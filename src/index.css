@@ -46,10 +46,10 @@
     color: #0A0A0A;             /* black — D9 token */
   }
 
-  /* Dark mode base — activado por clase en <html> (MainLayout lo gestiona) */
+  /* Dark mode base — paleta azul metálico, pensada para largas sesiones de trabajo */
   html.dark body {
-    background-color: #0A0A0A;
-    color: #F9FAFB; /* gray-50 */
+    background-color: #070C15;  /* navy-black profundo */
+    color: #E4EAF4;             /* blanco frío, no puro — menos fatiga visual */
   }
 }
 
@@ -66,12 +66,26 @@
     box-shadow: 0 1px 0 rgba(10, 10, 10, 0.06);
   }
 
-  /* ── Bordes de tarjeta — negro puro en light, blanco puro en dark ── */
+  /* ── Tarjeta dark — azul-gris profundo con superficie metálica ── */
+  html.dark .dark-card {
+    background-color: #0E1729 !important;  /* superficie principal: azul marino oscuro */
+  }
+  html.dark .dark-card-header {
+    background-color: #0A1220 !important;  /* cabecera: tono ligeramente más profundo */
+  }
+  html.dark .dark-page-bg {
+    background-color: #070C15 !important;  /* fondo de página: navy-black */
+  }
+
+  /* ── Bordes de tarjeta — negro puro en light, azul metálico en dark ── */
   .card-border {
     border: 1px solid rgba(0, 0, 0, 0.25);
   }
   html.dark .card-border {
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    /* azul-metálico: tono frío que recuerda a acero pulido */
+    border: 1px solid rgba(100, 150, 230, 0.22);
+    box-shadow: 0 0 0 0.5px rgba(80, 130, 220, 0.1),
+                inset 0 1px 0 rgba(140, 180, 255, 0.06); /* halo interior sutil */
   }
 
   /* Separadores internos de tarjeta (cabeceras, divisores) */
@@ -79,7 +93,7 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.15);
   }
   html.dark .card-divider-bottom {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    border-bottom: 1px solid rgba(100, 150, 230, 0.15);
   }
 
   /* Cabecera sticky */
@@ -87,6 +101,14 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.25);
   }
   html.dark .header-border-bottom {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    border-bottom: 1px solid rgba(100, 150, 230, 0.2);
+  }
+
+  /* Fondo de cabecera — blanco en light, navy translúcido en dark */
+  .app-header-bg {
+    background-color: rgba(255, 255, 255, 0.95);
+  }
+  html.dark .app-header-bg {
+    background-color: rgba(7, 12, 21, 0.92);
   }
 }

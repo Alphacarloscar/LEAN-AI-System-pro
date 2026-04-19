@@ -118,11 +118,11 @@ export function ChartWrapper({
   action,
 }: ChartWrapperProps) {
   return (
-    <div className={`rounded-xl bg-white dark:bg-gray-900 overflow-hidden card-border ${className}`}>
+    <div className={`rounded-xl bg-white dark-card overflow-hidden card-border ${className}`}>
 
       {/* Header */}
       {(title || action) && (
-        <div className="flex items-start justify-between gap-4 px-5 py-4 card-divider-bottom">
+        <div className="flex items-start justify-between gap-4 px-5 py-4 dark-card-header card-divider-bottom">
           <div className="min-w-0">
             {title && (
               <h4 className="text-sm font-semibold text-lean-black dark:text-gray-100 truncate">
