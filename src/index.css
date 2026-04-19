@@ -93,10 +93,10 @@
     border: 1px solid rgba(0, 0, 0, 0.25);
   }
   html.dark .card-border {
-    border: 1px solid rgba(120, 170, 255, 0.30);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     box-shadow:
-      0 0 0 0.5px rgba(100, 155, 255, 0.12),
-      inset 0 1px 0 rgba(180, 215, 255, 0.10), /* brillo superior — efecto bisel metálico */
+      0 0 0 0.5px rgba(255, 255, 255, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.10), /* brillo superior — bisel metálico blanco */
       0 4px 24px rgba(10, 30, 80, 0.4);        /* sombra azul profunda */
   }
 
@@ -105,7 +105,7 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.15);
   }
   html.dark .card-divider-bottom {
-    border-bottom: 1px solid rgba(100, 150, 230, 0.15);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   }
 
   /* Cabecera sticky */
