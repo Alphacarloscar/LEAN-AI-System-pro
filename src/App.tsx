@@ -8,6 +8,7 @@
 import { PhaseRoadmap, type LeanPhase }       from '@/shared/components/PhaseRoadmap'
 import { ChartWrapper, LeanRadarChart, LeanBarChart, DEMO_RADAR_DATA, DEMO_KPI_DATA } from '@/shared/components/charts'
 import { MetricHeroGrid }                      from '@/shared/components/MetricHero'
+import { AppSidebar }                          from '@/shared/components/AppSidebar'
 
 // ── Datos de demo — sprint L.E.A.N. 6 meses ──────────────────
 const DEMO_PHASES: LeanPhase[] = [
@@ -85,12 +86,57 @@ const DEMO_PHASES: LeanPhase[] = [
   },
 ]
 
+// ── Logo slot ──────────────────────────────────────────────────
+// Muestra imagen si se pasa src; si no, un placeholder visual
+// para insertar el logo durante la demo.
+function LogoSlot({ src, alt, align = 'left' }: {
+  src?:   string
+  alt:    string
+  align?: 'left' | 'right'
+}) {
+  if (src) {
+    return <img src={src} alt={alt} className="h-8 w-auto object-contain" />
+  }
+  return (
+    <div className={[
+      'flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-dashed',
+      'border-black/20 text-[10px] font-mono text-black/30 select-none',
+      align === 'right' ? 'flex-row-reverse' : '',
+    ].join(' ')}>
+      <svg className="h-3.5 w-3.5 opacity-50" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="1" y="3" width="14" height="10" rx="1.5" />
+        <circle cx="5.5" cy="7" r="1.5" />
+        <path d="M1 11l4-3 3 2.5 3-3 4 3.5" />
+      </svg>
+      {alt}
+    </div>
+  )
+}
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-surface dark:bg-gray-950 p-8">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <div className="min-h-screen bg-surface dark:bg-gray-950">
 
-        {/* Header */}
+      {/* ── Cabecera sticky con logos ── */}
+      <header className="sticky top-0 z-20 flex items-center justify-between px-8 py-3 bg-white/90 backdrop-blur-sm border-b border-black/8">
+        <LogoSlot alt="Logo Alpha" align="left" />
+        <span className="text-[10px] font-mono uppercase tracking-widest text-black/25">
+          L.E.A.N. AI System
+        </span>
+        <LogoSlot alt="Logo Cliente" align="right" />
+      </header>
+
+      {/* ── Sidebar de herramientas ── */}
+      <AppSidebar
+        phases={DEMO_PHASES}
+        onToolSelect={(phase, tool) => {
+          console.log('[Sidebar]', phase.label, tool.code, tool.name)
+        }}
+      />
+
+      <div className="max-w-5xl mx-auto space-y-8 px-8 py-8">
+
+        {/* Sub-header */}
         <div>
           <p className="text-xs font-mono uppercase tracking-widest text-text-subtle mb-1">
             Alpha Corp — Sprint L.E.A.N.

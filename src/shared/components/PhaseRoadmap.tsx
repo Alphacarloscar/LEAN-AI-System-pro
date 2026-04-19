@@ -345,21 +345,22 @@ export function PhaseRoadmap({
       {/* ── Track ── */}
       <div className="relative px-10 pt-2 pb-10">
 
-        {/* Línea de fondo completa (gris) */}
+        {/* Línea de fondo completa — negro puro al 15% */}
         <div
           aria-hidden="true"
-          className="absolute left-14 right-14 bg-border dark:bg-gray-700 rounded-full"
-          style={{ top: '22px', height: '2px' }}
+          className="absolute left-14 right-14 rounded-full"
+          style={{ top: '22px', height: '1px', backgroundColor: 'rgba(0,0,0,0.18)' }}
         />
 
-        {/* Línea de progreso (navy) */}
+        {/* Línea de progreso — negro puro sólido */}
         <div
           aria-hidden="true"
-          className="absolute left-14 bg-navy dark:bg-info-soft rounded-full transition-all duration-700 ease-out"
+          className="absolute left-14 rounded-full transition-all duration-700 ease-out"
           style={{
-            top:    '22px',
-            height: '2px',
-            width:  `calc((100% - 7rem) * ${progressPct / 100})`,
+            top:             '22px',
+            height:          '1px',
+            backgroundColor: '#000000',
+            width:           `calc((100% - 7rem) * ${progressPct / 100})`,
           }}
         />
 
