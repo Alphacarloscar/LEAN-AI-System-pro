@@ -236,10 +236,10 @@ function PhaseDetail({
   }
 
   return (
-    <div className="animate-fade-in rounded-xl bg-white dark:bg-gray-900 overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.25)' }}>
+    <div className="animate-fade-in rounded-xl bg-white dark:bg-gray-900 overflow-hidden card-border">
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-6 px-6 py-4 bg-surface dark:bg-gray-800/60" style={{ borderBottom: '1px solid rgba(0,0,0,0.15)' }}>
+      <div className="flex items-center justify-between gap-6 px-6 py-4 bg-surface dark:bg-gray-800/60 card-divider-bottom">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100">
             {phase.label}

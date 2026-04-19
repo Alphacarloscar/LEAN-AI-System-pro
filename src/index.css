@@ -65,4 +65,28 @@
   .shadow-line-bottom {
     box-shadow: 0 1px 0 rgba(10, 10, 10, 0.06);
   }
+
+  /* ── Bordes de tarjeta — negro puro en light, blanco puro en dark ── */
+  .card-border {
+    border: 1px solid rgba(0, 0, 0, 0.25);
+  }
+  html.dark .card-border {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+
+  /* Separadores internos de tarjeta (cabeceras, divisores) */
+  .card-divider-bottom {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+  }
+  html.dark .card-divider-bottom {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  /* Cabecera sticky */
+  .header-border-bottom {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+  }
+  html.dark .header-border-bottom {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  }
 }
