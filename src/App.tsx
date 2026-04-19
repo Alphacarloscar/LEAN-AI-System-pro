@@ -5,10 +5,57 @@
 // Sprint 1 añadirá: BrowserRouter + rutas reales + AuthProvider.
 // ============================================================
 
-import { PhaseRoadmap, type LeanPhase }       from '@/shared/components/PhaseRoadmap'
+import { useState, useEffect }                 from 'react'
+import { PhaseRoadmap, type LeanPhase }        from '@/shared/components/PhaseRoadmap'
 import { ChartWrapper, LeanRadarChart, LeanBarChart, DEMO_RADAR_DATA, DEMO_KPI_DATA } from '@/shared/components/charts'
 import { MetricHeroGrid }                      from '@/shared/components/MetricHero'
 import { AppSidebar }                          from '@/shared/components/AppSidebar'
+
+// ── Dark mode hook ────────────────────────────────────────────
+function useDarkMode() {
+  const [dark, setDark] = useState(false)
+
+  useEffect(() => {
+    if (dark) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [dark])
+
+  return { dark, toggle: () => setDark((v) => !v) }
+}
+
+// ── Icono sol / luna ──────────────────────────────────────────
+function DarkModeToggle({ dark, onToggle }: { dark: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      aria-label={dark ? 'Activar modo claro' : 'Activar modo oscuro'}
+      title={dark ? 'Modo claro' : 'Modo oscuro'}
+      className={[
+        'h-8 w-8 rounded-full flex items-center justify-center',
+        'transition-colors duration-200',
+        dark
+          ? 'bg-white/10 hover:bg-white/20 text-white/70'
+          : 'bg-black/5 hover:bg-black/10 text-black/40',
+      ].join(' ')}
+    >
+      {dark ? (
+        // Sol
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+          <circle cx="7.5" cy="7.5" r="2.5" />
+          <path d="M7.5 1v1.5M7.5 12.5V14M1 7.5h1.5M12.5 7.5H14M3.2 3.2l1 1M10.8 10.8l1 1M10.8 3.2l-1 1M3.2 10.8l1-1" />
+        </svg>
+      ) : (
+        // Luna
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+          <path d="M12 9A6 6 0 015 2a6 6 0 100 10 6 6 0 007-3z" />
+        </svg>
+      )}
+    </button>
+  )
+}
 
 // ── Datos de demo — sprint L.E.A.N. 6 meses ──────────────────
 const DEMO_PHASES: LeanPhase[] = [
@@ -114,16 +161,21 @@ function LogoSlot({ src, alt, align = 'left' }: {
 }
 
 export default function App() {
+  const { dark, toggle } = useDarkMode()
+
   return (
     <div className="min-h-screen bg-surface dark:bg-gray-950">
 
       {/* ── Cabecera sticky con logos ── */}
       <header className="sticky top-0 z-20 flex items-center justify-between px-8 py-3 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm header-border-bottom">
         <LogoSlot alt="Logo Alpha" align="left" />
-        <span className="text-[10px] font-mono uppercase tracking-widest text-black/25">
+        <span className="text-[10px] font-mono uppercase tracking-widest text-black/25 dark:text-white/25">
           L.E.A.N. AI System
         </span>
-        <LogoSlot alt="Logo Cliente" align="right" />
+        <div className="flex items-center gap-3">
+          <DarkModeToggle dark={dark} onToggle={toggle} />
+          <LogoSlot alt="Logo Cliente" align="right" />
+        </div>
       </header>
 
       {/* ── Sidebar de herramientas ── */}
