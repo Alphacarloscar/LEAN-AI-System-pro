@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alpha Consulting vs Big 4 — Diferencial L.E.A.N. AI System</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    padding: 40px 32px;
+  }
+
+  .wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 48px 52px 56px;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    border-bottom: 3px solid #1a1a1a;
+    padding-bottom: 24px;
+  }
+
+  .header-left h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .header-left p {
+    font-size: 13px;
+    color: #666;
+    font-weight: 400;
+  }
+
+  .brand {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #1a1a1a;
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  .brand span {
+    display: block;
+    font-weight: 400;
+    color: #888;
+    letter-spacing: 1px;
+    font-size: 11px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+
+  thead tr th {
+    padding: 13px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #1a1a1a;
+  }
+
+  thead th:first-child {
+    width: 22%;
+    background: #fff;
+    color: #1a1a1a;
+  }
+
+  thead th:nth-child(2) {
+    width: 39%;
+    background: #f0f0f0;
+    color: #444;
+    border-left: 1px solid #ddd;
+  }
+
+  thead th:nth-child(3) {
+    width: 39%;
+    background: #1a1a1a;
+    color: #fff;
+    border-left: 2px solid #1a1a1a;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #e8e8e8;
+  }
+
+  tbody tr:hover td {
+    background-color: #fafafa;
+  }
+
+  tbody tr:hover td:nth-child(3) {
+    background-color: #111;
+  }
+
+  tbody td {
+    padding: 14px 16px;
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  tbody td:first-child {
+    font-weight: 700;
+    font-size: 12.5px;
+    color: #1a1a1a;
+    border-right: 1px solid #e8e8e8;
+  }
+
+  tbody td:nth-child(2) {
+    color: #555;
+    background: #fafafa;
+    border-left: 1px solid #ddd;
+  }
+
+  tbody td:nth-child(3) {
+    background: #1a1a1a;
+    color: #e8e8e8;
+    border-left: 2px solid #1a1a1a;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    margin-bottom: 4px;
+  }
+
+  .badge-alpha {
+    background: #fff;
+    color: #1a1a1a;
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+
+  .badge-win {
+    background: rgba(255,255,255,0.12);
+    color: #ccc;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .highlight-row td:nth-child(3) {
+    background: #111;
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #999;
+    padding: 10px 16px 4px;
+    background: #fff !important;
+    border-bottom: none !important;
+    border-left: none !important;
+  }
+
+  .section-label-row td {
+    background: #f5f5f5 !important;
+    padding: 8px 16px 4px;
+    border-bottom: 1px solid #e0e0e0 !important;
+  }
+
+  .section-label-row td:nth-child(3) {
+    background: #222 !important;
+  }
+
+  .negative {
+    color: #aaa;
+    font-style: italic;
+  }
+
+  .footer {
+    margin-top: 36px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #999;
+  }
+
+  .footer strong {
+    color: #1a1a1a;
+    font-size: 12px;
+  }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+  }
+
+  .legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
+  .dot-black { background: #1a1a1a; }
+  .dot-gray { background: #c0c0c0; }
+
+  @media print {
+    body { padding: 0; background: white; }
+    .wrapper { border: none; padding: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>Alpha Consulting vs Big 4<br>Diferencial competitivo</h1>
+      <p>Habilitado por el L.E.A.N. AI System Enterprise — Abril 2026</p>
+    </div>
+    <div class="brand">
+      ALPHA CONSULTING SOLUTIONS
+      <span>L.E.A.N. AI System Enterprise</span>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Dimensión</th>
+        <th>Big 4 / Consultoras generalistas</th>
+        <th>Alpha Consulting + L.E.A.N. AI System</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- BLOQUE 1: VELOCIDAD -->
+      <tr class="section-label-row">
+        <td colspan="3" class="section-label">01 · Velocidad y arranque</td>
+      </tr>
+
+      <tr>
+        <td>Tiempo hasta primer entregable</td>
+        <td><span class="negative">3–6 meses.</span> El diagnóstico es un proyecto en sí mismo. El cliente paga antes de ver valor.</td>
+        <td><span class="badge badge-alpha">✓ Alpha</span><br>2–4 semanas. T1–T3 generan el mapa de madurez IA validado con datos reales del cliente desde la sesión inicial.</td>
+      </tr>
+
+      <tr>
+        <td>Ciclo de compra</td>
+        <td><span class="negative">6–18 meses</span> de procurement, RFPs, comités. Requiere presencia en lista de proveedores aprobados.</td>
+        <td><span class="badge badge-alpha">✓ Alpha</span><br>4–8 semanas. Decisión directa CIO/COO/DG. Sin RFP obligatorio. Formato compatible con presupuestos de innovación.</td>
+      </tr>
+
+      <!-- BLOQUE 2: ESPECIALIZACIÓN -->
+      <tr class="section-label-row">
+        <td colspan="3" class="section-label">02 · Especialización y metodología</td>
+      </tr>
+
+      <tr>
+        <td>Foco en IA</td>
+        <td><span class="negative">Práctica IA dentro de una firma generalista.</span> Los frameworks son los mismos de transformación digital de 2015, adaptados con terminología IA.</td>
+        <td><span class="badge badge-alpha">✓ Alpha</span><br>IA-first desde el origen. Las 13 herramientas (T1–T13) están diseñadas exclusivamente para el ciclo de adopción de IA B2B, no adaptadas de otro dominio.</td>
+      </tr>
+
+      <tr>
+        <td>Gestión de stakeholders IA</td>
+        <td><span class="negative">Change management genérico.</span> No diferencia entre perfiles de adopción IA. Un mismo mensaje para todos.</td>
+        <td><span class="badge badge-alpha">✓ Alpha</span><br>5 arquetipos específicos IA: Explorador, Operador, Decisor, Especialista de Riesgo y Constructor. Cada herramienta sabe a qué arquetipo habla y qué objeción gestiona.</td>
+      </tr>
+
+      <tr>
+        <td>Motor de recomendaciones</td>
+        <td><span class="negative">Framework estático.</span> El consultor senior aplica criterio propio. No hay sistema. El resultado depende del perfil del equipo asignado.</td>
+        <td><span class="badge badge-alpha">✓ Alpha</span><br>Motor IA dinámico que adapta recomendaciones al contexto real del cliente en tiempo de ejecución. No hay dos outputs iguales si los inputs son distintos.</td>
+      </tr>
+
+      <!-- BLOQUE 3: EVIDENCIA -->
+      <tr class="section-label-row">
+        <td colspan="3" class="section-label">03 · Evidencia, trazabilidad y entregables</td>
+      </tr>
+
+      <tr>
+        <td>Formato de entregables</td>
+        <td><span class="negative">Decks de PowerPoint.</span> No auditables, no actualizables, no conectados entre sí. El cliente recibe un snapshot.</td>
+        <td><span class="badge badge-alpha">✓ Alpha</span><br>AIMS digital (AI Management System) con IDs de herramienta, historial de versiones y trazabilidad completa entre decisiones. Vivo, no congelado.</td>
+      </tr>
+
+      <tr>
+        <td>Cumplimiento ISO 42001</td>
+        <td><span class="negative">Proyecto separado, coste adicional.</span> La certificación se plantea como un nuevo engagement post-consultoría.</td>
+        <td><span class="badge badge-alpha">✓ Alpha</span><br>~78% del AIMS requerido para ISO/IEC 42001:2023 se genera durante el sprint de 6 meses. Alpha no compite con los organismos de certificación: produce lo que ellos necesitan para auditar.</td>
+      </tr>
+
+      <tr>
+        <td>Quick Wins demostrables</td>
+        <td><span class="negative">No estructurados.</span> El valor percibido es difuso durante los primeros meses. Difícil de justificar internamente.</td>
+        <td><span class="badge badge-alpha">✓ Alpha</span><br>QW1–QW8 instrumentados por fase. Ejemplo: Licence Waste Report (semana 4) cuantifica el coste real de herramientas IA no utilizadas. El cliente tiene argumento de ROI antes del mes 2.</td>
+      </tr>
+
+      <!-- BLOQUE 4: MODELO -->
+      <tr class="section-label-row">
+        <td colspan="3" class="section-label">04 · Modelo de entrega y continuidad</td>
+      </tr>
+
+      <tr>
+        <td>Continuidad post-proyecto</td>
+        <td><span class="negative">Entrega y cierre.</span> Para cualquier actualización o ajuste, nuevo presupuesto. La dependencia es estructural y cara.</td>
+        <td><span class="badge badge-alpha">✓ Alpha</span><br>SaaS asistido: el cliente opera con un PM interno formado por Alpha. Alpha queda en background. Sin dependencia de consultor externo para el día a día.</td>
+      </tr>
+
+      <tr>
+        <td>Vendor Management IA</td>
+        <td><span class="negative">Ad-hoc o inexistente.</span> La selección de proveedores IA no tiene protocolo estandarizado. Se resuelve con opinión del socio o con el proveedor que ya tiene relación.</td>
+        <td><span class="badge badge-alpha">✓ Alpha</span><br>T7–T9 incluyen protocolo estructurado de evaluación, selección y gestión de proveedores IA. El cliente tiene criterio propio, no depende de la opinión de ningún consultor.</td>
+      </tr>
+
+      <tr>
+        <td>CIO Office / IT Governance</td>
+        <td><span class="negative">Servicio separado de IT strategy.</span> No conectado con el proyecto de IA. El cliente gestiona dos equipos distintos.</td>
+        <td><span class="badge badge-alpha">✓ Alpha</span><br>CIO Office-as-a-Service integrado como servicio ancla. La gobernanza IT y la adopción IA son un único vector de trabajo.</td>
+      </tr>
+
+      <!-- BLOQUE 5: ACCESO -->
+      <tr class="section-label-row">
+        <td colspan="3" class="section-label">05 · Acceso económico y perfil de cliente</td>
+      </tr>
+
+      <tr>
+        <td>Ticket de entrada</td>
+        <td><span class="negative">€300K–1M+ para empresa mediana.</span> Prácticamente inaccesible para compañías de 500–2.000 empleados sin presupuesto IT de gran empresa.</td>
+        <td><span class="badge badge-alpha">✓ Alpha</span><br>Diseñado para empresa mediana-grande española y europea. Ticket compatible con presupuestos de transformación digital de €50K–200K sin sacrificar rigor metodológico.</td>
+      </tr>
+
+      <tr>
+        <td>Perfil de cliente accesible</td>
+        <td><span class="negative">Grandes cuentas con procurement establecido.</span> Las medianas empresas rara vez llegan al proceso de selección.</td>
+        <td><span class="badge badge-alpha">✓ Alpha</span><br>CIOs y COOs de empresas 500–5.000 empleados. Decisores con capacidad real de compra sin necesidad de pasar por comités de 18 meses.</td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <div>
+      <strong>Alpha Consulting Solutions S.L.</strong><br>
+      carlos.sanchez@consultoriaalpha.com · Uso interno / Sales enablement
+    </div>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot dot-black"></div>
+        <span>Alpha Consulting + L.E.A.N. AI System</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot dot-gray"></div>
+        <span>Big 4 / Consultoras generalistas</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
