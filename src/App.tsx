@@ -118,7 +118,7 @@ export default function App() {
     <div className="min-h-screen bg-surface dark:bg-gray-950">
 
       {/* ── Cabecera sticky con logos ── */}
-      <header className="sticky top-0 z-20 flex items-center justify-between px-8 py-3 bg-white/90 backdrop-blur-sm" style={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
+      <header className="sticky top-0 z-20 flex items-center justify-between px-8 py-3 bg-white/90 backdrop-blur-sm" style={{ borderBottom: '1px solid rgba(0,0,0,0.25)' }}>
         <LogoSlot alt="Logo Alpha" align="left" />
         <span className="text-[10px] font-mono uppercase tracking-widest text-black/25">
           L.E.A.N. AI System
@@ -150,7 +150,7 @@ export default function App() {
         </div>
 
         {/* MetricHero — E6 demo */}
-        <div className="rounded-2xl bg-white dark:bg-gray-900 px-8 py-6" style={{ border: '1px solid rgba(0,0,0,0.1)' }}>
+        <div className="rounded-2xl bg-white dark:bg-gray-900 px-8 py-6" style={{ border: '1px solid rgba(0,0,0,0.25)' }}>
           <p className="text-xs font-mono uppercase tracking-widest text-text-subtle mb-5">Resumen ejecutivo</p>
           <MetricHeroGrid
             cols={4}
@@ -164,7 +164,7 @@ export default function App() {
         </div>
 
         {/* Metro Map */}
-        <div className="rounded-2xl bg-white dark:bg-gray-900 p-8" style={{ border: '1px solid rgba(0,0,0,0.1)' }}>
+        <div className="rounded-2xl bg-white dark:bg-gray-900 p-8" style={{ border: '1px solid rgba(0,0,0,0.25)' }}>
           <PhaseRoadmap
             phases={DEMO_PHASES}
             onToolClick={(phase, tool) => {
