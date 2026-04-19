@@ -66,15 +66,26 @@
     box-shadow: 0 1px 0 rgba(10, 10, 10, 0.06);
   }
 
-  /* ── Tarjeta dark — azul-gris profundo con superficie metálica ── */
+  /* ── Tarjeta dark — azul acerado con brillo metálico ── */
   html.dark .dark-card {
-    background-color: #0E1729 !important;  /* superficie principal: azul marino oscuro */
+    background-color: #111E35 !important;
+    background-image: linear-gradient(
+      145deg,
+      rgba(140, 185, 255, 0.05) 0%,
+      rgba(80, 130, 230, 0.02) 40%,
+      transparent 70%
+    ) !important;
   }
   html.dark .dark-card-header {
-    background-color: #0A1220 !important;  /* cabecera: tono ligeramente más profundo */
+    background-color: #0D1828 !important;
+    background-image: linear-gradient(
+      90deg,
+      rgba(120, 170, 255, 0.04) 0%,
+      transparent 60%
+    ) !important;
   }
   html.dark .dark-page-bg {
-    background-color: #070C15 !important;  /* fondo de página: navy-black */
+    background-color: #080F1C !important;
   }
 
   /* ── Bordes de tarjeta — negro puro en light, azul metálico en dark ── */
@@ -82,10 +93,11 @@
     border: 1px solid rgba(0, 0, 0, 0.25);
   }
   html.dark .card-border {
-    /* azul-metálico: tono frío que recuerda a acero pulido */
-    border: 1px solid rgba(100, 150, 230, 0.22);
-    box-shadow: 0 0 0 0.5px rgba(80, 130, 220, 0.1),
-                inset 0 1px 0 rgba(140, 180, 255, 0.06); /* halo interior sutil */
+    border: 1px solid rgba(120, 170, 255, 0.30);
+    box-shadow:
+      0 0 0 0.5px rgba(100, 155, 255, 0.12),
+      inset 0 1px 0 rgba(180, 215, 255, 0.10), /* brillo superior — efecto bisel metálico */
+      0 4px 24px rgba(10, 30, 80, 0.4);        /* sombra azul profunda */
   }
 
   /* Separadores internos de tarjeta (cabeceras, divisores) */
