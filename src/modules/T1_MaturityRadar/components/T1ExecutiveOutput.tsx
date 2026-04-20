@@ -42,11 +42,18 @@ function scoreColor(s: number | null) {
   return 'text-danger-dark'
 }
 
+function miniBarFill(score: number): string {
+  if (score >= 3) return 'bg-success-dark'
+  if (score >= 2) return 'bg-info-dark'
+  if (score >= 1) return 'bg-warning-dark'
+  return 'bg-danger-dark'
+}
+
 function miniBar(score: number, max = 4) {
   return (
-    <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+    <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
       <div
-        className="h-full bg-navy rounded-full transition-all duration-300"
+        className={`h-full ${miniBarFill(score)} rounded-full transition-all duration-300`}
         style={{ width: `${(score / max) * 100}%` }}
       />
     </div>

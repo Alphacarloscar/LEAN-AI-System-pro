@@ -6,10 +6,10 @@
 // Escala 0-4. Se actualiza en cada cambio sin delay.
 // ============================================================
 
-import { ChartWrapper, LeanRadarChart }              from '@/shared/components/charts'
 import type { T1DimensionState }                     from '../types'
-import { computeDimensionScore, computeOverallScore,
+import { computeOverallScore,
          resolveMaturityTier, MATURITY_TIER_CONFIG } from '../types'
+import { T1SpiderChart }                             from './T1SpiderChart'
 
 interface T1RadarPanelProps {
   dimensions: T1DimensionState[]
@@ -19,16 +19,6 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
   const overallScore = computeOverallScore(dimensions)
   const tier         = resolveMaturityTier(overallScore)
   const config       = MATURITY_TIER_CONFIG[tier]
-
-  // Construir data para el radar — score de cada dimensión desde subdimensiones
-  const radarData = dimensions.map((d) => {
-    const score = computeDimensionScore(d)
-    return {
-      dimension: d.label,
-      current:   score ?? 0,
-      target:    3.5,   // objetivo estándar del sprint L.E.A.N.
-    }
-  })
 
   // Barra de progreso: 0-4 → 0-100%
   const progressPct = (overallScore / 4) * 100
@@ -56,9 +46,14 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
         </span>
 
         {/* Barra de progreso */}
-        <div className="mt-4 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+        <div className="mt-4 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-navy rounded-full transition-all duration-300"
+            className={`h-full rounded-full transition-all duration-300 ${
+              overallScore >= 3   ? 'bg-success-dark' :
+              overallScore >= 2   ? 'bg-info-dark'    :
+              overallScore >= 1   ? 'bg-warning-dark'  :
+                                    'bg-danger-dark'
+            }`}
             style={{ width: `${Math.max(progressPct, 1.5)}%` }}
           />
         </div>
@@ -74,14 +69,14 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
       </div>
 
       {/* ── Radar chart ── */}
-      <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
-        <ChartWrapper
-          title="Radar de madurez IA"
-          subtitle="Estado actual · Objetivo sprint"
-          height={280}
-        >
-          <LeanRadarChart data={radarData} showTarget maxValue={4} />
-        </ChartWrapper>
+      <div className="rounded-xl border border-border bg-white dark:bg-gray-900 p-5">
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
+          Radar de madurez IA
+        </p>
+        <p className="text-xs text-text-muted mb-3">Estado actual · Objetivo sprint</p>
+        <div className="w-full aspect-square max-h-[280px] mx-auto">
+          <T1SpiderChart dimensions={dimensions} />
+        </div>
       </div>
 
       {/* ── Leyenda ── */}
