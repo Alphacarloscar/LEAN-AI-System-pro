@@ -28,18 +28,16 @@ export const changeResistanceScenario: DemoScenario = {
   },
 
   // ── T1 Radar — firma "techo cultural" ───────────────────────
-  // Tecnología y Talento técnico altos: la infraestructura existe.
-  // Cultura y Liderazgo intermedio muy bajos: el problema es humano.
-  // Procesos bajos: los flujos de trabajo no están rediseñados para IA.
+  // 6 dimensiones · escala 0-4 · consolidado IT + Negocio
+  // Tecnología y Datos sólidos: la infraestructura técnica existe.
+  // Talento y Procesos muy bajos: el cambio no está gestionado.
   t1Radar: [
-    { dimension: 'Estrategia',  current: 2.7, target: 4.0 },
-    { dimension: 'Datos',       current: 3.1, target: 4.0 },
-    { dimension: 'Tecnología',  current: 3.8, target: 4.5 },
-    { dimension: 'Talento',     current: 2.2, target: 4.0 },
-    { dimension: 'Procesos',    current: 1.8, target: 4.0 },
-    { dimension: 'Cultura',     current: 1.3, target: 4.0 },
-    { dimension: 'Gobernanza',  current: 2.4, target: 3.5 },
-    { dimension: 'Liderazgo',   current: 2.1, target: 4.5 },
+    { dimension: 'Estrategia', current: 2.4, target: 3.5 },
+    { dimension: 'Datos',      current: 3.0, target: 3.5 },
+    { dimension: 'Tecnología', current: 2.5, target: 3.5 },
+    { dimension: 'Talento',    current: 1.3, target: 3.5 },
+    { dimension: 'Procesos',   current: 1.3, target: 3.5 },
+    { dimension: 'Gobernanza', current: 1.9, target: 3.5 },
   ],
 
   // ── Hero metrics ─────────────────────────────────────────────
@@ -179,4 +177,63 @@ export const changeResistanceScenario: DemoScenario = {
 
   primaryQw: 'QW6',
   keyTools:  ['T2', 'T7', 'T8'],
+
+  // ── Entrevistados T1 — brecha IT / Negocio ───────────────────
+  // Director TI: ve la tecnología lista, no entiende la resistencia clínica.
+  // Director médico: usa la tecnología lo menos posible, cultura muy baja.
+  // Brecha principal: Tecnología (+1.0 IT vs BIZ) y Talento/Cambio.
+  interviewees: [
+    {
+      id:        'it-director-david',
+      name:      'David Carrasco',
+      role:      'Director TI',
+      archetype: 'Ejecutivo TI',
+      type:      'it',
+      scores: {
+        'strategy-vision':        3, 'strategy-roadmap':       2,
+        'strategy-budget':        3, 'strategy-sponsorship':   2,
+        'data-availability':      3, 'data-quality':           3,
+        'data-volume':            3, 'data-privacy':           3,
+        'tech-infrastructure':    4, 'tech-integration':       3,
+        'tech-security':          3, 'tech-mlops':             2,
+        'talent-technical':       3, 'talent-training':        1,
+        'talent-culture':         1, 'talent-change':          1,
+        'process-identification': 2, 'process-redesign':       1,
+        'process-roi':            1, 'process-pilots':         2,
+        'gov-policy':             2, 'gov-risk':               2,
+        'gov-catalog':            2, 'gov-audit':              2,
+      },
+      evidence: {
+        'tech-infrastructure':  'Hemos desplegado 3 herramientas IA clínicas. Técnicamente funcionan perfectamente.',
+        'talent-culture':       'Solo el 18% del personal clínico usa las herramientas disponibles. No entiendo por qué.',
+        'talent-change':        'No hay plan de formación ni gestión del cambio. IT desplegó, nadie acompañó la adopción.',
+      },
+    },
+    {
+      id:        'medical-director-ana',
+      name:      'Ana Quintero',
+      role:      'Directora Médica',
+      archetype: 'Líder de Negocio',
+      type:      'business',
+      scores: {
+        'strategy-vision':        3, 'strategy-roadmap':       2,
+        'strategy-budget':        2, 'strategy-sponsorship':   2,
+        'data-availability':      3, 'data-quality':           3,
+        'data-volume':            3, 'data-privacy':           3,
+        'tech-infrastructure':    3, 'tech-integration':       2,
+        'tech-security':          2, 'tech-mlops':             1,
+        'talent-technical':       1, 'talent-training':        1,
+        'talent-culture':         1, 'talent-change':          1,
+        'process-identification': 1, 'process-redesign':       1,
+        'process-roi':            1, 'process-pilots':         1,
+        'gov-policy':             2, 'gov-risk':               2,
+        'gov-catalog':            2, 'gov-audit':              1,
+      },
+      evidence: {
+        'talent-culture':    'El personal clínico no ha recibido formación. Les han instalado herramientas sin explicarles el por qué.',
+        'talent-change':     '3 de los 5 pilotos fueron abandonados por el personal en la fase de rollout.',
+        'process-redesign':  'Las herramientas IA están encima de flujos de trabajo que no se han rediseñado para ellas.',
+      },
+    },
+  ],
 }

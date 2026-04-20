@@ -30,18 +30,16 @@ export const vendorSprawlScenario: DemoScenario = {
   },
 
   // ── T1 Radar — firma "caos de adopción" ─────────────────────
-  // Exploración muy alta: mucha iniciativa, mucha energía.
-  // Gobernanza y Procesos muy bajos: cero coordinación.
-  // Estrategia media: hay visión pero no se traduce en orden.
+  // 6 dimensiones · escala 0-4 · consolidado IT + Negocio
+  // Gobernanza y Procesos en estado crítico (< 0.5).
+  // Talento y Tecnología relativamente fuertes.
   t1Radar: [
-    { dimension: 'Estrategia',  current: 2.8, target: 4.0 },
-    { dimension: 'Datos',       current: 2.3, target: 4.0 },
-    { dimension: 'Tecnología',  current: 3.4, target: 4.5 },
-    { dimension: 'Talento',     current: 3.6, target: 4.5 },
-    { dimension: 'Procesos',    current: 1.5, target: 4.0 },
-    { dimension: 'Cultura',     current: 4.1, target: 4.5 },
-    { dimension: 'Gobernanza',  current: 1.2, target: 4.5 },
-    { dimension: 'Liderazgo',   current: 2.9, target: 4.0 },
+    { dimension: 'Estrategia', current: 2.0, target: 3.5 },
+    { dimension: 'Datos',      current: 1.8, target: 3.5 },
+    { dimension: 'Tecnología', current: 1.9, target: 3.5 },
+    { dimension: 'Talento',    current: 2.4, target: 3.5 },
+    { dimension: 'Procesos',   current: 0.9, target: 3.5 },
+    { dimension: 'Gobernanza', current: 0.4, target: 3.5 },
   ],
 
   // ── Hero metrics ─────────────────────────────────────────────
@@ -238,4 +236,101 @@ export const vendorSprawlScenario: DemoScenario = {
 
   primaryQw: 'QW4',
   keyTools:  ['T2', 'T4', 'T6'],
+
+  // ── Entrevistados T1 — brecha IT / Negocio ───────────────────
+  // CIO: conoce el caos técnico y de gobernanza, puntúa bajo ahí.
+  // CEO: ve cultura y estrategia bien, no percibe el riesgo real.
+  // Brecha principal: Gobernanza (+0.25 CEO vs CIO) y Estrategia (+1.0).
+  interviewees: [
+    {
+      id:        'cio-elena',
+      name:      'Elena Villanueva',
+      role:      'CIO',
+      archetype: 'Ejecutiva TI',
+      type:      'it',
+      scores: {
+        // D1 Estrategia — avg 1.5
+        'strategy-vision':       2,
+        'strategy-roadmap':      1,
+        'strategy-budget':       1,
+        'strategy-sponsorship':  2,
+        // D2 Datos — avg 1.5
+        'data-availability':     2,
+        'data-quality':          1,
+        'data-volume':           2,
+        'data-privacy':          1,
+        // D3 Tecnología — avg 2.0
+        'tech-infrastructure':   3,
+        'tech-integration':      2,
+        'tech-security':         2,
+        'tech-mlops':            1,
+        // D4 Talento — avg 2.0
+        'talent-technical':      3,
+        'talent-training':       1,
+        'talent-culture':        3,
+        'talent-change':         1,
+        // D5 Procesos — avg 0.75
+        'process-identification': 1,
+        'process-redesign':       1,
+        'process-roi':            0,
+        'process-pilots':         1,
+        // D6 Gobernanza — avg 0.25
+        'gov-policy':            0,
+        'gov-risk':              0,
+        'gov-catalog':           1,
+        'gov-audit':             0,
+      },
+      evidence: {
+        'gov-catalog':    '26 contratos IA activos identificados. Ninguno revisado por IT antes de firmarse.',
+        'gov-policy':     'No existe AI Policy. Los contratos no incluyen cláusulas de seguridad de datos ni GDPR.',
+        'process-roi':    'Sin métricas de valor generado por ninguna de las 26 herramientas activas.',
+        'tech-infrastructure': 'M365 + Azure presentes y estables. Sin arquitectura IA definida formalmente.',
+      },
+    },
+    {
+      id:        'ceo-marcos',
+      name:      'Marcos Ibáñez',
+      role:      'CEO',
+      archetype: 'Líder de Negocio',
+      type:      'business',
+      scores: {
+        // D1 Estrategia — avg 2.5
+        'strategy-vision':       3,
+        'strategy-roadmap':      2,
+        'strategy-budget':       2,
+        'strategy-sponsorship':  3,
+        // D2 Datos — avg 2.0
+        'data-availability':     2,
+        'data-quality':          2,
+        'data-volume':           3,
+        'data-privacy':          1,
+        // D3 Tecnología — avg 1.75
+        'tech-infrastructure':   3,
+        'tech-integration':      2,
+        'tech-security':         1,
+        'tech-mlops':            1,
+        // D4 Talento — avg 2.75
+        'talent-technical':      3,
+        'talent-training':       2,
+        'talent-culture':        4,
+        'talent-change':         2,
+        // D5 Procesos — avg 1.0
+        'process-identification': 1,
+        'process-redesign':       1,
+        'process-roi':            1,
+        'process-pilots':         1,
+        // D6 Gobernanza — avg 0.5
+        'gov-policy':            1,
+        'gov-risk':              0,
+        'gov-catalog':           1,
+        'gov-audit':             0,
+      },
+      evidence: {
+        'talent-culture':     'Los equipos están muy entusiasmados con la IA. La energía es alta, la dirección lo ve positivo.',
+        'strategy-vision':    'Queremos ser referentes en uso de IA en nuestro sector en 2 años.',
+        'gov-catalog':        'No sabía que teníamos tantos contratos duplicados. Esto no puede seguir así.',
+        'data-privacy':       'Asumía que IT revisaba los contratos antes de firmar. Al parecer no.',
+      },
+    },
+  ],
 }

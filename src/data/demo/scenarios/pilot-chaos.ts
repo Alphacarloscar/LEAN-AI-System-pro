@@ -35,19 +35,17 @@ export const pilotChaosScenario: DemoScenario = {
   },
 
   // ── T1 Radar — firma "ambición sin infraestructura" ──────────
-  // Estrategia y Liderazgo muy altos: hay energía y visión en la cúpula.
-  // Cultura alta: la empresa tiene ADN innovador, no hay resistencia.
-  // Procesos y Gobernanza muy bajos: no hay metodología de ejecución.
+  // 6 dimensiones · escala 0-4 · consolidado IT + Negocio
+  // Estrategia y Talento muy altos: mucha energía y visión.
+  // Procesos y Gobernanza en estado crítico: sin metodología ni rigor.
   // Esta es la firma del "bright chaos" — mucha luz, cero rigor.
   t1Radar: [
-    { dimension: 'Estrategia',  current: 4.2, target: 4.5 },
-    { dimension: 'Datos',       current: 2.7, target: 4.0 },
-    { dimension: 'Tecnología',  current: 3.5, target: 4.5 },
-    { dimension: 'Talento',     current: 3.3, target: 4.0 },
-    { dimension: 'Procesos',    current: 1.5, target: 4.5 },
-    { dimension: 'Cultura',     current: 4.3, target: 4.5 },
-    { dimension: 'Gobernanza',  current: 1.2, target: 4.5 },
-    { dimension: 'Liderazgo',   current: 4.4, target: 4.5 },
+    { dimension: 'Estrategia', current: 3.5, target: 3.5 },
+    { dimension: 'Datos',      current: 2.4, target: 3.5 },
+    { dimension: 'Tecnología', current: 2.6, target: 3.5 },
+    { dimension: 'Talento',    current: 3.3, target: 3.5 },
+    { dimension: 'Procesos',   current: 1.3, target: 3.5 },
+    { dimension: 'Gobernanza', current: 1.3, target: 3.5 },
   ],
 
   // ── Hero metrics ─────────────────────────────────────────────
@@ -188,4 +186,63 @@ export const pilotChaosScenario: DemoScenario = {
 
   primaryQw: 'QW3',
   keyTools:  ['T4', 'T9', 'T12'],
+
+  // ── Entrevistados T1 — brecha IT / Negocio ───────────────────
+  // CTO: ve el caos de ejecución, sabe que necesitan metodología.
+  // CEO: muy optimista, no ve el problema de metodología (solo el resultado).
+  // Brecha principal: Procesos y Gobernanza alineados en bajo (ninguno ve solución).
+  interviewees: [
+    {
+      id:        'cto-jorge',
+      name:      'Jorge Sáenz',
+      role:      'CTO',
+      archetype: 'Ejecutivo TI',
+      type:      'it',
+      scores: {
+        'strategy-vision':        4, 'strategy-roadmap':       3,
+        'strategy-budget':        3, 'strategy-sponsorship':   4,
+        'data-availability':      2, 'data-quality':           2,
+        'data-volume':            3, 'data-privacy':           2,
+        'tech-infrastructure':    3, 'tech-integration':       3,
+        'tech-security':          3, 'tech-mlops':             2,
+        'talent-technical':       4, 'talent-training':        3,
+        'talent-culture':         4, 'talent-change':          2,
+        'process-identification': 2, 'process-redesign':       1,
+        'process-roi':            1, 'process-pilots':         1,
+        'gov-policy':             1, 'gov-risk':               1,
+        'gov-catalog':            2, 'gov-audit':              1,
+      },
+      evidence: {
+        'process-pilots':    'Cada piloto inventa su propia metodología. Sin Go/No-Go gates, sin criterios de escalado.',
+        'process-roi':       '12 pilotos lanzados en 18 meses. Solo 1 ha llegado a producción. No medimos por qué fallan.',
+        'talent-culture':    'La energía de experimentación es excepcional. El problema no es la voluntad, es la disciplina.',
+      },
+    },
+    {
+      id:        'ceo-lucia',
+      name:      'Lucía Peñalver',
+      role:      'CEO',
+      archetype: 'Líder de Negocio',
+      type:      'business',
+      scores: {
+        'strategy-vision':        4, 'strategy-roadmap':       3,
+        'strategy-budget':        3, 'strategy-sponsorship':   4,
+        'data-availability':      3, 'data-quality':           2,
+        'data-volume':            3, 'data-privacy':           2,
+        'tech-infrastructure':    3, 'tech-integration':       3,
+        'tech-security':          2, 'tech-mlops':             2,
+        'talent-technical':       3, 'talent-training':        3,
+        'talent-culture':         4, 'talent-change':          3,
+        'process-identification': 2, 'process-redesign':       1,
+        'process-roi':            1, 'process-pilots':         1,
+        'gov-policy':             1, 'gov-risk':               1,
+        'gov-catalog':            2, 'gov-audit':              1,
+      },
+      evidence: {
+        'strategy-vision':   'Queremos ser la firma de consultoría más avanzada en uso de IA de España. Es nuestra apuesta diferencial.',
+        'process-pilots':    'Tenemos 7 pilotos activos. Ninguno tiene fecha de producción. Esto me está frustrando.',
+        'gov-policy':        'No tenemos metodología de pilotos. Cada equipo experimenta a su manera. Hay que cambiar esto.',
+      },
+    },
+  ],
 }

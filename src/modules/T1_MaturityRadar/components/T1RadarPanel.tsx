@@ -1,35 +1,37 @@
 // ============================================================
 // T1 — RadarPanel (sticky)
-// Muestra el radar en tiempo real + overall score + tier badge.
-// Se actualiza en cada cambio de score sin delay.
+//
+// Muestra el radar de madurez en tiempo real + overall score + tier badge.
+// Los scores de las dimensiones se computan desde las subdimensiones.
+// Escala 0-4. Se actualiza en cada cambio sin delay.
 // ============================================================
 
-import { ChartWrapper, LeanRadarChart } from '@/shared/components/charts'
-import type { T1DimensionState }        from '../types'
-import { resolveMaturityTier, MATURITY_TIER_CONFIG } from '../types'
+import { ChartWrapper, LeanRadarChart }              from '@/shared/components/charts'
+import type { T1DimensionState }                     from '../types'
+import { computeDimensionScore, computeOverallScore,
+         resolveMaturityTier, MATURITY_TIER_CONFIG } from '../types'
 
 interface T1RadarPanelProps {
   dimensions: T1DimensionState[]
 }
 
 export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
-  // Calcular overall score (media simple — en prod será ponderada)
-  const overallScore = dimensions.length > 0
-    ? dimensions.reduce((sum, d) => sum + d.score, 0) / dimensions.length
-    : 0
+  const overallScore = computeOverallScore(dimensions)
+  const tier         = resolveMaturityTier(overallScore)
+  const config       = MATURITY_TIER_CONFIG[tier]
 
-  const tier   = resolveMaturityTier(overallScore)
-  const config = MATURITY_TIER_CONFIG[tier]
+  // Construir data para el radar — score de cada dimensión desde subdimensiones
+  const radarData = dimensions.map((d) => {
+    const score = computeDimensionScore(d)
+    return {
+      dimension: d.label,
+      current:   score ?? 0,
+      target:    3.5,   // objetivo estándar del sprint L.E.A.N.
+    }
+  })
 
-  // Construir data para el radar (mismo shape que LeanRadarChart espera)
-  const radarData = dimensions.map((d) => ({
-    dimension: d.label,
-    current:   d.score,
-    target:    d.target,
-  }))
-
-  // Barra de progreso del overall score
-  const progressPct = ((overallScore - 1) / 4) * 100   // 1–5 → 0–100%
+  // Barra de progreso: 0-4 → 0-100%
+  const progressPct = (overallScore / 4) * 100
 
   return (
     <div className="space-y-4">
@@ -45,7 +47,7 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
           <span className="text-5xl font-bold tracking-tight text-lean-black dark:text-gray-50 tabular-nums">
             {overallScore.toFixed(1)}
           </span>
-          <span className="text-xl font-light text-text-muted">/ 5</span>
+          <span className="text-xl font-light text-text-muted">/ 4</span>
         </div>
 
         {/* Tier badge */}
@@ -57,12 +59,12 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
         <div className="mt-4 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
           <div
             className="h-full bg-navy rounded-full transition-all duration-300"
-            style={{ width: `${Math.max(progressPct, 2)}%` }}
+            style={{ width: `${Math.max(progressPct, 1.5)}%` }}
           />
         </div>
         <div className="flex justify-between mt-1">
-          <span className="text-[10px] text-text-subtle">Inicial</span>
-          <span className="text-[10px] text-text-subtle">Líder</span>
+          <span className="text-[10px] text-text-subtle">Sin evidencia</span>
+          <span className="text-[10px] text-text-subtle">Óptimo</span>
         </div>
 
         {/* Descripción del tier */}
@@ -75,10 +77,10 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
       <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
         <ChartWrapper
           title="Radar de madurez IA"
-          subtitle="Estado actual vs. objetivo del sprint"
+          subtitle="Estado actual · Objetivo sprint"
           height={280}
         >
-          <LeanRadarChart data={radarData} showTarget />
+          <LeanRadarChart data={radarData} showTarget maxValue={4} />
         </ChartWrapper>
       </div>
 

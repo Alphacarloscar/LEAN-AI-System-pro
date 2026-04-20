@@ -28,18 +28,17 @@ export const dataVisibilityScenario: DemoScenario = {
   },
 
   // ── T1 Radar — firma "IA sin gobierno" ──────────────────────
-  // Estrategia y Liderazgo altos: hay voluntad y visión arriba.
-  // Datos y Procesos bajos: los cimientos no están.
-  // Gobernanza muy baja: nadie tiene el control real.
+  // 6 dimensiones · escala 0-4 · consolidado IT + Negocio
+  // Estrategia muy alta: hay voluntad y visión en la cúpula.
+  // Datos muy bajo: los cimientos de datos no sostienen la ambición.
+  // Gobernanza baja: nadie tiene visibilidad real de lo que produce la IA.
   t1Radar: [
-    { dimension: 'Estrategia',  current: 3.8, target: 4.5 },
-    { dimension: 'Datos',       current: 1.7, target: 4.0 },
-    { dimension: 'Tecnología',  current: 3.2, target: 4.0 },
-    { dimension: 'Talento',     current: 2.9, target: 4.0 },
-    { dimension: 'Procesos',    current: 1.9, target: 3.5 },
-    { dimension: 'Cultura',     current: 3.1, target: 4.0 },
-    { dimension: 'Gobernanza',  current: 1.4, target: 4.0 },
-    { dimension: 'Liderazgo',   current: 4.0, target: 4.5 },
+    { dimension: 'Estrategia', current: 3.5, target: 3.5 },
+    { dimension: 'Datos',      current: 1.8, target: 3.5 },
+    { dimension: 'Tecnología', current: 2.3, target: 3.5 },
+    { dimension: 'Talento',    current: 2.5, target: 3.5 },
+    { dimension: 'Procesos',   current: 1.5, target: 3.5 },
+    { dimension: 'Gobernanza', current: 1.4, target: 3.5 },
   ],
 
   // ── Hero metrics — los números que duelen ───────────────────
@@ -182,4 +181,63 @@ export const dataVisibilityScenario: DemoScenario = {
 
   primaryQw: 'QW7',
   keyTools:  ['T1', 'T7', 'T10'],
+
+  // ── Entrevistados T1 — brecha IT / Negocio ───────────────────
+  // CDO: sabe que los datos son el cuello de botella, puntúa D2 muy bajo.
+  // COO: ve la estrategia bien, sobreestima la madurez de datos y procesos.
+  // Brecha principal: Datos (+0.5 COO) y Procesos (+0.5 COO).
+  interviewees: [
+    {
+      id:        'cdo-alejandro',
+      name:      'Alejandro Ferrer',
+      role:      'CDO',
+      archetype: 'Ejecutivo TI',
+      type:      'it',
+      scores: {
+        'strategy-vision':        4, 'strategy-roadmap':       3,
+        'strategy-budget':        3, 'strategy-sponsorship':   4,
+        'data-availability':      1, 'data-quality':           1,
+        'data-volume':            2, 'data-privacy':           2,
+        'tech-infrastructure':    3, 'tech-integration':       3,
+        'tech-security':          2, 'tech-mlops':             2,
+        'talent-technical':       3, 'talent-training':        2,
+        'talent-culture':         3, 'talent-change':          2,
+        'process-identification': 2, 'process-redesign':       1,
+        'process-roi':            0, 'process-pilots':         2,
+        'gov-policy':             1, 'gov-risk':               1,
+        'gov-catalog':            2, 'gov-audit':              1,
+      },
+      evidence: {
+        'data-quality':    '14 herramientas IA activas. Solo 3 con métricas de calidad de datos estructuradas.',
+        'process-roi':     'Nadie mide el impacto real de las herramientas IA activas. No existe ningún KPI de valor.',
+        'data-availability': 'Los datos existen pero están en silos. Cada equipo tiene acceso solo a los suyos.',
+      },
+    },
+    {
+      id:        'coo-patricia',
+      name:      'Patricia Sousa',
+      role:      'COO',
+      archetype: 'Líder de Negocio',
+      type:      'business',
+      scores: {
+        'strategy-vision':        4, 'strategy-roadmap':       3,
+        'strategy-budget':        3, 'strategy-sponsorship':   4,
+        'data-availability':      2, 'data-quality':           2,
+        'data-volume':            3, 'data-privacy':           1,
+        'tech-infrastructure':    3, 'tech-integration':       2,
+        'tech-security':          2, 'tech-mlops':             1,
+        'talent-technical':       3, 'talent-training':        2,
+        'talent-culture':         3, 'talent-change':          2,
+        'process-identification': 2, 'process-redesign':       2,
+        'process-roi':            1, 'process-pilots':         2,
+        'gov-policy':             2, 'gov-risk':               1,
+        'gov-catalog':            2, 'gov-audit':              1,
+      },
+      evidence: {
+        'strategy-vision':  'La dirección quiere que la IA sea un diferenciador competitivo en 18 meses.',
+        'process-roi':      'Asumíamos que si la gente usa las herramientas es porque funcionan. Hay que medirlo.',
+        'data-quality':     'Creía que los datos estaban en mejor estado. El equipo técnico me ha dado una visión diferente.',
+      },
+    },
+  ],
 }

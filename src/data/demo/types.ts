@@ -106,6 +106,34 @@ export interface QuickWinPreview {
   licenceItems?:  QwLicenceItem[]
 }
 
+// ── Entrevistado demo (para T1 subdimensiones) ────────────────
+
+/**
+ * Perfil de entrevistado pre-cargado para la demo del T1 Assessment.
+ * Cada escenario tiene 2 entrevistados: uno IT y uno de Negocio.
+ * Sus scores muestran la brecha IT / Negocio típica del patrón.
+ */
+export interface T1DemoInterviewee {
+  id:        string
+  name:      string
+  /** Cargo: 'CIO', 'CEO', 'Head of Digital', etc. */
+  role:      string
+  /** Descripción del perfil para la UI */
+  archetype: string
+  type:      'it' | 'business'
+  /**
+   * Scores pre-cargados por código de subdimensión.
+   * Clave: código de subdimensión (e.g. 'data-availability')
+   * Valor: 0-4
+   */
+  scores:    Record<string, number>
+  /**
+   * Evidencias pre-cargadas por código de subdimensión.
+   * Textos cortos que Carlos puede mostrar como ejemplo de notas de sesión.
+   */
+  evidence?: Record<string, string>
+}
+
 // ── Escenario demo completo ───────────────────────────────────
 
 /**
@@ -170,4 +198,11 @@ export interface DemoScenario {
    * Se usan para destacarlas en el Metro Map durante la demo.
    */
   keyTools:       string[]
+
+  /**
+   * Entrevistados demo para el T1 Assessment.
+   * Mínimo 2: uno IT + uno de Negocio.
+   * Sus scores pre-cargados permiten mostrar la brecha IT/Negocio en vivo.
+   */
+  interviewees:   T1DemoInterviewee[]
 }

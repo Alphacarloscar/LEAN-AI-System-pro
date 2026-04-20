@@ -340,7 +340,7 @@ export default function App() {
             subtitle={`Madurez IA por dimensión · ${scenario.company.name}`}
             height={320}
           >
-            <LeanRadarChart data={scenario.t1Radar} showTarget />
+            <LeanRadarChart data={scenario.t1Radar} showTarget maxValue={4} />
           </ChartWrapper>
 
           <ChartWrapper

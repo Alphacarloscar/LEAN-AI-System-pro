@@ -28,18 +28,16 @@ export const slowDecisionsScenario: DemoScenario = {
   },
 
   // ── T1 Radar — firma "parálisis organizativa" ────────────────
-  // Datos y Tecnología decentes: tienen cimientos técnicos.
-  // Gobernanza y Procesos muy bajos: el problema es el sistema de decisión.
-  // Estrategia media: saben que quieren IA, no saben cómo decidirlo.
+  // 6 dimensiones · escala 0-4 · consolidado IT + Negocio
+  // Datos y Tecnología decentes: los cimientos técnicos existen.
+  // Procesos y Gobernanza muy bajos: el sistema de decisión bloquea todo.
   t1Radar: [
-    { dimension: 'Estrategia',  current: 2.6, target: 4.0 },
-    { dimension: 'Datos',       current: 2.9, target: 4.0 },
-    { dimension: 'Tecnología',  current: 3.1, target: 4.0 },
-    { dimension: 'Talento',     current: 2.4, target: 3.5 },
-    { dimension: 'Procesos',    current: 1.4, target: 4.0 },
-    { dimension: 'Cultura',     current: 2.7, target: 3.5 },
-    { dimension: 'Gobernanza',  current: 1.6, target: 4.0 },
-    { dimension: 'Liderazgo',   current: 3.3, target: 4.5 },
+    { dimension: 'Estrategia', current: 2.4, target: 3.5 },
+    { dimension: 'Datos',      current: 2.6, target: 3.5 },
+    { dimension: 'Tecnología', current: 2.3, target: 3.5 },
+    { dimension: 'Talento',    current: 1.8, target: 3.5 },
+    { dimension: 'Procesos',   current: 1.1, target: 3.5 },
+    { dimension: 'Gobernanza', current: 1.3, target: 3.5 },
   ],
 
   // ── Hero metrics ─────────────────────────────────────────────
@@ -175,4 +173,63 @@ export const slowDecisionsScenario: DemoScenario = {
 
   primaryQw: 'QW3',
   keyTools:  ['T1', 'T4', 'T6'],
+
+  // ── Entrevistados T1 — brecha IT / Negocio ───────────────────
+  // CTO: frustrado con el proceso. Sabe que la tecnología está lista.
+  // CFO: cree que la gobernanza protege. No ve el coste de la lentitud.
+  // Brecha principal: Gobernanza (+0.5 CFO) y Procesos IT vs BIZ.
+  interviewees: [
+    {
+      id:        'cto-rafael',
+      name:      'Rafael Mora',
+      role:      'CTO',
+      archetype: 'Ejecutivo TI',
+      type:      'it',
+      scores: {
+        'strategy-vision':        3, 'strategy-roadmap':       1,
+        'strategy-budget':        2, 'strategy-sponsorship':   3,
+        'data-availability':      3, 'data-quality':           3,
+        'data-volume':            3, 'data-privacy':           2,
+        'tech-infrastructure':    3, 'tech-integration':       3,
+        'tech-security':          2, 'tech-mlops':             2,
+        'talent-technical':       2, 'talent-training':        2,
+        'talent-culture':         2, 'talent-change':          1,
+        'process-identification': 2, 'process-redesign':       1,
+        'process-roi':            1, 'process-pilots':         1,
+        'gov-policy':             1, 'gov-risk':               1,
+        'gov-catalog':            1, 'gov-audit':              1,
+      },
+      evidence: {
+        'strategy-roadmap':  '8 oportunidades IA identificadas. Ninguna ha llegado a piloto. El proceso de aprobación dura 4,5 meses de media.',
+        'tech-infrastructure': 'La infraestructura está lista. El cuello de botella no es tecnológico.',
+        'process-pilots':    'Sin metodología de pilotos. Cada solicitud empieza de cero en el Comité.',
+      },
+    },
+    {
+      id:        'cfo-inmaculada',
+      name:      'Inmaculada Valls',
+      role:      'CFO',
+      archetype: 'Líder de Negocio',
+      type:      'business',
+      scores: {
+        'strategy-vision':        3, 'strategy-roadmap':       2,
+        'strategy-budget':        2, 'strategy-sponsorship':   3,
+        'data-availability':      3, 'data-quality':           2,
+        'data-volume':            3, 'data-privacy':           2,
+        'tech-infrastructure':    3, 'tech-integration':       2,
+        'tech-security':          2, 'tech-mlops':             1,
+        'talent-technical':       2, 'talent-training':        1,
+        'talent-culture':         3, 'talent-change':          1,
+        'process-identification': 1, 'process-redesign':       1,
+        'process-roi':            1, 'process-pilots':         1,
+        'gov-policy':             2, 'gov-risk':               1,
+        'gov-catalog':            2, 'gov-audit':              1,
+      },
+      evidence: {
+        'gov-policy':       'El proceso de aprobación existe para proteger a la empresa. Pero quizás es demasiado largo.',
+        'talent-culture':   'Los equipos quieren usar IA, hay buena disposición. El freno no es la gente.',
+        'process-roi':      'Si aprobamos algo deberíamos medir si funciona. Ahora mismo no lo hacemos.',
+      },
+    },
+  ],
 }
