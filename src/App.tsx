@@ -20,6 +20,10 @@ import {
   type DemoPattern,
   type DemoScenario,
 } from '@/data/demo'
+import { T1View } from '@/modules/T1_MaturityRadar'
+
+// ── Tipos de vista de la app ──────────────────────────────────
+type AppView = 'dashboard' | 't1-assessment'
 
 // ── Dark mode hook ────────────────────────────────────────────
 function useDarkMode() {
@@ -251,8 +255,25 @@ function QuickWinCard({ scenario }: { scenario: DemoScenario }) {
 export default function App() {
   const { dark, toggle }                  = useDarkMode()
   const [activePattern, setActivePattern] = useState<DemoPattern>(DEFAULT_DEMO_SCENARIO.id)
+  const [currentView, setCurrentView]     = useState<AppView>('dashboard')
 
   const scenario = getDemoScenario(activePattern)
+
+  // Navegación a herramienta desde Metro Map o Sidebar
+  function handleToolClick(_phase: unknown, tool: { code: string }) {
+    if (tool.code === 'T1') setCurrentView('t1-assessment')
+    // Sprint 2: añadir T2, T3...
+  }
+
+  // ── T1 View ─────────────────────────────────────────────────
+  if (currentView === 't1-assessment') {
+    return (
+      <T1View
+        scenario={scenario}
+        onBack={() => setCurrentView('dashboard')}
+      />
+    )
+  }
 
   return (
     <div className="min-h-screen bg-surface dark-page-bg">
@@ -272,9 +293,7 @@ export default function App() {
       {/* ── Sidebar de herramientas ── */}
       <AppSidebar
         phases={scenario.phases}
-        onToolSelect={(phase, tool) => {
-          console.log('[Sidebar]', phase.label, tool.code, tool.name)
-        }}
+        onToolSelect={handleToolClick}
       />
 
       <div className="max-w-5xl mx-auto space-y-8 px-8 py-8">
@@ -310,9 +329,7 @@ export default function App() {
         <div className="rounded-2xl bg-white dark-card p-8 card-border">
           <PhaseRoadmap
             phases={scenario.phases}
-            onToolClick={(phase, tool) => {
-              console.log('[PhaseRoadmap]', phase.label, tool.code, tool.name)
-            }}
+            onToolClick={handleToolClick}
           />
         </div>
 
