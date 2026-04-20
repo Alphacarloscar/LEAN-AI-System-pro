@@ -68,10 +68,10 @@ export const dataVisibilityScenario: DemoScenario = {
     },
     {
       value:      0,
-      label:      'Informes de valor IA',
-      suffix:     'presentados al Comité',
+      label:      'Informes de valor IA al Comité',
+      sublabel:   'últimos 12 meses',
       trend:      'down',
-      deltaLabel: 'en los últimos 12 meses',
+      deltaLabel: 'ninguno presentado',
     },
   ],
 

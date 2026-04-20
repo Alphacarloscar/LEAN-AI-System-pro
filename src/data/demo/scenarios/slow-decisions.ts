@@ -46,7 +46,7 @@ export const slowDecisionsScenario: DemoScenario = {
   heroMetrics: [
     {
       value:      4.5,
-      suffix:     ' meses',
+      suffix:     'meses',
       label:      'Ciclo medio de aprobación IA',
       sublabel:   'desde identificación hasta piloto',
       trend:      'down',
@@ -69,7 +69,7 @@ export const slowDecisionsScenario: DemoScenario = {
     {
       value:      0,
       label:      'Pilotos IA activos',
-      suffix:     'en marcha',
+      sublabel:   'ninguno en marcha',
       trend:      'down',
       deltaLabel: 'pese a 8 oportunidades mapeadas',
     },

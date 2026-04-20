@@ -61,7 +61,7 @@ export const pilotChaosScenario: DemoScenario = {
     },
     {
       value:      19,
-      suffix:     ' semanas',
+      suffix:     'sem.',
       label:      'Duración media de un PoC',
       sublabel:   'planificado: 6 semanas',
       trend:      'down',

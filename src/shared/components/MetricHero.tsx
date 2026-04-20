@@ -18,8 +18,8 @@ export type MetricTrend = 'up' | 'down' | 'neutral'
 export interface MetricHeroProps {
   value:       string | number
   label:       string
-  unit?:       string       // prefijo, ej. "€" o "%"
-  suffix?:     string       // sufijo, ej. "/ 5" o "pts"
+  unit?:       string       // prefijo MUY corto, ej. "€" o "%" (se renderiza a text-2xl)
+  suffix?:     string       // sufijo MUY corto sin espacios, ej. "/ 5", "pts", "sem." — NUNCA frases
   delta?:      number       // variación: +5, -3, 0
   deltaLabel?: string       // texto junto al delta, ej. "vs. mes anterior"
   trend?:      MetricTrend  // si no se pasa delta, permite forzar la dirección

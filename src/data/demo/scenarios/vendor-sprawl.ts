@@ -69,8 +69,8 @@ export const vendorSprawlScenario: DemoScenario = {
     },
     {
       value:      0,
-      label:      'Contratos con cláusula de seguridad IA',
-      suffix:     'revisadas',
+      label:      'Contratos IA con cláusula de seguridad',
+      sublabel:   'ninguno revisado',
       trend:      'down',
       deltaLabel: 'riesgo GDPR no gestionado',
     },
