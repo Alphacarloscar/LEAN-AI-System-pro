@@ -13,8 +13,9 @@
 // ============================================================
 
 import { useState, createContext, useContext }  from 'react'
-import { Routes, Route, useNavigate }           from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AppLayout }                            from '@/shared/layouts/AppLayout'
+import { LoginView, useAuthStore }              from '@/modules/Auth'
 import { PhaseRoadmap }                         from '@/shared/components/PhaseRoadmap'
 import { ChartWrapper, LeanRadarChart, LeanBarChart, DEMO_KPI_DATA } from '@/shared/components/charts'
 import { MetricHeroGrid }                       from '@/shared/components/MetricHero'
@@ -246,6 +247,14 @@ function DashboardView() {
   )
 }
 
+// ── ProtectedRoute — redirige a /login si no autenticado ──────
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuthStore()
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+  return <>{children}</>
+}
+
 // ── T1 route wrapper ──────────────────────────────────────────
 
 function T1RouteView() {
@@ -263,13 +272,25 @@ export default function App() {
   return (
     <DemoContext.Provider value={{ scenario, setPattern: setActivePattern }}>
       <Routes>
-        {/* Rutas con AppLayout persistente (header + sidebar siempre visibles) */}
-        <Route element={<AppLayout phases={scenario.phases} />}>
-          <Route index            element={<DashboardView />} />
+        {/* Ruta pública — Login (sin AppLayout) */}
+        <Route path="login" element={<LoginView />} />
+
+        {/* Rutas protegidas — AppLayout persistente (header + sidebar) */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <AppLayout phases={scenario.phases} />
+            </ProtectedRoute>
+          }
+        >
+          <Route index                 element={<DashboardView />} />
           <Route path="company-profile" element={<CompanyProfileView />} />
-          <Route path="t1"        element={<T1RouteView />} />
+          <Route path="t1"             element={<T1RouteView />} />
           {/* Sprint 2: T2, T3 — se añaden cuando los módulos estén construidos */}
         </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </DemoContext.Provider>
   )
