@@ -20,6 +20,7 @@ import { PhaseRoadmap }                         from '@/shared/components/PhaseR
 import { ChartWrapper, LeanRadarChart, LeanBarChart, DEMO_KPI_DATA } from '@/shared/components/charts'
 import { MetricHeroGrid }                       from '@/shared/components/MetricHero'
 import { T1View }                               from '@/modules/T1_MaturityRadar'
+import { T2View }                               from '@/modules/T2_StakeholderMatrix'
 import { CompanyProfileView }                   from '@/modules/CompanyProfile'
 import {
   DEMO_SCENARIOS,
@@ -263,6 +264,14 @@ function T1RouteView() {
   return <T1View scenario={scenario} onBack={() => navigate('/')} />
 }
 
+// ── T2 route wrapper ──────────────────────────────────────────
+
+function T2RouteView() {
+  const { scenario } = useDemoContext()
+  const navigate     = useNavigate()
+  return <T2View companyName={scenario.company.name} onBack={() => navigate('/')} />
+}
+
 // ── App root ──────────────────────────────────────────────────
 
 export default function App() {
@@ -286,7 +295,8 @@ export default function App() {
           <Route index                 element={<DashboardView />} />
           <Route path="company-profile" element={<CompanyProfileView />} />
           <Route path="t1"             element={<T1RouteView />} />
-          {/* Sprint 2: T2, T3 — se añaden cuando los módulos estén construidos */}
+          <Route path="t2"             element={<T2RouteView />} />
+          {/* Sprint 2: T3 — próxima sesión */}
         </Route>
 
         {/* Fallback */}
