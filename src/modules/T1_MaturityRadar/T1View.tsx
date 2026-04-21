@@ -13,15 +13,15 @@
 //   — Gap IT/Negocio en T1ExecutiveOutput
 // ============================================================
 
-import { useState, useMemo }                  from 'react'
-import type { DemoScenario }                  from '@/data/demo/types'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import type { DemoScenario }                    from '@/data/demo/types'
 import { DIMENSION_DEFINITIONS, TOTAL_SUBDIMENSIONS } from './constants'
 import type { T1DimensionState, T1SubdimensionState } from './types'
 import { countScoredSubdimensions, computeOverallScore } from './types'
-import { DimensionCard }                      from './components/DimensionCard'
-import { T1RadarPanel }                       from './components/T1RadarPanel'
-import { T1ExecutiveOutput }                  from './components/T1ExecutiveOutput'
-import type { IntervieweeAggregate }          from './components/T1ExecutiveOutput'
+import { DimensionCard }                        from './components/DimensionCard'
+import { T1RadarPanel }                         from './components/T1RadarPanel'
+import { T1ExecutiveOutput }                    from './components/T1ExecutiveOutput'
+import type { IntervieweeAggregate }            from './components/T1ExecutiveOutput'
 
 interface T1ViewProps {
   scenario: DemoScenario
@@ -50,9 +50,191 @@ function buildDimensionsForInterviewee(
   }))
 }
 
+// ── Modal: nueva entrevista ───────────────────────────────────
+
+interface NewIntervieweeForm {
+  name: string
+  role: string
+  type: 'it' | 'business'
+}
+
+interface NewInterviewModalProps {
+  onClose:  () => void
+  onSubmit: (form: NewIntervieweeForm) => void
+}
+
+function NewInterviewModal({ onClose, onSubmit }: NewInterviewModalProps) {
+  const [form, setForm] = useState<NewIntervieweeForm>({
+    name: '',
+    role: '',
+    type: 'business',
+  })
+  const nameRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => { nameRef.current?.focus() }, [])
+
+  const canSubmit = form.name.trim().length > 0 && form.role.trim().length > 0
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!canSubmit) return
+    onSubmit(form)
+  }
+
+  // Cerrar con Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
+
+      {/* Card del modal */}
+      <div className="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl border border-border shadow-2xl shadow-black/20">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+          <div>
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="px-1.5 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-info-soft uppercase">
+                T1
+              </span>
+              <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100">
+                Nueva entrevista
+              </h3>
+            </div>
+            <p className="text-[11px] text-text-subtle">
+              Añade un nuevo entrevistado al assessment en curso
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="h-7 w-7 rounded-lg flex items-center justify-center text-text-subtle hover:text-lean-black dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <path d="M1 1l11 11M12 1L1 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Formulario */}
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+
+          {/* Nombre */}
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
+              Nombre
+            </label>
+            <input
+              ref={nameRef}
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="Ej. Javier Morales"
+              className={[
+                'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-gray-100',
+                'bg-gray-50 dark:bg-gray-800 border border-border',
+                'placeholder:text-text-subtle',
+                'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
+                'transition-all duration-150',
+              ].join(' ')}
+            />
+          </div>
+
+          {/* Cargo */}
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
+              Cargo
+            </label>
+            <input
+              type="text"
+              value={form.role}
+              onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+              placeholder="Ej. CIO, Head of Digital, COO…"
+              className={[
+                'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-gray-100',
+                'bg-gray-50 dark:bg-gray-800 border border-border',
+                'placeholder:text-text-subtle',
+                'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
+                'transition-all duration-150',
+              ].join(' ')}
+            />
+          </div>
+
+          {/* Tipo IT / Negocio */}
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
+              Perfil
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['it', 'business'] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, type: t }))}
+                  className={[
+                    'py-2 rounded-lg text-xs font-semibold border transition-all duration-150',
+                    form.type === t
+                      ? t === 'it'
+                        ? 'bg-navy text-white border-navy shadow-sm'
+                        : 'bg-success-dark text-white border-success-dark shadow-sm'
+                      : 'bg-white dark:bg-gray-800 text-text-muted border-border hover:border-gray-300',
+                  ].join(' ')}
+                >
+                  {t === 'it' ? 'IT / Tecnología' : 'Negocio / Ops'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Nota informativa */}
+          <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border/60">
+            Se crearán <span className="font-medium text-text-muted">{TOTAL_SUBDIMENSIONS} subdimensiones</span> en blanco para este entrevistado. Puntúalas en la sesión.
+          </p>
+
+          {/* Acciones */}
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2 rounded-lg text-xs font-medium text-text-muted border border-border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className={[
+                'flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
+                canSubmit
+                  ? 'bg-navy text-white hover:bg-[#1a2e44] shadow-sm active:scale-[0.98]'
+                  : 'bg-gray-100 text-gray-300 cursor-not-allowed',
+              ].join(' ')}
+            >
+              Crear entrevista
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ── Componente principal ──────────────────────────────────────
 
 export function T1View({ scenario, onBack }: T1ViewProps) {
+
+  const [showNewModal, setShowNewModal] = useState(false)
+
+  // Lista de entrevistados: los del scenario + los añadidos en vivo
+  const [liveInterviewees, setLiveInterviewees] = useState(scenario.interviewees)
 
   // Estado por entrevistado: Record<id, T1DimensionState[]>
   const [intervieweeStates, setIntervieweeStates] = useState<Record<string, T1DimensionState[]>>(
@@ -65,6 +247,26 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
   )
 
   const [activeId, setActiveId] = useState<string>(scenario.interviewees[0]?.id ?? '')
+
+  // Añadir nuevo entrevistado en vivo
+  function addInterviewee(form: NewIntervieweeForm) {
+    const newId = `live-${Date.now()}`
+    const newPerson = {
+      id:        newId,
+      name:      form.name.trim(),
+      role:      form.role.trim(),
+      archetype: form.type === 'it' ? 'Perfil IT' : 'Perfil Negocio',
+      type:      form.type,
+      scores:    {} as Record<string, number>,
+    }
+    setLiveInterviewees((prev) => [...prev, newPerson])
+    setIntervieweeStates((prev) => ({
+      ...prev,
+      [newId]: buildDimensionsForInterviewee({}),
+    }))
+    setActiveId(newId)
+    setShowNewModal(false)
+  }
 
   // Dimensiones activas del entrevistado seleccionado
   const activeDimensions = intervieweeStates[activeId] ?? []
@@ -88,7 +290,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
   )
 
   // Datos para el gap IT/Negocio en T1ExecutiveOutput
-  const allIntervieweeAggregates: IntervieweeAggregate[] = scenario.interviewees.map((i) => ({
+  const allIntervieweeAggregates: IntervieweeAggregate[] = liveInterviewees.map((i) => ({
     id:         i.id,
     name:       i.name,
     role:       i.role,
@@ -96,7 +298,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
     dimensions: intervieweeStates[i.id] ?? [],
   }))
 
-  const activeInterviewee = scenario.interviewees.find((i) => i.id === activeId)
+  const activeInterviewee = liveInterviewees.find((i) => i.id === activeId)
 
   return (
     <div className="min-h-screen bg-surface dark-page-bg">
@@ -172,7 +374,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
             Entrevistado activo
           </span>
           <div className="flex gap-2 flex-wrap">
-            {scenario.interviewees.map((person) => {
+            {liveInterviewees.map((person) => {
               const personDims   = intervieweeStates[person.id] ?? []
               const personScored = countScoredSubdimensions(personDims)
               const isActive     = person.id === activeId
@@ -224,6 +426,21 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
                 </button>
               )
             })}
+
+            {/* Botón nueva entrevista — inline con los botones de personas */}
+            <button
+              onClick={() => setShowNewModal(true)}
+              className={[
+                'flex items-center gap-1.5 px-3 py-2 rounded-xl border text-left transition-all duration-150',
+                'border-dashed border-border hover:border-navy/40 hover:bg-gray-50 dark:hover:bg-gray-800/50',
+                'text-xs font-medium text-text-subtle hover:text-navy dark:hover:text-info-soft',
+              ].join(' ')}
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 2v12M2 8h12" />
+              </svg>
+              Nueva entrevista
+            </button>
           </div>
 
           {/* Nombre del entrevistado activo (contexto) */}
@@ -274,6 +491,14 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
           />
         </div>
       </div>
+
+      {/* ── Modal nueva entrevista ── */}
+      {showNewModal && (
+        <NewInterviewModal
+          onClose={() => setShowNewModal(false)}
+          onSubmit={addInterviewee}
+        />
+      )}
     </div>
   )
 }

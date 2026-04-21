@@ -51,7 +51,7 @@ function miniBarFill(score: number): string {
 
 function miniBar(score: number, max = 4) {
   return (
-    <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+    <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
       <div
         className={`h-full ${miniBarFill(score)} rounded-full transition-all duration-300`}
         style={{ width: `${(score / max) * 100}%` }}
@@ -283,7 +283,7 @@ export function T1ExecutiveOutput({
                   </span>
                 </div>
                 {/* Barra visual de gap */}
-                <div className="mt-2 w-full max-w-48 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden relative">
+                <div className="mt-2 w-full max-w-48 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden relative">
                   <div className="absolute inset-0 flex">
                     <div className="bg-navy rounded-full" style={{ width: `${(itOverall! / 4) * 100}%` }} />
                   </div>
@@ -316,7 +316,7 @@ export function T1ExecutiveOutput({
                       {row.itScore.toFixed(1)}
                     </span>
                     {/* Barra comparativa */}
-                    <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden relative">
+                    <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden relative">
                       <div
                         className="absolute top-0 bottom-0 left-0 bg-navy/70 rounded-full"
                         style={{ width: `${(row.itScore / 4) * 100}%` }}

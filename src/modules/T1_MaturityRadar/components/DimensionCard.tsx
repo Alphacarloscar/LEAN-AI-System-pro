@@ -184,7 +184,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
 // ── Componente principal ──────────────────────────────────────
 
 export function DimensionCard({ state, definition, onChange }: DimensionCardProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(true)
 
   const dimScore   = computeDimensionScore(state)
   const scoredCount = state.subdimensions.filter((s) => s.score !== null).length
