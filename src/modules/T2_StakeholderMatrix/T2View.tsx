@@ -19,6 +19,7 @@ import { useNavigate }                   from 'react-router-dom'
 import { useT2Store }                    from './store'
 import { ARCHETYPE_CONFIG, RESISTANCE_CONFIG } from './constants'
 import { InterviewModal }                from './components/InterviewModal'
+import { StakeholderQuadrantChart }      from './components/StakeholderQuadrantChart'
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from './types'
 
 // ── Utilidades de UI ──────────────────────────────────────────
@@ -416,8 +417,17 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
       <div className="max-w-6xl mx-auto px-8 py-5">
         <div className="flex gap-6 items-start">
 
-          {/* Columna izquierda: matrix */}
-          <div className="flex-1 min-w-0">
+          {/* Columna izquierda: gráfico + matrix */}
+          <div className="flex-1 min-w-0 space-y-5">
+
+            {/* Mapa de cuadrantes */}
+            <StakeholderQuadrantChart
+              stakeholders={stakeholders}
+              activeId={activeStakeholder?.id ?? null}
+              onSelect={setActiveStakeholder}
+            />
+
+            {/* Matrix por departamento */}
             <DepartmentMatrix
               stakeholders={stakeholders}
               activeId={activeStakeholder?.id ?? null}
