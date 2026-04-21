@@ -126,6 +126,52 @@ Sprint 0 cerrado. Las 9 decisiones técnicas (D1-D9) están documentadas en `ARQ
 
 ---
 
+## 9. Decisiones de Sprint 2 — Fase Listen MVP (2026-04-21)
+
+### 9.1 Foco MVP completo — NO demo-first. CERRADA.
+**Decisión:** el objetivo del desarrollo es completar el ecosistema completo herramienta por herramienta en modo MVP funcional. Las demos para CIOs son un output derivado, no el driver de priorización.
+**Consecuencia:** cada herramienta se cierra con criterios de "consultor puede usarla en engagement real", no con criterios de "funciona en presentación de 20 minutos".
+
+---
+
+### 9.2 CompanyProfile como módulo standalone. CERRADA.
+**Decisión:** el contexto de empresa (sector, ecosistema tecnológico, tamaño, objetivo, restricciones, áreas prioritarias) sale de T1 y pasa a ser un módulo independiente accesible desde el menú principal.
+**Consecuencia arquitectónica:** tabla `company_profiles` en Supabase con FK a `engagement_id`. Todos los tools (T1-T13) consumen `company_profile_id` vía `context_refs` — nunca hacen dependencia directa a T1.
+**Timing de relleno:** durante la primera entrevista con el CIO. Editable en cualquier momento posterior. Sin versionado complejo en MVP.
+
+---
+
+### 9.3 Fricciones en CompanyProfile. CERRADA.
+**Decisión:** el registro de fricciones y oportunidades (antes en B3 de T1) vive en CompanyProfile como sección propia.
+**Consecuencia:** pueden registrarse desde T1 durante entrevistas Y editarse directamente desde CompanyProfile. Tabla `friction_register` hija de `company_profiles`.
+**Razón:** T4 y T6 consumen fricciones. Si vivieran en T1, crearían dependencia estructural de T1 que rompe el modelo de módulos independientes.
+
+---
+
+### 9.4 Framework de arquetipos T2 — DEPRECACIÓN + nuevo framework. CERRADA.
+**Decisión:** los arquetipos anteriores (Explorador, Operador, Decisor, Especialista de Riesgo, Constructor) quedan **DEPRECADOS**. El nuevo framework es:
+- **Adoptador:** bajo conocimiento IA, baja influencia, potencial de adopción con formación.
+- **Ambassador:** conocimiento IA moderado, quiere influenciar a otros, tiene red.
+- **Decisor:** alta influencia organizativa, poder de decisión, independiente del conocimiento IA.
+- **Crítico:** resistencia activa al cambio, sin interés en adoptar IA.
+- **Especialista:** alto conocimiento técnico/IA, baja influencia organizativa.
+- **Modificador de resistencia** (Baja/Media/Alta): aplicable a cualquier arquetipo. "Decisor + Resistencia Alta" = perfil de mayor riesgo del engagement → alerta visual + recomendaciones específicas de gestión.
+**Consecuencia:** actualizar Excel "Descripción Detallada por Herramienta" y materiales comerciales.
+
+---
+
+### 9.5 Layout T2 — pantalla única. CERRADA.
+**Decisión:** T2 usa una sola pantalla con dos zonas: izquierda = distribución por departamento (vista agregada estratégica), derecha = panel lateral reactivo al click con detalle individual y recomendaciones de intervención. Sin tabs separados ni navegación entre vistas.
+**Razón:** reduce complejidad de construcción y es más eficiente en UX. El patrón ya estaba validado en el legacy.
+
+---
+
+### 9.6 T3 output contract hacia T4. PENDIENTE DE EJECUCIÓN.
+**Decisión:** el contrato de output de T3 hacia T4 debe definirse y documentarse en `ARQUITECTURA.md` ANTES de codificar T3. Campos mínimos: casos de uso registrados, score de eficiencia por caso, áreas involucradas, lead time total, wastes y blockers.
+**Razón:** sin este contrato, T4 en Sprint 3 tendrá dependencia improvisada en los datos de T3.
+
+---
+
 ## 8. Mensajes clave recurrentes (no se cuestionan sin datos nuevos)
 
 - ISO 42001 no es un producto separado: es un resultado natural del sprint.

@@ -66,38 +66,78 @@ Cada sprint produce: (a) código que se merge a `develop`, (b) documentación de
 
 ---
 
-## Sprint 1 — Migración fundacional (T1, T2, T3)
+## Sprint 1 — Migración fundacional + T1 MVP (CERRADO PARCIAL 2026-04-21)
 
-**Objetivo:** convertir el HTML monolítico actual en arquitectura modular real, con las 3 herramientas más maduras conectadas a Supabase.
+**Objetivo:** convertir el HTML monolítico en arquitectura modular. T1 construido y funcional. QW1 UI lista.
 
-**Entregables:**
-1. Esqueleto modular desplegado en Vercel (entorno dev).
-2. T1 AI Maturity Radar refactorizado:
-   - Gráfico de araña visual estilo "Tesla rocket launch" (nota explícita en Excel).
-   - Conexión Supabase real, no estado local.
-3. T2 AI Stakeholder Segmentation Matrix refactorizado:
-   - Auto-clasificación de tipo de usuario por análisis del consultor.
-   - Gráfico de burbujas por cuadrante.
-   - Visualización del gap licencias usadas vs necesidad real.
-4. T3 AI Value Stream Map ya está reconstruido — solo migrar a módulo independiente.
-5. **Quick Win QW1 instrumentado:** generación automática del Executive Briefing Pack tras N entrevistas.
+**Entregables completados:**
+1. ✓ Esqueleto modular desplegado en Vercel (entorno dev).
+2. ✓ T1 AI Maturity Radar: gráfico radar, tabs B1/B2/B3/Dashboard/Reporte CIO, Supabase conectado.
+3. ✓ QW1 Executive Briefing Pack: UI funcional (datos reales Supabase pendiente → Sprint 2 P2).
 
-**Criterios de éxito:**
-- Las tres herramientas leen y escriben en Supabase.
-- Funcionan cargadas como módulos independientes.
-- Un consultor Alpha puede usarlas en una sesión real sin bugs bloqueantes.
-- QW1 genera un PDF presentable.
+**Pendiente → pasa a Sprint 2:**
+- T2, T3: no construidos. Redefinidos con contratos nuevos.
+- CompanyProfile: extraído de T1, pasa a ser módulo standalone en Sprint 2.
 
 ---
 
-## Sprint 2 — Fase Evaluate (T4, T5, T6)
+## Sprint 2 — Fase Listen MVP Completa (ACTIVO 2026-04-21)
+
+**Objetivo:** completar la Fase Listen del L.E.A.N. AI System en modo MVP funcional. Al cierre, un consultor Alpha puede ejecutar un engagement real de Fase Listen end-to-end sin workarounds técnicos.
+
+**Foco:** MVP completo de las 3 herramientas + módulos de soporte. No demo-first — producto funcional primero.
+
+**Entregables P0:**
+1. **CompanyProfile** — módulo standalone desde menú principal. Campos: sector, ecosistema tecnológico, tamaño, objetivo, restricciones, áreas prioritarias. Editable en cualquier momento del engagement. Tabla `company_profiles` en Supabase.
+2. **CompanyProfile — sección Fricciones** — registro de fricciones y oportunidades (tipo, área, frecuencia, impacto, notas). Añadible desde T1 y desde CompanyProfile directamente.
+3. **Login screen** — pantalla de autenticación con 5 roles (Supabase Auth).
+4. **MainLayout — menú persistente** — visible en todo momento, dentro y fuera de herramientas.
+5. **T1 refinamientos** (5 mejoras):
+   - Nueva entrevista: drawer lateral + vista lista/tabla escalable (hasta 100+ entrevistados).
+   - Acordeones contraídos por defecto.
+   - Colores IT vs Negocio claramente diferenciados en radar.
+   - Mensaje dinámico de gap IT/Negocio (rule-based, 4-5 rangos, con pasos accionables).
+   - Barras de puntuación AI Readiness 2px más finas.
+6. **T2 AI Stakeholder Matrix** — construcción nueva:
+   - 5 arquetipos: Adoptador, Ambassador, Decisor, Crítico, Especialista.
+   - Modificador de resistencia (Baja/Media/Alta) aplicable a cualquier arquetipo.
+   - Entrevista de 5 preguntas → auto-asignación de arquetipo.
+   - Pantalla única: distribución por departamento (izquierda) + panel lateral individual (derecha).
+   - Recomendaciones de intervención dinámicas por arquetipo + resistencia.
+   - Conexión Supabase.
+
+**Entregables P1:**
+7. **T3 AI Value Stream Map** — construcción nueva:
+   - Contrato output hacia T4 definido antes de codificar (campos: casos, eficiencia, áreas, lead time, wastes).
+   - Formulario multi-tab: Datos / Entrevista / Etapas / Waste & Blockers.
+   - Visualización VSM: cards horizontales por etapa, métricas superiores, indicador de estado del flujo.
+   - Portfolio de iniciativas priorizado.
+   - Resumen ejecutivo auto-generado.
+   - Recomendaciones dinámicas rule-based.
+   - Conexión Supabase + output hacia T4 via `context_refs`.
+
+**Entregables P2 (stretch):**
+8. **QW1 datos reales** — conectar Executive Briefing Pack a Supabase (UI ya existe).
+
+**Criterios de éxito:**
+- CompanyProfile, T1, T2 y T3 leen y escriben en Supabase dev.
+- Un consultor Alpha ejecuta Fase Listen completa sin bugs bloqueantes ni workarounds.
+- T3 expone output contract legible para T4 (próximo sprint).
+- Design system aplicado consistentemente en los 3 tools + módulos.
+
+**Estimación:** 25-30 sesiones Carlos+Claude. 3-4 semanas.
+**Documento detallado:** `SPRINT_2_FASE_LISTEN.md`
+
+---
+
+## Sprint 3 — Fase Evaluate (T4, T5, T6)
 
 **Objetivo:** completar la fase Evaluate con sus 3 herramientas conectadas al ecosistema.
 
 **Entregables:**
 1. T4 Use Case Prioritization Board:
    - Score compuesto + cuadrante de decisión.
-   - Lectura de inputs desde T3 (readiness real) y T5 (categorías priorizadas).
+   - Lectura de inputs desde T3 (output contract) y T5 (categorías priorizadas).
 2. T5 AI Taxonomy Canvas:
    - 7 categorías evaluadas por prioridad/readiness/riesgo.
    - Output legible para CIO y Consejo.
@@ -108,9 +148,9 @@ Cada sprint produce: (a) código que se merge a `develop`, (b) documentación de
 5. **Quick Win QW3 y QW4 instrumentados:** Top 5 casos con ROI + Licence Waste Report.
 
 **Criterios de éxito:**
-- Demos QW3 y QW4 funcionan sin intervención técnica de Carlos.
-- T6 cubre los controles mínimos requeridos por AI Act.
-- T4 y T5 muestran consistencia con T1-T3 (datos no se contradicen entre fases).
+- T4 y T5 consumen `context_refs` de T1-T3 sin dependencias directas entre módulos.
+- T6 cubre controles mínimos requeridos por AI Act.
+- QW3 y QW4 generan outputs sin intervención técnica de Carlos.
 
 ---
 
