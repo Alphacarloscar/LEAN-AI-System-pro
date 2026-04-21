@@ -398,7 +398,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
                       ? 'bg-white/20 text-white'
                       : person.type === 'it'
                         ? 'bg-navy/10 text-navy dark:bg-navy/20 dark:text-info-soft'
-                        : 'bg-success-light text-success-dark',
+                        : 'bg-warning-light text-warning-dark',
                   ].join(' ')}>
                     {person.type === 'it' ? 'IT' : 'BIZ'}
                   </span>
