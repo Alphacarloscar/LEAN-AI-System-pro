@@ -38,8 +38,10 @@ const VB    = 520        // viewBox cuadrado (px)
 const CX    = 260        // centro X
 const CY    = 260        // centro Y
 const CR    = 200        // radio del círculo del gráfico
-const DOT_R = 14         // radio del punto de stakeholder (reducido de 20)
-const MAX_R = CR - DOT_R - 4   // 182: margen para que el punto no sobresalga del círculo
+const DOT_R = 14         // radio del punto de stakeholder
+// MAX_R: el clipPath garantiza que el anillo no sobresalga visualmente,
+// pero limitamos el centro para que el punto no quede pegado al borde.
+const MAX_R = CR - DOT_R - 8   // 178: centro del punto máximo a 178px del centro
 
 // ── Helpers de coordenadas ────────────────────────────────────
 
@@ -189,95 +191,132 @@ export function StakeholderQuadrantChart({
       </div>
 
       {/* SVG chart — circular */}
-      <div className="flex justify-center px-6 py-5">
+      <div className="flex justify-center px-4 py-5">
         <svg
           viewBox={`0 0 ${VB} ${VB}`}
           className="w-full"
-          style={{ maxWidth: 420, maxHeight: 420 }}
+          style={{ maxWidth: 480, maxHeight: 480 }}
         >
           <defs>
-            {/* ClipPath circular para los fondos de cuadrante */}
-            <clipPath id="quad-clip">
+            {/* Un solo clipPath: recorta TODO (fondos + puntos + anillos) al círculo */}
+            <clipPath id="circle-clip">
               <circle cx={CX} cy={CY} r={CR} />
             </clipPath>
           </defs>
 
-          {/* ── Fondos de cuadrante y crosshairs (clipped al círculo) ── */}
-          <g clipPath="url(#quad-clip)">
-            {/* TL: Alta influencia / Baja adopción → Crítico */}
-            <rect x={0} y={0} width={CX} height={CY}
-              fill={ARCHETYPE_BG_HEX.critico} opacity={0.55} />
-            {/* TR: Alta influencia / Alta adopción → Decisor */}
-            <rect x={CX} y={0} width={VB} height={CY}
-              fill={ARCHETYPE_BG_HEX.decisor} opacity={0.55} />
-            {/* BL: Baja influencia / Baja adopción → Especialista */}
-            <rect x={0} y={CY} width={CX} height={VB}
-              fill={ARCHETYPE_BG_HEX.especialista} opacity={0.55} />
-            {/* BR: Baja influencia / Alta adopción → Adoptador */}
-            <rect x={CX} y={CY} width={VB} height={VB}
-              fill={ARCHETYPE_BG_HEX.adoptador} opacity={0.55} />
+          {/* ── Todo el contenido visual dentro del círculo — clipped ── */}
+          <g clipPath="url(#circle-clip)">
 
-            {/* Líneas divisorias (crosshairs) */}
-            <line x1={0} y1={CY} x2={VB} y2={CY}
-              stroke="#C8CACD" strokeWidth={1} strokeDasharray="5 4" />
-            <line x1={CX} y1={0} x2={CX} y2={VB}
-              stroke="#C8CACD" strokeWidth={1} strokeDasharray="5 4" />
+            {/* Fondos de cuadrante */}
+            <rect x={0}  y={0}  width={CX} height={CY} fill={ARCHETYPE_BG_HEX.critico}     opacity={0.55} />
+            <rect x={CX} y={0}  width={VB} height={CY} fill={ARCHETYPE_BG_HEX.decisor}     opacity={0.55} />
+            <rect x={0}  y={CY} width={CX} height={VB} fill={ARCHETYPE_BG_HEX.especialista} opacity={0.55} />
+            <rect x={CX} y={CY} width={VB} height={VB} fill={ARCHETYPE_BG_HEX.adoptador}    opacity={0.55} />
 
-            {/* Labels de cuadrante — en las esquinas diagonales (~75% del radio) */}
-            {/* TL: Crítico */}
-            <text x={CX - 108} y={CY - 104} textAnchor="middle"
-              fontSize={8} fontWeight="700" fontFamily="ui-monospace, monospace"
-              fill={ARCHETYPE_HEX.critico} opacity={0.55} letterSpacing="0.06em">
+            {/* Crosshairs */}
+            <line x1={0} y1={CY} x2={VB} y2={CY} stroke="#C8CACD" strokeWidth={1} strokeDasharray="5 4" />
+            <line x1={CX} y1={0} x2={CX} y2={VB} stroke="#C8CACD" strokeWidth={1} strokeDasharray="5 4" />
+
+            {/* Labels de cuadrante */}
+            <text x={CX - 108} y={CY - 104} textAnchor="middle" fontSize={8} fontWeight="700"
+              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.critico} opacity={0.55} letterSpacing="0.06em">
               CRÍTICO
             </text>
-            <text x={CX - 108} y={CY - 93} textAnchor="middle"
-              fontSize={7} fontFamily="ui-monospace, monospace"
-              fill={ARCHETYPE_HEX.critico} opacity={0.38}>
+            <text x={CX - 108} y={CY - 93} textAnchor="middle" fontSize={7}
+              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.critico} opacity={0.38}>
               bloquea
             </text>
-
-            {/* TR: Decisor */}
-            <text x={CX + 108} y={CY - 104} textAnchor="middle"
-              fontSize={8} fontWeight="700" fontFamily="ui-monospace, monospace"
-              fill={ARCHETYPE_HEX.decisor} opacity={0.55} letterSpacing="0.06em">
+            <text x={CX + 108} y={CY - 104} textAnchor="middle" fontSize={8} fontWeight="700"
+              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.decisor} opacity={0.55} letterSpacing="0.06em">
               DECISOR
             </text>
-            <text x={CX + 108} y={CY - 93} textAnchor="middle"
-              fontSize={7} fontFamily="ui-monospace, monospace"
-              fill={ARCHETYPE_HEX.decisor} opacity={0.38}>
+            <text x={CX + 108} y={CY - 93} textAnchor="middle" fontSize={7}
+              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.decisor} opacity={0.38}>
               lidera
             </text>
-
-            {/* BL: Especialista */}
-            <text x={CX - 108} y={CY + 100} textAnchor="middle"
-              fontSize={8} fontWeight="700" fontFamily="ui-monospace, monospace"
-              fill={ARCHETYPE_HEX.especialista} opacity={0.55} letterSpacing="0.06em">
+            <text x={CX - 108} y={CY + 100} textAnchor="middle" fontSize={8} fontWeight="700"
+              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.especialista} opacity={0.55} letterSpacing="0.06em">
               ESPECIALISTA
             </text>
-            <text x={CX - 108} y={CY + 111} textAnchor="middle"
-              fontSize={7} fontFamily="ui-monospace, monospace"
-              fill={ARCHETYPE_HEX.especialista} opacity={0.38}>
+            <text x={CX - 108} y={CY + 111} textAnchor="middle" fontSize={7}
+              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.especialista} opacity={0.38}>
               dominio / miedo
             </text>
-
-            {/* BR: Adoptador */}
-            <text x={CX + 108} y={CY + 100} textAnchor="middle"
-              fontSize={8} fontWeight="700" fontFamily="ui-monospace, monospace"
-              fill={ARCHETYPE_HEX.adoptador} opacity={0.55} letterSpacing="0.06em">
+            <text x={CX + 108} y={CY + 100} textAnchor="middle" fontSize={8} fontWeight="700"
+              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.adoptador} opacity={0.55} letterSpacing="0.06em">
               ADOPTADOR
             </text>
-            <text x={CX + 108} y={CY + 111} textAnchor="middle"
-              fontSize={7} fontFamily="ui-monospace, monospace"
-              fill={ARCHETYPE_HEX.adoptador} opacity={0.38}>
+            <text x={CX + 108} y={CY + 111} textAnchor="middle" fontSize={7}
+              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.adoptador} opacity={0.38}>
               usa y adopta
             </text>
+
+            {/* ── Puntos de stakeholders — dentro del clipPath ──
+                El clipPath garantiza que auras, anillos y círculos
+                nunca sobresalgan del borde del gráfico, sin importar
+                la posición calculada por el jitter.                    */}
+            {withScores.map((s) => {
+              const pos      = jittered.get(s.id) ?? constrainToCircle(
+                toSvgX(s.interview!.adoptionScore),
+                toSvgY(s.interview!.influenceScore),
+              )
+              const isActive  = s.id === activeId
+              const isHover   = s.id === hoverId
+              const stroke    = RESISTANCE_STROKE[s.resistance]
+              const fill      = ARCHETYPE_HEX[s.archetype]
+              const ini       = initials(s.name)
+
+              return (
+                <g
+                  key={s.id}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => onSelect(s)}
+                  onMouseEnter={() => setHoverId(s.id)}
+                  onMouseLeave={() => setHoverId(null)}
+                >
+                  {/* Aura selección / hover */}
+                  {(isActive || isHover) && (
+                    <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 8} fill={fill} opacity={0.18} />
+                  )}
+
+                  {/* Anillo de resistencia */}
+                  <circle
+                    cx={pos.cx} cy={pos.cy}
+                    r={DOT_R + stroke.width + 1.5}
+                    fill="none"
+                    stroke={stroke.color}
+                    strokeWidth={stroke.width}
+                    strokeDasharray={stroke.dasharray}
+                    opacity={s.resistance === 'baja' ? 0.6 : 0.9}
+                  />
+
+                  {/* Círculo del arquetipo */}
+                  <circle
+                    cx={pos.cx} cy={pos.cy}
+                    r={DOT_R}
+                    fill={fill}
+                    stroke={isActive ? '#FFFFFF' : 'none'}
+                    strokeWidth={isActive ? 2 : 0}
+                  />
+
+                  {/* Iniciales */}
+                  <text
+                    x={pos.cx} y={pos.cy + 4}
+                    textAnchor="middle" fontSize={9} fontWeight="700"
+                    fill="#FFFFFF" fontFamily="Inter, sans-serif"
+                    style={{ pointerEvents: 'none', userSelect: 'none' }}
+                  >
+                    {ini}
+                  </text>
+                </g>
+              )
+            })}
           </g>
 
-          {/* ── Borde del círculo (encima de los fondos) ── */}
-          <circle cx={CX} cy={CY} r={CR}
-            fill="none" stroke="#D1D5DB" strokeWidth={1.5} />
+          {/* ── Borde del círculo — encima de todo el contenido interior ── */}
+          <circle cx={CX} cy={CY} r={CR} fill="none" stroke="#D1D5DB" strokeWidth={1.5} />
 
-          {/* ── Labels de eje (fuera del círculo) ── */}
+          {/* ── Labels de eje (fuera del círculo, no clippeados) ── */}
           <text x={CX} y={CY - CR - 14} textAnchor="middle"
             fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">
             ↑ Alta influencia
@@ -294,103 +333,41 @@ export function StakeholderQuadrantChart({
             fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">
             Alta →
           </text>
-          {/* Título eje X */}
           <text x={CX} y={VB - 6} textAnchor="middle"
             fontSize={9} fill="#6B7280" fontFamily="Inter, sans-serif">
             Adopción IA
           </text>
 
-          {/* ── Puntos de stakeholders (renderizados encima, sin clipPath) ── */}
+          {/* ── Tooltips — capa separada, encima del borde, sin clipPath ──
+              Se renderizan fuera del clipPath para que nunca queden cortados
+              aunque el punto esté cerca del borde.                           */}
           {withScores.map((s) => {
-            const base    = { cx: toSvgX(s.interview!.adoptionScore), cy: toSvgY(s.interview!.influenceScore) }
-            const pos     = jittered.get(s.id) ?? constrainToCircle(base.cx, base.cy)
-            const isActive = s.id === activeId
-            const isHover  = s.id === hoverId
-            const stroke   = RESISTANCE_STROKE[s.resistance]
-            const fill     = ARCHETYPE_HEX[s.archetype]
-            const ini      = initials(s.name)
+            if (s.id !== hoverId) return null
+            const pos  = jittered.get(s.id) ?? constrainToCircle(
+              toSvgX(s.interview!.adoptionScore),
+              toSvgY(s.interview!.influenceScore),
+            )
+            const fill = ARCHETYPE_HEX[s.archetype]
+            const ttW  = 155
+            const ttH  = 38
+            const showAbove = pos.cy - DOT_R - 10 > ttH + 6
+            const ttY  = showAbove ? pos.cy - DOT_R - ttH - 8 : pos.cy + DOT_R + 8
+            const ttX  = Math.max(6, Math.min(VB - ttW - 6, pos.cx - ttW / 2))
 
             return (
-              <g
-                key={s.id}
-                style={{ cursor: 'pointer' }}
-                onClick={() => onSelect(s)}
-                onMouseEnter={() => setHoverId(s.id)}
-                onMouseLeave={() => setHoverId(null)}
-              >
-                {/* Aura de selección / hover */}
-                {(isActive || isHover) && (
-                  <circle
-                    cx={pos.cx} cy={pos.cy}
-                    r={DOT_R + 8}
-                    fill={fill} opacity={0.18}
-                  />
-                )}
-
-                {/* Anillo de resistencia (fill=none → dashes visibles) */}
-                <circle
-                  cx={pos.cx} cy={pos.cy}
-                  r={DOT_R + stroke.width + 1.5}
-                  fill="none"
-                  stroke={stroke.color}
-                  strokeWidth={stroke.width}
-                  strokeDasharray={stroke.dasharray}
-                  opacity={s.resistance === 'baja' ? 0.6 : 0.9}
-                />
-
-                {/* Círculo del arquetipo */}
-                <circle
-                  cx={pos.cx} cy={pos.cy}
-                  r={DOT_R}
-                  fill={fill}
-                  stroke={isActive ? '#FFFFFF' : 'none'}
-                  strokeWidth={isActive ? 2 : 0}
-                />
-
-                {/* Iniciales */}
-                <text
-                  x={pos.cx} y={pos.cy + 4}
-                  textAnchor="middle"
-                  fontSize={9}
-                  fontWeight="700"
-                  fill="#FFFFFF"
-                  fontFamily="Inter, sans-serif"
-                  style={{ pointerEvents: 'none', userSelect: 'none' }}
-                >
-                  {ini}
+              <g key={`tt-${s.id}`} style={{ pointerEvents: 'none' }}>
+                <rect x={ttX} y={ttY} width={ttW} height={ttH}
+                  rx={6} fill="#0A0A0A" opacity={0.88} />
+                <text x={ttX + ttW / 2} y={ttY + 14}
+                  textAnchor="middle" fontSize={10.5} fontWeight="600"
+                  fill="#FFFFFF" fontFamily="Inter, sans-serif">
+                  {s.name}
                 </text>
-
-                {/* Tooltip hover */}
-                {isHover && (
-                  <g>
-                    {(() => {
-                      const ttW       = 155
-                      const ttH       = 38
-                      const showAbove = pos.cy - DOT_R - 10 > ttH + 6
-                      const ttY       = showAbove
-                        ? pos.cy - DOT_R - ttH - 8
-                        : pos.cy + DOT_R + 8
-                      const rawX      = pos.cx - ttW / 2
-                      const ttX       = Math.max(6, Math.min(VB - ttW - 6, rawX))
-                      return (
-                        <>
-                          <rect x={ttX} y={ttY} width={ttW} height={ttH}
-                            rx={6} fill="#0A0A0A" opacity={0.88} />
-                          <text x={ttX + ttW / 2} y={ttY + 14}
-                            textAnchor="middle" fontSize={10.5} fontWeight="600"
-                            fill="#FFFFFF" fontFamily="Inter, sans-serif">
-                            {s.name}
-                          </text>
-                          <text x={ttX + ttW / 2} y={ttY + 27}
-                            textAnchor="middle" fontSize={9.5}
-                            fill={fill} fontFamily="Inter, sans-serif">
-                            {ARCHETYPE_CONFIG[s.archetype].label} · {RESISTANCE_CONFIG[s.resistance].label}
-                          </text>
-                        </>
-                      )
-                    })()}
-                  </g>
-                )}
+                <text x={ttX + ttW / 2} y={ttY + 27}
+                  textAnchor="middle" fontSize={9.5}
+                  fill={fill} fontFamily="Inter, sans-serif">
+                  {ARCHETYPE_CONFIG[s.archetype].label} · {RESISTANCE_CONFIG[s.resistance].label}
+                </text>
               </g>
             )
           })}
