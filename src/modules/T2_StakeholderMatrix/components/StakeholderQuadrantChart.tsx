@@ -1,25 +1,23 @@
 // ============================================================
-// T2 — StakeholderQuadrantChart
+// T2 — StakeholderQuadrantChart (v2 — circular)
 //
-// Mapa 2D: X = Adopción IA (0-4), Y = Influencia (0-4)
-// Cada stakeholder = un punto posicionado por sus scores.
+// Gráfico circular: X = Adopción IA (0-4), Y = Influencia (0-4)
+// Cada stakeholder = punto dentro de un círculo dividido en 4 cuadrantes.
 //
-// Cuadrantes (naturaleza del perfil):
-//   ┌────────────────┬────────────────────┐
-//   │ Crítico         │ Decisor/Ambassador │  ← Alta influencia
-//   │ (bloquea)       │ (decide y lidera)  │
-//   ├────────────────┼────────────────────┤
-//   │ Especialista    │ Adoptador          │  ← Baja influencia
-//   │ (dominio/miedo) │ (usa y adopta)     │
-//   └────────────────┴────────────────────┘
-//       Baja adopción    Alta adopción
+// Cuadrantes:
+//   TL: Alta influencia / Baja adopción  → Crítico    (bloquea)
+//   TR: Alta influencia / Alta adopción  → Decisor    (decide y lidera)
+//   BL: Baja influencia / Baja adopción  → Especialista
+//   BR: Baja influencia / Alta adopción  → Adoptador
 //
 // Visual:
-//   - Punto coloreado por arquetipo
-//   - Borde grueso rojo = resistencia Alta | naranja = Media | fino = Baja
-//   - Iniciales dentro del punto
-//   - Nombre completo al hover
-//   - Click → activa el panel lateral
+//   - Círculo con 4 sectores coloreados (clipPath)
+//   - Punto r=14 coloreado por arquetipo
+//   - Anillo de resistencia: fino verde / ámbar discontinuo / rojo sólido
+//   - Iniciales 2 chars dentro del punto
+//   - Tooltip al hover: nombre + arquetipo + resistencia
+//   - Click → activa panel lateral
+//   - Jitter anti-solapamiento constrained al círculo
 // ============================================================
 
 import { useState } from 'react'
@@ -29,37 +27,40 @@ import { ARCHETYPE_CONFIG, RESISTANCE_CONFIG }               from '../constants'
 // ── Props ─────────────────────────────────────────────────────
 
 interface StakeholderQuadrantChartProps {
-  stakeholders:      Stakeholder[]
-  activeId:          string | null
-  onSelect:          (s: Stakeholder) => void
-  /** Si true, fondo oscuro (dark mode se hereda via CSS, no via prop) */
+  stakeholders: Stakeholder[]
+  activeId:     string | null
+  onSelect:     (s: Stakeholder) => void
 }
 
 // ── Constantes del layout SVG ─────────────────────────────────
 
-const VB_W    = 560
-const VB_H    = 380
-const ML      = 58    // margin left (eje Y label)
-const MR      = 20    // margin right
-const MT      = 24    // margin top
-const MB      = 52    // margin bottom (eje X label)
-const PW      = VB_W - ML - MR   // plot width  = 482
-const PH      = VB_H - MT - MB   // plot height = 304
-const MID_X   = ML + PW / 2
-const MID_Y   = MT + PH / 2
-const DOT_R   = 20   // radio del punto
-const SCORE_MAX = 4
+const VB    = 520        // viewBox cuadrado (px)
+const CX    = 260        // centro X
+const CY    = 260        // centro Y
+const CR    = 200        // radio del círculo del gráfico
+const DOT_R = 14         // radio del punto de stakeholder (reducido de 20)
+const MAX_R = CR - DOT_R - 4   // 182: margen para que el punto no sobresalga del círculo
 
 // ── Helpers de coordenadas ────────────────────────────────────
 
-/** Score → coordenada X en el SVG (0=izq, 4=der) */
-function toX(score: number) {
-  return ML + (score / SCORE_MAX) * PW
+/** Score (0–4) → coordenada X en el SVG */
+function toSvgX(score: number) {
+  return CX + ((score - 2) / 2) * CR
 }
 
-/** Score → coordenada Y en el SVG (4=arriba, 0=abajo — invertido) */
-function toY(score: number) {
-  return MT + PH - (score / SCORE_MAX) * PH
+/** Score (0–4) → coordenada Y en el SVG (invertido: mayor score = arriba) */
+function toSvgY(score: number) {
+  return CY - ((score - 2) / 2) * CR
+}
+
+/** Limita el punto al área circular válida */
+function constrainToCircle(cx: number, cy: number): { cx: number; cy: number } {
+  const dx   = cx - CX
+  const dy   = cy - CY
+  const dist = Math.sqrt(dx * dx + dy * dy)
+  if (dist <= MAX_R) return { cx, cy }
+  const scale = MAX_R / dist
+  return { cx: CX + dx * scale, cy: CY + dy * scale }
 }
 
 /** Iniciales del nombre (máx 2 caracteres) */
@@ -69,66 +70,52 @@ function initials(name: string) {
   return name.slice(0, 2).toUpperCase()
 }
 
-// ── Colores de arquetipo en hex (para SVG — no Tailwind) ──────
+// ── Colores en hex (para SVG — no Tailwind) ───────────────────
 
 const ARCHETYPE_HEX: Record<ArchetypeCode, string> = {
-  adoptador:   '#5FAF8A',   // success-dark
-  ambassador:  '#6A90C0',   // info-dark
-  decisor:     '#1B2A4E',   // navy
-  critico:     '#C06060',   // danger-dark
-  especialista:'#D4A85C',   // warning-dark
+  adoptador:    '#5FAF8A',
+  ambassador:   '#6A90C0',
+  decisor:      '#1B2A4E',
+  critico:      '#C06060',
+  especialista: '#D4A85C',
 }
 
 const ARCHETYPE_BG_HEX: Record<ArchetypeCode, string> = {
-  adoptador:   '#D4EDE3',   // success-light
-  ambassador:  '#DDE8F5',   // info-light
-  decisor:     'rgba(27,42,78,0.12)',
-  critico:     '#F5DEDE',   // danger-light
-  especialista:'#FAF0D7',   // warning-light
+  adoptador:    '#D4EDE3',
+  ambassador:   '#DDE8F5',
+  decisor:      'rgba(27,42,78,0.10)',
+  critico:      '#F5DEDE',
+  especialista: '#FAF0D7',
 }
 
 const RESISTANCE_STROKE: Record<ResistanceLevel, { color: string; width: number; dasharray?: string }> = {
-  baja:  { color: '#5FAF8A', width: 2 },
-  media: { color: '#D4A85C', width: 3, dasharray: '5 3' },
-  alta:  { color: '#C06060', width: 3.5 },
+  baja:  { color: '#5FAF8A', width: 1.5 },
+  media: { color: '#D4A85C', width: 2.5, dasharray: '4 3' },
+  alta:  { color: '#C06060', width: 3 },
 }
 
-// ── Labels de cuadrante ───────────────────────────────────────
-
-const QUADRANT_LABELS = [
-  // Top-left: alta influencia, baja adopción
-  { x: ML + 8, y: MT + 14, label: 'Alta influencia', sub: 'Baja adopción', anchor: 'start' as const, fill: ARCHETYPE_HEX.critico },
-  // Top-right: alta influencia, alta adopción
-  { x: ML + PW - 8, y: MT + 14, label: 'Alta influencia', sub: 'Alta adopción', anchor: 'end' as const, fill: ARCHETYPE_HEX.decisor },
-  // Bottom-left: baja influencia, baja adopción
-  { x: ML + 8, y: MT + PH - 6, label: 'Baja influencia', sub: 'Baja adopción', anchor: 'start' as const, fill: ARCHETYPE_HEX.especialista },
-  // Bottom-right: baja influencia, alta adopción
-  { x: ML + PW - 8, y: MT + PH - 6, label: 'Baja influencia', sub: 'Alta adopción', anchor: 'end' as const, fill: ARCHETYPE_HEX.adoptador },
-]
-
-// ── Jitter anti-solapamiento ──────────────────────────────────
-// Si dos puntos están muy cerca, los separa ligeramente.
+// ── Jitter anti-solapamiento (constrained al círculo) ─────────
 
 function applyJitter(
   items: { id: string; cx: number; cy: number }[]
 ): Map<string, { cx: number; cy: number }> {
-  const result = new Map<string, { cx: number; cy: number }>()
+  const result    = new Map<string, { cx: number; cy: number }>()
   const positions = items.map((item) => ({ ...item }))
 
-  const ITERATIONS = 30
-  const MIN_DIST   = DOT_R * 2 + 4
-  const FORCE      = 0.3
+  const ITERATIONS = 40
+  const MIN_DIST   = DOT_R * 2 + 8
+  const FORCE      = 0.4
 
   for (let iter = 0; iter < ITERATIONS; iter++) {
     for (let i = 0; i < positions.length; i++) {
       for (let j = i + 1; j < positions.length; j++) {
-        const dx = positions[j].cx - positions[i].cx
-        const dy = positions[j].cy - positions[i].cy
+        const dx   = positions[j].cx - positions[i].cx
+        const dy   = positions[j].cy - positions[i].cy
         const dist = Math.sqrt(dx * dx + dy * dy) || 0.01
         if (dist < MIN_DIST) {
           const overlap = (MIN_DIST - dist) / 2
-          const nx = (dx / dist) * overlap * FORCE
-          const ny = (dy / dist) * overlap * FORCE
+          const nx      = (dx / dist) * overlap * FORCE
+          const ny      = (dy / dist) * overlap * FORCE
           positions[i].cx -= nx
           positions[i].cy -= ny
           positions[j].cx += nx
@@ -136,12 +123,15 @@ function applyJitter(
         }
       }
     }
+    // Re-constrain al círculo tras cada iteración
+    for (const p of positions) {
+      const c = constrainToCircle(p.cx, p.cy)
+      p.cx = c.cx
+      p.cy = c.cy
+    }
   }
 
-  // Clamp dentro del área del plot
   positions.forEach((p) => {
-    p.cx = Math.max(ML + DOT_R + 2, Math.min(ML + PW - DOT_R - 2, p.cx))
-    p.cy = Math.max(MT + DOT_R + 2, Math.min(MT + PH - DOT_R - 2, p.cy))
     result.set(p.id, { cx: p.cx, cy: p.cy })
   })
 
@@ -157,29 +147,25 @@ export function StakeholderQuadrantChart({
 }: StakeholderQuadrantChartProps) {
   const [hoverId, setHoverId] = useState<string | null>(null)
 
-  // Sólo stakeholders con entrevista (tienen scores)
-  const withScores = stakeholders.filter((s) => s.interview)
-  // Sin entrevista: los mostramos en una fila aparte
+  const withScores    = stakeholders.filter((s) =>  s.interview)
   const withoutScores = stakeholders.filter((s) => !s.interview)
 
-  // Calcular posiciones base
+  // Posiciones base → jitter
   const basePositions = withScores.map((s) => ({
     id: s.id,
-    cx: toX(s.interview!.adoptionScore),
-    cy: toY(s.interview!.influenceScore),
+    cx: toSvgX(s.interview!.adoptionScore),
+    cy: toSvgY(s.interview!.influenceScore),
   }))
-
-  // Aplicar jitter
   const jittered = applyJitter(basePositions)
 
-  // Leyenda de arquetipos presentes
+  // Arquetipos presentes
   const archetypesPresent = [...new Set(stakeholders.map((s) => s.archetype))]
 
   return (
     <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
 
       {/* Header */}
-      <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
+      <div className="px-5 py-3.5 border-b border-border flex items-center justify-between gap-4 flex-wrap">
         <div>
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
             Mapa de stakeholders
@@ -188,111 +174,141 @@ export function StakeholderQuadrantChart({
             Adopción IA × Influencia organizacional
           </p>
         </div>
-        {/* Leyenda */}
+        {/* Leyenda de arquetipos */}
         <div className="flex flex-wrap gap-x-3 gap-y-1 justify-end">
-          {archetypesPresent.map((code) => {
-            const cfg = ARCHETYPE_CONFIG[code]
-            return (
-              <div key={code} className="flex items-center gap-1.5">
-                <span
-                  className="h-2.5 w-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: ARCHETYPE_HEX[code] }}
-                />
-                <span className="text-[10px] text-text-subtle">{cfg.label}</span>
-              </div>
-            )
-          })}
+          {archetypesPresent.map((code) => (
+            <div key={code} className="flex items-center gap-1.5">
+              <span
+                className="h-2.5 w-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: ARCHETYPE_HEX[code] }}
+              />
+              <span className="text-[10px] text-text-subtle">{ARCHETYPE_CONFIG[code].label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* SVG chart */}
-      <div className="px-2 py-2">
+      {/* SVG chart — circular */}
+      <div className="flex justify-center px-6 py-5">
         <svg
-          viewBox={`0 0 ${VB_W} ${VB_H}`}
+          viewBox={`0 0 ${VB} ${VB}`}
           className="w-full"
-          style={{ maxHeight: 340 }}
+          style={{ maxWidth: 420, maxHeight: 420 }}
         >
-          {/* ── Fondos de cuadrante ── */}
-          {/* Top-left: Crítico */}
-          <rect x={ML} y={MT} width={PW / 2} height={PH / 2}
-            fill={ARCHETYPE_BG_HEX.critico} opacity={0.4} />
-          {/* Top-right: Decisor/Ambassador */}
-          <rect x={MID_X} y={MT} width={PW / 2} height={PH / 2}
-            fill={ARCHETYPE_BG_HEX.decisor} opacity={0.4} />
-          {/* Bottom-left: Especialista */}
-          <rect x={ML} y={MID_Y} width={PW / 2} height={PH / 2}
-            fill={ARCHETYPE_BG_HEX.especialista} opacity={0.4} />
-          {/* Bottom-right: Adoptador */}
-          <rect x={MID_X} y={MID_Y} width={PW / 2} height={PH / 2}
-            fill={ARCHETYPE_BG_HEX.adoptador} opacity={0.4} />
+          <defs>
+            {/* ClipPath circular para los fondos de cuadrante */}
+            <clipPath id="quad-clip">
+              <circle cx={CX} cy={CY} r={CR} />
+            </clipPath>
+          </defs>
 
-          {/* ── Borde del plot ── */}
-          <rect x={ML} y={MT} width={PW} height={PH}
-            fill="none" stroke="#E5E7EB" strokeWidth={1} />
+          {/* ── Fondos de cuadrante y crosshairs (clipped al círculo) ── */}
+          <g clipPath="url(#quad-clip)">
+            {/* TL: Alta influencia / Baja adopción → Crítico */}
+            <rect x={0} y={0} width={CX} height={CY}
+              fill={ARCHETYPE_BG_HEX.critico} opacity={0.55} />
+            {/* TR: Alta influencia / Alta adopción → Decisor */}
+            <rect x={CX} y={0} width={VB} height={CY}
+              fill={ARCHETYPE_BG_HEX.decisor} opacity={0.55} />
+            {/* BL: Baja influencia / Baja adopción → Especialista */}
+            <rect x={0} y={CY} width={CX} height={VB}
+              fill={ARCHETYPE_BG_HEX.especialista} opacity={0.55} />
+            {/* BR: Baja influencia / Alta adopción → Adoptador */}
+            <rect x={CX} y={CY} width={VB} height={VB}
+              fill={ARCHETYPE_BG_HEX.adoptador} opacity={0.55} />
 
-          {/* ── Líneas divisorias de cuadrante ── */}
-          <line x1={MID_X} y1={MT} x2={MID_X} y2={MT + PH}
-            stroke="#D1D5DB" strokeWidth={1} strokeDasharray="5 4" />
-          <line x1={ML} y1={MID_Y} x2={ML + PW} y2={MID_Y}
-            stroke="#D1D5DB" strokeWidth={1} strokeDasharray="5 4" />
+            {/* Líneas divisorias (crosshairs) */}
+            <line x1={0} y1={CY} x2={VB} y2={CY}
+              stroke="#C8CACD" strokeWidth={1} strokeDasharray="5 4" />
+            <line x1={CX} y1={0} x2={CX} y2={VB}
+              stroke="#C8CACD" strokeWidth={1} strokeDasharray="5 4" />
 
-          {/* ── Labels de cuadrante ── */}
-          {QUADRANT_LABELS.map((q, i) => (
-            <g key={i} opacity={0.55}>
-              <text x={q.x} y={q.y} textAnchor={q.anchor} fontSize={9}
-                fontWeight="600" fill={q.fill} fontFamily="ui-monospace, monospace"
-                letterSpacing="0.05em">
-                {q.label.toUpperCase()}
-              </text>
-              <text x={q.x} y={q.y + 11} textAnchor={q.anchor} fontSize={8.5}
-                fill={q.fill} fontFamily="ui-monospace, monospace" opacity={0.75}>
-                {q.sub}
-              </text>
-            </g>
-          ))}
+            {/* Labels de cuadrante — en las esquinas diagonales (~75% del radio) */}
+            {/* TL: Crítico */}
+            <text x={CX - 108} y={CY - 104} textAnchor="middle"
+              fontSize={8} fontWeight="700" fontFamily="ui-monospace, monospace"
+              fill={ARCHETYPE_HEX.critico} opacity={0.55} letterSpacing="0.06em">
+              CRÍTICO
+            </text>
+            <text x={CX - 108} y={CY - 93} textAnchor="middle"
+              fontSize={7} fontFamily="ui-monospace, monospace"
+              fill={ARCHETYPE_HEX.critico} opacity={0.38}>
+              bloquea
+            </text>
 
-          {/* ── Eje X: ticks y label ── */}
-          {[0, 1, 2, 3, 4].map((v) => (
-            <g key={`xt-${v}`}>
-              <line x1={toX(v)} y1={MT + PH} x2={toX(v)} y2={MT + PH + 5}
-                stroke="#9CA3AF" strokeWidth={1} />
-              <text x={toX(v)} y={MT + PH + 16} textAnchor="middle"
-                fontSize={10} fill="#9CA3AF" fontFamily="ui-monospace, monospace">
-                {v}
-              </text>
-            </g>
-          ))}
-          <text x={ML + PW / 2} y={VB_H - 4} textAnchor="middle"
-            fontSize={10} fill="#6B7280" fontFamily="Inter, sans-serif">
-            Adopción IA →
+            {/* TR: Decisor */}
+            <text x={CX + 108} y={CY - 104} textAnchor="middle"
+              fontSize={8} fontWeight="700" fontFamily="ui-monospace, monospace"
+              fill={ARCHETYPE_HEX.decisor} opacity={0.55} letterSpacing="0.06em">
+              DECISOR
+            </text>
+            <text x={CX + 108} y={CY - 93} textAnchor="middle"
+              fontSize={7} fontFamily="ui-monospace, monospace"
+              fill={ARCHETYPE_HEX.decisor} opacity={0.38}>
+              lidera
+            </text>
+
+            {/* BL: Especialista */}
+            <text x={CX - 108} y={CY + 100} textAnchor="middle"
+              fontSize={8} fontWeight="700" fontFamily="ui-monospace, monospace"
+              fill={ARCHETYPE_HEX.especialista} opacity={0.55} letterSpacing="0.06em">
+              ESPECIALISTA
+            </text>
+            <text x={CX - 108} y={CY + 111} textAnchor="middle"
+              fontSize={7} fontFamily="ui-monospace, monospace"
+              fill={ARCHETYPE_HEX.especialista} opacity={0.38}>
+              dominio / miedo
+            </text>
+
+            {/* BR: Adoptador */}
+            <text x={CX + 108} y={CY + 100} textAnchor="middle"
+              fontSize={8} fontWeight="700" fontFamily="ui-monospace, monospace"
+              fill={ARCHETYPE_HEX.adoptador} opacity={0.55} letterSpacing="0.06em">
+              ADOPTADOR
+            </text>
+            <text x={CX + 108} y={CY + 111} textAnchor="middle"
+              fontSize={7} fontFamily="ui-monospace, monospace"
+              fill={ARCHETYPE_HEX.adoptador} opacity={0.38}>
+              usa y adopta
+            </text>
+          </g>
+
+          {/* ── Borde del círculo (encima de los fondos) ── */}
+          <circle cx={CX} cy={CY} r={CR}
+            fill="none" stroke="#D1D5DB" strokeWidth={1.5} />
+
+          {/* ── Labels de eje (fuera del círculo) ── */}
+          <text x={CX} y={CY - CR - 14} textAnchor="middle"
+            fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">
+            ↑ Alta influencia
+          </text>
+          <text x={CX} y={CY + CR + 22} textAnchor="middle"
+            fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">
+            Baja influencia ↓
+          </text>
+          <text x={CX - CR - 6} y={CY + 4} textAnchor="end"
+            fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">
+            ← Baja
+          </text>
+          <text x={CX + CR + 6} y={CY + 4} textAnchor="start"
+            fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">
+            Alta →
+          </text>
+          {/* Título eje X */}
+          <text x={CX} y={VB - 6} textAnchor="middle"
+            fontSize={9} fill="#6B7280" fontFamily="Inter, sans-serif">
+            Adopción IA
           </text>
 
-          {/* ── Eje Y: ticks y label ── */}
-          {[0, 1, 2, 3, 4].map((v) => (
-            <g key={`yt-${v}`}>
-              <line x1={ML - 5} y1={toY(v)} x2={ML} y2={toY(v)}
-                stroke="#9CA3AF" strokeWidth={1} />
-              <text x={ML - 8} y={toY(v) + 4} textAnchor="end"
-                fontSize={10} fill="#9CA3AF" fontFamily="ui-monospace, monospace">
-                {v}
-              </text>
-            </g>
-          ))}
-          <text
-            transform={`rotate(-90) translate(${-(MT + PH / 2)}, 14)`}
-            textAnchor="middle" fontSize={10} fill="#6B7280"
-            fontFamily="Inter, sans-serif">
-            Influencia →
-          </text>
-
-          {/* ── Puntos de stakeholders (con entrevista) ── */}
+          {/* ── Puntos de stakeholders (renderizados encima, sin clipPath) ── */}
           {withScores.map((s) => {
-            const pos      = jittered.get(s.id) ?? { cx: toX(s.interview!.adoptionScore), cy: toY(s.interview!.influenceScore) }
-            const isActive  = s.id === activeId
-            const isHover   = s.id === hoverId
-            const stroke    = RESISTANCE_STROKE[s.resistance]
-            const fill      = ARCHETYPE_HEX[s.archetype]
-            const ini       = initials(s.name)
+            const base    = { cx: toSvgX(s.interview!.adoptionScore), cy: toSvgY(s.interview!.influenceScore) }
+            const pos     = jittered.get(s.id) ?? constrainToCircle(base.cx, base.cy)
+            const isActive = s.id === activeId
+            const isHover  = s.id === hoverId
+            const stroke   = RESISTANCE_STROKE[s.resistance]
+            const fill     = ARCHETYPE_HEX[s.archetype]
+            const ini      = initials(s.name)
 
             return (
               <g
@@ -302,22 +318,24 @@ export function StakeholderQuadrantChart({
                 onMouseEnter={() => setHoverId(s.id)}
                 onMouseLeave={() => setHoverId(null)}
               >
-                {/* Aura de selección */}
+                {/* Aura de selección / hover */}
                 {(isActive || isHover) && (
                   <circle
                     cx={pos.cx} cy={pos.cy}
-                    r={DOT_R + 6}
-                    fill={fill} opacity={0.15}
+                    r={DOT_R + 8}
+                    fill={fill} opacity={0.18}
                   />
                 )}
 
-                {/* Círculo exterior (resistencia) */}
+                {/* Anillo de resistencia (fill=none → dashes visibles) */}
                 <circle
                   cx={pos.cx} cy={pos.cy}
-                  r={DOT_R + stroke.width + 1}
-                  fill={stroke.color}
-                  opacity={s.resistance === 'baja' ? 0.25 : 0.55}
+                  r={DOT_R + stroke.width + 1.5}
+                  fill="none"
+                  stroke={stroke.color}
+                  strokeWidth={stroke.width}
                   strokeDasharray={stroke.dasharray}
+                  opacity={s.resistance === 'baja' ? 0.6 : 0.9}
                 />
 
                 {/* Círculo del arquetipo */}
@@ -333,7 +351,7 @@ export function StakeholderQuadrantChart({
                 <text
                   x={pos.cx} y={pos.cy + 4}
                   textAnchor="middle"
-                  fontSize={s.resistance === 'alta' ? 10 : 10.5}
+                  fontSize={9}
                   fontWeight="700"
                   fill="#FFFFFF"
                   fontFamily="Inter, sans-serif"
@@ -342,41 +360,30 @@ export function StakeholderQuadrantChart({
                   {ini}
                 </text>
 
-                {/* Tooltip hover: nombre + arquetipo */}
+                {/* Tooltip hover */}
                 {isHover && (
                   <g>
-                    {/* Posicionar el tooltip arriba o abajo según posición en el gráfico */}
                     {(() => {
-                      const ttW  = 140
-                      const ttH  = 36
-                      const aboveSpace = pos.cy - MT
-                      const showAbove  = aboveSpace > ttH + DOT_R + 8
-                      const ttY  = showAbove
+                      const ttW       = 155
+                      const ttH       = 38
+                      const showAbove = pos.cy - DOT_R - 10 > ttH + 6
+                      const ttY       = showAbove
                         ? pos.cy - DOT_R - ttH - 8
                         : pos.cy + DOT_R + 8
-                      const rawX = pos.cx - ttW / 2
-                      const ttX  = Math.max(ML, Math.min(ML + PW - ttW, rawX))
-
+                      const rawX      = pos.cx - ttW / 2
+                      const ttX       = Math.max(6, Math.min(VB - ttW - 6, rawX))
                       return (
                         <>
-                          <rect
-                            x={ttX} y={ttY} width={ttW} height={ttH}
-                            rx={6} fill="#0A0A0A" opacity={0.88}
-                          />
-                          <text
-                            x={ttX + ttW / 2} y={ttY + 14}
-                            textAnchor="middle" fontSize={10.5}
-                            fontWeight="600" fill="#FFFFFF"
-                            fontFamily="Inter, sans-serif"
-                          >
+                          <rect x={ttX} y={ttY} width={ttW} height={ttH}
+                            rx={6} fill="#0A0A0A" opacity={0.88} />
+                          <text x={ttX + ttW / 2} y={ttY + 14}
+                            textAnchor="middle" fontSize={10.5} fontWeight="600"
+                            fill="#FFFFFF" fontFamily="Inter, sans-serif">
                             {s.name}
                           </text>
-                          <text
-                            x={ttX + ttW / 2} y={ttY + 26}
+                          <text x={ttX + ttW / 2} y={ttY + 27}
                             textAnchor="middle" fontSize={9.5}
-                            fill={fill}
-                            fontFamily="Inter, sans-serif"
-                          >
+                            fill={fill} fontFamily="Inter, sans-serif">
                             {ARCHETYPE_CONFIG[s.archetype].label} · {RESISTANCE_CONFIG[s.resistance].label}
                           </text>
                         </>
@@ -392,18 +399,19 @@ export function StakeholderQuadrantChart({
 
       {/* ── Leyenda de resistencia ── */}
       <div className="px-5 pb-3 flex items-center gap-5 border-t border-border/50 pt-3">
-        <span className="text-[10px] text-text-subtle font-mono uppercase tracking-wide">Resistencia:</span>
+        <span className="text-[10px] text-text-subtle font-mono uppercase tracking-wide">
+          Resistencia:
+        </span>
         {([
-          { level: 'baja',  label: 'Baja',  desc: 'borde fino verde' },
-          { level: 'media', label: 'Media', desc: 'borde discontinuo ámbar' },
-          { level: 'alta',  label: 'Alta',  desc: 'borde sólido rojo' },
-        ] as { level: ResistanceLevel; label: string; desc: string }[]).map(({ level, label }) => {
+          { level: 'baja'  as ResistanceLevel, label: 'Baja' },
+          { level: 'media' as ResistanceLevel, label: 'Media' },
+          { level: 'alta'  as ResistanceLevel, label: 'Alta' },
+        ]).map(({ level, label }) => {
           const s = RESISTANCE_STROKE[level]
           return (
             <div key={level} className="flex items-center gap-1.5">
-              <svg width="16" height="16" viewBox="0 0 16 16">
-                <circle
-                  cx="8" cy="8" r="6"
+              <svg width="18" height="18" viewBox="0 0 18 18">
+                <circle cx="9" cy="9" r="5"
                   fill="none"
                   stroke={s.color}
                   strokeWidth={s.width}
