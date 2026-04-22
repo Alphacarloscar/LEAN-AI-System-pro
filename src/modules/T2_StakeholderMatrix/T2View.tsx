@@ -22,6 +22,17 @@ import { InterviewModal }                from './components/InterviewModal'
 import { StakeholderQuadrantChart }      from './components/StakeholderQuadrantChart'
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from './types'
 
+// Colores hex por arquetipo (para SVG — mirrors StakeholderQuadrantChart)
+const ARCH_HEX: Record<ArchetypeCode, string> = {
+  adoptador:    '#5FAF8A',
+  ambassador:   '#6A90C0',
+  decisor:      '#1B2A4E',
+  critico:      '#C06060',
+  especialista: '#D4A85C',
+}
+
+const ARCH_ORDER: ArchetypeCode[] = ['decisor', 'ambassador', 'adoptador', 'critico', 'especialista']
+
 // ── Utilidades de UI ──────────────────────────────────────────
 
 function ArchetypeDot({ archetype, size = 'sm' }: { archetype: ArchetypeCode; size?: 'sm' | 'md' }) {
@@ -46,6 +57,73 @@ function ResistanceBadge({ resistance }: { resistance: ResistanceLevel }) {
       {resistance === 'alta' ? '▲ ' : resistance === 'media' ? '◆ ' : '● '}
       {resistance.charAt(0).toUpperCase() + resistance.slice(1)}
     </span>
+  )
+}
+
+// ── Gráfico vertical de scores ────────────────────────────────
+
+function ScoreBarChart({
+  adoptionScore,
+  influenceScore,
+  opennessScore,
+}: {
+  adoptionScore:  number
+  influenceScore: number
+  opennessScore:  number
+}) {
+  const MAX  = 4
+  const BW   = 15   // bar width
+  const GAP  = 9    // gap between bars
+  const LM   = 16   // left margin (for y-axis ticks)
+  const CH   = 70   // chart height
+  const TM   = 16   // top margin (for value labels)
+  const LH   = 20   // label height at bottom
+  const VBW  = LM + 3 * (BW + GAP) - GAP + 4
+  const VBH  = TM + CH + LH
+
+  const bars = [
+    { key: 'ad',  label: 'Ad.',  value: adoptionScore,  color: '#5FAF8A' },
+    { key: 'inf', label: 'Inf.', value: influenceScore, color: '#1B2A4E' },
+    { key: 'ap',  label: 'Ap.',  value: opennessScore,  color: '#6A90C0' },
+  ]
+
+  return (
+    <svg viewBox={`0 0 ${VBW} ${VBH}`} width={VBW} height={VBH}>
+      {/* Baseline */}
+      <line x1={LM} y1={TM + CH} x2={VBW - 2} y2={TM + CH} stroke="#E2E8F0" strokeWidth={0.8} />
+      {/* Y-axis ticks at 1,2,3,4 */}
+      {[1, 2, 3, 4].map((tick) => {
+        const ty = TM + CH - (tick / MAX) * CH
+        return (
+          <g key={tick}>
+            <line x1={LM - 3} y1={ty} x2={LM} y2={ty} stroke="#E2E8F0" strokeWidth={0.6} />
+            <text x={LM - 5} y={ty + 2.5} textAnchor="end" fontSize={6} fill="#CBD5E1"
+              fontFamily="ui-monospace,monospace">{tick}</text>
+          </g>
+        )
+      })}
+      {/* Bars */}
+      {bars.map(({ key, label, value, color }, i) => {
+        const bx  = LM + i * (BW + GAP)
+        const bh  = (value / MAX) * CH
+        const by  = TM + CH - bh
+        return (
+          <g key={key}>
+            <rect x={bx} y={by} width={BW} height={bh} fill={color} opacity={0.88} rx={2} />
+            {/* Value above bar */}
+            <text x={bx + BW / 2} y={by - 3} textAnchor="middle" fontSize={7} fontWeight="700"
+              fill="#475569" fontFamily="ui-monospace,monospace">
+              {value.toFixed(1)}
+            </text>
+            {/* Short label below baseline */}
+            <text x={bx + BW / 2} y={TM + CH + 12} textAnchor="middle" fontSize={6.5}
+              fill="#94A3B8" fontFamily="ui-monospace,monospace">
+              {label}
+            </text>
+          </g>
+        )
+      })}
+    </svg>
   )
 }
 
@@ -112,69 +190,62 @@ function StakeholderPanel({
         </div>
       </div>
 
-      <div className="px-5 py-4 space-y-5">
+      {/* Body: split izquierda (info) | derecha (score bars) */}
+      <div className="flex divide-x divide-border/40">
 
-        {/* Descripción del arquetipo */}
-        <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-1.5">
-            Perfil — {cfg.label}
-          </p>
-          <p className="text-xs text-text-muted leading-relaxed">{cfg.description}</p>
-          <p className="text-[11px] italic text-text-subtle mt-1">"{cfg.tagline}"</p>
-        </div>
+        {/* LEFT — arquetipo + intervenciones + notas */}
+        <div className="flex-1 min-w-0 px-5 py-4 space-y-5">
 
-        {/* Scores de entrevista */}
-        {stakeholder.interview && (
-          <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-2">
-              Scores de entrevista
-            </p>
-            <div className="space-y-1.5">
-              {[
-                { label: 'Adopción IA',  value: stakeholder.interview.adoptionScore,  color: 'bg-success-dark' },
-                { label: 'Influencia',   value: stakeholder.interview.influenceScore, color: 'bg-navy' },
-                { label: 'Apertura',     value: stakeholder.interview.opennessScore,  color: 'bg-info-dark' },
-              ].map(({ label, value, color }) => (
-                <div key={label} className="flex items-center gap-2">
-                  <span className="text-[10px] text-text-subtle w-20 shrink-0">{label}</span>
-                  <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div className={`h-full ${color} rounded-full`} style={{ width: `${(value / 4) * 100}%` }} />
-                  </div>
-                  <span className="text-[10px] font-semibold text-text-muted tabular-nums w-6 text-right">
-                    {value.toFixed(1)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Intervenciones recomendadas */}
-        <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-2">
-            Intervenciones recomendadas · {res.label}
-          </p>
-          <ol className="space-y-2">
-            {interventions.map((item, i) => (
-              <li key={i} className="flex gap-2.5">
-                <span className="flex-shrink-0 h-4 w-4 rounded-full bg-navy text-white text-[9px] font-bold flex items-center justify-center mt-0.5">
-                  {i + 1}
-                </span>
-                <p className="text-xs text-text-muted leading-relaxed">{item}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        {/* Notas */}
-        {stakeholder.notes && (
+          {/* Descripción del arquetipo */}
           <div>
             <p className="text-[10px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-1.5">
-              Notas de sesión
+              Perfil — {cfg.label}
             </p>
-            <p className="text-xs text-text-muted leading-relaxed italic bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 py-2">
-              {stakeholder.notes}
+            <p className="text-xs text-text-muted leading-relaxed">{cfg.description}</p>
+            <p className="text-[11px] italic text-text-subtle mt-1">"{cfg.tagline}"</p>
+          </div>
+
+          {/* Intervenciones recomendadas */}
+          <div>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-2">
+              Intervenciones recomendadas · {res.label}
             </p>
+            <ol className="space-y-2">
+              {interventions.map((item, i) => (
+                <li key={i} className="flex gap-2.5">
+                  <span className="flex-shrink-0 h-4 w-4 rounded-full bg-navy text-white text-[9px] font-bold flex items-center justify-center mt-0.5">
+                    {i + 1}
+                  </span>
+                  <p className="text-xs text-text-muted leading-relaxed">{item}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          {/* Notas */}
+          {stakeholder.notes && (
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-1.5">
+                Notas de sesión
+              </p>
+              <p className="text-xs text-text-muted leading-relaxed italic bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 py-2">
+                {stakeholder.notes}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT — gráfico vertical de scores */}
+        {stakeholder.interview && (
+          <div className="w-[84px] shrink-0 flex flex-col items-center justify-center py-4 px-1 gap-1">
+            <p className="text-[8px] font-mono uppercase tracking-widest text-text-subtle mb-0.5">
+              Scores
+            </p>
+            <ScoreBarChart
+              adoptionScore={stakeholder.interview.adoptionScore}
+              influenceScore={stakeholder.interview.influenceScore}
+              opennessScore={stakeholder.interview.opennessScore}
+            />
           </div>
         )}
       </div>
@@ -352,6 +423,157 @@ function DepartmentMatrix({
   )
 }
 
+// ── Gráfico resumen por departamento ─────────────────────────
+
+function DepartmentOverviewChart({ stakeholders }: { stakeholders: Stakeholder[] }) {
+  const deptData = useMemo(() => {
+    const map = new Map<string, Stakeholder[]>()
+    stakeholders.forEach((s) => {
+      if (!map.has(s.department)) map.set(s.department, [])
+      map.get(s.department)!.push(s)
+    })
+    return Array.from(map.entries())
+      .map(([dept, members]) => ({
+        dept,
+        total: members.length,
+        // Riesgo = crítico + alta resistencia en cualquier arquetipo
+        riskScore: members.filter(
+          (m) => m.archetype === 'critico' || m.resistance === 'alta'
+        ).length,
+        segments: ARCH_ORDER
+          .map((arch) => ({ arch, count: members.filter((m) => m.archetype === arch).length }))
+          .filter((seg) => seg.count > 0),
+      }))
+      // Ordenar: mayor concentración de riesgo primero
+      .sort((a, b) => b.riskScore - a.riskScore || b.total - a.total)
+  }, [stakeholders])
+
+  if (deptData.length === 0) return null
+
+  const maxCount = Math.max(...deptData.map((d) => d.total), 1)
+
+  const BW    = 38   // bar width
+  const GAP   = 16   // gap between bars
+  const LM    = 28   // left margin (y-axis)
+  const RM    = 10   // right margin
+  const CH    = 110  // chart area height
+  const TM    = 16   // top margin (space for value labels)
+  const LH    = 28   // bottom label height
+  const VBW   = LM + deptData.length * (BW + GAP) - GAP + RM
+  const VBH   = TM + CH + LH
+
+  const yTicks = Array.from({ length: maxCount + 1 }, (_, i) => i)
+
+  return (
+    <div className="rounded-xl border border-border bg-white dark:bg-gray-900 px-5 py-4">
+      <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+        Composición por departamento
+      </p>
+
+      <div className="overflow-x-auto">
+        <svg
+          viewBox={`0 0 ${VBW} ${VBH}`}
+          width={Math.max(VBW, 260)}
+          height={VBH}
+          style={{ minWidth: VBW }}
+        >
+          {/* Y-axis line */}
+          <line x1={LM} y1={TM} x2={LM} y2={TM + CH} stroke="#E2E8F0" strokeWidth={0.8} />
+
+          {/* Y-axis ticks */}
+          {yTicks.map((tick) => {
+            const ty = TM + CH - (tick / maxCount) * CH
+            return (
+              <g key={tick}>
+                <line x1={LM - 3} y1={ty} x2={LM + VBW - LM - RM} y2={ty}
+                  stroke="#F1F5F9" strokeWidth={0.6} />
+                <line x1={LM - 4} y1={ty} x2={LM} y2={ty} stroke="#CBD5E1" strokeWidth={0.7} />
+                <text x={LM - 6} y={ty + 2.5} textAnchor="end" fontSize={7} fill="#94A3B8"
+                  fontFamily="ui-monospace,monospace">{tick}</text>
+              </g>
+            )
+          })}
+
+          {/* Bars per department */}
+          {deptData.map(({ dept, total, segments }, i) => {
+            const bx = LM + i * (BW + GAP)
+            // Compute stacked segment rects (bottom → top)
+            let curY = TM + CH
+            const rects = segments.map(({ arch, count }) => {
+              const segH = (count / maxCount) * CH
+              const rectY = curY - segH
+              curY = rectY
+              return { arch, segH, rectY }
+            })
+            const topY   = rects[0]?.rectY ?? TM + CH
+            const topArch = rects[0]?.arch
+            const truncDept = dept.length > 8 ? dept.slice(0, 7) + '…' : dept
+
+            return (
+              <g key={dept}>
+                {/* Stacked color segments */}
+                {rects.map(({ arch, segH, rectY }) => (
+                  <rect
+                    key={arch}
+                    x={bx} y={rectY}
+                    width={BW} height={segH}
+                    fill={ARCH_HEX[arch]}
+                    opacity={0.85}
+                  />
+                ))}
+                {/* Rounded top cap */}
+                {topArch && (
+                  <rect
+                    x={bx} y={topY}
+                    width={BW} height={Math.min(4, (total / maxCount) * CH)}
+                    fill={ARCH_HEX[topArch]}
+                    opacity={0.85}
+                    rx={2}
+                  />
+                )}
+                {/* Total count label above bar */}
+                <text
+                  x={bx + BW / 2} y={topY - 4}
+                  textAnchor="middle" fontSize={8} fontWeight="700"
+                  fill="#475569" fontFamily="ui-monospace,monospace"
+                >
+                  {total}
+                </text>
+                {/* Department label below baseline */}
+                <text
+                  x={bx + BW / 2} y={TM + CH + 14}
+                  textAnchor="middle" fontSize={7}
+                  fill="#64748B" fontFamily="ui-monospace,monospace"
+                >
+                  {truncDept}
+                </text>
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+
+      {/* Archetype legend */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5">
+        {ARCH_ORDER.map((arch) => {
+          const count = stakeholders.filter((s) => s.archetype === arch).length
+          if (count === 0) return null
+          const cfg = ARCHETYPE_CONFIG[arch]
+          return (
+            <div key={arch} className="flex items-center gap-1.5">
+              <span
+                className="h-1.5 w-3.5 rounded-sm inline-block shrink-0"
+                style={{ backgroundColor: ARCH_HEX[arch] }}
+              />
+              <span className="text-[9px] text-text-subtle">{cfg.label}</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ── Vista principal ───────────────────────────────────────────
 
 interface T2ViewProps {
@@ -447,6 +669,11 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
               onSelect={setActiveStakeholder}
             />
 
+            {/* Gráfico de composición por departamento */}
+            {stakeholders.length > 0 && (
+              <DepartmentOverviewChart stakeholders={stakeholders} />
+            )}
+
             {/* Matrix por departamento */}
             <DepartmentMatrix
               stakeholders={stakeholders}
@@ -456,7 +683,7 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
           </div>
 
           {/* Columna derecha: panel sticky */}
-          <div className="w-80 shrink-0 sticky top-20">
+          <div className="w-96 shrink-0 sticky top-20">
             {activeStakeholder ? (
               <StakeholderPanel
                 stakeholder={activeStakeholder}
