@@ -89,8 +89,8 @@ function MetallicScoreBars({
   const VAL_COL  = 26    // value text area
   const VBW      = LBL_W + G1 + TRACK_W + G2 + VAL_COL
   const TX       = LBL_W + G1   // track origin x
-  const ROW_H    = 30
-  const VBH      = SCORE_BARS_META.length * ROW_H + 6
+  const ROW_H    = 38
+  const VBH      = SCORE_BARS_META.length * ROW_H + 8
 
   const values = [adoptionScore, influenceScore, opennessScore]
 
@@ -133,18 +133,20 @@ function MetallicScoreBars({
             <rect x={TX} y={cy - 0.4} width={TRACK_W} height={0.8}
               fill={hex} opacity={0.08} rx={0.4} />
 
-            {/* Glow halo — soft blur sim */}
-            <rect x={TX} y={cy - 2} width={fillW} height={4}
-              fill={hex} opacity={0.10} rx={2} />
+            {/* Glow halo — wider and softer */}
+            <rect x={TX} y={cy - 3} width={fillW} height={6}
+              fill={hex} opacity={0.10} rx={3} />
+            <rect x={TX} y={cy - 1.5} width={fillW} height={3}
+              fill={hex} opacity={0.10} rx={1.5} />
 
-            {/* Main metallic bar — 2px */}
-            <rect x={TX} y={cy - 1} width={fillW} height={2}
-              fill={`url(#mb-${key})`} rx={1} />
+            {/* Main metallic bar — 3px */}
+            <rect x={TX} y={cy - 1.5} width={fillW} height={3}
+              fill={`url(#mb-${key})`} rx={1.5} />
 
-            {/* Top shine — 0.5px hairline */}
-            <rect x={TX + fillW * 0.08} y={cy - 1.5}
-              width={fillW * 0.45} height={0.5}
-              fill={light} opacity={0.55} rx={0.25} />
+            {/* Top shine — hairline */}
+            <rect x={TX + fillW * 0.08} y={cy - 2}
+              width={fillW * 0.45} height={0.7}
+              fill={light} opacity={0.60} rx={0.35} />
 
             {/* Value */}
             <text
@@ -307,7 +309,7 @@ function StakeholderPanel({
       <div className="flex divide-x divide-border/30">
 
         {/* LEFT — perfil + mapa de posición grande */}
-        <div className="w-[200px] shrink-0 px-4 py-4 flex flex-col gap-3">
+        <div className="w-[210px] shrink-0 px-3 py-4 flex flex-col gap-3">
 
           {/* Perfil arquetipo */}
           <div>
@@ -318,34 +320,15 @@ function StakeholderPanel({
             <p className="text-[9px] italic text-text-subtle mt-1">"{cfg.tagline}"</p>
           </div>
 
-          {/* Mapa de posición — grande, protagonista visual */}
+          {/* Mapa de posición — protagonista visual a ancho completo */}
           {stakeholder.interview ? (
-            <div className="flex flex-col items-center gap-1 mt-1">
+            <div className="flex justify-center mt-1">
               <MiniPositionMap
                 adoptionScore={stakeholder.interview.adoptionScore}
                 influenceScore={stakeholder.interview.influenceScore}
                 archetype={stakeholder.archetype}
-                size={112}
-              />
-              {/* Indicador de señal de influencia */}
-              <div className="flex items-end gap-[3px] mt-1">
-                {[0.25, 0.50, 0.75, 1.0].map((frac, i) => {
-                  const active = (stakeholder.interview!.influenceScore / 4) >= frac - 0.12
-                  return (
-                    <div
-                      key={i}
-                      className="w-[4px] rounded-[1px]"
-                      style={{
-                        height: `${7 + i * 4}px`,
-                        backgroundColor: active ? ARCH_HEX[stakeholder.archetype] : '#E2E8F0',
-                        opacity: active ? 0.82 : 0.35,
-                      }}
-                    />
-                  )
-                })}
-                <span className="text-[7px] font-mono text-text-subtle ml-1.5 mb-0.5">influencia</span>
-              </div>
-            </div>
+                size={160}
+              /></div>
           ) : (
             <div className="flex flex-col items-center justify-center flex-1 gap-1 opacity-35 py-6">
               <svg className="h-8 w-8 text-text-subtle" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round">
