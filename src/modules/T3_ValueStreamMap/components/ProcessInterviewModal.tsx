@@ -553,6 +553,7 @@ export function ProcessInterviewModal({
       owner:            formData.owner?.trim() || undefined,
       ownerRole:        formData.ownerRole?.trim() || undefined,
       description:      formData.description?.trim() || undefined,
+      phase:            'validacion',
       aiCategory,
       orgReadiness,
       opportunityLevel: oppLevel,

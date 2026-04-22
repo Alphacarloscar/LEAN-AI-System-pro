@@ -4,9 +4,21 @@
 
 import type {
   AICategoryCode, AICategoryConfig, OrgReadinessLevel,
-  OpportunityLevel, InterviewQuestion,
+  OpportunityLevel, ProcessPhase, InterviewQuestion,
   InterviewAnswerCode, ProcessInterviewResult,
 } from './types'
+
+// ── Configuración de fases ────────────────────────────────────
+
+export const PHASE_CONFIG: Record<ProcessPhase, {
+  label: string; badgeBg: string; badgeText: string; order: number
+}> = {
+  idea:            { label: 'Idea',            badgeBg: 'bg-gray-100 dark:bg-gray-800', badgeText: 'text-gray-500', order: 0 },
+  validacion:      { label: 'Validación',      badgeBg: 'bg-warning-light',             badgeText: 'text-warning-dark', order: 1 },
+  piloto:          { label: 'Piloto',          badgeBg: 'bg-info-light',                badgeText: 'text-info-dark', order: 2 },
+  estandarizacion: { label: 'Estandarización', badgeBg: 'bg-success-light',             badgeText: 'text-success-dark', order: 3 },
+  escalado:        { label: 'Escalado',        badgeBg: 'bg-navy/10 dark:bg-navy/20',   badgeText: 'text-navy dark:text-info-soft', order: 4 },
+}
 
 // ── Configuración de categorías IA ───────────────────────────
 

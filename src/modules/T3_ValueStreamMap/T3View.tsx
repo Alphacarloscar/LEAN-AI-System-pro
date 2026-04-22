@@ -1,14 +1,12 @@
 // ============================================================
-// T3 — Value Stream Map
+// T3 — Value Stream Map (Rediseño v2)
 //
-// Layout: header sticky + two-column (lista+matrix izq | panel der)
-//
-// Columna izquierda:
-//   - OpportunityMatrix SVG (readiness × oportunidad)
-//   - Lista de procesos agrupados por departamento
-//
-// Columna derecha (sticky):
-//   - ProcessPanel: categoría IA + scores + oportunidades
+// Layout: 3 zonas verticales
+//   1. HERO — Dos gráficas protagonistas (Opportunity Matrix +
+//      Department Chart), grandes, sin texto, impacto visual.
+//   2. BANNER — KPI de fases + lista de procesos (cards clicables).
+//   3. DETALLE — Se despliega debajo al seleccionar un proceso.
+//      Tabs: Oportunidades | Entrevista | Etapas (Sprint 3+)
 //
 // Sprint 2 MVP: datos en Zustand (persist local).
 // Sprint 3+: Supabase tabla `value_stream`.
@@ -17,13 +15,19 @@
 import { useState, useMemo }         from 'react'
 import { useNavigate }               from 'react-router-dom'
 import { useT3Store }                from './store'
-import { AI_CATEGORY_CONFIG, READINESS_CONFIG, OPPORTUNITY_CONFIG } from './constants'
+import {
+  AI_CATEGORY_CONFIG,
+  READINESS_CONFIG,
+  OPPORTUNITY_CONFIG,
+  PHASE_CONFIG,
+} from './constants'
 import { ProcessInterviewModal }     from './components/ProcessInterviewModal'
 import type {
-  ValueStream, AICategoryCode, OrgReadinessLevel, OpportunityLevel,
+  ValueStream, AICategoryCode, OrgReadinessLevel,
+  ProcessPhase,
 } from './types'
 
-// ── Colores hex por categoría IA ──────────────────────────────
+// ── Constantes de color ───────────────────────────────────────
 
 const CAT_HEX: Record<AICategoryCode, string> = {
   automatizacion_inteligente: '#6A90C0',
@@ -41,12 +45,9 @@ const CAT_ORDER: AICategoryCode[] = [
   'optimizacion_proceso',
 ]
 
-// ── Utilities UI ──────────────────────────────────────────────
+const ALL_PHASES: ProcessPhase[] = ['idea', 'validacion', 'piloto', 'estandarizacion', 'escalado']
 
-function CategoryDot({ category }: { category: AICategoryCode }) {
-  const cfg = AI_CATEGORY_CONFIG[category]
-  return <span className={`h-2 w-2 rounded-full ${cfg.dotBg} shrink-0`} />
-}
+// ── Badges ────────────────────────────────────────────────────
 
 function CategoryBadge({ category }: { category: AICategoryCode }) {
   const cfg = AI_CATEGORY_CONFIG[category]
@@ -67,8 +68,8 @@ function ReadinessBadge({ level }: { level: OrgReadinessLevel }) {
   )
 }
 
-function OpportunityBadge({ level }: { level: OpportunityLevel }) {
-  const cfg = OPPORTUNITY_CONFIG[level]
+function PhaseBadge({ phase }: { phase: ProcessPhase }) {
+  const cfg = PHASE_CONFIG[phase]
   return (
     <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}>
       {cfg.label}
@@ -76,81 +77,10 @@ function OpportunityBadge({ level }: { level: OpportunityLevel }) {
   )
 }
 
-// ── Barras de score T3 ────────────────────────────────────────
+// ── HERO CHART 1: Opportunity Matrix grande ───────────────────
+// Eje X = readiness, Eje Y = oportunidad IA. Dots by category.
 
-const T3_SCORE_BARS = [
-  { key: 'aut', label: 'AUTOMATIZACIÓN', hex: '#6A90C0', light: '#B8D0E8' },
-  { key: 'dat', label: 'DATOS',          hex: '#5FAF8A', light: '#B4E4CF' },
-  { key: 'imp', label: 'IMPACTO',        hex: '#D4A85C', light: '#E8D0A0' },
-] as const
-
-function T3ScoreBars({
-  automationScore,
-  dataScore,
-  impactScore,
-  trackWidth = 88,
-}: {
-  automationScore: number
-  dataScore:       number
-  impactScore:     number
-  trackWidth?:     number
-}) {
-  const MAX   = 4
-  const LBL_W = 72, G1 = 8, TRACK_W = trackWidth, G2 = 6, VAL_COL = 26
-  const VBW   = LBL_W + G1 + TRACK_W + G2 + VAL_COL
-  const TX    = LBL_W + G1
-  const ROW_H = 38, VBH = T3_SCORE_BARS.length * ROW_H + 8
-  const values = [automationScore, dataScore, impactScore]
-
-  return (
-    <svg viewBox={`0 0 ${VBW} ${VBH}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
-      <defs>
-        {T3_SCORE_BARS.map(({ key, hex, light }, i) => {
-          const fillW = Math.max((values[i] / MAX) * TRACK_W, 2)
-          return (
-            <linearGradient key={key} id={`t3bar-${key}`}
-              x1={TX} y1="0" x2={TX + fillW} y2="0"
-              gradientUnits="userSpaceOnUse">
-              <stop offset="0%"   stopColor={hex}   stopOpacity="0.15" />
-              <stop offset="30%"  stopColor={hex}   stopOpacity="0.92" />
-              <stop offset="58%"  stopColor={light} stopOpacity="1" />
-              <stop offset="85%"  stopColor={hex}   stopOpacity="0.80" />
-              <stop offset="100%" stopColor={hex}   stopOpacity="0.40" />
-            </linearGradient>
-          )
-        })}
-      </defs>
-      {T3_SCORE_BARS.map(({ key, label, hex, light }, i) => {
-        const val   = values[i]
-        const fillW = Math.max((val / MAX) * TRACK_W, 2)
-        const cy    = i * ROW_H + ROW_H / 2 + 3
-        return (
-          <g key={key}>
-            <text x={0} y={cy + 3} fontSize={7} fill="#64748B"
-              fontFamily="ui-monospace,monospace" letterSpacing="0.05em">
-              {label}
-            </text>
-            <rect x={TX} y={cy - 0.4} width={TRACK_W} height={0.8} fill={hex} opacity={0.08} rx={0.4} />
-            <rect x={TX} y={cy - 3}   width={fillW}   height={6}   fill={hex} opacity={0.10} rx={3} />
-            <rect x={TX} y={cy - 1.5} width={fillW}   height={3}   fill={`url(#t3bar-${key})`} rx={1.5} />
-            <rect x={TX + fillW * 0.08} y={cy - 2} width={fillW * 0.45} height={0.7}
-              fill={light} opacity={0.60} rx={0.35} />
-            <text x={TX + TRACK_W + G2} y={cy + 3} fontSize={8} fontWeight="600" fill="#94A3B8"
-              fontFamily="ui-monospace,monospace">
-              {val.toFixed(1)}<tspan fontSize={6.5} opacity={0.5}>/4</tspan>
-            </text>
-          </g>
-        )
-      })}
-    </svg>
-  )
-}
-
-// ── Mini Opportunity Matrix (SVG) ─────────────────────────────
-// Eje X = readiness organizacional, Eje Y = oportunidad IA.
-// Cada punto = un proceso. Tamaño del punto ∝ impacto.
-
-function OpportunityMatrix({
+function HeroOpportunityMatrix({
   processes,
   activeId,
   onSelect,
@@ -159,92 +89,103 @@ function OpportunityMatrix({
   activeId:  string | null
   onSelect:  (id: string) => void
 }) {
-  const S = 200    // tamaño del cuadrado
-  const P = 28     // padding
+  const S  = 320
+  const P  = 36
   const IN = S - P * 2
 
-  function getCoords(p: ValueStream) {
-    const score = p.interview?.opportunityScore ?? 0
-    const ready = p.interview?.readinessScore ?? 0
-    const rx  = P + (ready / 4) * IN
-    const ry  = P + (1 - score / 4) * IN
-    return { rx, ry }
-  }
-
-  const QUADRANT_LABELS = [
-    { x: P + IN * 0.72, y: P + IN * 0.14, text: 'Pilotar ya', color: '#5FAF8A' },
-    { x: P + IN * 0.04, y: P + IN * 0.14, text: 'Preparar',   color: '#D4A85C' },
-    { x: P + IN * 0.72, y: P + IN * 0.78, text: 'Quick wins', color: '#9AAEC8' },
-    { x: P + IN * 0.04, y: P + IN * 0.78, text: 'Evaluar',    color: '#94A3B8' },
+  const QUAD_LABELS = [
+    { qx: 0.60, qy: 0.08, text: 'PILOTAR YA',       color: '#5FAF8A' },
+    { qx: 0.03, qy: 0.08, text: 'PREPARAR TERRENO', color: '#D4A85C' },
+    { qx: 0.60, qy: 0.82, text: 'QUICK WINS',       color: '#9AAEC8' },
+    { qx: 0.03, qy: 0.82, text: 'EVALUAR',           color: '#94A3B8' },
   ]
 
   return (
     <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ display: 'block' }}>
       <defs>
-        <clipPath id="t3-matrix-clip">
-          <rect x={P} y={P} width={IN} height={IN} rx={4} />
+        <clipPath id="t3hero-clip">
+          <rect x={P} y={P} width={IN} height={IN} rx={6} />
         </clipPath>
+        {processes.map((p) => (
+          <radialGradient key={`glow-${p.id}`} id={`glow-${p.id}`}
+            cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor={CAT_HEX[p.aiCategory]} stopOpacity="0.35" />
+            <stop offset="100%" stopColor={CAT_HEX[p.aiCategory]} stopOpacity="0" />
+          </radialGradient>
+        ))}
       </defs>
 
       {/* Quadrant fills */}
-      <g clipPath="url(#t3-matrix-clip)">
+      <g clipPath="url(#t3hero-clip)">
         <rect x={P}        y={P}        width={IN/2} height={IN/2} fill="#D4A85C" opacity={0.04} />
         <rect x={P + IN/2} y={P}        width={IN/2} height={IN/2} fill="#5FAF8A" opacity={0.06} />
-        <rect x={P}        y={P + IN/2} width={IN/2} height={IN/2} fill="#94A3B8" opacity={0.03} />
+        <rect x={P}        y={P + IN/2} width={IN/2} height={IN/2} fill="#E5E7EB" opacity={0.03} />
         <rect x={P + IN/2} y={P + IN/2} width={IN/2} height={IN/2} fill="#9AAEC8" opacity={0.04} />
       </g>
 
-      {/* Border */}
-      <rect x={P} y={P} width={IN} height={IN} rx={4} fill="none"
-        stroke="#E5E7EB" strokeWidth={0.8} />
+      {/* Grid border */}
+      <rect x={P} y={P} width={IN} height={IN} rx={6} fill="none"
+        stroke="#E5E7EB" strokeWidth={1} />
 
-      {/* Crosshairs */}
+      {/* Dividers */}
       <line x1={P + IN/2} y1={P} x2={P + IN/2} y2={P + IN}
-        stroke="#E5E7EB" strokeWidth={0.6} strokeDasharray="2 2" />
+        stroke="#E5E7EB" strokeWidth={0.8} strokeDasharray="3 3" />
       <line x1={P} y1={P + IN/2} x2={P + IN} y2={P + IN/2}
-        stroke="#E5E7EB" strokeWidth={0.6} strokeDasharray="2 2" />
+        stroke="#E5E7EB" strokeWidth={0.8} strokeDasharray="3 3" />
 
       {/* Quadrant labels */}
-      {QUADRANT_LABELS.map((q, i) => (
-        <text key={i} x={q.x} y={q.y} fontSize={5.5} fill={q.color}
-          fontFamily="ui-monospace,monospace" letterSpacing="0.02em" opacity={0.7}>
+      {QUAD_LABELS.map((q, i) => (
+        <text key={i}
+          x={P + q.qx * IN} y={P + q.qy * IN}
+          fontSize={7} fill={q.color} opacity={0.80}
+          fontFamily="ui-monospace,monospace" letterSpacing="0.06em" fontWeight="700">
           {q.text}
         </text>
       ))}
 
       {/* Axis labels */}
-      <text x={P + IN/2} y={P - 7} fontSize={5.5} fill="#94A3B8"
-        fontFamily="ui-monospace,monospace" textAnchor="middle">
+      <text x={P + IN / 2} y={P - 12} fontSize={8} fill="#9CA3AF"
+        fontFamily="ui-monospace,monospace" textAnchor="middle" letterSpacing="0.08em">
         READINESS →
       </text>
       <text
-        x={P - 7} y={P + IN/2}
-        fontSize={5.5} fill="#94A3B8"
+        x={P - 14} y={P + IN / 2}
+        fontSize={8} fill="#9CA3AF"
         fontFamily="ui-monospace,monospace"
         textAnchor="middle"
-        transform={`rotate(-90, ${P - 7}, ${P + IN/2})`}
+        letterSpacing="0.08em"
+        transform={`rotate(-90, ${P - 14}, ${P + IN/2})`}
       >
         OPORTUNIDAD IA ↑
       </text>
 
       {/* Process dots */}
       {processes.map((p) => {
-        const { rx, ry } = getCoords(p)
-        const hex        = CAT_HEX[p.aiCategory]
-        const isActive   = p.id === activeId
-        const dotR       = isActive ? 5.5 : 4
+        const score    = p.interview?.opportunityScore ?? 0
+        const ready    = p.interview?.readinessScore   ?? 0
+        const dx       = P + (ready / 4) * IN
+        const dy       = P + (1 - score / 4) * IN
+        const hex      = CAT_HEX[p.aiCategory]
+        const isActive = p.id === activeId
+        const r        = isActive ? 9 : 7
+
         return (
           <g key={p.id} style={{ cursor: 'pointer' }} onClick={() => onSelect(p.id)}>
-            {/* Glow */}
-            <circle cx={rx} cy={ry} r={dotR * 2.2} fill={hex} opacity={isActive ? 0.18 : 0.08} />
-            <circle cx={rx} cy={ry} r={dotR * 1.4} fill={hex} opacity={isActive ? 0.22 : 0.12} />
+            {/* Outer glow */}
+            <circle cx={dx} cy={dy} r={r * 3.5}
+              fill={`url(#glow-${p.id})`} />
+            {/* Mid halo */}
+            <circle cx={dx} cy={dy} r={r * 1.8}
+              fill={hex} opacity={isActive ? 0.25 : 0.12} />
             {/* Main dot */}
-            <circle cx={rx} cy={ry} r={dotR} fill={hex} opacity={isActive ? 1 : 0.75}
-              stroke={isActive ? '#fff' : 'none'} strokeWidth={1} />
-            {/* Shine */}
-            <ellipse cx={rx - dotR * 0.2} cy={ry - dotR * 0.3}
-              rx={dotR * 0.35} ry={dotR * 0.2}
-              fill="#fff" opacity={0.35} />
+            <circle cx={dx} cy={dy} r={r} fill={hex}
+              opacity={isActive ? 1 : 0.80}
+              stroke={isActive ? '#fff' : 'rgba(255,255,255,0.5)'}
+              strokeWidth={isActive ? 1.5 : 0.8} />
+            {/* Metallic shine */}
+            <ellipse cx={dx - r * 0.22} cy={dy - r * 0.30}
+              rx={r * 0.38} ry={r * 0.22}
+              fill="#fff" opacity={0.40} />
           </g>
         )
       })}
@@ -252,9 +193,9 @@ function OpportunityMatrix({
   )
 }
 
-// ── Resumen por departamento (overview chart) ─────────────────
+// ── HERO CHART 2: Department Stacked Chart grande ─────────────
 
-function DepartmentSummaryChart({ processes }: { processes: ValueStream[] }) {
+function HeroDepartmentChart({ processes }: { processes: ValueStream[] }) {
   const byDept = useMemo(() => {
     const map = new Map<string, ValueStream[]>()
     processes.forEach((p) => {
@@ -276,107 +217,266 @@ function DepartmentSummaryChart({ processes }: { processes: ValueStream[] }) {
       .sort((a, b) => b.highOpp - a.highOpp || b.total - a.total)
   }, [processes])
 
-  const BW = 10, GAP = 28, LM = 26, RM = 8
-  const CH = 80, TM = 16, LH = 28
-  const totalW = LM + byDept.length * (BW + GAP) - GAP + RM
-  const svgH   = TM + CH + LH
+  const BW = 18, GAP = 30, LM = 22, RM = 8
+  const CH = 160, TM = 20, LH = 36
+  const totalW  = LM + byDept.length * (BW + GAP) - GAP + RM
+  const svgH    = TM + CH + LH
 
   return (
     <svg viewBox={`0 0 ${totalW} ${svgH}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
       {byDept.map(({ dept, total, highOpp, segments }, di) => {
         const x = LM + di * (BW + GAP)
         let stackY = TM + CH
-
-        const isHighRisk = highOpp > 0
-        const labelColor = isHighRisk ? '#C06060' : '#94A3B8'
+        const isHigh = highOpp > 0
 
         return (
           <g key={dept}>
+            {/* Track base */}
+            <rect x={x} y={TM} width={BW} height={CH}
+              fill="currentColor" opacity={0.04} rx={3} className="text-gray-500" />
+
             {segments.map(({ cat, count }) => {
               const segH = (count / total) * CH
               stackY -= segH
-              const hex  = CAT_HEX[cat]
+              const hex = CAT_HEX[cat]
               return (
                 <g key={cat}>
                   <defs>
-                    <linearGradient id={`t3dep-${di}-${cat}`}
+                    <linearGradient id={`herobar-${di}-${cat}`}
                       x1="0" y1="0" x2="0" y2="1"
                       gradientUnits="userSpaceOnUse">
                       <stop offset="0%"   stopColor={hex} stopOpacity="0.95" />
-                      <stop offset="55%"  stopColor={hex} stopOpacity="0.75" />
-                      <stop offset="100%" stopColor={hex} stopOpacity="0.45" />
+                      <stop offset="60%"  stopColor={hex} stopOpacity="0.75" />
+                      <stop offset="100%" stopColor={hex} stopOpacity="0.40" />
                     </linearGradient>
                   </defs>
-                  <rect
-                    x={x} y={stackY} width={BW} height={segH}
-                    fill={`url(#t3dep-${di}-${cat})`} rx={2}
-                  />
-                  <rect x={x + BW * 0.2} y={stackY + 0.5}
-                    width={BW * 0.35} height={Math.min(segH * 0.45, 2.5)}
-                    fill="#fff" opacity={0.28} rx={0.8} />
+                  <rect x={x} y={stackY} width={BW} height={segH}
+                    fill={`url(#herobar-${di}-${cat})`} rx={2} />
+                  <rect x={x + BW * 0.18} y={stackY + 0.8}
+                    width={BW * 0.32} height={Math.min(segH * 0.42, 3.5)}
+                    fill="#fff" opacity={0.30} rx={1} />
                 </g>
               )
             })}
 
-            {/* Track base */}
-            <rect x={x} y={TM} width={BW} height={CH}
-              fill="currentColor" opacity={0.04} rx={2} className="text-gray-500" />
-
-            {/* Count */}
-            <text x={x + BW / 2} y={TM - 5} fontSize={7} fontWeight="700"
-              fill={isHighRisk ? '#C06060' : '#64748B'}
+            {/* Count label */}
+            <text x={x + BW / 2} y={TM - 7}
+              fontSize={9} fontWeight="700"
+              fill={isHigh ? '#C06060' : '#6B7280'}
               textAnchor="middle" fontFamily="ui-monospace,monospace">
               {total}
             </text>
 
             {/* Risk dot */}
-            {isHighRisk && (
-              <circle cx={x + BW + 3} cy={TM - 3} r={2} fill="#C06060" opacity={0.7} />
+            {isHigh && (
+              <circle cx={x + BW + 4} cy={TM - 5} r={2.5} fill="#C06060" opacity={0.75} />
             )}
 
-            {/* Dept label */}
-            <text
-              x={x + BW / 2}
-              y={TM + CH + LH * 0.5}
-              fontSize={5.5}
-              fill={labelColor}
-              textAnchor="middle"
-              fontFamily="ui-sans-serif,sans-serif"
-              style={{ letterSpacing: '0.01em' }}
-            >
-              {dept.split(' ')[0]}
-            </text>
+            {/* Dept label — split into 2 lines if long */}
+            {(() => {
+              const words = dept.split(' ')
+              const line1 = words.slice(0, Math.ceil(words.length / 2)).join(' ')
+              const line2 = words.slice(Math.ceil(words.length / 2)).join(' ')
+              return (
+                <>
+                  <text x={x + BW / 2} y={TM + CH + 13}
+                    fontSize={6.5} fill={isHigh ? '#C06060' : '#9CA3AF'}
+                    textAnchor="middle" fontFamily="ui-sans-serif,sans-serif">
+                    {line1}
+                  </text>
+                  {line2 && (
+                    <text x={x + BW / 2} y={TM + CH + 22}
+                      fontSize={6.5} fill={isHigh ? '#C06060' : '#9CA3AF'}
+                      textAnchor="middle" fontFamily="ui-sans-serif,sans-serif">
+                      {line2}
+                    </text>
+                  )}
+                </>
+              )
+            })()}
           </g>
         )
       })}
 
-      {/* Eje Y */}
+      {/* Y axis */}
       <line x1={LM - 4} y1={TM} x2={LM - 4} y2={TM + CH}
         stroke="#E5E7EB" strokeWidth={0.6} />
       {[0, 0.5, 1].map((pct) => (
-        <text key={pct} x={LM - 7} y={TM + CH - pct * CH + 2}
-          fontSize={5.5} textAnchor="end" fill="#94A3B8"
-          fontFamily="ui-monospace,monospace">
-          {pct === 0 ? '' : pct === 0.5 ? '50%' : '100%'}
-        </text>
+        <g key={pct}>
+          <line x1={LM - 6} y1={TM + CH - pct * CH} x2={LM - 4} y2={TM + CH - pct * CH}
+            stroke="#E5E7EB" strokeWidth={0.6} />
+          <text x={LM - 8} y={TM + CH - pct * CH + 2}
+            fontSize={6} textAnchor="end" fill="#9CA3AF"
+            fontFamily="ui-monospace,monospace">
+            {pct === 0 ? '' : pct === 0.5 ? '50%' : '100%'}
+          </text>
+        </g>
       ))}
     </svg>
   )
 }
 
-// ── ProcessPanel — detalle del proceso seleccionado ───────────
+// ── Score bars T3 ─────────────────────────────────────────────
 
-function ProcessPanel({
-  process,
+const T3_SCORE_BARS = [
+  { key: 'aut', label: 'AUTOMATIZACIÓN', hex: '#6A90C0', light: '#B8D0E8' },
+  { key: 'dat', label: 'DATOS',          hex: '#5FAF8A', light: '#B4E4CF' },
+  { key: 'vol', label: 'VOLUMEN',        hex: '#9AAEC8', light: '#C8DAE8' },
+  { key: 'imp', label: 'IMPACTO',        hex: '#D4A85C', light: '#E8D0A0' },
+  { key: 'rdy', label: 'READINESS',      hex: '#C06060', light: '#DDA8A8' },
+] as const
+
+function T3ScoreBars({
+  automationScore, dataScore, volumeScore, impactScore, readinessScore,
+  trackWidth = 200,
 }: {
-  process: ValueStream
+  automationScore: number; dataScore: number; volumeScore: number
+  impactScore: number; readinessScore: number; trackWidth?: number
 }) {
-  const catCfg   = AI_CATEGORY_CONFIG[process.aiCategory]
-  const hasInterview = !!process.interview
+  const MAX = 4
+  const LBL_W = 80, G1 = 10, TRACK_W = trackWidth, G2 = 8, VAL_COL = 28
+  const VBW = LBL_W + G1 + TRACK_W + G2 + VAL_COL
+  const TX  = LBL_W + G1
+  const ROW_H = 36, VBH = T3_SCORE_BARS.length * ROW_H + 8
+  const values = [automationScore, dataScore, volumeScore, impactScore, readinessScore]
 
-  const validatedOpps  = process.opportunities.filter((o) => o.status === 'validada')
-  const suggestedOpps  = process.opportunities.filter((o) => o.status === 'sugerida')
-  const discardedOpps  = process.opportunities.filter((o) => o.status === 'descartada')
+  return (
+    <svg viewBox={`0 0 ${VBW} ${VBH}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
+      <defs>
+        {T3_SCORE_BARS.map(({ key, hex, light }, i) => {
+          const fillW = Math.max((values[i] / MAX) * TRACK_W, 2)
+          return (
+            <linearGradient key={key} id={`t3sb-${key}`}
+              x1={TX} y1="0" x2={TX + fillW} y2="0"
+              gradientUnits="userSpaceOnUse">
+              <stop offset="0%"   stopColor={hex}   stopOpacity="0.15" />
+              <stop offset="30%"  stopColor={hex}   stopOpacity="0.92" />
+              <stop offset="58%"  stopColor={light} stopOpacity="1" />
+              <stop offset="85%"  stopColor={hex}   stopOpacity="0.80" />
+              <stop offset="100%" stopColor={hex}   stopOpacity="0.40" />
+            </linearGradient>
+          )
+        })}
+      </defs>
+      {T3_SCORE_BARS.map(({ key, label, hex, light }, i) => {
+        const val   = values[i]
+        const fillW = Math.max((val / MAX) * TRACK_W, 2)
+        const cy    = i * ROW_H + ROW_H / 2 + 3
+        return (
+          <g key={key}>
+            <text x={0} y={cy + 3} fontSize={7.5} fill="#64748B"
+              fontFamily="ui-monospace,monospace" letterSpacing="0.05em">
+              {label}
+            </text>
+            <rect x={TX} y={cy - 0.4} width={TRACK_W} height={0.8}
+              fill={hex} opacity={0.08} rx={0.4} />
+            <rect x={TX} y={cy - 3.5} width={fillW} height={7}
+              fill={hex} opacity={0.10} rx={3.5} />
+            <rect x={TX} y={cy - 1.5} width={fillW} height={3}
+              fill={`url(#t3sb-${key})`} rx={1.5} />
+            <rect x={TX + fillW * 0.08} y={cy - 2}
+              width={fillW * 0.45} height={0.7}
+              fill={light} opacity={0.60} rx={0.35} />
+            <text x={TX + TRACK_W + G2} y={cy + 3}
+              fontSize={8} fontWeight="600" fill="#94A3B8"
+              fontFamily="ui-monospace,monospace">
+              {val.toFixed(1)}<tspan fontSize={6.5} opacity={0.5}>/4</tspan>
+            </text>
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+// ── Mini matrix de posición para el panel de detalle ──────────
+
+function DetailPositionMap({
+  opportunityScore,
+  readinessScore,
+  category,
+  size = 200,
+}: {
+  opportunityScore: number
+  readinessScore:   number
+  category:         AICategoryCode
+  size?:            number
+}) {
+  const S = size, P = Math.round(S * 0.10), IN = S - P * 2
+  const dx  = P + (readinessScore   / 4) * IN
+  const dy  = P + (1 - opportunityScore / 4) * IN
+  const hex = CAT_HEX[category]
+  const r   = S * 0.048
+
+  const QUAD_LABELS = [
+    { qx: 0.52, qy: 0.06, text: 'Pilotar ya',       color: '#5FAF8A' },
+    { qx: 0.02, qy: 0.06, text: 'Preparar',          color: '#D4A85C' },
+    { qx: 0.52, qy: 0.86, text: 'Quick wins',        color: '#9AAEC8' },
+    { qx: 0.02, qy: 0.86, text: 'Evaluar',           color: '#94A3B8' },
+  ]
+
+  return (
+    <svg viewBox={`0 0 ${S} ${S}`} width={S} height={S} style={{ display: 'block' }}>
+      <defs>
+        <clipPath id="detail-map-clip">
+          <rect x={P} y={P} width={IN} height={IN} rx={5} />
+        </clipPath>
+        <radialGradient id="detail-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stopColor={hex} stopOpacity="0.40" />
+          <stop offset="100%" stopColor={hex} stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      <g clipPath="url(#detail-map-clip)">
+        <rect x={P}        y={P}        width={IN/2} height={IN/2} fill="#D4A85C" opacity={0.04} />
+        <rect x={P + IN/2} y={P}        width={IN/2} height={IN/2} fill="#5FAF8A" opacity={0.06} />
+        <rect x={P}        y={P + IN/2} width={IN/2} height={IN/2} fill="#E5E7EB" opacity={0.03} />
+        <rect x={P + IN/2} y={P + IN/2} width={IN/2} height={IN/2} fill="#9AAEC8" opacity={0.04} />
+      </g>
+
+      <rect x={P} y={P} width={IN} height={IN} rx={5} fill="none"
+        stroke="#E5E7EB" strokeWidth={1} />
+      <line x1={P + IN/2} y1={P} x2={P + IN/2} y2={P + IN}
+        stroke="#E5E7EB" strokeWidth={0.6} strokeDasharray="3 3" />
+      <line x1={P} y1={P + IN/2} x2={P + IN} y2={P + IN/2}
+        stroke="#E5E7EB" strokeWidth={0.6} strokeDasharray="3 3" />
+
+      {QUAD_LABELS.map((q, i) => (
+        <text key={i}
+          x={P + q.qx * IN} y={P + q.qy * IN}
+          fontSize={S * 0.045} fill={q.color} opacity={0.75}
+          fontFamily="ui-monospace,monospace" letterSpacing="0.03em">
+          {q.text}
+        </text>
+      ))}
+
+      {/* Glow + dot */}
+      <circle cx={dx} cy={dy} r={r * 3.5} fill="url(#detail-glow)" />
+      <circle cx={dx} cy={dy} r={r * 1.8} fill={hex} opacity={0.20} />
+      <circle cx={dx} cy={dy} r={r}       fill={hex}
+        stroke="#fff" strokeWidth={1.5} />
+      <ellipse cx={dx - r * 0.22} cy={dy - r * 0.30}
+        rx={r * 0.40} ry={r * 0.22}
+        fill="#fff" opacity={0.42} />
+
+      {/* Crosshair lines from dot to axes */}
+      <line x1={P} y1={dy} x2={dx - r} y2={dy}
+        stroke={hex} strokeWidth={0.5} strokeDasharray="2 2" opacity={0.4} />
+      <line x1={dx} y1={P + IN} x2={dx} y2={dy + r}
+        stroke={hex} strokeWidth={0.5} strokeDasharray="2 2" opacity={0.4} />
+    </svg>
+  )
+}
+
+// ── Panel de detalle del proceso (desplegado debajo) ──────────
+
+type DetailTab = 'oportunidades' | 'entrevista' | 'etapas'
+
+function ProcessDetailPanel({ process }: { process: ValueStream }) {
+  const [tab, setTab] = useState<DetailTab>('oportunidades')
+
+  const catCfg       = AI_CATEGORY_CONFIG[process.aiCategory]
+  const hasInterview = !!process.interview
 
   const effortColors = {
     bajo:  'bg-success-light text-success-dark',
@@ -389,197 +489,304 @@ function ProcessPanel({
     alto:  'bg-navy/10 dark:bg-navy/20 text-navy dark:text-info-soft',
   }
 
-  return (
-    <div className="flex flex-col h-full">
-      {/* HEADER */}
-      <div className="flex items-start divide-x divide-border dark:divide-white/6
-        border-b border-border dark:border-white/6">
+  const INTERVIEW_LABELS: Record<number, string> = {
+    1: '¿Qué % es repetitivo?',
+    2: '¿Disponibilidad de datos?',
+    3: '¿Frecuencia y volumen?',
+    4: '¿Impacto de mejora?',
+    5: '¿Actitud del equipo?',
+    6: '¿Tiempo manual/semana?',
+  }
 
-        {/* Identidad */}
-        <div className="flex-1 px-4 py-3 min-w-0">
+  return (
+    <div className="border-t border-border dark:border-white/6 bg-white dark:bg-gray-950">
+
+      {/* Panel header */}
+      <div className="flex items-start gap-6 px-8 py-5 border-b border-border dark:border-white/6">
+
+        {/* Identity */}
+        <div className="flex-1 min-w-0">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
             {process.department}
+            {process.owner && ` · ${process.owner}`}
+            {process.ownerRole && ` · ${process.ownerRole}`}
           </p>
-          <p className="text-sm font-semibold text-lean-black dark:text-gray-100 leading-snug">
+          <h2 className="text-lg font-semibold text-lean-black dark:text-gray-100 leading-tight mb-2">
             {process.name}
-          </p>
-          {(process.owner || process.ownerRole) && (
-            <p className="text-xs text-text-subtle mt-0.5">
-              {[process.owner, process.ownerRole].filter(Boolean).join(' · ')}
-            </p>
-          )}
-          <div className="flex flex-wrap gap-1.5 mt-2">
+          </h2>
+          <div className="flex flex-wrap gap-1.5">
+            <PhaseBadge phase={process.phase} />
             <CategoryBadge category={process.aiCategory} />
             <ReadinessBadge level={process.orgReadiness} />
-            <OpportunityBadge level={process.opportunityLevel} />
             {process.manualOverride && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-warning-light text-warning-dark">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold
+                bg-warning-light text-warning-dark">
                 Override consultor
               </span>
             )}
           </div>
+          {process.description && (
+            <p className="text-xs text-text-muted mt-2 leading-relaxed max-w-2xl">
+              {process.description}
+            </p>
+          )}
         </div>
 
-        {/* Oportunity score */}
+        {/* Opp score hero */}
         {hasInterview && (
-          <div className="w-[100px] px-3 py-3 flex flex-col items-center justify-center">
-            <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-1 text-center">
-              Oportunidad
+          <div className="shrink-0 text-center">
+            <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-0.5">
+              Score oportunidad
             </p>
-            <p className="text-2xl font-bold text-lean-black dark:text-gray-100 tabular-nums">
+            <p className="text-4xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
               {process.interview!.opportunityScore.toFixed(1)}
             </p>
-            <p className="text-[9px] text-text-subtle">/4.0</p>
+            <p className="text-[10px] text-text-subtle">/4.0</p>
           </div>
         )}
       </div>
 
-      {/* BODY */}
-      <div className="flex divide-x divide-border/30 dark:divide-white/6 min-h-0 flex-1">
+      {/* Tabs */}
+      <div className="flex gap-0 border-b border-border dark:border-white/6 px-8">
+        {([
+          { key: 'oportunidades', label: 'Oportunidades IA' },
+          { key: 'entrevista',    label: 'Entrevista' },
+          { key: 'etapas',       label: 'Etapas del proceso' },
+        ] as { key: DetailTab; label: string }[]).map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={[
+              'px-4 py-3 text-xs font-medium border-b-2 transition-colors',
+              tab === key
+                ? 'border-navy text-lean-black dark:text-gray-100'
+                : 'border-transparent text-text-muted hover:text-text-default',
+            ].join(' ')}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-        {/* LEFT — descripción + mini matrix */}
-        <div className="w-[180px] shrink-0 px-3 py-4 flex flex-col gap-3">
-          <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
-              Categoría IA
-            </p>
-            <p className="text-[11px] font-semibold text-lean-black dark:text-gray-200 leading-snug mb-1">
-              {catCfg.tagline}
-            </p>
-            <p className="text-[11px] text-text-muted leading-relaxed">
-              {catCfg.description}
-            </p>
-          </div>
+      {/* Tab content */}
+      <div className="px-8 py-6">
 
-          {/* Mini matrix posición */}
-          {hasInterview && (
-            <div className="flex flex-col items-center gap-1">
-              <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle">
-                Posición
-              </p>
-              <OpportunityMatrix
-                processes={[process]}
-                activeId={process.id}
-                onSelect={() => undefined}
-              />
-            </div>
-          )}
+        {/* ── TAB: OPORTUNIDADES ───────────────────────────── */}
+        {tab === 'oportunidades' && (
+          <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8">
 
-          {!hasInterview && (
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-[11px] text-text-subtle text-center leading-relaxed">
-                Entrevista pendiente
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT — oportunidades IA */}
-        <div className="flex-1 px-4 py-4 overflow-y-auto flex flex-col gap-4">
-          <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
-              Oportunidades IA
-            </p>
-            {process.opportunities.length === 0 ? (
-              <p className="text-xs text-text-subtle">
-                Completa la entrevista para generar oportunidades.
-              </p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {/* Validadas primero */}
-                {validatedOpps.map((opp) => (
-                  <div key={opp.id}
-                    className="rounded-xl border border-success-dark/20 bg-success-light/10
-                      dark:bg-success-dark/5 px-3 py-2.5">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-success-dark" />
-                      <p className="text-[11px] font-semibold text-lean-black dark:text-gray-200">
-                        {opp.title}
-                      </p>
-                      <span className="ml-auto text-[9px] font-semibold text-success-dark">VALIDADA</span>
-                    </div>
-                    <p className="text-[11px] text-text-muted leading-relaxed mb-1.5">
-                      {opp.description}
-                    </p>
-                    <div className="flex gap-1.5 flex-wrap">
-                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${effortColors[opp.effort]}`}>
-                        Esfuerzo {opp.effort}
-                      </span>
-                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${impactColors[opp.impact]}`}>
-                        Impacto {opp.impact}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Sugeridas */}
-                {suggestedOpps.map((opp) => (
-                  <div key={opp.id}
-                    className="rounded-xl border border-border dark:border-white/8
-                      bg-white dark:bg-gray-900/50 px-3 py-2.5">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-info-dark" />
-                      <p className="text-[11px] font-semibold text-lean-black dark:text-gray-200">
-                        {opp.title}
-                      </p>
-                    </div>
-                    <p className="text-[11px] text-text-muted leading-relaxed mb-1.5">
-                      {opp.description}
-                    </p>
-                    <div className="flex gap-1.5 flex-wrap">
-                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${effortColors[opp.effort]}`}>
-                        Esfuerzo {opp.effort}
-                      </span>
-                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${impactColors[opp.impact]}`}>
-                        Impacto {opp.impact}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Descartadas (colapsadas) */}
-                {discardedOpps.length > 0 && (
-                  <p className="text-[10px] text-text-subtle">
-                    + {discardedOpps.length} descartada{discardedOpps.length > 1 ? 's' : ''}
+            {/* LEFT — posición map grande */}
+            {hasInterview ? (
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
+                  Posición en la matriz
+                </p>
+                <DetailPositionMap
+                  opportunityScore={process.interview!.opportunityScore}
+                  readinessScore={process.interview!.readinessScore}
+                  category={process.aiCategory}
+                  size={200}
+                />
+                <div className="w-full">
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+                    Categoría IA
                   </p>
-                )}
+                  <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-1">
+                    {catCfg.tagline}
+                  </p>
+                  <p className="text-[11px] text-text-muted leading-relaxed">
+                    {catCfg.description}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center gap-3 py-8">
+                <div className="h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xl">
+                  ◎
+                </div>
+                <p className="text-xs text-text-muted">
+                  Completa la entrevista para posicionar este proceso.
+                </p>
+              </div>
+            )}
+
+            {/* RIGHT — oportunidades IA */}
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-4">
+                Oportunidades IA identificadas · {process.opportunities.length}
+              </p>
+
+              {process.opportunities.length === 0 ? (
+                <p className="text-xs text-text-subtle">
+                  Completa la entrevista para generar oportunidades automáticamente.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {process.opportunities.map((opp) => {
+                    const isValidated = opp.status === 'validada'
+                    return (
+                      <div key={opp.id}
+                        className={[
+                          'rounded-2xl border px-4 py-3.5 flex flex-col gap-2',
+                          isValidated
+                            ? 'border-success-dark/20 bg-success-light/8 dark:bg-success-dark/5'
+                            : 'border-border dark:border-white/8 bg-white dark:bg-gray-900/50',
+                        ].join(' ')}>
+                        <div className="flex items-start gap-2">
+                          <span className={`h-1.5 w-1.5 rounded-full mt-1 shrink-0 ${
+                            isValidated ? 'bg-success-dark' : 'bg-info-dark'
+                          }`} />
+                          <p className="text-xs font-semibold text-lean-black dark:text-gray-200 leading-snug">
+                            {opp.title}
+                          </p>
+                          {isValidated && (
+                            <span className="ml-auto shrink-0 text-[9px] font-bold text-success-dark">
+                              ✓
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-text-muted leading-relaxed">
+                          {opp.description}
+                        </p>
+                        <div className="flex gap-1.5 flex-wrap mt-auto">
+                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${effortColors[opp.effort]}`}>
+                            Esfuerzo {opp.effort}
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${impactColors[opp.impact]}`}>
+                            Impacto {opp.impact}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Notas del consultor */}
+              {process.notes && (
+                <div className="mt-6 rounded-2xl bg-gray-50 dark:bg-gray-800/50
+                  border border-border dark:border-white/6 px-4 py-3">
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+                    Notas del consultor
+                  </p>
+                  <p className="text-xs text-text-muted leading-relaxed italic">{process.notes}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB: ENTREVISTA ──────────────────────────────── */}
+        {tab === 'entrevista' && (
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
+
+            {/* Preguntas + respuestas */}
+            <div>
+              {hasInterview ? (
+                <>
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-4">
+                    Respuestas de la entrevista
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    {Object.entries(process.interview!.answers).map(([qId, answer]) => (
+                      <div key={qId}
+                        className="rounded-xl border border-border dark:border-white/8
+                          bg-white dark:bg-gray-900/50 px-4 py-3">
+                        <p className="text-[10px] font-mono text-text-subtle mb-0.5">
+                          P{qId}
+                        </p>
+                        <p className="text-xs text-text-muted mb-1.5">
+                          {INTERVIEW_LABELS[parseInt(qId)] ?? `Pregunta ${qId}`}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <span className="h-6 w-6 rounded-full bg-navy flex items-center justify-center
+                            text-[10px] font-bold text-white shrink-0">
+                            {answer}
+                          </span>
+                          <p className="text-xs font-medium text-lean-black dark:text-gray-200">
+                            Respuesta {answer}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center
+                    justify-center text-2xl">
+                    ✎
+                  </div>
+                  <p className="text-sm font-medium text-text-muted">Sin entrevista registrada</p>
+                  <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
+                    Usa el botón "+ Proceso" y selecciona este proceso para completar la entrevista estructurada.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Score bars */}
+            {hasInterview && (
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-4">
+                  Scores del diagnóstico
+                </p>
+                <T3ScoreBars
+                  automationScore={process.interview!.automationScore}
+                  dataScore={process.interview!.dataScore}
+                  volumeScore={process.interview!.volumeScore}
+                  impactScore={process.interview!.impactScore}
+                  readinessScore={process.interview!.readinessScore}
+                  trackWidth={200}
+                />
+                <div className="mt-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50
+                  border border-border dark:border-white/6 px-4 py-3">
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
+                    Score oportunidad compuesto
+                  </p>
+                  <p className="text-2xl font-bold text-lean-black dark:text-gray-100 tabular-nums">
+                    {process.interview!.opportunityScore.toFixed(2)}
+                    <span className="text-sm font-normal text-text-subtle">/4.00</span>
+                  </p>
+                  <p className="text-[10px] text-text-subtle mt-1">
+                    Ponderación: automatización 35% · datos 25% · volumen 20% · impacto 20%
+                  </p>
+                </div>
               </div>
             )}
           </div>
+        )}
 
-          {/* Descripción del proceso */}
-          {process.description && (
-            <div>
-              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
-                Descripción del proceso
-              </p>
-              <p className="text-[11px] text-text-muted leading-relaxed">{process.description}</p>
+        {/* ── TAB: ETAPAS (Sprint 3+) ──────────────────────── */}
+        {tab === 'etapas' && (
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
+            <div className="h-14 w-14 rounded-3xl bg-navy/5 dark:bg-navy/10 flex items-center
+              justify-center text-3xl">
+              ◎
             </div>
-          )}
-
-          {/* Notas del consultor */}
-          {process.notes && (
             <div>
-              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
-                Notas del consultor
+              <p className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-1">
+                Etapas del proceso — Sprint 3
               </p>
-              <p className="text-[11px] text-text-muted leading-relaxed italic">{process.notes}</p>
+              <p className="text-xs text-text-muted max-w-sm leading-relaxed">
+                El mapeado de etapas (VSM swimlane) con tiempos de proceso, espera, handoffs
+                y detección de cuellos de botella estará disponible en Sprint 3.
+              </p>
             </div>
-          )}
-        </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full
+              bg-navy/5 dark:bg-navy/10 border border-navy/10">
+              <span className="text-[10px] font-mono text-navy dark:text-info-soft uppercase tracking-widest">
+                Próximamente en Sprint 3
+              </span>
+            </div>
+            {process.stages && process.stages.length > 0 && (
+              <p className="text-xs text-text-subtle">
+                {process.stages.length} etapa{process.stages.length > 1 ? 's' : ''} definida{process.stages.length > 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+        )}
       </div>
-
-      {/* FOOTER — score bars */}
-      {hasInterview && (
-        <div className="border-t border-border dark:border-white/6 px-4 py-3">
-          <T3ScoreBars
-            automationScore={process.interview!.automationScore}
-            dataScore={process.interview!.dataScore}
-            impactScore={process.interview!.impactScore}
-            trackWidth={260}
-          />
-        </div>
-      )}
     </div>
   )
 }
@@ -592,36 +799,38 @@ interface T3ViewProps {
 }
 
 export function T3View({ companyName, onBack }: T3ViewProps) {
-  const navigate                    = useNavigate()
-  const { processes, addProcess } = useT3Store()
-  const [activeId, setActiveId]     = useState<string | null>(processes[0]?.id ?? null)
-  const [showModal, setShowModal]   = useState(false)
+  const navigate                          = useNavigate()
+  const { processes, addProcess }         = useT3Store()
+  const [activeId, setActiveId]           = useState<string | null>(null)
+  const [showModal, setShowModal]         = useState(false)
+  const [filterPhase, setFilterPhase]     = useState<ProcessPhase | null>(null)
+  const [filterCat, setFilterCat]         = useState<AICategoryCode | null>(null)
 
   const activeProcess = useMemo(
     () => processes.find((p) => p.id === activeId) ?? null,
     [processes, activeId]
   )
 
-  // Agrupar por departamento
-  const byDept = useMemo(() => {
-    const map = new Map<string, ValueStream[]>()
-    processes.forEach((p) => {
-      const arr = map.get(p.department) ?? []
-      arr.push(p)
-      map.set(p.department, arr)
-    })
-    return Array.from(map.entries()).sort((a, b) => {
-      const aHigh = a[1].filter((p) => p.opportunityLevel === 'critica' || p.opportunityLevel === 'alta').length
-      const bHigh = b[1].filter((p) => p.opportunityLevel === 'critica' || p.opportunityLevel === 'alta').length
-      return bHigh - aHigh || b[1].length - a[1].length
-    })
-  }, [processes])
+  // Procesos filtrados
+  const filtered = useMemo(
+    () => processes
+      .filter((p) => !filterPhase || p.phase === filterPhase)
+      .filter((p) => !filterCat   || p.aiCategory === filterCat)
+      .sort((a, b) => {
+        const oA = a.interview?.opportunityScore ?? 0
+        const oB = b.interview?.opportunityScore ?? 0
+        return oB - oA
+      }),
+    [processes, filterPhase, filterCat]
+  )
 
-  // Métricas globales
+  // KPIs globales
+  const phaseCount  = Object.fromEntries(
+    ALL_PHASES.map((ph) => [ph, processes.filter((p) => p.phase === ph).length])
+  ) as Record<ProcessPhase, number>
+
   const totalCritica = processes.filter((p) => p.opportunityLevel === 'critica').length
   const totalAlta    = processes.filter((p) => p.opportunityLevel === 'alta').length
-  const totalMedia   = processes.filter((p) => p.opportunityLevel === 'media').length
-  const readyAlta    = processes.filter((p) => p.orgReadiness === 'alta').length
 
   const existingDepts = Array.from(new Set(processes.map((p) => p.department)))
 
@@ -630,17 +839,21 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
     setShowModal(false)
   }
 
-  return (
-    <div className="flex flex-col h-full min-h-screen bg-white dark:bg-gray-950">
+  function handleSelectProcess(id: string) {
+    setActiveId((prev) => prev === id ? null : id)
+  }
 
-      {/* ── Header sticky ───────────────────────────────────── */}
+  return (
+    <div className="flex flex-col bg-white dark:bg-gray-950 min-h-screen">
+
+      {/* ── HEADER ──────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm
-        border-b border-border dark:border-white/6 px-6 py-3">
-        <div className="flex items-center gap-4">
+        border-b border-border dark:border-white/6 px-8 py-3">
+        <div className="flex items-center gap-4 max-w-7xl mx-auto">
           <button
             onClick={() => onBack ? onBack() : navigate('/')}
             className="h-8 w-8 rounded-full flex items-center justify-center
-              text-text-subtle hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              text-text-subtle hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
           >
             ←
           </button>
@@ -648,196 +861,220 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
             <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
               {companyName} · Fase L · Listen
             </p>
-            <h1 className="text-base font-semibold text-lean-black dark:text-gray-100 leading-tight">
+            <h1 className="text-base font-semibold text-lean-black dark:text-gray-100">
               T3 — Value Stream Map
             </h1>
           </div>
 
           {/* KPI strip */}
-          <div className="hidden sm:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-5">
             {[
-              { label: 'Crítica',  value: totalCritica, color: 'text-navy dark:text-info-soft' },
-              { label: 'Alta',     value: totalAlta,    color: 'text-info-dark' },
-              { label: 'Media',    value: totalMedia,   color: 'text-warning-dark' },
-              { label: 'Equipos listos', value: readyAlta, color: 'text-success-dark' },
+              { label: 'Opp crítica', value: totalCritica, color: 'text-navy dark:text-info-soft' },
+              { label: 'Opp alta',    value: totalAlta,    color: 'text-info-dark' },
+              { label: 'Total',       value: processes.length, color: 'text-lean-black dark:text-gray-100' },
             ].map(({ label, value, color }) => (
               <div key={label} className="text-center">
-                <p className={`text-lg font-bold tabular-nums leading-none ${color}`}>{value}</p>
-                <p className="text-[9px] text-text-subtle mt-0.5">{label}</p>
+                <p className={`text-xl font-bold tabular-nums leading-none ${color}`}>{value}</p>
+                <p className="text-[9px] text-text-subtle mt-0.5 whitespace-nowrap">{label}</p>
               </div>
             ))}
           </div>
 
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold
-              bg-navy text-white hover:bg-navy/80 transition-colors shrink-0"
+            className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl
+              text-xs font-semibold bg-navy text-white hover:bg-navy/80 transition-colors"
           >
             + Proceso
           </button>
         </div>
       </div>
 
-      {/* ── Layout dos columnas ──────────────────────────────── */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-8">
 
-        {/* ── Columna izquierda ────────────────────────────── */}
-        <div className="w-[340px] shrink-0 flex flex-col border-r border-border dark:border-white/6
-          overflow-y-auto">
+        {/* ── ZONA 1: HERO CHARTS ─────────────────────────── */}
+        <div className="py-8">
+          <div className="grid grid-cols-2 gap-6">
 
-          {/* Overview charts */}
-          <div className="px-4 pt-4 pb-2">
-            <div className="grid grid-cols-2 gap-3">
-
-              {/* Opportunity Matrix */}
-              <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 p-3">
-                <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">
-                  Matriz oportunidad
-                </p>
-                <OpportunityMatrix
-                  processes={processes}
-                  activeId={activeId}
-                  onSelect={setActiveId}
-                />
-                {/* Leyenda */}
-                <div className="mt-2 flex flex-col gap-1">
-                  {CAT_ORDER.filter((c) => processes.some((p) => p.aiCategory === c)).map((c) => {
-                    const cfg = AI_CATEGORY_CONFIG[c]
-                    return (
-                      <div key={c} className="flex items-center gap-1.5">
-                        <span className={`h-1.5 w-1.5 rounded-full ${cfg.dotBg} shrink-0`} />
-                        <span className="text-[9px] text-text-subtle truncate">{cfg.label}</span>
-                      </div>
-                    )
-                  })}
-                </div>
+            {/* Opportunity Matrix */}
+            <div className="rounded-3xl bg-white dark:bg-gray-900 border border-border
+              dark:border-white/6 p-6">
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-4">
+                Matriz de oportunidad
+              </p>
+              <HeroOpportunityMatrix
+                processes={filtered}
+                activeId={activeId}
+                onSelect={handleSelectProcess}
+              />
+              {/* Leyenda compacta */}
+              <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5">
+                {CAT_ORDER.filter((c) => processes.some((p) => p.aiCategory === c)).map((c) => {
+                  const cfg = AI_CATEGORY_CONFIG[c]
+                  return (
+                    <div key={c} className="flex items-center gap-1.5">
+                      <span className={`h-2 w-2 rounded-full ${cfg.dotBg} shrink-0`} />
+                      <span className="text-[10px] text-text-subtle">{cfg.label}</span>
+                    </div>
+                  )
+                })}
               </div>
+            </div>
 
-              {/* Department Summary */}
-              <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 p-3">
-                <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">
-                  Por departamento
-                </p>
-                <DepartmentSummaryChart processes={processes} />
-                <div className="mt-2 flex flex-col gap-1">
-                  {CAT_ORDER.filter((c) => processes.some((p) => p.aiCategory === c)).map((c) => {
-                    const cfg = AI_CATEGORY_CONFIG[c]
-                    return (
-                      <div key={c} className="flex items-center gap-1.5">
-                        <span className={`h-1.5 w-1.5 rounded-full ${cfg.dotBg} shrink-0`} />
-                        <span className="text-[9px] text-text-subtle truncate">{cfg.label}</span>
-                      </div>
-                    )
-                  })}
-                </div>
+            {/* Department Chart */}
+            <div className="rounded-3xl bg-white dark:bg-gray-900 border border-border
+              dark:border-white/6 p-6">
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-4">
+                Por departamento
+              </p>
+              <HeroDepartmentChart processes={processes} />
+              {/* Leyenda compacta */}
+              <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5">
+                {CAT_ORDER.filter((c) => processes.some((p) => p.aiCategory === c)).map((c) => {
+                  const cfg = AI_CATEGORY_CONFIG[c]
+                  return (
+                    <div key={c} className="flex items-center gap-1.5">
+                      <span className={`h-2 w-2 rounded-full ${cfg.dotBg} shrink-0`} />
+                      <span className="text-[10px] text-text-subtle">{cfg.label}</span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>
-
-          {/* Lista de procesos por departamento */}
-          <div className="flex-1 px-3 pt-1 pb-4">
-            <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2 px-1">
-              Procesos mapeados · {processes.length}
-            </p>
-
-            {byDept.map(([dept, members]) => {
-              const highOpp = members.filter(
-                (m) => m.opportunityLevel === 'critica' || m.opportunityLevel === 'alta'
-              ).length
-              return (
-                <div key={dept} className="mb-3">
-                  {/* Dept header */}
-                  <div className="flex items-center gap-2 px-1 mb-1.5">
-                    <p className="text-[10px] font-medium text-text-muted truncate flex-1">{dept}</p>
-                    {highOpp > 0 && (
-                      <span className="text-[9px] font-semibold text-danger-dark shrink-0">
-                        {highOpp} alta prioridad
-                      </span>
-                    )}
-                  </div>
-
-                  {members.map((p) => {
-                    const isActive  = p.id === activeId
-                    const catCfg    = AI_CATEGORY_CONFIG[p.aiCategory]
-                    const oppCfg    = OPPORTUNITY_CONFIG[p.opportunityLevel]
-                    const hasCrit   = p.opportunityLevel === 'critica'
-
-                    return (
-                      <button
-                        key={p.id}
-                        onClick={() => setActiveId(p.id)}
-                        className={[
-                          'w-full text-left rounded-xl px-3 py-2.5 mb-1 transition-all duration-150',
-                          'border',
-                          isActive
-                            ? 'border-navy/30 bg-navy/5 dark:bg-navy/10'
-                            : hasCrit
-                            ? 'border-navy/15 bg-white dark:bg-gray-900 hover:border-navy/30'
-                            : 'border-border dark:border-white/6 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-white/12',
-                        ].join(' ')}
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <CategoryDot category={p.aiCategory} />
-                          <p className="text-[11px] font-semibold text-lean-black dark:text-gray-200
-                            truncate flex-1 leading-snug">
-                            {p.name}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${catCfg.badgeBg} ${catCfg.badgeText}`}>
-                            {catCfg.label.split(' ')[0]}
-                          </span>
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${oppCfg.badgeBg} ${oppCfg.badgeText}`}>
-                            {oppCfg.label}
-                          </span>
-                          {p.interview && (
-                            <span className="text-[9px] text-text-subtle ml-auto tabular-nums">
-                              {p.interview.opportunityScore.toFixed(1)}/4
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              )
-            })}
-
-            {processes.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-                <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center
-                  justify-center text-xl mb-3">
-                  ◎
-                </div>
-                <p className="text-sm font-medium text-text-muted mb-1">Sin procesos mapeados</p>
-                <p className="text-xs text-text-subtle leading-relaxed">
-                  Añade el primer proceso para comenzar el análisis de oportunidades IA.
-                </p>
-              </div>
-            )}
-          </div>
         </div>
 
-        {/* ── Panel derecho ────────────────────────────────── */}
-        <div className="flex-1 min-w-0 overflow-y-auto">
-          {activeProcess ? (
-            <ProcessPanel process={activeProcess} />
+        {/* ── ZONA 2: BANNER DE PROCESOS ───────────────────── */}
+        <div className="border-t border-border dark:border-white/6 pt-6 pb-4">
+
+          {/* Phase KPI bar */}
+          <div className="flex items-center gap-3 mb-5 flex-wrap">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mr-2 shrink-0">
+              Procesos mapeados · {processes.length}
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              {ALL_PHASES.map((ph) => {
+                const cfg = PHASE_CONFIG[ph]
+                const cnt = phaseCount[ph]
+                return (
+                  <button
+                    key={ph}
+                    onClick={() => setFilterPhase(filterPhase === ph ? null : ph)}
+                    className={[
+                      'flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold',
+                      'border transition-all',
+                      filterPhase === ph
+                        ? `${cfg.badgeBg} ${cfg.badgeText} border-transparent`
+                        : 'bg-transparent border-border dark:border-white/10 text-text-muted hover:border-gray-300',
+                    ].join(' ')}
+                  >
+                    <span className="tabular-nums font-bold">{cnt}</span>
+                    <span>{cfg.label}</span>
+                  </button>
+                )
+              })}
+              {filterPhase && (
+                <button onClick={() => { setFilterPhase(null); setFilterCat(null) }}
+                  className="text-[10px] text-text-subtle hover:text-text-muted transition-colors ml-1">
+                  Limpiar filtros ×
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Process cards */}
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
+                flex items-center justify-center text-2xl">◎</div>
+              <p className="text-sm font-medium text-text-muted">Sin procesos mapeados</p>
+              <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
+                Añade el primer proceso para comenzar el análisis de oportunidades IA.
+              </p>
+            </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center px-8 py-16">
-              <div className="h-16 w-16 rounded-3xl bg-gray-100 dark:bg-gray-800 flex items-center
-                justify-center text-3xl mb-4">
-                ◎
-              </div>
-              <p className="text-sm font-medium text-text-muted mb-2">
-                Selecciona un proceso
-              </p>
-              <p className="text-xs text-text-subtle max-w-[240px] leading-relaxed">
-                Haz click en un proceso de la lista para ver su análisis de oportunidades IA y scores de diagnóstico.
-              </p>
+            <div className="flex flex-col gap-2">
+              {filtered.map((p) => {
+                const isActive  = p.id === activeId
+                const catCfg    = AI_CATEGORY_CONFIG[p.aiCategory]
+                const oppCfg    = OPPORTUNITY_CONFIG[p.opportunityLevel]
+                const phaseCfg  = PHASE_CONFIG[p.phase]
+                const hasCrit   = p.opportunityLevel === 'critica'
+
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => handleSelectProcess(p.id)}
+                    className={[
+                      'w-full text-left rounded-2xl px-5 py-3.5 transition-all duration-150',
+                      'border flex items-center gap-4',
+                      isActive
+                        ? 'border-navy/30 bg-navy/4 dark:bg-navy/8 shadow-sm'
+                        : hasCrit
+                        ? 'border-navy/15 bg-white dark:bg-gray-900 hover:border-navy/25 hover:shadow-sm'
+                        : 'border-border dark:border-white/6 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-white/12',
+                    ].join(' ')}
+                  >
+                    {/* Category color bar */}
+                    <div
+                      className="shrink-0 w-1 h-8 rounded-full"
+                      style={{ backgroundColor: CAT_HEX[p.aiCategory], opacity: isActive ? 1 : 0.5 }}
+                    />
+
+                    {/* Main info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-lean-black dark:text-gray-200 truncate">
+                        {p.name}
+                      </p>
+                      <p className="text-xs text-text-subtle mt-0.5">
+                        {p.department}
+                        {p.owner && ` · ${p.owner}`}
+                      </p>
+                    </div>
+
+                    {/* Badges */}
+                    <div className="hidden sm:flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${phaseCfg.badgeBg} ${phaseCfg.badgeText}`}>
+                        {phaseCfg.label}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${catCfg.badgeBg} ${catCfg.badgeText}`}>
+                        {catCfg.label.split(' ')[0]}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${oppCfg.badgeBg} ${oppCfg.badgeText}`}>
+                        {oppCfg.label}
+                      </span>
+                    </div>
+
+                    {/* Score */}
+                    {p.interview && (
+                      <div className="shrink-0 text-right ml-2">
+                        <p className="text-base font-bold tabular-nums text-lean-black dark:text-gray-200">
+                          {p.interview.opportunityScore.toFixed(1)}
+                        </p>
+                        <p className="text-[9px] text-text-subtle">/4.0</p>
+                      </div>
+                    )}
+
+                    {/* Chevron */}
+                    <span className={`shrink-0 text-text-subtle transition-transform duration-200 ${
+                      isActive ? 'rotate-180' : ''
+                    }`}>
+                      ↓
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
       </div>
+
+      {/* ── ZONA 3: DETALLE DEL PROCESO ──────────────────────── */}
+      {activeProcess && (
+        <div className="max-w-7xl mx-auto w-full px-8 pb-16">
+          <ProcessDetailPanel process={activeProcess} />
+        </div>
+      )}
 
       {/* Modal de nueva entrevista */}
       {showModal && (

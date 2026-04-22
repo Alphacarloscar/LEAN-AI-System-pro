@@ -7,6 +7,15 @@
 // Sprint 2 MVP: lógica rule-based local. Sprint 3+: Supabase.
 // ============================================================
 
+// ── Fases de madurez de la iniciativa ───────────────────────
+
+export type ProcessPhase =
+  | 'idea'             // Identificado, sin validación
+  | 'validacion'       // Análisis de viabilidad en curso
+  | 'piloto'           // Piloto activo en un área
+  | 'estandarizacion'  // Escalando a otros equipos
+  | 'escalado'         // Operativo y normalizado
+
 // ── Categorías de IA ─────────────────────────────────────────
 
 export type AICategoryCode =
@@ -84,6 +93,21 @@ export interface AIOpportunity {
   status:      'sugerida' | 'validada' | 'descartada'
 }
 
+// ── Etapa del proceso (para VSM detallado) ──────────────────
+
+export interface ProcessStage {
+  id:                string
+  name:              string
+  responsible?:      string
+  department?:       string
+  system?:           string
+  procTimeHours:     number   // Tiempo de proceso (h)
+  waitTimeHours:     number   // Tiempo de espera (h)
+  handoffs:          number
+  valueContribution: 'alta' | 'media' | 'baja' | 'nula'
+  notes?:            string
+}
+
 // ── Proceso / Value Stream ───────────────────────────────────
 
 export interface ValueStream {
@@ -94,6 +118,8 @@ export interface ValueStream {
   owner?:      string
   ownerRole?:  string
   description?: string
+  /** Fase de madurez de la iniciativa */
+  phase:       ProcessPhase
   /** Categoría IA asignada (puede venir de entrevista o manual) */
   aiCategory:  AICategoryCode
   orgReadiness: OrgReadinessLevel
@@ -102,8 +128,10 @@ export interface ValueStream {
   interview?:  ProcessInterviewResult
   /** Oportunidades IA generadas/validadas */
   opportunities: AIOpportunity[]
-  notes?:       string
-  createdAt:    string
+  /** Etapas del proceso (VSM detallado — Sprint 3+) */
+  stages?:     ProcessStage[]
+  notes?:      string
+  createdAt:   string
   /** Ajuste manual del consultor sobre la categoría auto-asignada */
   manualOverride?: boolean
 }
