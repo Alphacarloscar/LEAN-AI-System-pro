@@ -21,6 +21,7 @@ import { ChartWrapper, LeanRadarChart, LeanBarChart, DEMO_KPI_DATA } from '@/sha
 import { MetricHeroGrid }                       from '@/shared/components/MetricHero'
 import { T1View }                               from '@/modules/T1_MaturityRadar'
 import { T2View }                               from '@/modules/T2_StakeholderMatrix'
+import { T3View }                               from '@/modules/T3_ValueStreamMap'
 import { CompanyProfileView }                   from '@/modules/CompanyProfile'
 import {
   DEMO_SCENARIOS,
@@ -272,6 +273,14 @@ function T2RouteView() {
   return <T2View companyName={scenario.company.name} onBack={() => navigate('/')} />
 }
 
+// ── T3 route wrapper ──────────────────────────────────────────
+
+function T3RouteView() {
+  const { scenario } = useDemoContext()
+  const navigate     = useNavigate()
+  return <T3View companyName={scenario.company.name} onBack={() => navigate('/')} />
+}
+
 // ── App root ──────────────────────────────────────────────────
 
 export default function App() {
@@ -296,7 +305,7 @@ export default function App() {
           <Route path="company-profile" element={<CompanyProfileView />} />
           <Route path="t1"             element={<T1RouteView />} />
           <Route path="t2"             element={<T2RouteView />} />
-          {/* Sprint 2: T3 — próxima sesión */}
+          <Route path="t3"             element={<T3RouteView />} />
         </Route>
 
         {/* Fallback */}
