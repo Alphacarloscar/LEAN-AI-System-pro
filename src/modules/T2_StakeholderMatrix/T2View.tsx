@@ -60,9 +60,17 @@ function ResistanceBadge({ resistance }: { resistance: ResistanceLevel }) {
   )
 }
 
-// ── Gráfico vertical de scores ────────────────────────────────
+// ── Barras metálicas horizontales (scores) ────────────────────
+// Inspiración: líneas ultra-finas con gradiente metálico y brillo sutil.
+// No Excel: sin rellenos planos, sin bordes, solo luz y sombra.
 
-function ScoreBarChart({
+const SCORE_BARS_META = [
+  { key: 'ad',  label: 'ADOPCIÓN IA', hex: '#5FAF8A', light: '#B4E4CF' },
+  { key: 'inf', label: 'INFLUENCIA',  hex: '#6A90C0', light: '#B8D0E8' },
+  { key: 'ap',  label: 'APERTURA',    hex: '#9AAEC8', light: '#C8DAE8' },
+] as const
+
+function MetallicScoreBars({
   adoptionScore,
   influenceScore,
   opennessScore,
@@ -71,58 +79,133 @@ function ScoreBarChart({
   influenceScore: number
   opennessScore:  number
 }) {
-  const MAX  = 4
-  const BW   = 15   // bar width
-  const GAP  = 9    // gap between bars
-  const LM   = 16   // left margin (for y-axis ticks)
-  const CH   = 70   // chart height
-  const TM   = 16   // top margin (for value labels)
-  const LH   = 20   // label height at bottom
-  const VBW  = LM + 3 * (BW + GAP) - GAP + 4
-  const VBH  = TM + CH + LH
+  const MAX      = 4
+  const VBW      = 176   // viewBox width — fits in w-[200px] px-3 container
+  const LBL_W    = 54    // label column
+  const G1       = 7     // gutter label→track
+  const TRACK_W  = 88    // background guide width
+  const G2       = 5     // gutter track→value
+  // total: 54+7+88+5+22 = 176 ✓ (VAL_W=22 reserved in viewBox, text positioned via TX+TRACK_W+G2)
+  const TX       = LBL_W + G1   // track origin x
+  const ROW_H    = 28
+  const VBH      = SCORE_BARS_META.length * ROW_H + 6
 
-  const bars = [
-    { key: 'ad',  label: 'Ad.',  value: adoptionScore,  color: '#5FAF8A' },
-    { key: 'inf', label: 'Inf.', value: influenceScore, color: '#1B2A4E' },
-    { key: 'ap',  label: 'Ap.',  value: opennessScore,  color: '#6A90C0' },
-  ]
+  const values = [adoptionScore, influenceScore, opennessScore]
 
   return (
-    <svg viewBox={`0 0 ${VBW} ${VBH}`} width={VBW} height={VBH}>
-      {/* Baseline */}
-      <line x1={LM} y1={TM + CH} x2={VBW - 2} y2={TM + CH} stroke="#E2E8F0" strokeWidth={0.8} />
-      {/* Y-axis ticks at 1,2,3,4 */}
-      {[1, 2, 3, 4].map((tick) => {
-        const ty = TM + CH - (tick / MAX) * CH
-        return (
-          <g key={tick}>
-            <line x1={LM - 3} y1={ty} x2={LM} y2={ty} stroke="#E2E8F0" strokeWidth={0.6} />
-            <text x={LM - 5} y={ty + 2.5} textAnchor="end" fontSize={6} fill="#CBD5E1"
-              fontFamily="ui-monospace,monospace">{tick}</text>
-          </g>
-        )
-      })}
-      {/* Bars */}
-      {bars.map(({ key, label, value, color }, i) => {
-        const bx  = LM + i * (BW + GAP)
-        const bh  = (value / MAX) * CH
-        const by  = TM + CH - bh
+    <svg viewBox={`0 0 ${VBW} ${VBH}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
+      <defs>
+        {SCORE_BARS_META.map(({ key, hex, light }, i) => {
+          const fillW = Math.max((values[i] / MAX) * TRACK_W, 2)
+          return (
+            <linearGradient
+              key={key}
+              id={`mb-${key}`}
+              x1={TX} y1="0" x2={TX + fillW} y2="0"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%"   stopColor={hex}   stopOpacity="0.15" />
+              <stop offset="30%"  stopColor={hex}   stopOpacity="0.92" />
+              <stop offset="58%"  stopColor={light} stopOpacity="1" />
+              <stop offset="85%"  stopColor={hex}   stopOpacity="0.80" />
+              <stop offset="100%" stopColor={hex}   stopOpacity="0.40" />
+            </linearGradient>
+          )
+        })}
+      </defs>
+
+      {SCORE_BARS_META.map(({ key, label, hex, light }, i) => {
+        const val   = values[i]
+        const fillW = Math.max((val / MAX) * TRACK_W, 2)
+        const cy    = i * ROW_H + ROW_H / 2 + 3
+
         return (
           <g key={key}>
-            <rect x={bx} y={by} width={BW} height={bh} fill={color} opacity={0.88} rx={2} />
-            {/* Value above bar */}
-            <text x={bx + BW / 2} y={by - 3} textAnchor="middle" fontSize={7} fontWeight="700"
-              fill="#475569" fontFamily="ui-monospace,monospace">
-              {value.toFixed(1)}
-            </text>
-            {/* Short label below baseline */}
-            <text x={bx + BW / 2} y={TM + CH + 12} textAnchor="middle" fontSize={6.5}
-              fill="#94A3B8" fontFamily="ui-monospace,monospace">
+            {/* Label */}
+            <text x={0} y={cy + 3} fontSize={7} fill="#64748B"
+              fontFamily="ui-monospace,monospace" letterSpacing="0.05em">
               {label}
+            </text>
+
+            {/* Track guide — barely visible */}
+            <rect x={TX} y={cy - 0.4} width={TRACK_W} height={0.8}
+              fill={hex} opacity={0.08} rx={0.4} />
+
+            {/* Glow halo — soft blur sim */}
+            <rect x={TX} y={cy - 2} width={fillW} height={4}
+              fill={hex} opacity={0.10} rx={2} />
+
+            {/* Main metallic bar — 2px */}
+            <rect x={TX} y={cy - 1} width={fillW} height={2}
+              fill={`url(#mb-${key})`} rx={1} />
+
+            {/* Top shine — 0.5px hairline */}
+            <rect x={TX + fillW * 0.08} y={cy - 1.5}
+              width={fillW * 0.45} height={0.5}
+              fill={light} opacity={0.55} rx={0.25} />
+
+            {/* Value */}
+            <text
+              x={TX + TRACK_W + G2} y={cy + 3}
+              fontSize={8} fontWeight="600" fill="#94A3B8"
+              fontFamily="ui-monospace,monospace"
+            >
+              {val.toFixed(1)}<tspan fontSize={6.5} opacity={0.5}>/4</tspan>
             </text>
           </g>
         )
       })}
+    </svg>
+  )
+}
+
+// ── Mini mapa de posición (cuadrante) ─────────────────────────
+// Muestra al stakeholder como punto en el espacio adopción × influencia.
+// Orientación espacial instantánea sin palabras.
+
+function MiniPositionMap({
+  adoptionScore,
+  influenceScore,
+  archetype,
+}: {
+  adoptionScore:  number
+  influenceScore: number
+  archetype:      ArchetypeCode
+}) {
+  const S   = 56   // total SVG size
+  const P   = 7    // padding inside border
+  const IN  = S - P * 2   // inner grid size = 42
+
+  // adoption → X (0=left, 4=right), influence → Y (0=bottom, 4=top → inverted SVG)
+  const dx  = P + (adoptionScore  / 4) * IN
+  const dy  = P + (1 - influenceScore / 4) * IN
+  const hex = ARCH_HEX[archetype]
+  const MID = P + IN / 2
+
+  return (
+    <svg viewBox={`0 0 ${S} ${S}`} width={S} height={S} style={{ display: 'block' }}>
+      {/* Quadrant fills */}
+      <rect x={P}     y={P}     width={IN/2-0.5} height={IN/2-0.5} fill="#C06060" opacity={0.05} />
+      <rect x={MID+0.5} y={P}   width={IN/2-0.5} height={IN/2-0.5} fill="#1B2A4E" opacity={0.05} />
+      <rect x={P}     y={MID+0.5} width={IN/2-0.5} height={IN/2-0.5} fill="#D4A85C" opacity={0.05} />
+      <rect x={MID+0.5} y={MID+0.5} width={IN/2-0.5} height={IN/2-0.5} fill="#5FAF8A" opacity={0.05} />
+      {/* Grid border */}
+      <rect x={P} y={P} width={IN} height={IN} fill="none" stroke="#E2E8F0" strokeWidth={0.5} rx={1.5} />
+      {/* Crosshair */}
+      <line x1={MID} y1={P}   x2={MID} y2={P+IN} stroke="#94A3B8" strokeWidth={0.35} opacity={0.25} />
+      <line x1={P}   y1={MID} x2={P+IN} y2={MID} stroke="#94A3B8" strokeWidth={0.35} opacity={0.25} />
+      {/* Axis micro-labels */}
+      <text x={MID} y={S-1} textAnchor="middle" fontSize={4.5} fill="#94A3B8" fontFamily="ui-monospace,monospace">adopción</text>
+      <text x={2} y={MID+1.5} textAnchor="middle" fontSize={4.5} fill="#94A3B8" fontFamily="ui-monospace,monospace"
+        transform={`rotate(-90,2,${MID})`}>influencia</text>
+      {/* Dot glow layers */}
+      <circle cx={dx} cy={dy} r={6}   fill={hex} opacity={0.08} />
+      <circle cx={dx} cy={dy} r={3.5} fill={hex} opacity={0.18} />
+      {/* Dot */}
+      <circle cx={dx} cy={dy} r={2.2} fill={hex} opacity={0.90} />
+      {/* Dot shine */}
+      <ellipse cx={dx - 0.7} cy={dy - 0.7} rx={0.8} ry={0.5}
+        fill="rgba(255,255,255,0.55)" />
     </svg>
   )
 }
@@ -190,64 +273,122 @@ function StakeholderPanel({
         </div>
       </div>
 
-      {/* Body: split izquierda (info) | derecha (score bars) */}
-      <div className="flex divide-x divide-border/40">
+      {/* Body: visual izquierda | info derecha */}
+      <div className="flex divide-x divide-border/30 min-h-[220px]">
 
-        {/* LEFT — arquetipo + intervenciones + notas */}
-        <div className="flex-1 min-w-0 px-5 py-4 space-y-5">
+        {/* ── LEFT: datos visuales ─────────────────────────────── */}
+        <div className="w-[200px] shrink-0 px-3 py-4 flex flex-col gap-4">
+
+          {/* Mini mapa de posición + scores si hay entrevista */}
+          {stakeholder.interview ? (
+            <>
+              {/* Mapa cuadrante */}
+              <div className="flex items-center gap-2">
+                <MiniPositionMap
+                  adoptionScore={stakeholder.interview.adoptionScore}
+                  influenceScore={stakeholder.interview.influenceScore}
+                  archetype={stakeholder.archetype}
+                />
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-[8px] font-mono uppercase tracking-widest text-text-subtle leading-none">
+                    Posición
+                  </p>
+                  <p className="text-[8px] font-mono text-text-subtle leading-snug opacity-70">
+                    Adopc. × Infl.
+                  </p>
+                  {/* Indicador de señal estratégica: 4 barras verticales proporcionales a influencia */}
+                  <div className="flex items-end gap-[2px] mt-2">
+                    {[0.4, 0.6, 0.8, 1.0].map((frac, i) => {
+                      const active = (stakeholder.interview!.influenceScore / 4) >= frac - 0.15
+                      return (
+                        <div
+                          key={i}
+                          className="w-[3px] rounded-[1px]"
+                          style={{
+                            height: `${6 + i * 3}px`,
+                            backgroundColor: active ? ARCH_HEX[stakeholder.archetype] : '#E2E8F0',
+                            opacity: active ? 0.85 : 0.4,
+                          }}
+                        />
+                      )
+                    })}
+                    <span className="text-[7px] font-mono text-text-subtle ml-1 mb-0.5">infl.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px bg-border/40" />
+
+              {/* Barras metálicas de scores */}
+              <div>
+                <p className="text-[8px] font-mono uppercase tracking-widest text-text-subtle mb-2">
+                  Scores entrevista
+                </p>
+                <MetallicScoreBars
+                  adoptionScore={stakeholder.interview.adoptionScore}
+                  influenceScore={stakeholder.interview.influenceScore}
+                  opennessScore={stakeholder.interview.opennessScore}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center flex-1 gap-1 opacity-40">
+              <svg className="h-6 w-6 text-text-subtle" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <p className="text-[9px] text-text-subtle text-center leading-snug">Sin entrevista registrada</p>
+            </div>
+          )}
+
+          {/* Notas de sesión — al final del panel izquierdo */}
+          {stakeholder.notes && (
+            <>
+              <div className="h-px bg-border/40" />
+              <div>
+                <p className="text-[8px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+                  Notas de sesión
+                </p>
+                <p className="text-[10px] text-text-muted leading-relaxed italic">
+                  {stakeholder.notes}
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* ── RIGHT: perfil + intervenciones ───────────────────── */}
+        <div className="flex-1 min-w-0 px-4 py-4 space-y-4">
 
           {/* Descripción del arquetipo */}
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-1.5">
+            <p className="text-[9px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-1.5">
               Perfil — {cfg.label}
             </p>
-            <p className="text-xs text-text-muted leading-relaxed">{cfg.description}</p>
-            <p className="text-[11px] italic text-text-subtle mt-1">"{cfg.tagline}"</p>
+            <p className="text-[11px] text-text-muted leading-relaxed">{cfg.description}</p>
+            <p className="text-[10px] italic text-text-subtle mt-1.5">"{cfg.tagline}"</p>
           </div>
+
+          {/* Divider */}
+          <div className="h-px bg-border/40" />
 
           {/* Intervenciones recomendadas */}
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-2">
-              Intervenciones recomendadas · {res.label}
+            <p className="text-[9px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-2">
+              Intervenciones · {res.label}
             </p>
-            <ol className="space-y-2">
+            <ol className="space-y-2.5">
               {interventions.map((item, i) => (
-                <li key={i} className="flex gap-2.5">
-                  <span className="flex-shrink-0 h-4 w-4 rounded-full bg-navy text-white text-[9px] font-bold flex items-center justify-center mt-0.5">
+                <li key={i} className="flex gap-2">
+                  <span className="flex-shrink-0 h-[14px] w-[14px] rounded-full bg-navy text-white text-[8px] font-bold flex items-center justify-center mt-0.5">
                     {i + 1}
                   </span>
-                  <p className="text-xs text-text-muted leading-relaxed">{item}</p>
+                  <p className="text-[11px] text-text-muted leading-relaxed">{item}</p>
                 </li>
               ))}
             </ol>
           </div>
-
-          {/* Notas */}
-          {stakeholder.notes && (
-            <div>
-              <p className="text-[10px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-1.5">
-                Notas de sesión
-              </p>
-              <p className="text-xs text-text-muted leading-relaxed italic bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 py-2">
-                {stakeholder.notes}
-              </p>
-            </div>
-          )}
         </div>
-
-        {/* RIGHT — gráfico vertical de scores */}
-        {stakeholder.interview && (
-          <div className="w-[84px] shrink-0 flex flex-col items-center justify-center py-4 px-1 gap-1">
-            <p className="text-[8px] font-mono uppercase tracking-widest text-text-subtle mb-0.5">
-              Scores
-            </p>
-            <ScoreBarChart
-              adoptionScore={stakeholder.interview.adoptionScore}
-              influenceScore={stakeholder.interview.influenceScore}
-              opennessScore={stakeholder.interview.opennessScore}
-            />
-          </div>
-        )}
       </div>
     </div>
   )
@@ -452,13 +593,14 @@ function DepartmentOverviewChart({ stakeholders }: { stakeholders: Stakeholder[]
 
   const maxCount = Math.max(...deptData.map((d) => d.total), 1)
 
-  const BW    = 38   // bar width
-  const GAP   = 16   // gap between bars
-  const LM    = 28   // left margin (y-axis)
-  const RM    = 10   // right margin
-  const CH    = 110  // chart area height
-  const TM    = 16   // top margin (space for value labels)
-  const LH    = 28   // bottom label height
+  // Barras finas metálicas — pilares verticales de 10px, espaciado generoso
+  const BW    = 10   // bar width — thin pillar
+  const GAP   = 28   // generous gap for spatial feel
+  const LM    = 26   // left margin (y-axis)
+  const RM    = 8    // right margin
+  const CH    = 100  // chart area height
+  const TM    = 18   // top margin (value labels)
+  const LH    = 30   // bottom label height
   const VBW   = LM + deptData.length * (BW + GAP) - GAP + RM
   const VBH   = TM + CH + LH
 
@@ -473,80 +615,113 @@ function DepartmentOverviewChart({ stakeholders }: { stakeholders: Stakeholder[]
       <div className="overflow-x-auto">
         <svg
           viewBox={`0 0 ${VBW} ${VBH}`}
-          width={Math.max(VBW, 260)}
+          width={Math.max(VBW, 240)}
           height={VBH}
-          style={{ minWidth: VBW }}
+          style={{ minWidth: VBW, overflow: 'visible' }}
         >
-          {/* Y-axis line */}
-          <line x1={LM} y1={TM} x2={LM} y2={TM + CH} stroke="#E2E8F0" strokeWidth={0.8} />
+          <defs>
+            {/* Metallic shine overlay — applied via clip per segment */}
+            {ARCH_ORDER.map((arch) => {
+              const hex = ARCH_HEX[arch]
+              return (
+                <linearGradient key={arch} id={`dmc-${arch}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%"   stopColor={hex}  stopOpacity="0.55" />
+                  <stop offset="35%"  stopColor={hex}  stopOpacity="0.95" />
+                  <stop offset="60%"  stopColor="white" stopOpacity="0.18" />
+                  <stop offset="100%" stopColor={hex}  stopOpacity="0.65" />
+                </linearGradient>
+              )
+            })}
+          </defs>
 
-          {/* Y-axis ticks */}
+          {/* Y-axis hairline */}
+          <line x1={LM} y1={TM} x2={LM} y2={TM + CH} stroke="#E2E8F0" strokeWidth={0.5} />
+
+          {/* Y-axis ticks + horizontal grid guides */}
           {yTicks.map((tick) => {
             const ty = TM + CH - (tick / maxCount) * CH
             return (
               <g key={tick}>
-                <line x1={LM - 3} y1={ty} x2={LM + VBW - LM - RM} y2={ty}
-                  stroke="#F1F5F9" strokeWidth={0.6} />
-                <line x1={LM - 4} y1={ty} x2={LM} y2={ty} stroke="#CBD5E1" strokeWidth={0.7} />
-                <text x={LM - 6} y={ty + 2.5} textAnchor="end" fontSize={7} fill="#94A3B8"
+                <line x1={LM} y1={ty} x2={VBW - RM} y2={ty}
+                  stroke="#F1F5F9" strokeWidth={0.5} strokeDasharray="2 3" />
+                <text x={LM - 5} y={ty + 2.5} textAnchor="end" fontSize={6.5} fill="#CBD5E1"
                   fontFamily="ui-monospace,monospace">{tick}</text>
               </g>
             )
           })}
 
-          {/* Bars per department */}
-          {deptData.map(({ dept, total, segments }, i) => {
+          {/* Pilares por departamento */}
+          {deptData.map(({ dept, total, segments, riskScore }, i) => {
             const bx = LM + i * (BW + GAP)
-            // Compute stacked segment rects (bottom → top)
             let curY = TM + CH
             const rects = segments.map(({ arch, count }) => {
-              const segH = (count / maxCount) * CH
+              const segH = Math.max((count / maxCount) * CH, 1)
               const rectY = curY - segH
               curY = rectY
-              return { arch, segH, rectY }
+              return { arch, count, segH, rectY }
             })
-            const topY   = rects[0]?.rectY ?? TM + CH
+            const topY    = rects[0]?.rectY ?? TM + CH
             const topArch = rects[0]?.arch
-            const truncDept = dept.length > 8 ? dept.slice(0, 7) + '…' : dept
+            const label   = dept.length > 7 ? dept.slice(0, 6) + '…' : dept
+            const isRisk  = riskScore > 0
 
             return (
               <g key={dept}>
-                {/* Stacked color segments */}
-                {rects.map(({ arch, segH, rectY }) => (
-                  <rect
-                    key={arch}
-                    x={bx} y={rectY}
-                    width={BW} height={segH}
-                    fill={ARCH_HEX[arch]}
-                    opacity={0.85}
-                  />
-                ))}
-                {/* Rounded top cap */}
-                {topArch && (
-                  <rect
-                    x={bx} y={topY}
-                    width={BW} height={Math.min(4, (total / maxCount) * CH)}
-                    fill={ARCH_HEX[topArch]}
-                    opacity={0.85}
-                    rx={2}
-                  />
+                {/* Subtle glow behind pilar if risk dept */}
+                {isRisk && (
+                  <rect x={bx - 3} y={topY - 2} width={BW + 6} height={TM + CH - topY + 2}
+                    fill="#C06060" opacity={0.06} rx={3} />
                 )}
-                {/* Total count label above bar */}
-                <text
-                  x={bx + BW / 2} y={topY - 4}
-                  textAnchor="middle" fontSize={8} fontWeight="700"
-                  fill="#475569" fontFamily="ui-monospace,monospace"
+
+                {/* Stacked metallic segments */}
+                {rects.map(({ arch, segH, rectY }, ri) => (
+                  <g key={arch}>
+                    {/* Base color */}
+                    <rect x={bx} y={rectY} width={BW} height={segH}
+                      fill={ARCH_HEX[arch]} opacity={0.82}
+                      rx={ri === 0 ? 2 : 0}
+                    />
+                    {/* Metallic shine overlay */}
+                    <rect x={bx} y={rectY} width={BW} height={segH}
+                      fill={`url(#dmc-${arch})`}
+                      rx={ri === 0 ? 2 : 0}
+                      style={{ mixBlendMode: 'screen' as React.CSSProperties['mixBlendMode'] }}
+                    />
+                    {/* Segment separator (thin gap between stack layers) */}
+                    {ri < rects.length - 1 && (
+                      <line x1={bx} y1={rectY + segH} x2={bx + BW} y2={rectY + segH}
+                        stroke="white" strokeWidth={0.8} opacity={0.4} />
+                    )}
+                  </g>
+                ))}
+
+                {/* Top shine hairline */}
+                {topArch && (
+                  <rect x={bx + 1} y={topY} width={BW - 2} height={0.6}
+                    fill="white" opacity={0.35} rx={0.3} />
+                )}
+
+                {/* Total count label */}
+                <text x={bx + BW / 2} y={topY - 5}
+                  textAnchor="middle" fontSize={7.5} fontWeight="700"
+                  fill={isRisk ? '#C06060' : '#64748B'}
+                  fontFamily="ui-monospace,monospace"
                 >
                   {total}
                 </text>
-                {/* Department label below baseline */}
-                <text
-                  x={bx + BW / 2} y={TM + CH + 14}
-                  textAnchor="middle" fontSize={7}
+
+                {/* Department label */}
+                <text x={bx + BW / 2} y={TM + CH + 14}
+                  textAnchor="middle" fontSize={6.5}
                   fill="#64748B" fontFamily="ui-monospace,monospace"
                 >
-                  {truncDept}
+                  {label}
                 </text>
+                {/* Risk dot under label if dept tiene riesgo */}
+                {isRisk && (
+                  <circle cx={bx + BW / 2} cy={TM + CH + 20} r={1.5}
+                    fill="#C06060" opacity={0.7} />
+                )}
               </g>
             )
           })}
