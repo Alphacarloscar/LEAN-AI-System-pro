@@ -198,10 +198,39 @@ export function StakeholderQuadrantChart({
           style={{ maxWidth: 560, maxHeight: 560 }}
         >
           <defs>
-            {/* Un solo clipPath: recorta TODO (fondos + puntos + anillos) al círculo */}
+            {/* ClipPath: recorta TODO al círculo */}
             <clipPath id="circle-clip">
               <circle cx={CX} cy={CY} r={CR} />
             </clipPath>
+
+            {/* ── Gradientes radiales 3D por arquetipo ──────────────────────────
+                Simula una esfera con luz desde arriba-izquierda (cx=38% cy=28%).
+                Tres stops: highlight claro → color base → borde oscuro.         */}
+            <radialGradient id="grad-adoptador"    cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
+              <stop offset="0%"   stopColor="#AFD7C5" />
+              <stop offset="52%"  stopColor="#5FAF8A" />
+              <stop offset="100%" stopColor="#437B61" />
+            </radialGradient>
+            <radialGradient id="grad-ambassador"   cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
+              <stop offset="0%"   stopColor="#B5C8E0" />
+              <stop offset="52%"  stopColor="#6A90C0" />
+              <stop offset="100%" stopColor="#4A6586" />
+            </radialGradient>
+            <radialGradient id="grad-decisor"      cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
+              <stop offset="0%"   stopColor="#8D95A7" />
+              <stop offset="52%"  stopColor="#1B2A4E" />
+              <stop offset="100%" stopColor="#131D37" />
+            </radialGradient>
+            <radialGradient id="grad-critico"      cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
+              <stop offset="0%"   stopColor="#E0B0B0" />
+              <stop offset="52%"  stopColor="#C06060" />
+              <stop offset="100%" stopColor="#864343" />
+            </radialGradient>
+            <radialGradient id="grad-especialista" cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
+              <stop offset="0%"   stopColor="#EAD4AE" />
+              <stop offset="52%"  stopColor="#D4A85C" />
+              <stop offset="100%" stopColor="#947640" />
+            </radialGradient>
           </defs>
 
           {/* ── Todo el contenido visual dentro del círculo — clipped ── */}
@@ -237,36 +266,61 @@ export function StakeholderQuadrantChart({
                   onMouseEnter={() => setHoverId(s.id)}
                   onMouseLeave={() => setHoverId(null)}
                 >
-                  {/* Aura selección / hover */}
+                  {/* ── Capa 1: glow de selección / hover (soft, multicapa) ── */}
                   {(isActive || isHover) && (
-                    <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 8} fill={fill} opacity={0.18} />
+                    <>
+                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 14} fill={fill} opacity={0.06} />
+                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 10} fill={fill} opacity={0.10} />
+                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 6}  fill={fill} opacity={0.16} />
+                    </>
                   )}
 
-                  {/* Anillo de resistencia */}
+                  {/* ── Capa 2: halo de peligro para resistencia Alta ── */}
+                  {s.resistance === 'alta' && (
+                    <>
+                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 12} fill="#C06060" opacity={0.06} />
+                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 8}  fill="#C06060" opacity={0.11} />
+                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 5}  fill="#C06060" opacity={0.17} />
+                    </>
+                  )}
+
+                  {/* ── Capa 3: anillo de resistencia ── */}
                   <circle
                     cx={pos.cx} cy={pos.cy}
-                    r={DOT_R + stroke.width + 1.5}
+                    r={DOT_R + stroke.width + 2}
                     fill="none"
                     stroke={stroke.color}
                     strokeWidth={stroke.width}
                     strokeDasharray={stroke.dasharray}
-                    opacity={s.resistance === 'baja' ? 0.6 : 0.9}
+                    opacity={s.resistance === 'baja' ? 0.65 : 0.92}
                   />
 
-                  {/* Círculo del arquetipo */}
+                  {/* ── Capa 4: esfera 3D con gradiente radial ── */}
                   <circle
                     cx={pos.cx} cy={pos.cy}
                     r={DOT_R}
-                    fill={fill}
-                    stroke={isActive ? '#FFFFFF' : 'none'}
-                    strokeWidth={isActive ? 2 : 0}
+                    fill={`url(#grad-${s.archetype})`}
+                    stroke={isActive ? 'rgba(255,255,255,0.85)' : 'none'}
+                    strokeWidth={isActive ? 1.5 : 0}
                   />
 
-                  {/* Iniciales */}
+                  {/* ── Capa 5: mancha de luz — simula esfera 3D ──
+                      Elipse semitransparente en la zona superior-izquierda.
+                      Crea el "punto de brillo" característico de las esferas. */}
+                  <ellipse
+                    cx={pos.cx - DOT_R * 0.27}
+                    cy={pos.cy - DOT_R * 0.28}
+                    rx={DOT_R * 0.36}
+                    ry={DOT_R * 0.23}
+                    fill="rgba(255,255,255,0.50)"
+                    style={{ pointerEvents: 'none' }}
+                  />
+
+                  {/* ── Capa 6: iniciales ── */}
                   <text
                     x={pos.cx} y={pos.cy + 4}
                     textAnchor="middle" fontSize={9} fontWeight="700"
-                    fill="#FFFFFF" fontFamily="Inter, sans-serif"
+                    fill="rgba(255,255,255,0.92)" fontFamily="Inter, sans-serif"
                     style={{ pointerEvents: 'none', userSelect: 'none' }}
                   >
                     {ini}
