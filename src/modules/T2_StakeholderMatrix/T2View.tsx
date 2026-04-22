@@ -193,6 +193,18 @@ function DepartmentMatrix({
   activeId:     string | null
   onSelect:     (s: Stakeholder) => void
 }) {
+  // Estado de colapso por departamento (ninguno colapsado por defecto)
+  const [collapsedDepts, setCollapsedDepts] = useState<Set<string>>(new Set())
+
+  function toggleDept(dept: string) {
+    setCollapsedDepts((prev) => {
+      const next = new Set(prev)
+      if (next.has(dept)) next.delete(dept)
+      else next.add(dept)
+      return next
+    })
+  }
+
   // Agrupar por departamento
   const departments = useMemo(() => {
     const map = new Map<string, Stakeholder[]>()
@@ -265,66 +277,74 @@ function DepartmentMatrix({
         )}
       </div>
 
-      {/* Departamentos */}
+      {/* Departamentos — colapsables */}
       {Array.from(departments.entries()).map(([dept, members]) => {
+        const isCollapsed = collapsedDepts.has(dept)
         return (
           <div key={dept} className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
 
-            {/* Header departamento */}
-            <div className="px-5 py-3 border-b border-border bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+            {/* Header departamento — clickable para colapsar */}
+            <button
+              onClick={() => toggleDept(dept)}
+              className="w-full px-5 py-3 border-b border-border bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between hover:bg-gray-100/60 dark:hover:bg-gray-800/50 transition-colors"
+            >
               <div className="flex items-center gap-2">
+                {/* Chevron */}
+                <svg
+                  className={`h-3 w-3 text-text-subtle transition-transform duration-200 ${isCollapsed ? '' : 'rotate-90'}`}
+                  viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                >
+                  <path d="M4 2l4 4-4 4" />
+                </svg>
                 <p className="text-xs font-semibold text-lean-black dark:text-gray-200">{dept}</p>
                 <span className="text-[10px] text-text-subtle">{members.length} persona{members.length > 1 ? 's' : ''}</span>
               </div>
-              {/* Mini-leyenda de arquetipos en este dpto */}
+              {/* Mini-dots de arquetipos */}
               <div className="flex gap-1">
                 {members.map((s) => (
                   <ArchetypeDot key={s.id} archetype={s.archetype} />
                 ))}
               </div>
-            </div>
+            </button>
 
-            {/* Filas de stakeholders */}
-            <div className="divide-y divide-border/50">
-              {members.map((s) => {
-                const isActive  = s.id === activeId
-                const isRisk    = s.resistance === 'alta' && (s.archetype === 'critico' || s.archetype === 'decisor')
-                return (
-                  <button
-                    key={s.id}
-                    onClick={() => onSelect(s)}
-                    className={[
-                      'w-full flex items-center gap-3 px-5 py-3 text-left transition-all duration-150',
-                      isActive
-                        ? 'bg-navy/5 dark:bg-navy/10 border-l-2 border-navy'
-                        : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 border-l-2 border-transparent',
-                    ].join(' ')}
-                  >
-                    {/* Dot arquetipo */}
-                    <ArchetypeDot archetype={s.archetype} size="md" />
-
-                    {/* Nombre + cargo */}
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-semibold truncate ${isActive ? 'text-navy dark:text-info-soft' : 'text-lean-black dark:text-gray-200'}`}>
-                        {s.name}
-                        {isRisk && (
-                          <svg className="inline h-3 w-3 text-danger-dark ml-1" viewBox="0 0 16 16" fill="currentColor">
-                            <path fillRule="evenodd" d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0114.082 15H1.918a1.75 1.75 0 01-1.543-2.575L6.457 1.047zM9 11a1 1 0 11-2 0 1 1 0 012 0zm-.25-5.25a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </p>
-                      <p className="text-[11px] text-text-subtle truncate">{s.role}</p>
-                    </div>
-
-                    {/* Badges */}
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <ArchetypeBadge archetype={s.archetype} />
-                      <ResistanceBadge resistance={s.resistance} />
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
+            {/* Filas de stakeholders — ocultas si colapsado */}
+            {!isCollapsed && (
+              <div className="divide-y divide-border/50">
+                {members.map((s) => {
+                  const isActive = s.id === activeId
+                  const isRisk   = s.resistance === 'alta' && (s.archetype === 'critico' || s.archetype === 'decisor')
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => onSelect(s)}
+                      className={[
+                        'w-full flex items-center gap-3 px-5 py-3 text-left transition-all duration-150',
+                        isActive
+                          ? 'bg-navy/5 dark:bg-navy/10 border-l-2 border-navy'
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 border-l-2 border-transparent',
+                      ].join(' ')}
+                    >
+                      <ArchetypeDot archetype={s.archetype} size="md" />
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs font-semibold truncate ${isActive ? 'text-navy dark:text-info-soft' : 'text-lean-black dark:text-gray-200'}`}>
+                          {s.name}
+                          {isRisk && (
+                            <svg className="inline h-3 w-3 text-danger-dark ml-1" viewBox="0 0 16 16" fill="currentColor">
+                              <path fillRule="evenodd" d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0114.082 15H1.918a1.75 1.75 0 01-1.543-2.575L6.457 1.047zM9 11a1 1 0 11-2 0 1 1 0 012 0zm-.25-5.25a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </p>
+                        <p className="text-[11px] text-text-subtle truncate">{s.role}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <ArchetypeBadge archetype={s.archetype} />
+                        <ResistanceBadge resistance={s.resistance} />
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )
       })}

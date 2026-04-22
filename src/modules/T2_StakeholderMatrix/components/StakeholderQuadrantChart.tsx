@@ -195,7 +195,7 @@ export function StakeholderQuadrantChart({
         <svg
           viewBox={`0 0 ${VB} ${VB}`}
           className="w-full"
-          style={{ maxWidth: 480, maxHeight: 480 }}
+          style={{ maxWidth: 560, maxHeight: 560 }}
         >
           <defs>
             {/* Un solo clipPath: recorta TODO (fondos + puntos + anillos) al círculo */}
@@ -207,49 +207,12 @@ export function StakeholderQuadrantChart({
           {/* ── Todo el contenido visual dentro del círculo — clipped ── */}
           <g clipPath="url(#circle-clip)">
 
-            {/* Fondos de cuadrante */}
-            <rect x={0}  y={0}  width={CX} height={CY} fill={ARCHETYPE_BG_HEX.critico}     opacity={0.55} />
-            <rect x={CX} y={0}  width={VB} height={CY} fill={ARCHETYPE_BG_HEX.decisor}     opacity={0.55} />
-            <rect x={0}  y={CY} width={CX} height={VB} fill={ARCHETYPE_BG_HEX.especialista} opacity={0.55} />
-            <rect x={CX} y={CY} width={VB} height={VB} fill={ARCHETYPE_BG_HEX.adoptador}    opacity={0.55} />
-
-            {/* Crosshairs */}
-            <line x1={0} y1={CY} x2={VB} y2={CY} stroke="#C8CACD" strokeWidth={1} strokeDasharray="5 4" />
-            <line x1={CX} y1={0} x2={CX} y2={VB} stroke="#C8CACD" strokeWidth={1} strokeDasharray="5 4" />
-
-            {/* Labels de cuadrante */}
-            <text x={CX - 108} y={CY - 104} textAnchor="middle" fontSize={8} fontWeight="700"
-              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.critico} opacity={0.55} letterSpacing="0.06em">
-              CRÍTICO
-            </text>
-            <text x={CX - 108} y={CY - 93} textAnchor="middle" fontSize={7}
-              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.critico} opacity={0.38}>
-              bloquea
-            </text>
-            <text x={CX + 108} y={CY - 104} textAnchor="middle" fontSize={8} fontWeight="700"
-              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.decisor} opacity={0.55} letterSpacing="0.06em">
-              DECISOR
-            </text>
-            <text x={CX + 108} y={CY - 93} textAnchor="middle" fontSize={7}
-              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.decisor} opacity={0.38}>
-              lidera
-            </text>
-            <text x={CX - 108} y={CY + 100} textAnchor="middle" fontSize={8} fontWeight="700"
-              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.especialista} opacity={0.55} letterSpacing="0.06em">
-              ESPECIALISTA
-            </text>
-            <text x={CX - 108} y={CY + 111} textAnchor="middle" fontSize={7}
-              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.especialista} opacity={0.38}>
-              dominio / miedo
-            </text>
-            <text x={CX + 108} y={CY + 100} textAnchor="middle" fontSize={8} fontWeight="700"
-              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.adoptador} opacity={0.55} letterSpacing="0.06em">
-              ADOPTADOR
-            </text>
-            <text x={CX + 108} y={CY + 111} textAnchor="middle" fontSize={7}
-              fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.adoptador} opacity={0.38}>
-              usa y adopta
-            </text>
+            {/* Fondos de cuadrante — con hueco de 4px en los ejes (sin dibujar líneas) */}
+            {/* El espacio entre rects (GAP=4px cada lado) actúa como separador visual  */}
+            <rect x={0}      y={0}      width={CX - 4}      height={CY - 4}      fill={ARCHETYPE_BG_HEX.critico}      opacity={0.5} />
+            <rect x={CX + 4} y={0}      width={VB - CX - 4} height={CY - 4}      fill={ARCHETYPE_BG_HEX.decisor}      opacity={0.5} />
+            <rect x={0}      y={CY + 4} width={CX - 4}      height={VB - CY - 4} fill={ARCHETYPE_BG_HEX.especialista} opacity={0.5} />
+            <rect x={CX + 4} y={CY + 4} width={VB - CX - 4} height={VB - CY - 4} fill={ARCHETYPE_BG_HEX.adoptador}   opacity={0.5} />
 
             {/* ── Puntos de stakeholders — dentro del clipPath ──
                 El clipPath garantiza que auras, anillos y círculos
@@ -316,7 +279,58 @@ export function StakeholderQuadrantChart({
           {/* ── Borde del círculo — encima de todo el contenido interior ── */}
           <circle cx={CX} cy={CY} r={CR} fill="none" stroke="#D1D5DB" strokeWidth={1.5} />
 
-          {/* ── Labels de eje (fuera del círculo, no clippeados) ── */}
+          {/* ── Labels de arquetipo — FUERA del círculo, en las diagonales ──
+              Posición: CR + 28px desde el centro, a 45° de cada cuadrante.
+              Calculado: (CR+28) * cos(45°) ≈ 228 * 0.707 ≈ 161px               */}
+          {/* TL: Crítico — alta influencia, baja adopción */}
+          <text x={CX - 142} y={CY - 138} textAnchor="middle"
+            fontSize={8.5} fontWeight="700" fontFamily="ui-monospace, monospace"
+            fill={ARCHETYPE_HEX.critico} letterSpacing="0.06em">
+            CRÍTICO
+          </text>
+          <text x={CX - 142} y={CY - 127} textAnchor="middle"
+            fontSize={7.5} fontFamily="ui-monospace, monospace"
+            fill={ARCHETYPE_HEX.critico} opacity={0.6}>
+            bloquea
+          </text>
+
+          {/* TR: Decisor — alta influencia, alta adopción */}
+          <text x={CX + 142} y={CY - 138} textAnchor="middle"
+            fontSize={8.5} fontWeight="700" fontFamily="ui-monospace, monospace"
+            fill={ARCHETYPE_HEX.decisor} letterSpacing="0.06em">
+            DECISOR
+          </text>
+          <text x={CX + 142} y={CY - 127} textAnchor="middle"
+            fontSize={7.5} fontFamily="ui-monospace, monospace"
+            fill={ARCHETYPE_HEX.decisor} opacity={0.6}>
+            lidera
+          </text>
+
+          {/* BL: Especialista — baja influencia, baja adopción */}
+          <text x={CX - 142} y={CY + 134} textAnchor="middle"
+            fontSize={8.5} fontWeight="700" fontFamily="ui-monospace, monospace"
+            fill={ARCHETYPE_HEX.especialista} letterSpacing="0.06em">
+            ESPECIALISTA
+          </text>
+          <text x={CX - 142} y={CY + 145} textAnchor="middle"
+            fontSize={7.5} fontFamily="ui-monospace, monospace"
+            fill={ARCHETYPE_HEX.especialista} opacity={0.6}>
+            dominio / miedo
+          </text>
+
+          {/* BR: Adoptador — baja influencia, alta adopción */}
+          <text x={CX + 142} y={CY + 134} textAnchor="middle"
+            fontSize={8.5} fontWeight="700" fontFamily="ui-monospace, monospace"
+            fill={ARCHETYPE_HEX.adoptador} letterSpacing="0.06em">
+            ADOPTADOR
+          </text>
+          <text x={CX + 142} y={CY + 145} textAnchor="middle"
+            fontSize={7.5} fontFamily="ui-monospace, monospace"
+            fill={ARCHETYPE_HEX.adoptador} opacity={0.6}>
+            usa y adopta
+          </text>
+
+          {/* ── Labels de eje (dimensiones del gráfico) ── */}
           <text x={CX} y={CY - CR - 14} textAnchor="middle"
             fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">
             ↑ Alta influencia
