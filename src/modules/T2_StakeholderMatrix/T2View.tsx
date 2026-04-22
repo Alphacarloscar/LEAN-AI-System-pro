@@ -116,7 +116,7 @@ function StakeholderPanel({
 
         {/* Descripción del arquetipo */}
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-1.5">
             Perfil — {cfg.label}
           </p>
           <p className="text-xs text-text-muted leading-relaxed">{cfg.description}</p>
@@ -126,7 +126,7 @@ function StakeholderPanel({
         {/* Scores de entrevista */}
         {stakeholder.interview && (
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-2">
               Scores de entrevista
             </p>
             <div className="space-y-1.5">
@@ -151,7 +151,7 @@ function StakeholderPanel({
 
         {/* Intervenciones recomendadas */}
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-2">
             Intervenciones recomendadas · {res.label}
           </p>
           <ol className="space-y-2">
@@ -169,7 +169,7 @@ function StakeholderPanel({
         {/* Notas */}
         {stakeholder.notes && (
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-1.5">
               Notas de sesión
             </p>
             <p className="text-xs text-text-muted leading-relaxed italic bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 py-2">
@@ -193,11 +193,11 @@ function DepartmentMatrix({
   activeId:     string | null
   onSelect:     (s: Stakeholder) => void
 }) {
-  // Estado de colapso por departamento (ninguno colapsado por defecto)
-  const [collapsedDepts, setCollapsedDepts] = useState<Set<string>>(new Set())
+  // expandedDepts = set de depts EXPANDIDOS (vacío por defecto → todos colapsados)
+  const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set())
 
   function toggleDept(dept: string) {
-    setCollapsedDepts((prev) => {
+    setExpandedDepts((prev) => {
       const next = new Set(prev)
       if (next.has(dept)) next.delete(dept)
       else next.add(dept)
@@ -279,7 +279,7 @@ function DepartmentMatrix({
 
       {/* Departamentos — colapsables */}
       {Array.from(departments.entries()).map(([dept, members]) => {
-        const isCollapsed = collapsedDepts.has(dept)
+        const isCollapsed = !expandedDepts.has(dept)
         return (
           <div key={dept} className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
 
@@ -289,7 +289,7 @@ function DepartmentMatrix({
               className="w-full px-5 py-3 border-b border-border bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between hover:bg-gray-100/60 dark:hover:bg-gray-800/50 transition-colors"
             >
               <div className="flex items-center gap-2">
-                {/* Chevron */}
+                {/* Chevron — apunta derecha cuando colapsado, abajo cuando expandido */}
                 <svg
                   className={`h-3 w-3 text-text-subtle transition-transform duration-200 ${isCollapsed ? '' : 'rotate-90'}`}
                   viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"

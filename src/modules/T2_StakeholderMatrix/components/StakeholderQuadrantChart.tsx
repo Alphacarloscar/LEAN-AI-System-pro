@@ -279,54 +279,55 @@ export function StakeholderQuadrantChart({
           {/* ── Borde del círculo — encima de todo el contenido interior ── */}
           <circle cx={CX} cy={CY} r={CR} fill="none" stroke="#D1D5DB" strokeWidth={1.5} />
 
-          {/* ── Labels de arquetipo — FUERA del círculo, en las diagonales ──
-              Posición: CR + 28px desde el centro, a 45° de cada cuadrante.
-              Calculado: (CR+28) * cos(45°) ≈ 228 * 0.707 ≈ 161px               */}
-          {/* TL: Crítico — alta influencia, baja adopción */}
-          <text x={CX - 142} y={CY - 138} textAnchor="middle"
-            fontSize={8.5} fontWeight="700" fontFamily="ui-monospace, monospace"
+          {/* ── Labels de arquetipo — en las esquinas del VB, totalmente fuera del círculo ──
+              Distancia del centro: 235px a 45° → offset = 235*cos(45°) ≈ 166px
+              Borde del círculo a 45°: 200*cos(45°) = 141px → los labels están 25px fuera  */}
+
+          {/* TL: Crítico */}
+          <text x={94} y={91} textAnchor="middle"
+            fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace"
             fill={ARCHETYPE_HEX.critico} letterSpacing="0.06em">
             CRÍTICO
           </text>
-          <text x={CX - 142} y={CY - 127} textAnchor="middle"
+          <text x={94} y={103} textAnchor="middle"
             fontSize={7.5} fontFamily="ui-monospace, monospace"
-            fill={ARCHETYPE_HEX.critico} opacity={0.6}>
+            fill={ARCHETYPE_HEX.critico} opacity={0.65}>
             bloquea
           </text>
 
-          {/* TR: Decisor — alta influencia, alta adopción */}
-          <text x={CX + 142} y={CY - 138} textAnchor="middle"
-            fontSize={8.5} fontWeight="700" fontFamily="ui-monospace, monospace"
+          {/* TR: Decisor */}
+          <text x={426} y={91} textAnchor="middle"
+            fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace"
             fill={ARCHETYPE_HEX.decisor} letterSpacing="0.06em">
             DECISOR
           </text>
-          <text x={CX + 142} y={CY - 127} textAnchor="middle"
+          <text x={426} y={103} textAnchor="middle"
             fontSize={7.5} fontFamily="ui-monospace, monospace"
-            fill={ARCHETYPE_HEX.decisor} opacity={0.6}>
+            fill={ARCHETYPE_HEX.decisor} opacity={0.65}>
             lidera
           </text>
 
-          {/* BL: Especialista — baja influencia, baja adopción */}
-          <text x={CX - 142} y={CY + 134} textAnchor="middle"
-            fontSize={8.5} fontWeight="700" fontFamily="ui-monospace, monospace"
+          {/* BL: Especialista */}
+          <text x={94} y={424} textAnchor="middle"
+            fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace"
             fill={ARCHETYPE_HEX.especialista} letterSpacing="0.06em">
             ESPECIALISTA
           </text>
-          <text x={CX - 142} y={CY + 145} textAnchor="middle"
+          <text x={94} y={436} textAnchor="middle"
             fontSize={7.5} fontFamily="ui-monospace, monospace"
-            fill={ARCHETYPE_HEX.especialista} opacity={0.6}>
+            fill={ARCHETYPE_HEX.especialista} opacity={0.65}>
             dominio / miedo
           </text>
 
-          {/* BR: Adoptador — baja influencia, alta adopción */}
-          <text x={CX + 142} y={CY + 134} textAnchor="middle"
-            fontSize={8.5} fontWeight="700" fontFamily="ui-monospace, monospace"
+          {/* BR: Adoptador */}
+          <text x={426} y={424} textAnchor="middle"
+            fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace"
             fill={ARCHETYPE_HEX.adoptador} letterSpacing="0.06em">
             ADOPTADOR
           </text>
-          <text x={CX + 142} y={CY + 145} textAnchor="middle"
+          <text x={426} y={436} textAnchor="middle"
             fontSize={7.5} fontFamily="ui-monospace, monospace"
-            fill={ARCHETYPE_HEX.adoptador} opacity={0.6}>
+            fill={ARCHETYPE_HEX.adoptador} opacity={0.65}>
             usa y adopta
           </text>
 
