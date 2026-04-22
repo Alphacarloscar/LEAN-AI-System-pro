@@ -74,20 +74,22 @@ function MetallicScoreBars({
   adoptionScore,
   influenceScore,
   opennessScore,
+  trackWidth = 88,
 }: {
   adoptionScore:  number
   influenceScore: number
   opennessScore:  number
+  trackWidth?:    number
 }) {
   const MAX      = 4
-  const VBW      = 176   // viewBox width — fits in w-[200px] px-3 container
-  const LBL_W    = 54    // label column
-  const G1       = 7     // gutter label→track
-  const TRACK_W  = 88    // background guide width
-  const G2       = 5     // gutter track→value
-  // total: 54+7+88+5+22 = 176 ✓ (VAL_W=22 reserved in viewBox, text positioned via TX+TRACK_W+G2)
+  const LBL_W    = 60    // label column
+  const G1       = 8     // gutter label→track
+  const TRACK_W  = trackWidth
+  const G2       = 6     // gutter track→value
+  const VAL_COL  = 26    // value text area
+  const VBW      = LBL_W + G1 + TRACK_W + G2 + VAL_COL
   const TX       = LBL_W + G1   // track origin x
-  const ROW_H    = 28
+  const ROW_H    = 30
   const VBH      = SCORE_BARS_META.length * ROW_H + 6
 
   const values = [adoptionScore, influenceScore, opennessScore]
@@ -167,45 +169,56 @@ function MiniPositionMap({
   adoptionScore,
   influenceScore,
   archetype,
+  size = 56,
 }: {
   adoptionScore:  number
   influenceScore: number
   archetype:      ArchetypeCode
+  size?:          number
 }) {
-  const S   = 56   // total SVG size
-  const P   = 7    // padding inside border
-  const IN  = S - P * 2   // inner grid size = 42
+  const S   = size
+  const P   = Math.round(S * 0.12)   // padding scales with size
+  const IN  = S - P * 2
 
-  // adoption → X (0=left, 4=right), influence → Y (0=bottom, 4=top → inverted SVG)
   const dx  = P + (adoptionScore  / 4) * IN
   const dy  = P + (1 - influenceScore / 4) * IN
   const hex = ARCH_HEX[archetype]
   const MID = P + IN / 2
 
+  // Scale-dependent sizes
+  const dotR    = S * 0.040
+  const glow1R  = S * 0.110
+  const glow2R  = S * 0.065
+  const lblSize = Math.max(S * 0.080, 5)
+  const strokeW = Math.max(S * 0.006, 0.35)
+
   return (
     <svg viewBox={`0 0 ${S} ${S}`} width={S} height={S} style={{ display: 'block' }}>
-      {/* Quadrant fills */}
-      <rect x={P}     y={P}     width={IN/2-0.5} height={IN/2-0.5} fill="#C06060" opacity={0.05} />
-      <rect x={MID+0.5} y={P}   width={IN/2-0.5} height={IN/2-0.5} fill="#1B2A4E" opacity={0.05} />
-      <rect x={P}     y={MID+0.5} width={IN/2-0.5} height={IN/2-0.5} fill="#D4A85C" opacity={0.05} />
-      <rect x={MID+0.5} y={MID+0.5} width={IN/2-0.5} height={IN/2-0.5} fill="#5FAF8A" opacity={0.05} />
+      {/* Quadrant fills — more visible at larger sizes */}
+      <rect x={P}       y={P}       width={IN/2-0.5} height={IN/2-0.5} fill="#C06060" opacity={0.07} rx={1} />
+      <rect x={MID+0.5} y={P}       width={IN/2-0.5} height={IN/2-0.5} fill="#1B2A4E" opacity={0.07} rx={1} />
+      <rect x={P}       y={MID+0.5} width={IN/2-0.5} height={IN/2-0.5} fill="#D4A85C" opacity={0.07} rx={1} />
+      <rect x={MID+0.5} y={MID+0.5} width={IN/2-0.5} height={IN/2-0.5} fill="#5FAF8A" opacity={0.07} rx={1} />
       {/* Grid border */}
-      <rect x={P} y={P} width={IN} height={IN} fill="none" stroke="#E2E8F0" strokeWidth={0.5} rx={1.5} />
+      <rect x={P} y={P} width={IN} height={IN} fill="none" stroke="#E2E8F0" strokeWidth={0.5} rx={2} />
       {/* Crosshair */}
-      <line x1={MID} y1={P}   x2={MID} y2={P+IN} stroke="#94A3B8" strokeWidth={0.35} opacity={0.25} />
-      <line x1={P}   y1={MID} x2={P+IN} y2={MID} stroke="#94A3B8" strokeWidth={0.35} opacity={0.25} />
-      {/* Axis micro-labels */}
-      <text x={MID} y={S-1} textAnchor="middle" fontSize={4.5} fill="#94A3B8" fontFamily="ui-monospace,monospace">adopción</text>
-      <text x={2} y={MID+1.5} textAnchor="middle" fontSize={4.5} fill="#94A3B8" fontFamily="ui-monospace,monospace"
-        transform={`rotate(-90,2,${MID})`}>influencia</text>
-      {/* Dot glow layers */}
-      <circle cx={dx} cy={dy} r={6}   fill={hex} opacity={0.08} />
-      <circle cx={dx} cy={dy} r={3.5} fill={hex} opacity={0.18} />
-      {/* Dot */}
-      <circle cx={dx} cy={dy} r={2.2} fill={hex} opacity={0.90} />
-      {/* Dot shine */}
-      <ellipse cx={dx - 0.7} cy={dy - 0.7} rx={0.8} ry={0.5}
-        fill="rgba(255,255,255,0.55)" />
+      <line x1={MID} y1={P}   x2={MID} y2={P+IN} stroke="#94A3B8" strokeWidth={strokeW} opacity={0.22} />
+      <line x1={P}   y1={MID} x2={P+IN} y2={MID} stroke="#94A3B8" strokeWidth={strokeW} opacity={0.22} />
+      {/* Axis labels */}
+      <text x={MID} y={S - P * 0.3} textAnchor="middle" fontSize={lblSize}
+        fill="#94A3B8" fontFamily="ui-monospace,monospace">adopción</text>
+      <text x={P * 0.35} y={MID + 1} textAnchor="middle" fontSize={lblSize}
+        fill="#94A3B8" fontFamily="ui-monospace,monospace"
+        transform={`rotate(-90,${P * 0.35},${MID})`}>influencia</text>
+      {/* Glow halos */}
+      <circle cx={dx} cy={dy} r={glow1R} fill={hex} opacity={0.08} />
+      <circle cx={dx} cy={dy} r={glow2R} fill={hex} opacity={0.20} />
+      {/* Main dot */}
+      <circle cx={dx} cy={dy} r={dotR} fill={hex} opacity={0.92} />
+      {/* Shine */}
+      <ellipse cx={dx - dotR * 0.32} cy={dy - dotR * 0.32}
+        rx={dotR * 0.38} ry={dotR * 0.24}
+        fill="rgba(255,255,255,0.60)" />
     </svg>
   )
 }
@@ -230,29 +243,56 @@ function StakeholderPanel({
   return (
     <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
 
-      {/* Header del panel */}
-      <div className={`px-5 py-4 border-b border-border ${isHighRisk ? 'bg-danger-light dark:bg-danger-dark/20' : 'bg-gray-50 dark:bg-gray-800/50'}`}>
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-lean-black dark:text-gray-100 truncate">
-              {stakeholder.name}
-            </p>
-            <p className="text-xs text-text-muted mt-0.5">{stakeholder.role}</p>
-            <p className="text-[10px] text-text-subtle mt-0.5">{stakeholder.department}</p>
+      {/* ── HEADER: identidad izquierda | notas derecha ── */}
+      <div className={`border-b border-border ${isHighRisk ? 'bg-danger-light dark:bg-danger-dark/20' : 'bg-gray-50 dark:bg-gray-800/50'}`}>
+        <div className="flex divide-x divide-border/40">
+
+          {/* Identidad */}
+          <div className="flex-1 min-w-0 px-4 py-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-lean-black dark:text-gray-100 truncate">
+                  {stakeholder.name}
+                </p>
+                <p className="text-xs text-text-muted mt-0.5">{stakeholder.role}</p>
+                <p className="text-[10px] text-text-subtle mt-0.5">{stakeholder.department}</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="h-6 w-6 rounded-md flex items-center justify-center text-text-subtle hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0"
+              >
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M1 1l9 9M10 1L1 10" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-1.5 mt-2.5">
+              <ArchetypeBadge archetype={stakeholder.archetype} />
+              <ResistanceBadge resistance={stakeholder.resistance} />
+              {stakeholder.manualOverride && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-gray-100 dark:bg-gray-800 text-text-subtle">
+                  Ajuste manual
+                </span>
+              )}
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="h-6 w-6 rounded-md flex items-center justify-center text-text-subtle hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0"
-          >
-            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M1 1l9 9M10 1L1 10" />
-            </svg>
-          </button>
+
+          {/* Notas de sesión — en el header, columna derecha */}
+          {stakeholder.notes && (
+            <div className="w-[168px] shrink-0 px-3 py-3">
+              <p className="text-[8px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+                Notas de sesión
+              </p>
+              <p className="text-[10px] text-text-muted leading-relaxed italic line-clamp-4">
+                {stakeholder.notes}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Alerta riesgo alto */}
         {isHighRisk && (
-          <div className="mt-3 flex items-start gap-2 px-3 py-2 rounded-lg bg-danger-light border border-danger-dark/20">
+          <div className="mx-4 mb-3 flex items-start gap-2 px-3 py-2 rounded-lg bg-danger-light border border-danger-dark/20">
             <svg className="h-3.5 w-3.5 text-danger-dark mt-0.5 shrink-0" viewBox="0 0 16 16" fill="currentColor">
               <path fillRule="evenodd" d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0114.082 15H1.918a1.75 1.75 0 01-1.543-2.575L6.457 1.047zM9 11a1 1 0 11-2 0 1 1 0 012 0zm-.25-5.25a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z" clipRule="evenodd" />
             </svg>
@@ -261,135 +301,93 @@ function StakeholderPanel({
             </p>
           </div>
         )}
-
-        <div className="flex flex-wrap gap-2 mt-3">
-          <ArchetypeBadge archetype={stakeholder.archetype} />
-          <ResistanceBadge resistance={stakeholder.resistance} />
-          {stakeholder.manualOverride && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] bg-gray-100 dark:bg-gray-800 text-text-subtle">
-              Ajuste manual
-            </span>
-          )}
-        </div>
       </div>
 
-      {/* Body: visual izquierda | info derecha */}
-      <div className="flex divide-x divide-border/30 min-h-[220px]">
+      {/* ── BODY: mapa grande izquierda | intervenciones derecha ── */}
+      <div className="flex divide-x divide-border/30">
 
-        {/* ── LEFT: datos visuales ─────────────────────────────── */}
-        <div className="w-[200px] shrink-0 px-3 py-4 flex flex-col gap-4">
+        {/* LEFT — perfil + mapa de posición grande */}
+        <div className="w-[200px] shrink-0 px-4 py-4 flex flex-col gap-3">
 
-          {/* Mini mapa de posición + scores si hay entrevista */}
-          {stakeholder.interview ? (
-            <>
-              {/* Mapa cuadrante */}
-              <div className="flex items-center gap-2">
-                <MiniPositionMap
-                  adoptionScore={stakeholder.interview.adoptionScore}
-                  influenceScore={stakeholder.interview.influenceScore}
-                  archetype={stakeholder.archetype}
-                />
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-[8px] font-mono uppercase tracking-widest text-text-subtle leading-none">
-                    Posición
-                  </p>
-                  <p className="text-[8px] font-mono text-text-subtle leading-snug opacity-70">
-                    Adopc. × Infl.
-                  </p>
-                  {/* Indicador de señal estratégica: 4 barras verticales proporcionales a influencia */}
-                  <div className="flex items-end gap-[2px] mt-2">
-                    {[0.4, 0.6, 0.8, 1.0].map((frac, i) => {
-                      const active = (stakeholder.interview!.influenceScore / 4) >= frac - 0.15
-                      return (
-                        <div
-                          key={i}
-                          className="w-[3px] rounded-[1px]"
-                          style={{
-                            height: `${6 + i * 3}px`,
-                            backgroundColor: active ? ARCH_HEX[stakeholder.archetype] : '#E2E8F0',
-                            opacity: active ? 0.85 : 0.4,
-                          }}
-                        />
-                      )
-                    })}
-                    <span className="text-[7px] font-mono text-text-subtle ml-1 mb-0.5">infl.</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="h-px bg-border/40" />
-
-              {/* Barras metálicas de scores */}
-              <div>
-                <p className="text-[8px] font-mono uppercase tracking-widest text-text-subtle mb-2">
-                  Scores entrevista
-                </p>
-                <MetallicScoreBars
-                  adoptionScore={stakeholder.interview.adoptionScore}
-                  influenceScore={stakeholder.interview.influenceScore}
-                  opennessScore={stakeholder.interview.opennessScore}
-                />
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center flex-1 gap-1 opacity-40">
-              <svg className="h-6 w-6 text-text-subtle" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <p className="text-[9px] text-text-subtle text-center leading-snug">Sin entrevista registrada</p>
-            </div>
-          )}
-
-          {/* Notas de sesión — al final del panel izquierdo */}
-          {stakeholder.notes && (
-            <>
-              <div className="h-px bg-border/40" />
-              <div>
-                <p className="text-[8px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
-                  Notas de sesión
-                </p>
-                <p className="text-[10px] text-text-muted leading-relaxed italic">
-                  {stakeholder.notes}
-                </p>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* ── RIGHT: perfil + intervenciones ───────────────────── */}
-        <div className="flex-1 min-w-0 px-4 py-4 space-y-4">
-
-          {/* Descripción del arquetipo */}
+          {/* Perfil arquetipo */}
           <div>
-            <p className="text-[9px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-1.5">
+            <p className="text-[8px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-1">
               Perfil — {cfg.label}
             </p>
-            <p className="text-[11px] text-text-muted leading-relaxed">{cfg.description}</p>
-            <p className="text-[10px] italic text-text-subtle mt-1.5">"{cfg.tagline}"</p>
+            <p className="text-[10px] text-text-muted leading-relaxed">{cfg.description}</p>
+            <p className="text-[9px] italic text-text-subtle mt-1">"{cfg.tagline}"</p>
           </div>
 
-          {/* Divider */}
-          <div className="h-px bg-border/40" />
+          {/* Mapa de posición — grande, protagonista visual */}
+          {stakeholder.interview ? (
+            <div className="flex flex-col items-center gap-1 mt-1">
+              <MiniPositionMap
+                adoptionScore={stakeholder.interview.adoptionScore}
+                influenceScore={stakeholder.interview.influenceScore}
+                archetype={stakeholder.archetype}
+                size={112}
+              />
+              {/* Indicador de señal de influencia */}
+              <div className="flex items-end gap-[3px] mt-1">
+                {[0.25, 0.50, 0.75, 1.0].map((frac, i) => {
+                  const active = (stakeholder.interview!.influenceScore / 4) >= frac - 0.12
+                  return (
+                    <div
+                      key={i}
+                      className="w-[4px] rounded-[1px]"
+                      style={{
+                        height: `${7 + i * 4}px`,
+                        backgroundColor: active ? ARCH_HEX[stakeholder.archetype] : '#E2E8F0',
+                        opacity: active ? 0.82 : 0.35,
+                      }}
+                    />
+                  )
+                })}
+                <span className="text-[7px] font-mono text-text-subtle ml-1.5 mb-0.5">influencia</span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center flex-1 gap-1 opacity-35 py-6">
+              <svg className="h-8 w-8 text-text-subtle" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <p className="text-[9px] text-text-subtle text-center leading-snug">Sin entrevista</p>
+            </div>
+          )}
+        </div>
 
-          {/* Intervenciones recomendadas */}
-          <div>
-            <p className="text-[9px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-2">
-              Intervenciones · {res.label}
-            </p>
-            <ol className="space-y-2.5">
-              {interventions.map((item, i) => (
-                <li key={i} className="flex gap-2">
-                  <span className="flex-shrink-0 h-[14px] w-[14px] rounded-full bg-navy text-white text-[8px] font-bold flex items-center justify-center mt-0.5">
-                    {i + 1}
-                  </span>
-                  <p className="text-[11px] text-text-muted leading-relaxed">{item}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
+        {/* RIGHT — intervenciones */}
+        <div className="flex-1 min-w-0 px-4 py-4">
+          <p className="text-[8px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-3">
+            Intervenciones · {res.label}
+          </p>
+          <ol className="space-y-3">
+            {interventions.map((item, i) => (
+              <li key={i} className="flex gap-2.5">
+                <span className="flex-shrink-0 h-[15px] w-[15px] rounded-full bg-navy text-white text-[8px] font-bold flex items-center justify-center mt-0.5">
+                  {i + 1}
+                </span>
+                <p className="text-[11px] text-text-muted leading-relaxed">{item}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
+
+      {/* ── FOOTER: barras de scores a ancho completo ── */}
+      {stakeholder.interview && (
+        <div className="border-t border-border/40 px-5 py-4">
+          <p className="text-[8px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+            Scores de entrevista
+          </p>
+          <MetallicScoreBars
+            adoptionScore={stakeholder.interview.adoptionScore}
+            influenceScore={stakeholder.interview.influenceScore}
+            opennessScore={stakeholder.interview.opennessScore}
+            trackWidth={260}
+          />
+        </div>
+      )}
     </div>
   )
 }
