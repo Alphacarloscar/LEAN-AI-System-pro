@@ -216,9 +216,8 @@ function HeroCategoryDonut({ processes }: { processes: ValueStream[] }) {
   if (total === 0) {
     return (
       <svg viewBox={`0 0 ${VB} ${VB}`} width="100%" style={{ display: 'block' }}>
-        <circle cx={CX} cy={CY} r={R_OUTER + 5} fill="#111827" />
         <text x={CX} y={CY + 5} textAnchor="middle" fontSize={13}
-          fill="rgba(255,255,255,0.35)" fontFamily="ui-monospace,monospace">
+          fill="#94A3B8" fontFamily="ui-monospace,monospace">
           Sin procesos
         </text>
       </svg>
@@ -255,21 +254,17 @@ function HeroCategoryDonut({ processes }: { processes: ValueStream[] }) {
   }
 
   return (
-    <svg viewBox={`0 0 ${VB} ${VB}`} width="100%" style={{ display: 'block' }}>
-      <defs>
-        <radialGradient id="t3donut-bg" cx="50%" cy="35%" r="75%">
-          <stop offset="0%"   stopColor="#2A3D6A" />
-          <stop offset="100%" stopColor="#0D1B36" />
-        </radialGradient>
-      </defs>
+    <svg viewBox={`0 0 ${VB} ${VB}`} width="100%" style={{ display: 'block' }}
+      className="text-lean-black dark:text-gray-100">
 
-      {/* Dark circular background */}
-      <circle cx={CX} cy={CY} r={R_OUTER + 6} fill="url(#t3donut-bg)" />
+      {/* Outer / inner ring guides */}
+      <circle cx={CX} cy={CY} r={R_OUTER} fill="none" stroke="rgba(148,163,184,0.28)" strokeWidth={1} />
+      <circle cx={CX} cy={CY} r={R_INNER} fill="none" stroke="rgba(148,163,184,0.18)" strokeWidth={0.6} />
 
       {/* Concentric rings — decorative */}
-      {[75, 100, 126, 152].map((r) => (
+      {[75, 100, 126].map((r) => (
         <circle key={r} cx={CX} cy={CY} r={r}
-          fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={0.8} />
+          fill="none" stroke="rgba(148,163,184,0.18)" strokeWidth={0.6} />
       ))}
 
       {/* Sectors */}
@@ -356,23 +351,20 @@ function HeroCategoryDonut({ processes }: { processes: ValueStream[] }) {
         )
       })}
 
-      {/* Inner circle — dark center */}
-      <circle cx={CX} cy={CY} r={R_INNER - 3} fill="rgba(10,20,45,0.96)" />
-
-      {/* Center text */}
+      {/* Center text — transparent hole, reads on card background */}
       <text x={CX} y={CY - 14} textAnchor="middle"
-        fontSize={7.5} fill="rgba(255,255,255,0.40)"
+        fontSize={7.5} fill="#94A3B8"
         fontFamily="ui-monospace,monospace" letterSpacing="0.10em">
         VALUE STREAM
       </text>
       <text x={CX} y={CY - 2} textAnchor="middle"
-        fontSize={7.5} fill="rgba(255,255,255,0.40)"
+        fontSize={7.5} fill="#94A3B8"
         fontFamily="ui-monospace,monospace" letterSpacing="0.10em">
         MAP
       </text>
       <text x={CX} y={CY + 22} textAnchor="middle"
         fontSize={26} fontWeight="700"
-        fill="rgba(255,255,255,0.88)"
+        fill="currentColor"
         fontFamily="ui-monospace,monospace"
       >
         {total}

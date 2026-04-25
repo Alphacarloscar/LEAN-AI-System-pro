@@ -20,7 +20,7 @@
 //   - Jitter anti-solapamiento constrained al círculo
 // ============================================================
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from '../types'
 import { ARCHETYPE_CONFIG, RESISTANCE_CONFIG }               from '../constants'
 
@@ -96,6 +96,24 @@ const RESISTANCE_STROKE: Record<ResistanceLevel, { color: string; width: number;
   alta:  { color: '#C06060', width: 3 },
 }
 
+// ── Dark mode detection ───────────────────────────────────────
+
+function useDarkMode(): boolean {
+  const [dark, setDark] = useState(
+    () => typeof document !== 'undefined'
+      ? document.documentElement.classList.contains('dark')
+      : false
+  )
+  useEffect(() => {
+    const obs = new MutationObserver(() => {
+      setDark(document.documentElement.classList.contains('dark'))
+    })
+    obs.observe(document.documentElement, { attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+  return dark
+}
+
 // ── Jitter anti-solapamiento (constrained al círculo) ─────────
 
 function applyJitter(
@@ -148,6 +166,22 @@ export function StakeholderQuadrantChart({
   onSelect,
 }: StakeholderQuadrantChartProps) {
   const [hoverId, setHoverId] = useState<string | null>(null)
+  const isDark = useDarkMode()
+
+  // Quadrant fills — dark-mode-aware
+  // decisor usa navy oscuro (#1B2A4E) que es invisible en fondos oscuros
+  const QUADRANT_FILLS = {
+    critico:      isDark ? 'rgba(192,96,96,0.28)'   : ARCHETYPE_BG_HEX.critico,
+    decisor:      isDark ? 'rgba(100,135,192,0.28)' : ARCHETYPE_BG_HEX.decisor,
+    especialista: isDark ? 'rgba(212,168,92,0.28)'  : ARCHETYPE_BG_HEX.especialista,
+    adoptador:    isDark ? 'rgba(95,175,138,0.28)'  : ARCHETYPE_BG_HEX.adoptador,
+  }
+
+  // Label colors — decisor es navy oscuro, en dark mode usar azul más claro
+  const LABEL_HEX = {
+    ...ARCHETYPE_HEX,
+    decisor: isDark ? '#8BAED4' : ARCHETYPE_HEX.decisor,
+  }
 
   const withScores    = stakeholders.filter((s) =>  s.interview)
   const withoutScores = stakeholders.filter((s) => !s.interview)
@@ -238,10 +272,10 @@ export function StakeholderQuadrantChart({
 
             {/* Fondos de cuadrante — con hueco de 4px en los ejes (sin dibujar líneas) */}
             {/* El espacio entre rects (GAP=4px cada lado) actúa como separador visual  */}
-            <rect x={0}      y={0}      width={CX - 4}      height={CY - 4}      fill={ARCHETYPE_BG_HEX.critico}      opacity={0.5} />
-            <rect x={CX + 4} y={0}      width={VB - CX - 4} height={CY - 4}      fill={ARCHETYPE_BG_HEX.decisor}      opacity={0.5} />
-            <rect x={0}      y={CY + 4} width={CX - 4}      height={VB - CY - 4} fill={ARCHETYPE_BG_HEX.especialista} opacity={0.5} />
-            <rect x={CX + 4} y={CY + 4} width={VB - CX - 4} height={VB - CY - 4} fill={ARCHETYPE_BG_HEX.adoptador}   opacity={0.5} />
+            <rect x={0}      y={0}      width={CX - 4}      height={CY - 4}      fill={QUADRANT_FILLS.critico}      opacity={0.5} />
+            <rect x={CX + 4} y={0}      width={VB - CX - 4} height={CY - 4}      fill={QUADRANT_FILLS.decisor}      opacity={0.5} />
+            <rect x={0}      y={CY + 4} width={CX - 4}      height={VB - CY - 4} fill={QUADRANT_FILLS.especialista} opacity={0.5} />
+            <rect x={CX + 4} y={CY + 4} width={VB - CX - 4} height={VB - CY - 4} fill={QUADRANT_FILLS.adoptador}   opacity={0.5} />
 
             {/* ── Puntos de stakeholders — dentro del clipPath ──
                 El clipPath garantiza que auras, anillos y círculos
@@ -352,12 +386,12 @@ export function StakeholderQuadrantChart({
           {/* TR: Decisor */}
           <text x={426} y={91} textAnchor="middle"
             fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace"
-            fill={ARCHETYPE_HEX.decisor} letterSpacing="0.06em">
+            fill={LABEL_HEX.decisor} letterSpacing="0.06em">
             DECISOR
           </text>
           <text x={426} y={103} textAnchor="middle"
             fontSize={7.5} fontFamily="ui-monospace, monospace"
-            fill={ARCHETYPE_HEX.decisor} opacity={0.65}>
+            fill={LABEL_HEX.decisor} opacity={0.65}>
             lidera
           </text>
 
