@@ -22,6 +22,7 @@ import { MetricHeroGrid }                       from '@/shared/components/Metric
 import { T1View }                               from '@/modules/T1_MaturityRadar'
 import { T2View }                               from '@/modules/T2_StakeholderMatrix'
 import { T3View }                               from '@/modules/T3_ValueStreamMap'
+import { T4View }                               from '@/modules/T4_UseCasePriorityBoard'
 import { CompanyProfileView }                   from '@/modules/CompanyProfile'
 import {
   DEMO_SCENARIOS,
@@ -201,6 +202,7 @@ function DashboardView() {
     if (tool.code === 'T1') navigate('/t1')
     if (tool.code === 'T2') navigate('/t2')
     if (tool.code === 'T3') navigate('/t3')
+    if (tool.code === 'T4') navigate('/t4')
   }
 
   return (
@@ -281,6 +283,14 @@ function T3RouteView() {
   return <T3View companyName={scenario.company.name} onBack={() => navigate('/')} />
 }
 
+// ── T4 route wrapper ──────────────────────────────────────────
+
+function T4RouteView() {
+  const { scenario } = useDemoContext()
+  const navigate     = useNavigate()
+  return <T4View companyName={scenario.company.name} onBack={() => navigate('/')} />
+}
+
 // ── App root ──────────────────────────────────────────────────
 
 export default function App() {
@@ -306,6 +316,7 @@ export default function App() {
           <Route path="t1"             element={<T1RouteView />} />
           <Route path="t2"             element={<T2RouteView />} />
           <Route path="t3"             element={<T3RouteView />} />
+          <Route path="t4"             element={<T4RouteView />} />
         </Route>
 
         {/* Fallback */}
