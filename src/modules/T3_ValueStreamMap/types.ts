@@ -139,11 +139,13 @@ export interface ValueStream {
 // ── Formulario para crear proceso (antes de entrevista) ─────
 
 export interface NewValueStreamForm {
-  name:        string
-  department:  string
-  owner?:      string
-  ownerRole?:  string
+  name:         string
+  department:   string
+  owner?:       string
+  ownerRole?:   string
   description?: string
+  /** Fase de madurez de la iniciativa — seleccionada en el formulario */
+  phase:        ProcessPhase
 }
 
 // ── Configuración de categoría IA ───────────────────────────

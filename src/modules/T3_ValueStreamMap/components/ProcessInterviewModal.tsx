@@ -15,6 +15,7 @@ import {
   INTERVIEW_QUESTIONS,
   AI_CATEGORY_CONFIG,
   READINESS_CONFIG,
+  PHASE_CONFIG,
   computeProcessInterviewResult,
   generateOpportunities,
   getOpportunityLevel,
@@ -23,6 +24,7 @@ import type {
   InterviewAnswerCode,
   AICategoryCode,
   OrgReadinessLevel,
+  ProcessPhase,
   NewValueStreamForm,
   ValueStream,
 } from '../types'
@@ -59,6 +61,8 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 
 // ── Fase 1: formulario datos del proceso ─────────────────────
 
+const PHASE_ORDER: ProcessPhase[] = ['idea', 'validacion', 'piloto', 'estandarizacion', 'escalado']
+
 function ProcessFormPhase({
   onNext,
   existingDepartments,
@@ -67,7 +71,7 @@ function ProcessFormPhase({
   existingDepartments: string[]
 }) {
   const [form, setForm] = useState<NewValueStreamForm>({
-    name: '', department: '', owner: '', ownerRole: '', description: '',
+    name: '', department: '', owner: '', ownerRole: '', description: '', phase: 'validacion',
   })
   const [showDepts, setShowDepts] = useState(false)
   const nameRef = useRef<HTMLInputElement>(null)
@@ -190,6 +194,41 @@ function ProcessFormPhase({
             placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-navy/20
             resize-none"
         />
+      </div>
+
+      {/* Fase de madurez */}
+      <div className="flex flex-col gap-2">
+        <label className="text-xs font-medium text-text-muted">
+          Fase de madurez de la iniciativa <span className="text-danger-dark">*</span>
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {PHASE_ORDER.map((p) => {
+            const cfg = PHASE_CONFIG[p]
+            const active = form.phase === p
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setForm({ ...form, phase: p })}
+                className={[
+                  'px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 border',
+                  active
+                    ? `${cfg.badgeBg} ${cfg.badgeText} border-transparent ring-2 ring-navy/30`
+                    : 'bg-gray-50 dark:bg-gray-800 text-text-muted border-border dark:border-white/10 hover:bg-gray-100 dark:hover:bg-gray-700',
+                ].join(' ')}
+              >
+                {cfg.label}
+              </button>
+            )
+          })}
+        </div>
+        <p className="text-[11px] text-text-subtle">
+          {form.phase === 'idea'            && 'Identificado, sin validación formal todavía.'}
+          {form.phase === 'validacion'      && 'Análisis de viabilidad en curso.'}
+          {form.phase === 'piloto'          && 'Piloto activo en un área o equipo.'}
+          {form.phase === 'estandarizacion' && 'Escalando a otros equipos de la organización.'}
+          {form.phase === 'escalado'        && 'Operativo y normalizado en toda la organización.'}
+        </p>
       </div>
 
       <button
@@ -514,7 +553,7 @@ export function ProcessInterviewModal({
 }: ProcessInterviewModalProps) {
   const [phase, setPhase]         = useState<Phase>('form')
   const [formData, setFormData]   = useState<NewValueStreamForm>({
-    name: '', department: '', owner: '', ownerRole: '', description: '',
+    name: '', department: '', owner: '', ownerRole: '', description: '', phase: 'validacion',
   })
   const [answers, setAnswers]     = useState<Record<number, InterviewAnswerCode>>({})
 
@@ -553,7 +592,7 @@ export function ProcessInterviewModal({
       owner:            formData.owner?.trim() || undefined,
       ownerRole:        formData.ownerRole?.trim() || undefined,
       description:      formData.description?.trim() || undefined,
-      phase:            'validacion',
+      phase:            formData.phase,
       aiCategory,
       orgReadiness,
       opportunityLevel: oppLevel,
