@@ -231,7 +231,8 @@ function NewInterviewModal({ onClose, onSubmit }: NewInterviewModalProps) {
 
 export function T1View({ scenario, onBack }: T1ViewProps) {
 
-  const [showNewModal, setShowNewModal] = useState(false)
+  const [showNewModal,      setShowNewModal]      = useState(false)
+  const [showInterviewees,  setShowInterviewees]  = useState(false)
 
   // Lista de entrevistados: los del scenario + los añadidos en vivo
   const [liveInterviewees, setLiveInterviewees] = useState(scenario.interviewees)
@@ -300,6 +301,29 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
 
   const activeInterviewee = liveInterviewees.find((i) => i.id === activeId)
 
+  // Dimensiones agregadas: promedio de todos los entrevistados → para el QW1 Executive Output
+  // El score del header sigue siendo individual (el del entrevistado activo).
+  const aggregateDimensions = useMemo((): T1DimensionState[] => {
+    const allStates = Object.values(intervieweeStates)
+    if (allStates.length === 0) return []
+    const template = allStates[0]
+    return template.map((dim) => ({
+      ...dim,
+      subdimensions: dim.subdimensions.map((sub) => {
+        const scores = allStates
+          .map((state) =>
+            state.find((d) => d.code === dim.code)
+              ?.subdimensions.find((s) => s.code === sub.code)?.score ?? null
+          )
+          .filter((s): s is number => s !== null)
+        const avg = scores.length > 0
+          ? scores.reduce((a, b) => a + b, 0) / scores.length
+          : null
+        return { ...sub, score: avg }
+      }),
+    }))
+  }, [intervieweeStates])
+
   return (
     <div className="min-h-screen bg-surface dark-page-bg">
 
@@ -367,89 +391,107 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
         </p>
       </div>
 
-      {/* ── Selector de entrevistados ── */}
-      <div className="max-w-6xl mx-auto px-8 py-4">
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-            Entrevistado activo
-          </span>
-          <div className="flex gap-2 flex-wrap">
-            {liveInterviewees.map((person) => {
-              const personDims   = intervieweeStates[person.id] ?? []
-              const personScored = countScoredSubdimensions(personDims)
-              const isActive     = person.id === activeId
-              const isComplete   = personScored === TOTAL_SUBDIMENSIONS
+      {/* ── Selector de entrevistados — collapsible ── */}
+      <div className="max-w-6xl mx-auto px-8 py-3">
+        <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
 
-              return (
-                <button
-                  key={person.id}
-                  onClick={() => setActiveId(person.id)}
-                  className={[
-                    'flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all duration-150',
-                    isActive
-                      ? 'bg-navy text-white border-navy shadow-sm'
-                      : 'bg-white dark:bg-gray-900 border-border hover:border-navy/30 hover:bg-gray-50 dark:hover:bg-gray-800',
-                  ].join(' ')}
-                >
-                  {/* Tipo IT / BIZ */}
-                  <span className={[
-                    'text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider',
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : person.type === 'it'
-                        ? 'bg-navy/10 text-navy dark:bg-navy/20 dark:text-info-soft'
-                        : 'bg-warning-light text-warning-dark',
-                  ].join(' ')}>
-                    {person.type === 'it' ? 'IT' : 'BIZ'}
+          {/* Toggle bar */}
+          <div className="flex items-center justify-between px-4 py-3 cursor-pointer
+            hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+            onClick={() => setShowInterviewees((v) => !v)}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
+                Entrevistado activo
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-navy/8 dark:bg-navy/15 text-[10px]
+                font-semibold text-navy dark:text-info-soft">
+                {liveInterviewees.length} entrevistados
+              </span>
+              <span className="text-[10px] text-text-subtle">
+                {liveInterviewees.filter((i) => i.type === 'it').length} IT ·{' '}
+                {liveInterviewees.filter((i) => i.type !== 'it').length} BIZ
+              </span>
+              {activeInterviewee && (
+                <span className="text-[10px] text-text-muted">
+                  Puntuando: <span className="font-semibold text-lean-black dark:text-gray-200">
+                    {activeInterviewee.name}
                   </span>
-
-                  {/* Nombre + cargo */}
-                  <div className="min-w-0">
-                    <p className={`text-xs font-semibold truncate ${isActive ? 'text-white' : 'text-lean-black dark:text-gray-100'}`}>
-                      {person.name}
-                    </p>
-                    <p className={`text-[10px] truncate ${isActive ? 'text-white/70' : 'text-text-muted'}`}>
-                      {person.role}
-                    </p>
-                  </div>
-
-                  {/* Progreso */}
-                  <span className={`text-[10px] tabular-nums shrink-0 ${isActive ? 'text-white/70' : 'text-text-subtle'}`}>
-                    {isComplete ? (
-                      <svg className="h-3.5 w-3.5 text-current" viewBox="0 0 16 16" fill="currentColor">
-                        <path fillRule="evenodd" d="M8 1a7 7 0 100 14A7 7 0 008 1zm3.78 5.22a.75.75 0 010 1.06l-4 4a.75.75 0 01-1.06 0l-2-2a.75.75 0 011.06-1.06L7.25 9.69l3.47-3.47a.75.75 0 011.06 0z" />
-                      </svg>
-                    ) : (
-                      `${personScored}/${TOTAL_SUBDIMENSIONS}`
-                    )}
-                  </span>
-                </button>
-              )
-            })}
-
-            {/* Botón nueva entrevista — inline con los botones de personas */}
-            <button
-              onClick={() => setShowNewModal(true)}
-              className={[
-                'flex items-center gap-1.5 px-3 py-2 rounded-xl border text-left transition-all duration-150',
-                'border-dashed border-border hover:border-navy/40 hover:bg-gray-50 dark:hover:bg-gray-800/50',
-                'text-xs font-medium text-text-subtle hover:text-navy dark:hover:text-info-soft',
-              ].join(' ')}
-            >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M8 2v12M2 8h12" />
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowNewModal(true) }}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold
+                  bg-navy text-white hover:bg-navy/80 transition-colors"
+              >
+                <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M8 2v12M2 8h12" />
+                </svg>
+                Nueva
+              </button>
+              <svg
+                className={`h-3.5 w-3.5 text-text-subtle transition-transform duration-200 ${showInterviewees ? 'rotate-180' : ''}`}
+                viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+              >
+                <path d="M4 6l4 4 4-4" />
               </svg>
-              Nueva entrevista
-            </button>
+            </div>
           </div>
 
-          {/* Nombre del entrevistado activo (contexto) */}
-          {activeInterviewee && (
-            <div className="ml-auto flex items-center gap-2 text-xs text-text-muted">
-              <span className="text-text-subtle">Puntuando:</span>
-              <span className="font-medium text-lean-black dark:text-gray-200">
-                {activeInterviewee.name} · {activeInterviewee.archetype}
-              </span>
+          {/* Expandido: lista de entrevistados */}
+          {showInterviewees && (
+            <div className="border-t border-border px-4 py-3">
+              <div className="flex gap-2 flex-wrap">
+                {liveInterviewees.map((person) => {
+                  const personDims   = intervieweeStates[person.id] ?? []
+                  const personScored = countScoredSubdimensions(personDims)
+                  const isActive     = person.id === activeId
+                  const isComplete   = personScored === TOTAL_SUBDIMENSIONS
+
+                  return (
+                    <button
+                      key={person.id}
+                      onClick={() => setActiveId(person.id)}
+                      className={[
+                        'flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all duration-150',
+                        isActive
+                          ? 'bg-navy text-white border-navy shadow-sm'
+                          : 'bg-white dark:bg-gray-900 border-border hover:border-navy/30 hover:bg-gray-50 dark:hover:bg-gray-800',
+                      ].join(' ')}
+                    >
+                      <span className={[
+                        'text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider',
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : person.type === 'it'
+                            ? 'bg-navy/10 text-navy dark:bg-navy/20 dark:text-info-soft'
+                            : 'bg-warning-light text-warning-dark',
+                      ].join(' ')}>
+                        {person.type === 'it' ? 'IT' : 'BIZ'}
+                      </span>
+                      <div className="min-w-0">
+                        <p className={`text-xs font-semibold truncate ${isActive ? 'text-white' : 'text-lean-black dark:text-gray-100'}`}>
+                          {person.name}
+                        </p>
+                        <p className={`text-[10px] truncate ${isActive ? 'text-white/70' : 'text-text-muted'}`}>
+                          {person.role}
+                        </p>
+                      </div>
+                      <span className={`text-[10px] tabular-nums shrink-0 ${isActive ? 'text-white/70' : 'text-text-subtle'}`}>
+                        {isComplete ? (
+                          <svg className="h-3.5 w-3.5 text-current" viewBox="0 0 16 16" fill="currentColor">
+                            <path fillRule="evenodd" d="M8 1a7 7 0 100 14A7 7 0 008 1zm3.78 5.22a.75.75 0 010 1.06l-4 4a.75.75 0 01-1.06 0l-2-2a.75.75 0 011.06-1.06L7.25 9.69l3.47-3.47a.75.75 0 011.06 0z" />
+                          </svg>
+                        ) : (
+                          `${personScored}/${TOTAL_SUBDIMENSIONS}`
+                        )}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>
@@ -482,10 +524,10 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
 
         </div>
 
-        {/* ── Executive Output (QW1) ── */}
+        {/* ── Executive Output (QW1) — usa el promedio de TODOS los entrevistados ── */}
         <div className="mt-8">
           <T1ExecutiveOutput
-            dimensions={activeDimensions}
+            dimensions={aggregateDimensions}
             companyName={scenario.company.name}
             allInterviewees={allIntervieweeAggregates}
           />

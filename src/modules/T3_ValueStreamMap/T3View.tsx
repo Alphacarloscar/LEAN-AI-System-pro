@@ -193,125 +193,190 @@ function HeroOpportunityMatrix({
   )
 }
 
-// ── HERO CHART 2: Department Stacked Chart grande ─────────────
+// ── HERO CHART 2: Category Donut — distribución por tipología IA ─
+// Reemplaza el bar chart: gráfico circular con 5 sectores (una por
+// categoría IA), inspirado en el diseño de T2 StakeholderQuadrantChart.
+// Fondo oscuro, dots metallic por proceso, labels en el perímetro.
 
-function HeroDepartmentChart({ processes }: { processes: ValueStream[] }) {
-  const byDept = useMemo(() => {
-    const map = new Map<string, ValueStream[]>()
-    processes.forEach((p) => {
-      const arr = map.get(p.department) ?? []
-      arr.push(p)
-      map.set(p.department, arr)
-    })
-    return Array.from(map.entries())
-      .map(([dept, members]) => ({
-        dept,
-        total: members.length,
-        highOpp: members.filter((m) =>
-          m.opportunityLevel === 'critica' || m.opportunityLevel === 'alta'
-        ).length,
-        segments: CAT_ORDER
-          .map((cat) => ({ cat, count: members.filter((m) => m.aiCategory === cat).length }))
-          .filter((s) => s.count > 0),
-      }))
-      .sort((a, b) => b.highOpp - a.highOpp || b.total - a.total)
-  }, [processes])
+function HeroCategoryDonut({ processes }: { processes: ValueStream[] }) {
+  const VB = 400, CX = 200, CY = 200
+  const R_OUTER = 152, R_INNER = 58
 
-  const BW = 18, GAP = 30, LM = 22, RM = 8
-  const CH = 160, TM = 20, LH = 36
-  const totalW  = LM + byDept.length * (BW + GAP) - GAP + RM
-  const svgH    = TM + CH + LH
+  const total = processes.length
+
+  const catData = useMemo(() => CAT_ORDER
+    .map((cat) => ({
+      cat,
+      count: processes.filter((p) => p.aiCategory === cat).length,
+      procs: processes.filter((p) => p.aiCategory === cat),
+    }))
+    .filter((c) => c.count > 0),
+  [processes])
+
+  if (total === 0) {
+    return (
+      <svg viewBox={`0 0 ${VB} ${VB}`} width="100%" style={{ display: 'block' }}>
+        <circle cx={CX} cy={CY} r={R_OUTER + 5} fill="#111827" />
+        <text x={CX} y={CY + 5} textAnchor="middle" fontSize={13}
+          fill="rgba(255,255,255,0.35)" fontFamily="ui-monospace,monospace">
+          Sin procesos
+        </text>
+      </svg>
+    )
+  }
+
+  // Compute arc angles
+  const GAP_RAD = catData.length > 1 ? 0.03 : 0
+  let currentAngle = -Math.PI / 2
+
+  const arcs = catData.map(({ cat, count, procs }) => {
+    const fraction  = count / total
+    const arcSpan   = fraction * 2 * Math.PI - GAP_RAD
+    const startAngle = currentAngle + GAP_RAD / 2
+    const endAngle   = startAngle + arcSpan
+    currentAngle    += fraction * 2 * Math.PI
+    const midAngle   = (startAngle + endAngle) / 2
+    return { cat, count, procs, startAngle, endAngle, midAngle }
+  })
+
+  function arcPath(sa: number, ea: number, ro: number, ri: number) {
+    const x1o = CX + ro * Math.cos(sa), y1o = CY + ro * Math.sin(sa)
+    const x2o = CX + ro * Math.cos(ea), y2o = CY + ro * Math.sin(ea)
+    const x1i = CX + ri * Math.cos(sa), y1i = CY + ri * Math.sin(sa)
+    const x2i = CX + ri * Math.cos(ea), y2i = CY + ri * Math.sin(ea)
+    const large = ea - sa > Math.PI ? 1 : 0
+    return [
+      `M ${x1o.toFixed(2)} ${y1o.toFixed(2)}`,
+      `A ${ro} ${ro} 0 ${large} 1 ${x2o.toFixed(2)} ${y2o.toFixed(2)}`,
+      `L ${x2i.toFixed(2)} ${y2i.toFixed(2)}`,
+      `A ${ri} ${ri} 0 ${large} 0 ${x1i.toFixed(2)} ${y1i.toFixed(2)}`,
+      'Z',
+    ].join(' ')
+  }
 
   return (
-    <svg viewBox={`0 0 ${totalW} ${svgH}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
-      {byDept.map(({ dept, total, highOpp, segments }, di) => {
-        const x = LM + di * (BW + GAP)
-        let stackY = TM + CH
-        const isHigh = highOpp > 0
+    <svg viewBox={`0 0 ${VB} ${VB}`} width="100%" style={{ display: 'block' }}>
+      <defs>
+        <radialGradient id="t3donut-bg" cx="50%" cy="35%" r="75%">
+          <stop offset="0%"   stopColor="#2A3D6A" />
+          <stop offset="100%" stopColor="#0D1B36" />
+        </radialGradient>
+      </defs>
+
+      {/* Dark circular background */}
+      <circle cx={CX} cy={CY} r={R_OUTER + 6} fill="url(#t3donut-bg)" />
+
+      {/* Concentric rings — decorative */}
+      {[75, 100, 126, 152].map((r) => (
+        <circle key={r} cx={CX} cy={CY} r={r}
+          fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={0.8} />
+      ))}
+
+      {/* Sectors */}
+      {arcs.map(({ cat, count, procs, startAngle, endAngle, midAngle }) => {
+        const hex = CAT_HEX[cat]
+        const cfg = AI_CATEGORY_CONFIG[cat]
+
+        // Label — outside the donut
+        const labelR   = R_OUTER + 24
+        const lx       = CX + labelR * Math.cos(midAngle)
+        const ly       = CY + labelR * Math.sin(midAngle)
+        const cosM     = Math.cos(midAngle)
+        const anchor   = cosM < -0.2 ? 'end' : cosM > 0.2 ? 'start' : 'middle'
+
+        // Label text — short version
+        const words    = cfg.label.split(' ')
+        const line1    = words.slice(0, Math.ceil(words.length / 2)).join(' ')
+        const line2    = words.slice(Math.ceil(words.length / 2)).join(' ')
+
+        // Dots — one per process, distributed angularly, radially by opportunity score
+        const dots = procs.map((p, i) => {
+          const frac    = procs.length > 1 ? (i + 0.5) / procs.length : 0.5
+          const dotAng  = startAngle + frac * (endAngle - startAngle)
+          const opp     = p.interview?.opportunityScore ?? 2
+          const radPct  = 0.15 + (opp / 4) * 0.70  // maps 0-4 → 15%-85% of ring width
+          const dotR    = R_INNER + radPct * (R_OUTER - R_INNER)
+          return {
+            id: p.id,
+            cx: CX + dotR * Math.cos(dotAng),
+            cy: CY + dotR * Math.sin(dotAng),
+            hex,
+          }
+        })
 
         return (
-          <g key={dept}>
-            {/* Track base */}
-            <rect x={x} y={TM} width={BW} height={CH}
-              fill="currentColor" opacity={0.04} rx={3} className="text-gray-500" />
+          <g key={cat}>
+            {/* Sector fill — semi-transparent */}
+            <path d={arcPath(startAngle, endAngle, R_OUTER, R_INNER)}
+              fill={hex} opacity={0.18} />
+            {/* Sector border */}
+            <path d={arcPath(startAngle, endAngle, R_OUTER, R_INNER)}
+              fill="none" stroke={hex} strokeWidth={1} opacity={0.55} />
 
-            {segments.map(({ cat, count }) => {
-              const segH = (count / total) * CH
-              stackY -= segH
-              const hex = CAT_HEX[cat]
-              return (
-                <g key={cat}>
-                  <defs>
-                    <linearGradient id={`herobar-${di}-${cat}`}
-                      x1="0" y1="0" x2="0" y2="1"
-                      gradientUnits="userSpaceOnUse">
-                      <stop offset="0%"   stopColor={hex} stopOpacity="0.95" />
-                      <stop offset="60%"  stopColor={hex} stopOpacity="0.75" />
-                      <stop offset="100%" stopColor={hex} stopOpacity="0.40" />
-                    </linearGradient>
-                  </defs>
-                  <rect x={x} y={stackY} width={BW} height={segH}
-                    fill={`url(#herobar-${di}-${cat})`} rx={2} />
-                  <rect x={x + BW * 0.18} y={stackY + 0.8}
-                    width={BW * 0.32} height={Math.min(segH * 0.42, 3.5)}
-                    fill="#fff" opacity={0.30} rx={1} />
-                </g>
-              )
-            })}
+            {/* Process dots */}
+            {dots.map((dot) => (
+              <g key={dot.id}>
+                {/* Glow */}
+                <circle cx={dot.cx} cy={dot.cy} r={10}
+                  fill={dot.hex} opacity={0.15} />
+                <circle cx={dot.cx} cy={dot.cy} r={7}
+                  fill={dot.hex} opacity={0.90}
+                  stroke="rgba(255,255,255,0.30)" strokeWidth={0.8} />
+                {/* Shine */}
+                <ellipse cx={dot.cx - 2} cy={dot.cy - 2}
+                  rx={2.5} ry={1.5}
+                  fill="rgba(255,255,255,0.45)" />
+              </g>
+            ))}
 
-            {/* Count label */}
-            <text x={x + BW / 2} y={TM - 7}
-              fontSize={9} fontWeight="700"
-              fill={isHigh ? '#C06060' : '#6B7280'}
-              textAnchor="middle" fontFamily="ui-monospace,monospace">
-              {total}
+            {/* Count label — in arc midpoint near outer edge */}
+            <text
+              x={CX + (R_INNER + (R_OUTER - R_INNER) * 0.80) * Math.cos(midAngle)}
+              y={CY + (R_INNER + (R_OUTER - R_INNER) * 0.80) * Math.sin(midAngle) + 4}
+              textAnchor="middle" fontSize={11} fontWeight="700"
+              fill={hex} fontFamily="ui-monospace,monospace"
+            >
+              {count}
             </text>
 
-            {/* Risk dot */}
-            {isHigh && (
-              <circle cx={x + BW + 4} cy={TM - 5} r={2.5} fill="#C06060" opacity={0.75} />
+            {/* Category label — outside ring */}
+            <text x={lx} y={ly - (line2 ? 5 : 0)} textAnchor={anchor}
+              fontSize={8} fontWeight="700"
+              fill={hex} fontFamily="ui-monospace,monospace" letterSpacing="0.05em">
+              {line1.toUpperCase()}
+            </text>
+            {line2 && (
+              <text x={lx} y={ly + 10} textAnchor={anchor}
+                fontSize={8} fontWeight="700"
+                fill={hex} fontFamily="ui-monospace,monospace" letterSpacing="0.05em">
+                {line2.toUpperCase()}
+              </text>
             )}
-
-            {/* Dept label — split into 2 lines if long */}
-            {(() => {
-              const words = dept.split(' ')
-              const line1 = words.slice(0, Math.ceil(words.length / 2)).join(' ')
-              const line2 = words.slice(Math.ceil(words.length / 2)).join(' ')
-              return (
-                <>
-                  <text x={x + BW / 2} y={TM + CH + 13}
-                    fontSize={6.5} fill={isHigh ? '#C06060' : '#9CA3AF'}
-                    textAnchor="middle" fontFamily="ui-sans-serif,sans-serif">
-                    {line1}
-                  </text>
-                  {line2 && (
-                    <text x={x + BW / 2} y={TM + CH + 22}
-                      fontSize={6.5} fill={isHigh ? '#C06060' : '#9CA3AF'}
-                      textAnchor="middle" fontFamily="ui-sans-serif,sans-serif">
-                      {line2}
-                    </text>
-                  )}
-                </>
-              )
-            })()}
           </g>
         )
       })}
 
-      {/* Y axis */}
-      <line x1={LM - 4} y1={TM} x2={LM - 4} y2={TM + CH}
-        stroke="#E5E7EB" strokeWidth={0.6} />
-      {[0, 0.5, 1].map((pct) => (
-        <g key={pct}>
-          <line x1={LM - 6} y1={TM + CH - pct * CH} x2={LM - 4} y2={TM + CH - pct * CH}
-            stroke="#E5E7EB" strokeWidth={0.6} />
-          <text x={LM - 8} y={TM + CH - pct * CH + 2}
-            fontSize={6} textAnchor="end" fill="#9CA3AF"
-            fontFamily="ui-monospace,monospace">
-            {pct === 0 ? '' : pct === 0.5 ? '50%' : '100%'}
-          </text>
-        </g>
-      ))}
+      {/* Inner circle — dark center */}
+      <circle cx={CX} cy={CY} r={R_INNER - 3} fill="rgba(10,20,45,0.96)" />
+
+      {/* Center text */}
+      <text x={CX} y={CY - 14} textAnchor="middle"
+        fontSize={7.5} fill="rgba(255,255,255,0.40)"
+        fontFamily="ui-monospace,monospace" letterSpacing="0.10em">
+        VALUE STREAM
+      </text>
+      <text x={CX} y={CY - 2} textAnchor="middle"
+        fontSize={7.5} fill="rgba(255,255,255,0.40)"
+        fontFamily="ui-monospace,monospace" letterSpacing="0.10em">
+        MAP
+      </text>
+      <text x={CX} y={CY + 22} textAnchor="middle"
+        fontSize={26} fontWeight="700"
+        fill="rgba(255,255,255,0.88)"
+        fontFamily="ui-monospace,monospace"
+      >
+        {total}
+      </text>
     </svg>
   )
 }
@@ -894,21 +959,23 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
 
         {/* ── ZONA 1: HERO CHARTS ─────────────────────────── */}
         <div className="py-8">
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-6 items-stretch">
 
             {/* Opportunity Matrix */}
             <div className="rounded-3xl bg-white dark:bg-gray-900 border border-border
-              dark:border-white/6 p-6">
-              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-4">
+              dark:border-white/6 p-6 flex flex-col">
+              <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">
                 Matriz de oportunidad
               </p>
-              <HeroOpportunityMatrix
-                processes={filtered}
-                activeId={activeId}
-                onSelect={handleSelectProcess}
-              />
+              <div className="flex-1 flex items-center justify-center">
+                <HeroOpportunityMatrix
+                  processes={filtered}
+                  activeId={activeId}
+                  onSelect={handleSelectProcess}
+                />
+              </div>
               {/* Leyenda compacta */}
-              <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5">
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
                 {CAT_ORDER.filter((c) => processes.some((p) => p.aiCategory === c)).map((c) => {
                   const cfg = AI_CATEGORY_CONFIG[c]
                   return (
@@ -921,15 +988,17 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
               </div>
             </div>
 
-            {/* Department Chart */}
+            {/* Category Donut Chart */}
             <div className="rounded-3xl bg-white dark:bg-gray-900 border border-border
-              dark:border-white/6 p-6">
-              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-4">
-                Por departamento
+              dark:border-white/6 p-6 flex flex-col">
+              <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">
+                Distribución por categoría IA
               </p>
-              <HeroDepartmentChart processes={processes} />
+              <div className="flex-1 flex items-center justify-center">
+                <HeroCategoryDonut processes={processes} />
+              </div>
               {/* Leyenda compacta */}
-              <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5">
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
                 {CAT_ORDER.filter((c) => processes.some((p) => p.aiCategory === c)).map((c) => {
                   const cfg = AI_CATEGORY_CONFIG[c]
                   return (
@@ -949,7 +1018,7 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
 
           {/* Phase KPI bar */}
           <div className="flex items-center gap-3 mb-5 flex-wrap">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mr-2 shrink-0">
+            <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mr-2 shrink-0">
               Procesos mapeados · {processes.length}
             </p>
             <div className="flex items-center gap-2 flex-wrap">
@@ -982,85 +1051,69 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
             </div>
           </div>
 
-          {/* Process cards */}
+          {/* Process cards — compact grid style */}
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
               <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
                 flex items-center justify-center text-2xl">◎</div>
-              <p className="text-sm font-medium text-text-muted">Sin procesos mapeados</p>
+              <p className="text-sm font-bold text-text-muted">Sin procesos mapeados</p>
               <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
                 Añade el primer proceso para comenzar el análisis de oportunidades IA.
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
               {filtered.map((p) => {
                 const isActive  = p.id === activeId
                 const catCfg    = AI_CATEGORY_CONFIG[p.aiCategory]
                 const oppCfg    = OPPORTUNITY_CONFIG[p.opportunityLevel]
                 const phaseCfg  = PHASE_CONFIG[p.phase]
-                const hasCrit   = p.opportunityLevel === 'critica'
 
                 return (
                   <button
                     key={p.id}
                     onClick={() => handleSelectProcess(p.id)}
                     className={[
-                      'w-full text-left rounded-2xl px-5 py-3.5 transition-all duration-150',
-                      'border flex items-center gap-4',
+                      'w-full text-left rounded-2xl px-4 py-3 transition-all duration-150',
+                      'border flex flex-col gap-2',
                       isActive
-                        ? 'border-navy/30 bg-navy/4 dark:bg-navy/8 shadow-sm'
-                        : hasCrit
-                        ? 'border-navy/15 bg-white dark:bg-gray-900 hover:border-navy/25 hover:shadow-sm'
-                        : 'border-border dark:border-white/6 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-white/12',
+                        ? 'border-navy/40 bg-navy/5 dark:bg-navy/10 shadow-sm ring-1 ring-navy/20'
+                        : 'border-border dark:border-white/6 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-white/14 hover:shadow-sm',
                     ].join(' ')}
                   >
-                    {/* Category color bar */}
-                    <div
-                      className="shrink-0 w-1 h-8 rounded-full"
-                      style={{ backgroundColor: CAT_HEX[p.aiCategory], opacity: isActive ? 1 : 0.5 }}
-                    />
-
-                    {/* Main info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-lean-black dark:text-gray-200 truncate">
+                    {/* Header row: color bar + name + chevron */}
+                    <div className="flex items-start gap-2.5">
+                      <div
+                        className="shrink-0 w-1 h-6 rounded-full mt-0.5"
+                        style={{ backgroundColor: CAT_HEX[p.aiCategory], opacity: isActive ? 1 : 0.6 }}
+                      />
+                      <p className="flex-1 text-xs font-bold text-lean-black dark:text-gray-200 leading-tight line-clamp-2">
                         {p.name}
                       </p>
-                      <p className="text-xs text-text-subtle mt-0.5">
-                        {p.department}
-                        {p.owner && ` · ${p.owner}`}
-                      </p>
+                      <span className={`shrink-0 text-text-subtle text-[10px] transition-transform duration-200 ${
+                        isActive ? 'rotate-180' : ''
+                      }`}>↓</span>
                     </div>
 
-                    {/* Badges */}
-                    <div className="hidden sm:flex items-center gap-2 shrink-0 flex-wrap justify-end">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${phaseCfg.badgeBg} ${phaseCfg.badgeText}`}>
+                    {/* Dept */}
+                    <p className="text-[10px] text-text-subtle truncate pl-3.5">
+                      {p.department}
+                    </p>
+
+                    {/* Badges row */}
+                    <div className="flex items-center gap-1 flex-wrap pl-3.5">
+                      <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${phaseCfg.badgeBg} ${phaseCfg.badgeText}`}>
                         {phaseCfg.label}
                       </span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${catCfg.badgeBg} ${catCfg.badgeText}`}>
+                      <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${catCfg.badgeBg} ${catCfg.badgeText}`}>
                         {catCfg.label.split(' ')[0]}
                       </span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${oppCfg.badgeBg} ${oppCfg.badgeText}`}>
-                        {oppCfg.label}
-                      </span>
-                    </div>
-
-                    {/* Score */}
-                    {p.interview && (
-                      <div className="shrink-0 text-right ml-2">
-                        <p className="text-base font-bold tabular-nums text-lean-black dark:text-gray-200">
+                      {p.interview && (
+                        <span className={`ml-auto text-xs font-bold tabular-nums ${oppCfg.badgeText}`}>
                           {p.interview.opportunityScore.toFixed(1)}
-                        </p>
-                        <p className="text-[9px] text-text-subtle">/4.0</p>
-                      </div>
-                    )}
-
-                    {/* Chevron */}
-                    <span className={`shrink-0 text-text-subtle transition-transform duration-200 ${
-                      isActive ? 'rotate-180' : ''
-                    }`}>
-                      ↓
-                    </span>
+                        </span>
+                      )}
+                    </div>
                   </button>
                 )
               })}

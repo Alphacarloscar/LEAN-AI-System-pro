@@ -82,14 +82,14 @@ function MetallicScoreBars({
   trackWidth?:    number
 }) {
   const MAX      = 4
-  const LBL_W    = 60    // label column
-  const G1       = 8     // gutter label→track
+  const LBL_W    = 76    // label column — ampliado para fuente mayor
+  const G1       = 10    // gutter label→track
   const TRACK_W  = trackWidth
-  const G2       = 6     // gutter track→value
-  const VAL_COL  = 26    // value text area
+  const G2       = 8     // gutter track→value
+  const VAL_COL  = 32    // value text area
   const VBW      = LBL_W + G1 + TRACK_W + G2 + VAL_COL
   const TX       = LBL_W + G1   // track origin x
-  const ROW_H    = 38
+  const ROW_H    = 52    // más espacio por fila
   const VBH      = SCORE_BARS_META.length * ROW_H + 8
 
   const values = [adoptionScore, influenceScore, opennessScore]
@@ -124,8 +124,8 @@ function MetallicScoreBars({
         return (
           <g key={key}>
             {/* Label */}
-            <text x={0} y={cy + 3} fontSize={7} fill="#64748B"
-              fontFamily="ui-monospace,monospace" letterSpacing="0.05em">
+            <text x={0} y={cy + 4} fontSize={10} fill="#64748B"
+              fontFamily="ui-monospace,monospace" letterSpacing="0.04em" fontWeight="600">
               {label}
             </text>
 
@@ -150,11 +150,11 @@ function MetallicScoreBars({
 
             {/* Value */}
             <text
-              x={TX + TRACK_W + G2} y={cy + 3}
-              fontSize={8} fontWeight="600" fill="#94A3B8"
+              x={TX + TRACK_W + G2} y={cy + 4}
+              fontSize={11} fontWeight="600" fill="#94A3B8"
               fontFamily="ui-monospace,monospace"
             >
-              {val.toFixed(1)}<tspan fontSize={6.5} opacity={0.5}>/4</tspan>
+              {val.toFixed(1)}<tspan fontSize={8} opacity={0.5}>/4</tspan>
             </text>
           </g>
         )
@@ -341,7 +341,7 @@ function StakeholderPanel({
 
         {/* RIGHT — intervenciones */}
         <div className="flex-1 min-w-0 px-4 py-4">
-          <p className="text-[8px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-3">
+          <p className="text-[8px] font-mono font-bold uppercase tracking-widest text-lean-black dark:text-gray-200 mb-3">
             Intervenciones · {res.label}
           </p>
           <ol className="space-y-3">
@@ -360,7 +360,7 @@ function StakeholderPanel({
       {/* ── FOOTER: barras de scores a ancho completo ── */}
       {stakeholder.interview && (
         <div className="border-t border-border/40 px-5 py-4">
-          <p className="text-[8px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+          <p className="text-[8px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">
             Scores de entrevista
           </p>
           <MetallicScoreBars
@@ -574,14 +574,14 @@ function DepartmentOverviewChart({ stakeholders }: { stakeholders: Stakeholder[]
 
   const maxCount = Math.max(...deptData.map((d) => d.total), 1)
 
-  // Barras finas metálicas — pilares verticales de 10px, espaciado generoso
-  const BW    = 10   // bar width — thin pillar
-  const GAP   = 28   // generous gap for spatial feel
-  const LM    = 26   // left margin (y-axis)
+  // Barras metálicas — pilares verticales más anchos y altos para mayor legibilidad
+  const BW    = 16   // bar width — wider for visibility
+  const GAP   = 34   // generous gap for spatial feel
+  const LM    = 32   // left margin (y-axis)
   const RM    = 8    // right margin
-  const CH    = 100  // chart area height
-  const TM    = 18   // top margin (value labels)
-  const LH    = 30   // bottom label height
+  const CH    = 140  // chart area height — taller
+  const TM    = 22   // top margin (value labels)
+  const LH    = 42   // bottom label height — more space for larger text
   const VBW   = LM + deptData.length * (BW + GAP) - GAP + RM
   const VBH   = TM + CH + LH
 
@@ -589,7 +589,7 @@ function DepartmentOverviewChart({ stakeholders }: { stakeholders: Stakeholder[]
 
   return (
     <div className="rounded-xl border border-border bg-white dark:bg-gray-900 px-5 py-4">
-      <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+      <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">
         Composición por departamento
       </p>
 
@@ -625,7 +625,7 @@ function DepartmentOverviewChart({ stakeholders }: { stakeholders: Stakeholder[]
               <g key={tick}>
                 <line x1={LM} y1={ty} x2={VBW - RM} y2={ty}
                   stroke="#F1F5F9" strokeWidth={0.5} strokeDasharray="2 3" />
-                <text x={LM - 5} y={ty + 2.5} textAnchor="end" fontSize={6.5} fill="#CBD5E1"
+                <text x={LM - 6} y={ty + 3} textAnchor="end" fontSize={9} fill="#CBD5E1"
                   fontFamily="ui-monospace,monospace">{tick}</text>
               </g>
             )
@@ -643,7 +643,6 @@ function DepartmentOverviewChart({ stakeholders }: { stakeholders: Stakeholder[]
             })
             const topY    = rects[0]?.rectY ?? TM + CH
             const topArch = rects[0]?.arch
-            const label   = dept.length > 7 ? dept.slice(0, 6) + '…' : dept
             const isRisk  = riskScore > 0
 
             return (
@@ -683,24 +682,40 @@ function DepartmentOverviewChart({ stakeholders }: { stakeholders: Stakeholder[]
                 )}
 
                 {/* Total count label */}
-                <text x={bx + BW / 2} y={topY - 5}
-                  textAnchor="middle" fontSize={7.5} fontWeight="700"
+                <text x={bx + BW / 2} y={topY - 6}
+                  textAnchor="middle" fontSize={10} fontWeight="700"
                   fill={isRisk ? '#C06060' : '#64748B'}
                   fontFamily="ui-monospace,monospace"
                 >
                   {total}
                 </text>
 
-                {/* Department label */}
-                <text x={bx + BW / 2} y={TM + CH + 14}
-                  textAnchor="middle" fontSize={6.5}
-                  fill="#64748B" fontFamily="ui-monospace,monospace"
-                >
-                  {label}
-                </text>
+                {/* Department label — two lines with larger font */}
+                {(() => {
+                  const words = dept.split(/[\s/]+/)
+                  const mid   = Math.ceil(words.length / 2)
+                  const line1 = words.slice(0, mid).join(' ')
+                  const line2 = words.slice(mid).join(' ')
+                  return (
+                    <>
+                      <text x={bx + BW / 2} y={TM + CH + 16}
+                        textAnchor="middle" fontSize={10}
+                        fill={isRisk ? '#C06060' : '#64748B'} fontFamily="ui-sans-serif,sans-serif">
+                        {line1}
+                      </text>
+                      {line2 && (
+                        <text x={bx + BW / 2} y={TM + CH + 29}
+                          textAnchor="middle" fontSize={10}
+                          fill={isRisk ? '#C06060' : '#64748B'} fontFamily="ui-sans-serif,sans-serif">
+                          {line2}
+                        </text>
+                      )}
+                    </>
+                  )
+                })()}
                 {/* Risk dot under label if dept tiene riesgo */}
                 {isRisk && (
-                  <circle cx={bx + BW / 2} cy={TM + CH + 20} r={1.5}
+                  <circle cx={bx + BW / 2} cy={TM + CH + 36} r={2}
                     fill="#C06060" opacity={0.7} />
                 )}
               </g>
