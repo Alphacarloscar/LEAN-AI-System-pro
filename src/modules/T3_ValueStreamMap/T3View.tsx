@@ -198,8 +198,16 @@ function HeroOpportunityMatrix({
 // categoría IA), inspirado en el diseño de T2 StakeholderQuadrantChart.
 // Fondo oscuro, dots metallic por proceso, labels en el perímetro.
 
-function HeroCategoryDonut({ processes }: { processes: ValueStream[] }) {
-  const VB = 400, CX = 200, CY = 200
+function HeroCategoryDonut({
+  processes,
+  activeId,
+  onSelect,
+}: {
+  processes: ValueStream[]
+  activeId:  string | null
+  onSelect:  (id: string) => void
+}) {
+  const VB = 480, CX = 240, CY = 240
   const R_OUTER = 152, R_INNER = 58
 
   const total = processes.length
@@ -254,7 +262,7 @@ function HeroCategoryDonut({ processes }: { processes: ValueStream[] }) {
   }
 
   return (
-    <svg viewBox={`0 0 ${VB} ${VB}`} width="100%" style={{ display: 'block' }}
+    <svg viewBox={`0 0 ${VB} ${VB}`} width="100%" style={{ display: 'block', overflow: 'visible' }}
       className="text-lean-black dark:text-gray-100">
 
       {/* Outer / inner ring guides */}
@@ -308,21 +316,36 @@ function HeroCategoryDonut({ processes }: { processes: ValueStream[] }) {
             <path d={arcPath(startAngle, endAngle, R_OUTER, R_INNER)}
               fill="none" stroke={hex} strokeWidth={1} opacity={0.55} />
 
-            {/* Process dots */}
-            {dots.map((dot) => (
-              <g key={dot.id}>
-                {/* Glow */}
-                <circle cx={dot.cx} cy={dot.cy} r={10}
-                  fill={dot.hex} opacity={0.15} />
-                <circle cx={dot.cx} cy={dot.cy} r={7}
-                  fill={dot.hex} opacity={0.90}
-                  stroke="rgba(255,255,255,0.30)" strokeWidth={0.8} />
-                {/* Shine */}
-                <ellipse cx={dot.cx - 2} cy={dot.cy - 2}
-                  rx={2.5} ry={1.5}
-                  fill="rgba(255,255,255,0.45)" />
-              </g>
-            ))}
+            {/* Process dots — clickables, sincronizados con la matriz */}
+            {dots.map((dot) => {
+              const isActive = dot.id === activeId
+              return (
+                <g key={dot.id} style={{ cursor: 'pointer' }}
+                  onClick={() => onSelect(dot.id)}>
+                  {/* Anillos de selección activa */}
+                  {isActive && (
+                    <>
+                      <circle cx={dot.cx} cy={dot.cy} r={18}
+                        fill={dot.hex} opacity={0.10} />
+                      <circle cx={dot.cx} cy={dot.cy} r={13}
+                        fill={dot.hex} opacity={0.18} />
+                    </>
+                  )}
+                  {/* Halo */}
+                  <circle cx={dot.cx} cy={dot.cy} r={isActive ? 12 : 10}
+                    fill={dot.hex} opacity={isActive ? 0.28 : 0.15} />
+                  {/* Dot principal */}
+                  <circle cx={dot.cx} cy={dot.cy} r={isActive ? 9 : 7}
+                    fill={dot.hex} opacity={0.92}
+                    stroke={isActive ? 'rgba(255,255,255,0.90)' : 'rgba(255,255,255,0.50)'}
+                    strokeWidth={isActive ? 2 : 0.8} />
+                  {/* Shine */}
+                  <ellipse cx={dot.cx - 2} cy={dot.cy - 2}
+                    rx={2.5} ry={1.5}
+                    fill="rgba(255,255,255,0.55)" />
+                </g>
+              )
+            })}
 
             {/* Count label — in arc midpoint near outer edge */}
             <text
@@ -987,7 +1010,11 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
                 Distribución por categoría IA
               </p>
               <div className="flex-1 flex items-center justify-center">
-                <HeroCategoryDonut processes={processes} />
+                <HeroCategoryDonut
+                  processes={processes}
+                  activeId={activeId}
+                  onSelect={handleSelectProcess}
+                />
               </div>
               {/* Leyenda compacta */}
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
