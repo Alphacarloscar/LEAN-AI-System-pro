@@ -405,7 +405,7 @@ function T4ScoreBars({ scores, trackWidth = 220 }: { scores: UseCaseScores; trac
   const values = [scores.kpiImpact, scores.feasibility, scores.aiRisk, scores.dataDependency]
 
   return (
-    <svg viewBox={`0 0 ${VBW} ${VBH}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
+    <svg viewBox={`0 0 ${VBW} ${VBH}`} width="100%" style={{ display: 'block' }}>
       <defs>
         {T4_SCORE_BARS.map(({ key, cfg }, i) => {
           const fillW = Math.max((values[i] / MAX) * trackWidth, 2)
@@ -439,12 +439,9 @@ function T4ScoreBars({ scores, trackWidth = 220 }: { scores: UseCaseScores; trac
               fontFamily="ui-monospace,monospace">
               {cfg.scaleLabels[lblIdx]}{isNeg ? ' ↑ riesgo' : ''}
             </text>
-            {/* Track bg */}
-            <rect x={TX} y={cy - 0.4} width={trackWidth} height={0.8}
-              fill={cfg.hex} opacity={0.08} rx={0.4} />
-            {/* Fill shadow */}
-            <rect x={TX} y={cy - 3.5} width={fillW} height={7}
-              fill={cfg.hex} opacity={0.10} rx={3.5} />
+            {/* Track bg — misma altura que la barra de relleno para evitar efecto doble-pista */}
+            <rect x={TX} y={cy - 1.5} width={trackWidth} height={3}
+              fill={cfg.hex} opacity={0.08} rx={1.5} />
             {/* Fill bar */}
             <rect x={TX} y={cy - 1.5} width={fillW} height={3}
               fill={`url(#t4sb2-${key})`} rx={1.5} />
