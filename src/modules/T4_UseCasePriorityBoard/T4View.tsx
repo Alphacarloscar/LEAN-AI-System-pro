@@ -47,9 +47,11 @@ function priorityScoreColor(score: number): string {
 }
 
 function fmtEur(n: number): string {
-  if (n >= 1_000_000) return `€${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000)     return `€${Math.round(n / 1_000)}k`
-  return `€${n}`
+  const abs = Math.abs(n)
+  const sign = n < 0 ? '-' : ''
+  if (abs >= 1_000_000) return `${sign}€${(abs / 1_000_000).toFixed(1)}M`
+  if (abs >= 1_000)     return `${sign}€${Math.round(abs / 1_000)}k`
+  return `${sign}€${Math.round(abs)}`
 }
 
 // ── Badges ────────────────────────────────────────────────────
@@ -197,12 +199,16 @@ function QuarterlyRoadmap({ useCases }: { useCases: UseCase[] }) {
 
               {/* Track */}
               <div className="flex-1 flex items-center gap-2 flex-wrap min-h-[24px] relative">
-                {/* Track line */}
-                <div className={`absolute left-0 top-1/2 w-full h-px
-                  ${isEmpty
-                    ? 'border-t border-dashed border-border dark:border-white/8'
-                    : 'border-t border-border dark:border-white/10'
-                  }`} />
+                {/* Track line — h-px sólido o punteado según si el quarter tiene casos */}
+                <div
+                  className={`absolute left-0 top-1/2 -translate-y-px w-full h-px
+                    ${isEmpty ? 'opacity-30' : 'opacity-60'}`}
+                  style={{
+                    background: isEmpty
+                      ? 'repeating-linear-gradient(to right,#94A3B8 0,#94A3B8 4px,transparent 4px,transparent 8px)'
+                      : '#E2E8F0',
+                  }}
+                />
 
                 {isEmpty ? (
                   <span className="relative text-[10px] text-text-subtle opacity-50 italic">
@@ -477,7 +483,7 @@ function ScoreInput({
   hex?:       string
 }) {
   const barColor = hex ?? '#6A90C0'
-  const pct = (value / 100) * 100
+  const pct = value  // value ya está en escala 0-100
 
   // Semantic label for current value
   const cfg      = Object.values(DIMENSION_CONFIG).find((d) => d.label === label)
@@ -521,11 +527,12 @@ function ScoreInput({
           className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
           style={{ zIndex: 1 }}
         />
-        {/* Thumb indicator */}
+        {/* Thumb indicator — centrado verticalmente en el contenedor h-5 (20px), thumb h-4 (16px) → top 2px */}
         <div
           className="absolute h-4 w-4 rounded-full border-2 border-white shadow-md pointer-events-none"
           style={{
             left:            `calc(${pct}% - 8px)`,
+            top:             '2px',
             backgroundColor: barColor,
           }}
         />
