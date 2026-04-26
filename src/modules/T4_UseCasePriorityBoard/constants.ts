@@ -1,9 +1,12 @@
 // ============================================================
 // T4 — Constantes: configuración de scoring, estados,
-// dimensiones, go/no-go y funciones de cálculo.
+// dimensiones, go/no-go, benchmarks ROI y funciones de cálculo.
+//
+// Escala de scoring: 0-100 continua (slider).
+// Score compuesto: fórmula directa 0-100.
 // ============================================================
 
-import type { UseCaseStatus, UseCaseScores } from './types'
+import type { UseCaseStatus, UseCaseScores, UseCaseEconomics, HourlyRatePreset } from './types'
 
 // ── Configuración de estados ──────────────────────────────────
 
@@ -61,13 +64,15 @@ export const DIMENSION_CONFIG = {
 }
 
 // ── Pesos del scoring compuesto ───────────────────────────────
-// Resultado: 0-100 (max cuando kpi=5, feas=5, risk=1, dep=1)
+// Fórmula directa 0-100:
+//   score = kpi×0.35 + feas×0.30 + (100-risk)×0.20 + (100-dep)×0.15
+// Máximo: 100×(0.35+0.30+0.20+0.15) = 100. Mínimo: 0.
 
 export const SCORE_WEIGHTS = {
   kpiImpact:      0.35,
   feasibility:    0.30,
-  aiRisk:         0.20,  // invertido: (6-aiRisk) × peso
-  dataDependency: 0.15,  // invertido: (6-dataDependency) × peso
+  aiRisk:         0.20,  // invertido: (100-aiRisk) × peso
+  dataDependency: 0.15,  // invertido: (100-dataDependency) × peso
 }
 
 // ── Función de cálculo del score compuesto ────────────────────
@@ -75,21 +80,20 @@ export const SCORE_WEIGHTS = {
 export function computePriorityScore(scores: UseCaseScores): number {
   const { kpiImpact, feasibility, aiRisk, dataDependency } = scores
   const raw =
-    kpiImpact      * SCORE_WEIGHTS.kpiImpact +
-    feasibility    * SCORE_WEIGHTS.feasibility +
-    (6 - aiRisk)   * SCORE_WEIGHTS.aiRisk +
-    (6 - dataDependency) * SCORE_WEIGHTS.dataDependency
+    kpiImpact           * SCORE_WEIGHTS.kpiImpact +
+    feasibility         * SCORE_WEIGHTS.feasibility +
+    (100 - aiRisk)      * SCORE_WEIGHTS.aiRisk +
+    (100 - dataDependency) * SCORE_WEIGHTS.dataDependency
 
-  // Normalizar: min=1.00, max=5.00 → 0-100
-  return parseFloat(((raw / 5) * 100).toFixed(1))
+  return parseFloat(raw.toFixed(1))
 }
 
-// ── Umbrales de go/no-go ──────────────────────────────────────
+// ── Umbrales de go/no-go (escala 0-100) ──────────────────────
 
 export const GO_NOGO_THRESHOLDS = {
-  go:      75,   // >= 75 → recomendación GO
-  pending: 55,   // >= 55 → revisar (zona gris)
-               // <  55 → recomendación NO-GO
+  go:      70,   // >= 70 → recomendación GO
+  pending: 50,   // >= 50 → revisar (zona gris)
+               // <  50 → recomendación NO-GO
 }
 
 export function getGoNoGoRecommendation(priorityScore: number): {
@@ -139,17 +143,17 @@ export function averageStakeholderScores(
     { kpiImpact: 0, feasibility: 0, aiRisk: 0, dataDependency: 0 }
   )
   return {
-    kpiImpact:      parseFloat((sum.kpiImpact / n).toFixed(2)),
-    feasibility:    parseFloat((sum.feasibility / n).toFixed(2)),
-    aiRisk:         parseFloat((sum.aiRisk / n).toFixed(2)),
-    dataDependency: parseFloat((sum.dataDependency / n).toFixed(2)),
+    kpiImpact:      parseFloat((sum.kpiImpact / n).toFixed(1)),
+    feasibility:    parseFloat((sum.feasibility / n).toFixed(1)),
+    aiRisk:         parseFloat((sum.aiRisk / n).toFixed(1)),
+    dataDependency: parseFloat((sum.dataDependency / n).toFixed(1)),
   }
 }
 
 // ── Cuadrantes de la matriz de prioridad ─────────────────────
-// X = facilidad de implementación (0-1)
-// Y = impacto en KPI (0-1)
-// Umbral: 0.60 (equivale a score 3/5)
+// X = facilidad de implementación (0-100)
+// Y = impacto en KPI (0-100)
+// Umbral: 60 (equivale a 60/100)
 
 export const PRIORITY_QUADRANTS = [
   { qx: 0.60, qy: 0.08, text: 'IMPLEMENTAR YA', color: '#5FAF8A' },
@@ -185,4 +189,99 @@ export const AI_CATEGORY_HEX: Record<string, string> = {
   analitica_predictiva:       '#1B2A4E',
   asistente_ia:               '#D4A85C',
   optimizacion_proceso:       '#C06060',
+}
+
+// ── Benchmarks de coste de implementación por categoría IA ───
+// Rangos basados en proyectos IA B2B en mercado español/europeo
+// (fuente: estimación interna Alpha Consulting, revisable por engagement)
+
+export const IMPLEMENTATION_COST_BENCHMARKS: Record<string, {
+  min:       number
+  max:       number
+  suggested: number
+  label:     string
+}> = {
+  automatizacion_inteligente: { min: 15_000, max: 60_000, suggested: 30_000, label: '15k – 60k €' },
+  automatizacion_rpa:         { min:  8_000, max: 40_000, suggested: 18_000, label:  '8k – 40k €' },
+  analitica_predictiva:       { min: 20_000, max: 80_000, suggested: 40_000, label: '20k – 80k €' },
+  asistente_ia:               { min:  5_000, max: 25_000, suggested: 12_000, label:  '5k – 25k €' },
+  optimizacion_proceso:       { min: 12_000, max: 50_000, suggested: 25_000, label: '12k – 50k €' },
+}
+
+// ── Benchmarks de ganancia de eficiencia por categoría IA ────
+// Porcentaje de reducción de tiempo/esfuerzo esperado en el proceso.
+// 0.0 = sin mejora. 1.0 = proceso 100% automatizado.
+
+export const EFFICIENCY_GAIN_BENCHMARKS: Record<string, {
+  value: number
+  label: string
+}> = {
+  automatizacion_inteligente: { value: 0.55, label: '~55% reducción de carga manual' },
+  automatizacion_rpa:         { value: 0.70, label: '~70% reducción de carga manual' },
+  analitica_predictiva:       { value: 0.30, label: '~30% mejora de velocidad decisional' },
+  asistente_ia:               { value: 0.40, label: '~40% reducción de tiempo en tarea' },
+  optimizacion_proceso:       { value: 0.35, label: '~35% reducción de ineficiencias' },
+}
+
+// ── Presets de coste por hora (€/hora, coste cargado) ─────────
+// Administrativo ≈ salario bruto 22k, carga ×2.0
+// Técnico ≈ salario bruto 40k, carga ×2.0
+// Directivo ≈ salario bruto 80k, carga ×2.0
+
+export const HOURLY_RATE_PRESETS: Record<HourlyRatePreset, {
+  rate:  number
+  label: string
+  hint:  string
+}> = {
+  administrativo: { rate: 25, label: 'Administrativo',  hint: '~25 €/h · perfil backoffice, soporte, ops' },
+  tecnico:        { rate: 45, label: 'Técnico / Mando', hint: '~45 €/h · IT, analítica, product, RRHH, finanzas' },
+  directivo:      { rate: 90, label: 'Directivo',       hint: '~90 €/h · C-level, directores de área' },
+}
+
+// ── Mapa de horas semanales desde respuesta Q6 de T3 ─────────
+// Q6 de T3 = "¿Cuántas horas/semana consume este proceso?"
+// Opciones: A (>20h), B (5-20h), C (1-5h), D (<1h)
+
+export const T3_HOURS_FROM_ANSWER: Record<string, number> = {
+  A: 25,  // > 20 horas/semana → 25h (estimación central)
+  B: 14,  // 5-20 horas/semana → 14h (estimación central)
+  C: 5,   // 1-5 horas/semana  → 5h  (estimación central)
+  D: 1,   // < 1 hora/semana   → 1h
+}
+
+// ── Función de cálculo de ROI desde datos económicos ─────────
+//
+// annualSaving = horasSemanales × personas × 52 semanas × gananciaEfic × €/h
+// paybackMeses = costeImpl / (ahorro / 12)
+// roi3años (%) = (ahorro×3 - costeImpl) / costeImpl × 100
+
+export interface ROIResult {
+  annualSaving:   number   // € ahorro anual estimado
+  paybackMonths:  number   // meses para recuperar inversión
+  roi3year:       number   // % ROI a 3 años
+}
+
+export function computeROIFromEconomics(econ: UseCaseEconomics): ROIResult {
+  const annualSaving =
+    econ.processHoursPerWeek *
+    econ.headcount *
+    52 *
+    econ.efficiencyGain *
+    econ.hourlyRate
+
+  const paybackMonths =
+    annualSaving > 0 && econ.implementationCost > 0
+      ? econ.implementationCost / (annualSaving / 12)
+      : 0
+
+  const roi3year =
+    econ.implementationCost > 0
+      ? ((annualSaving * 3 - econ.implementationCost) / econ.implementationCost) * 100
+      : 0
+
+  return {
+    annualSaving:   Math.round(annualSaving),
+    paybackMonths:  parseFloat(paybackMonths.toFixed(1)),
+    roi3year:       parseFloat(roi3year.toFixed(0)),
+  }
 }

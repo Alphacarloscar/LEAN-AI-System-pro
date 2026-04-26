@@ -11,6 +11,9 @@
 // departamento, categoría IA y opportunityScore como base
 // del scoring inicial.
 //
+// Escala de scoring: 0-100 (continua, slider en taller).
+// Score compuesto: 0-100 (mayor = mayor prioridad).
+//
 // Sprint 2 MVP: datos en Zustand (persist local).
 // Sprint 3+: Supabase tabla `use_cases`.
 // ============================================================
@@ -28,24 +31,21 @@ export type UseCaseStatus =
 // ── Dimensiones de scoring ────────────────────────────────────
 
 export type ScoringDimension =
-  | 'kpiImpact'        // Impacto en KPI de negocio (1-5, mayor = mejor)
-  | 'feasibility'      // Facilidad de implementación (1-5, mayor = más fácil)
-  | 'aiRisk'           // Riesgo IA/regulatorio (1-5, mayor = mayor riesgo → peor)
-  | 'dataDependency'   // Dependencia de datos (1-5, mayor = más dependiente → peor)
-
-// ── Puntuación por dimensión (1-5) ───────────────────────────
-
-export type ScoreValue = 1 | 2 | 3 | 4 | 5
+  | 'kpiImpact'        // Impacto en KPI de negocio (0-100, mayor = mejor)
+  | 'feasibility'      // Facilidad de implementación (0-100, mayor = más fácil)
+  | 'aiRisk'           // Riesgo IA/regulatorio (0-100, mayor = mayor riesgo → peor)
+  | 'dataDependency'   // Dependencia de datos (0-100, mayor = más dependiente → peor)
 
 // ── Objeto de scores del caso de uso ─────────────────────────
-// Para kpiImpact y feasibility: mayor = mejor
-// Para aiRisk y dataDependency: mayor = peor (se invierte en cálculo)
+// Escala: 0-100 continua (slider en taller).
+// Para kpiImpact y feasibility: mayor = mejor.
+// Para aiRisk y dataDependency: mayor = peor (se invierte en cálculo).
 
 export interface UseCaseScores {
-  kpiImpact:      number  // 1.0 – 5.0
-  feasibility:    number  // 1.0 – 5.0
-  aiRisk:         number  // 1.0 – 5.0
-  dataDependency: number  // 1.0 – 5.0
+  kpiImpact:      number  // 0 – 100
+  feasibility:    number  // 0 – 100
+  aiRisk:         number  // 0 – 100
+  dataDependency: number  // 0 – 100
 }
 
 // ── Score de un stakeholder individual ───────────────────────
@@ -78,6 +78,47 @@ export interface UseCaseRoadmap {
   owner?:             string   // Responsable de la implementación
   nextSteps?:         string   // Texto libre: próximos pasos concretos
   dependencies?:      string   // Dependencias con otros casos o sistemas
+}
+
+// ── Economía y ROI del caso de uso ───────────────────────────
+//
+// Toggle auto/manual por campo:
+//  - efficiencyGainMode 'benchmark': usa EFFICIENCY_GAIN_BENCHMARKS[aiCategory]
+//  - hourlyRateMode 'preset': usa HOURLY_RATE_PRESETS[hourlyRatePreset]
+//  - implementationCostMode 'benchmark': usa IMPLEMENTATION_COST_BENCHMARKS[aiCategory].suggested
+//
+// ROI calculado (no almacenado, derivado en runtime):
+//  annualSaving    = processHoursPerWeek × headcount × 52 × efficiencyGain × hourlyRate
+//  paybackMonths   = implementationCost / (annualSaving / 12)
+//  roi3year (%)    = (annualSaving×3 - implementationCost) / implementationCost × 100
+
+export type HourlyRatePreset   = 'administrativo' | 'tecnico' | 'directivo'
+export type EfficiencyGainMode = 'benchmark' | 'manual'
+export type HourlyRateMode     = 'preset' | 'manual'
+export type ImplCostMode       = 'benchmark' | 'manual'
+
+export interface UseCaseEconomics {
+  /** KPI principal que impacta este caso de uso */
+  kpiPrincipal?: string
+
+  // ── Inputs de ahorro ────────────────────────────────────────
+  /** Horas/semana que consume el proceso hoy */
+  processHoursPerWeek:    number
+  /** Personas involucradas en el proceso */
+  headcount:              number
+
+  /** Ganancia de eficiencia esperada (0-1 → 0-100%). */
+  efficiencyGain:         number        // 0.0 – 1.0
+  efficiencyGainMode:     EfficiencyGainMode
+
+  /** Coste/hora cargado (€) */
+  hourlyRate:             number        // €/hora
+  hourlyRateMode:         HourlyRateMode
+  hourlyRatePreset?:      HourlyRatePreset
+
+  // ── Coste de implementación ──────────────────────────────────
+  implementationCost:     number        // € total estimado
+  implementationCostMode: ImplCostMode
 }
 
 // ── Contexto T1 (read-only) ───────────────────────────────────
@@ -119,6 +160,14 @@ export interface UseCase {
   /** Categoría IA heredada de T3 o asignada manualmente */
   aiCategory:  string
   status:      UseCaseStatus
+
+  /** Sponsor / dueño del caso de uso en el cliente */
+  sponsorName?:       string
+  /** Responsable IT / Data para la implementación */
+  responsibleItData?: string
+  /** Objetivo de negocio estratégico que respalda este caso */
+  businessObjective?: string
+
   /** Si fue importado desde T3 */
   importedFromT3?: ImportedFromT3
 
@@ -129,11 +178,15 @@ export interface UseCase {
    * Scores consensuados/promediados (base para el cálculo).
    * Si hay stakeholderScores, estos son el promedio automático.
    * Si no, son los valores introducidos manualmente por el consultor.
+   * Escala 0-100.
    */
   scores: UseCaseScores
 
   /** Score de prioridad compuesto 0-100 */
   priorityScore: number
+
+  /** Datos económicos para cálculo de ROI */
+  economics?: UseCaseEconomics
 
   /** Decisión go/no-go */
   goNoGo?: GoNoGoDecision

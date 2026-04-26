@@ -1,12 +1,14 @@
 // ============================================================
-// T4 — Use Case Priority Board
+// T4 — Use Case Priority Board  (Sprint 2 — Redesign)
 //
 // Layout: 3 zonas verticales
-//   1. HERO — Priority Matrix (X=facilidad, Y=impacto KPI)
-//             + Status Donut (distribución por estado)
+//   1. HERO — Executive Dashboard
+//      · 4 KPI boxes (GO, ahorro estimado, payback, pendientes)
+//      · Roadmap trimestral (strips por quarter)
 //   2. BANNER — Filtros por estado + cards de casos de uso
 //   3. DETALLE — Panel expansible al seleccionar un caso
-//      Tabs: Scoring | Hoja de ruta | Contexto T1/T2
+//      Tabs: Scoring | Economía | Hoja de ruta | Contexto T1/T2
+//      (Scoring tab incluye scatter matrix + sliders 0-100)
 //
 // Sprint 2 MVP: datos en Zustand (persist local).
 // Sprint 3+: Supabase tabla `use_cases`.
@@ -22,11 +24,33 @@ import {
   PRIORITY_QUADRANTS,
   AI_CATEGORY_LABELS,
   AI_CATEGORY_HEX,
+  ROADMAP_QUARTERS,
   computePriorityScore,
   getGoNoGoRecommendation,
+  computeROIFromEconomics,
+  IMPLEMENTATION_COST_BENCHMARKS,
+  EFFICIENCY_GAIN_BENCHMARKS,
+  HOURLY_RATE_PRESETS,
+  GO_NOGO_THRESHOLDS,
 } from './constants'
 import { ImportFromT3Modal } from './components/ImportFromT3Modal'
-import type { UseCase, UseCaseStatus, UseCaseScores } from './types'
+import type {
+  UseCase, UseCaseStatus, UseCaseScores, UseCaseEconomics,
+} from './types'
+
+// ── Helpers de color ──────────────────────────────────────────
+
+function priorityScoreColor(score: number): string {
+  if (score >= GO_NOGO_THRESHOLDS.go)      return 'text-success-dark'
+  if (score >= GO_NOGO_THRESHOLDS.pending) return 'text-warning-dark'
+  return 'text-danger-dark'
+}
+
+function fmtEur(n: number): string {
+  if (n >= 1_000_000) return `€${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000)     return `€${Math.round(n / 1_000)}k`
+  return `€${n}`
+}
 
 // ── Badges ────────────────────────────────────────────────────
 
@@ -52,19 +76,211 @@ function CategoryBadge({ category }: { category: string }) {
   )
 }
 
-// ── Colores del score ─────────────────────────────────────────
+// ── HERO: Executive Dashboard ─────────────────────────────────
 
-function priorityScoreColor(score: number): string {
-  if (score >= 75) return 'text-success-dark'
-  if (score >= 55) return 'text-warning-dark'
-  return 'text-danger-dark'
+interface ExecDashboardProps {
+  useCases: UseCase[]
 }
 
-// ── HERO CHART 1: Priority Matrix ─────────────────────────────
-// X = feasibility (0-1), Y = kpiImpact (0-1)
-// Dots colored by status. Quadrant threshold: 0.60.
+function ExecDashboard({ useCases }: ExecDashboardProps) {
+  const totalGo    = useCases.filter((uc) => uc.status === 'go').length
+  const pending    = useCases.filter((uc) => uc.status === 'candidato' || uc.status === 'priorizado').length
 
-function HeroPriorityMatrix({
+  // Suma de ahorro anual estimado de todos los casos con economics
+  const roisWithData = useCases
+    .filter((uc) => uc.economics)
+    .map((uc) => computeROIFromEconomics(uc.economics!))
+
+  const totalAnnualSaving = roisWithData.reduce((acc, r) => acc + r.annualSaving, 0)
+  const avgPayback = roisWithData.length > 0
+    ? roisWithData.reduce((acc, r) => acc + r.paybackMonths, 0) / roisWithData.length
+    : null
+
+  const kpis = [
+    {
+      label:    'Casos aprobados (GO)',
+      value:    String(totalGo),
+      subtext:  `de ${useCases.length} totales`,
+      color:    'text-success-dark',
+      dotColor: 'bg-success-dark',
+    },
+    {
+      label:    'Ahorro anual estimado',
+      value:    fmtEur(totalAnnualSaving),
+      subtext:  `${roisWithData.length} casos con datos económicos`,
+      color:    'text-lean-black dark:text-gray-100',
+      dotColor: 'bg-navy',
+    },
+    {
+      label:    'Payback promedio',
+      value:    avgPayback !== null ? `${avgPayback.toFixed(1)} meses` : '—',
+      subtext:  'recuperación de inversión',
+      color:    'text-lean-black dark:text-gray-100',
+      dotColor: 'bg-info-dark',
+    },
+    {
+      label:    'Pendientes de decisión',
+      value:    String(pending),
+      subtext:  'candidatos + priorizados',
+      color:    pending > 0 ? 'text-warning-dark' : 'text-text-muted',
+      dotColor: pending > 0 ? 'bg-warning-dark' : 'bg-gray-400',
+    },
+  ]
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {kpis.map((kpi) => (
+        <div key={kpi.label}
+          className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6
+            px-5 py-4 flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${kpi.dotColor}`} />
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle leading-tight">
+              {kpi.label}
+            </p>
+          </div>
+          <p className={`text-2xl font-bold tabular-nums leading-none ${kpi.color}`}>
+            {kpi.value}
+          </p>
+          <p className="text-[10px] text-text-subtle">{kpi.subtext}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── HERO: Quarterly Roadmap ───────────────────────────────────
+
+function QuarterlyRoadmap({ useCases }: { useCases: UseCase[] }) {
+  // Casos con quarter asignado
+  const byQuarter = useMemo(() => {
+    const map = new Map<string, UseCase[]>()
+    ROADMAP_QUARTERS.forEach((q) => map.set(q, []))
+    useCases.forEach((uc) => {
+      if (uc.roadmap?.quarter && map.has(uc.roadmap.quarter)) {
+        map.get(uc.roadmap.quarter)!.push(uc)
+      }
+    })
+    return map
+  }, [useCases])
+
+  // Mostrar solo quarters con casos + los 2 siguientes vacíos
+  const quartersToShow = useMemo(() => {
+    const all  = [...ROADMAP_QUARTERS]
+    const used = all.filter((q) => (byQuarter.get(q)?.length ?? 0) > 0)
+    if (used.length === 0) return all.slice(0, 4)
+    const lastUsedIdx = all.indexOf(used[used.length - 1])
+    return all.slice(0, Math.min(lastUsedIdx + 3, all.length))
+  }, [byQuarter])
+
+  const unassigned = useCases.filter((uc) => !uc.roadmap?.quarter)
+
+  return (
+    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 px-6 py-4">
+      <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-4">
+        Roadmap trimestral — distribución planificada
+      </p>
+
+      <div className="flex flex-col gap-2.5">
+        {quartersToShow.map((quarter) => {
+          const cases = byQuarter.get(quarter) ?? []
+          const isEmpty = cases.length === 0
+          return (
+            <div key={quarter} className="flex items-start gap-4">
+              {/* Quarter label */}
+              <div className={`shrink-0 w-16 pt-0.5 ${isEmpty ? 'opacity-35' : ''}`}>
+                <p className="text-[10px] font-mono font-bold text-lean-black dark:text-gray-200
+                  tabular-nums">
+                  {quarter}
+                </p>
+              </div>
+
+              {/* Track */}
+              <div className="flex-1 flex items-center gap-2 flex-wrap min-h-[24px] relative">
+                {/* Track line */}
+                <div className={`absolute left-0 top-1/2 w-full h-px
+                  ${isEmpty
+                    ? 'border-t border-dashed border-border dark:border-white/8'
+                    : 'border-t border-border dark:border-white/10'
+                  }`} />
+
+                {isEmpty ? (
+                  <span className="relative text-[10px] text-text-subtle opacity-50 italic">
+                    Sin casos asignados
+                  </span>
+                ) : (
+                  cases.map((uc) => {
+                    const cfg = STATUS_CONFIG[uc.status]
+                    return (
+                      <div
+                        key={uc.id}
+                        className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-full
+                          border text-[10px] font-medium truncate max-w-[200px]
+                          ${cfg.badgeBg} ${cfg.badgeText} border-transparent`}
+                        title={uc.name}
+                      >
+                        <span
+                          className="h-1.5 w-1.5 rounded-full shrink-0"
+                          style={{ backgroundColor: cfg.hex }}
+                        />
+                        <span className="truncate">{uc.name}</span>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+
+              {/* Count badge */}
+              {!isEmpty && (
+                <div className="shrink-0">
+                  <span className="text-[10px] font-bold text-text-subtle tabular-nums">
+                    {cases.length} caso{cases.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        {/* Unassigned */}
+        {unassigned.length > 0 && (
+          <div className="flex items-start gap-4 mt-1 pt-2 border-t border-border dark:border-white/6">
+            <div className="shrink-0 w-16 pt-0.5">
+              <p className="text-[10px] font-mono font-bold text-text-subtle opacity-50">
+                Sin Q
+              </p>
+            </div>
+            <div className="flex-1 flex items-center gap-1.5 flex-wrap">
+              {unassigned.map((uc) => {
+                const cfg = STATUS_CONFIG[uc.status]
+                return (
+                  <div
+                    key={uc.id}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full
+                      border text-[10px] font-medium truncate max-w-[200px] opacity-50
+                      bg-gray-100 dark:bg-gray-800 text-text-muted border-transparent`}
+                    title={uc.name}
+                  >
+                    <span
+                      className="h-1.5 w-1.5 rounded-full shrink-0"
+                      style={{ backgroundColor: cfg.hex }}
+                    />
+                    <span className="truncate">{uc.name}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Scatter matrix (para tab Scoring del detalle) ─────────────
+// X = feasibility (0-100), Y = kpiImpact (0-100). Umbral: 60.
+
+function PriorityMatrix({
   useCases,
   activeId,
   onSelect,
@@ -74,19 +290,19 @@ function HeroPriorityMatrix({
   onSelect: (id: string) => void
 }) {
   const S  = 320
-  const P  = 36
+  const P  = 40
   const IN = S - P * 2
 
   return (
     <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ display: 'block' }}>
       <defs>
-        <clipPath id="t4hero-clip">
+        <clipPath id="t4matrix-clip">
           <rect x={P} y={P} width={IN} height={IN} rx={6} />
         </clipPath>
         {useCases.map((uc) => {
           const hex = STATUS_CONFIG[uc.status].hex
           return (
-            <radialGradient key={`glow-${uc.id}`} id={`t4glow-${uc.id}`}
+            <radialGradient key={`mglow-${uc.id}`} id={`t4mglow-${uc.id}`}
               cx="50%" cy="50%" r="50%">
               <stop offset="0%"   stopColor={hex} stopOpacity="0.35" />
               <stop offset="100%" stopColor={hex} stopOpacity="0" />
@@ -96,18 +312,18 @@ function HeroPriorityMatrix({
       </defs>
 
       {/* Quadrant fills */}
-      <g clipPath="url(#t4hero-clip)">
-        <rect x={P}           y={P}           width={IN * 0.6} height={IN * 0.6} fill="#6A90C0" opacity={0.04} />
-        <rect x={P + IN * 0.6} y={P}          width={IN * 0.4} height={IN * 0.6} fill="#5FAF8A" opacity={0.06} />
-        <rect x={P}           y={P + IN * 0.6} width={IN * 0.6} height={IN * 0.4} fill="#E5E7EB" opacity={0.03} />
-        <rect x={P + IN * 0.6} y={P + IN * 0.6} width={IN * 0.4} height={IN * 0.4} fill="#9AAEC8" opacity={0.04} />
+      <g clipPath="url(#t4matrix-clip)">
+        <rect x={P}              y={P}              width={IN * 0.60} height={IN * 0.40} fill="#6A90C0" opacity={0.05} />
+        <rect x={P + IN * 0.60}  y={P}              width={IN * 0.40} height={IN * 0.40} fill="#5FAF8A" opacity={0.07} />
+        <rect x={P}              y={P + IN * 0.40}  width={IN * 0.60} height={IN * 0.60} fill="#E5E7EB" opacity={0.03} />
+        <rect x={P + IN * 0.60}  y={P + IN * 0.40}  width={IN * 0.40} height={IN * 0.60} fill="#9AAEC8" opacity={0.05} />
       </g>
 
       {/* Grid border */}
       <rect x={P} y={P} width={IN} height={IN} rx={6} fill="none"
         stroke="#E5E7EB" strokeWidth={1} />
 
-      {/* Dividers at threshold 0.60 */}
+      {/* Threshold dividers */}
       <line x1={P + IN * 0.6} y1={P} x2={P + IN * 0.6} y2={P + IN}
         stroke="#E5E7EB" strokeWidth={0.8} strokeDasharray="3 3" />
       <line x1={P} y1={P + IN * 0.4} x2={P + IN} y2={P + IN * 0.4}
@@ -123,35 +339,34 @@ function HeroPriorityMatrix({
         </text>
       ))}
 
-      {/* Axis labels */}
-      <text x={P + IN / 2} y={P - 12} fontSize={8} fill="#9CA3AF"
+      {/* Axis labels — inside the plot area to avoid overflow */}
+      <text x={P + IN / 2} y={P + IN + 16} fontSize={8} fill="#9CA3AF"
         fontFamily="ui-monospace,monospace" textAnchor="middle" letterSpacing="0.08em">
         FACILIDAD →
       </text>
       <text
-        x={P - 14} y={P + IN / 2}
+        x={P - 16} y={P + IN / 2}
         fontSize={8} fill="#9CA3AF"
         fontFamily="ui-monospace,monospace"
         textAnchor="middle"
         letterSpacing="0.08em"
-        transform={`rotate(-90, ${P - 14}, ${P + IN / 2})`}
+        transform={`rotate(-90, ${P - 16}, ${P + IN / 2})`}
       >
-        IMPACTO KPI ↑
+        IMPACTO ↑
       </text>
 
       {/* Use case dots */}
       {useCases.map((uc) => {
-        const x        = P + (uc.scores.feasibility / 5) * IN
-        const y        = P + (1 - uc.scores.kpiImpact / 5) * IN
+        const x        = P + (uc.scores.feasibility / 100) * IN
+        const y        = P + (1 - uc.scores.kpiImpact / 100) * IN
         const hex      = STATUS_CONFIG[uc.status].hex
         const isActive = uc.id === activeId
         const r        = isActive ? 9 : 7
 
         return (
           <g key={uc.id} style={{ cursor: 'pointer' }} onClick={() => onSelect(uc.id)}>
-            <circle cx={x} cy={y} r={r * 3.5} fill={`url(#t4glow-${uc.id})`} />
-            <circle cx={x} cy={y} r={r * 1.8} fill={hex}
-              opacity={isActive ? 0.25 : 0.12} />
+            <circle cx={x} cy={y} r={r * 3.5} fill={`url(#t4mglow-${uc.id})`} />
+            <circle cx={x} cy={y} r={r * 1.8} fill={hex} opacity={isActive ? 0.25 : 0.12} />
             <circle cx={x} cy={y} r={r} fill={hex}
               opacity={isActive ? 1 : 0.85}
               stroke={isActive ? '#fff' : 'rgba(255,255,255,0.5)'}
@@ -166,188 +381,7 @@ function HeroPriorityMatrix({
   )
 }
 
-// ── HERO CHART 2: Status Donut ────────────────────────────────
-
-function HeroStatusDonut({
-  useCases,
-  activeId,
-  onSelect,
-}: {
-  useCases: UseCase[]
-  activeId: string | null
-  onSelect: (id: string) => void
-}) {
-  const VB = 480, CX = 240, CY = 240
-  const R_OUTER = 152, R_INNER = 58
-  const total   = useCases.length
-
-  const statusData = useMemo(() => STATUS_ORDER
-    .map((st) => ({
-      st,
-      count: useCases.filter((uc) => uc.status === st).length,
-      ucs:   useCases.filter((uc) => uc.status === st),
-    }))
-    .filter((d) => d.count > 0),
-  [useCases])
-
-  if (total === 0) {
-    return (
-      <svg viewBox={`0 0 ${VB} ${VB}`} width="100%" style={{ display: 'block' }}>
-        <text x={CX} y={CY + 5} textAnchor="middle" fontSize={13}
-          fill="#94A3B8" fontFamily="ui-monospace,monospace">
-          Sin casos de uso
-        </text>
-      </svg>
-    )
-  }
-
-  const GAP_RAD = statusData.length > 1 ? 0.03 : 0
-  let currentAngle = -Math.PI / 2
-
-  const arcs = statusData.map(({ st, count, ucs }) => {
-    const fraction   = count / total
-    const arcSpan    = fraction * 2 * Math.PI - GAP_RAD
-    const startAngle = currentAngle + GAP_RAD / 2
-    const endAngle   = startAngle + arcSpan
-    currentAngle    += fraction * 2 * Math.PI
-    const midAngle   = (startAngle + endAngle) / 2
-    return { st, count, ucs, startAngle, endAngle, midAngle }
-  })
-
-  function arcPath(sa: number, ea: number, ro: number, ri: number) {
-    const x1o = CX + ro * Math.cos(sa), y1o = CY + ro * Math.sin(sa)
-    const x2o = CX + ro * Math.cos(ea), y2o = CY + ro * Math.sin(ea)
-    const x1i = CX + ri * Math.cos(sa), y1i = CY + ri * Math.sin(sa)
-    const x2i = CX + ri * Math.cos(ea), y2i = CY + ri * Math.sin(ea)
-    const large = ea - sa > Math.PI ? 1 : 0
-    return [
-      `M ${x1o.toFixed(2)} ${y1o.toFixed(2)}`,
-      `A ${ro} ${ro} 0 ${large} 1 ${x2o.toFixed(2)} ${y2o.toFixed(2)}`,
-      `L ${x2i.toFixed(2)} ${y2i.toFixed(2)}`,
-      `A ${ri} ${ri} 0 ${large} 0 ${x1i.toFixed(2)} ${y1i.toFixed(2)}`,
-      'Z',
-    ].join(' ')
-  }
-
-  const goCount  = useCases.filter((uc) => uc.status === 'go').length
-  const noGoCount = useCases.filter((uc) => uc.status === 'no_go').length
-
-  return (
-    <svg viewBox={`0 0 ${VB} ${VB}`} width="100%"
-      style={{ display: 'block', overflow: 'visible' }}
-      className="text-lean-black dark:text-gray-100">
-
-      <circle cx={CX} cy={CY} r={R_OUTER} fill="none"
-        stroke="rgba(148,163,184,0.28)" strokeWidth={1} />
-      <circle cx={CX} cy={CY} r={R_INNER} fill="none"
-        stroke="rgba(148,163,184,0.18)" strokeWidth={0.6} />
-      {[75, 100, 126].map((r) => (
-        <circle key={r} cx={CX} cy={CY} r={r}
-          fill="none" stroke="rgba(148,163,184,0.18)" strokeWidth={0.6} />
-      ))}
-
-      {arcs.map(({ st, count, ucs, startAngle, endAngle, midAngle }) => {
-        const hex = STATUS_CONFIG[st].hex
-        const cfg = STATUS_CONFIG[st]
-
-        const labelR = R_OUTER + 24
-        const lx     = CX + labelR * Math.cos(midAngle)
-        const ly     = CY + labelR * Math.sin(midAngle)
-        const cosM   = Math.cos(midAngle)
-        const anchor = cosM < -0.2 ? 'end' : cosM > 0.2 ? 'start' : 'middle'
-
-        const dots = ucs.map((uc, i) => {
-          const frac   = ucs.length > 1 ? (i + 0.5) / ucs.length : 0.5
-          const dotAng = startAngle + frac * (endAngle - startAngle)
-          const pct    = 0.15 + (uc.priorityScore / 100) * 0.70
-          const dotR   = R_INNER + pct * (R_OUTER - R_INNER)
-          return {
-            id: uc.id,
-            cx: CX + dotR * Math.cos(dotAng),
-            cy: CY + dotR * Math.sin(dotAng),
-            hex,
-          }
-        })
-
-        return (
-          <g key={st}>
-            <path d={arcPath(startAngle, endAngle, R_OUTER, R_INNER)}
-              fill={hex} opacity={0.18} />
-            <path d={arcPath(startAngle, endAngle, R_OUTER, R_INNER)}
-              fill="none" stroke={hex} strokeWidth={1} opacity={0.55} />
-
-            {dots.map((dot) => {
-              const isActive = dot.id === activeId
-              return (
-                <g key={dot.id} style={{ cursor: 'pointer' }}
-                  onClick={() => onSelect(dot.id)}>
-                  {isActive && (
-                    <>
-                      <circle cx={dot.cx} cy={dot.cy} r={18}
-                        fill={dot.hex} opacity={0.10} />
-                      <circle cx={dot.cx} cy={dot.cy} r={13}
-                        fill={dot.hex} opacity={0.18} />
-                    </>
-                  )}
-                  <circle cx={dot.cx} cy={dot.cy} r={isActive ? 12 : 10}
-                    fill={dot.hex} opacity={isActive ? 0.28 : 0.15} />
-                  <circle cx={dot.cx} cy={dot.cy} r={isActive ? 9 : 7}
-                    fill={dot.hex} opacity={0.92}
-                    stroke={isActive ? 'rgba(255,255,255,0.90)' : 'rgba(255,255,255,0.50)'}
-                    strokeWidth={isActive ? 2 : 0.8} />
-                  <ellipse cx={dot.cx - 2} cy={dot.cy - 2}
-                    rx={2.5} ry={1.5} fill="rgba(255,255,255,0.55)" />
-                </g>
-              )
-            })}
-
-            <text
-              x={CX + (R_INNER + (R_OUTER - R_INNER) * 0.80) * Math.cos(midAngle)}
-              y={CY + (R_INNER + (R_OUTER - R_INNER) * 0.80) * Math.sin(midAngle) + 4}
-              textAnchor="middle" fontSize={11} fontWeight="700"
-              fill={hex} fontFamily="ui-monospace,monospace"
-            >
-              {count}
-            </text>
-
-            <text x={lx} y={ly} textAnchor={anchor}
-              fontSize={8} fontWeight="700"
-              fill={hex} fontFamily="ui-monospace,monospace" letterSpacing="0.05em">
-              {cfg.label.toUpperCase()}
-            </text>
-          </g>
-        )
-      })}
-
-      {/* Center text */}
-      <text x={CX} y={CY - 18} textAnchor="middle"
-        fontSize={7.5} fill="#94A3B8"
-        fontFamily="ui-monospace,monospace" letterSpacing="0.10em">
-        CASOS DE USO
-      </text>
-      <text x={CX} y={CY + 22} textAnchor="middle"
-        fontSize={26} fontWeight="700"
-        fill="currentColor"
-        fontFamily="ui-monospace,monospace">
-        {total}
-      </text>
-      <text x={CX} y={CY + 38} textAnchor="middle"
-        fontSize={8} fill="#5FAF8A"
-        fontFamily="ui-monospace,monospace" letterSpacing="0.06em">
-        {goCount} GO
-      </text>
-      {noGoCount > 0 && (
-        <text x={CX} y={CY + 52} textAnchor="middle"
-          fontSize={8} fill="#C06060"
-          fontFamily="ui-monospace,monospace" letterSpacing="0.06em">
-          {noGoCount} NO-GO
-        </text>
-      )}
-    </svg>
-  )
-}
-
-// ── Score bars T4 ─────────────────────────────────────────────
+// ── Score bars (visualización 0-100) ─────────────────────────
 
 const T4_SCORE_BARS = [
   { key: 'kpiImpact',      cfg: DIMENSION_CONFIG.kpiImpact },
@@ -356,32 +390,21 @@ const T4_SCORE_BARS = [
   { key: 'dataDependency', cfg: DIMENSION_CONFIG.dataDependency },
 ] as const
 
-function T4ScoreBars({
-  scores,
-  trackWidth = 200,
-}: {
-  scores: UseCaseScores
-  trackWidth?: number
-}) {
-  const MAX   = 5
-  const LBL_W = 108, G1 = 8, TRACK_W = trackWidth, G2 = 8, VAL_COL = 28
-  const VBW   = LBL_W + G1 + TRACK_W + G2 + VAL_COL
+function T4ScoreBars({ scores, trackWidth = 220 }: { scores: UseCaseScores; trackWidth?: number }) {
+  const MAX = 100
+  const LBL_W = 110, G1 = 8, G2 = 8, VAL_COL = 34
+  const VBW   = LBL_W + G1 + trackWidth + G2 + VAL_COL
   const TX    = LBL_W + G1
-  const ROW_H = 36, VBH = T4_SCORE_BARS.length * ROW_H + 8
-  const values = [
-    scores.kpiImpact,
-    scores.feasibility,
-    scores.aiRisk,
-    scores.dataDependency,
-  ]
+  const ROW_H = 34, VBH = T4_SCORE_BARS.length * ROW_H + 8
+  const values = [scores.kpiImpact, scores.feasibility, scores.aiRisk, scores.dataDependency]
 
   return (
     <svg viewBox={`0 0 ${VBW} ${VBH}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
       <defs>
         {T4_SCORE_BARS.map(({ key, cfg }, i) => {
-          const fillW = Math.max((values[i] / MAX) * TRACK_W, 2)
+          const fillW = Math.max((values[i] / MAX) * trackWidth, 2)
           return (
-            <linearGradient key={key} id={`t4sb-${key}`}
+            <linearGradient key={key} id={`t4sb2-${key}`}
               x1={TX} y1="0" x2={TX + fillW} y2="0"
               gradientUnits="userSpaceOnUse">
               <stop offset="0%"   stopColor={cfg.hex}   stopOpacity="0.15" />
@@ -394,13 +417,11 @@ function T4ScoreBars({
         })}
       </defs>
       {T4_SCORE_BARS.map(({ key, cfg }, i) => {
-        const val   = values[i]
-        const fillW = Math.max((val / MAX) * TRACK_W, 2)
-        const cy    = i * ROW_H + ROW_H / 2 + 3
-
-        // Para dimensiones negativas (risk, dep), mostrar indicador invertido
-        const isNegative = cfg.direction === 'negative'
-        const scaleLabel = cfg.scaleLabels[Math.round(val) - 1] ?? ''
+        const val    = values[i]
+        const fillW  = Math.max((val / MAX) * trackWidth, 2)
+        const cy     = i * ROW_H + ROW_H / 2 + 3
+        const lblIdx = Math.min(4, Math.floor(val / 20))
+        const isNeg  = cfg.direction === 'negative'
 
         return (
           <g key={key}>
@@ -409,22 +430,27 @@ function T4ScoreBars({
               {cfg.label}
             </text>
             <text x={0} y={cy + 8} fontSize={6.5} fill="#94A3B8"
-              fontFamily="ui-monospace,monospace" letterSpacing="0.02em">
-              {scaleLabel}{isNegative ? ' ↑ riesgo' : ''}
+              fontFamily="ui-monospace,monospace">
+              {cfg.scaleLabels[lblIdx]}{isNeg ? ' ↑ riesgo' : ''}
             </text>
-            <rect x={TX} y={cy - 0.4} width={TRACK_W} height={0.8}
+            {/* Track bg */}
+            <rect x={TX} y={cy - 0.4} width={trackWidth} height={0.8}
               fill={cfg.hex} opacity={0.08} rx={0.4} />
+            {/* Fill shadow */}
             <rect x={TX} y={cy - 3.5} width={fillW} height={7}
               fill={cfg.hex} opacity={0.10} rx={3.5} />
+            {/* Fill bar */}
             <rect x={TX} y={cy - 1.5} width={fillW} height={3}
-              fill={`url(#t4sb-${key})`} rx={1.5} />
+              fill={`url(#t4sb2-${key})`} rx={1.5} />
+            {/* Gloss */}
             <rect x={TX + fillW * 0.08} y={cy - 2}
               width={fillW * 0.45} height={0.7}
               fill={cfg.light} opacity={0.60} rx={0.35} />
-            <text x={TX + TRACK_W + G2} y={cy + 3}
+            {/* Value */}
+            <text x={TX + trackWidth + G2} y={cy + 3}
               fontSize={8} fontWeight="600" fill="#94A3B8"
               fontFamily="ui-monospace,monospace">
-              {val.toFixed(1)}<tspan fontSize={6.5} opacity={0.5}>/5</tspan>
+              {val}<tspan fontSize={6} opacity={0.5}>/100</tspan>
             </text>
           </g>
         )
@@ -433,117 +459,497 @@ function T4ScoreBars({
   )
 }
 
-// ── Mini mapa de posición para el panel de detalle ────────────
-
-function DetailPositionMap({
-  kpiImpact,
-  feasibility,
-  status,
-  size = 200,
-}: {
-  kpiImpact:   number
-  feasibility: number
-  status:      UseCaseStatus
-  size?:       number
-}) {
-  const S = size, P = Math.round(S * 0.10), IN = S - P * 2
-  const dx  = P + (feasibility / 5) * IN
-  const dy  = P + (1 - kpiImpact / 5) * IN
-  const hex = STATUS_CONFIG[status].hex
-  const r   = S * 0.048
-
-  return (
-    <svg viewBox={`0 0 ${S} ${S}`} width={S} height={S} style={{ display: 'block' }}>
-      <defs>
-        <clipPath id="t4detail-clip">
-          <rect x={P} y={P} width={IN} height={IN} rx={5} />
-        </clipPath>
-        <radialGradient id="t4detail-glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%"   stopColor={hex} stopOpacity="0.40" />
-          <stop offset="100%" stopColor={hex} stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      <g clipPath="url(#t4detail-clip)">
-        <rect x={P}              y={P}              width={IN * 0.6} height={IN * 0.4} fill="#6A90C0" opacity={0.04} />
-        <rect x={P + IN * 0.6}   y={P}              width={IN * 0.4} height={IN * 0.4} fill="#5FAF8A" opacity={0.06} />
-        <rect x={P}              y={P + IN * 0.4}   width={IN * 0.6} height={IN * 0.6} fill="#E5E7EB" opacity={0.03} />
-        <rect x={P + IN * 0.6}   y={P + IN * 0.4}   width={IN * 0.4} height={IN * 0.6} fill="#9AAEC8" opacity={0.04} />
-      </g>
-
-      <rect x={P} y={P} width={IN} height={IN} rx={5} fill="none"
-        stroke="#E5E7EB" strokeWidth={1} />
-      <line x1={P + IN * 0.6} y1={P} x2={P + IN * 0.6} y2={P + IN}
-        stroke="#E5E7EB" strokeWidth={0.6} strokeDasharray="3 3" />
-      <line x1={P} y1={P + IN * 0.4} x2={P + IN} y2={P + IN * 0.4}
-        stroke="#E5E7EB" strokeWidth={0.6} strokeDasharray="3 3" />
-
-      {PRIORITY_QUADRANTS.map((q, i) => (
-        <text key={i}
-          x={P + q.qx * IN} y={P + q.qy * IN}
-          fontSize={S * 0.045} fill={q.color} opacity={0.75}
-          fontFamily="ui-monospace,monospace" letterSpacing="0.03em">
-          {q.text.split(' ')[0]}
-        </text>
-      ))}
-
-      <circle cx={dx} cy={dy} r={r * 3.5} fill="url(#t4detail-glow)" />
-      <circle cx={dx} cy={dy} r={r * 1.8} fill={hex} opacity={0.20} />
-      <circle cx={dx} cy={dy} r={r}       fill={hex}
-        stroke="#fff" strokeWidth={1.5} />
-      <ellipse cx={dx - r * 0.22} cy={dy - r * 0.30}
-        rx={r * 0.40} ry={r * 0.22}
-        fill="#fff" opacity={0.42} />
-      <line x1={P} y1={dy} x2={dx - r} y2={dy}
-        stroke={hex} strokeWidth={0.5} strokeDasharray="2 2" opacity={0.4} />
-      <line x1={dx} y1={P + IN} x2={dx} y2={dy + r}
-        stroke={hex} strokeWidth={0.5} strokeDasharray="2 2" opacity={0.4} />
-    </svg>
-  )
-}
-
-// ── Panel de scoring inline (edición de scores) ───────────────
+// ── Score input — slider 0-100 ────────────────────────────────
 
 function ScoreInput({
   label,
+  description,
   value,
   onChange,
+  isNegative,
+  hex,
 }: {
-  label:    string
-  value:    number
-  onChange: (v: number) => void
+  label:      string
+  description?: string
+  value:      number
+  onChange:   (v: number) => void
+  isNegative?: boolean
+  hex?:       string
 }) {
+  const barColor = hex ?? '#6A90C0'
+  const pct = (value / 100) * 100
+
+  // Semantic label for current value
+  const cfg      = Object.values(DIMENSION_CONFIG).find((d) => d.label === label)
+  const lblIdx   = Math.min(4, Math.floor(value / 20))
+  const valueLabel = cfg?.scaleLabels[lblIdx] ?? String(value)
+
   return (
-    <div className="flex items-center gap-3">
-      <p className="text-[10px] font-mono text-text-subtle w-32 shrink-0">{label}</p>
-      <div className="flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((n) => (
-          <button
-            key={n}
-            onClick={() => onChange(n)}
-            className={[
-              'h-6 w-6 rounded-lg text-[10px] font-bold transition-all',
-              Math.round(value) === n
-                ? 'bg-navy text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-text-muted hover:bg-gray-200 dark:hover:bg-gray-700',
-            ].join(' ')}
-          >
-            {n}
-          </button>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-baseline justify-between gap-2">
+        <div>
+          <p className="text-xs font-semibold text-lean-black dark:text-gray-200">{label}</p>
+          {description && (
+            <p className="text-[10px] text-text-subtle leading-snug">{description}</p>
+          )}
+        </div>
+        <div className="shrink-0 text-right">
+          <span className="text-sm font-bold tabular-nums text-lean-black dark:text-gray-200">
+            {value}
+          </span>
+          <span className="text-[10px] text-text-subtle ml-0.5">/100</span>
+          <p className="text-[9px] text-text-subtle" style={{ color: barColor }}>
+            {valueLabel}{isNegative ? ' ↑' : ''}
+          </p>
+        </div>
+      </div>
+
+      {/* Slider */}
+      <div className="relative h-5 flex items-center">
+        {/* Track */}
+        <div className="w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
+          <div
+            className="absolute left-0 top-0 h-full rounded-full transition-all duration-100"
+            style={{ width: `${pct}%`, backgroundColor: barColor, opacity: 0.7 }}
+          />
+        </div>
+        <input
+          type="range"
+          min={0} max={100} step={5}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
+          style={{ zIndex: 1 }}
+        />
+        {/* Thumb indicator */}
+        <div
+          className="absolute h-4 w-4 rounded-full border-2 border-white shadow-md pointer-events-none"
+          style={{
+            left:            `calc(${pct}% - 8px)`,
+            backgroundColor: barColor,
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
+// ── Tab Economía ──────────────────────────────────────────────
+
+function EconomicsTab({ useCase }: { useCase: UseCase }) {
+  const { updateUseCase } = useT4Store()
+  const [editing, setEditing] = useState(false)
+
+  const benchmarkCost = IMPLEMENTATION_COST_BENCHMARKS[useCase.aiCategory]
+  const benchmarkEff  = EFFICIENCY_GAIN_BENCHMARKS[useCase.aiCategory]
+
+  // Inicializar economics con defaults de benchmark si no existen
+  const defaultEcon: UseCaseEconomics = {
+    kpiPrincipal:          '',
+    processHoursPerWeek:   10,
+    headcount:             2,
+    efficiencyGain:        benchmarkEff?.value ?? 0.40,
+    efficiencyGainMode:    'benchmark',
+    hourlyRate:            HOURLY_RATE_PRESETS.tecnico.rate,
+    hourlyRateMode:        'preset',
+    hourlyRatePreset:      'tecnico',
+    implementationCost:    benchmarkCost?.suggested ?? 20_000,
+    implementationCostMode: 'benchmark',
+  }
+
+  const [local, setLocal] = useState<UseCaseEconomics>(useCase.economics ?? defaultEcon)
+
+  function patch<K extends keyof UseCaseEconomics>(key: K, val: UseCaseEconomics[K]) {
+    setLocal((prev) => ({ ...prev, [key]: val }))
+  }
+
+  function handleSave() {
+    updateUseCase(useCase.id, { economics: local })
+    setEditing(false)
+  }
+
+  const econ = editing ? local : (useCase.economics ?? local)
+  const roiDisplay = computeROIFromEconomics(econ)
+
+  const ROI_PILL_COLOR = roiDisplay.roi3year > 300
+    ? 'text-success-dark bg-success-light'
+    : roiDisplay.roi3year > 0
+    ? 'text-warning-dark bg-warning-light'
+    : 'text-danger-dark bg-danger-light'
+
+  return (
+    <div className="flex flex-col gap-6">
+
+      {/* ROI summary boxes */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          {
+            label:   'Ahorro anual estimado',
+            value:   fmtEur(roiDisplay.annualSaving),
+            sub:     `${econ.processHoursPerWeek}h/sem × ${econ.headcount} personas × ${Math.round(econ.efficiencyGain * 100)}% ef.`,
+            color:   'text-success-dark',
+          },
+          {
+            label:   'Payback estimado',
+            value:   roiDisplay.paybackMonths > 0 ? `${roiDisplay.paybackMonths.toFixed(1)} meses` : '—',
+            sub:     `${fmtEur(econ.implementationCost)} inversión`,
+            color:   'text-lean-black dark:text-gray-100',
+          },
+          {
+            label:   'ROI 3 años',
+            value:   roiDisplay.roi3year > 0 ? `${Math.round(roiDisplay.roi3year)}%` : '—',
+            sub:     `${fmtEur(roiDisplay.annualSaving * 3 - econ.implementationCost)} beneficio neto`,
+            color:   ROI_PILL_COLOR.split(' ')[0],
+          },
+        ].map((kpi) => (
+          <div key={kpi.label}
+            className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-border
+              dark:border-white/6 px-4 py-3">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
+              {kpi.label}
+            </p>
+            <p className={`text-xl font-bold tabular-nums ${kpi.color}`}>{kpi.value}</p>
+            <p className="text-[10px] text-text-subtle mt-0.5 leading-snug">{kpi.sub}</p>
+          </div>
         ))}
       </div>
-      <span className="text-xs font-bold text-lean-black dark:text-gray-200 tabular-nums w-6">
-        {value.toFixed(0)}
-      </span>
+
+      {/* Benchmark context */}
+      {benchmarkCost && !editing && (
+        <div className="rounded-2xl border border-navy/15 bg-navy/3 dark:bg-navy/8 px-4 py-3">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-navy/60 mb-1">
+            Benchmark · {AI_CATEGORY_LABELS[useCase.aiCategory] ?? useCase.aiCategory}
+          </p>
+          <div className="flex flex-wrap gap-4">
+            <div>
+              <p className="text-[10px] text-text-subtle">Coste de implementación</p>
+              <p className="text-xs font-bold text-lean-black dark:text-gray-200">
+                {benchmarkCost.label}
+              </p>
+            </div>
+            {benchmarkEff && (
+              <div>
+                <p className="text-[10px] text-text-subtle">Ganancia de eficiencia</p>
+                <p className="text-xs font-bold text-lean-black dark:text-gray-200">
+                  {benchmarkEff.label}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit / save toggle */}
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
+          Datos del caso de uso
+        </p>
+        {!editing ? (
+          <button
+            onClick={() => { setLocal(useCase.economics ?? defaultEcon); setEditing(true) }}
+            className="text-[10px] font-semibold text-navy dark:text-info-soft hover:underline"
+          >
+            ✎ Editar
+          </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setEditing(false)}
+              className="text-[10px] text-text-muted hover:text-text-default"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              className="text-[10px] font-bold px-3 py-1 rounded-lg bg-navy text-white
+                hover:bg-navy/80 transition-colors"
+            >
+              Guardar
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Fields grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        {/* KPI principal */}
+        <div className="lg:col-span-2">
+          <p className="text-[10px] font-mono text-text-subtle mb-1">KPI principal a impactar</p>
+          {editing ? (
+            <input
+              type="text"
+              value={local.kpiPrincipal ?? ''}
+              onChange={(e) => patch('kpiPrincipal', e.target.value)}
+              placeholder="ej. Tiempo de resolución L1, Coste por contratación..."
+              className="w-full px-3 py-2 rounded-xl border border-border dark:border-white/10
+                bg-white dark:bg-gray-900 text-xs text-lean-black dark:text-gray-200
+                focus:outline-none focus:ring-1 focus:ring-navy/30"
+            />
+          ) : (
+            <p className="text-xs font-medium text-lean-black dark:text-gray-200">
+              {econ.kpiPrincipal || <span className="italic text-text-subtle">Sin definir</span>}
+            </p>
+          )}
+        </div>
+
+        {/* Horas/semana */}
+        <div>
+          <p className="text-[10px] font-mono text-text-subtle mb-1">
+            Horas/semana del proceso actual
+          </p>
+          {editing ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="number" min={0} max={168} step={1}
+                value={local.processHoursPerWeek}
+                onChange={(e) => patch('processHoursPerWeek', Number(e.target.value))}
+                className="w-20 px-2 py-1.5 rounded-xl border border-border dark:border-white/10
+                  bg-white dark:bg-gray-900 text-xs text-lean-black dark:text-gray-200
+                  focus:outline-none focus:ring-1 focus:ring-navy/30 tabular-nums"
+              />
+              <span className="text-[10px] text-text-subtle">horas por semana</span>
+            </div>
+          ) : (
+            <p className="text-xl font-bold text-lean-black dark:text-gray-200 tabular-nums">
+              {econ.processHoursPerWeek}
+              <span className="text-xs font-normal text-text-subtle ml-1">h/semana</span>
+            </p>
+          )}
+        </div>
+
+        {/* Headcount */}
+        <div>
+          <p className="text-[10px] font-mono text-text-subtle mb-1">
+            Personas involucradas
+          </p>
+          {editing ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="number" min={1} max={500} step={1}
+                value={local.headcount}
+                onChange={(e) => patch('headcount', Number(e.target.value))}
+                className="w-20 px-2 py-1.5 rounded-xl border border-border dark:border-white/10
+                  bg-white dark:bg-gray-900 text-xs text-lean-black dark:text-gray-200
+                  focus:outline-none focus:ring-1 focus:ring-navy/30 tabular-nums"
+              />
+              <span className="text-[10px] text-text-subtle">personas</span>
+            </div>
+          ) : (
+            <p className="text-xl font-bold text-lean-black dark:text-gray-200 tabular-nums">
+              {econ.headcount}
+              <span className="text-xs font-normal text-text-subtle ml-1">personas</span>
+            </p>
+          )}
+        </div>
+
+        {/* Ganancia de eficiencia — toggle benchmark/manual */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[10px] font-mono text-text-subtle">
+              Ganancia de eficiencia
+            </p>
+            {editing && (
+              <div className="flex items-center gap-1">
+                {(['benchmark', 'manual'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => {
+                      patch('efficiencyGainMode', mode)
+                      if (mode === 'benchmark' && benchmarkEff) {
+                        patch('efficiencyGain', benchmarkEff.value)
+                      }
+                    }}
+                    className={[
+                      'px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all',
+                      local.efficiencyGainMode === mode
+                        ? 'bg-navy text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-text-muted',
+                    ].join(' ')}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {editing ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="number" min={0} max={100} step={5}
+                value={Math.round(local.efficiencyGain * 100)}
+                onChange={(e) => patch('efficiencyGain', Number(e.target.value) / 100)}
+                disabled={local.efficiencyGainMode === 'benchmark'}
+                className="w-20 px-2 py-1.5 rounded-xl border border-border dark:border-white/10
+                  bg-white dark:bg-gray-900 text-xs text-lean-black dark:text-gray-200
+                  focus:outline-none focus:ring-1 focus:ring-navy/30 tabular-nums
+                  disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <span className="text-[10px] text-text-subtle">%</span>
+              {local.efficiencyGainMode === 'benchmark' && benchmarkEff && (
+                <span className="text-[9px] text-navy/60">(benchmark)</span>
+              )}
+            </div>
+          ) : (
+            <p className="text-xl font-bold text-lean-black dark:text-gray-200 tabular-nums">
+              {Math.round(econ.efficiencyGain * 100)}%
+              {econ.efficiencyGainMode === 'benchmark' && (
+                <span className="text-[10px] font-normal text-text-subtle ml-1">benchmark</span>
+              )}
+            </p>
+          )}
+        </div>
+
+        {/* Coste por hora — toggle preset/manual */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[10px] font-mono text-text-subtle">Coste/hora cargado</p>
+            {editing && (
+              <div className="flex items-center gap-1">
+                {(['preset', 'manual'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => patch('hourlyRateMode', mode)}
+                    className={[
+                      'px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all',
+                      local.hourlyRateMode === mode
+                        ? 'bg-navy text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-text-muted',
+                    ].join(' ')}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {editing ? (
+            local.hourlyRateMode === 'preset' ? (
+              <div className="flex flex-col gap-1.5">
+                {(Object.entries(HOURLY_RATE_PRESETS) as [string, typeof HOURLY_RATE_PRESETS[keyof typeof HOURLY_RATE_PRESETS]][]).map(([key, p]) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      patch('hourlyRatePreset', key as 'administrativo' | 'tecnico' | 'directivo')
+                      patch('hourlyRate', p.rate)
+                    }}
+                    className={[
+                      'text-left px-3 py-2 rounded-xl border text-[10px] transition-all',
+                      local.hourlyRatePreset === key
+                        ? 'border-navy/40 bg-navy/5 text-lean-black dark:text-gray-200'
+                        : 'border-border dark:border-white/8 text-text-muted hover:border-gray-300',
+                    ].join(' ')}
+                  >
+                    <span className="font-bold">{p.label}</span>
+                    <span className="ml-2 opacity-70">{p.hint}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-text-subtle">€</span>
+                <input
+                  type="number" min={10} max={500} step={5}
+                  value={local.hourlyRate}
+                  onChange={(e) => patch('hourlyRate', Number(e.target.value))}
+                  className="w-24 px-2 py-1.5 rounded-xl border border-border dark:border-white/10
+                    bg-white dark:bg-gray-900 text-xs text-lean-black dark:text-gray-200
+                    focus:outline-none focus:ring-1 focus:ring-navy/30 tabular-nums"
+                />
+                <span className="text-[10px] text-text-subtle">/hora</span>
+              </div>
+            )
+          ) : (
+            <p className="text-xl font-bold text-lean-black dark:text-gray-200 tabular-nums">
+              €{econ.hourlyRate}/h
+              {econ.hourlyRateMode === 'preset' && econ.hourlyRatePreset && (
+                <span className="text-[10px] font-normal text-text-subtle ml-1">
+                  {HOURLY_RATE_PRESETS[econ.hourlyRatePreset]?.label}
+                </span>
+              )}
+            </p>
+          )}
+        </div>
+
+        {/* Coste de implementación — toggle benchmark/manual */}
+        <div className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[10px] font-mono text-text-subtle">
+              Coste de implementación estimado
+            </p>
+            {editing && (
+              <div className="flex items-center gap-1">
+                {(['benchmark', 'manual'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => {
+                      patch('implementationCostMode', mode)
+                      if (mode === 'benchmark' && benchmarkCost) {
+                        patch('implementationCost', benchmarkCost.suggested)
+                      }
+                    }}
+                    className={[
+                      'px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all',
+                      local.implementationCostMode === mode
+                        ? 'bg-navy text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-text-muted',
+                    ].join(' ')}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {editing ? (
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] text-text-subtle">€</span>
+              <input
+                type="number" min={0} max={2_000_000} step={1000}
+                value={local.implementationCost}
+                onChange={(e) => patch('implementationCost', Number(e.target.value))}
+                disabled={local.implementationCostMode === 'benchmark'}
+                className="w-32 px-2 py-1.5 rounded-xl border border-border dark:border-white/10
+                  bg-white dark:bg-gray-900 text-xs text-lean-black dark:text-gray-200
+                  focus:outline-none focus:ring-1 focus:ring-navy/30 tabular-nums
+                  disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <span className="text-[10px] text-text-subtle">euros (coste total del proyecto)</span>
+              {local.implementationCostMode === 'benchmark' && benchmarkCost && (
+                <span className="text-[9px] text-navy/60">
+                  Rango benchmark: {benchmarkCost.label}
+                </span>
+              )}
+            </div>
+          ) : (
+            <p className="text-xl font-bold text-lean-black dark:text-gray-200 tabular-nums">
+              {fmtEur(econ.implementationCost)}
+              {econ.implementationCostMode === 'benchmark' && benchmarkCost && (
+                <span className="text-[10px] font-normal text-text-subtle ml-1">
+                  benchmark · rango: {benchmarkCost.label}
+                </span>
+              )}
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
 
 // ── Panel de detalle del caso de uso ─────────────────────────
 
-type DetailTab = 'scoring' | 'roadmap' | 'contexto'
+type DetailTab = 'scoring' | 'economia' | 'roadmap' | 'contexto'
 
-function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
+function UseCaseDetailPanel({
+  useCase,
+  allUseCases,
+  onSelect,
+}: {
+  useCase:     UseCase
+  allUseCases: UseCase[]
+  onSelect:    (id: string) => void
+}) {
   const { updateUseCase, recalcScore } = useT4Store()
   const [tab, setTab]                 = useState<DetailTab>('scoring')
   const [editingScore, setEditingScore] = useState(false)
@@ -559,8 +965,7 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
   }
 
   function handleScoreChange(dim: keyof UseCaseScores, v: number) {
-    const updated = { ...localScores, [dim]: v }
-    setLocalScores(updated)
+    setLocalScores((prev) => ({ ...prev, [dim]: v }))
   }
 
   const previewScore = computePriorityScore(localScores)
@@ -570,12 +975,11 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
 
       {/* Panel header */}
       <div className="flex items-start gap-6 px-8 py-5 border-b border-border dark:border-white/6">
-
-        {/* Identity */}
         <div className="flex-1 min-w-0">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
             {useCase.department}
             {useCase.importedFromT3 && ` · Importado desde T3`}
+            {useCase.sponsorName && ` · ${useCase.sponsorName}`}
           </p>
           <h2 className="text-lg font-semibold text-lean-black dark:text-gray-100 leading-tight mb-2">
             {useCase.name}
@@ -603,10 +1007,10 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
           )}
         </div>
 
-        {/* Priority score hero */}
+        {/* Score hero */}
         <div className="shrink-0 text-center">
           <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-0.5">
-            Score prioridad
+            Score
           </p>
           <p className={`text-4xl font-bold tabular-nums leading-none ${priorityScoreColor(useCase.priorityScore)}`}>
             {useCase.priorityScore.toFixed(0)}
@@ -622,9 +1026,10 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
       {/* Tabs */}
       <div className="flex gap-0 border-b border-border dark:border-white/6 px-8">
         {([
-          { key: 'scoring',  label: 'Scoring' },
-          { key: 'roadmap',  label: 'Hoja de ruta' },
-          { key: 'contexto', label: 'Contexto T1/T2' },
+          { key: 'scoring',   label: 'Scoring' },
+          { key: 'economia',  label: 'Economía' },
+          { key: 'roadmap',   label: 'Hoja de ruta' },
+          { key: 'contexto',  label: 'Contexto T1/T2' },
         ] as { key: DetailTab; label: string }[]).map(({ key, label }) => (
           <button
             key={key}
@@ -646,45 +1051,38 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
 
         {/* ── TAB: SCORING ─────────────────────────────────── */}
         {tab === 'scoring' && (
-          <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-8">
 
-            {/* LEFT — mini matrix */}
-            <div className="flex flex-col items-center gap-3">
+            {/* LEFT — scatter matrix */}
+            <div className="flex flex-col gap-3">
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-                Posición en la matriz
+                Posición en la matriz de prioridad
               </p>
-              <DetailPositionMap
-                kpiImpact={useCase.scores.kpiImpact}
-                feasibility={useCase.scores.feasibility}
-                status={useCase.status}
-                size={200}
+              <PriorityMatrix
+                useCases={allUseCases}
+                activeId={useCase.id}
+                onSelect={onSelect}
               />
-              <div className="w-full rounded-2xl border border-border dark:border-white/8
-                px-3 py-2.5 bg-gray-50 dark:bg-gray-800/50">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
-                  Umbral go/no-go
-                </p>
-                <p className={`text-xs font-semibold ${recommendation.badgeText} ${recommendation.badgeBg}
-                  px-2 py-0.5 rounded-full inline-block`}>
-                  {recommendation.label}
-                </p>
-                <p className="text-[10px] text-text-muted leading-relaxed mt-1.5">
-                  {recommendation.description}
-                </p>
+              <div className="flex flex-wrap gap-3">
+                {STATUS_ORDER.filter((st) => allUseCases.some((uc) => uc.status === st)).map((st) => (
+                  <div key={st} className="flex items-center gap-1.5">
+                    <span className={`h-2 w-2 rounded-full ${STATUS_CONFIG[st].dotBg}`} />
+                    <span className="text-[9px] text-text-subtle">{STATUS_CONFIG[st].label}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* RIGHT — score bars + go/no-go + edición */}
+            {/* RIGHT — score bars + editing + go/no-go */}
             <div>
               <div className="flex items-center justify-between mb-4">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-                  Dimensiones de scoring · taller de priorización
+                  Dimensiones de scoring
                 </p>
                 {!editingScore ? (
                   <button
                     onClick={() => { setEditingScore(true); setLocalScores(useCase.scores) }}
-                    className="text-[10px] font-semibold text-navy dark:text-info-soft
-                      hover:underline transition-all"
+                    className="text-[10px] font-semibold text-navy dark:text-info-soft hover:underline"
                   >
                     ✎ Editar scores
                   </button>
@@ -712,46 +1110,58 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
                   <T4ScoreBars scores={useCase.scores} trackWidth={220} />
                   <div className="mt-5 rounded-2xl bg-gray-50 dark:bg-gray-800/50
                     border border-border dark:border-white/6 px-4 py-3">
-                    <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
-                      Score compuesto
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
+                      Score compuesto · ponderado
                     </p>
                     <p className="text-2xl font-bold tabular-nums text-lean-black dark:text-gray-100">
                       {useCase.priorityScore.toFixed(1)}
                       <span className="text-sm font-normal text-text-subtle">/100</span>
                     </p>
-                    <p className="text-[10px] text-text-subtle mt-1">
-                      Ponderación: KPI 35% · facilidad 30% · riesgo IA 20% · dependencia datos 15%
+                    <p className="text-[10px] text-text-subtle mt-0.5">
+                      KPI 35% · facilidad 30% · riesgo IA 20% · dep. datos 15%
+                    </p>
+                    <p className="text-[10px] text-text-subtle mt-0.5">
+                      Umbral GO ≥ {GO_NOGO_THRESHOLDS.go} · Revisar ≥ {GO_NOGO_THRESHOLDS.pending} · NO-GO &lt; {GO_NOGO_THRESHOLDS.pending}
                     </p>
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col gap-4 mt-2">
+                <div className="flex flex-col gap-5 mt-2">
                   <p className="text-[10px] text-text-subtle">
-                    Edita los scores del taller (1 = mínimo, 5 = máximo). Para riesgo y dependencia de datos,
-                    puntuaciones altas indican mayor riesgo / dependencia.
+                    Ajusta los scores del taller (0 = mínimo, 100 = máximo).
+                    Para riesgo y dependencia de datos, valores altos indican mayor riesgo/dependencia.
                   </p>
                   <ScoreInput
-                    label="Impacto en KPI"
+                    label={DIMENSION_CONFIG.kpiImpact.label}
+                    description="Mayor valor = mayor impacto en KPIs de negocio"
                     value={localScores.kpiImpact}
                     onChange={(v) => handleScoreChange('kpiImpact', v)}
+                    hex={DIMENSION_CONFIG.kpiImpact.hex}
                   />
                   <ScoreInput
-                    label="Facilidad impl."
+                    label={DIMENSION_CONFIG.feasibility.label}
+                    description="Mayor valor = más fácil de implementar"
                     value={localScores.feasibility}
                     onChange={(v) => handleScoreChange('feasibility', v)}
+                    hex={DIMENSION_CONFIG.feasibility.hex}
                   />
                   <ScoreInput
-                    label="Riesgo IA/reg."
+                    label={DIMENSION_CONFIG.aiRisk.label}
+                    description="Mayor valor = mayor riesgo (peor para el score)"
                     value={localScores.aiRisk}
                     onChange={(v) => handleScoreChange('aiRisk', v)}
+                    isNegative
+                    hex={DIMENSION_CONFIG.aiRisk.hex}
                   />
                   <ScoreInput
-                    label="Dep. de datos"
+                    label={DIMENSION_CONFIG.dataDependency.label}
+                    description="Mayor valor = mayor dependencia bloqueante (peor)"
                     value={localScores.dataDependency}
                     onChange={(v) => handleScoreChange('dataDependency', v)}
+                    isNegative
+                    hex={DIMENSION_CONFIG.dataDependency.hex}
                   />
-                  <div className="rounded-xl bg-navy/5 dark:bg-navy/10 px-4 py-2.5
-                    border border-navy/10 mt-2">
+                  <div className="rounded-xl bg-navy/5 dark:bg-navy/10 px-4 py-2.5 border border-navy/10">
                     <p className="text-[10px] text-text-subtle">Preview score</p>
                     <p className={`text-xl font-bold tabular-nums ${priorityScoreColor(previewScore)}`}>
                       {previewScore.toFixed(1)}/100
@@ -780,14 +1190,13 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
                           <p className="text-xs font-semibold text-lean-black dark:text-gray-200">
                             {ss.stakeholderName}
                           </p>
-                          <p className="text-[10px] text-text-subtle">
-                            {ss.stakeholderRole}
-                          </p>
+                          <p className="text-[10px] text-text-subtle">{ss.stakeholderRole}</p>
                         </div>
                         <div className="flex gap-3 flex-wrap">
                           {(['kpiImpact', 'feasibility', 'aiRisk', 'dataDependency'] as const).map((dim) => (
                             <div key={dim} className="flex items-center gap-1">
-                              <span className="text-[9px] text-text-subtle">
+                              <span className="text-[9px] text-text-subtle"
+                                style={{ color: DIMENSION_CONFIG[dim].hex }}>
                                 {DIMENSION_CONFIG[dim].label.split(' ')[0]}:
                               </span>
                               <span className="text-[10px] font-bold text-lean-black dark:text-gray-200">
@@ -821,18 +1230,14 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
                   </p>
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className={`text-xs font-bold ${
-                      useCase.goNoGo.decision === 'go' ? 'text-success-dark' :
-                      useCase.goNoGo.decision === 'no_go' ? 'text-danger-dark' :
-                      'text-warning-dark'
+                      useCase.goNoGo.decision === 'go'    ? 'text-success-dark' :
+                      useCase.goNoGo.decision === 'no_go' ? 'text-danger-dark'  : 'text-warning-dark'
                     }`}>
                       {useCase.goNoGo.decision === 'go' ? '✓ GO' :
-                       useCase.goNoGo.decision === 'no_go' ? '✕ NO-GO' :
-                       '◎ PENDIENTE'}
+                       useCase.goNoGo.decision === 'no_go' ? '✕ NO-GO' : '◎ PENDIENTE'}
                     </span>
                     {useCase.goNoGo.decidedBy && (
-                      <span className="text-[10px] text-text-subtle">
-                        · {useCase.goNoGo.decidedBy}
-                      </span>
+                      <span className="text-[10px] text-text-subtle">· {useCase.goNoGo.decidedBy}</span>
                     )}
                   </div>
                   {useCase.goNoGo.rationale && (
@@ -846,11 +1251,12 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
           </div>
         )}
 
+        {/* ── TAB: ECONOMÍA ────────────────────────────────── */}
+        {tab === 'economia' && <EconomicsTab useCase={useCase} />}
+
         {/* ── TAB: HOJA DE RUTA ────────────────────────────── */}
         {tab === 'roadmap' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-            {/* Left: roadmap details */}
             <div>
               {useCase.roadmap ? (
                 <div className="flex flex-col gap-5">
@@ -872,18 +1278,16 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
                       </div>
                     </div>
                   )}
-
                   {useCase.roadmap.owner && (
                     <div>
                       <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
-                        Responsable de implementación
+                        Responsable
                       </p>
                       <p className="text-sm font-semibold text-lean-black dark:text-gray-200">
                         {useCase.roadmap.owner}
                       </p>
                     </div>
                   )}
-
                   {useCase.roadmap.nextSteps && (
                     <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50
                       border border-border dark:border-white/6 px-4 py-3">
@@ -895,7 +1299,6 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
                       </p>
                     </div>
                   )}
-
                   {useCase.roadmap.dependencies && (
                     <div className="rounded-2xl bg-warning-light/20 border border-warning-dark/20 px-4 py-3">
                       <p className="text-[10px] font-mono uppercase tracking-widest text-warning-dark mb-2">
@@ -918,17 +1321,13 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
                 </div>
               )}
             </div>
-
-            {/* Right: notes */}
             {useCase.notes && (
               <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50
                 border border-border dark:border-white/6 px-4 py-3 h-fit">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
                   Notas del consultor
                 </p>
-                <p className="text-xs text-text-muted leading-relaxed italic">
-                  {useCase.notes}
-                </p>
+                <p className="text-xs text-text-muted leading-relaxed italic">{useCase.notes}</p>
               </div>
             )}
           </div>
@@ -937,13 +1336,12 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
         {/* ── TAB: CONTEXTO T1/T2 ──────────────────────────── */}
         {tab === 'contexto' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-            {/* T1 context */}
+            {/* T1 */}
             <div className="rounded-2xl border border-border dark:border-white/8
               bg-white dark:bg-gray-900/50 px-5 py-4">
               <div className="flex items-center gap-2 mb-3">
-                <div className="h-6 w-6 rounded-lg bg-navy/10 dark:bg-navy/20 flex items-center
-                  justify-center text-xs font-bold text-navy dark:text-info-soft">
+                <div className="h-6 w-6 rounded-lg bg-navy/10 dark:bg-navy/20
+                  flex items-center justify-center text-xs font-bold text-navy dark:text-info-soft">
                   T1
                 </div>
                 <p className="text-xs font-semibold text-lean-black dark:text-gray-200">
@@ -954,16 +1352,11 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
                 <>
                   {useCase.t1Context.relevantDimensions.length > 0 && (
                     <div className="mb-3">
-                      <p className="text-[10px] font-mono text-text-subtle mb-1.5">
-                        Dimensiones relevantes
-                      </p>
+                      <p className="text-[10px] font-mono text-text-subtle mb-1.5">Dimensiones relevantes</p>
                       <div className="flex flex-wrap gap-1.5">
                         {useCase.t1Context.relevantDimensions.map((d) => (
-                          <span key={d}
-                            className="px-2 py-0.5 rounded-full text-[10px] font-semibold
-                              bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft">
-                            {d}
-                          </span>
+                          <span key={d} className="px-2 py-0.5 rounded-full text-[10px] font-semibold
+                            bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft">{d}</span>
                         ))}
                       </div>
                     </div>
@@ -975,20 +1368,16 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
                   )}
                 </>
               ) : (
-                <p className="text-xs text-text-subtle italic">
-                  Sin contexto T1 registrado para este caso de uso.
-                </p>
+                <p className="text-xs text-text-subtle italic">Sin contexto T1 registrado.</p>
               )}
             </div>
 
-            {/* T2 context */}
+            {/* T2 */}
             <div className="rounded-2xl border border-border dark:border-white/8
               bg-white dark:bg-gray-900/50 px-5 py-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-6 w-6 rounded-lg bg-info-light flex items-center
-                  justify-center text-xs font-bold text-info-dark">
-                  T2
-                </div>
+                  justify-center text-xs font-bold text-info-dark">T2</div>
                 <p className="text-xs font-semibold text-lean-black dark:text-gray-200">
                   Contexto de stakeholders (T2)
                 </p>
@@ -998,21 +1387,17 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
                   {useCase.t2Context.championArchetype && (
                     <div>
                       <p className="text-[10px] font-mono text-text-subtle mb-0.5">Champion</p>
-                      <p className="text-xs font-medium text-success-dark">
-                        ✓ {useCase.t2Context.championArchetype}
-                      </p>
+                      <p className="text-xs font-medium text-success-dark">✓ {useCase.t2Context.championArchetype}</p>
                     </div>
                   )}
-                  {useCase.t2Context.blockerArchetypes && useCase.t2Context.blockerArchetypes.length > 0 && (
+                  {useCase.t2Context.blockerArchetypes?.length ? (
                     <div>
                       <p className="text-[10px] font-mono text-text-subtle mb-0.5">Posibles bloqueos</p>
                       {useCase.t2Context.blockerArchetypes.map((b) => (
-                        <p key={b} className="text-xs font-medium text-danger-dark">
-                          ▲ {b}
-                        </p>
+                        <p key={b} className="text-xs font-medium text-danger-dark">▲ {b}</p>
                       ))}
                     </div>
-                  )}
+                  ) : null}
                   {useCase.t2Context.stakeholderNotes && (
                     <p className="text-xs text-text-muted leading-relaxed">
                       {useCase.t2Context.stakeholderNotes}
@@ -1020,38 +1405,26 @@ function UseCaseDetailPanel({ useCase }: { useCase: UseCase }) {
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-text-subtle italic">
-                  Sin contexto T2 registrado para este caso de uso.
-                </p>
+                <p className="text-xs text-text-subtle italic">Sin contexto T2 registrado.</p>
               )}
             </div>
 
-            {/* Category context */}
+            {/* Categoría IA */}
             <div className="rounded-2xl border border-border dark:border-white/8
               bg-white dark:bg-gray-900/50 px-5 py-4">
               <div className="flex items-center gap-2 mb-3">
-                <div className="h-3 w-3 rounded-full shrink-0"
-                  style={{ backgroundColor: catHex }} />
-                <p className="text-xs font-semibold text-lean-black dark:text-gray-200">
-                  Categoría IA (T3)
-                </p>
+                <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: catHex }} />
+                <p className="text-xs font-semibold text-lean-black dark:text-gray-200">Categoría IA</p>
               </div>
-              <p className="text-sm font-semibold text-lean-black dark:text-gray-200 mb-1"
-                style={{ color: catHex }}>
+              <p className="text-sm font-semibold mb-1" style={{ color: catHex }}>
                 {AI_CATEGORY_LABELS[useCase.aiCategory] ?? useCase.aiCategory}
               </p>
               {useCase.importedFromT3 && (
                 <div className="mt-2">
-                  <p className="text-[10px] font-mono text-text-subtle mb-0.5">
-                    Proceso origen (T3)
-                  </p>
-                  <p className="text-xs text-text-muted">
-                    {useCase.importedFromT3.processName}
-                  </p>
+                  <p className="text-[10px] font-mono text-text-subtle mb-0.5">Proceso origen (T3)</p>
+                  <p className="text-xs text-text-muted">{useCase.importedFromT3.processName}</p>
                   <p className="text-[10px] text-text-subtle mt-0.5">
-                    Opportunity score T3: <span className="font-bold">
-                      {useCase.importedFromT3.opportunityScore.toFixed(2)}/4.0
-                    </span>
+                    Opp. score T3: <span className="font-bold">{useCase.importedFromT3.opportunityScore.toFixed(2)}/4.0</span>
                   </p>
                 </div>
               )}
@@ -1071,10 +1444,10 @@ interface T4ViewProps {
 }
 
 export function T4View({ companyName, onBack }: T4ViewProps) {
-  const navigate                     = useNavigate()
-  const { useCases }                 = useT4Store()
-  const [activeId, setActiveId]      = useState<string | null>(null)
-  const [showImport, setShowImport]  = useState(false)
+  const navigate                      = useNavigate()
+  const { useCases }                  = useT4Store()
+  const [activeId, setActiveId]       = useState<string | null>(null)
+  const [showImport, setShowImport]   = useState(false)
   const [filterStatus, setFilterStatus] = useState<UseCaseStatus | null>(null)
 
   const activeUseCase = useMemo(
@@ -1082,7 +1455,6 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
     [useCases, activeId]
   )
 
-  // Filtrado y ordenación
   const filtered = useMemo(
     () => useCases
       .filter((uc) => !filterStatus || uc.status === filterStatus)
@@ -1090,15 +1462,6 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
     [useCases, filterStatus]
   )
 
-  // KPIs globales
-  const totalGo       = useCases.filter((uc) => uc.status === 'go').length
-  const totalNoGo     = useCases.filter((uc) => uc.status === 'no_go').length
-  const totalPrio     = useCases.filter((uc) => uc.status === 'priorizado').length
-  const avgScore      = useCases.length
-    ? Math.round(useCases.reduce((s, uc) => s + uc.priorityScore, 0) / useCases.length)
-    : 0
-
-  // Contadores por status para filtros
   const statusCounts = Object.fromEntries(
     STATUS_ORDER.map((st) => [st, useCases.filter((uc) => uc.status === st).length])
   ) as Record<UseCaseStatus, number>
@@ -1129,23 +1492,6 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
               T4 — Use Case Priority Board
             </h1>
           </div>
-
-          {/* KPI strip */}
-          <div className="hidden md:flex items-center gap-5">
-            {[
-              { label: 'GO',        value: totalGo,    color: 'text-success-dark' },
-              { label: 'Priorizado', value: totalPrio,  color: 'text-info-dark' },
-              { label: 'No-Go',     value: totalNoGo,  color: 'text-danger-dark' },
-              { label: 'Score medio', value: avgScore,  color: 'text-lean-black dark:text-gray-100' },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="text-center">
-                <p className={`text-xl font-bold tabular-nums leading-none ${color}`}>{value}</p>
-                <p className="text-[9px] text-text-subtle mt-0.5 whitespace-nowrap">{label}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Botones */}
           <button
             onClick={() => setShowImport(true)}
             className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl
@@ -1159,63 +1505,22 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
 
       <div className="flex-1 max-w-7xl mx-auto w-full px-8">
 
-        {/* ── ZONA 1: HERO CHARTS ─────────────────────────── */}
-        <div className="py-8">
-          <div className="grid grid-cols-2 gap-6 items-stretch">
-
-            {/* Priority Matrix */}
-            <div className="rounded-3xl bg-white dark:bg-gray-900 border border-border
-              dark:border-white/6 p-6 flex flex-col">
-              <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">
-                Matriz de prioridad
-              </p>
-              <div className="flex-1 flex items-center justify-center">
-                <HeroPriorityMatrix
-                  useCases={filtered}
-                  activeId={activeId}
-                  onSelect={handleSelectUseCase}
-                />
-              </div>
-              {/* Leyenda por estado */}
-              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
-                {STATUS_ORDER.filter((st) => useCases.some((uc) => uc.status === st)).map((st) => {
-                  const cfg = STATUS_CONFIG[st]
-                  return (
-                    <div key={st} className="flex items-center gap-1.5">
-                      <span className={`h-2 w-2 rounded-full ${cfg.dotBg} shrink-0`} />
-                      <span className="text-[10px] text-text-subtle">{cfg.label}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Status Donut */}
-            <div className="rounded-3xl bg-white dark:bg-gray-900 border border-border
-              dark:border-white/6 p-6 flex flex-col">
-              <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">
-                Distribución por estado
-              </p>
-              <div className="flex-1 flex items-center justify-center">
-                <HeroStatusDonut
-                  useCases={useCases}
-                  activeId={activeId}
-                  onSelect={handleSelectUseCase}
-                />
-              </div>
-              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
-                {STATUS_ORDER.filter((st) => useCases.some((uc) => uc.status === st)).map((st) => {
-                  const cfg = STATUS_CONFIG[st]
-                  return (
-                    <div key={st} className="flex items-center gap-1.5">
-                      <span className={`h-2 w-2 rounded-full ${cfg.dotBg} shrink-0`} />
-                      <span className="text-[10px] text-text-subtle">{cfg.label}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
+        {/* ── ZONA 1: HERO — Executive Dashboard ──────────── */}
+        <div className="py-8 flex flex-col gap-5">
+          <div>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
+              {companyName} · Portfolio de IA
+            </p>
+            <h2 className="text-lg font-semibold text-lean-black dark:text-gray-100">
+              Dashboard ejecutivo
+            </h2>
           </div>
+
+          {/* 4 KPI boxes */}
+          <ExecDashboard useCases={useCases} />
+
+          {/* Roadmap trimestral */}
+          <QuarterlyRoadmap useCases={useCases} />
         </div>
 
         {/* ── ZONA 2: LISTA DE CASOS DE USO ───────────────── */}
@@ -1271,9 +1576,10 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
               {filtered.map((uc) => {
-                const isActive  = uc.id === activeId
-                const statusCfg = STATUS_CONFIG[uc.status]
+                const isActive   = uc.id === activeId
+                const statusCfg  = STATUS_CONFIG[uc.status]
                 const scoreColor = priorityScoreColor(uc.priorityScore)
+                const roi        = uc.economics ? computeROIFromEconomics(uc.economics) : null
 
                 return (
                   <button
@@ -1287,7 +1593,7 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
                         : 'border-border dark:border-white/6 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-white/14 hover:shadow-sm',
                     ].join(' ')}
                   >
-                    {/* Header: color bar + name + chevron */}
+                    {/* Color bar + name */}
                     <div className="flex items-start gap-2.5">
                       <div
                         className="shrink-0 w-1 h-6 rounded-full mt-0.5"
@@ -1323,6 +1629,20 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
                         {uc.priorityScore.toFixed(0)}
                       </span>
                     </div>
+
+                    {/* ROI hint (si hay datos económicos) */}
+                    {roi && roi.annualSaving > 0 && (
+                      <div className="pl-3.5 flex items-center gap-1.5">
+                        <span className="text-[9px] text-success-dark font-semibold">
+                          {fmtEur(roi.annualSaving)}/año
+                        </span>
+                        {roi.paybackMonths > 0 && (
+                          <span className="text-[9px] text-text-subtle">
+                            · payback {roi.paybackMonths.toFixed(1)}m
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </button>
                 )
               })}
@@ -1334,11 +1654,15 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
       {/* ── ZONA 3: DETALLE ─────────────────────────────────── */}
       {activeUseCase && (
         <div className="max-w-7xl mx-auto w-full px-8 pb-16">
-          <UseCaseDetailPanel useCase={activeUseCase} />
+          <UseCaseDetailPanel
+            useCase={activeUseCase}
+            allUseCases={useCases}
+            onSelect={handleSelectUseCase}
+          />
         </div>
       )}
 
-      {/* Modal de importación desde T3 */}
+      {/* Modal importación T3 */}
       {showImport && (
         <ImportFromT3Modal onClose={() => setShowImport(false)} />
       )}

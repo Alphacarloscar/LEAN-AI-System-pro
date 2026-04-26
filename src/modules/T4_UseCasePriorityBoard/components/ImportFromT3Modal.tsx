@@ -14,12 +14,12 @@
 // Procesos ya importados se muestran como deshabilitados.
 // ============================================================
 
-import { useState }             from 'react'
-import { useT3Store }           from '../../T3_ValueStreamMap/store'
-import { useT4Store }           from '../store'
-import { AI_CATEGORY_CONFIG }   from '../../T3_ValueStreamMap/constants'
-import { computePriorityScore } from '../constants'
-import type { UseCase }         from '../types'
+import { useState }                                      from 'react'
+import { useT3Store }                                    from '../../T3_ValueStreamMap/store'
+import { useT4Store }                                    from '../store'
+import { AI_CATEGORY_CONFIG }                            from '../../T3_ValueStreamMap/constants'
+import { computePriorityScore, T3_HOURS_FROM_ANSWER }   from '../constants'
+import type { UseCase, UseCaseEconomics }                from '../types'
 
 interface ImportFromT3ModalProps {
   onClose: () => void
@@ -65,15 +65,33 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
     )
 
     toImport.forEach((process) => {
-      // Mapear opportunityScore (0-4) → kpiImpact (1-5)
+      // Mapear opportunityScore T3 (0-4) → kpiImpact T4 (0-100)
+      // oppScore 0 → 0, oppScore 4 → 100  (× 25)
       const oppScore  = process.interview?.opportunityScore ?? 2
-      const kpiImpact = Math.min(5, Math.max(1, Math.round(oppScore * 1.25)))
+      const kpiImpact = Math.min(100, Math.max(0, Math.round(oppScore * 25)))
+
+      // Pre-rellenar horas/semana desde respuesta a la pregunta 6 de T3
+      // (Q6 = "¿Cuántas horas/semana consume este proceso?")
+      const q6Answer    = process.interview?.answers?.[6]
+      const hoursFromT3 = q6Answer ? (T3_HOURS_FROM_ANSWER[q6Answer] ?? 10) : 10
 
       const scores = {
         kpiImpact,
-        feasibility:    3,
-        aiRisk:         3,
-        dataDependency: 3,
+        feasibility:    50,  // neutro — se ajusta en el taller
+        aiRisk:         50,  // neutro — se ajusta en el taller
+        dataDependency: 50,  // neutro — se ajusta en el taller
+      }
+
+      const economics: UseCaseEconomics = {
+        processHoursPerWeek:    hoursFromT3,
+        headcount:              2,
+        efficiencyGain:         0.40,
+        efficiencyGainMode:     'benchmark',
+        hourlyRate:             45,
+        hourlyRateMode:         'preset',
+        hourlyRatePreset:       'tecnico',
+        implementationCost:     20_000,
+        implementationCostMode: 'benchmark',
       }
 
       const newUseCase: Omit<UseCase, 'id' | 'createdAt'> = {
@@ -91,6 +109,7 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
         stakeholderScores: [],
         scores,
         priorityScore: computePriorityScore(scores),
+        economics,
       }
 
       addUseCase(newUseCase)
@@ -180,8 +199,8 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
                 const catCfg     = AI_CATEGORY_CONFIG[process.aiCategory]
                 const oppScore   = process.interview?.opportunityScore ?? null
                 const kpiHint    = oppScore !== null
-                  ? Math.min(5, Math.max(1, Math.round(oppScore * 1.25)))
-                  : 3
+                  ? Math.min(100, Math.max(0, Math.round(oppScore * 25)))
+                  : 50
 
                 return (
                   <button
@@ -242,7 +261,7 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
 
                         {/* Preview del kpiImpact que se asignará */}
                         <span className="text-[9px] text-text-subtle">
-                          → KPI inicial: <strong>{kpiHint}/5</strong>
+                          → KPI inicial: <strong>{kpiHint}/100</strong>
                           {' '}(desde T3 opp. score)
                         </span>
                       </div>
