@@ -113,8 +113,14 @@ const ALL_DOMAIN_CODES: T5DomainCode[] = [
   'analitica_predictiva', 'asistente_ia', 'optimizacion_proceso', 'agéntica',
 ]
 
-function DepartmentAdoptionChart({ processes }: {
-  processes: Array<{ department: string; aiCategory: string }>
+function DepartmentAdoptionChart({
+  processes,
+  canvas,
+  onSelectDomain,
+}: {
+  processes:      Array<{ department: string; aiCategory: string }>
+  canvas:         T5Canvas
+  onSelectDomain: (c: T5DomainCode) => void
 }) {
   const deptCats: Record<string, Set<string>> = {}
   processes.forEach(p => {
@@ -133,12 +139,34 @@ function DepartmentAdoptionChart({ processes }: {
         <table className="w-full text-[10px]">
           <thead>
             <tr>
-              <th className="text-left pb-2 pr-3 font-medium text-text-subtle w-32">Departamento</th>
-              {ALL_DOMAIN_CODES.map(code => (
-                <th key={code} className="text-center pb-2 px-1" title={T5_DOMAIN_CONFIG[code].label}>
-                  <span className="text-sm">{T5_DOMAIN_CONFIG[code].icon}</span>
-                </th>
-              ))}
+              <th className="text-left pb-3 pr-3 font-medium text-text-subtle w-32" />
+              {ALL_DOMAIN_CODES.map(code => {
+                const domCfg = T5_DOMAIN_CONFIG[code]
+                const recCfg = T5_RECOMMENDATION_CONFIG[canvas.domains[code].recommendation]
+                return (
+                  <th key={code} className="text-center pb-3 px-1">
+                    <button
+                      onClick={() => onSelectDomain(code)}
+                      title={domCfg.label}
+                      className="mx-auto flex flex-col items-center justify-center rounded-full
+                        transition-all duration-150 hover:scale-110 focus:outline-none"
+                      style={{
+                        width:           40,
+                        height:          40,
+                        border:          `2px solid ${recCfg.hex}`,
+                        backgroundColor: recCfg.hex + '22',
+                      }}
+                    >
+                      <span
+                        className="text-[8px] font-bold leading-tight text-center text-lean-black dark:text-gray-200"
+                        style={{ maxWidth: 34, wordBreak: 'break-word', padding: '0 2px' }}
+                      >
+                        {domCfg.shortLabel}
+                      </span>
+                    </button>
+                  </th>
+                )
+              })}
             </tr>
           </thead>
           <tbody>
@@ -334,7 +362,11 @@ function PortfolioMatrix({
       </div>
 
       {/* Department adoption chart */}
-      <DepartmentAdoptionChart processes={processes} />
+      <DepartmentAdoptionChart
+        processes={processes}
+        canvas={canvas}
+        onSelectDomain={onSelectDomain}
+      />
     </div>
   )
 }
