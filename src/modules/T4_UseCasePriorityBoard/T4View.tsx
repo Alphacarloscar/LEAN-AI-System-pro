@@ -151,10 +151,17 @@ function ExecDashboard({ useCases }: ExecDashboardProps) {
   )
 }
 
-// ── HERO: Quarterly Roadmap ───────────────────────────────────
+// ── HERO: Quarterly Roadmap — tarjetas interactivas ──────────
 
-function QuarterlyRoadmap({ useCases }: { useCases: UseCase[] }) {
-  // Casos con quarter asignado
+function QuarterlyRoadmap({
+  useCases,
+  activeId,
+  onSelect,
+}: {
+  useCases: UseCase[]
+  activeId: string | null
+  onSelect: (id: string) => void
+}) {
   const byQuarter = useMemo(() => {
     const map = new Map<string, UseCase[]>()
     ROADMAP_QUARTERS.forEach((q) => map.set(q, []))
@@ -166,7 +173,6 @@ function QuarterlyRoadmap({ useCases }: { useCases: UseCase[] }) {
     return map
   }, [useCases])
 
-  // Mostrar solo quarters con casos + los 2 siguientes vacíos
   const quartersToShow = useMemo(() => {
     const all  = [...ROADMAP_QUARTERS]
     const used = all.filter((q) => (byQuarter.get(q)?.length ?? 0) > 0)
@@ -178,103 +184,106 @@ function QuarterlyRoadmap({ useCases }: { useCases: UseCase[] }) {
   const unassigned = useCases.filter((uc) => !uc.roadmap?.quarter)
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 px-6 py-4">
-      <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-4">
+    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 px-6 py-5">
+      <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-5">
         Roadmap trimestral — distribución planificada
       </p>
 
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col divide-y divide-border dark:divide-white/6">
         {quartersToShow.map((quarter) => {
-          const cases = byQuarter.get(quarter) ?? []
+          const cases   = byQuarter.get(quarter) ?? []
           const isEmpty = cases.length === 0
           return (
-            <div key={quarter} className="flex items-start gap-4">
-              {/* Quarter label */}
-              <div className={`shrink-0 w-16 pt-0.5 ${isEmpty ? 'opacity-35' : ''}`}>
-                <p className="text-[10px] font-mono font-bold text-lean-black dark:text-gray-200
-                  tabular-nums">
-                  {quarter}
+            <div key={quarter} className={`flex items-start gap-5 py-4 first:pt-0 last:pb-0 ${isEmpty ? 'opacity-40' : ''}`}>
+              {/* Quarter label — fijo */}
+              <div className="shrink-0 w-20 pt-1">
+                <p className="text-sm font-bold text-lean-black dark:text-gray-200 tabular-nums">
+                  {quarter.split(' ')[0]}
                 </p>
-              </div>
-
-              {/* Track */}
-              <div className="flex-1 flex items-center gap-2 flex-wrap min-h-[24px] relative">
-                {/* Track line — h-px sólido o punteado según si el quarter tiene casos */}
-                <div
-                  className={`absolute left-0 top-1/2 -translate-y-px w-full h-px
-                    ${isEmpty ? 'opacity-30' : 'opacity-60'}`}
-                  style={{
-                    background: isEmpty
-                      ? 'repeating-linear-gradient(to right,#94A3B8 0,#94A3B8 4px,transparent 4px,transparent 8px)'
-                      : '#E2E8F0',
-                  }}
-                />
-
-                {isEmpty ? (
-                  <span className="relative text-[10px] text-text-subtle opacity-50 italic">
-                    Sin casos asignados
-                  </span>
-                ) : (
-                  cases.map((uc) => {
-                    const cfg = STATUS_CONFIG[uc.status]
-                    return (
-                      <div
-                        key={uc.id}
-                        className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-full
-                          border text-[10px] font-medium truncate max-w-[200px]
-                          ${cfg.badgeBg} ${cfg.badgeText} border-transparent`}
-                        title={uc.name}
-                      >
-                        <span
-                          className="h-1.5 w-1.5 rounded-full shrink-0"
-                          style={{ backgroundColor: cfg.hex }}
-                        />
-                        <span className="truncate">{uc.name}</span>
-                      </div>
-                    )
-                  })
+                <p className="text-[10px] text-text-subtle tabular-nums">
+                  {quarter.split(' ')[1]}
+                </p>
+                {!isEmpty && (
+                  <p className="text-[9px] font-mono text-text-subtle mt-0.5">
+                    {cases.length} caso{cases.length !== 1 ? 's' : ''}
+                  </p>
                 )}
               </div>
 
-              {/* Count badge */}
-              {!isEmpty && (
-                <div className="shrink-0">
-                  <span className="text-[10px] font-bold text-text-subtle tabular-nums">
-                    {cases.length} caso{cases.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-              )}
+              {/* Tarjetas — scroll horizontal si hay muchas */}
+              <div className="flex-1 overflow-x-auto">
+                {isEmpty ? (
+                  <div className="flex items-center h-14">
+                    <div className="w-full h-px opacity-50"
+                      style={{ background: 'repeating-linear-gradient(to right,#CBD5E1 0,#CBD5E1 5px,transparent 5px,transparent 10px)' }}
+                    />
+                    <span className="shrink-0 ml-3 text-[10px] text-text-subtle italic">Sin casos asignados</span>
+                  </div>
+                ) : (
+                  <div className="flex gap-2.5 pb-0.5">
+                    {cases.map((uc) => {
+                      const isActive  = uc.id === activeId
+                      const statusCfg = STATUS_CONFIG[uc.status]
+                      const roi       = uc.economics ? computeROIFromEconomics(uc.economics) : null
+                      return (
+                        <button
+                          key={uc.id}
+                          onClick={() => onSelect(uc.id)}
+                          className={[
+                            'shrink-0 w-52 text-left rounded-xl border px-3 py-2.5 transition-all duration-150',
+                            isActive
+                              ? 'border-navy/40 bg-navy/5 dark:bg-navy/10 ring-1 ring-navy/20 shadow-sm'
+                              : 'border-border dark:border-white/8 bg-white dark:bg-gray-950 hover:border-navy/30 hover:shadow-sm',
+                          ].join(' ')}
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold
+                              ${statusCfg.badgeBg} ${statusCfg.badgeText}`}>
+                              {statusCfg.label}
+                            </span>
+                            <span className={`text-sm font-bold tabular-nums ${priorityScoreColor(uc.priorityScore)}`}>
+                              {uc.priorityScore.toFixed(0)}
+                            </span>
+                          </div>
+                          <p className="text-xs font-semibold text-lean-black dark:text-gray-200
+                            leading-tight line-clamp-2 mb-1">
+                            {uc.name}
+                          </p>
+                          <p className="text-[10px] text-text-subtle truncate">{uc.department}</p>
+                          {roi && roi.annualSaving > 0 && (
+                            <p className="text-[10px] font-semibold text-success-dark mt-1">
+                              {fmtEur(roi.annualSaving)}/año · payback {roi.paybackMonths.toFixed(1)}m
+                            </p>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )
         })}
 
-        {/* Unassigned */}
+        {/* Sin quarter asignado */}
         {unassigned.length > 0 && (
-          <div className="flex items-start gap-4 mt-1 pt-2 border-t border-border dark:border-white/6">
-            <div className="shrink-0 w-16 pt-0.5">
-              <p className="text-[10px] font-mono font-bold text-text-subtle opacity-50">
-                Sin Q
-              </p>
+          <div className="flex items-start gap-5 pt-4 opacity-50">
+            <div className="shrink-0 w-20 pt-1">
+              <p className="text-[10px] font-mono font-bold text-text-subtle">Sin Q</p>
             </div>
-            <div className="flex-1 flex items-center gap-1.5 flex-wrap">
-              {unassigned.map((uc) => {
-                const cfg = STATUS_CONFIG[uc.status]
-                return (
-                  <div
-                    key={uc.id}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full
-                      border text-[10px] font-medium truncate max-w-[200px] opacity-50
-                      bg-gray-100 dark:bg-gray-800 text-text-muted border-transparent`}
-                    title={uc.name}
-                  >
-                    <span
-                      className="h-1.5 w-1.5 rounded-full shrink-0"
-                      style={{ backgroundColor: cfg.hex }}
-                    />
-                    <span className="truncate">{uc.name}</span>
-                  </div>
-                )
-              })}
+            <div className="flex-1 flex gap-2 flex-wrap">
+              {unassigned.map((uc) => (
+                <button
+                  key={uc.id}
+                  onClick={() => onSelect(uc.id)}
+                  className="shrink-0 text-left rounded-xl border border-dashed border-border
+                    dark:border-white/8 bg-gray-50 dark:bg-gray-900/50 px-3 py-2 transition-all
+                    hover:border-gray-400 hover:opacity-100"
+                >
+                  <p className="text-[10px] font-semibold text-text-muted truncate max-w-[160px]">{uc.name}</p>
+                  <p className="text-[9px] text-text-subtle">{uc.department}</p>
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -651,7 +660,9 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
         {!editing ? (
           <button
             onClick={() => { setLocal(useCase.economics ?? defaultEcon); setEditing(true) }}
-            className="text-[10px] font-semibold text-navy dark:text-info-soft hover:underline"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold
+              border border-navy/40 text-navy dark:text-info-soft bg-navy/5 dark:bg-navy/10
+              hover:bg-navy/10 transition-colors"
           >
             ✎ Editar
           </button>
@@ -659,13 +670,14 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setEditing(false)}
-              className="text-[10px] text-text-muted hover:text-text-default"
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-border
+                dark:border-white/10 text-text-muted hover:text-text-default transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={handleSave}
-              className="text-[10px] font-bold px-3 py-1 rounded-lg bg-navy text-white
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-navy text-white
                 hover:bg-navy/80 transition-colors"
             >
               Guardar
@@ -674,7 +686,9 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
         )}
       </div>
 
-      {/* Fields grid */}
+      {/* Fields grid — datos en tarjetas */}
+      <div className="rounded-2xl border border-border dark:border-white/8
+        bg-gray-50 dark:bg-gray-900/50 px-5 py-4 flex flex-col gap-5">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* KPI principal */}
@@ -937,6 +951,7 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
           )}
         </div>
       </div>
+      </div>
     </div>
   )
 }
@@ -1027,8 +1042,8 @@ function UseCaseDetailPanel({
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-0 border-b border-border dark:border-white/6 px-8">
+      {/* Tabs — botones con borde azul metálico */}
+      <div className="flex gap-2 px-8 py-3 border-b border-border dark:border-white/6 flex-wrap">
         {([
           { key: 'scoring',   label: 'Scoring' },
           { key: 'economia',  label: 'Economía' },
@@ -1039,10 +1054,10 @@ function UseCaseDetailPanel({
             key={key}
             onClick={() => setTab(key)}
             className={[
-              'px-4 py-3 text-xs font-medium border-b-2 transition-colors',
+              'px-4 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150',
               tab === key
-                ? 'border-navy text-lean-black dark:text-gray-100'
-                : 'border-transparent text-text-muted hover:text-text-default',
+                ? 'border-navy/50 bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft shadow-sm'
+                : 'border-border dark:border-white/10 text-text-muted hover:border-navy/30 hover:text-navy/70 dark:hover:text-info-soft/70',
             ].join(' ')}
           >
             {label}
@@ -1086,7 +1101,9 @@ function UseCaseDetailPanel({
                 {!editingScore ? (
                   <button
                     onClick={() => { setEditingScore(true); setLocalScores(useCase.scores) }}
-                    className="text-[10px] font-semibold text-navy dark:text-info-soft hover:underline"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold
+                      border border-navy/40 text-navy dark:text-info-soft bg-navy/5 dark:bg-navy/10
+                      hover:bg-navy/10 transition-colors"
                   >
                     ✎ Editar scores
                   </button>
@@ -1094,13 +1111,14 @@ function UseCaseDetailPanel({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setEditingScore(false)}
-                      className="text-[10px] text-text-muted hover:text-text-default"
+                      className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-border
+                        dark:border-white/10 text-text-muted hover:text-text-default transition-colors"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={handleSaveScores}
-                      className="text-[10px] font-bold px-3 py-1 rounded-lg bg-navy text-white
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-navy text-white
                         hover:bg-navy/80 transition-colors"
                     >
                       Guardar
@@ -1523,8 +1541,12 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
           {/* 4 KPI boxes */}
           <ExecDashboard useCases={useCases} />
 
-          {/* Roadmap trimestral */}
-          <QuarterlyRoadmap useCases={useCases} />
+          {/* Roadmap trimestral — interactivo */}
+          <QuarterlyRoadmap
+            useCases={useCases}
+            activeId={activeId}
+            onSelect={handleSelectUseCase}
+          />
         </div>
 
         {/* ── ZONA 2: LISTA DE CASOS DE USO ───────────────── */}
