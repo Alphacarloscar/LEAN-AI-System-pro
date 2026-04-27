@@ -379,7 +379,7 @@ function ResultPhase({
 
   const ALL_CATEGORIES: AICategoryCode[] = [
     'automatizacion_inteligente', 'automatizacion_rpa',
-    'analitica_predictiva', 'asistente_ia', 'optimizacion_proceso',
+    'analitica_predictiva', 'asistente_ia', 'optimizacion_proceso', 'agéntica',
   ]
   const ALL_READINESS: OrgReadinessLevel[] = ['alta', 'media', 'baja']
 

@@ -1,14 +1,8 @@
 // ============================================================
 // T5 — AI Domain Architecture Canvas
-//
-// Mapa de portafolio estratégico de los 6 dominios IA.
-// Posiciona cada dominio en una matriz Valor vs. Madurez Técnica
-// y genera recomendaciones de activación + governance matrix.
-//
-// Diseñado como entregable wow para CIOs y CEOs.
 // ============================================================
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { T5Canvas, T5DomainCode, T5DomainScores, T5DomainAssessment } from './types'
 import {
   T5_DOMAIN_CONFIG,
@@ -17,7 +11,88 @@ import {
   T5_MATURITY_CONFIG,
   computeT5Recommendation,
 } from './constants'
-import { useT5Store } from './store'
+import { useT5Store }  from './store'
+import { useT3Store }  from '@/modules/T3_ValueStreamMap'
+import { useT4Store }  from '@/modules/T4_UseCasePriorityBoard'
+
+// ── Collision resolution ──────────────────────────────────────
+// Reference container dimensions for physics calculations
+
+const COLL_W   = 520
+const COLL_H   = 295
+const COLL_GAP = 10   // minimum gap between bubble edges (px)
+
+interface ChipPos {
+  code: T5DomainCode
+  xPx:  number
+  yPx:  number
+  size: number
+}
+
+function resolveChipCollisions(chips: ChipPos[]): ChipPos[] {
+  const result = chips.map(c => ({ ...c }))
+
+  for (let iter = 0; iter < 80; iter++) {
+    let anyMoved = false
+
+    for (let i = 0; i < result.length; i++) {
+      for (let j = i + 1; j < result.length; j++) {
+        const a = result[i]
+        const b = result[j]
+        const minDist = (a.size + b.size) / 2 + COLL_GAP
+        const dx      = b.xPx - a.xPx
+        const dy      = b.yPx - a.yPx
+        const dist    = Math.sqrt(dx * dx + dy * dy)
+
+        if (dist < minDist) {
+          if (dist < 0.5) {
+            a.xPx -= minDist / 2
+            b.xPx += minDist / 2
+          } else {
+            const push = (minDist - dist) / 2 + 0.5
+            const nx   = dx / dist
+            const ny   = dy / dist
+            a.xPx -= nx * push
+            a.yPx -= ny * push
+            b.xPx += nx * push
+            b.yPx += ny * push
+          }
+          anyMoved = true
+        }
+      }
+    }
+
+    // Clamp to container
+    for (const p of result) {
+      const r = p.size / 2
+      p.xPx = Math.max(r + 2, Math.min(COLL_W - r - 2, p.xPx))
+      p.yPx = Math.max(r + 2, Math.min(COLL_H - r - 2, p.yPx))
+    }
+
+    if (!anyMoved) break
+  }
+
+  return result
+}
+
+// ── Inline status maps (avoid cross-module constants import) ──
+
+const UC_STATUS_LABEL: Record<string, string> = {
+  go: 'Go', en_piloto: 'En piloto', priorizado: 'Priorizado',
+  candidato: 'Candidato', no_go: 'No-Go', completado: 'Completado',
+}
+const UC_STATUS_STYLE: Record<string, { bg: string; text: string }> = {
+  go:         { bg: 'bg-success-light', text: 'text-success-dark' },
+  en_piloto:  { bg: 'bg-warning-light', text: 'text-warning-dark' },
+  priorizado: { bg: 'bg-info-light',    text: 'text-info-dark' },
+  candidato:  { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-500' },
+  no_go:      { bg: 'bg-danger-light',  text: 'text-danger-dark' },
+  completado: { bg: 'bg-navy/10',       text: 'text-navy' },
+}
+const PHASE_LABEL: Record<string, string> = {
+  idea: 'Idea', validacion: 'Validación', piloto: 'Piloto',
+  estandarizacion: 'Estandarización', escalado: 'Escalado',
+}
 
 // ── Maturity Badge ────────────────────────────────────────────
 
@@ -31,21 +106,103 @@ function MaturityBadge({ level }: { level: string }) {
   )
 }
 
+// ── Department Adoption Chart ─────────────────────────────────
+
+const ALL_DOMAIN_CODES: T5DomainCode[] = [
+  'automatizacion_rpa', 'automatizacion_inteligente',
+  'analitica_predictiva', 'asistente_ia', 'optimizacion_proceso', 'agéntica',
+]
+
+function DepartmentAdoptionChart({ processes }: {
+  processes: Array<{ department: string; aiCategory: string }>
+}) {
+  const deptCats: Record<string, Set<string>> = {}
+  processes.forEach(p => {
+    if (!deptCats[p.department]) deptCats[p.department] = new Set()
+    deptCats[p.department].add(p.aiCategory)
+  })
+  const departments = Object.keys(deptCats).sort()
+  if (!departments.length) return null
+
+  return (
+    <div className="mt-4 pt-4 border-t border-border/50">
+      <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+        Adopción por departamento
+      </p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-[10px]">
+          <thead>
+            <tr>
+              <th className="text-left pb-2 pr-3 font-medium text-text-subtle w-32">Departamento</th>
+              {ALL_DOMAIN_CODES.map(code => (
+                <th key={code} className="text-center pb-2 px-1" title={T5_DOMAIN_CONFIG[code].label}>
+                  <span className="text-sm">{T5_DOMAIN_CONFIG[code].icon}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {departments.map(dept => (
+              <tr key={dept} className="border-t border-border/30">
+                <td className="py-1.5 pr-3 text-text-muted leading-tight">
+                  {dept.split('/')[0].trim()}
+                </td>
+                {ALL_DOMAIN_CODES.map(code => {
+                  const active = deptCats[dept]?.has(code)
+                  return (
+                    <td key={code} className="py-1.5 px-1 text-center">
+                      <span
+                        className="inline-block w-3 h-3 rounded-full transition-colors"
+                        style={{
+                          backgroundColor: active
+                            ? T5_DOMAIN_CONFIG[code].hex
+                            : 'transparent',
+                          border: active
+                            ? 'none'
+                            : '1.5px solid #CBD5E1',
+                        }}
+                      />
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 // ── Portfolio Matrix ──────────────────────────────────────────
 
 function PortfolioMatrix({
   canvas,
+  processes,
   selectedDomain,
   onSelectDomain,
 }: {
-  canvas:          T5Canvas
-  selectedDomain:  T5DomainCode
-  onSelectDomain:  (c: T5DomainCode) => void
+  canvas:         T5Canvas
+  processes:      Array<{ department: string; aiCategory: string }>
+  selectedDomain: T5DomainCode
+  onSelectDomain: (c: T5DomainCode) => void
 }) {
   const domains = Object.values(canvas.domains)
 
+  // Compute chip positions with collision avoidance
+  const resolvedPositions = useMemo((): ChipPos[] => {
+    const chips: ChipPos[] = domains.map(d => ({
+      code: d.domainCode,
+      xPx:  (6 + (d.scores.technicalReady / 100) * 82) / 100 * COLL_W,
+      yPx:  (6 + ((100 - d.scores.businessValue) / 100) * 82) / 100 * COLL_H,
+      size: Math.max(64, Math.min(80, 64 + d.useCaseCount * 5)),
+    }))
+    return resolveChipCollisions(chips)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canvas.domains])
+
   return (
-    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border p-5 h-full flex flex-col">
+    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border p-5">
       <p className="text-xs font-mono uppercase tracking-widest text-text-subtle mb-1">
         Portfolio map — 6 dominios IA
       </p>
@@ -53,7 +210,7 @@ function PortfolioMatrix({
         Haz clic en un dominio para ver su ficha de governance
       </p>
 
-      <div className="flex gap-2 flex-1">
+      <div className="flex gap-2">
         {/* Y-axis label */}
         <div className="flex flex-col justify-between items-center shrink-0 pb-7">
           <span className="text-[9px] font-semibold text-success-dark">Alto</span>
@@ -68,11 +225,12 @@ function PortfolioMatrix({
           <span className="text-[9px] font-semibold text-gray-400">Bajo</span>
         </div>
 
-        {/* Chart + x-axis */}
         <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-          {/* Chart area */}
-          <div className="relative flex-1 rounded-xl overflow-hidden border border-border/60 min-h-[260px]">
-
+          {/* Chart area — fixed pixel height matching COLL_H reference */}
+          <div
+            className="relative rounded-xl overflow-hidden border border-border/60"
+            style={{ height: COLL_H }}
+          >
             {/* Quadrant backgrounds */}
             <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 pointer-events-none">
               <div className="bg-warning-light/45 border-r border-b border-border/30" />
@@ -95,18 +253,13 @@ function PortfolioMatrix({
               Evaluar viabilidad
             </span>
 
-            {/* Domain chips */}
+            {/* Domain chips — collision-resolved */}
             {domains.map(d => {
+              const pos        = resolvedPositions.find(p => p.code === d.domainCode)
+              if (!pos) return null
               const domCfg     = T5_DOMAIN_CONFIG[d.domainCode]
               const recCfg     = T5_RECOMMENDATION_CONFIG[d.recommendation]
               const isSelected = selectedDomain === d.domainCode
-              // Size proportional to use-case count
-              const size = Math.max(64, Math.min(80, 64 + d.useCaseCount * 5))
-
-              // X: technicalReady 0→100 maps to 6%→90%
-              // Y (top): businessValue inverted — 100 → near top (6%), 0 → near bottom (90%)
-              const xPct = 6 + (d.scores.technicalReady / 100) * 82
-              const yPct = 6 + ((100 - d.scores.businessValue) / 100) * 82
 
               return (
                 <button
@@ -115,17 +268,17 @@ function PortfolioMatrix({
                   onClick={() => onSelectDomain(d.domainCode)}
                   className="absolute group"
                   style={{
-                    left:      `${xPct}%`,
-                    top:       `${yPct}%`,
-                    width:      size,
-                    height:     size,
+                    left:      pos.xPx,
+                    top:       pos.yPx,
+                    width:     pos.size,
+                    height:    pos.size,
                     transform: 'translate(-50%, -50%)',
                     zIndex:    isSelected ? 10 : 5,
                   }}
                 >
                   <div
                     className={`w-full h-full rounded-full flex flex-col items-center justify-center
-                      transition-all duration-200 ${isSelected ? 'scale-115' : 'hover:scale-105'}`}
+                      transition-all duration-200 ${isSelected ? 'scale-110' : 'hover:scale-105'}`}
                     style={{
                       border:          `2.5px solid ${recCfg.hex}`,
                       backgroundColor: recCfg.hex + (isSelected ? '38' : '20'),
@@ -137,7 +290,7 @@ function PortfolioMatrix({
                     <span className="text-sm leading-none select-none">{domCfg.icon}</span>
                     <span
                       className="text-[8px] font-bold leading-tight text-center text-lean-black dark:text-gray-200 select-none"
-                      style={{ maxWidth: size - 10, wordBreak: 'break-word', padding: '0 3px' }}
+                      style={{ maxWidth: pos.size - 10, wordBreak: 'break-word', padding: '0 3px' }}
                     >
                       {domCfg.shortLabel}
                     </span>
@@ -147,10 +300,7 @@ function PortfolioMatrix({
                   </div>
 
                   {/* Hover tooltip */}
-                  <div
-                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 pointer-events-none
-                      opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-20 whitespace-nowrap"
-                  >
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-20 whitespace-nowrap">
                     <div className="bg-lean-black text-white text-[10px] rounded-lg px-3 py-1.5 shadow-xl">
                       <p className="font-semibold">{domCfg.label}</p>
                       <p style={{ color: recCfg.hex }}>{recCfg.label}</p>
@@ -182,6 +332,9 @@ function PortfolioMatrix({
           )
         })}
       </div>
+
+      {/* Department adoption chart */}
+      <DepartmentAdoptionChart processes={processes} />
     </div>
   )
 }
@@ -234,7 +387,7 @@ function DomainCard({
   const recCfg = T5_RECOMMENDATION_CONFIG[assessment.recommendation]
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border p-5 flex flex-col gap-4 h-full overflow-y-auto">
+    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border p-5 flex flex-col gap-4">
 
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
@@ -288,9 +441,7 @@ function DomainCard({
 
       {/* Governance */}
       <div className="rounded-xl border border-border bg-gray-50/50 dark:bg-gray-800/30 px-4 py-4 flex flex-col gap-3">
-        <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-          Governance
-        </p>
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">Governance</p>
 
         <div className="flex flex-col gap-2.5">
           <div className="flex items-start gap-2.5">
@@ -334,9 +485,7 @@ function DomainCard({
 
         {assessment.governanceNotes && (
           <div className="rounded-lg bg-warning-light/40 border border-warning-dark/20 px-3 py-2">
-            <p className="text-[10px] text-warning-dark leading-relaxed">
-              ⚠️ {assessment.governanceNotes}
-            </p>
+            <p className="text-[10px] text-warning-dark leading-relaxed">⚠️ {assessment.governanceNotes}</p>
           </div>
         )}
       </div>
@@ -344,16 +493,144 @@ function DomainCard({
   )
 }
 
+// ── Domain Projects Modal ─────────────────────────────────────
+
+function DomainProjectsModal({
+  domainCode,
+  onClose,
+}: {
+  domainCode: T5DomainCode
+  onClose:    () => void
+}) {
+  const processes = useT3Store(s => s.processes)
+  const useCases  = useT4Store(s => s.useCases)
+  const domCfg    = T5_DOMAIN_CONFIG[domainCode]
+
+  const domainUCs   = useCases.filter(uc => uc.aiCategory === domainCode)
+  const domainProcs = processes.filter(p  => p.aiCategory  === domainCode)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-border shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-xl shrink-0"
+              style={{ backgroundColor: domCfg.hex + '22', border: `1.5px solid ${domCfg.hex}55` }}
+            >
+              {domCfg.icon}
+            </div>
+            <div>
+              <p className="text-[10px] text-text-subtle font-mono uppercase tracking-wide">Proyectos identificados</p>
+              <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100">{domCfg.label}</h3>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-text-subtle hover:text-lean-black dark:hover:text-gray-200 transition-colors text-lg w-7 h-7 flex items-center justify-center"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
+
+          {/* T4 use cases */}
+          {domainUCs.length > 0 && (
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+                Casos de uso — T4 ({domainUCs.length})
+              </p>
+              <div className="flex flex-col gap-2">
+                {domainUCs.map(uc => {
+                  const style = UC_STATUS_STYLE[uc.status] ?? UC_STATUS_STYLE.candidato
+                  return (
+                    <div key={uc.id} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-lean-black dark:text-gray-200 truncate">{uc.name}</p>
+                        <p className="text-[10px] text-text-subtle mt-0.5">{uc.department}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-semibold ${style.bg} ${style.text}`}>
+                          {UC_STATUS_LABEL[uc.status] ?? uc.status}
+                        </span>
+                        <span className="text-[10px] font-bold tabular-nums text-lean-black dark:text-gray-200 w-8 text-right">
+                          {uc.priorityScore}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* T3 processes */}
+          {domainProcs.length > 0 && (
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+                Procesos — T3 ({domainProcs.length})
+              </p>
+              <div className="flex flex-col gap-2">
+                {domainProcs.map(p => (
+                  <div key={p.id} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50">
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-lean-black dark:text-gray-200 truncate">{p.name}</p>
+                      <p className="text-[10px] text-text-subtle mt-0.5">{p.department}</p>
+                    </div>
+                    <span className="text-[10px] text-text-subtle shrink-0 capitalize">
+                      {PHASE_LABEL[p.phase] ?? p.phase}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {domainUCs.length === 0 && domainProcs.length === 0 && (
+            <div className="text-center py-8">
+              <span className="text-3xl block mb-3">🔍</span>
+              <p className="text-sm text-text-muted">No hay proyectos identificados en este dominio todavía.</p>
+              <p className="text-[11px] text-text-subtle mt-1">
+                Completa el diagnóstico T3 y prioriza casos de uso en T4.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-border shrink-0">
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 rounded-xl border border-border text-sm text-text-muted hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Activation Sequence ───────────────────────────────────────
 
-function ActivationSequence({ canvas }: { canvas: T5Canvas }) {
+function ActivationSequence({
+  canvas,
+  onCardClick,
+}: {
+  canvas:      T5Canvas
+  onCardClick: (code: T5DomainCode) => void
+}) {
   return (
     <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border p-5">
       <p className="text-xs font-mono uppercase tracking-widest text-text-subtle mb-1">
         Secuencia de activación recomendada
       </p>
       <p className="text-[10px] text-text-subtle mb-4">
-        Orden de implementación basado en score compuesto y nivel de riesgo
+        Haz clic en cada dominio para ver los proyectos y procesos identificados
       </p>
 
       <div className="flex gap-3 overflow-x-auto pb-1">
@@ -364,7 +641,11 @@ function ActivationSequence({ canvas }: { canvas: T5Canvas }) {
           const isLast  = idx === canvas.activationSequence.length - 1
           return (
             <div key={code} className="flex items-center gap-2 shrink-0">
-              <div className="rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50 px-4 py-3 min-w-[155px]">
+              <button
+                onClick={() => onCardClick(code)}
+                className="rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50 px-4 py-3 min-w-[155px]
+                  hover:border-navy/30 hover:bg-navy/4 transition-all duration-150 text-left group"
+              >
                 <div className="flex items-center gap-2 mb-2">
                   <span
                     className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
@@ -381,15 +662,14 @@ function ActivationSequence({ canvas }: { canvas: T5Canvas }) {
                   {recCfg.actionLabel}
                 </span>
                 <p className="text-[9px] text-text-subtle mt-1.5 tabular-nums">
-                  Score: {d.priorityScore}/100
-                  {d.useCaseCount > 0 && (
-                    <> · {d.useCaseCount} caso{d.useCaseCount > 1 ? 's' : ''}</>
-                  )}
+                  {d.priorityScore}/100
+                  {d.useCaseCount > 0 && <> · {d.useCaseCount} caso{d.useCaseCount > 1 ? 's' : ''}</>}
                 </p>
-              </div>
-              {!isLast && (
-                <span className="text-text-subtle text-sm shrink-0">→</span>
-              )}
+                <p className="text-[9px] text-text-subtle/60 mt-0.5 group-hover:text-navy/50 transition-colors">
+                  Ver proyectos →
+                </p>
+              </button>
+              {!isLast && <span className="text-text-subtle text-sm shrink-0">→</span>}
             </div>
           )
         })}
@@ -437,14 +717,14 @@ function EditModal({
           </button>
         </div>
 
-        {/* Sliders */}
+        {/* Sliders — use browser default rendering with accentColor for visible track */}
         <div className="px-6 py-5 flex flex-col gap-5">
           {(Object.entries(T5_DIMENSION_CONFIG) as Array<[keyof T5DomainScores, (typeof T5_DIMENSION_CONFIG)[keyof T5DomainScores]]>).map(([key, cfg]) => {
             const val    = scores[key]
             const lblIdx = Math.min(4, Math.floor(val / 20))
             return (
               <div key={key}>
-                <div className="flex justify-between items-baseline mb-1.5">
+                <div className="flex justify-between items-baseline mb-2">
                   <span className="text-xs font-semibold text-lean-black dark:text-gray-200">{cfg.label}</span>
                   <span className="text-xs font-bold tabular-nums" style={{ color: cfg.hex }}>
                     {val} — {cfg.scaleLabels[lblIdx]}
@@ -457,7 +737,7 @@ function EditModal({
                   step={5}
                   value={val}
                   onChange={e => setScores(prev => ({ ...prev, [key]: Number(e.target.value) }))}
-                  className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+                  className="w-full cursor-pointer"
                   style={{ accentColor: cfg.hex }}
                 />
                 <p className="text-[9px] text-text-subtle mt-1">{cfg.description}</p>
@@ -466,7 +746,7 @@ function EditModal({
           })}
         </div>
 
-        {/* Preview recommendation */}
+        {/* Preview */}
         <div className="mx-6 mb-4 rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50 px-4 py-2.5">
           <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-1.5">
             Recomendación resultante
@@ -507,8 +787,11 @@ export function T5View({
   onBack:      () => void
 }) {
   const { canvas, updateDomainScores } = useT5Store()
-  const [selectedDomain, setSelectedDomain] = useState<T5DomainCode>('automatizacion_inteligente')
-  const [editingDomain,  setEditingDomain]  = useState<T5DomainCode | null>(null)
+  const processes                      = useT3Store(s => s.processes)
+
+  const [selectedDomain,  setSelectedDomain]  = useState<T5DomainCode>('automatizacion_inteligente')
+  const [editingDomain,   setEditingDomain]    = useState<T5DomainCode | null>(null)
+  const [projectsDomain,  setProjectsDomain]   = useState<T5DomainCode | null>(null)
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-5 px-8 py-8">
@@ -538,11 +821,12 @@ export function T5View({
         <MaturityBadge level={canvas.maturityLevel} />
       </div>
 
-      {/* ── Main grid: portfolio matrix + governance card ── */}
+      {/* ── Main grid ── */}
       <div className="grid grid-cols-12 gap-5 items-start">
         <div className="col-span-7">
           <PortfolioMatrix
             canvas={canvas}
+            processes={processes}
             selectedDomain={selectedDomain}
             onSelectDomain={setSelectedDomain}
           />
@@ -556,9 +840,12 @@ export function T5View({
       </div>
 
       {/* ── Activation sequence ── */}
-      <ActivationSequence canvas={canvas} />
+      <ActivationSequence
+        canvas={canvas}
+        onCardClick={setProjectsDomain}
+      />
 
-      {/* ── Edit modal ── */}
+      {/* ── Modals ── */}
       {editingDomain && (
         <EditModal
           domainCode={editingDomain}
@@ -568,6 +855,13 @@ export function T5View({
             setEditingDomain(null)
           }}
           onCancel={() => setEditingDomain(null)}
+        />
+      )}
+
+      {projectsDomain && (
+        <DomainProjectsModal
+          domainCode={projectsDomain}
+          onClose={() => setProjectsDomain(null)}
         />
       )}
     </div>
