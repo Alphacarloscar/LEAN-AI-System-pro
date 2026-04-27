@@ -24,6 +24,7 @@ export type AICategoryCode =
   | 'analitica_predictiva'        // datos altos + impacto alto → modelos predictivos
   | 'asistente_ia'                // readiness alto + auto bajo → copilot / asistente
   | 'optimizacion_proceso'        // scores medios → análisis y mejora de flujo
+  | 'agéntica'                    // máximo en todas las dimensiones → agentes autónomos multi-paso
 
 // ── Niveles de readiness del equipo ─────────────────────────
 

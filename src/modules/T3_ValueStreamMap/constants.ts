@@ -162,6 +162,34 @@ export const AI_CATEGORY_CONFIG: Record<AICategoryCode, AICategoryConfig> = {
       },
     ],
   },
+
+  agéntica: {
+    code:        'agéntica',
+    label:       'IA Agéntica',
+    tagline:     'Agentes autónomos de múltiples pasos. El futuro operativo ya disponible.',
+    description: 'Proceso complejo que requiere razonamiento multi-paso, planificación y ejecución autónoma de tareas encadenadas. Los agentes IA actúan de forma independiente, usan herramientas y se adaptan al contexto sin intervención humana en cada paso.',
+    badgeBg:     'bg-purple-100 dark:bg-purple-900/30',
+    badgeText:   'text-purple-700 dark:text-purple-300',
+    dotBg:       'bg-purple-600',
+    hex:         '#7C3AED',
+    opportunityTemplates: [
+      {
+        title:       'Agente de investigación y síntesis',
+        description: 'Agente autónomo que investiga, analiza y sintetiza información de múltiples fuentes para generar informes ejecutivos sin intervención humana.',
+        effort: 'medio', impact: 'alto',
+      },
+      {
+        title:       'Agente de orquestación de procesos',
+        description: 'Agente que planifica y ejecuta flujos de trabajo complejos, coordinando múltiples sistemas y herramientas de forma autónoma con capacidad de recuperación ante errores.',
+        effort: 'alto', impact: 'alto',
+      },
+      {
+        title:       'Copilot agéntico para decisiones operativas',
+        description: 'Agente que monitoriza KPIs en tiempo real, detecta anomalías y ejecuta acciones correctivas dentro de parámetros predefinidos sin esperar aprobación humana.',
+        effort: 'medio', impact: 'alto',
+      },
+    ],
+  },
 }
 
 // ── Etiquetas de readiness organizacional ────────────────────
@@ -302,7 +330,9 @@ export function computeProcessInterviewResult(
   // ── Asignación de categoría IA (priority-ordered) ─────────
   let aiCategory: AICategoryCode
 
-  if (automationScore >= 2.5 && dataScore >= 2.5) {
+  if (automationScore >= 3 && dataScore >= 3 && readinessScore >= 3 && impactScore >= 3) {
+    aiCategory = 'agéntica'
+  } else if (automationScore >= 2.5 && dataScore >= 2.5) {
     aiCategory = 'automatizacion_inteligente'
   } else if (automationScore >= 2.5) {
     aiCategory = 'automatizacion_rpa'

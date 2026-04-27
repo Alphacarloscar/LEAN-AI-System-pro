@@ -35,6 +35,7 @@ const CAT_HEX: Record<AICategoryCode, string> = {
   analitica_predictiva:       '#1B2A4E',
   asistente_ia:               '#D4A85C',
   optimizacion_proceso:       '#C06060',
+  agéntica:                   '#7C3AED',
 }
 
 const CAT_ORDER: AICategoryCode[] = [
@@ -43,6 +44,7 @@ const CAT_ORDER: AICategoryCode[] = [
   'analitica_predictiva',
   'asistente_ia',
   'optimizacion_proceso',
+  'agéntica',
 ]
 
 const ALL_PHASES: ProcessPhase[] = ['idea', 'validacion', 'piloto', 'estandarizacion', 'escalado']

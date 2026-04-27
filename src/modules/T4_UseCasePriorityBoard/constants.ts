@@ -181,6 +181,7 @@ export const AI_CATEGORY_LABELS: Record<string, string> = {
   analitica_predictiva:       'Analítica Predictiva',
   asistente_ia:               'Asistente IA',
   optimizacion_proceso:       'Optimización de Proceso',
+  agéntica:                   'Agéntica IA',
 }
 
 export const AI_CATEGORY_HEX: Record<string, string> = {
@@ -189,6 +190,7 @@ export const AI_CATEGORY_HEX: Record<string, string> = {
   analitica_predictiva:       '#1B2A4E',
   asistente_ia:               '#D4A85C',
   optimizacion_proceso:       '#C06060',
+  agéntica:                   '#7C3AED',
 }
 
 // ── Benchmarks de coste de implementación por categoría IA ───
@@ -201,11 +203,12 @@ export const IMPLEMENTATION_COST_BENCHMARKS: Record<string, {
   suggested: number
   label:     string
 }> = {
-  automatizacion_inteligente: { min: 15_000, max: 60_000, suggested: 30_000, label: '15k – 60k €' },
-  automatizacion_rpa:         { min:  8_000, max: 40_000, suggested: 18_000, label:  '8k – 40k €' },
-  analitica_predictiva:       { min: 20_000, max: 80_000, suggested: 40_000, label: '20k – 80k €' },
-  asistente_ia:               { min:  5_000, max: 25_000, suggested: 12_000, label:  '5k – 25k €' },
-  optimizacion_proceso:       { min: 12_000, max: 50_000, suggested: 25_000, label: '12k – 50k €' },
+  automatizacion_inteligente: { min: 15_000, max:  60_000, suggested: 30_000, label:  '15k – 60k €' },
+  automatizacion_rpa:         { min:  8_000, max:  40_000, suggested: 18_000, label:   '8k – 40k €' },
+  analitica_predictiva:       { min: 20_000, max:  80_000, suggested: 40_000, label:  '20k – 80k €' },
+  asistente_ia:               { min:  5_000, max:  25_000, suggested: 12_000, label:   '5k – 25k €' },
+  optimizacion_proceso:       { min: 12_000, max:  50_000, suggested: 25_000, label:  '12k – 50k €' },
+  agéntica:                   { min: 35_000, max: 120_000, suggested: 65_000, label: '35k – 120k €' },
 }
 
 // ── Benchmarks de ganancia de eficiencia por categoría IA ────
@@ -221,6 +224,7 @@ export const EFFICIENCY_GAIN_BENCHMARKS: Record<string, {
   analitica_predictiva:       { value: 0.30, label: '~30% mejora de velocidad decisional' },
   asistente_ia:               { value: 0.40, label: '~40% reducción de tiempo en tarea' },
   optimizacion_proceso:       { value: 0.35, label: '~35% reducción de ineficiencias' },
+  agéntica:                   { value: 0.65, label: '~65% reducción en procesos complejos multi-paso' },
 }
 
 // ── Presets de coste por hora (€/hora, coste cargado) ─────────
