@@ -405,69 +405,48 @@ const T4_SCORE_BARS = [
   { key: 'dataDependency', cfg: DIMENSION_CONFIG.dataDependency },
 ] as const
 
-function T4ScoreBars({ scores, trackWidth = 220 }: { scores: UseCaseScores; trackWidth?: number }) {
-  const MAX = 100
-  const LBL_W = 110, G1 = 8, G2 = 8, VAL_COL = 34
-  const VBW   = LBL_W + G1 + trackWidth + G2 + VAL_COL
-  const TX    = LBL_W + G1
-  const ROW_H = 34, VBH = T4_SCORE_BARS.length * ROW_H + 8
-  const values = [scores.kpiImpact, scores.feasibility, scores.aiRisk, scores.dataDependency]
-
+// CSS puro — el texto nunca puede solaparse con la barra (flex con ancho fijo)
+function T4ScoreBars({ scores }: { scores: UseCaseScores }) {
   return (
-    <svg viewBox={`0 0 ${VBW} ${VBH}`} width="100%" style={{ display: 'block' }}>
-      <defs>
-        {T4_SCORE_BARS.map(({ key, cfg }, i) => {
-          const fillW = Math.max((values[i] / MAX) * trackWidth, 2)
-          return (
-            <linearGradient key={key} id={`t4sb2-${key}`}
-              x1={TX} y1="0" x2={TX + fillW} y2="0"
-              gradientUnits="userSpaceOnUse">
-              <stop offset="0%"   stopColor={cfg.hex}   stopOpacity="0.15" />
-              <stop offset="30%"  stopColor={cfg.hex}   stopOpacity="0.92" />
-              <stop offset="58%"  stopColor={cfg.light} stopOpacity="1" />
-              <stop offset="85%"  stopColor={cfg.hex}   stopOpacity="0.80" />
-              <stop offset="100%" stopColor={cfg.hex}   stopOpacity="0.40" />
-            </linearGradient>
-          )
-        })}
-      </defs>
-      {T4_SCORE_BARS.map(({ key, cfg }, i) => {
-        const val    = values[i]
-        const fillW  = Math.max((val / MAX) * trackWidth, 2)
-        const cy     = i * ROW_H + ROW_H / 2 + 3
+    <div className="flex flex-col gap-4">
+      {T4_SCORE_BARS.map(({ key, cfg }) => {
+        const val    = scores[key as keyof UseCaseScores]
         const lblIdx = Math.min(4, Math.floor(val / 20))
         const isNeg  = cfg.direction === 'negative'
 
         return (
-          <g key={key}>
-            <text x={0} y={cy - 2} fontSize={7.5} fill="#64748B"
-              fontFamily="ui-monospace,monospace" letterSpacing="0.05em">
-              {cfg.label}
-            </text>
-            <text x={0} y={cy + 8} fontSize={6.5} fill="#94A3B8"
-              fontFamily="ui-monospace,monospace">
-              {cfg.scaleLabels[lblIdx]}{isNeg ? ' ↑ riesgo' : ''}
-            </text>
-            {/* Track bg — misma altura que la barra de relleno para evitar efecto doble-pista */}
-            <rect x={TX} y={cy - 1.5} width={trackWidth} height={3}
-              fill={cfg.hex} opacity={0.08} rx={1.5} />
-            {/* Fill bar */}
-            <rect x={TX} y={cy - 1.5} width={fillW} height={3}
-              fill={`url(#t4sb2-${key})`} rx={1.5} />
-            {/* Gloss */}
-            <rect x={TX + fillW * 0.08} y={cy - 2}
-              width={fillW * 0.45} height={0.7}
-              fill={cfg.light} opacity={0.60} rx={0.35} />
-            {/* Value */}
-            <text x={TX + trackWidth + G2} y={cy + 3}
-              fontSize={8} fontWeight="600" fill="#94A3B8"
-              fontFamily="ui-monospace,monospace">
-              {val}<tspan fontSize={6} opacity={0.5}>/100</tspan>
-            </text>
-          </g>
+          <div key={key} className="flex items-center gap-4">
+
+            {/* Label — ancho fijo, nunca toca la barra */}
+            <div className="w-44 shrink-0">
+              <p className="text-[11px] font-semibold text-lean-black dark:text-gray-200 leading-tight">
+                {cfg.label}
+              </p>
+              <p className="text-[10px] text-text-subtle mt-0.5">
+                {cfg.scaleLabels[lblIdx]}{isNeg ? ' ↑ riesgo' : ''}
+              </p>
+            </div>
+
+            {/* Barra — ocupa el espacio restante */}
+            <div className="flex-1 h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{ width: `${val}%`, backgroundColor: cfg.hex, opacity: 0.85 }}
+              />
+            </div>
+
+            {/* Valor */}
+            <div className="shrink-0 w-14 text-right">
+              <span className="text-xs font-bold tabular-nums text-lean-black dark:text-gray-200">
+                {val}
+              </span>
+              <span className="text-[10px] text-text-subtle">/100</span>
+            </div>
+
+          </div>
         )
       })}
-    </svg>
+    </div>
   )
 }
 
@@ -1129,7 +1108,7 @@ function UseCaseDetailPanel({
 
               {!editingScore ? (
                 <>
-                  <T4ScoreBars scores={useCase.scores} trackWidth={220} />
+                  <T4ScoreBars scores={useCase.scores} />
                   <div className="mt-5 rounded-2xl bg-gray-50 dark:bg-gray-800/50
                     border border-border dark:border-white/6 px-4 py-3">
                     <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
