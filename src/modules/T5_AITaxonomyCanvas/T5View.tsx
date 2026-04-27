@@ -106,6 +106,165 @@ function MaturityBadge({ level }: { level: string }) {
   )
 }
 
+// ── Dept × Category Detail Modal ─────────────────────────────
+
+function DeptCategoryModal({
+  department,
+  domainCode,
+  canvas,
+  onClose,
+}: {
+  department: string
+  domainCode: T5DomainCode
+  canvas:     T5Canvas
+  onClose:    () => void
+}) {
+  const processes  = useT3Store(s => s.processes)
+  const useCases   = useT4Store(s => s.useCases)
+  const domCfg     = T5_DOMAIN_CONFIG[domainCode]
+  const assessment = canvas.domains[domainCode]
+  const recCfg     = T5_RECOMMENDATION_CONFIG[assessment.recommendation]
+
+  const filteredUCs   = useCases.filter(uc => uc.aiCategory === domainCode && uc.department === department)
+  const filteredProcs = processes.filter(p  => p.aiCategory  === domainCode && p.department  === department)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-border shadow-2xl w-full max-w-lg max-h-[82vh] flex flex-col">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-xl shrink-0"
+              style={{ backgroundColor: domCfg.hex + '22', border: `1.5px solid ${domCfg.hex}55` }}
+            >
+              {domCfg.icon}
+            </div>
+            <div>
+              <p className="text-[10px] text-text-subtle font-mono uppercase tracking-wide">{department}</p>
+              <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100">{domCfg.label}</h3>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-text-subtle hover:text-lean-black dark:hover:text-gray-200 transition-colors text-lg w-7 h-7 flex items-center justify-center"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
+
+          {/* Quadrant / Recommendation summary */}
+          <div className="rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50 px-4 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${recCfg.badgeBg} ${recCfg.badgeText}`}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: recCfg.hex }} />
+                {recCfg.label}
+              </span>
+              <span className="text-xl font-bold tabular-nums text-lean-black dark:text-gray-100">
+                {assessment.priorityScore}
+                <span className="text-[10px] text-text-subtle font-normal">/100</span>
+              </span>
+            </div>
+            <div className="flex gap-4">
+              <span className="text-[10px] text-text-subtle">
+                Valor negocio: <strong className="text-lean-black dark:text-gray-200">{assessment.scores.businessValue}</strong>
+              </span>
+              <span className="text-[10px] text-text-subtle">
+                Madurez técnica: <strong className="text-lean-black dark:text-gray-200">{assessment.scores.technicalReady}</strong>
+              </span>
+              <span className="text-[10px] text-text-subtle">
+                Org readiness: <strong className="text-lean-black dark:text-gray-200">{assessment.scores.orgReadiness}</strong>
+              </span>
+            </div>
+          </div>
+
+          {/* T4 use cases */}
+          {filteredUCs.length > 0 && (
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+                Casos de uso — T4 ({filteredUCs.length})
+              </p>
+              <div className="flex flex-col gap-2">
+                {filteredUCs.map(uc => {
+                  const style = UC_STATUS_STYLE[uc.status] ?? UC_STATUS_STYLE.candidato
+                  return (
+                    <div key={uc.id} className="px-3 py-2.5 rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50">
+                      <div className="flex items-center justify-between gap-3 mb-1">
+                        <p className="text-xs font-medium text-lean-black dark:text-gray-200 truncate">{uc.name}</p>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-semibold ${style.bg} ${style.text}`}>
+                            {UC_STATUS_LABEL[uc.status] ?? uc.status}
+                          </span>
+                          <span className="text-[10px] font-bold tabular-nums text-lean-black dark:text-gray-200 w-7 text-right">
+                            {uc.priorityScore}
+                          </span>
+                        </div>
+                      </div>
+                      {uc.description && (
+                        <p className="text-[10px] text-text-subtle leading-relaxed mt-0.5">{uc.description}</p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* T3 processes */}
+          {filteredProcs.length > 0 && (
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+                Procesos — T3 ({filteredProcs.length})
+              </p>
+              <div className="flex flex-col gap-2">
+                {filteredProcs.map(p => (
+                  <div key={p.id} className="px-3 py-2.5 rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50">
+                    <div className="flex items-center justify-between gap-3 mb-1">
+                      <p className="text-xs font-medium text-lean-black dark:text-gray-200 truncate">{p.name}</p>
+                      <span className="text-[10px] text-text-subtle shrink-0 capitalize">
+                        {PHASE_LABEL[p.phase] ?? p.phase}
+                      </span>
+                    </div>
+                    {p.description && (
+                      <p className="text-[10px] text-text-subtle leading-relaxed mt-0.5">{p.description}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {filteredUCs.length === 0 && filteredProcs.length === 0 && (
+            <div className="text-center py-10">
+              <span className="text-3xl block mb-3">🔍</span>
+              <p className="text-sm text-text-muted">
+                Sin proyectos en <strong>{department.split('/')[0].trim()}</strong> para este dominio.
+              </p>
+              <p className="text-[11px] text-text-subtle mt-1">
+                Completa el diagnóstico T3 y prioriza casos de uso en T4.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-border shrink-0">
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 rounded-xl border border-border text-sm text-text-muted hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Department Adoption Chart ─────────────────────────────────
 
 const ALL_DOMAIN_CODES: T5DomainCode[] = [
@@ -122,6 +281,8 @@ function DepartmentAdoptionChart({
   canvas:         T5Canvas
   onSelectDomain: (c: T5DomainCode) => void
 }) {
+  const [selectedCell, setSelectedCell] = useState<{ dept: string; code: T5DomainCode } | null>(null)
+
   const deptCats: Record<string, Set<string>> = {}
   processes.forEach(p => {
     if (!deptCats[p.department]) deptCats[p.department] = new Set()
@@ -131,74 +292,94 @@ function DepartmentAdoptionChart({
   if (!departments.length) return null
 
   return (
-    <div className="mt-4 pt-4 border-t border-border/50">
-      <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
-        Adopción por departamento
-      </p>
-      <div className="overflow-x-auto">
-        <table className="w-full text-[10px]">
-          <thead>
-            <tr>
-              <th className="text-left pb-3 pr-3 font-medium text-text-subtle w-32" />
-              {ALL_DOMAIN_CODES.map(code => {
-                const domCfg = T5_DOMAIN_CONFIG[code]
-                const recCfg = T5_RECOMMENDATION_CONFIG[canvas.domains[code].recommendation]
-                return (
-                  <th key={code} className="text-center pb-3 px-1">
-                    <button
-                      onClick={() => onSelectDomain(code)}
-                      title={domCfg.label}
-                      className="mx-auto flex flex-col items-center justify-center rounded-full
-                        transition-all duration-150 hover:scale-110 focus:outline-none"
-                      style={{
-                        width:           40,
-                        height:          40,
-                        border:          `2px solid ${recCfg.hex}`,
-                        backgroundColor: recCfg.hex + '22',
-                      }}
-                    >
-                      <span
-                        className="text-[8px] font-bold leading-tight text-center text-lean-black dark:text-gray-200"
-                        style={{ maxWidth: 34, wordBreak: 'break-word', padding: '0 2px' }}
-                      >
-                        {domCfg.shortLabel}
-                      </span>
-                    </button>
-                  </th>
-                )
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {departments.map(dept => (
-              <tr key={dept} className="border-t border-border/30">
-                <td className="py-1.5 pr-3 text-text-muted leading-tight">
-                  {dept.split('/')[0].trim()}
-                </td>
+    <>
+      <div className="mt-4 pt-4 border-t border-border/50">
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+          Adopción por departamento
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[10px]">
+            <thead>
+              <tr>
+                <th className="text-left pb-3 pr-3 font-medium text-text-subtle w-32" />
                 {ALL_DOMAIN_CODES.map(code => {
-                  const active = deptCats[dept]?.has(code)
+                  const domCfg = T5_DOMAIN_CONFIG[code]
+                  const recCfg = T5_RECOMMENDATION_CONFIG[canvas.domains[code].recommendation]
                   return (
-                    <td key={code} className="py-1.5 px-1 text-center">
-                      <span
-                        className="inline-block w-3 h-3 rounded-full transition-colors"
+                    <th key={code} className="text-center pb-3 px-1">
+                      <button
+                        onClick={() => onSelectDomain(code)}
+                        title={domCfg.label}
+                        className="mx-auto flex flex-col items-center justify-center rounded-full
+                          transition-all duration-150 hover:scale-110 focus:outline-none"
                         style={{
-                          backgroundColor: active
-                            ? T5_DOMAIN_CONFIG[code].hex
-                            : 'transparent',
-                          border: active
-                            ? 'none'
-                            : '1.5px solid #CBD5E1',
+                          width:           40,
+                          height:          40,
+                          border:          `2px solid ${recCfg.hex}`,
+                          backgroundColor: recCfg.hex + '22',
                         }}
-                      />
-                    </td>
+                      >
+                        <span
+                          className="text-[8px] font-bold leading-tight text-center text-lean-black dark:text-gray-200"
+                          style={{ maxWidth: 34, wordBreak: 'break-word', padding: '0 2px' }}
+                        >
+                          {domCfg.shortLabel}
+                        </span>
+                      </button>
+                    </th>
                   )
                 })}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {departments.map(dept => (
+                <tr key={dept} className="border-t border-border/30">
+                  <td className="py-1.5 pr-3 text-text-muted leading-tight">
+                    {dept.split('/')[0].trim()}
+                  </td>
+                  {ALL_DOMAIN_CODES.map(code => {
+                    const active = deptCats[dept]?.has(code)
+                    const domCfg = T5_DOMAIN_CONFIG[code]
+                    return (
+                      <td key={code} className="py-1.5 px-1 text-center">
+                        <button
+                          onClick={() => setSelectedCell({ dept, code })}
+                          title={`${dept.split('/')[0].trim()} × ${domCfg.label}`}
+                          className={[
+                            'inline-flex items-center justify-center rounded-full focus:outline-none',
+                            'transition-all duration-150',
+                            active
+                              ? 'w-4 h-4 hover:scale-125 hover:shadow-sm'
+                              : 'w-3 h-3 hover:scale-110 opacity-50 hover:opacity-80',
+                          ].join(' ')}
+                          style={{
+                            backgroundColor: active ? domCfg.hex : 'transparent',
+                            border:          active ? 'none' : '1.5px solid #CBD5E1',
+                            cursor:          'pointer',
+                          }}
+                        />
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-[9px] text-text-subtle/60 mt-2">
+          Haz clic en cualquier punto para ver los proyectos del departamento en ese dominio
+        </p>
       </div>
-    </div>
+
+      {selectedCell && (
+        <DeptCategoryModal
+          department={selectedCell.dept}
+          domainCode={selectedCell.code}
+          canvas={canvas}
+          onClose={() => setSelectedCell(null)}
+        />
+      )}
+    </>
   )
 }
 
