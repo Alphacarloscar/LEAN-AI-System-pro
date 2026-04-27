@@ -1468,25 +1468,13 @@ interface T4ViewProps {
 export function T4View({ companyName, onBack }: T4ViewProps) {
   const navigate                      = useNavigate()
   const { useCases }                  = useT4Store()
-  const [activeId, setActiveId]       = useState<string | null>(null)
-  const [showImport, setShowImport]   = useState(false)
-  const [filterStatus, setFilterStatus] = useState<UseCaseStatus | null>(null)
+  const [activeId, setActiveId]     = useState<string | null>(null)
+  const [showImport, setShowImport] = useState(false)
 
   const activeUseCase = useMemo(
     () => useCases.find((uc) => uc.id === activeId) ?? null,
     [useCases, activeId]
   )
-
-  const filtered = useMemo(
-    () => useCases
-      .filter((uc) => !filterStatus || uc.status === filterStatus)
-      .sort((a, b) => b.priorityScore - a.priorityScore),
-    [useCases, filterStatus]
-  )
-
-  const statusCounts = Object.fromEntries(
-    STATUS_ORDER.map((st) => [st, useCases.filter((uc) => uc.status === st).length])
-  ) as Record<UseCaseStatus, number>
 
   function handleSelectUseCase(id: string) {
     setActiveId((prev) => prev === id ? null : id)
@@ -1549,132 +1537,17 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
           />
         </div>
 
-        {/* ── ZONA 2: LISTA DE CASOS DE USO ───────────────── */}
-        <div className="border-t border-border dark:border-white/6 pt-6 pb-4">
-
-          {/* Filtros por estado */}
-          <div className="flex items-center gap-3 mb-5 flex-wrap">
-            <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mr-2 shrink-0">
-              Casos de uso · {useCases.length}
+        {/* Sin casos — estado vacío */}
+        {useCases.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
+              flex items-center justify-center text-2xl">◎</div>
+            <p className="text-sm font-bold text-text-muted">Sin casos de uso</p>
+            <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
+              Importa procesos desde T3 o añade un caso de uso manualmente.
             </p>
-            <div className="flex items-center gap-2 flex-wrap">
-              {STATUS_ORDER.filter((st) => statusCounts[st] > 0).map((st) => {
-                const cfg = STATUS_CONFIG[st]
-                const cnt = statusCounts[st]
-                return (
-                  <button
-                    key={st}
-                    onClick={() => setFilterStatus(filterStatus === st ? null : st)}
-                    className={[
-                      'flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold',
-                      'border transition-all',
-                      filterStatus === st
-                        ? `${cfg.badgeBg} ${cfg.badgeText} border-transparent`
-                        : 'bg-transparent border-border dark:border-white/10 text-text-muted hover:border-gray-300',
-                    ].join(' ')}
-                  >
-                    <span className="tabular-nums font-bold">{cnt}</span>
-                    <span>{cfg.label}</span>
-                  </button>
-                )
-              })}
-              {filterStatus && (
-                <button
-                  onClick={() => setFilterStatus(null)}
-                  className="text-[10px] text-text-subtle hover:text-text-muted transition-colors ml-1"
-                >
-                  Limpiar ×
-                </button>
-              )}
-            </div>
           </div>
-
-          {/* Cards */}
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
-                flex items-center justify-center text-2xl">◎</div>
-              <p className="text-sm font-bold text-text-muted">Sin casos de uso</p>
-              <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
-                Importa procesos desde T3 o añade un caso de uso manualmente.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
-              {filtered.map((uc) => {
-                const isActive   = uc.id === activeId
-                const statusCfg  = STATUS_CONFIG[uc.status]
-                const scoreColor = priorityScoreColor(uc.priorityScore)
-                const roi        = uc.economics ? computeROIFromEconomics(uc.economics) : null
-
-                return (
-                  <button
-                    key={uc.id}
-                    onClick={() => handleSelectUseCase(uc.id)}
-                    className={[
-                      'w-full text-left rounded-2xl px-4 py-3 transition-all duration-150',
-                      'border flex flex-col gap-2',
-                      isActive
-                        ? 'border-navy/40 bg-navy/5 dark:bg-navy/10 shadow-sm ring-1 ring-navy/20'
-                        : 'border-border dark:border-white/6 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-white/14 hover:shadow-sm',
-                    ].join(' ')}
-                  >
-                    {/* Color bar + name */}
-                    <div className="flex items-start gap-2.5">
-                      <div
-                        className="shrink-0 w-1 h-6 rounded-full mt-0.5"
-                        style={{ backgroundColor: statusCfg.hex, opacity: isActive ? 1 : 0.6 }}
-                      />
-                      <p className="flex-1 text-xs font-bold text-lean-black dark:text-gray-200
-                        leading-tight line-clamp-2">
-                        {uc.name}
-                      </p>
-                      <span className={`shrink-0 text-text-subtle text-[10px] transition-transform
-                        duration-200 ${isActive ? 'rotate-180' : ''}`}>↓</span>
-                    </div>
-
-                    {/* Dept */}
-                    <p className="text-[10px] text-text-subtle truncate pl-3.5">
-                      {uc.department}
-                      {uc.importedFromT3 && <span className="ml-1 opacity-50">· T3</span>}
-                    </p>
-
-                    {/* Badges + score */}
-                    <div className="flex items-center gap-1 flex-wrap pl-3.5">
-                      <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold
-                        ${statusCfg.badgeBg} ${statusCfg.badgeText}`}>
-                        {statusCfg.label}
-                      </span>
-                      {uc.roadmap?.quarter && (
-                        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-semibold
-                          bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft">
-                          {uc.roadmap.quarter}
-                        </span>
-                      )}
-                      <span className={`ml-auto text-xs font-bold tabular-nums ${scoreColor}`}>
-                        {uc.priorityScore.toFixed(0)}
-                      </span>
-                    </div>
-
-                    {/* ROI hint (si hay datos económicos) */}
-                    {roi && roi.annualSaving > 0 && (
-                      <div className="pl-3.5 flex items-center gap-1.5">
-                        <span className="text-[9px] text-success-dark font-semibold">
-                          {fmtEur(roi.annualSaving)}/año
-                        </span>
-                        {roi.paybackMonths > 0 && (
-                          <span className="text-[9px] text-text-subtle">
-                            · payback {roi.paybackMonths.toFixed(1)}m
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {/* ── ZONA 3: DETALLE ─────────────────────────────────── */}
