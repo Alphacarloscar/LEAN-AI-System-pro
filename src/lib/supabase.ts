@@ -5,16 +5,16 @@
 // NUNCA importar @supabase/supabase-js directamente en componentes.
 // Siempre pasar por este módulo o por src/services/.
 //
-// Tipos generados automáticamente desde Supabase CLI:
-//   supabase gen types typescript --project-id TU_PROJECT_ID > src/types/database.types.ts
-// Se ejecutará en Sprint 1 cuando exista el schema real.
+// Sprint 3: cliente sin genérico Database — los servicios tipan
+// las respuestas explícitamente. Sprint 5: generar tipos via CLI:
+//   supabase gen types typescript --project-id PROJECT_ID \
+//     > src/types/database.types.ts
 // ============================================================
 
 import { createClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database.types'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl    = import.meta.env.VITE_SUPABASE_URL    as string
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
@@ -23,13 +23,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   )
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    // Persistir sesión en localStorage — comportamiento por defecto, explicitado para claridad
-    persistSession: true,
-    // MFA: se requiere enrollment al primer login (configurado en Supabase Auth settings)
-    // La lógica de enforcement está en useAuth hook (src/shared/hooks/useAuth.ts)
-  },
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const supabase = createClient<any>(supabaseUrl, supabaseAnonKey, {
+  auth: { persistSession: true },
 })
-
-export type { Database }

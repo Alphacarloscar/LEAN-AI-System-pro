@@ -1,18 +1,12 @@
 // ============================================================
-// LEAN AI System — App root (Sprint 2)
+// LEAN AI System — App root (Sprint 3)
 //
-// Sprint 2: React Router + AppLayout persistente.
-// Demo mode activo: datos desde src/data/demo/
-// Sprint 3+: datos reales desde Supabase.
-//
-// Rutas actuales:
-//   /                  → DashboardView
-//   /company-profile   → CompanyProfileView  ← NUEVO Sprint 2
-//   /t1                → T1View
-//   /t2, /t3, ...      → próximos sprints
+// Sprint 3: Supabase Auth real + persistencia en BD.
+// initialize() restaura sesión al recargar página.
+// isInitializing evita flash de /login mientras se comprueba.
 // ============================================================
 
-import { useState, createContext, useContext }  from 'react'
+import { useState, createContext, useContext, useEffect }  from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AppLayout }                            from '@/shared/layouts/AppLayout'
 import { LoginView, useAuthStore }              from '@/modules/Auth'
@@ -258,7 +252,16 @@ function DashboardView() {
 // ── ProtectedRoute — redirige a /login si no autenticado ──────
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, isInitializing } = useAuthStore()
+  // Mientras se comprueba la sesión de Supabase no redirigimos
+  if (isInitializing) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <svg className="animate-spin h-6 w-6 text-[#0D1B2A]" viewBox="0 0 24 24" fill="none">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+    </div>
+  )
   if (!isAuthenticated) return <Navigate to="/login" replace />
   return <>{children}</>
 }
@@ -316,6 +319,10 @@ function T6RouteView() {
 export default function App() {
   const [activePattern, setActivePattern] = useState<DemoPattern>(DEFAULT_DEMO_SCENARIO.id)
   const scenario = getDemoScenario(activePattern)
+
+  // Sprint 3: restaurar sesión Supabase al montar la app
+  const { initialize } = useAuthStore()
+  useEffect(() => { initialize() }, [initialize])
 
   return (
     <DemoContext.Provider value={{ scenario, setPattern: setActivePattern }}>

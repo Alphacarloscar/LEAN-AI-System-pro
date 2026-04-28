@@ -1,9 +1,8 @@
 // ============================================================
 // LoginView — Pantalla de acceso al L.E.A.N. AI System
 //
-// Ruta: /login  (fuera del AppLayout — sin sidebar ni header)
-// MVP: valida contra MVP_CREDENTIALS (hardcoded).
-// Sprint 3+: reemplazar con Supabase Auth.
+// Sprint 3: login async con Supabase Auth.
+// La UI es idéntica al Sprint 2 — solo cambia el submit handler.
 // ============================================================
 
 import { useState, useEffect, FormEvent } from 'react'
@@ -14,7 +13,6 @@ import { useAuthStore }                   from './store'
 function LeanLogo() {
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* Monograma Alpha */}
       <div className="h-12 w-12 rounded-xl bg-[#0D1B2A] flex items-center justify-center shadow-lg">
         <span className="text-white font-bold text-xl tracking-tight select-none">α</span>
       </div>
@@ -35,11 +33,11 @@ function LeanLogo() {
 function Field({
   label, type, value, onChange, placeholder, autoComplete,
 }: {
-  label:        string
-  type:         string
-  value:        string
-  onChange:     (v: string) => void
-  placeholder?: string
+  label:         string
+  type:          string
+  value:         string
+  onChange:      (v: string) => void
+  placeholder?:  string
   autoComplete?: string
 }) {
   return (
@@ -71,44 +69,27 @@ export function LoginView() {
   const [password, setPassword] = useState('')
   const [loading,  setLoading]  = useState(false)
 
-  const { login, logout, error, clearError, isAuthenticated } = useAuthStore()
+  const { login, error, clearError, isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
 
-  // Si ya estaba autenticado → ir directo al dashboard
+  // Si ya estaba autenticado → ir al dashboard directamente
   useEffect(() => {
     if (isAuthenticated) navigate('/', { replace: true })
   }, [isAuthenticated, navigate])
 
-  // Limpiar sesión anterior al llegar a /login
-  useEffect(() => {
-    logout()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!email || !password) return
 
     setLoading(true)
     clearError()
 
-    // Pequeño delay visual para dar feedback de "procesando"
-    setTimeout(() => {
-      const ok = login(email, password)
-      if (ok) {
-        navigate('/', { replace: true })
-      }
-      setLoading(false)
-    }, 400)
-  }
+    const ok = await login(email, password)
+    if (ok) {
+      navigate('/', { replace: true })
+    }
 
-  function handleDemoAccess() {
-    setEmail('demo@lean-ai.com')
-    setPassword('demo2025')
-    setTimeout(() => {
-      const ok = login('demo@lean-ai.com', 'demo2025')
-      if (ok) navigate('/', { replace: true })
-    }, 200)
+    setLoading(false)
   }
 
   return (
@@ -182,26 +163,6 @@ export function LoginView() {
               ) : 'Acceder'}
             </button>
           </form>
-
-          {/* Separador */}
-          <div className="relative flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-100" />
-            <span className="text-[10px] font-mono text-gray-300 uppercase tracking-widest">o</span>
-            <div className="flex-1 h-px bg-gray-100" />
-          </div>
-
-          {/* Demo access */}
-          <button
-            type="button"
-            onClick={handleDemoAccess}
-            className={[
-              'w-full py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
-              'border border-dashed border-gray-200 text-gray-400',
-              'hover:border-gray-300 hover:text-gray-600 active:scale-[0.98]',
-            ].join(' ')}
-          >
-            Acceso demo
-          </button>
 
         </div>
 
