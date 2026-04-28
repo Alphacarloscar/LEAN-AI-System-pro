@@ -19,6 +19,7 @@ import { T3View }                               from '@/modules/T3_ValueStreamMa
 import { T4View }                               from '@/modules/T4_UseCasePriorityBoard'
 import { T5View }                               from '@/modules/T5_AITaxonomyCanvas'
 import { T6View }                               from '@/modules/T6_RiskGovernance'
+import { T7View }                               from '@/modules/T7_AdoptionHeatmap'
 import { CompanyProfileView }                   from '@/modules/CompanyProfile'
 import {
   DEMO_SCENARIOS,
@@ -201,6 +202,7 @@ function DashboardView() {
     if (tool.code === 'T4') navigate('/t4')
     if (tool.code === 'T5') navigate('/t5')
     if (tool.code === 'T6') navigate('/t6')
+    if (tool.code === 'T7') navigate('/t7')
   }
 
   return (
@@ -314,6 +316,14 @@ function T6RouteView() {
   return <T6View companyName={scenario.company.name} onBack={() => navigate('/')} />
 }
 
+// ── T7 route wrapper ──────────────────────────────────────────
+
+function T7RouteView() {
+  const { scenario } = useDemoContext()
+  const navigate     = useNavigate()
+  return <T7View companyName={scenario.company.name} onBack={() => navigate('/')} />
+}
+
 // ── App root ──────────────────────────────────────────────────
 
 export default function App() {
@@ -346,6 +356,7 @@ export default function App() {
           <Route path="t4"             element={<T4RouteView />} />
           <Route path="t5"             element={<T5RouteView />} />
           <Route path="t6"             element={<T6RouteView />} />
+          <Route path="t7"             element={<T7RouteView />} />
         </Route>
 
         {/* Fallback */}
