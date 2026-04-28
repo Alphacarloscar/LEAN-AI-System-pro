@@ -17,7 +17,8 @@
 import { create }          from 'zustand'
 import { persist }         from 'zustand/middleware'
 import { computePriorityScore } from './constants'
-import type { UseCase }    from './types'
+import type { UseCase, AIActClassification } from './types'
+import { computeAIActRisk } from './types'
 
 // ── Demo data — 8 casos de uso priorización ──────────────────
 //
@@ -111,6 +112,14 @@ const DEMO_USE_CASES: UseCase[] = [
       championArchetype: 'CIO (innovador proactivo)',
       blockerArchetypes: [],
       stakeholderNotes:  'El equipo de IT Operations está alineado. Sin bloqueos identificados.',
+    },
+    aiActClassification: {
+      scope:          'operaciones_internas',
+      personImpact:   'no',
+      sensitiveData:  false,
+      explainability: 'yes',
+      riskLevel:      computeAIActRisk('operaciones_internas', 'no', false, 'yes'),
+      classifiedAt:   new Date('2026-04-17').toISOString(),
     },
     notes:     'Primer caso de uso a implementar. Genera evidencia interna de ROI que facilita el resto de la hoja de ruta.',
     createdAt: new Date('2026-04-14').toISOString(),
@@ -283,6 +292,14 @@ const DEMO_USE_CASES: UseCase[] = [
       blockerArchetypes: [],
       stakeholderNotes:  'Susana necesita ver demostración de que el equipo conserva el control. Proponer co-piloto vs. automatización total.',
     },
+    aiActClassification: {
+      scope:          'operaciones_internas',
+      personImpact:   'no',
+      sensitiveData:  false,
+      explainability: 'yes',
+      riskLevel:      computeAIActRisk('operaciones_internas', 'no', false, 'yes'),
+      classifiedAt:   new Date('2026-04-17').toISOString(),
+    },
     notes:     'Segundo caso de uso en secuencia. También habilita el futuro caso de scoring de proveedores (demo-uc-002).',
     createdAt: new Date('2026-04-14').toISOString(),
   },
@@ -347,6 +364,14 @@ const DEMO_USE_CASES: UseCase[] = [
       championArchetype: 'CMO (innovador activo, ya experimenta con IA)',
       blockerArchetypes: [],
       stakeholderNotes:  'El equipo completo de marketing está proactivo. Implementación más rápida del portfolio.',
+    },
+    aiActClassification: {
+      scope:          'cliente_marketing',
+      personImpact:   'no',
+      sensitiveData:  false,
+      explainability: 'yes',
+      riskLevel:      computeAIActRisk('cliente_marketing', 'no', false, 'yes'),
+      classifiedAt:   new Date('2026-04-17').toISOString(),
     },
     notes:     'Quick win con mayor facilidad del portfolio. Genera evidencia positiva interna en menos de 2 semanas.',
     createdAt: new Date('2026-04-14').toISOString(),
@@ -440,6 +465,14 @@ const DEMO_USE_CASES: UseCase[] = [
       implementationCost:    12_000,
       implementationCostMode: 'benchmark',
     },
+    aiActClassification: {
+      scope:          'rrhh',
+      personImpact:   'human_review',
+      sensitiveData:  false,
+      explainability: 'yes',
+      riskLevel:      computeAIActRisk('rrhh', 'human_review', false, 'yes'),
+      classifiedAt:   new Date('2026-04-17').toISOString(),
+    },
     notes:     'Laura está muy motivada. Pendiente de alinear con el DPO para gestión de datos de candidatos bajo RGPD antes de confirmar go.',
     createdAt: new Date('2026-04-14').toISOString(),
   },
@@ -486,12 +519,14 @@ const DEMO_USE_CASES: UseCase[] = [
 // ── Store ─────────────────────────────────────────────────────
 
 interface T4Store {
-  useCases:       UseCase[]
-  addUseCase:     (uc: Omit<UseCase, 'id' | 'createdAt'>) => string
-  updateUseCase:  (id: string, updates: Partial<Omit<UseCase, 'id'>>) => void
-  removeUseCase:  (id: string) => void
+  useCases:                  UseCase[]
+  addUseCase:                (uc: Omit<UseCase, 'id' | 'createdAt'>) => string
+  updateUseCase:             (id: string, updates: Partial<Omit<UseCase, 'id'>>) => void
+  removeUseCase:             (id: string) => void
   /** Recalcula el priorityScore de un caso de uso tras editar sus scores */
-  recalcScore:    (id: string) => void
+  recalcScore:               (id: string) => void
+  /** Guarda la clasificación AI Act de un caso de uso */
+  updateAIActClassification: (id: string, classification: AIActClassification) => void
 }
 
 export const useT4Store = create<T4Store>()(
@@ -536,6 +571,13 @@ export const useT4Store = create<T4Store>()(
           ),
         }))
       },
+
+      updateAIActClassification: (id, classification) =>
+        set((state) => ({
+          useCases: state.useCases.map((uc) =>
+            uc.id === id ? { ...uc, aiActClassification: classification } : uc
+          ),
+        })),
     }),
     {
       name:    'lean-t4-usecases',

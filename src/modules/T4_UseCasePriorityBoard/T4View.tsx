@@ -36,7 +36,9 @@ import {
 import { ImportFromT3Modal } from './components/ImportFromT3Modal'
 import type {
   UseCase, UseCaseStatus, UseCaseScores, UseCaseEconomics,
+  AIActScope, AIActClassification,
 } from './types'
+import { computeAIActRisk } from './types'
 
 // ── Helpers de color ──────────────────────────────────────────
 
@@ -935,9 +937,236 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
   )
 }
 
+// ── AI Act — configuración visual ────────────────────────────
+
+const AIACT_RISK_CONFIG = {
+  prohibido:      { label: 'Prohibido',      badgeBg: 'bg-red-100 dark:bg-red-900/30',      badgeText: 'text-red-700 dark:text-red-300',      hex: '#DC2626', icon: '🚫' },
+  alto:           { label: 'Alto riesgo',    badgeBg: 'bg-danger-light dark:bg-red-900/20', badgeText: 'text-danger-dark',                    hex: '#EA580C', icon: '🔴' },
+  limitado:       { label: 'Riesgo limitado',badgeBg: 'bg-warning-light',                  badgeText: 'text-warning-dark',                   hex: '#D97706', icon: '🟡' },
+  minimo:         { label: 'Riesgo mínimo',  badgeBg: 'bg-success-light',                  badgeText: 'text-success-dark',                   hex: '#16A34A', icon: '🟢' },
+  sin_clasificar: { label: 'Sin clasificar', badgeBg: 'bg-gray-100 dark:bg-gray-800',       badgeText: 'text-gray-500 dark:text-gray-400',    hex: '#94A3B8', icon: '⬜' },
+} as const
+
+const AIACT_SCOPE_LABELS: Record<AIActScope, string> = {
+  rrhh:                 'RRHH — Selección, evaluación o formación de personas',
+  financiero_clientes:  'Financiero — Crédito, scoring o seguros a clientes',
+  salud:                'Salud o servicios sanitarios',
+  infraestructura:      'Infraestructura crítica (energía, transporte, agua)',
+  seguridad:            'Seguridad — Identificación o control de acceso',
+  educacion:            'Educación — Evaluación o acceso a formación',
+  administracion:       'Administración pública o justicia',
+  operaciones_internas: 'Operaciones internas (back-office, procesos)',
+  cliente_marketing:    'Atención al cliente, marketing o ventas',
+}
+
+// ── Modal de clasificación AI Act ─────────────────────────────
+
+function AIActClassificationModal({
+  useCaseName,
+  onSave,
+  onCancel,
+}: {
+  useCaseName: string
+  onSave:      (classification: AIActClassification) => void
+  onCancel:    () => void
+}) {
+  const [scope,          setScope]          = useState<AIActScope | ''>('')
+  const [personImpact,   setPersonImpact]   = useState<'no' | 'human_review' | 'autonomous' | ''>('')
+  const [sensitiveData,  setSensitiveData]  = useState<boolean | null>(null)
+  const [explainability, setExplainability] = useState<'yes' | 'no' | ''>('')
+
+  const allAnswered = scope && personImpact !== '' && sensitiveData !== null && explainability
+
+  const previewRisk = allAnswered
+    ? computeAIActRisk(scope as AIActScope, personImpact as 'no'|'human_review'|'autonomous', sensitiveData!, explainability as 'yes'|'no')
+    : null
+
+  const riskCfg = previewRisk ? AIACT_RISK_CONFIG[previewRisk] : null
+
+  function handleSave() {
+    if (!allAnswered) return
+    onSave({
+      scope:          scope as AIActScope,
+      personImpact:   personImpact as 'no' | 'human_review' | 'autonomous',
+      sensitiveData:  sensitiveData!,
+      explainability: explainability as 'yes' | 'no',
+      riskLevel:      previewRisk!,
+      classifiedAt:   new Date().toISOString(),
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-border shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+
+        {/* Header */}
+        <div className="flex items-start justify-between px-6 py-5 border-b border-border shrink-0">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-navy text-white">AI Act</span>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">Clasificación regulatoria</p>
+            </div>
+            <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100 leading-tight">{useCaseName}</h3>
+            <p className="text-[10px] text-text-subtle mt-1">Responde 4 preguntas para clasificar el riesgo regulatorio de este caso de uso.</p>
+          </div>
+          <button onClick={onCancel} className="text-text-subtle hover:text-lean-black dark:hover:text-gray-200 text-lg w-7 h-7 flex items-center justify-center shrink-0">✕</button>
+        </div>
+
+        {/* Questions */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">
+
+          {/* P1 — Ámbito */}
+          <div>
+            <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-0.5">
+              P1 · ¿En qué ámbito opera este sistema?
+            </p>
+            <p className="text-[10px] text-text-subtle mb-2">El sector determina si aplica el Anexo III del AI Act (alto riesgo automático).</p>
+            <div className="flex flex-col gap-1.5">
+              {(Object.entries(AIACT_SCOPE_LABELS) as [AIActScope, string][]).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setScope(key)}
+                  className={[
+                    'text-left px-3 py-2 rounded-xl border text-xs transition-all duration-100',
+                    scope === key
+                      ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft font-medium'
+                      : 'border-border text-text-muted hover:border-navy/30 hover:text-lean-black dark:hover:text-gray-200',
+                  ].join(' ')}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* P2 — Impacto en personas */}
+          <div>
+            <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-0.5">
+              P2 · ¿El sistema toma decisiones que afectan a personas físicas?
+            </p>
+            <p className="text-[10px] text-text-subtle mb-2">No incluye decisiones sobre procesos o datos agregados de la empresa.</p>
+            <div className="flex flex-col gap-1.5">
+              {([
+                { v: 'no',           l: 'No — opera sobre procesos o datos internos de la empresa' },
+                { v: 'human_review', l: 'Sí — pero un humano revisa y aprueba cada decisión antes de aplicarla' },
+                { v: 'autonomous',   l: 'Sí — de forma autónoma o con supervisión mínima' },
+              ] as { v: 'no'|'human_review'|'autonomous'; l: string }[]).map(({ v, l }) => (
+                <button
+                  key={v}
+                  onClick={() => setPersonImpact(v)}
+                  className={[
+                    'text-left px-3 py-2 rounded-xl border text-xs transition-all duration-100',
+                    personImpact === v
+                      ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft font-medium'
+                      : 'border-border text-text-muted hover:border-navy/30 hover:text-lean-black dark:hover:text-gray-200',
+                  ].join(' ')}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* P3 — Datos sensibles */}
+          <div>
+            <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-0.5">
+              P3 · ¿Utiliza o procesa datos de salud, biométricos, religión, origen étnico o datos sexuales?
+            </p>
+            <p className="text-[10px] text-text-subtle mb-2">Categorías especiales RGPD Art. 9 y datos biométricos identificativos.</p>
+            <div className="flex gap-2">
+              {([{ v: false, l: 'No' }, { v: true, l: 'Sí' }] as { v: boolean; l: string }[]).map(({ v, l }) => (
+                <button
+                  key={String(v)}
+                  onClick={() => setSensitiveData(v)}
+                  className={[
+                    'flex-1 px-3 py-2 rounded-xl border text-xs font-medium transition-all duration-100',
+                    sensitiveData === v
+                      ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft'
+                      : 'border-border text-text-muted hover:border-navy/30',
+                  ].join(' ')}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* P4 — Explicabilidad */}
+          <div>
+            <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-0.5">
+              P4 · ¿El output del sistema es explicable o trazable para el usuario afectado?
+            </p>
+            <p className="text-[10px] text-text-subtle mb-2">El sistema puede justificar por qué tomó una decisión o recomendación concreta.</p>
+            <div className="flex gap-2">
+              {([
+                { v: 'yes', l: 'Sí — hay trazabilidad o explicación disponible' },
+                { v: 'no',  l: 'No — el output es opaco o no se comunica' },
+              ] as { v: 'yes'|'no'; l: string }[]).map(({ v, l }) => (
+                <button
+                  key={v}
+                  onClick={() => setExplainability(v)}
+                  className={[
+                    'flex-1 text-left px-3 py-2 rounded-xl border text-xs transition-all duration-100',
+                    explainability === v
+                      ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft font-medium'
+                      : 'border-border text-text-muted hover:border-navy/30 hover:text-lean-black dark:hover:text-gray-200',
+                  ].join(' ')}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Preview resultado */}
+          {riskCfg && (
+            <div className={`rounded-xl border px-4 py-3 ${riskCfg.badgeBg}`}>
+              <p className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: riskCfg.hex }}>
+                Clasificación resultante
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{riskCfg.icon}</span>
+                <span className="text-sm font-bold" style={{ color: riskCfg.hex }}>{riskCfg.label}</span>
+              </div>
+              {previewRisk === 'prohibido' && (
+                <p className="text-[10px] mt-1.5 text-red-600 dark:text-red-400 leading-relaxed">
+                  ⚠️ Este sistema puede caer en la categoría de uso prohibido por el AI Act (Art. 5). Revisa con el equipo legal antes de proceder.
+                </p>
+              )}
+              {previewRisk === 'alto' && (
+                <p className="text-[10px] mt-1.5 leading-relaxed" style={{ color: riskCfg.hex }}>
+                  Requiere conformidad con el Anexo III del AI Act antes de despliegue. Documenta controles y supervisión humana.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border shrink-0">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 rounded-xl border border-border text-sm text-text-muted hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!allAnswered}
+            className="px-4 py-2 rounded-xl bg-navy text-white text-sm font-medium
+              hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Guardar clasificación
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Panel de detalle del caso de uso ─────────────────────────
 
-type DetailTab = 'scoring' | 'economia' | 'roadmap' | 'contexto'
+type DetailTab = 'scoring' | 'economia' | 'roadmap' | 'contexto' | 'regulatorio'
 
 function UseCaseDetailPanel({
   useCase,
@@ -948,10 +1177,13 @@ function UseCaseDetailPanel({
   allUseCases: UseCase[]
   onSelect:    (id: string) => void
 }) {
-  const { updateUseCase, recalcScore } = useT4Store()
+  const { updateUseCase, recalcScore, updateAIActClassification } = useT4Store()
   const [tab, setTab]                 = useState<DetailTab>('scoring')
   const [editingScore, setEditingScore] = useState(false)
   const [localScores, setLocalScores]  = useState<UseCaseScores>(useCase.scores)
+  // AI Act gate: status pendiente de cambio hasta que el usuario clasifica
+  const [pendingStatus,    setPendingStatus]    = useState<UseCaseStatus | null>(null)
+  const [showAIActModal,   setShowAIActModal]   = useState(false)
 
   const recommendation = getGoNoGoRecommendation(useCase.priorityScore)
   const catHex         = AI_CATEGORY_HEX[useCase.aiCategory] ?? '#94A3B8'
@@ -964,6 +1196,25 @@ function UseCaseDetailPanel({
 
   function handleScoreChange(dim: keyof UseCaseScores, v: number) {
     setLocalScores((prev) => ({ ...prev, [dim]: v }))
+  }
+
+  /** Gate: si el nuevo status requiere clasificación AI Act y no existe, muestra el modal */
+  function handleStatusChange(newStatus: UseCaseStatus) {
+    const requiresClassification = newStatus === 'go' || newStatus === 'priorizado'
+    if (requiresClassification && !useCase.aiActClassification) {
+      setPendingStatus(newStatus)
+      setShowAIActModal(true)
+    } else {
+      updateUseCase(useCase.id, { status: newStatus })
+    }
+  }
+
+  function handleAIActSave(classification: AIActClassification) {
+    updateAIActClassification(useCase.id, classification)
+    if (pendingStatus) updateUseCase(useCase.id, { status: pendingStatus })
+    setPendingStatus(null)
+    setShowAIActModal(false)
+    setTab('regulatorio')
   }
 
   const previewScore = computePriorityScore(localScores)
@@ -982,7 +1233,7 @@ function UseCaseDetailPanel({
           <h2 className="text-lg font-semibold text-lean-black dark:text-gray-100 leading-tight mb-2">
             {useCase.name}
           </h2>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 items-center">
             <StatusBadge status={useCase.status} />
             <CategoryBadge category={useCase.aiCategory} />
             {useCase.roadmap?.quarter && (
@@ -991,6 +1242,43 @@ function UseCaseDetailPanel({
                 {useCase.roadmap.quarter}
               </span>
             )}
+            {/* AI Act risk badge */}
+            {(() => {
+              const risk = useCase.aiActClassification?.riskLevel ?? 'sin_clasificar'
+              const cfg  = AIACT_RISK_CONFIG[risk]
+              return (
+                <button
+                  onClick={() => setTab('regulatorio')}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1
+                    ${cfg.badgeBg} ${cfg.badgeText} hover:opacity-80 transition-opacity`}
+                  title="Ver clasificación AI Act"
+                >
+                  {cfg.icon} {cfg.label}
+                </button>
+              )
+            })()}
+          </div>
+          {/* Cambiar estado */}
+          <div className="flex items-center gap-1.5 mt-2">
+            <span className="text-[9px] font-mono uppercase text-text-subtle">Estado:</span>
+            {STATUS_ORDER.map((st) => {
+              const cfg = STATUS_CONFIG[st]
+              return (
+                <button
+                  key={st}
+                  onClick={() => handleStatusChange(st)}
+                  disabled={useCase.status === st}
+                  className={[
+                    'px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all duration-100',
+                    useCase.status === st
+                      ? `${cfg.badgeBg} ${cfg.badgeText} cursor-default`
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700',
+                  ].join(' ')}
+                >
+                  {cfg.label}
+                </button>
+              )
+            })}
           </div>
           {useCase.description && (
             <p className="text-xs text-text-muted mt-2 leading-relaxed max-w-2xl">
@@ -1024,10 +1312,11 @@ function UseCaseDetailPanel({
       {/* Tabs — botones con borde azul metálico */}
       <div className="flex gap-2 px-8 py-3 border-b border-border dark:border-white/6 flex-wrap">
         {([
-          { key: 'scoring',   label: 'Scoring' },
-          { key: 'economia',  label: 'Economía' },
-          { key: 'roadmap',   label: 'Hoja de ruta' },
-          { key: 'contexto',  label: 'Contexto T1/T2' },
+          { key: 'scoring',     label: 'Scoring' },
+          { key: 'economia',    label: 'Economía' },
+          { key: 'roadmap',     label: 'Hoja de ruta' },
+          { key: 'contexto',    label: 'Contexto T1/T2' },
+          { key: 'regulatorio', label: `⚖️ AI Act${useCase.aiActClassification ? ` · ${AIACT_RISK_CONFIG[useCase.aiActClassification.riskLevel].label}` : ''}` },
         ] as { key: DetailTab; label: string }[]).map(({ key, label }) => (
           <button
             key={key}
@@ -1252,6 +1541,132 @@ function UseCaseDetailPanel({
           </div>
         )}
 
+        {/* ── TAB: REGULATORIO (AI Act) ────────────────────── */}
+        {tab === 'regulatorio' && (() => {
+          const cls = useCase.aiActClassification
+          if (!cls) {
+            return (
+              <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
+                <span className="text-4xl">⚖️</span>
+                <div>
+                  <p className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-1">
+                    Sin clasificación AI Act
+                  </p>
+                  <p className="text-xs text-text-muted max-w-sm leading-relaxed">
+                    Clasifica este caso de uso para evaluar su nivel de riesgo regulatorio según el EU AI Act y el RGPD.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowAIActModal(true)}
+                  className="px-5 py-2.5 rounded-xl bg-navy text-white text-sm font-semibold hover:bg-navy/90 transition-colors"
+                >
+                  Clasificar ahora
+                </button>
+              </div>
+            )
+          }
+
+          const riskCfg  = AIACT_RISK_CONFIG[cls.riskLevel]
+          const scopeLabel = AIACT_SCOPE_LABELS[cls.scope]
+
+          return (
+            <div className="flex flex-col gap-5 max-w-2xl">
+
+              {/* Resultado principal */}
+              <div className={`rounded-2xl border px-5 py-4 ${riskCfg.badgeBg}`}>
+                <p className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: riskCfg.hex }}>
+                  Nivel de riesgo EU AI Act
+                </p>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{riskCfg.icon}</span>
+                    <div>
+                      <p className="text-lg font-bold" style={{ color: riskCfg.hex }}>{riskCfg.label}</p>
+                      <p className="text-[10px] text-text-subtle mt-0.5">
+                        Clasificado el {new Date(cls.classifiedAt).toLocaleDateString('es-ES')}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAIActModal(true)}
+                    className="shrink-0 px-3 py-1.5 rounded-xl border border-navy/40 text-navy dark:text-info-soft
+                      bg-white dark:bg-gray-900 text-xs font-medium hover:bg-navy/5 transition-colors"
+                  >
+                    Reclasificar
+                  </button>
+                </div>
+              </div>
+
+              {/* Respuestas */}
+              <div className="rounded-2xl border border-border bg-gray-50 dark:bg-gray-800/50 px-5 py-4 flex flex-col gap-3">
+                <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">Respuestas del cuestionario</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P1 · Ámbito</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-gray-200 leading-tight">{scopeLabel}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P2 · Impacto en personas</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-gray-200">
+                      {cls.personImpact === 'no'           ? 'No afecta a personas físicas'
+                      : cls.personImpact === 'human_review' ? 'Sí, con revisión humana'
+                      :                                       'Sí, de forma autónoma'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P3 · Datos sensibles</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-gray-200">
+                      {cls.sensitiveData ? '⚠️ Sí — datos RGPD Art. 9' : '✓ No'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P4 · Explicabilidad</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-gray-200">
+                      {cls.explainability === 'yes' ? '✓ Sistema explicable / trazable' : '✕ Output opaco'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Obligaciones según nivel */}
+              <div className="rounded-2xl border border-border bg-white dark:bg-gray-900 px-5 py-4">
+                <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">Obligaciones regulatorias aplicables</p>
+                {cls.riskLevel === 'prohibido' && (
+                  <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3">
+                    <p className="text-xs font-semibold text-red-700 dark:text-red-300 mb-1">🚫 Sistema potencialmente prohibido — Art. 5 AI Act</p>
+                    <p className="text-[10px] text-red-600 dark:text-red-400 leading-relaxed">Detener el desarrollo e iniciar revisión legal inmediata. Este sistema puede infringir el artículo 5 del AI Act si se despliega.</p>
+                  </div>
+                )}
+                {cls.riskLevel === 'alto' && (
+                  <ul className="flex flex-col gap-2">
+                    {['Evaluación de conformidad antes del despliegue (Annex III)', 'Sistema de gestión de riesgos documentado', 'Datos de entrenamiento y gobernanza documentados', 'Registro en la base de datos EU de sistemas de alto riesgo', 'Supervisión humana obligatoria definida y operativa', 'Transparencia hacia usuarios afectados'].map((o, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-warning-dark shrink-0 mt-0.5">▶</span>
+                        <span className="text-xs text-text-muted leading-tight">{o}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {cls.riskLevel === 'limitado' && (
+                  <ul className="flex flex-col gap-2">
+                    {['Obligación de transparencia hacia los usuarios (Art. 50)', 'Indicar que el contenido es generado por IA si aplica', 'Política de uso aceptable documentada'].map((o, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-warning-dark shrink-0 mt-0.5">▶</span>
+                        <span className="text-xs text-text-muted leading-tight">{o}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {cls.riskLevel === 'minimo' && (
+                  <p className="text-xs text-success-dark leading-relaxed">
+                    ✓ Sin obligaciones regulatorias específicas del AI Act. Se recomienda documentar el uso en el catálogo corporativo de IA como buena práctica de gobernanza.
+                  </p>
+                )}
+              </div>
+            </div>
+          )
+        })()}
+
         {/* ── TAB: ECONOMÍA ────────────────────────────────── */}
         {tab === 'economia' && <EconomicsTab useCase={useCase} />}
 
@@ -1433,6 +1848,15 @@ function UseCaseDetailPanel({
           </div>
         )}
       </div>
+
+      {/* Modal AI Act — gate al cambiar status */}
+      {showAIActModal && (
+        <AIActClassificationModal
+          useCaseName={useCase.name}
+          onSave={handleAIActSave}
+          onCancel={() => { setShowAIActModal(false); setPendingStatus(null) }}
+        />
+      )}
     </div>
   )
 }

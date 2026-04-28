@@ -200,8 +200,84 @@ export interface UseCase {
   /** Contexto de T2 (solo lectura) */
   t2Context?: T2Context
 
+  /** Clasificación regulatoria AI Act + RGPD */
+  aiActClassification?: AIActClassification
+
   notes?:    string
   createdAt: string
+}
+
+// ── Clasificación regulatoria AI Act ─────────────────────────
+//
+// P1 — Ámbito/sector del sistema
+// P2 — Impacto en personas físicas
+// P3 — Datos sensibles (salud, biométricos, religión, sexo, origen)
+// P4 — Explicabilidad del output
+//
+// Lógica de clasificación (computeAIActRisk):
+//   - Datos sensibles + seguridad + autónomo → prohibido
+//   - Sector regulado (RRHH, financiero clientes, salud, etc.) → alto
+//   - Autónomo + no explicable → alto
+//   - Datos sensibles + impacto en personas → alto
+//   - Cliente/marketing o cualquier impacto en personas → limitado
+//   - Todo lo demás → mínimo
+// ──────────────────────────────────────────────────────────────
+
+export type AIActRiskLevel =
+  | 'prohibido'      // Art. 5 — sistemas prohibidos
+  | 'alto'           // Annex III — alto riesgo regulado
+  | 'limitado'       // Art. 50 — obligaciones de transparencia
+  | 'minimo'         // Sin requisitos específicos
+  | 'sin_clasificar' // Pendiente de evaluación
+
+export type AIActScope =
+  | 'rrhh'                 // Selección, evaluación o formación de personas
+  | 'financiero_clientes'  // Crédito, scoring o seguros a clientes
+  | 'salud'                // Servicios sanitarios o diagnóstico
+  | 'infraestructura'      // Infraestructura crítica (energía, transporte, agua)
+  | 'seguridad'            // Identificación, acceso o vigilancia
+  | 'educacion'            // Evaluación o acceso a formación
+  | 'administracion'       // Administración pública o justicia
+  | 'operaciones_internas' // Procesos internos, back-office
+  | 'cliente_marketing'    // Atención al cliente, marketing o ventas
+
+export interface AIActClassification {
+  scope:          AIActScope
+  personImpact:   'no' | 'human_review' | 'autonomous'
+  sensitiveData:  boolean
+  explainability: 'yes' | 'no'
+  riskLevel:      AIActRiskLevel
+  classifiedAt:   string
+}
+
+/** Calcula el nivel de riesgo AI Act a partir de las 4 respuestas */
+export function computeAIActRisk(
+  scope:          AIActScope,
+  personImpact:   'no' | 'human_review' | 'autonomous',
+  sensitiveData:  boolean,
+  explainability: 'yes' | 'no',
+): AIActRiskLevel {
+  // Prohibido: datos sensibles + control de acceso/seguridad + autónomo
+  if (sensitiveData && scope === 'seguridad' && personImpact === 'autonomous') return 'prohibido'
+
+  // Alto riesgo: sectores Annex III
+  const HIGH_RISK: AIActScope[] = [
+    'rrhh', 'financiero_clientes', 'salud',
+    'infraestructura', 'seguridad', 'educacion', 'administracion',
+  ]
+  if (HIGH_RISK.includes(scope)) return 'alto'
+
+  // Alto riesgo: datos sensibles que afectan a personas
+  if (sensitiveData && personImpact !== 'no') return 'alto'
+
+  // Alto riesgo: decisiones autónomas sin trazabilidad
+  if (personImpact === 'autonomous' && explainability === 'no') return 'alto'
+
+  // Riesgo limitado: sistemas cara-al-cliente o con impacto en personas
+  if (scope === 'cliente_marketing' || personImpact !== 'no') return 'limitado'
+
+  // Riesgo mínimo: operaciones internas, sin datos sensibles, sin decisiones sobre personas
+  return 'minimo'
 }
 
 // ── Formulario de nuevo caso de uso (manual) ─────────────────
