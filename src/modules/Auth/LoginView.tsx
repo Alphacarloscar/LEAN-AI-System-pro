@@ -8,6 +8,7 @@
 import { useState, useEffect, FormEvent } from 'react'
 import { useNavigate }                    from 'react-router-dom'
 import { useAuthStore }                   from './store'
+import { supabase }                       from '@/lib/supabase'
 
 // ── Icono L.E.A.N. ───────────────────────────────────────────
 function LeanLogo() {
@@ -65,9 +66,15 @@ function Field({
 
 // ── Vista principal ───────────────────────────────────────────
 export function LoginView() {
-  const [email,    setEmail]    = useState('')
-  const [password, setPassword] = useState('')
-  const [loading,  setLoading]  = useState(false)
+  const [email,       setEmail]       = useState('')
+  const [password,    setPassword]    = useState('')
+  const [loading,     setLoading]     = useState(false)
+  // Recovery flow
+  const [isRecovery,  setIsRecovery]  = useState(false)
+  const [newPass,     setNewPass]     = useState('')
+  const [newPass2,    setNewPass2]    = useState('')
+  const [recError,    setRecError]    = useState('')
+  const [recOk,       setRecOk]       = useState(false)
 
   const { login, error, clearError, isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
@@ -76,6 +83,14 @@ export function LoginView() {
   useEffect(() => {
     if (isAuthenticated) navigate('/', { replace: true })
   }, [isAuthenticated, navigate])
+
+  // Detectar evento PASSWORD_RECOVERY de Supabase (llega al abrir el enlace del email)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setIsRecovery(true)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -90,6 +105,53 @@ export function LoginView() {
     }
 
     setLoading(false)
+  }
+
+  async function handleUpdatePassword(e: FormEvent) {
+    e.preventDefault()
+    setRecError('')
+    if (newPass.length < 6) { setRecError('La contraseña debe tener al menos 6 caracteres.'); return }
+    if (newPass !== newPass2) { setRecError('Las contraseñas no coinciden.'); return }
+    setLoading(true)
+    const { error: err } = await supabase.auth.updateUser({ password: newPass })
+    setLoading(false)
+    if (err) { setRecError(err.message); return }
+    setRecOk(true)
+    setTimeout(() => { setIsRecovery(false); setRecOk(false); setNewPass(''); setNewPass2('') }, 2000)
+  }
+
+  // ── Formulario de nueva contraseña (recovery) ─────────────────
+  if (isRecovery) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(to right, rgba(13,27,42,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(13,27,42,0.03) 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
+        <div className="relative w-full max-w-sm">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/60 px-8 py-10 space-y-8">
+            <LeanLogo />
+            {recOk ? (
+              <div className="text-center space-y-2">
+                <p className="text-sm font-semibold text-green-600">✓ Contraseña actualizada</p>
+                <p className="text-xs text-gray-400">Redirigiendo al login…</p>
+              </div>
+            ) : (
+              <form onSubmit={handleUpdatePassword} className="space-y-4">
+                <p className="text-xs text-gray-500 text-center">Introduce tu nueva contraseña.</p>
+                <Field label="Nueva contraseña" type="password" value={newPass} onChange={setNewPass} placeholder="Mínimo 6 caracteres" autoComplete="new-password" />
+                <Field label="Repite la contraseña" type="password" value={newPass2} onChange={setNewPass2} placeholder="••••••••" autoComplete="new-password" />
+                {recError && (
+                  <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-50 border border-red-100">
+                    <p className="text-xs text-red-600">{recError}</p>
+                  </div>
+                )}
+                <button type="submit" disabled={loading || !newPass || !newPass2} className={['w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-150', loading || !newPass || !newPass2 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-[#0D1B2A] text-white hover:bg-[#1a2e44]'].join(' ')}>
+                  {loading ? 'Guardando…' : 'Guardar contraseña'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
