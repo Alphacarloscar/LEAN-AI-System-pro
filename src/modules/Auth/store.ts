@@ -102,12 +102,6 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     })
 
     if (error || !data.user) {
-      console.error('[login] AUTH ERROR:', {
-        message: error?.message,
-        status:  error?.status,
-        code:    (error as any)?.code,
-        email:   email.toLowerCase().trim(),
-      })
       set({ error: 'Credenciales incorrectas. Verifica tu email y contraseña.' })
       return false
     }
