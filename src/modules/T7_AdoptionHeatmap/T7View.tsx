@@ -47,11 +47,11 @@ function getSegment(archetype: ArchetypeCode, resistance: ResistanceLevel): Roge
 // ── SVG Bell Curve ────────────────────────────────────────────
 
 const W         = 800
-const H_SVG     = 440
-const BASELINE  = 400           // línea base (eje X)
-const AMPLITUDE = 362           // pico llega a y≈38 (cerca del tope)
-const MU        = 480           // pico en frontera early_majority / late_majority
-const SIGMA     = 190
+const H_SVG     = 560
+const BASELINE  = 520           // línea base (eje X)
+const AMPLITUDE = 482           // pico llega a y≈38 (cerca del tope)
+const MU        = 400           // centrado en W/2 → curva perfectamente simétrica
+const SIGMA     = 120           // colas llegan al suelo en x=0 y x=800
 
 // Segmentos de igual anchura (W/5 = 160px)
 const SEG_BOUNDS: Record<RogersSegment, { x1: number; x2: number }> = {
@@ -505,7 +505,7 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
                 <rect
                   key={seg}
                   x={x1} y={0}
-                  width={x2 - x1} height={H_SVG - 40}
+                  width={x2 - x1} height={BASELINE}
                   fill={cfg.bg}
                   opacity={0.7}
                 />
@@ -516,7 +516,7 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
             {dividers.map(x => (
               <line
                 key={x}
-                x1={x} y1={0} x2={x} y2={H_SVG - 40}
+                x1={x} y1={0} x2={x} y2={BASELINE}
                 stroke="#CBD5E1"
                 strokeWidth={1}
                 strokeDasharray="4 3"
@@ -566,7 +566,7 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
                   </text>
                   {count > 0 && (
                     <text
-                      x={cx} y={H_SVG - 22}
+                      x={cx} y={BASELINE + 22}
                       textAnchor="middle"
                       fontSize={8}
                       fill="#64748B"
