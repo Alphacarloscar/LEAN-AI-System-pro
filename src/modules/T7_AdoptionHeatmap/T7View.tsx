@@ -1,13 +1,14 @@
 // ============================================================
-// T7 — Adoption Heatmap (Curva de Rogers)
+// T7 — Adoption Heatmap (Curva de Rogers) — v2
 //
-// Visualiza la distribución de stakeholders en la curva de
-// difusión de Rogers (Innovadores → Rezagados).
-// Fuente de datos: T2 store (arquetipo + resistencia).
-//
-// Tab 1: Bell curve SVG + filtro por dpto + tarjeta condensada
-// Tab 2: Recomendaciones por departamento
-// Tab 3: Plan global de gestión del cambio
+// Cambios v2:
+// 1. Curva llega al tope del gráfico (AMPLITUDE aumentado)
+// 2. Dots en Mayoría Temp. y Tardía van DEBAJO de la curva
+// 3. Cinco segmentos de igual anchura (160px c/u)
+// 4. Dots más pequeños (r=11) con iniciales conservadas
+// 5. Filtro en modo spotlight (click muestra solo ese dpto.)
+// 6. Efecto 3D con gradiente radial en los dots
+// 7. Tarjeta dinámica de Momentum / Riesgos / Oportunidades
 // ============================================================
 
 import { useState, useMemo } from 'react'
@@ -26,7 +27,6 @@ const SEGMENT_ORDER: RogersSegment[] = [
   'innovators', 'early_adopters', 'early_majority', 'late_majority', 'laggards',
 ]
 
-// Segmento base por arquetipo (sin modificar por resistencia)
 const ARCHETYPE_BASE_SEG: Record<ArchetypeCode, RogersSegment> = {
   adoptador:    'early_adopters',
   ambassador:   'early_majority',
@@ -35,7 +35,6 @@ const ARCHETYPE_BASE_SEG: Record<ArchetypeCode, RogersSegment> = {
   critico:      'laggards',
 }
 
-/** Resistencia alta desplaza un segmento a la derecha */
 function getSegment(archetype: ArchetypeCode, resistance: ResistanceLevel): RogersSegment {
   const base = ARCHETYPE_BASE_SEG[archetype]
   if (resistance === 'alta') {
@@ -48,33 +47,28 @@ function getSegment(archetype: ArchetypeCode, resistance: ResistanceLevel): Roge
 // ── SVG Bell Curve ────────────────────────────────────────────
 
 const W         = 800
-const BASELINE  = 240
-const AMPLITUDE = 180
-const MU        = 400    // pico en x=400 (entre Early y Late Majority)
-const SIGMA     = 160
+const H_SVG     = 280
+const BASELINE  = 248           // línea base (eje X)
+const AMPLITUDE = 218           // pico llega a y≈30 (cerca del tope)
+const MU        = 480           // pico en frontera early_majority / late_majority
+const SIGMA     = 175
+
+// Segmentos de igual anchura (W/5 = 160px)
+const SEG_BOUNDS: Record<RogersSegment, { x1: number; x2: number }> = {
+  innovators:     { x1: 0,   x2: 160 },
+  early_adopters: { x1: 160, x2: 320 },
+  early_majority: { x1: 320, x2: 480 },
+  late_majority:  { x1: 480, x2: 640 },
+  laggards:       { x1: 640, x2: 800 },
+}
+
+// Segmentos donde los dots van DEBAJO de la curva
+const BELOW_CURVE_SEGS: RogersSegment[] = ['early_majority', 'late_majority']
 
 function bellY(x: number): number {
   return BASELINE - AMPLITUDE * Math.exp(-((x - MU) ** 2) / (2 * SIGMA ** 2))
 }
 
-// Límites x de cada segmento (proporcional a % de población Rogers)
-const SEG_BOUNDS: Record<RogersSegment, { x1: number; x2: number }> = {
-  innovators:     { x1: 0,   x2: 20  },  // 2.5%
-  early_adopters: { x1: 20,  x2: 128 },  // 13.5%
-  early_majority: { x1: 128, x2: 400 },  // 34%
-  late_majority:  { x1: 400, x2: 672 },  // 34%
-  laggards:       { x1: 672, x2: 800 },  // 16%
-}
-
-const SEG_LABELS: Record<RogersSegment, { label: string; pct: string; bg: string; border: string }> = {
-  innovators:     { label: 'Innovadores',    pct: '2.5%',  bg: '#EFF6FF', border: '#BFDBFE' },
-  early_adopters: { label: 'Early Adopters', pct: '13.5%', bg: '#F0FDF4', border: '#86EFAC' },
-  early_majority: { label: 'Mayoría Temp.',  pct: '34%',   bg: '#FEFCE8', border: '#FDE047' },
-  late_majority:  { label: 'Mayoría Tardía', pct: '34%',   bg: '#FFF7ED', border: '#FDBA74' },
-  laggards:       { label: 'Rezagados',      pct: '16%',   bg: '#F9FAFB', border: '#D1D5DB' },
-}
-
-// Construye el path SVG relleno de la curva
 function buildBellFillPath(): string {
   const pts: string[] = []
   for (let x = 0; x <= W; x += 4) {
@@ -83,7 +77,6 @@ function buildBellFillPath(): string {
   return `M ${pts.join(' L ')} L ${W},${BASELINE} L 0,${BASELINE} Z`
 }
 
-// Construye solo la línea de la curva (stroke)
 function buildBellStrokePath(): string {
   const pts: string[] = []
   for (let x = 0; x <= W; x += 4) {
@@ -94,6 +87,14 @@ function buildBellStrokePath(): string {
 
 const BELL_FILL   = buildBellFillPath()
 const BELL_STROKE = buildBellStrokePath()
+
+const SEG_LABELS: Record<RogersSegment, { label: string; pct: string; bg: string }> = {
+  innovators:     { label: 'Innovadores',    pct: '2.5%',  bg: '#EFF6FF' },
+  early_adopters: { label: 'Early Adopters', pct: '13.5%', bg: '#F0FDF4' },
+  early_majority: { label: 'Mayoría Temp.',  pct: '34%',   bg: '#FEFCE8' },
+  late_majority:  { label: 'Mayoría Tardía', pct: '34%',   bg: '#FFF7ED' },
+  laggards:       { label: 'Rezagados',      pct: '16%',   bg: '#F9FAFB' },
+}
 
 // ── Departamentos ─────────────────────────────────────────────
 
@@ -124,8 +125,10 @@ const RES_CFG: Record<ResistanceLevel, { label: string; color: string }> = {
 
 // ── Posicionamiento de dots ───────────────────────────────────
 
+const DOT_R = 11   // radio normal
+const DOT_OFFSET = DOT_R + 6   // distancia perpendicular a la curva
+
 function computeDotPositions(stakeholders: Stakeholder[]): DotPosition[] {
-  // Agrupar por segmento
   const bySegment: Record<RogersSegment, Stakeholder[]> = {
     innovators: [], early_adopters: [], early_majority: [], late_majority: [], laggards: [],
   }
@@ -140,25 +143,32 @@ function computeDotPositions(stakeholders: Stakeholder[]): DotPosition[] {
     if (group.length === 0) continue
 
     const { x1, x2 } = SEG_BOUNDS[seg]
-    const segW  = x2 - x1
-    const cx0   = (x1 + x2) / 2
+    const segW = x2 - x1
+    const cx0  = (x1 + x2) / 2
+    const below = BELOW_CURVE_SEGS.includes(seg)
 
     group.forEach((sh, i) => {
-      // Distribuir horizontalmente dentro del segmento
-      const maxSpread = Math.min(segW * 0.55, 25 * group.length)
+      const maxSpread = Math.min(segW * 0.55, 22 * group.length)
       const offsetX = group.length > 1
         ? -maxSpread / 2 + (maxSpread / (group.length - 1)) * i
         : 0
 
       const cx = cx0 + offsetX
-      // Colocar el dot 14px por encima de la curva
-      const cy = bellY(cx) - 14
+      const curveY = bellY(cx)
+      // Abajo de la curva en los segmentos mayoría; arriba en los demás
+      const cy = below ? curveY + DOT_OFFSET : curveY - DOT_OFFSET
 
       positions.push({ stakeholderId: sh.id, segment: seg, cx, cy })
     })
   }
 
   return positions
+}
+
+// ── Gradiente ID seguro ───────────────────────────────────────
+
+function gradId(dept: string): string {
+  return `dotGrad3D-${dept.replace(/[\s/&]/g, '')}`
 }
 
 // ── TabButton ─────────────────────────────────────────────────
@@ -200,14 +210,14 @@ function CondensedCard({
   stakeholders: Stakeholder[]
   onClose:      () => void
 }) {
-  const sh      = stakeholders.find(s => s.id === dot.stakeholderId)
+  const sh = stakeholders.find(s => s.id === dot.stakeholderId)
   if (!sh) return null
 
-  const arcCfg  = ARCHETYPE_CONFIG[sh.archetype]
-  const resCfg  = RES_CFG[sh.resistance]
-  const dc      = deptCfg(sh.department)
+  const arcCfg   = ARCHETYPE_CONFIG[sh.archetype]
+  const resCfg   = RES_CFG[sh.resistance]
+  const dc       = deptCfg(sh.department)
   const segLabel = SEG_LABELS[dot.segment].label
-  const tip     = arcCfg.interventions[sh.resistance][0]
+  const tip      = arcCfg.interventions[sh.resistance][0]
   const initials = sh.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
 
   return (
@@ -221,7 +231,6 @@ function CondensedCard({
       </button>
 
       <div className="flex items-start gap-3">
-        {/* Avatar */}
         <div
           className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm"
           style={{ backgroundColor: dc.fill }}
@@ -230,7 +239,6 @@ function CondensedCard({
         </div>
 
         <div className="flex-1 min-w-0 pr-6">
-          {/* Nombre + segmento */}
           <div className="flex items-start justify-between gap-2 flex-wrap">
             <div>
               <p className="font-semibold text-lean-black dark:text-gray-100 text-sm leading-tight">{sh.name}</p>
@@ -241,7 +249,6 @@ function CondensedCard({
             </span>
           </div>
 
-          {/* Badges */}
           <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
             <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${dc.badgeBg} ${dc.badgeText}`}>
               {sh.department}
@@ -254,7 +261,6 @@ function CondensedCard({
             </span>
           </div>
 
-          {/* Intervención recomendada */}
           <div className="mt-3 flex gap-2.5 items-start">
             <span className="flex-shrink-0 mt-0.5 w-5 h-5 rounded-full bg-navy/10 dark:bg-navy/25 flex items-center justify-center">
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -269,45 +275,138 @@ function CondensedCard({
   )
 }
 
+// ── Tarjeta de Momentum ───────────────────────────────────────
+
+function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) {
+  const total = stakeholders.length
+  if (total === 0) return null
+
+  // % en segmentos positivos (innovators + early_adopters + early_majority)
+  const positive = stakeholders.filter(sh => {
+    const seg = getSegment(sh.archetype, sh.resistance)
+    return seg === 'innovators' || seg === 'early_adopters' || seg === 'early_majority'
+  }).length
+  const momentumPct = Math.round((positive / total) * 100)
+
+  // Nivel de momentum
+  const momentumLevel =
+    momentumPct >= 65 ? { label: 'Alto', color: 'text-success-dark', bg: 'bg-success-light' }
+    : momentumPct >= 40 ? { label: 'Medio', color: 'text-warning-dark', bg: 'bg-warning-light' }
+    : { label: 'Bajo', color: 'text-danger-dark', bg: 'bg-danger-light' }
+
+  // Riesgo principal: stakeholders con resistencia alta
+  const highResistance = stakeholders.filter(sh => sh.resistance === 'alta')
+  const topRisk = highResistance.length > 0
+    ? `${highResistance.length} stakeholder${highResistance.length > 1 ? 's' : ''} con resistencia alta`
+    : 'Sin resistencia crítica detectada'
+
+  // Oportunidad: ambassadors / adoptadores con resistencia baja-media
+  const ambassadors = stakeholders.filter(sh =>
+    (sh.archetype === 'ambassador' || sh.archetype === 'adoptador') && sh.resistance !== 'alta'
+  )
+  const topOpp = ambassadors.length > 0
+    ? `${ambassadors.length} agente${ambassadors.length > 1 ? 's' : ''} de cambio activos disponibles`
+    : 'Identificar nuevos early adopters internos'
+
+  // Segmento con más concentración
+  const segCount: Partial<Record<RogersSegment, number>> = {}
+  for (const sh of stakeholders) {
+    const seg = getSegment(sh.archetype, sh.resistance)
+    segCount[seg] = (segCount[seg] ?? 0) + 1
+  }
+  const topSeg = (Object.entries(segCount) as [RogersSegment, number][])
+    .sort((a, b) => b[1] - a[1])[0]
+  const topSegLabel = topSeg ? SEG_LABELS[topSeg[0]].label : '—'
+
+  return (
+    <div className="w-52 flex-shrink-0 rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-4 space-y-4">
+      {/* Momentum score */}
+      <div>
+        <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">Momentum</p>
+        <div className="flex items-end gap-1.5 mb-1.5">
+          <span className="text-2xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
+            {momentumPct}%
+          </span>
+          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full mb-0.5 ${momentumLevel.bg} ${momentumLevel.color}`}>
+            {momentumLevel.label}
+          </span>
+        </div>
+        {/* Barra de progreso */}
+        <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${momentumPct}%`,
+              backgroundColor: momentumPct >= 65 ? '#16a34a' : momentumPct >= 40 ? '#d97706' : '#dc2626',
+            }}
+          />
+        </div>
+        <p className="text-[10px] text-text-subtle mt-1.5">
+          Concentración: <span className="font-medium text-text-muted">{topSegLabel}</span>
+        </p>
+      </div>
+
+      <div className="border-t border-border dark:border-white/6" />
+
+      {/* Riesgo */}
+      <div>
+        <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">Riesgo principal</p>
+        <div className="flex gap-2 items-start">
+          <div className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full bg-danger-light flex items-center justify-center">
+            <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+              <path d="M4 1L1 7h6L4 1z" stroke="#dc2626" strokeWidth="1.2" strokeLinejoin="round"/>
+              <circle cx="4" cy="5.5" r="0.4" fill="#dc2626"/>
+            </svg>
+          </div>
+          <p className="text-[11px] text-text-muted leading-relaxed">{topRisk}</p>
+        </div>
+      </div>
+
+      <div className="border-t border-border dark:border-white/6" />
+
+      {/* Oportunidad */}
+      <div>
+        <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">Oportunidad</p>
+        <div className="flex gap-2 items-start">
+          <div className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full bg-success-light flex items-center justify-center">
+            <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+              <path d="M1.5 4.5l2 2 3-3.5" stroke="#16a34a" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <p className="text-[11px] text-text-muted leading-relaxed">{topOpp}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Tab 1: Bell Curve ─────────────────────────────────────────
 
-function BellCurveTab({
-  stakeholders,
-}: {
-  stakeholders: Stakeholder[]
-}) {
-  const [activeDepts, setActiveDepts] = useState<Set<string>>(
-    () => new Set(stakeholders.map(s => s.department))
-  )
+function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
+  // Spotlight: null = todos visibles; string = solo ese dept visible
+  const [focusDept, setFocusDept] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
-  // Lista de departamentos únicos
   const depts = useMemo(
     () => [...new Set(stakeholders.map(s => s.department))],
     [stakeholders]
   )
 
-  // Posiciones de todos los dots (todos, no solo visibles)
   const allDots = useMemo(
     () => computeDotPositions(stakeholders),
     [stakeholders]
   )
 
-  // Dot del stakeholder seleccionado
   const selectedDot = useMemo(
     () => allDots.find(d => d.stakeholderId === selectedId) ?? null,
     [allDots, selectedId]
   )
 
-  function toggleDept(dept: string) {
-    setActiveDepts(prev => {
-      const next = new Set(prev)
-      if (next.has(dept)) { next.delete(dept) } else { next.add(dept) }
-      return next
-    })
+  function handleDeptClick(dept: string) {
+    setFocusDept(prev => prev === dept ? null : dept)
+    setSelectedId(null)
   }
 
-  // Contar por segmento
   const countBySeg = useMemo(() => {
     const counts: Record<RogersSegment, number> = {
       innovators: 0, early_adopters: 0, early_majority: 0, late_majority: 0, laggards: 0,
@@ -318,26 +417,31 @@ function BellCurveTab({
     return counts
   }, [stakeholders])
 
-  return (
-    <div className="space-y-5">
+  // Divisores iguales: 160, 320, 480, 640
+  const dividers = [160, 320, 480, 640]
 
-      {/* Filtros por departamento */}
+  return (
+    <div className="space-y-4">
+
+      {/* Filtro spotlight */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mr-1">
           Filtrar por dpto.
         </span>
         {depts.map(dept => {
           const cfg     = deptCfg(dept)
-          const active  = activeDepts.has(dept)
+          const active  = focusDept === dept
           return (
             <button
               key={dept}
-              onClick={() => toggleDept(dept)}
+              onClick={() => handleDeptClick(dept)}
               className={[
                 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 border',
                 active
                   ? 'text-white border-transparent shadow-sm'
-                  : 'bg-transparent text-text-muted border-border dark:border-white/10 hover:border-current',
+                  : focusDept !== null
+                    ? 'bg-transparent text-text-subtle border-border dark:border-white/10 opacity-40'
+                    : 'bg-transparent text-text-muted border-border dark:border-white/10 hover:border-current',
               ].join(' ')}
               style={active ? { backgroundColor: cfg.fill, borderColor: cfg.fill } : { color: cfg.fill }}
             >
@@ -349,152 +453,201 @@ function BellCurveTab({
             </button>
           )
         })}
+        {focusDept && (
+          <button
+            onClick={() => setFocusDept(null)}
+            className="text-[10px] text-text-subtle hover:text-text-muted underline transition-colors"
+          >
+            Ver todos
+          </button>
+        )}
       </div>
 
-      {/* SVG Bell Curve */}
-      <div className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 overflow-hidden">
-        <svg
-          viewBox={`0 0 ${W} 290`}
-          className="w-full"
-          style={{ height: 'auto' }}
-          aria-label="Curva de difusión de Rogers — distribución de stakeholders"
-        >
-          <defs>
-            {/* Clip path para fondo de la curva */}
-            <clipPath id="t7-bell-clip">
-              <path d={BELL_FILL} />
-            </clipPath>
-          </defs>
+      {/* SVG + tarjeta momentum */}
+      <div className="flex gap-4 items-start">
 
-          {/* Fondos de segmento */}
-          {SEGMENT_ORDER.map(seg => {
-            const { x1, x2 } = SEG_BOUNDS[seg]
-            const cfg = SEG_LABELS[seg]
-            return (
-              <rect
-                key={seg}
-                x={x1} y={0}
-                width={x2 - x1} height={260}
-                fill={cfg.bg}
-                opacity={0.7}
-              />
-            )
-          })}
+        {/* SVG Bell Curve */}
+        <div className="flex-1 min-w-0 rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 overflow-hidden">
+          <svg
+            viewBox={`0 0 ${W} ${H_SVG}`}
+            className="w-full"
+            style={{ height: 'auto' }}
+            aria-label="Curva de difusión de Rogers — distribución de stakeholders"
+          >
+            <defs>
+              {/* Gradientes 3D por departamento */}
+              {depts.map(dept => {
+                const fill = deptCfg(dept).fill
+                return (
+                  <radialGradient key={dept} id={gradId(dept)} cx="35%" cy="28%" r="65%">
+                    <stop offset="0%"   stopColor="white" stopOpacity={0.45}/>
+                    <stop offset="100%" stopColor={fill}  stopOpacity={1}/>
+                  </radialGradient>
+                )
+              })}
+              {/* Gradiente seleccionado (más brillante) */}
+              {depts.map(dept => {
+                const fill = deptCfg(dept).fill
+                return (
+                  <radialGradient key={`sel-${dept}`} id={`${gradId(dept)}-sel`} cx="35%" cy="28%" r="65%">
+                    <stop offset="0%"   stopColor="white" stopOpacity={0.7}/>
+                    <stop offset="100%" stopColor={fill}  stopOpacity={1}/>
+                  </radialGradient>
+                )
+              })}
+            </defs>
 
-          {/* Divisores de segmento */}
-          {[20, 128, 400, 672].map(x => (
-            <line
-              key={x}
-              x1={x} y1={0} x2={x} y2={250}
-              stroke="#CBD5E1"
-              strokeWidth={1}
-              strokeDasharray="4 3"
-            />
-          ))}
-
-          {/* Bell curve fill (blanco semi-transparente) */}
-          <path
-            d={BELL_FILL}
-            fill="rgba(255,255,255,0.55)"
-          />
-
-          {/* Bell curve stroke */}
-          <path
-            d={BELL_STROKE}
-            fill="none"
-            stroke="#475569"
-            strokeWidth={2}
-          />
-
-          {/* Baseline */}
-          <line x1={0} y1={BASELINE} x2={W} y2={BASELINE} stroke="#CBD5E1" strokeWidth={1} />
-
-          {/* Etiquetas de segmento */}
-          {SEGMENT_ORDER.map(seg => {
-            const { x1, x2 } = SEG_BOUNDS[seg]
-            const cx    = (x1 + x2) / 2
-            const cfg   = SEG_LABELS[seg]
-            const count = countBySeg[seg]
-            return (
-              <g key={seg}>
-                <text
-                  x={cx} y={13}
-                  textAnchor="middle"
-                  fontSize={seg === 'innovators' ? 6 : 8.5}
-                  fontWeight="600"
-                  fill="#475569"
-                  fontFamily="ui-monospace, monospace"
-                >
-                  {cfg.label}
-                </text>
-                <text
-                  x={cx} y={24}
-                  textAnchor="middle"
-                  fontSize={7}
-                  fill="#94A3B8"
-                  fontFamily="ui-monospace, monospace"
-                >
-                  {cfg.pct}
-                </text>
-                {count > 0 && (
-                  <text
-                    x={cx} y={257}
-                    textAnchor="middle"
-                    fontSize={8}
-                    fill="#64748B"
-                    fontFamily="sans-serif"
-                  >
-                    {count} persona{count !== 1 ? 's' : ''}
-                  </text>
-                )}
-              </g>
-            )
-          })}
-
-          {/* Dots */}
-          {allDots.map(dot => {
-            const sh       = stakeholders.find(s => s.id === dot.stakeholderId)
-            if (!sh) return null
-            const isVisible  = activeDepts.has(sh.department)
-            const isSelected = selectedId === sh.id
-            const fill       = deptCfg(sh.department).fill
-            const initials   = sh.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-
-            return (
-              <g
-                key={dot.stakeholderId}
-                onClick={() => setSelectedId(isSelected ? null : sh.id)}
-                style={{ cursor: 'pointer' }}
-                opacity={isVisible ? 1 : 0.15}
-              >
-                <circle
-                  cx={dot.cx}
-                  cy={dot.cy}
-                  r={isSelected ? 16 : 13}
-                  fill={fill}
-                  stroke={isSelected ? '#fff' : 'rgba(255,255,255,0.8)'}
-                  strokeWidth={isSelected ? 2.5 : 1.5}
-                  style={{ transition: 'r 0.15s, stroke-width 0.15s' }}
+            {/* Fondos de segmento */}
+            {SEGMENT_ORDER.map(seg => {
+              const { x1, x2 } = SEG_BOUNDS[seg]
+              const cfg = SEG_LABELS[seg]
+              return (
+                <rect
+                  key={seg}
+                  x={x1} y={0}
+                  width={x2 - x1} height={H_SVG - 30}
+                  fill={cfg.bg}
+                  opacity={0.7}
                 />
-                <text
-                  x={dot.cx}
-                  y={dot.cy + 4}
-                  textAnchor="middle"
-                  fontSize={9}
-                  fontWeight="700"
-                  fill="white"
-                  fontFamily="sans-serif"
-                  style={{ pointerEvents: 'none', userSelect: 'none' }}
+              )
+            })}
+
+            {/* Divisores de segmento */}
+            {dividers.map(x => (
+              <line
+                key={x}
+                x1={x} y1={0} x2={x} y2={H_SVG - 30}
+                stroke="#CBD5E1"
+                strokeWidth={1}
+                strokeDasharray="4 3"
+              />
+            ))}
+
+            {/* Bell curve fill */}
+            <path d={BELL_FILL} fill="rgba(255,255,255,0.5)" />
+
+            {/* Bell curve stroke */}
+            <path
+              d={BELL_STROKE}
+              fill="none"
+              stroke="#475569"
+              strokeWidth={2}
+            />
+
+            {/* Baseline */}
+            <line x1={0} y1={BASELINE} x2={W} y2={BASELINE} stroke="#CBD5E1" strokeWidth={1} />
+
+            {/* Etiquetas de segmento */}
+            {SEGMENT_ORDER.map(seg => {
+              const { x1, x2 } = SEG_BOUNDS[seg]
+              const cx    = (x1 + x2) / 2
+              const cfg   = SEG_LABELS[seg]
+              const count = countBySeg[seg]
+              return (
+                <g key={seg}>
+                  <text
+                    x={cx} y={14}
+                    textAnchor="middle"
+                    fontSize={8.5}
+                    fontWeight="600"
+                    fill="#475569"
+                    fontFamily="ui-monospace, monospace"
+                  >
+                    {cfg.label}
+                  </text>
+                  <text
+                    x={cx} y={25}
+                    textAnchor="middle"
+                    fontSize={7}
+                    fill="#94A3B8"
+                    fontFamily="ui-monospace, monospace"
+                  >
+                    {cfg.pct}
+                  </text>
+                  {count > 0 && (
+                    <text
+                      x={cx} y={H_SVG - 16}
+                      textAnchor="middle"
+                      fontSize={8}
+                      fill="#64748B"
+                      fontFamily="sans-serif"
+                    >
+                      {count} persona{count !== 1 ? 's' : ''}
+                    </text>
+                  )}
+                </g>
+              )
+            })}
+
+            {/* Dots con efecto 3D */}
+            {allDots.map(dot => {
+              const sh = stakeholders.find(s => s.id === dot.stakeholderId)
+              if (!sh) return null
+
+              const isVisible  = focusDept === null || sh.department === focusDept
+              const isSelected = selectedId === sh.id
+              const dept       = sh.department
+              const r          = isSelected ? DOT_R + 3 : DOT_R
+              const fillUrl    = isSelected ? `url(#${gradId(dept)}-sel)` : `url(#${gradId(dept)})`
+              const initials   = sh.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+
+              return (
+                <g
+                  key={dot.stakeholderId}
+                  onClick={() => setSelectedId(isSelected ? null : sh.id)}
+                  style={{ cursor: 'pointer' }}
+                  opacity={isVisible ? 1 : 0.08}
                 >
-                  {initials}
-                </text>
-              </g>
-            )
-          })}
-        </svg>
+                  {/* Sombra */}
+                  <circle
+                    cx={dot.cx + 1}
+                    cy={dot.cy + 1.5}
+                    r={r}
+                    fill="rgba(0,0,0,0.18)"
+                  />
+                  {/* Cuerpo con gradiente 3D */}
+                  <circle
+                    cx={dot.cx}
+                    cy={dot.cy}
+                    r={r}
+                    fill={fillUrl}
+                    stroke={isSelected ? 'white' : 'rgba(255,255,255,0.7)'}
+                    strokeWidth={isSelected ? 2 : 1.2}
+                    style={{ transition: 'r 0.15s' }}
+                  />
+                  {/* Brillo superior */}
+                  <ellipse
+                    cx={dot.cx - r * 0.2}
+                    cy={dot.cy - r * 0.28}
+                    rx={r * 0.38}
+                    ry={r * 0.22}
+                    fill="rgba(255,255,255,0.35)"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  {/* Iniciales */}
+                  <text
+                    x={dot.cx}
+                    y={dot.cy + 3.5}
+                    textAnchor="middle"
+                    fontSize={7.5}
+                    fontWeight="700"
+                    fill="white"
+                    fontFamily="sans-serif"
+                    style={{ pointerEvents: 'none', userSelect: 'none' }}
+                  >
+                    {initials}
+                  </text>
+                </g>
+              )
+            })}
+          </svg>
+        </div>
+
+        {/* Tarjeta Momentum */}
+        <MomentumCard stakeholders={stakeholders} />
       </div>
 
-      {/* Tarjeta condensada — aparece al hacer click en un dot */}
+      {/* Tarjeta condensada al hacer click */}
       {selectedDot && (
         <CondensedCard
           dot={selectedDot}
@@ -503,7 +656,7 @@ function BellCurveTab({
         />
       )}
 
-      {/* Leyenda de departamentos */}
+      {/* Leyenda */}
       <div className="flex items-center gap-4 flex-wrap">
         <span className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">Leyenda</span>
         {depts.map(dept => {
@@ -523,7 +676,6 @@ function BellCurveTab({
 // ── Tab 2: Recomendaciones por Departamento ───────────────────
 
 function DeptRecommendationsTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
-  // Agrupar por departamento
   const byDept = useMemo(() => {
     const map: Record<string, Stakeholder[]> = {}
     for (const sh of stakeholders) {
@@ -533,7 +685,6 @@ function DeptRecommendationsTab({ stakeholders }: { stakeholders: Stakeholder[] 
     return map
   }, [stakeholders])
 
-  // Calcular readiness por departamento (% en segmentos "positivos")
   function deptReadiness(deptShs: Stakeholder[]): { label: string; pct: number; color: string } {
     const positives = deptShs.filter(sh => {
       const seg = getSegment(sh.archetype, sh.resistance)
@@ -551,13 +702,11 @@ function DeptRecommendationsTab({ stakeholders }: { stakeholders: Stakeholder[] 
         const cfg       = deptCfg(dept)
         const readiness = deptReadiness(deptShs)
 
-        // Recomendaciones: primera intervención de cada stakeholder según arquetipo+resistencia
         const recs = deptShs.flatMap(sh => {
           const arc  = ARCHETYPE_CONFIG[sh.archetype]
           const tips = arc.interventions[sh.resistance]
           return tips.slice(0, 2).map(tip => ({ sh, tip }))
         })
-        // Deduplicate keeping first occurrence
         const seen = new Set<string>()
         const uniqueRecs = recs.filter(r => {
           if (seen.has(r.tip)) return false
@@ -570,13 +719,9 @@ function DeptRecommendationsTab({ stakeholders }: { stakeholders: Stakeholder[] 
             key={dept}
             className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-5"
           >
-            {/* Header */}
             <div className="flex items-start justify-between gap-3 mb-4">
               <div className="flex items-center gap-2.5">
-                <span
-                  className="w-3.5 h-3.5 rounded-full flex-shrink-0 mt-0.5"
-                  style={{ backgroundColor: cfg.fill }}
-                />
+                <span className="w-3.5 h-3.5 rounded-full flex-shrink-0 mt-0.5" style={{ backgroundColor: cfg.fill }} />
                 <div>
                   <p className="font-semibold text-sm text-lean-black dark:text-gray-100">{dept}</p>
                   <p className="text-xs text-text-muted">{deptShs.length} stakeholders</p>
@@ -587,35 +732,23 @@ function DeptRecommendationsTab({ stakeholders }: { stakeholders: Stakeholder[] 
               </span>
             </div>
 
-            {/* Stakeholders mini-list */}
             <div className="flex flex-wrap gap-2 mb-4">
               {deptShs.map(sh => {
                 const arcCfg = ARCHETYPE_CONFIG[sh.archetype]
                 const seg    = SEG_LABELS[getSegment(sh.archetype, sh.resistance)].label
                 return (
-                  <div
-                    key={sh.id}
-                    className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-50 dark:bg-gray-800 border border-border dark:border-white/6"
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: cfg.fill }}
-                    />
+                  <div key={sh.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-50 dark:bg-gray-800 border border-border dark:border-white/6">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cfg.fill }} />
                     <span className="text-xs font-medium text-lean-black dark:text-gray-200">{sh.name}</span>
-                    <span className={`text-[10px] px-1.5 rounded-full ${arcCfg.badgeBg} ${arcCfg.badgeText}`}>
-                      {arcCfg.label}
-                    </span>
+                    <span className={`text-[10px] px-1.5 rounded-full ${arcCfg.badgeBg} ${arcCfg.badgeText}`}>{arcCfg.label}</span>
                     <span className="text-[10px] text-text-subtle font-mono">{seg}</span>
                   </div>
                 )
               })}
             </div>
 
-            {/* Recomendaciones */}
             <div className="space-y-2.5">
-              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-                Acciones recomendadas
-              </p>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">Acciones recomendadas</p>
               {uniqueRecs.map((r, i) => (
                 <div key={i} className="flex gap-2.5 items-start">
                   <span
@@ -650,7 +783,7 @@ const CHANGE_PLAN = [
       'Establecer el grupo de trabajo LEAN con representación de todas las áreas.',
       'Definir el criterio de éxito del piloto junto a cada decisor — ownership desde el día 1.',
     ],
-    risk:      'Si los ambassadors no tienen tiempo asignado, el proyecto se ralentizará en Mes 3-4.',
+    risk: 'Si los ambassadors no tienen tiempo asignado, el proyecto se ralentizará en Mes 3-4.',
   },
   {
     phase:     'Mes 3–4',
@@ -664,7 +797,7 @@ const CHANGE_PLAN = [
       'Ejecutar workshop de casos de uso con Operaciones y Dirección General.',
       'Escalar comunicación interna liderada por ambassadors — no por IT o consultores externos.',
     ],
-    risk:      'Los críticos intentarán desacreditar resultados parciales. Anticipar con datos, no con narrativa.',
+    risk: 'Los críticos intentarán desacreditar resultados parciales. Anticipar con datos, no con narrativa.',
   },
   {
     phase:     'Mes 5–6',
@@ -678,7 +811,7 @@ const CHANGE_PLAN = [
       'Presentar resultados al Comité de Dirección con el T9 Roadmap 6M actualizado.',
       'Diseñar el plan de continuidad post-sprint — quién mantiene la gobernanza del sistema de adopción.',
     ],
-    risk:      'Sin un ownership interno claro post-sprint, la adopción se degrada en 3-6 meses.',
+    risk: 'Sin un ownership interno claro post-sprint, la adopción se degrada en 3-6 meses.',
   },
 ]
 
@@ -691,24 +824,17 @@ function ChangeManagementPlanTab() {
       </p>
 
       {CHANGE_PLAN.map((step, i) => (
-        <div
-          key={i}
-          className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-6"
-        >
+        <div key={i} className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-6">
           <div className="flex items-start gap-4 mb-4">
-            {/* Phase badge */}
             <div className="flex-shrink-0 text-center">
               <div className="text-2xl">{step.icon}</div>
               <span className="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-navy/10 dark:bg-navy/20 text-navy dark:text-info-soft">
                 {step.phase}
               </span>
             </div>
-
             <div className="flex-1">
               <h3 className="font-semibold text-lean-black dark:text-gray-100 text-sm">{step.title}</h3>
               <p className="text-xs text-text-muted mt-1 leading-relaxed">{step.objective}</p>
-
-              {/* Target segments */}
               <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                 <span className="text-[10px] font-mono text-text-subtle uppercase tracking-wide">Foco:</span>
                 {step.segments.map(s => (
@@ -720,7 +846,6 @@ function ChangeManagementPlanTab() {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
             {step.actions.map((action, j) => (
               <div key={j} className="flex gap-2 items-start">
@@ -732,7 +857,6 @@ function ChangeManagementPlanTab() {
             ))}
           </div>
 
-          {/* Risk */}
           <div className="flex gap-2 items-start p-3 rounded-lg bg-danger-light/30 dark:bg-red-900/15 border border-danger-light dark:border-red-800/30">
             <svg className="flex-shrink-0 mt-0.5 w-3.5 h-3.5 text-danger-dark" fill="none" viewBox="0 0 16 16">
               <path d="M8 2L1 14h14L8 2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
@@ -757,7 +881,6 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
   const stakeholders = useT2Store(s => s.stakeholders)
   const [activeTab, setActiveTab] = useState<'curve' | 'dept' | 'plan'>('curve')
 
-  // Conteos para los badges de tabs
   const segCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     for (const sh of stakeholders) {
@@ -797,7 +920,6 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
           </div>
         </div>
 
-        {/* Stats summary */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-border dark:border-white/6">
             <p className="text-lg font-bold text-lean-black dark:text-gray-100 tabular-nums">{stakeholders.length}</p>
@@ -818,24 +940,9 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
 
       {/* Tabs */}
       <div className="flex items-center gap-2 flex-wrap">
-        <TabButton
-          active={activeTab === 'curve'}
-          label="Curva de adopción"
-          badge={String(stakeholders.length)}
-          onClick={() => setActiveTab('curve')}
-        />
-        <TabButton
-          active={activeTab === 'dept'}
-          label="Por departamento"
-          badge={String(new Set(stakeholders.map(s => s.department)).size)}
-          onClick={() => setActiveTab('dept')}
-        />
-        <TabButton
-          active={activeTab === 'plan'}
-          label="Plan de cambio"
-          badge="6M"
-          onClick={() => setActiveTab('plan')}
-        />
+        <TabButton active={activeTab === 'curve'} label="Curva de adopción" badge={String(stakeholders.length)} onClick={() => setActiveTab('curve')} />
+        <TabButton active={activeTab === 'dept'}  label="Por departamento"  badge={String(new Set(stakeholders.map(s => s.department)).size)} onClick={() => setActiveTab('dept')} />
+        <TabButton active={activeTab === 'plan'}  label="Plan de cambio"    badge="6M" onClick={() => setActiveTab('plan')} />
       </div>
 
       {/* Tab content */}
@@ -847,15 +954,9 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
         </div>
       ) : (
         <>
-          {activeTab === 'curve' && (
-            <BellCurveTab stakeholders={stakeholders} />
-          )}
-          {activeTab === 'dept' && (
-            <DeptRecommendationsTab stakeholders={stakeholders} />
-          )}
-          {activeTab === 'plan' && (
-            <ChangeManagementPlanTab />
-          )}
+          {activeTab === 'curve' && <BellCurveTab stakeholders={stakeholders} />}
+          {activeTab === 'dept'  && <DeptRecommendationsTab stakeholders={stakeholders} />}
+          {activeTab === 'plan'  && <ChangeManagementPlanTab />}
         </>
       )}
     </div>
