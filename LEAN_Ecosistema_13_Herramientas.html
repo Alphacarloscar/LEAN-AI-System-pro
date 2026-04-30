@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L.E.A.N. AI System — Ecosistema de 13 Herramientas</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: #f4f4f4;
+    color: #1a1a1a;
+    padding: 40px 28px;
+    line-height: 1.6;
+  }
+
+  .wrapper {
+    max-width: 960px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 52px 60px 64px;
+  }
+
+  /* HEADER */
+  .doc-header {
+    border-bottom: 3px solid #1a1a1a;
+    padding-bottom: 28px;
+    margin-bottom: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .doc-header h1 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+  }
+  .doc-header h1 span {
+    font-weight: 400;
+    color: #555;
+  }
+  .doc-header .meta {
+    text-align: right;
+    font-size: 11px;
+    color: #888;
+    line-height: 1.8;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .doc-header .meta strong {
+    display: block;
+    color: #1a1a1a;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  /* SECTION TITLES */
+  .section {
+    margin-bottom: 48px;
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e0e0e0;
+  }
+  .section-title .num {
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    letter-spacing: 1px;
+  }
+
+  /* PROSE */
+  p {
+    font-size: 15px;
+    color: #333;
+    margin-bottom: 14px;
+    line-height: 1.7;
+  }
+  p strong {
+    color: #1a1a1a;
+  }
+
+  /* CALLOUT */
+  .callout {
+    background: #1a1a1a;
+    color: #e8e8e8;
+    padding: 20px 24px;
+    margin: 24px 0;
+    font-size: 14.5px;
+    line-height: 1.65;
+    border-left: 4px solid #fff;
+  }
+  .callout strong { color: #fff; }
+
+  /* ACRONIMO */
+  .acronym-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    margin: 24px 0;
+  }
+  .acro-cell {
+    padding: 20px 18px;
+    background: #f7f7f7;
+    border: 1px solid #e0e0e0;
+  }
+  .acro-cell .letter {
+    font-size: 28px;
+    font-weight: 800;
+    color: #1a1a1a;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .acro-cell .word {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+  .acro-cell .desc {
+    font-size: 11.5px;
+    color: #666;
+    line-height: 1.4;
+  }
+
+  /* PHASES + TOOLS */
+  .phase-block {
+    margin-bottom: 6px;
+  }
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 2px;
+  }
+  .phase-tag {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    min-width: 90px;
+    text-align: center;
+  }
+  .phase-name {
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 16px;
+    flex: 1;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .phase-lean {
+    font-size: 11px;
+    color: #888;
+    padding: 6px 16px;
+    font-style: italic;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  /* Phase color coding */
+  .phase-l .phase-tag { background: #1a1a1a; color: #fff; }
+  .phase-e .phase-tag { background: #444; color: #fff; }
+  .phase-a .phase-tag { background: #777; color: #fff; }
+  .phase-n .phase-tag { background: #aaa; color: #fff; }
+  .phase-t .phase-tag { background: #fff; color: #1a1a1a; border: 2px solid #1a1a1a; }
+
+  .tool-row {
+    display: flex;
+    align-items: flex-start;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 10px 0 10px 0;
+    gap: 0;
+  }
+  .tool-id {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #aaa;
+    min-width: 44px;
+    padding: 2px 0 0 96px;
+  }
+  .tool-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1a1a1a;
+    min-width: 240px;
+    padding-right: 20px;
+  }
+  .tool-desc {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.5;
+    flex: 1;
+  }
+  .tool-output {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #888;
+    background: #f5f5f5;
+    padding: 2px 8px;
+    border-radius: 2px;
+    white-space: nowrap;
+    margin-top: 2px;
+    align-self: flex-start;
+  }
+
+  /* DEPENDENCY FLOW */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 24px 0;
+    overflow-x: auto;
+  }
+  .flow-node {
+    background: #1a1a1a;
+    color: #fff;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    min-width: 80px;
+    line-height: 1.4;
+  }
+  .flow-node .ids {
+    font-size: 10px;
+    color: #aaa;
+    font-weight: 400;
+    display: block;
+    margin-top: 2px;
+  }
+  .flow-arrow {
+    font-size: 18px;
+    color: #aaa;
+    padding: 0 6px;
+    flex-shrink: 0;
+  }
+  .flow-node.light {
+    background: #f0f0f0;
+    color: #1a1a1a;
+  }
+  .flow-node.light .ids { color: #888; }
+  .flow-node.iso {
+    background: #fff;
+    color: #1a1a1a;
+    border: 2px solid #1a1a1a;
+  }
+  .flow-node.iso .ids { color: #666; }
+
+  /* PROBLEM BULLETS */
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .problem-card {
+    border: 1px solid #e0e0e0;
+    padding: 16px 18px;
+    background: #fafafa;
+  }
+  .problem-card .problem-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+  .problem-card .problem-desc {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.45;
+  }
+
+  /* OUTPUT SUMMARY */
+  .output-list {
+    list-style: none;
+    margin: 16px 0;
+  }
+  .output-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13.5px;
+    color: #333;
+  }
+  .output-list li:last-child { border-bottom: none; }
+  .output-list .check {
+    font-size: 11px;
+    font-weight: 700;
+    background: #1a1a1a;
+    color: #fff;
+    padding: 1px 6px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    letter-spacing: 0.5px;
+  }
+
+  /* FOOTER */
+  .doc-footer {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #aaa;
+  }
+
+  @media print {
+    body { padding: 0; background: white; }
+    .wrapper { border: none; padding: 24px; }
+    .problem-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <div class="doc-header">
+    <div>
+      <h1>L.E.A.N. AI System Enterprise<br><span>Descripción del ecosistema de 13 herramientas</span></h1>
+    </div>
+    <div class="meta">
+      <strong>Alpha Consulting Solutions S.L.</strong>
+      Documento interno / Sales enablement<br>
+      Versión Abril 2026
+    </div>
+  </div>
+
+
+  <!-- SECCIÓN 1: EL PROBLEMA -->
+  <div class="section">
+    <div class="section-title"><span class="num">01</span> El problema que resuelve</div>
+
+    <p>Las empresas medianas y grandes han dejado de preguntarse si deben adoptar inteligencia artificial. Ya saben que sí. El problema ahora es <strong>cómo hacerlo de forma estructurada, con ROI medible, sin fracturar la organización y sin exponer a la empresa a riesgos regulatorios crecientes.</strong></p>
+
+    <p>El mercado está inundado de herramientas de IA. Lo que escasea no son las herramientas — es el <strong>sistema para adoptarlas.</strong> Sin metodología, las empresas acumulan pilotos aislados que no escalan, inversiones que no se pueden justificar internamente y stakeholders con niveles de adopción tan distintos que generan fricción organizacional.</p>
+
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-title">Pilotos que no escalan</div>
+        <div class="problem-desc">Las pruebas de concepto llegan a producción solo en el 30–35% de los casos (McKinsey, 2024). El diagnóstico de madurez real brilla por su ausencia antes del piloto.</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-title">ROI invisible</div>
+        <div class="problem-desc">Las empresas no tienen sistema de medición de valor IA. El coste se ve, el beneficio no se cuantifica. Resultado: el CIO no puede defender el presupuesto al siguiente año.</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-title">Stakeholders desalineados</div>
+        <div class="problem-desc">Cada perfil interno tiene una relación distinta con la IA: el que quiere explorar, el que teme perder el puesto, el que aprueba el presupuesto. Nadie gestiona esa diversidad.</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-title">Riesgo regulatorio sin gestionar</div>
+        <div class="problem-desc">El AI Act europeo y la norma ISO/IEC 42001:2023 exigen sistemas documentados de gestión de IA. La mayoría de empresas medianas no tiene nada preparado.</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Analogía directa:</strong> es como querer construir un edificio cuando ya tienes todos los materiales en el solar. Las herramientas de IA son los materiales. Lo que falta es el arquitecto, el plano, la secuencia de obra y el manual de mantenimiento. El L.E.A.N. AI System es ese sistema completo, de diagnóstico a operación continua.
+    </div>
+  </div>
+
+
+  <!-- SECCIÓN 2: QUÉ ES -->
+  <div class="section">
+    <div class="section-title"><span class="num">02</span> En qué consiste</div>
+
+    <p>El <strong>L.E.A.N. AI System Enterprise</strong> es un ecosistema de <strong>13 herramientas digitales interconectadas</strong> que materializan una metodología propietaria de adopción de IA para empresas B2B medianas-grandes. Cada herramienta es un módulo del sprint de trabajo de 6 meses con el cliente, y el output de cada una alimenta a las siguientes: forman un grafo de dependencias, no una lista independiente.</p>
+
+    <p>La metodología toma su nombre del acrónimo <strong>L.E.A.N.</strong> — intencionalmente derivado del Lean Management, porque la adopción de IA sin eliminar desperdicio organizacional reproduce los mismos errores que la manufactura en los años 80.</p>
+
+    <div class="acronym-grid">
+      <div class="acro-cell">
+        <div class="letter">L</div>
+        <div class="word">Listen</div>
+        <div class="desc">Escuchar la organización: madurez real, stakeholders, flujo de valor actual.</div>
+      </div>
+      <div class="acro-cell">
+        <div class="letter">E</div>
+        <div class="word">Evaluate</div>
+        <div class="desc">Evaluar y priorizar casos de uso por impacto, readiness y riesgo.</div>
+      </div>
+      <div class="acro-cell">
+        <div class="letter">A</div>
+        <div class="word">Activate</div>
+        <div class="desc">Activar la adopción con heatmaps, comunicación segmentada y roadmap ejecutable.</div>
+      </div>
+      <div class="acro-cell">
+        <div class="letter">N</div>
+        <div class="word">Normalize</div>
+        <div class="desc">Normalizar: ritmo operativo, backlog vivo y dashboard de valor medido.</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- SECCIÓN 3: LAS 13 HERRAMIENTAS -->
+  <div class="section">
+    <div class="section-title"><span class="num">03</span> Las 13 herramientas — descripción y función</div>
+
+    <!-- FASE L -->
+    <div class="phase-block">
+      <div class="phase-header phase-l">
+        <div class="phase-tag">LISTEN</div>
+        <div class="phase-name">Escucha organizacional — Diagnóstico de punto de partida real</div>
+        <div class="phase-lean">Principio: ir al gemba · eliminar waste · valor por cliente final</div>
+      </div>
+      <div class="tool-row">
+        <div class="tool-id">T1</div>
+        <div class="tool-name">AI Maturity Radar</div>
+        <div class="tool-desc">Diagnóstico multidimensional de madurez real en IA. Mide 6 dimensiones (estrategia, datos, infraestructura, talento, cultura, gobernanza) para producir una línea de base objetiva. Evita el sesgo de autodiagnóstico del cliente.</div>
+        <div class="tool-output">→ Radar de madurez</div>
+      </div>
+      <div class="tool-row">
+        <div class="tool-id">T2</div>
+        <div class="tool-name">AI Stakeholder Segmentation Matrix</div>
+        <div class="tool-desc">Mapea y clasifica a todos los stakeholders relevantes en 5 arquetipos de adopción IA: Explorador, Operador, Decisor, Especialista de Riesgo y Constructor. Cada arquetipo tiene objeciones, motivaciones y mensajes distintos. Sin esta segmentación, la comunicación es ruido.</div>
+        <div class="tool-output">→ Mapa de stakeholders</div>
+      </div>
+      <div class="tool-row">
+        <div class="tool-id">T3</div>
+        <div class="tool-name">AI Value Stream Map</div>
+        <div class="tool-desc">Visualiza el flujo de valor actual de los procesos candidatos a IA: dónde hay bottlenecks, dónde se genera waste, dónde la IA tiene mayor palanca de mejora. Herramienta directamente derivada del Value Stream Mapping de Lean Manufacturing, adaptada al contexto IA.</div>
+        <div class="tool-output">→ VSM con bottlenecks</div>
+      </div>
+    </div>
+
+    <!-- FASE E -->
+    <div class="phase-block" style="margin-top:18px;">
+      <div class="phase-header phase-e">
+        <div class="phase-tag">EVALUATE</div>
+        <div class="phase-name">Evaluación y priorización — Qué construir primero y por qué</div>
+        <div class="phase-lean">Principio: pull por readiness · valor antes que moda · calidad desde el origen</div>
+      </div>
+      <div class="tool-row">
+        <div class="tool-id">T4</div>
+        <div class="tool-name">AI Use Case Prioritization Board</div>
+        <div class="tool-desc">Prioriza los casos de uso IA identificados en función de impacto de negocio, readiness organizacional y coste de implementación. El output no es una lista de deseos — es una matriz ejecutable con criterio de inversión defendible ante el CFO.</div>
+        <div class="tool-output">→ Ranking de casos de uso</div>
+      </div>
+      <div class="tool-row">
+        <div class="tool-id">T5</div>
+        <div class="tool-name">AI Taxonomy Canvas</div>
+        <div class="tool-desc">Clasifica los casos de uso según 7 categorías de IA (automatización, generación, análisis, predicción, recomendación, visión, lenguaje). Evita que el cliente compre tecnología que no necesita por seguir tendencias. Genera criterio interno antes de hablar con proveedores.</div>
+        <div class="tool-output">→ Taxonomía categorizada</div>
+      </div>
+      <div class="tool-row">
+        <div class="tool-id">T6</div>
+        <div class="tool-name">AI Risk & Governance Canvas</div>
+        <div class="tool-desc">Evalúa el perfil de riesgo de cada caso de uso IA: riesgo operacional, legal (AI Act), ético y de reputación. Produce los controles mínimos necesarios para operar cada caso de uso con responsabilidad. Es la base del AIMS para ISO 42001.</div>
+        <div class="tool-output">→ Mapa de riesgos + controles</div>
+      </div>
+    </div>
+
+    <!-- FASE A -->
+    <div class="phase-block" style="margin-top:18px;">
+      <div class="phase-header phase-a">
+        <div class="phase-tag">ACTIVATE</div>
+        <div class="phase-name">Activación — De la priorización a la implementación real</div>
+        <div class="phase-lean">Principio: pull por colectivo · flujo sin silos · flujo de idea a valor</div>
+      </div>
+      <div class="tool-row">
+        <div class="tool-id">T7</div>
+        <div class="tool-name">AI Adoption Heatmap</div>
+        <div class="tool-desc">Visualiza el nivel real de adopción IA por departamento, equipo y perfil. Identifica dónde hay early adopters que pueden convertirse en embajadores internos, y dónde hay resistencia que necesita intervención específica. El heatmap es la herramienta de activación segmentada por colectivo.</div>
+        <div class="tool-output">→ Mapa de adopción por equipo</div>
+      </div>
+      <div class="tool-row">
+        <div class="tool-id">T8</div>
+        <div class="tool-name">AI Communication Map</div>
+        <div class="tool-desc">Diseña el plan de comunicación interna del programa IA: qué se dice, a quién, cuándo y por qué canal. Cada mensaje está calibrado al arquetipo de stakeholder definido en T2. Sin comunicación estructurada, la adopción genera fricción y rumor.</div>
+        <div class="tool-output">→ Plan de comunicación</div>
+      </div>
+      <div class="tool-row">
+        <div class="tool-id">T9</div>
+        <div class="tool-name">AI Roadmap 6M</div>
+        <div class="tool-desc">El roadmap ejecutable de los 6 meses del sprint: qué se implementa en qué orden, con qué recursos, con qué quick wins en cada fase. No es un diagrama de Gantt de consultor — es un plan de valor entregable, con hitos visibles para la dirección cada 4–6 semanas.</div>
+        <div class="tool-output">→ Roadmap ejecutable</div>
+      </div>
+    </div>
+
+    <!-- FASE N -->
+    <div class="phase-block" style="margin-top:18px;">
+      <div class="phase-header phase-n">
+        <div class="phase-tag">NORMALIZE</div>
+        <div class="phase-name">Normalización — Operación continua post-sprint</div>
+        <div class="phase-lean">Principio: kaizen · rituales ligeros · pull continuo</div>
+      </div>
+      <div class="tool-row">
+        <div class="tool-id">T10</div>
+        <div class="tool-name">AI Value Dashboard</div>
+        <div class="tool-desc">Dashboard de medición de valor IA en tiempo real. Agrega KPIs de los casos de uso en producción y los presenta en formato ejecutivo. Resuelve el problema fundamental del CIO: poder demostrar ante el CEO y el CFO qué está produciendo la inversión en IA.</div>
+        <div class="tool-output">→ Dashboard de ROI IA</div>
+      </div>
+      <div class="tool-row">
+        <div class="tool-id">T11</div>
+        <div class="tool-name">AI Operating Rhythm</div>
+        <div class="tool-desc">Define el sistema operativo del programa IA post-sprint: qué reuniones, con qué cadencia, con qué agenda y con qué participantes. Inspirado en el Daily Standup y la Retrospectiva de Scrum, pero calibrado para programas de IA B2B, no para desarrollo software.</div>
+        <div class="tool-output">→ Rituales operativos</div>
+      </div>
+      <div class="tool-row">
+        <div class="tool-id">T12</div>
+        <div class="tool-name">AI Backlog Board</div>
+        <div class="tool-desc">Backlog vivo de iniciativas IA priorizadas por impacto y readiness, gestionado en ciclos cortos. Permite al cliente mantener la inercia post-sprint sin necesidad del consultor externo. Es la herramienta de continuidad — evita que el programa muera en el mes 7.</div>
+        <div class="tool-output">→ Backlog priorizado</div>
+      </div>
+    </div>
+
+    <!-- T13 TRANSVERSAL -->
+    <div class="phase-block" style="margin-top:18px;">
+      <div class="phase-header phase-t">
+        <div class="phase-tag" style="background:#fff;color:#1a1a1a;border:2px solid #1a1a1a;">ISO / T13</div>
+        <div class="phase-name">Transversal — Cumplimiento normativo continuo</div>
+        <div class="phase-lean">Principio: ISO/IEC 42001:2023 · AI Act UE · gobernanza desde el origen</div>
+      </div>
+      <div class="tool-row">
+        <div class="tool-id">T13</div>
+        <div class="tool-name">AI System Impact Assessment</div>
+        <div class="tool-desc">Herramienta transversal activa durante todo el sprint. Agrega automáticamente los outputs de T1-T12 relevantes para construir el AIMS (AI Management System) requerido por ISO/IEC 42001:2023. Al completar el sprint, el cliente tiene ~78% del AIMS auditado. Alpha no compite con las entidades de certificación (Bureau Veritas, SGS, BSI) — produce el documento que ellas necesitan para auditar.</div>
+        <div class="tool-output">→ AIMS ≈78% ISO 42001</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- SECCIÓN 4: CÓMO LO RESUELVE — GRAFO DE DEPENDENCIAS -->
+  <div class="section">
+    <div class="section-title"><span class="num">04</span> Cómo lo resuelve — el grafo de dependencias</div>
+
+    <p>Las 13 herramientas no son módulos independientes. Son un <strong>grafo de dependencias:</strong> los datos que genera cada herramienta son los inputs de las siguientes. Esto es lo que diferencia una metodología de un conjunto de plantillas.</p>
+
+    <div class="flow">
+      <div class="flow-node" style="background:#1a1a1a;">
+        LISTEN<span class="ids">T1 · T2 · T3</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node" style="background:#444;">
+        EVALUATE<span class="ids">T4 · T5 · T6</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node" style="background:#777;">
+        ACTIVATE<span class="ids">T7 · T8 · T9</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node" style="background:#aaa;color:#fff;">
+        NORMALIZE<span class="ids">T10 · T11 · T12</span>
+      </div>
+      <div class="flow-arrow">↕</div>
+      <div class="flow-node iso">
+        ISO 42001<span class="ids">T13 transversal</span>
+      </div>
+    </div>
+
+    <p>T1-T3 generan los datos primarios de la organización. T4-T6 los consumen para priorizar. T7-T9 consumen L+E para activar. T10-T12 orquestan el ciclo vivo consumiendo todo lo anterior. T13 es la capa transversal: alimenta el AIMS a lo largo de todo el sprint, no al final.</p>
+
+    <p>El resultado no es un informe de consultoría. Es un <strong>sistema vivo de gestión de IA</strong> que el cliente puede operar de forma autónoma una vez completado el sprint, con o sin Alpha presente.</p>
+  </div>
+
+
+  <!-- SECCIÓN 5: OUTPUTS FINALES -->
+  <div class="section">
+    <div class="section-title"><span class="num">05</span> Qué tiene el cliente al completar el sprint</div>
+
+    <ul class="output-list">
+      <li><span class="check">01</span> Diagnóstico de madurez IA validado con datos reales, no con percepción del equipo directivo.</li>
+      <li><span class="check">02</span> Mapa completo de stakeholders clasificados por arquetipo de adopción, con plan de comunicación segmentado.</li>
+      <li><span class="check">03</span> Cartera de casos de uso IA priorizada por impacto, readiness y riesgo — con argumento financiero defendible.</li>
+      <li><span class="check">04</span> Roadmap ejecutable de 6 meses con quick wins instrumentados (valor visible en las primeras 4 semanas).</li>
+      <li><span class="check">05</span> Dashboard de valor IA operativo: el CIO puede mostrar ROI en tiempo real ante el CEO y el CFO.</li>
+      <li><span class="check">06</span> Sistema operativo post-sprint: rituales, backlog y cadencia para mantener la inercia sin consultor externo.</li>
+      <li><span class="check">07</span> AIMS (~78% completo) listo para proceso de certificación ISO/IEC 42001:2023 con cualquier organismo acreditado.</li>
+    </ul>
+  </div>
+
+
+  <!-- FOOTER -->
+  <div class="doc-footer">
+    <div>Alpha Consulting Solutions S.L. · carlos.sanchez@consultoriaalpha.com</div>
+    <div>L.E.A.N. AI System Enterprise · Uso interno / Sales enablement · Abril 2026</div>
+  </div>
+
+</div>
+</body>
+</html>
