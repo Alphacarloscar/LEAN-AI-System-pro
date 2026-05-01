@@ -21,6 +21,7 @@ import { T5View }                               from '@/modules/T5_AITaxonomyCan
 import { T6View }                               from '@/modules/T6_RiskGovernance'
 import { T7View }                               from '@/modules/T7_AdoptionHeatmap'
 import { T8View }                               from '@/modules/T8_CommunicationMap'
+import { T9View }                               from '@/modules/T9_AIRoadmap'
 import { CompanyProfileView }                   from '@/modules/CompanyProfile'
 import {
   DEMO_SCENARIOS,
@@ -205,6 +206,7 @@ function DashboardView() {
     if (tool.code === 'T6') navigate('/t6')
     if (tool.code === 'T7') navigate('/t7')
     if (tool.code === 'T8') navigate('/t8')
+    if (tool.code === 'T9') navigate('/t9')
   }
 
   return (
@@ -334,6 +336,14 @@ function T8RouteView() {
   return <T8View companyName={scenario.company.name} onBack={() => navigate('/')} />
 }
 
+// ── T9 route wrapper ──────────────────────────────────────────
+
+function T9RouteView() {
+  const { scenario } = useDemoContext()
+  const navigate     = useNavigate()
+  return <T9View companyName={scenario.company.name} onBack={() => navigate('/')} />
+}
+
 // ── App root ──────────────────────────────────────────────────
 
 export default function App() {
@@ -368,6 +378,7 @@ export default function App() {
           <Route path="t6"             element={<T6RouteView />} />
           <Route path="t7"             element={<T7RouteView />} />
           <Route path="t8"             element={<T8RouteView />} />
+          <Route path="t9"             element={<T9RouteView />} />
         </Route>
 
         {/* Fallback */}
