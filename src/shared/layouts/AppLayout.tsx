@@ -13,6 +13,7 @@
 
 import { Outlet, useOutletContext, useNavigate } from 'react-router-dom'
 import { AppSidebar }                            from '@/shared/components/AppSidebar'
+import { AlphaLogo }                             from '@/shared/components/AlphaLogo'
 import { useDarkMode }                           from '@/shared/hooks/useDarkMode'
 import { useAuthStore }                          from '@/modules/Auth'
 import type { LeanPhase }                        from '@/shared/components/PhaseRoadmap'
@@ -59,20 +60,38 @@ function DarkModeToggle({ dark, onToggle }: { dark: boolean; onToggle: () => voi
   )
 }
 
-// ── Logo placeholder ──────────────────────────────────────────
-function LogoSlot({ alt, align = 'left' }: { alt: string; align?: 'left' | 'right' }) {
+// AlphaLogo importado desde @/shared/components/AlphaLogo
+
+// ── Slot logo cliente ─────────────────────────────────────────
+// Sin dashed border — no llama la atención en demo.
+// Sustituir por <img src={clientLogoUrl} alt={clientName} className="h-7 object-contain" />
+// cuando haya logo del cliente disponible.
+function ClientLogoSlot({ dark }: { dark?: boolean }) {
   return (
-    <div className={[
-      'flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-dashed',
-      'border-black/20 dark:border-white/15 text-[10px] font-mono text-black/30 dark:text-white/25 select-none',
-      align === 'right' ? 'flex-row-reverse' : '',
-    ].join(' ')}>
-      <svg className="h-3.5 w-3.5 opacity-50" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <rect x="1" y="3" width="14" height="10" rx="1.5" />
-        <circle cx="5.5" cy="7" r="1.5" />
-        <path d="M1 11l4-3 3 2.5 3-3 4 3.5" />
+    <div
+      className="flex items-center gap-1.5 px-2.5 py-1 rounded-md select-none"
+      style={{
+        background: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+      }}
+    >
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke={dark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)'}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      >
+        <rect x="2" y="4" width="12" height="9" rx="1.5" />
+        <path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1" />
       </svg>
-      {alt}
+      <span
+        className="text-[9px] font-medium tracking-wide uppercase"
+        style={{ color: dark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.22)' }}
+      >
+        Cliente
+      </span>
     </div>
   )
 }
@@ -122,14 +141,14 @@ export function AppLayout({ phases }: AppLayoutProps) {
           ? 'bg-gray-950/90 border-white/8'
           : 'bg-white/90 border-black/6',
       ].join(' ')}>
-        <LogoSlot alt="Logo Alpha" align="left" />
+        <AlphaLogo dark={dark} />
         <span className="text-[10px] font-mono uppercase tracking-widest text-black/25 dark:text-white/25">
           L.E.A.N. AI System
         </span>
         <div className="flex items-center gap-3">
           <LogoutButton dark={dark} />
           <DarkModeToggle dark={dark} onToggle={toggle} />
-          <LogoSlot alt="Logo Cliente" align="right" />
+          <ClientLogoSlot dark={dark} />
         </div>
       </header>
 

@@ -262,7 +262,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   // Mientras se comprueba la sesión de Supabase no redirigimos
   if (isInitializing) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <svg className="animate-spin h-6 w-6 text-[#0D1B2A]" viewBox="0 0 24 24" fill="none">
+      <svg className="animate-spin h-6 w-6 text-navy" viewBox="0 0 24 24" fill="none">
         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
       </svg>

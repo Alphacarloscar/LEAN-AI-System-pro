@@ -9,26 +9,7 @@ import { useState, useEffect, FormEvent } from 'react'
 import { useNavigate }                    from 'react-router-dom'
 import { useAuthStore }                   from './store'
 import { supabase }                       from '@/lib/supabase'
-
-// ── Icono L.E.A.N. ───────────────────────────────────────────
-function LeanLogo() {
-  return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="h-12 w-12 rounded-xl bg-[#0D1B2A] flex items-center justify-center shadow-lg">
-        <span className="text-white font-bold text-xl tracking-tight select-none">α</span>
-      </div>
-      <div className="text-center">
-        <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-gray-400">
-          Alpha Consulting Solutions
-        </p>
-        <h1 className="text-xl font-semibold text-gray-900 mt-0.5">
-          L.E.A.N. AI System
-        </h1>
-        <p className="text-xs text-gray-400 mt-0.5">Enterprise Edition</p>
-      </div>
-    </div>
-  )
-}
+import { AlphaLogo }                      from '@/shared/components/AlphaLogo'
 
 // ── Campo de formulario ───────────────────────────────────────
 function Field({
@@ -127,7 +108,7 @@ export function LoginView() {
         <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(to right, rgba(13,27,42,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(13,27,42,0.03) 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
         <div className="relative w-full max-w-sm">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/60 px-8 py-10 space-y-8">
-            <LeanLogo />
+            <AlphaLogo size="lg" />
             {recOk ? (
               <div className="text-center space-y-2">
                 <p className="text-sm font-semibold text-green-600">✓ Contraseña actualizada</p>
@@ -173,7 +154,7 @@ export function LoginView() {
       <div className="relative w-full max-w-sm">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/60 px-8 py-10 space-y-8">
 
-          <LeanLogo />
+          <AlphaLogo size="lg" />
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Field
