@@ -6,9 +6,9 @@
 // Sprint 3+: leer/escribir desde Supabase tabla `value_stream`.
 // ============================================================
 
-import { create }           from 'zustand'
-import { persist }          from 'zustand/middleware'
-import type { ValueStream } from './types'
+import { create }                        from 'zustand'
+import { persist }                       from 'zustand/middleware'
+import type { ValueStream, ProcessStage } from './types'
 
 // ── Demo data — 7 procesos en 5 departamentos ─────────────────
 // Distribución realista para el patrón 'vendor-sprawl'.
@@ -36,6 +36,34 @@ const DEMO_PROCESSES: ValueStream[] = [
     opportunityLevel: 'critica',
     notes:            'Proceso con mayor volumen del departamento. 150+ tickets/semana. 40% resolución L1 podría automatizarse completamente.',
     createdAt:        new Date('2026-04-10').toISOString(),
+    stages: [
+      {
+        id: 'demo-s001-001', name: 'Recepción incidencia',
+        department: 'IT / Tecnología', responsible: 'Portal ITSM', system: 'ServiceDesk Pro',
+        procTimeHours: 0.08, waitTimeHours: 0.25, handoffs: 0, valueContribution: 'alta',
+      },
+      {
+        id: 'demo-s001-002', name: 'Clasificación L1',
+        department: 'IT / Tecnología', responsible: 'Técnico L1', system: 'ServiceDesk Pro',
+        procTimeHours: 0.25, waitTimeHours: 1.5, handoffs: 1, valueContribution: 'media',
+      },
+      {
+        id: 'demo-s001-003', name: 'Resolución L1',
+        department: 'IT / Tecnología', responsible: 'Técnico L1', system: 'ServiceDesk Pro',
+        procTimeHours: 0.75, waitTimeHours: 4, handoffs: 0, valueContribution: 'alta',
+      },
+      {
+        id: 'demo-s001-004', name: 'Escalado a L2',
+        department: 'IT / Tecnología', responsible: 'Gestor L2', system: 'JIRA',
+        procTimeHours: 0.25, waitTimeHours: 8, handoffs: 2, valueContribution: 'baja',
+        notes: 'Punto crítico — representa el 50%+ del ciclo total. Candidato prioritario a automatización.',
+      },
+      {
+        id: 'demo-s001-005', name: 'Cierre y registro',
+        department: 'IT / Tecnología', responsible: 'Técnico L1', system: 'ServiceDesk Pro',
+        procTimeHours: 0.17, waitTimeHours: 0.5, handoffs: 1, valueContribution: 'media',
+      },
+    ],
     interview: {
       answers:          { 1: 'A', 2: 'A', 3: 'A', 4: 'B', 5: 'A', 6: 'A' },
       automationScore:  4.00,
@@ -179,6 +207,29 @@ const DEMO_PROCESSES: ValueStream[] = [
     opportunityLevel: 'alta',
     notes:            'Proceso altamente repetitivo. Susana preocupada por impacto en su equipo de analistas. Oportunidad de demostrar que IA amplifica, no reemplaza.',
     createdAt:        new Date('2026-04-11').toISOString(),
+    stages: [
+      {
+        id: 'demo-s004-001', name: 'Recepción y entrada',
+        department: 'Legal / Administración', responsible: 'Administrativo', system: 'Email / Escáner',
+        procTimeHours: 0.25, waitTimeHours: 2, handoffs: 0, valueContribution: 'media',
+      },
+      {
+        id: 'demo-s004-002', name: 'Clasificación manual',
+        department: 'Legal / Administración', responsible: 'Administrativo', system: 'SharePoint',
+        procTimeHours: 0.5, waitTimeHours: 3, handoffs: 1, valueContribution: 'baja',
+      },
+      {
+        id: 'demo-s004-003', name: 'Revisión legal',
+        department: 'Legal / Administración', responsible: 'Abogado interno', system: 'iManage',
+        procTimeHours: 2, waitTimeHours: 24, handoffs: 2, valueContribution: 'alta',
+        notes: 'Cuello de botella principal. 24h de espera por carga de trabajo legal. Alta prioridad para asistente IA de revisión contractual.',
+      },
+      {
+        id: 'demo-s004-004', name: 'Archivo y registro',
+        department: 'Legal / Administración', responsible: 'Administrativo', system: 'SharePoint',
+        procTimeHours: 0.25, waitTimeHours: 1, handoffs: 1, valueContribution: 'media',
+      },
+    ],
     interview: {
       answers:          { 1: 'A', 2: 'C', 3: 'B', 4: 'B', 5: 'B', 6: 'A' },
       automationScore:  4.00,
@@ -366,6 +417,11 @@ interface T3Store {
   addProcess:      (p: Omit<ValueStream, 'id' | 'createdAt'>) => void
   updateProcess:   (id: string, updates: Partial<Omit<ValueStream, 'id'>>) => void
   removeProcess:   (id: string) => void
+
+  /** Stage management — modifica stages dentro del proceso correspondiente */
+  addStage:    (processId: string, stage: Omit<ProcessStage, 'id'>) => void
+  updateStage: (processId: string, stageId: string, updates: Partial<Omit<ProcessStage, 'id'>>) => void
+  removeStage: (processId: string, stageId: string) => void
 }
 
 export const useT3Store = create<T3Store>()(
@@ -395,6 +451,46 @@ export const useT3Store = create<T3Store>()(
       removeProcess: (id) =>
         set((state) => ({
           processes: state.processes.filter((p) => p.id !== id),
+        })),
+
+      // ── Stage management ────────────────────────────────────────
+
+      addStage: (processId, stage) =>
+        set((state) => ({
+          processes: state.processes.map((p) =>
+            p.id !== processId ? p : {
+              ...p,
+              stages: [
+                ...(p.stages ?? []),
+                {
+                  ...stage,
+                  id: `st-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+                },
+              ],
+            }
+          ),
+        })),
+
+      updateStage: (processId, stageId, updates) =>
+        set((state) => ({
+          processes: state.processes.map((p) =>
+            p.id !== processId ? p : {
+              ...p,
+              stages: (p.stages ?? []).map((s) =>
+                s.id !== stageId ? s : { ...s, ...updates }
+              ),
+            }
+          ),
+        })),
+
+      removeStage: (processId, stageId) =>
+        set((state) => ({
+          processes: state.processes.map((p) =>
+            p.id !== processId ? p : {
+              ...p,
+              stages: (p.stages ?? []).filter((s) => s.id !== stageId),
+            }
+          ),
         })),
     }),
     {

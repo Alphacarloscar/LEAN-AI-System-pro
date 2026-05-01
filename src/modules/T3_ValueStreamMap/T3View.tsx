@@ -22,6 +22,7 @@ import {
   PHASE_CONFIG,
 } from './constants'
 import { ProcessInterviewModal }     from './components/ProcessInterviewModal'
+import { StagesTab }                 from './components/StagesTab'
 import type {
   ValueStream, AICategoryCode, OrgReadinessLevel,
   ProcessPhase,
@@ -839,34 +840,12 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
           </div>
         )}
 
-        {/* ── TAB: ETAPAS (Sprint 3+) ──────────────────────── */}
+        {/* ── TAB: ETAPAS ──────────────────────────────────── */}
         {tab === 'etapas' && (
-          <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
-            <div className="h-14 w-14 rounded-3xl bg-navy/5 dark:bg-navy/10 flex items-center
-              justify-center text-3xl">
-              ◎
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-1">
-                Etapas del proceso — Sprint 3
-              </p>
-              <p className="text-xs text-text-muted max-w-sm leading-relaxed">
-                El mapeado de etapas (VSM swimlane) con tiempos de proceso, espera, handoffs
-                y detección de cuellos de botella estará disponible en Sprint 3.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full
-              bg-navy/5 dark:bg-navy/10 border border-navy/10">
-              <span className="text-[10px] font-mono text-navy dark:text-info-soft uppercase tracking-widest">
-                Próximamente en Sprint 3
-              </span>
-            </div>
-            {process.stages && process.stages.length > 0 && (
-              <p className="text-xs text-text-subtle">
-                {process.stages.length} etapa{process.stages.length > 1 ? 's' : ''} definida{process.stages.length > 1 ? 's' : ''}
-              </p>
-            )}
-          </div>
+          <StagesTab
+            processId={process.id}
+            stages={process.stages ?? []}
+          />
         )}
       </div>
     </div>
