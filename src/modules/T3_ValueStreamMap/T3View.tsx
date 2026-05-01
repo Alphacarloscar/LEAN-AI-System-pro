@@ -23,6 +23,7 @@ import {
 } from './constants'
 import { ProcessInterviewModal }     from './components/ProcessInterviewModal'
 import { StagesTab }                 from './components/StagesTab'
+import { PhaseMiniMap }              from '@/shared/components/PhaseMiniMap'
 import type {
   ValueStream, AICategoryCode, OrgReadinessLevel,
   ProcessPhase,
@@ -919,12 +920,12 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
             ←
           </button>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-              {companyName} · Fase L · Listen
-            </p>
-            <h1 className="text-base font-semibold text-lean-black dark:text-gray-100">
-              T3 — Value Stream Map
-            </h1>
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-info-soft uppercase tracking-wider">T3</span>
+              <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100">Value Stream Map</h1>
+              <PhaseMiniMap phaseId="listen" toolCode="T3" />
+            </div>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">{companyName}</p>
           </div>
 
           {/* KPI strip */}

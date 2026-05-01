@@ -18,6 +18,7 @@ import {
 } from './constants'
 import type { ISO42001Status } from './types'
 import type { AIActRiskLevel } from '@/modules/T4_UseCasePriorityBoard/types'
+import { PhaseMiniMap }        from '@/shared/components/PhaseMiniMap'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -631,7 +632,10 @@ export function T6View({
                 Risk &amp; Governance
               </h1>
             </div>
-            <p className="text-xs text-text-subtle">{companyName} · Fase Evaluate</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <p className="text-xs text-text-subtle">{companyName}</p>
+              <PhaseMiniMap phaseId="evaluate" toolCode="T6" />
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">

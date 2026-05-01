@@ -81,6 +81,56 @@
 
 ---
 
+### ✅ V-01c (rev2) | Logo AC — overlap corregido, fiel al original
+**Fecha:** 2026-05-01
+**Severidad:** 🔴 Bloqueante
+
+**Problema:** Primera implementación SVG del logo tenía overlap superficial (C empezaba en x=72, overlap ≈ 17px). El logo oficial muestra la "A" entrando profundamente en la apertura de la "C" (overlap ≈ 50% del ancho de A).
+
+**Archivos modificados:**
+| Archivo | Cambio |
+|---------|--------|
+| `src/shared/components/AlphaLogo.tsx` | viewBox ajustado a `"0 0 185 148"`. C: `x=53` (antes x=72). Overlap: 53px (antes ~17px). "ALPHA CONSULTING": `x=92 y=81 letterSpacing=2.8` (antes 3.8). |
+
+**Resultado compilación:** ✅ 0 errores TypeScript
+
+---
+
+### ✅ U-01 | Hilo conductor metodológico en T1–T9 (PhaseMiniMap)
+**Fecha:** 2026-05-01
+**Severidad:** 🔴 Bloqueante para demo (sin él, el cliente no sabe en qué fase está)
+
+**Problema:** Los headers de T1–T9 mostraban chips de texto inconsistentes ("Fase Listen · Semanas 1–3", "Fase E · Enable" [incorrecto], "Fase L · Listen" [incorrecto para T3], nada en T7/T8/T9). No había indicador visual de posición en la metodología L.E.A.N. de 6 fases.
+
+**Solución:** Componente `PhaseMiniMap` con 6 nodos L–E–A–N–I–∞ conectados por líneas. Estado visual por posición:
+- Activa → navy filled + glow
+- Anteriores → navy/10 sutil (progreso completado)
+- Siguientes → gris muy sutil
+
+**Archivos modificados:**
+| Archivo | Cambio |
+|---------|--------|
+| `src/shared/components/PhaseMiniMap.tsx` | **NUEVO** — componente compartido. Props: `phaseId`, `toolCode`, `dark`. Estático, sin dependencias de contexto. |
+| `src/modules/T1_MaturityRadar/T1View.tsx` | Import + chip "Fase Listen" → `<PhaseMiniMap phaseId="listen" toolCode="T1" />` |
+| `src/modules/T2_StakeholderMatrix/T2View.tsx` | Import + chip "Fase Listen" → `<PhaseMiniMap phaseId="listen" toolCode="T2" />` |
+| `src/modules/T3_ValueStreamMap/T3View.tsx` | Import + texto "Fase L · Listen" (incorrecto) → header refactorizado + `<PhaseMiniMap phaseId="listen" toolCode="T3" />` |
+| `src/modules/T4_UseCasePriorityBoard/T4View.tsx` | Import + texto "Fase E · Enable" (incorrecto) → header refactorizado + `<PhaseMiniMap phaseId="evaluate" toolCode="T4" />` |
+| `src/modules/T5_AITaxonomyCanvas/T5View.tsx` | Import + texto "Fase Evaluate" → `<PhaseMiniMap phaseId="evaluate" toolCode="T5" />` |
+| `src/modules/T6_RiskGovernance/T6View.tsx` | Import + texto "Fase Evaluate" → `<PhaseMiniMap phaseId="evaluate" toolCode="T6" />` |
+| `src/modules/T7_AdoptionHeatmap/T7View.tsx` | Import + fase ausente → `<PhaseMiniMap phaseId="activate" toolCode="T7" />` añadida |
+| `src/modules/T8_CommunicationMap/T8View.tsx` | Import + fase ausente → `<PhaseMiniMap phaseId="activate" toolCode="T8" />` añadida |
+| `src/modules/T9_AIRoadmap/T9View.tsx` | Import + fase ausente → header refactorizado + `<PhaseMiniMap phaseId="activate" toolCode="T9" />` |
+
+**Bugs corregidos de paso:**
+- T3: "Fase L · Listen" → correcto con PhaseMiniMap
+- T4: "Fase E · Enable" → corregido a "evaluate"
+- T7: "Fase L · Listen" (copiado de T1) → corregido a "activate"
+- T8/T9: sin fase → ahora tienen indicador correcto
+
+**Resultado compilación:** ✅ 0 errores TypeScript
+
+---
+
 ## BLOQUE B — Importantes (pendiente)
 
 - [ ] U-01 — Añadir hilo conductor metodológico (breadcrumb/indicador de fase) en T1–T9

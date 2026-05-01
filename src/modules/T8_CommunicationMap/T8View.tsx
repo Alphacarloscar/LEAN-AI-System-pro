@@ -17,6 +17,7 @@ import { useState, useMemo } from 'react'
 import { useT2Store }        from '@/modules/T2_StakeholderMatrix/store'
 import { ARCHETYPE_CONFIG }  from '@/modules/T2_StakeholderMatrix/constants'
 import { useT4Store }        from '@/modules/T4_UseCasePriorityBoard/store'
+import { PhaseMiniMap }      from '@/shared/components/PhaseMiniMap'
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from '@/modules/T2_StakeholderMatrix/types'
 import type { CommAction, CommPhase, CommType, CommChannel, DeptKit, MaterialTemplate } from './types'
 
@@ -1066,7 +1067,10 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
               <h1 className="text-lg font-semibold text-lean-black dark:text-gray-100 leading-tight">
                 Communication Map
               </h1>
-              <p className="text-xs text-text-muted">{companyName} · Plan prescriptivo de comunicación</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-xs text-text-muted">{companyName} · Plan de comunicación</p>
+                <PhaseMiniMap phaseId="activate" toolCode="T8" />
+              </div>
             </div>
           </div>
         </div>

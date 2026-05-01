@@ -21,6 +21,7 @@ import { countScoredSubdimensions, computeOverallScore } from './types'
 import { DimensionCard }                        from './components/DimensionCard'
 import { T1RadarPanel }                         from './components/T1RadarPanel'
 import { T1ExecutiveOutput }                    from './components/T1ExecutiveOutput'
+import { PhaseMiniMap }                         from '@/shared/components/PhaseMiniMap'
 import type { IntervieweeAggregate }            from './components/T1ExecutiveOutput'
 
 interface T1ViewProps {
@@ -352,9 +353,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
             <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100 truncate">
               AI Readiness Assessment
             </h1>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-gray-800 text-text-muted shrink-0">
-              Fase Listen · Semanas 1–3
-            </span>
+            <PhaseMiniMap phaseId="listen" toolCode="T1" />
           </div>
 
           {/* Progreso + score */}

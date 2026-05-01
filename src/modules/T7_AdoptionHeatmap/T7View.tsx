@@ -14,6 +14,7 @@
 import { useState, useMemo } from 'react'
 import { useT2Store }        from '@/modules/T2_StakeholderMatrix/store'
 import { ARCHETYPE_CONFIG }  from '@/modules/T2_StakeholderMatrix/constants'
+import { PhaseMiniMap }      from '@/shared/components/PhaseMiniMap'
 import type {
   ArchetypeCode,
   ResistanceLevel,
@@ -915,7 +916,10 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
               <h1 className="text-lg font-semibold text-lean-black dark:text-gray-100 leading-tight">
                 Adoption Heatmap
               </h1>
-              <p className="text-xs text-text-muted">{companyName} · Curva de difusión Rogers</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-xs text-text-muted">{companyName} · Curva de difusión Rogers</p>
+                <PhaseMiniMap phaseId="activate" toolCode="T7" />
+              </div>
             </div>
           </div>
         </div>

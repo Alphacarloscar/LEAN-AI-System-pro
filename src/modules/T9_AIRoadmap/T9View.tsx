@@ -17,6 +17,7 @@
 import { useState }     from 'react'
 import { useT4Store }   from '@/modules/T4_UseCasePriorityBoard/store'
 import { useT9Store }   from './store'
+import { PhaseMiniMap } from '@/shared/components/PhaseMiniMap'
 import type { AIActRiskLevel, UseCase } from '@/modules/T4_UseCasePriorityBoard/types'
 import type {
   AddFreeForm,
@@ -566,12 +567,12 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
             </svg>
             Volver al dashboard
           </button>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-            {companyName} · Sprint L.E.A.N.
-          </p>
-          <h1 className="text-xl font-semibold text-lean-black dark:text-gray-100 mt-0.5">
-            Roadmap IA — 6 meses
-          </h1>
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-info-soft uppercase tracking-wider">T9</span>
+            <h1 className="text-base font-semibold text-lean-black dark:text-gray-100">Roadmap IA — 6 meses</h1>
+            <PhaseMiniMap phaseId="activate" toolCode="T9" />
+          </div>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">{companyName} · Sprint L.E.A.N.</p>
         </div>
         <div className="flex items-center gap-2">
           <button className="px-4 py-1.5 text-xs border border-border dark:border-white/10 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-text-muted transition-colors">

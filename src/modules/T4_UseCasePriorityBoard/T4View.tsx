@@ -34,6 +34,7 @@ import {
   GO_NOGO_THRESHOLDS,
 } from './constants'
 import { ImportFromT3Modal } from './components/ImportFromT3Modal'
+import { PhaseMiniMap }     from '@/shared/components/PhaseMiniMap'
 import type {
   UseCase, UseCaseStatus, UseCaseScores, UseCaseEconomics,
   AIActScope, AIActClassification,
@@ -1898,12 +1899,12 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
             ←
           </button>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-              {companyName} · Fase E · Enable
-            </p>
-            <h1 className="text-base font-semibold text-lean-black dark:text-gray-100">
-              T4 — Use Case Priority Board
-            </h1>
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-info-soft uppercase tracking-wider">T4</span>
+              <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100">Use Case Priority Board</h1>
+              <PhaseMiniMap phaseId="evaluate" toolCode="T4" />
+            </div>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">{companyName}</p>
           </div>
           <button
             onClick={() => setShowImport(true)}

@@ -1,127 +1,131 @@
 // ============================================================
 // AlphaLogo — Logo oficial de Alpha Consulting Solutions
 //
-// Monograma "AC": A en primer plano, C en segundo plano con overlap.
-// Texto "ALPHA CONSULTING" centrado en peso light con tracking.
+// Monograma "AC":
+//   · C pintada primero (segundo plano)
+//   · A pintada encima (primer plano)
+//   · La "A" entra profundamente dentro de la apertura de la "C"
+//     (overlap ≈ 50% del ancho de la A — fiel al logo original)
+//   · "ALPHA CONSULTING" en peso light, centrado entre ambas letras
 //
 // Usado en:
 //   · AppLayout (header sticky)  → size="sm"
 //   · LoginView (hero centrado)  → size="lg"
 //
-// Swap a archivo real (cuando esté disponible como SVG/PNG):
+// ── Swap a archivo real ──────────────────────────────────────
+// Cuando esté disponible el SVG/PNG oficial, sustituir el
+// contenido de <ACMark> por:
 //   <img src="/logo-alpha.svg" alt="Alpha Consulting Solutions"
-//        className={size === 'sm' ? 'h-7' : 'h-16'} />
+//        style={{ width, height, objectFit: 'contain' }} />
 // ============================================================
 
 interface AlphaLogoProps {
-  /** 'sm' → header compacto. 'lg' → login hero. */
   size?: 'sm' | 'lg'
-  /** Forzar variante oscura: blanco sobre fondo oscuro. */
   dark?: boolean
 }
 
-// ── Monograma AC — SVG inline ──────────────────────────────────
+// ── ACMark SVG ─────────────────────────────────────────────────
 //
-// El logo usa letras en peso Black con overlap:
-//   1. "C" se pinta primero (atrás)
-//   2. "A" se pinta después (delante, tapando el overlap)
+// viewBox calibrado para el overlap correcto:
+//   A starts x=10, extends ~96px → ends x=106
+//   C starts x=53, extends ~92px → ends x=145
+//   Overlap: x=53–106 = 53px (≈55% del ancho de A)
 //
-// viewBox calibrado para que las letras ocupen el espacio natural
-// sin padding innecesario.
+// El overlap entre letras se ajustará automáticamente al
+// font-metrics reales de Inter; si Inter no está cargado,
+// fallback a Arial (métricas similares).
 //
 function ACMark({ color }: { color: string }) {
   return (
     <svg
-      viewBox="0 0 195 138"
-      fill="none"
+      viewBox="0 0 185 148"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
-      style={{ display: 'block', overflow: 'visible' }}
+      style={{ display: 'block', width: '100%', height: '100%' }}
     >
-      {/* ── C en segundo plano ── */}
+      {/* ── C — segundo plano (painted first) ── */}
       <text
-        x="72"
-        y="126"
+        x="53"
+        y="134"
         fontFamily="'Inter', 'Arial', Helvetica, sans-serif"
-        fontSize="126"
+        fontSize="132"
         fontWeight="900"
         fill={color}
-        style={{ fontVariantNumeric: 'tabular-nums' }}
-      >
-        C
-      </text>
+      >C</text>
 
-      {/* ── A en primer plano ── */}
+      {/* ── A — primer plano (painted on top) ── */}
       <text
-        x="2"
-        y="126"
+        x="10"
+        y="134"
         fontFamily="'Inter', 'Arial', Helvetica, sans-serif"
-        fontSize="126"
+        fontSize="132"
         fontWeight="900"
         fill={color}
-        style={{ fontVariantNumeric: 'tabular-nums' }}
-      >
-        A
-      </text>
+      >A</text>
 
-      {/* ── ALPHA CONSULTING — centrado, peso light ── */}
+      {/* ── ALPHA CONSULTING — light, tracked, centrado ── */}
       <text
-        x="97"
-        y="78"
+        x="92"
+        y="81"
         textAnchor="middle"
         fontFamily="'Inter', 'Arial', Helvetica, sans-serif"
-        fontSize="12.5"
+        fontSize="12"
         fontWeight="300"
-        letterSpacing="3.8"
+        letterSpacing="2.8"
         fill={color}
-      >
-        ALPHA CONSULTING
-      </text>
+      >ALPHA CONSULTING</text>
     </svg>
   )
 }
 
-// ── Componente público ──────────────────────────────────────────
+// ── Componente exportado ────────────────────────────────────────
 export function AlphaLogo({ size = 'sm', dark = false }: AlphaLogoProps) {
-  // Claro: negro (matching el logo blanco oficial).
-  // Oscuro: blanco (matching el logo negro oficial).
-  const logoColor = dark ? '#ffffff' : '#0D0D0D'
+  // Light mode → negro del logo oficial (#0D0D0D)
+  // Dark mode  → blanco del logo oficial (#FFFFFF)
+  const logoColor = dark ? '#FFFFFF' : '#0D0D0D'
 
   if (size === 'sm') {
-    // Header: monograma compacto, ~48px de ancho
     return (
       <div
-        style={{ width: 48, height: 34, flexShrink: 0 }}
         aria-label="Alpha Consulting Solutions"
         title="Alpha Consulting Solutions"
+        style={{ width: 56, height: 45, flexShrink: 0 }}
       >
         <ACMark color={logoColor} />
       </div>
     )
   }
 
-  // Login hero: logo grande + nombre del producto debajo
+  // Login hero — logo grande + nombre del producto
   return (
-    <div className="flex flex-col items-center gap-3 select-none">
-      {/* Logo AC a tamaño prominente */}
+    <div
+      className="flex flex-col items-center select-none"
+      style={{ gap: 16 }}
+    >
       <div
-        style={{ width: 176, height: 124 }}
         aria-label="Alpha Consulting Solutions"
+        style={{ width: 185, height: 148 }}
       >
         <ACMark color={logoColor} />
       </div>
 
-      {/* Nombre del producto */}
-      <div className="text-center leading-none space-y-0.5">
+      <div className="text-center" style={{ lineHeight: 1 }}>
         <p
-          className="text-xl font-semibold tracking-tight"
-          style={{ color: dark ? '#f1f5f9' : '#1B2A4E' }}
+          style={{
+            fontSize: 20,
+            fontWeight: 600,
+            letterSpacing: '-0.02em',
+            color: dark ? '#f1f5f9' : '#1B2A4E',
+            marginBottom: 4,
+          }}
         >
           L.E.A.N. AI System
         </p>
         <p
-          className="text-xs"
-          style={{ color: dark ? '#64748b' : '#9ca3af' }}
+          style={{
+            fontSize: 11,
+            color: dark ? '#64748b' : '#9ca3af',
+          }}
         >
           Enterprise Edition
         </p>

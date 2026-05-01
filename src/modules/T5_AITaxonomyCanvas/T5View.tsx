@@ -11,9 +11,10 @@ import {
   T5_MATURITY_CONFIG,
   computeT5Recommendation,
 } from './constants'
-import { useT5Store }  from './store'
-import { useT3Store }  from '@/modules/T3_ValueStreamMap'
-import { useT4Store }  from '@/modules/T4_UseCasePriorityBoard'
+import { useT5Store }    from './store'
+import { useT3Store }    from '@/modules/T3_ValueStreamMap'
+import { useT4Store }    from '@/modules/T4_UseCasePriorityBoard'
+import { PhaseMiniMap }  from '@/shared/components/PhaseMiniMap'
 
 // ── Collision resolution ──────────────────────────────────────
 // Reference container dimensions for physics calculations
@@ -1028,7 +1029,10 @@ export function T5View({
                 AI Domain Architecture Canvas
               </h1>
             </div>
-            <p className="text-xs text-text-subtle">{companyName} · Fase Evaluate</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <p className="text-xs text-text-subtle">{companyName}</p>
+              <PhaseMiniMap phaseId="evaluate" toolCode="T5" />
+            </div>
           </div>
         </div>
         <MaturityBadge level={canvas.maturityLevel} />

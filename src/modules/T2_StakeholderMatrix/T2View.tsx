@@ -21,6 +21,7 @@ import { ARCHETYPE_CONFIG, RESISTANCE_CONFIG } from './constants'
 import { InterviewModal }                from './components/InterviewModal'
 import { StakeholderQuadrantChart }      from './components/StakeholderQuadrantChart'
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from './types'
+import { PhaseMiniMap }                  from '@/shared/components/PhaseMiniMap'
 
 // Colores hex por arquetipo (para SVG — mirrors StakeholderQuadrantChart)
 const ARCH_HEX: Record<ArchetypeCode, string> = {
@@ -801,9 +802,7 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
             <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100 truncate">
               AI Stakeholder Matrix
             </h1>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-gray-800 text-text-muted shrink-0">
-              Fase Listen · Semanas 1–3
-            </span>
+            <PhaseMiniMap phaseId="listen" toolCode="T2" />
           </div>
 
           <button
