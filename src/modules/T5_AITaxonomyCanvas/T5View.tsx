@@ -450,7 +450,7 @@ function PortfolioMatrix({
             <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 pointer-events-none">
               <div className="bg-warning-light/45 border-r border-b border-border/30" />
               <div className="bg-success-light/45 border-b border-border/30" />
-              <div className="bg-gray-100/80 border-r border-border/30 dark:bg-gray-800/40" />
+              <div className="bg-gray-100/80 border-r border-border/30 dark:bg-gray-400/15" />
               <div className="bg-info-light/20" />
             </div>
 
@@ -991,7 +991,7 @@ function EditModal({
           </button>
           <button
             onClick={() => onSave(scores)}
-            className="px-4 py-2 rounded-xl bg-navy text-white text-sm font-medium hover:bg-navy/90 transition-colors"
+            className="px-4 py-2 rounded-xl bg-navy-metallic text-white text-sm font-medium hover:bg-navy-metallic-hover transition-colors shadow-sm"
           >
             Guardar evaluación
           </button>

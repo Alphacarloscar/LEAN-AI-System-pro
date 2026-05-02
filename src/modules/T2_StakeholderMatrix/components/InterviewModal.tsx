@@ -142,7 +142,7 @@ function StakeholderFormPhase({
         className={[
           'w-full py-2.5 rounded-lg text-xs font-semibold transition-all duration-150',
           canContinue
-            ? 'bg-navy text-white hover:bg-[#1a2e44] shadow-sm active:scale-[0.98]'
+            ? 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98]'
             : 'bg-gray-100 text-gray-300 cursor-not-allowed',
         ].join(' ')}
       >
@@ -350,7 +350,7 @@ function ResultPhase({
 
       <button
         onClick={() => onConfirm(archetype, resistance, isOverride)}
-        className="w-full py-2.5 rounded-lg text-xs font-semibold bg-navy text-white hover:bg-[#1a2e44] shadow-sm active:scale-[0.98] transition-all duration-150"
+        className="w-full py-2.5 rounded-lg text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98] transition-all duration-150"
       >
         Añadir a la matrix
       </button>

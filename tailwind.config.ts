@@ -85,12 +85,12 @@ const config: Config = {
         'silver-metallic':
           'linear-gradient(135deg, #E8E8EA 0%, #C0C0C5 50%, #A8A8AE 100%)',
         'navy-metallic':
-          'linear-gradient(135deg, #1B2A4E 0%, #0F1E3D 50%, #0A1530 100%)',
+          'linear-gradient(180deg, #3A5A9E 0%, #2B4580 18%, #1B2A4E 55%, #0F1E3D 100%)',
         // Variantes para hover / active
         'silver-metallic-hover':
           'linear-gradient(135deg, #D8D8DA 0%, #B0B0B5 50%, #989898 100%)',
         'navy-metallic-hover':
-          'linear-gradient(135deg, #243660 0%, #192848 50%, #101E3C 100%)',
+          'linear-gradient(180deg, #4A6AAE 0%, #3A5590 18%, #243660 55%, #192848 100%)',
       },
 
       // ─────────────────────────────────────────────────────────────

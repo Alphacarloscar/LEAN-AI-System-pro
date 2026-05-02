@@ -116,6 +116,19 @@ export function T1SpiderChart({ dimensions }: T1SpiderChartProps) {
       className="w-full h-full select-none"
       aria-label="Radar de madurez IA"
     >
+      <defs>
+        {/* Gradientes para los dots del radar — luz desde arriba-izquierda */}
+        <radialGradient id="spider-dot-light" cx="35%" cy="28%" r="70%" fx="35%" fy="28%">
+          <stop offset="0%"   stopColor="#6B7E9E" />
+          <stop offset="50%"  stopColor="#1B2A4E" />
+          <stop offset="100%" stopColor="#0D1B35" />
+        </radialGradient>
+        <radialGradient id="spider-dot-dark" cx="35%" cy="28%" r="70%" fx="35%" fy="28%">
+          <stop offset="0%"   stopColor="#D5E4F2" />
+          <stop offset="50%"  stopColor="#9BB5D9" />
+          <stop offset="100%" stopColor="#6A90C0" />
+        </radialGradient>
+      </defs>
       {/* ── Anillos de grilla ── */}
       {gridPts.map((pts, i) => (
         <polygon
@@ -190,8 +203,22 @@ export function T1SpiderChart({ dimensions }: T1SpiderChartProps) {
 
         return (
           <g key={i}>
-            {/* Dot */}
-            <circle cx={x.toFixed(2)} cy={y.toFixed(2)} r={3.5} fill={p.dot} />
+            {/* Halo suave — profundidad metálica */}
+            <circle cx={x.toFixed(2)} cy={y.toFixed(2)} r={7}
+              fill={p.dot} opacity={0.18} />
+            {/* Dot con gradiente radial esférico */}
+            <circle cx={x.toFixed(2)} cy={y.toFixed(2)} r={3.5}
+              fill={isDark ? 'url(#spider-dot-dark)' : 'url(#spider-dot-light)'}
+              stroke="rgba(255,255,255,0.70)"
+              strokeWidth={0.8} />
+            {/* Shine — punto de luz superior-izquierda */}
+            <ellipse
+              cx={(parseFloat(x.toFixed(2)) - 1.3).toFixed(2)}
+              cy={(parseFloat(y.toFixed(2)) - 1.3).toFixed(2)}
+              rx={1.4} ry={0.8}
+              fill="rgba(255,255,255,0.60)"
+              style={{ pointerEvents: 'none' }}
+            />
             {/* Score value */}
             <text
               x={lx.toFixed(2)}

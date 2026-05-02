@@ -475,7 +475,7 @@ function AddFreeItemForm({ form, onChange, onSave, onCancel }: AddFormProps) {
         <button
           onClick={onSave}
           disabled={!form.name.trim()}
-          className="px-4 py-1.5 text-xs bg-navy text-white rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
+          className="px-4 py-1.5 text-xs bg-navy-metallic text-white rounded-lg hover:bg-navy-metallic-hover disabled:opacity-40 transition-all shadow-sm"
         >
           Añadir al roadmap
         </button>
@@ -600,7 +600,7 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
           </button>
           <button
             onClick={() => { setShowAddForm(true) }}
-            className="px-4 py-1.5 text-xs bg-navy text-white rounded-lg hover:opacity-90 transition-opacity"
+            className="px-4 py-1.5 text-xs bg-navy-metallic text-white rounded-lg hover:bg-navy-metallic-hover transition-all shadow-sm"
           >
             + Añadir iniciativa
           </button>

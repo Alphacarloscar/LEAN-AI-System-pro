@@ -273,8 +273,8 @@ function StageModal({ processId, stage, onClose }: StageModalProps) {
             <button
               onClick={handleSave}
               disabled={!form.name.trim()}
-              className="px-4 py-2 rounded-xl text-xs font-medium bg-navy text-white
-                hover:bg-navy/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 rounded-xl text-xs font-medium bg-navy-metallic text-white
+                hover:bg-navy-metallic-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               {isEdit ? 'Guardar cambios' : 'Añadir etapa'}
             </button>
@@ -336,8 +336,8 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
         </div>
         <button
           onClick={() => setModalStage('new')}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-navy text-white
-            text-xs font-medium hover:bg-navy/90 transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-navy-metallic text-white
+            text-xs font-medium hover:bg-navy-metallic-hover transition-colors shadow-sm"
         >
           + Añadir primera etapa
         </button>
@@ -425,7 +425,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
           <button
             onClick={() => setModalStage('new')}
             className="ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-              bg-navy text-white text-[10px] font-medium hover:bg-navy/90 transition-colors"
+              bg-navy-metallic text-white text-[10px] font-medium hover:bg-navy-metallic-hover transition-colors shadow-sm"
           >
             + Etapa
           </button>

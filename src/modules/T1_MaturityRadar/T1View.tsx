@@ -184,7 +184,7 @@ function NewInterviewModal({ onClose, onSubmit }: NewInterviewModalProps) {
                     'py-2 rounded-lg text-xs font-semibold border transition-all duration-150',
                     form.type === t
                       ? t === 'it'
-                        ? 'bg-navy text-white border-navy shadow-sm'
+                        ? 'bg-navy-metallic text-white border-navy shadow-sm'
                         : 'bg-success-dark text-white border-success-dark shadow-sm'
                       : 'bg-white dark:bg-gray-800 text-text-muted border-border hover:border-gray-300',
                   ].join(' ')}
@@ -215,7 +215,7 @@ function NewInterviewModal({ onClose, onSubmit }: NewInterviewModalProps) {
               className={[
                 'flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
                 canSubmit
-                  ? 'bg-navy text-white hover:bg-[#1a2e44] shadow-sm active:scale-[0.98]'
+                  ? 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98]'
                   : 'bg-gray-100 text-gray-300 cursor-not-allowed',
               ].join(' ')}
             >
@@ -359,7 +359,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
           {/* Nueva entrevista — acceso directo desde header (U-04) */}
           <button
             onClick={() => setShowNewModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-navy text-white hover:bg-navy/80 transition-colors shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm shrink-0"
           >
             <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
               <path d="M8 2v12M2 8h12" />
@@ -434,7 +434,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
               <button
                 onClick={(e) => { e.stopPropagation(); setShowNewModal(true) }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold
-                  bg-navy text-white hover:bg-navy/80 transition-colors"
+                  bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm"
               >
                 <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <path d="M8 2v12M2 8h12" />
@@ -467,7 +467,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
                       className={[
                         'flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all duration-150',
                         isActive
-                          ? 'bg-navy text-white border-navy shadow-sm'
+                          ? 'bg-navy-metallic text-white border-navy shadow-sm'
                           : 'bg-white dark:bg-gray-900 border-border hover:border-navy/30 hover:bg-gray-50 dark:hover:bg-gray-800',
                       ].join(' ')}
                     >

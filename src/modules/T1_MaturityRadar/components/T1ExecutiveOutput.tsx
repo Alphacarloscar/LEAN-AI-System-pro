@@ -33,10 +33,10 @@ interface T1ExecutiveOutputProps {
 }
 
 // ── Colores IT / BIZ — tokens del design system ──────────────
-// IT  → navy  (#1B2A4E) — azul oscuro institucional
-// BIZ → warning-dark (#D4A85C) — ámbar/dorado, contraste claro vs navy
+// IT  → navy (#1B2A4E) light / info-soft (#9BB5D9) dark — contraste claro en ambos modos
+// BIZ → warning-dark (#D4A85C) — ámbar/dorado visible en light y dark
 
-const IT_BAR_CLASS  = 'bg-navy'
+const IT_BAR_CLASS  = 'bg-navy dark:bg-info-soft'
 const BIZ_BAR_CLASS = 'bg-warning-dark'
 const IT_TEXT_CLASS  = 'text-navy dark:text-info-soft'
 const BIZ_TEXT_CLASS = 'text-warning-dark'

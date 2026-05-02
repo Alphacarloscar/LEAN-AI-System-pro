@@ -335,7 +335,7 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
                   className={[
                     'px-5 py-2 rounded-xl text-xs font-semibold transition-all',
                     importCount > 0
-                      ? 'bg-navy text-white hover:bg-navy/80'
+                      ? 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm'
                       : 'bg-gray-200 dark:bg-gray-700 text-text-muted cursor-not-allowed',
                   ].join(' ')}
                 >
@@ -364,8 +364,8 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
             </div>
             <button
               onClick={onClose}
-              className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-navy text-white
-                hover:bg-navy/80 transition-colors"
+              className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-navy-metallic text-white
+                hover:bg-navy-metallic-hover transition-colors shadow-sm"
             >
               Ver el Priority Board
             </button>

@@ -235,9 +235,9 @@ function ProcessFormPhase({
         type="submit"
         disabled={!canContinue}
         className="w-full py-2.5 rounded-xl text-sm font-semibold text-white
-          bg-navy hover:bg-navy/80 disabled:bg-gray-200 disabled:text-gray-400
+          bg-navy-metallic hover:bg-navy-metallic-hover disabled:bg-gray-200 disabled:text-gray-400
           dark:disabled:bg-gray-800 dark:disabled:text-gray-600
-          transition-colors"
+          transition-colors shadow-sm"
       >
         Continuar con la entrevista →
       </button>
@@ -537,7 +537,7 @@ function ResultPhase({
         <button
           onClick={() => onConfirm(aiCategory, orgReadiness, manualOverride)}
           className="flex-[2] py-2.5 rounded-xl text-sm font-semibold text-white
-            bg-navy hover:bg-navy/80 transition-colors"
+            bg-navy-metallic hover:bg-navy-metallic-hover transition-colors shadow-sm"
         >
           Añadir proceso al mapa ✓
         </button>

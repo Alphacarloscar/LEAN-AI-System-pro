@@ -557,7 +557,7 @@ export function PolicyDownloadButton({ data }: PolicyDownloadButtonProps) {
               'flex items-center gap-2 px-4 py-2 rounded-xl text-white text-xs font-semibold transition-colors',
               error   ? 'bg-red-600 cursor-not-allowed opacity-70'
               : loading ? 'bg-navy/50 cursor-wait'
-              : 'bg-navy hover:bg-navy/90',
+              : 'bg-navy-metallic hover:bg-navy-metallic-hover shadow-sm',
             ].join(' ')}
           >
             {loading ? (

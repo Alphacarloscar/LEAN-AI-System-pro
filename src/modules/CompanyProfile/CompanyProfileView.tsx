@@ -317,7 +317,7 @@ export function CompanyProfileView() {
                 'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
                 savedFlash
                   ? 'bg-success-dark text-white'
-                  : 'bg-navy text-white hover:bg-navy-dark',
+                  : 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm',
               ].join(' ')}
             >
               {savedFlash ? (

@@ -319,7 +319,7 @@ function PriorityMatrix({
   const [hovered, setHovered] = useState<T4Hovered | null>(null)
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
     <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ display: 'block' }}>
       <defs>
         <clipPath id="t4matrix-clip">
@@ -710,8 +710,8 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
             </button>
             <button
               onClick={handleSave}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-navy text-white
-                hover:bg-navy/80 transition-colors"
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-navy-metallic text-white
+                hover:bg-navy-metallic-hover transition-colors shadow-sm"
             >
               Guardar
             </button>
@@ -1205,8 +1205,8 @@ function AIActClassificationModal({
           <button
             onClick={handleSave}
             disabled={!allAnswered}
-            className="px-4 py-2 rounded-xl bg-navy text-white text-sm font-medium
-              hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-xl bg-navy-metallic text-white text-sm font-medium
+              hover:bg-navy-metallic-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           >
             Guardar clasificación
           </button>
@@ -1438,8 +1438,8 @@ function UseCaseDetailPanel({
                     </button>
                     <button
                       onClick={handleSaveScores}
-                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-navy text-white
-                        hover:bg-navy/80 transition-colors"
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-navy-metallic text-white
+                        hover:bg-navy-metallic-hover transition-colors shadow-sm"
                     >
                       Guardar
                     </button>
@@ -1610,7 +1610,7 @@ function UseCaseDetailPanel({
                 </div>
                 <button
                   onClick={() => setShowAIActModal(true)}
-                  className="px-5 py-2.5 rounded-xl bg-navy text-white text-sm font-semibold hover:bg-navy/90 transition-colors"
+                  className="px-5 py-2.5 rounded-xl bg-navy-metallic text-white text-sm font-semibold hover:bg-navy-metallic-hover transition-colors shadow-sm"
                 >
                   Clasificar ahora
                 </button>

@@ -813,7 +813,7 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
 
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-navy text-white text-xs font-semibold hover:bg-[#1a2e44] shadow-sm active:scale-[0.98] transition-all duration-150 shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-navy-metallic text-white text-xs font-semibold hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98] transition-all duration-150 shrink-0"
           >
             <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M8 2v12M2 8h12" />

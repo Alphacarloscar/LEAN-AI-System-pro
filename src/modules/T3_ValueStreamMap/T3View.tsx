@@ -112,7 +112,7 @@ function HeroOpportunityMatrix({
   const [hovered, setHovered] = useState<T3Hovered | null>(null)
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
     <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ display: 'block' }}>
       <defs>
         <clipPath id="t3hero-clip">
@@ -269,6 +269,12 @@ function HeroCategoryDonut({
 
   const total = processes.length
 
+  const [donutHovered, setDonutHovered] = useState<{
+    leftPct: number; topPct: number
+    name: string; hex: string; catLabel: string
+    opportunity: number; readiness: number
+  } | null>(null)
+
   const catData = useMemo(() => CAT_ORDER
     .map((cat) => ({
       cat,
@@ -319,6 +325,7 @@ function HeroCategoryDonut({
   }
 
   return (
+    <div className="relative w-full">
     <svg viewBox={`0 0 ${VB} ${VB}`} width="100%" style={{ display: 'block', overflow: 'visible' }}
       className="text-lean-black dark:text-gray-100">
 
@@ -357,10 +364,14 @@ function HeroCategoryDonut({
           const radPct  = 0.15 + (opp / 4) * 0.70  // maps 0-4 → 15%-85% of ring width
           const dotR    = R_INNER + radPct * (R_OUTER - R_INNER)
           return {
-            id: p.id,
-            cx: CX + dotR * Math.cos(dotAng),
-            cy: CY + dotR * Math.sin(dotAng),
+            id:          p.id,
+            cx:          CX + dotR * Math.cos(dotAng),
+            cy:          CY + dotR * Math.sin(dotAng),
             hex,
+            name:        p.name,
+            catLabel:    cfg.label,
+            opportunity: opp,
+            readiness:   p.interview?.readinessScore ?? 0,
           }
         })
 
@@ -378,7 +389,18 @@ function HeroCategoryDonut({
               const isActive = dot.id === activeId
               return (
                 <g key={dot.id} style={{ cursor: 'pointer' }}
-                  onClick={() => onSelect(dot.id)}>
+                  onClick={() => onSelect(dot.id)}
+                  onMouseEnter={() => setDonutHovered({
+                    leftPct:     (dot.cx / VB) * 100,
+                    topPct:      (dot.cy / VB) * 100,
+                    name:        dot.name,
+                    hex:         dot.hex,
+                    catLabel:    dot.catLabel,
+                    opportunity: dot.opportunity,
+                    readiness:   dot.readiness,
+                  })}
+                  onMouseLeave={() => setDonutHovered(null)}
+                >
                   {/* Anillos de selección activa */}
                   {isActive && (
                     <>
@@ -450,6 +472,37 @@ function HeroCategoryDonut({
         {total}
       </text>
     </svg>
+
+    {/* Tooltip */}
+    {donutHovered && (
+      <div
+        className="pointer-events-none absolute z-50 bg-white dark:bg-gray-900 border border-border dark:border-white/10 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[148px]"
+        style={{
+          left:      `${donutHovered.leftPct}%`,
+          top:       `${donutHovered.topPct}%`,
+          transform: `translate(${donutHovered.leftPct > 60 ? 'calc(-100% - 8px)' : '10px'}, -50%)`,
+        }}
+      >
+        <p className="font-semibold text-lean-black dark:text-gray-100 mb-1 leading-tight truncate max-w-[160px]">
+          {donutHovered.name}
+        </p>
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: donutHovered.hex }} />
+          <span className="text-text-muted">{donutHovered.catLabel}</span>
+        </div>
+        <div className="space-y-0.5 text-text-muted">
+          <div className="flex justify-between gap-4">
+            <span>Oportunidad</span>
+            <span className="font-medium text-lean-black dark:text-gray-200">{donutHovered.opportunity}/4</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span>Readiness</span>
+            <span className="font-medium text-lean-black dark:text-gray-200">{donutHovered.readiness}/4</span>
+          </div>
+        </div>
+      </div>
+    )}
+    </div>
   )
 }
 
@@ -998,7 +1051,7 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
           <button
             onClick={() => setShowModal(true)}
             className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl
-              text-xs font-semibold bg-navy text-white hover:bg-navy/80 transition-colors"
+              text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm"
           >
             + Proceso
           </button>
