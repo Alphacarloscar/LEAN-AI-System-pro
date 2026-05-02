@@ -67,7 +67,7 @@ export function Modal({
       <div
         className={[
           'relative w-full rounded-lg bg-white shadow-xl animate-fade-in',
-          'dark:bg-gray-900',
+          'dark:bg-warm-800',
           sizeClasses[size],
         ].join(' ')}
         onClick={(e) => e.stopPropagation()}
@@ -75,13 +75,13 @@ export function Modal({
         {/* Header */}
         {title && (
           <div className="flex items-center justify-between px-6 py-4 shadow-line-bottom">
-            <h2 id="modal-title" className="text-base font-semibold text-lean-black dark:text-gray-100">
+            <h2 id="modal-title" className="text-base font-semibold text-lean-black dark:text-warm-50">
               {title}
             </h2>
             <button
               onClick={onClose}
               aria-label="Cerrar"
-              className="p-1 rounded text-text-muted hover:text-lean-black hover:bg-gray-100 transition-colors dark:hover:bg-gray-800 dark:hover:text-gray-200"
+              className="p-1 rounded text-text-muted hover:text-lean-black hover:bg-[#F0EDE8] transition-colors dark:hover:bg-warm-700 dark:hover:text-warm-50"
             >
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
@@ -97,7 +97,7 @@ export function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="px-6 py-4 shadow-line-top bg-surface dark:bg-gray-800/50 rounded-b-lg">
+          <div className="px-6 py-4 shadow-line-top bg-surface dark:bg-warm-800/50 rounded-b-lg">
             {footer}
           </div>
         )}

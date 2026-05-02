@@ -65,7 +65,7 @@ export function Tabs({
         base,
         'px-4 py-2.5 text-sm font-medium -mb-px border-b-2',
         isActive
-          ? 'border-navy text-navy dark:border-info-soft dark:text-info-soft'
+          ? 'border-navy text-navy dark:border-warm-300 dark:text-warm-100'
           : 'border-transparent text-text-muted hover:text-lean-black dark:hover:text-gray-100',
         tab.disabled ? 'opacity-40 pointer-events-none' : 'cursor-pointer',
       ].join(' ')
@@ -100,7 +100,7 @@ export function Tabs({
             <span className="flex items-center gap-1.5">
               {tab.label}
               {tab.badge !== undefined && (
-                <span className="inline-flex items-center justify-center h-4 min-w-[1rem] px-1 rounded-full bg-navy/10 text-navy text-[10px] font-semibold dark:bg-info-soft/20 dark:text-info-soft">
+                <span className="inline-flex items-center justify-center h-4 min-w-[1rem] px-1 rounded-full bg-navy/10 text-navy text-[10px] font-semibold dark:bg-warm-600/20 dark:text-warm-100">
                   {tab.badge}
                 </span>
               )}

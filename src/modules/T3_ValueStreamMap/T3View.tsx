@@ -34,7 +34,7 @@ import type {
 const CAT_HEX: Record<AICategoryCode, string> = {
   automatizacion_inteligente: '#6A90C0',
   automatizacion_rpa:         '#5FAF8A',
-  analitica_predictiva:       '#1B2A4E',
+  analitica_predictiva:       '#2A2822',  // warm charcoal (era navy #1B2A4E)
   asistente_ia:               '#D4A85C',
   optimizacion_proceso:       '#C06060',
   agéntica:                   '#7C3AED',
@@ -676,7 +676,7 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
   const impactColors = {
     bajo:  'bg-gray-100 dark:bg-gray-800 text-gray-500',
     medio: 'bg-info-light text-info-dark',
-    alto:  'bg-navy/10 dark:bg-navy/20 text-navy dark:text-info-soft',
+    alto:  'bg-navy/10 dark:bg-navy/20 text-navy dark:text-warm-100',
   }
 
   const INTERVIEW_LABELS: Record<number, string> = {
@@ -1027,7 +1027,7 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
-              <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-info-soft uppercase tracking-wider">T3</span>
+              <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">T3</span>
               <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100">Value Stream Map</h1>
               <PhaseMiniMap phaseId="listen" toolCode="T3" />
             </div>
@@ -1037,7 +1037,7 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
           {/* KPI strip */}
           <div className="hidden md:flex items-center gap-5">
             {[
-              { label: 'Opp crítica', value: totalCritica, color: 'text-navy dark:text-info-soft' },
+              { label: 'Opp crítica', value: totalCritica, color: 'text-navy dark:text-warm-100' },
               { label: 'Opp alta',    value: totalAlta,    color: 'text-info-dark' },
               { label: 'Total',       value: processes.length, color: 'text-lean-black dark:text-gray-100' },
             ].map(({ label, value, color }) => (

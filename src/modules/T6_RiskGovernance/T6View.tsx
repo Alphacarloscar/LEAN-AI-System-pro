@@ -45,13 +45,13 @@ function TabButton({
       className={[
         'px-4 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 flex items-center gap-1.5',
         active
-          ? 'border-navy/50 bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft shadow-sm'
+          ? 'border-navy/50 bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 shadow-sm'
           : 'border-border dark:border-white/10 text-text-muted hover:border-navy/30 hover:text-navy/70',
       ].join(' ')}
     >
       {label}
       {badge && (
-        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-navy/15 dark:bg-navy/30 text-navy dark:text-info-soft">
+        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-navy/15 dark:bg-navy/30 text-navy dark:text-warm-100">
           {badge}
         </span>
       )}
@@ -407,7 +407,7 @@ function RiskDashboardTab() {
             <span className="ml-2 font-bold text-lean-black dark:text-gray-200">({filteredCases.length})</span>
           </p>
           {selectedLevel && (
-            <button onClick={() => setSelectedLevel(null)} className="text-[10px] text-navy dark:text-info-soft hover:underline">
+            <button onClick={() => setSelectedLevel(null)} className="text-[10px] text-navy dark:text-warm-100 hover:underline">
               Ver todos ×
             </button>
           )}
@@ -574,7 +574,7 @@ function ISO42001Tab() {
                         <span className="text-[9px] font-mono text-text-subtle">{control.code}</span>
                         <p className="text-xs font-semibold text-lean-black dark:text-gray-200">{control.title}</p>
                         {control.autoInferred && (
-                          <span className="px-1.5 py-0.5 rounded-full text-[8px] font-semibold bg-navy/10 text-navy dark:text-info-soft">
+                          <span className="px-1.5 py-0.5 rounded-full text-[8px] font-semibold bg-navy/10 text-navy dark:text-warm-100">
                             auto
                           </span>
                         )}

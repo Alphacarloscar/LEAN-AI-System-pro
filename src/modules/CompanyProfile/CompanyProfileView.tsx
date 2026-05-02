@@ -156,7 +156,7 @@ function FrictionCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-6 w-6 rounded-full bg-navy/10 dark:bg-navy/20 border border-navy/20 dark:border-navy/30 flex items-center justify-center">
-            <span className="text-[10px] font-bold text-navy dark:text-info-soft">{index + 1}</span>
+            <span className="text-[10px] font-bold text-navy dark:text-warm-100">{index + 1}</span>
           </div>
           <span className="text-xs font-semibold text-lean-black dark:text-gray-300">Fricción / Oportunidad</span>
         </div>
@@ -285,7 +285,7 @@ export function CompanyProfileView() {
             {/* Título */}
             <div className="flex items-center gap-2">
               <div className="h-7 w-7 rounded-lg bg-navy/10 dark:bg-navy/20 border border-navy/20 dark:border-navy/30 flex items-center justify-center">
-                <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#1B2A4E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="dark:stroke-info-soft">
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#2A2822" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="dark:stroke-warm-100">
                   <rect x="2" y="3" width="10" height="10" rx="1" />
                   <path d="M5 13V9h4v4M2 6h10" />
                 </svg>

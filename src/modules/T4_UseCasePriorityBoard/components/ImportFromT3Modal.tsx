@@ -164,7 +164,7 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
                 </span>
                 <button
                   onClick={selectAll}
-                  className="text-[10px] font-semibold text-navy dark:text-info-soft hover:underline"
+                  className="text-[10px] font-semibold text-navy dark:text-warm-100 hover:underline"
                 >
                   Seleccionar todos
                 </button>

@@ -4,123 +4,180 @@
 
 /* ============================================================
    LEAN AI System — CSS base global
-   Los estilos de componentes van en Tailwind, no aquí.
-   Solo tocar este archivo para resets globales o fuentes.
+   Paleta: Obsidian Amber + Grises Metálicos (Sprint 4 Rev2)
+   Modo por defecto: LIGHT (ivory cálido)
    ============================================================ */
 
-/*
- * font-display: swap en todas las @font-face de Inter.
- * Garantiza que el texto se renderiza con fuente del sistema mientras Inter carga,
- * eliminando el FOIT (Flash of Invisible Text) en conexiones lentas.
- * Aplica a los 6 subsets importados en main.tsx.
- */
 @font-face { font-family: 'Inter'; font-display: swap; }
 
 @layer base {
-  /* Box sizing universal — sin sorpresas */
   *,
   *::before,
   *::after {
     box-sizing: border-box;
   }
 
-  /* Fuente base — Inter heredada desde tailwind.config.ts */
   html {
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-    font-feature-settings: 'cv11', 'ss01'; /* Inter: uso de 1 sin serif + numerales alternativos */
+    font-feature-settings: 'cv11', 'ss01';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Numerales tabulares — D9 sección 7.3 */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
     font-feature-settings: 'tnum';
   }
 
-  /* Reset de body */
+  /* ── Light mode base — ivory cálido ── */
   body {
     margin: 0;
     min-height: 100vh;
-    background-color: #ffffff; /* white — modo light por defecto */
-    color: #0A0A0A;             /* black — D9 token */
+    background-color: #F7F4EE;  /* ivory cálido — modo light por defecto */
+    color: #1C1A16;              /* negro cálido */
   }
 
-  /* Dark mode base — paleta azul metálico, pensada para largas sesiones de trabajo */
+  /* ── Dark mode base — carbón cálido ── */
   html.dark body {
-    background-color: #070C15;  /* navy-black profundo */
-    color: #E4EAF4;             /* blanco frío, no puro — menos fatiga visual */
+    background-color: #22201C;  /* warm-900 — fondo app dark */
+    color: #F0EDE8;             /* warm-50 — texto primario dark */
   }
 }
 
 @layer utilities {
-  /* Líneas finas elegantes (R5 — D9 sección 7.5) */
-  /* box-shadow en lugar de border para evitar el problema de 0.5px en pantallas no-retina */
+
+  /* ── Bordes sutiles ── */
   .border-subtle {
-    box-shadow: 0 0 0 1px #E5E7EB; /* gray-200 */
+    box-shadow: 0 0 0 1px #D4D0C8; /* warm border light */
   }
   .border-subtle-dark {
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 1px rgba(240, 237, 232, 0.08);
   }
   .shadow-line-bottom {
-    box-shadow: 0 1px 0 rgba(10, 10, 10, 0.06);
+    box-shadow: 0 1px 0 rgba(28, 26, 22, 0.06);
   }
 
-  /* ── Tarjeta dark — azul acerado con brillo metálico ── */
+  /* ── Tarjeta dark — carbón cálido con brillo metálico ── */
   html.dark .dark-card {
-    background-color: #111E35 !important;
+    background-color: #2E2B26 !important;
     background-image: linear-gradient(
       145deg,
-      rgba(140, 185, 255, 0.05) 0%,
-      rgba(80, 130, 230, 0.02) 40%,
+      rgba(240, 237, 232, 0.04) 0%,
+      rgba(200, 134, 10,  0.02) 40%,
       transparent 70%
     ) !important;
   }
   html.dark .dark-card-header {
-    background-color: #0D1828 !important;
+    background-color: #26231E !important;
     background-image: linear-gradient(
       90deg,
-      rgba(120, 170, 255, 0.04) 0%,
+      rgba(240, 237, 232, 0.03) 0%,
       transparent 60%
     ) !important;
   }
   html.dark .dark-page-bg {
-    background-color: #080F1C !important;
+    background-color: #16140F !important; /* warm-950 */
   }
 
-  /* ── Bordes de tarjeta — negro puro en light, azul metálico en dark ── */
+  /* ── Bordes de tarjeta ── */
   .card-border {
-    border: 1px solid rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(28, 26, 22, 0.20);
   }
   html.dark .card-border {
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(240, 237, 232, 0.10);
     box-shadow:
-      0 0 0 0.5px rgba(255, 255, 255, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.10), /* brillo superior — bisel metálico blanco */
-      0 4px 24px rgba(10, 30, 80, 0.4);        /* sombra azul profunda */
+      0 0 0 0.5px rgba(240, 237, 232, 0.06),
+      inset 0 1px 0 rgba(240, 237, 232, 0.08),
+      0 4px 24px rgba(22, 20, 15, 0.4);
   }
 
-  /* Separadores internos de tarjeta (cabeceras, divisores) */
   .card-divider-bottom {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    border-bottom: 1px solid rgba(28, 26, 22, 0.12);
   }
   html.dark .card-divider-bottom {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    border-bottom: 1px solid rgba(240, 237, 232, 0.08);
   }
 
-  /* Cabecera sticky */
   .header-border-bottom {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+    border-bottom: 1px solid rgba(28, 26, 22, 0.15);
   }
   html.dark .header-border-bottom {
-    border-bottom: 1px solid rgba(100, 150, 230, 0.2);
+    border-bottom: 1px solid rgba(200, 134, 10, 0.15); /* toque ámbar en header dark */
   }
 
-  /* Fondo de cabecera — blanco en light, navy translúcido en dark */
+  /* ── Fondo de cabecera ── */
   .app-header-bg {
-    background-color: rgba(255, 255, 255, 0.95);
+    background-color: rgba(247, 244, 238, 0.95); /* ivory/95 */
   }
   html.dark .app-header-bg {
-    background-color: rgba(7, 12, 21, 0.92);
+    background-color: rgba(34, 32, 28, 0.92);   /* warm-900/92 */
   }
+
 }
+
+/* ============================================================
+   WARM DARK MODE — Overrides globales de escala gray
+   Redirige dark:bg-gray-* → escala warm equivalente
+   Técnica: html.dark tiene especificidad mayor que .dark
+   ============================================================ */
+
+/* Fondos */
+html.dark .dark\:bg-gray-950  { background-color: #16140F; }
+html.dark .dark\:bg-gray-900  { background-color: #22201C; }
+html.dark .dark\:bg-gray-800  { background-color: #2A2822; }
+html.dark .dark\:bg-gray-700  { background-color: #333028; }
+
+/* Hover backgrounds */
+html.dark .dark\:hover\:bg-gray-800:hover { background-color: #2A2822; }
+html.dark .dark\:hover\:bg-gray-700:hover { background-color: #333028; }
+
+/* bg-gray-800/50 — con opacidad */
+html.dark .dark\:bg-gray-800\/50 { background-color: rgba(42, 40, 34, 0.5); }
+
+/* Textos */
+html.dark .dark\:text-gray-100 { color: #F0EDE8; }
+html.dark .dark\:text-gray-200 { color: #D8D4CC; }
+html.dark .dark\:text-gray-300 { color: #C4C0B8; }
+html.dark .dark\:text-gray-400 { color: #9A9790; }
+html.dark .dark\:text-gray-500 { color: #6B6864; }
+
+/* Bordes */
+html.dark .dark\:border-white\/8  { border-color: rgba(240, 237, 232, 0.08); }
+html.dark .dark\:border-white\/6  { border-color: rgba(240, 237, 232, 0.06); }
+html.dark .dark\:border-white\/10 { border-color: rgba(240, 237, 232, 0.10); }
+html.dark .dark\:border-white\/4  { border-color: rgba(240, 237, 232, 0.04); }
+
+/* Hover border */
+html.dark .dark\:hover\:bg-gray-800\/50:hover { background-color: rgba(42, 40, 34, 0.5); }
+
+/* bg-gray-800 con opacidades */
+html.dark .dark\:bg-gray-800\/40 { background-color: rgba(42, 40, 34, 0.4); }
+html.dark .dark\:bg-gray-800\/30 { background-color: rgba(42, 40, 34, 0.3); }
+
+/* hover:bg-gray-800/50 */
+html.dark .dark\:hover\:bg-gray-800\/50:hover { background-color: rgba(42, 40, 34, 0.5); }
+
+/* bg-gray-50 en dark (fondo muy sutil) */
+html.dark .dark\:bg-gray-50 { background-color: #2A2822; }
+
+/* bg-gray-800/50 sticky header light */
+html.dark .bg-gray-950\/90 { background-color: rgba(34, 32, 28, 0.92); }
+
+/* Progress/track bars */
+html.dark .dark\:bg-gray-700 { background-color: #333028; }
+
+/* hover:bg-gray-700 */
+html.dark .dark\:hover\:bg-gray-700:hover { background-color: #333028; }
+
+/* bg-gray-950 con opacidades adicionales */
+html.dark .dark\:bg-gray-950\/95 { background-color: rgba(22, 20, 15, 0.95); }
+html.dark .dark\:bg-gray-950\/90 { background-color: rgba(22, 20, 15, 0.90); }
+
+/* bg-gray-900 con opacidades */
+html.dark .dark\:bg-gray-900\/50 { background-color: rgba(34, 32, 28, 0.50); }
+html.dark .dark\:bg-gray-900\/80 { background-color: rgba(34, 32, 28, 0.80); }
+
+/* border-white con opacidades adicionales */
+html.dark .dark\:border-white\/14 { border-color: rgba(240, 237, 232, 0.14); }
+html.dark .dark\:hover\:border-white\/14:hover { border-color: rgba(240, 237, 232, 0.14); }
+html.dark .dark\:border-white\/20 { border-color: rgba(240, 237, 232, 0.20); }

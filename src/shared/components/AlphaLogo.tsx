@@ -56,7 +56,7 @@ export function AlphaLogo({ size = 'sm', dark = false }: AlphaLogoProps) {
             fontSize:      20,
             fontWeight:    600,
             letterSpacing: '-0.02em',
-            color:         dark ? '#f1f5f9' : '#1B2A4E',
+            color:         dark ? '#F0EDE8' : '#1C1A16',  // warm-50 / warm near-black
             marginBottom:  4,
           }}
         >

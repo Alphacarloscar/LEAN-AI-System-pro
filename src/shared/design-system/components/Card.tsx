@@ -21,8 +21,8 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const variantClasses: Record<CardVariant, string> = {
-  default:  'bg-white border-border shadow-border dark:bg-gray-900 dark:shadow-border-dark',
-  elevated: 'bg-white shadow-lg border-transparent dark:bg-gray-900',
+  default:  'bg-white border-border shadow-border dark:bg-warm-800 dark:border-warm-600/30 dark:shadow-border-dark',
+  elevated: 'bg-white shadow-lg border-transparent dark:bg-warm-800',
   flat:     'bg-transparent border-transparent',
 }
 
@@ -65,7 +65,7 @@ export function Card({
 
       {/* Footer opcional */}
       {footer && (
-        <div className="px-6 py-4 shadow-line-top bg-surface dark:bg-gray-800/50 rounded-b-lg">
+        <div className="px-6 py-4 shadow-line-top bg-surface dark:bg-warm-800/50 rounded-b-lg">
           {footer}
         </div>
       )}

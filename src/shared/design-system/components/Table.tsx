@@ -42,7 +42,7 @@ function SortIcon({ active, direction }: { active: boolean; direction?: SortDire
   return (
     <svg
       className={`inline-block h-3.5 w-3.5 ml-1 transition-colors ${
-        active ? 'text-navy dark:text-info-soft' : 'text-text-subtle'
+        active ? 'text-navy dark:text-warm-100' : 'text-text-subtle'
       }`}
       viewBox="0 0 16 16"
       fill="none"
@@ -119,7 +119,7 @@ export function Table<T = Record<string, unknown>>({
             <tr>
               <td colSpan={columns.length} className="px-4 py-8 text-center text-text-muted">
                 <div className="flex items-center justify-center gap-2">
-                  <svg className="h-4 w-4 animate-spin text-navy dark:text-info-soft" viewBox="0 0 24 24" fill="none">
+                  <svg className="h-4 w-4 animate-spin text-navy dark:text-warm-100" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>

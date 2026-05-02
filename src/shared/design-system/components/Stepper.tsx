@@ -36,7 +36,7 @@ function getStatus(index: number, activeStep: number): StepStatus {
 function StepIcon({ status, number }: { status: StepStatus; number: number }) {
   if (status === 'complete') {
     return (
-      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy dark:bg-info-soft">
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy dark:bg-warm-600">
         <svg className="h-4 w-4 text-white" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M3 8l3.5 3.5L13 5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -46,8 +46,8 @@ function StepIcon({ status, number }: { status: StepStatus; number: number }) {
 
   if (status === 'active') {
     return (
-      <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-navy dark:border-info-soft bg-white dark:bg-gray-900">
-        <span className="text-xs font-semibold text-navy dark:text-info-soft">{number}</span>
+      <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-navy dark:border-warm-300 bg-white dark:bg-gray-900">
+        <span className="text-xs font-semibold text-navy dark:text-warm-100">{number}</span>
       </span>
     )
   }
@@ -63,7 +63,7 @@ function StepIcon({ status, number }: { status: StepStatus; number: number }) {
 // ── Línea conectora ──
 function Connector({ complete, vertical }: { complete: boolean; vertical?: boolean }) {
   const base = complete
-    ? 'bg-navy dark:bg-info-soft'
+    ? 'bg-navy dark:bg-warm-600'
     : 'bg-border dark:bg-gray-700'
 
   if (vertical) {
@@ -102,7 +102,7 @@ function HorizontalStepper({ steps, activeStep, onStepClick }: StepperProps) {
                 <div className="mt-2 text-center">
                   <p className={`text-xs font-medium ${
                     status === 'active'
-                      ? 'text-navy dark:text-info-soft'
+                      ? 'text-navy dark:text-warm-100'
                       : status === 'complete'
                         ? 'text-lean-black dark:text-gray-100'
                         : 'text-text-muted'
@@ -162,7 +162,7 @@ function VerticalStepper({ steps, activeStep, onStepClick }: StepperProps) {
                 <div className={`pb-${isLast ? '0' : '6'} pt-1`}>
                   <p className={`text-sm font-medium ${
                     status === 'active'
-                      ? 'text-navy dark:text-info-soft'
+                      ? 'text-navy dark:text-warm-100'
                       : status === 'complete'
                         ? 'text-lean-black dark:text-gray-100'
                         : 'text-text-muted'

@@ -68,19 +68,19 @@ export function PhaseMiniMap({ phaseId, toolCode, dark = false }: PhaseMiniMapPr
 
         if (isActive) {
           nodeStyle = {
-            background:  dark ? '#9BB5D9' : '#1B2A4E',
-            border:      `1.5px solid ${dark ? '#9BB5D9' : '#1B2A4E'}`,
+            background:  dark ? '#C8860A' : '#2A2822',    // gold en dark, carbón en light
+            border:      `1.5px solid ${dark ? '#C8860A' : '#2A2822'}`,
             boxShadow:   dark
-              ? '0 0 0 2px rgba(155, 181, 217, 0.25)'
-              : '0 0 0 2px rgba(27, 42, 78, 0.15)',
+              ? '0 0 0 2px rgba(200, 134, 10, 0.25)'
+              : '0 0 0 2px rgba(42, 40, 34, 0.15)',
           }
-          letterStyle = { color: dark ? '#1B2A4E' : '#ffffff', fontWeight: 700 }
+          letterStyle = { color: dark ? '#1C1A16' : '#ffffff', fontWeight: 700 }
         } else if (isBefore) {
           nodeStyle = {
-            background:  dark ? 'rgba(155,181,217,0.18)' : 'rgba(27,42,78,0.12)',
-            border:      `1.5px solid ${dark ? 'rgba(155,181,217,0.35)' : 'rgba(27,42,78,0.25)'}`,
+            background:  dark ? 'rgba(196,192,184,0.18)' : 'rgba(42,40,34,0.12)',
+            border:      `1.5px solid ${dark ? 'rgba(196,192,184,0.35)' : 'rgba(42,40,34,0.25)'}`,
           }
-          letterStyle = { color: dark ? 'rgba(155,181,217,0.7)' : 'rgba(27,42,78,0.55)', fontWeight: 600 }
+          letterStyle = { color: dark ? 'rgba(196,192,184,0.7)' : 'rgba(42,40,34,0.55)', fontWeight: 600 }
         } else {
           // upcoming (idx > activeIdx)
           nodeStyle = {

@@ -77,7 +77,7 @@ function initials(name: string) {
 const ARCHETYPE_HEX: Record<ArchetypeCode, string> = {
   adoptador:    '#5FAF8A',
   ambassador:   '#6A90C0',
-  decisor:      '#1B2A4E',
+  decisor:      '#2A2822',  // warm charcoal (era navy #1B2A4E)
   critico:      '#C06060',
   especialista: '#D4A85C',
 }
@@ -85,7 +85,7 @@ const ARCHETYPE_HEX: Record<ArchetypeCode, string> = {
 const ARCHETYPE_BG_HEX: Record<ArchetypeCode, string> = {
   adoptador:    '#D4EDE3',
   ambassador:   '#DDE8F5',
-  decisor:      'rgba(27,42,78,0.10)',
+  decisor:      'rgba(42,40,34,0.10)',  // warm charcoal bg sutil
   critico:      '#F5DEDE',
   especialista: '#FAF0D7',
 }
@@ -169,12 +169,12 @@ export function StakeholderQuadrantChart({
   const isDark = useDarkMode()
 
   // Quadrant fills — dark-mode-aware
-  // decisor usa navy oscuro (#1B2A4E) que es invisible en fondos oscuros
+  // decisor usa warm charcoal (era navy) — visible en ambos modos con opacidad correcta
   const QUADRANT_FILLS = {
-    critico:      isDark ? 'rgba(192,96,96,0.28)'   : ARCHETYPE_BG_HEX.critico,
-    decisor:      isDark ? 'rgba(100,135,192,0.28)' : ARCHETYPE_BG_HEX.decisor,
-    especialista: isDark ? 'rgba(212,168,92,0.28)'  : ARCHETYPE_BG_HEX.especialista,
-    adoptador:    isDark ? 'rgba(95,175,138,0.28)'  : ARCHETYPE_BG_HEX.adoptador,
+    critico:      isDark ? 'rgba(192,96,96,0.28)'    : ARCHETYPE_BG_HEX.critico,
+    decisor:      isDark ? 'rgba(196,192,184,0.18)'  : ARCHETYPE_BG_HEX.decisor,
+    especialista: isDark ? 'rgba(212,168,92,0.28)'   : ARCHETYPE_BG_HEX.especialista,
+    adoptador:    isDark ? 'rgba(95,175,138,0.28)'   : ARCHETYPE_BG_HEX.adoptador,
   }
 
   // Label colors — decisor es navy oscuro, en dark mode usar azul más claro
@@ -251,9 +251,9 @@ export function StakeholderQuadrantChart({
               <stop offset="100%" stopColor="#4A6586" />
             </radialGradient>
             <radialGradient id="grad-decisor"      cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
-              <stop offset="0%"   stopColor="#8D95A7" />
-              <stop offset="52%"  stopColor="#1B2A4E" />
-              <stop offset="100%" stopColor="#131D37" />
+              <stop offset="0%"   stopColor="#6A6762" />
+              <stop offset="52%"  stopColor="#2A2822" />
+              <stop offset="100%" stopColor="#1C1A16" />
             </radialGradient>
             <radialGradient id="grad-critico"      cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
               <stop offset="0%"   stopColor="#E0B0B0" />

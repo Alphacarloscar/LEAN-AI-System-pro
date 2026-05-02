@@ -111,7 +111,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
         {/* Ver criterios */}
         <button
           onClick={() => onChange({ ...sub, showCriteria: !sub.showCriteria })}
-          className="flex items-center gap-1 text-[10px] font-medium text-navy dark:text-info-soft hover:underline transition-colors"
+          className="flex items-center gap-1 text-[10px] font-medium text-navy dark:text-warm-100 hover:underline transition-colors"
         >
           <svg
             className={`h-3 w-3 transition-transform duration-150 ${sub.showCriteria ? 'rotate-90' : ''}`}
@@ -214,7 +214,7 @@ export function DimensionCard({ state, definition, onChange }: DimensionCardProp
         className="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
       >
         {/* Número D1-D6 */}
-        <span className="shrink-0 px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[11px] font-mono font-bold text-navy dark:text-info-soft">
+        <span className="shrink-0 px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[11px] font-mono font-bold text-navy dark:text-warm-100">
           {definition.dimNumber}
         </span>
 

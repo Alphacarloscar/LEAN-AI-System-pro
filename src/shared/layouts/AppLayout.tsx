@@ -131,15 +131,15 @@ export function AppLayout({ phases }: AppLayoutProps) {
   const { dark, toggle } = useDarkMode()
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-gray-950">
+    <div className="min-h-screen bg-surface dark:bg-warm-900">
 
       {/* ── Header sticky — siempre visible ── */}
       <header className={[
         'sticky top-0 z-20 flex items-center justify-between px-8 py-3',
         'backdrop-blur-sm border-b',
         dark
-          ? 'bg-gray-950/90 border-white/8'
-          : 'bg-white/90 border-black/6',
+          ? 'bg-warm-900/92 border-warm-600/20'
+          : 'bg-[rgba(247,244,238,0.95)] border-[rgba(28,26,22,0.12)]',
       ].join(' ')}>
         <AlphaLogo dark={dark} />
         <span className="text-[10px] font-mono uppercase tracking-widest text-black/25 dark:text-white/25">

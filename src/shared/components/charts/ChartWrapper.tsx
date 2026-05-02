@@ -20,9 +20,9 @@ import { ResponsiveContainer } from 'recharts'
 // ── Paleta de colores — valores hex que espeja tailwind.config.ts ──
 // Recharts no puede leer CSS variables, necesita hex directos.
 export const CHART_PALETTE = {
-  navy:         '#1B2A4E',
-  navyDark:     '#0A1530',
-  silver:       '#C0C0C5',
+  navy:         '#2A2822',   // warm charcoal (era #1B2A4E)
+  navyDark:     '#16140F',   // warm-950 (era #0A1530)
+  silver:       '#C4C0B8',   // warm silver (era #C0C0C5)
   success:      '#86C7A8',
   successLight: '#D4EDE3',
   successDark:  '#5FAF8A',
@@ -35,12 +35,12 @@ export const CHART_PALETTE = {
   info:         '#9BB5D9',
   infoLight:    '#D6E4F5',
   infoDark:     '#5A87C5',
-  border:       '#E5E7EB',
-  muted:        '#6B7280',
-  subtle:       '#9CA3AF',
-  surface:      '#F9FAFB',
+  border:       '#D4D0C8',   // warm border (era #E5E7EB)
+  muted:        '#6B6864',   // warm text-muted (era #6B7280)
+  subtle:       '#9A9790',   // warm text-subtle (era #9CA3AF)
+  surface:      '#F7F4EE',   // warm ivory (era #F9FAFB)
   white:        '#FFFFFF',
-  black:        '#0A0A0A',
+  black:        '#1C1A16',   // warm near-black (era #0A0A0A)
 } as const
 
 // Secuencia de colores para series múltiples

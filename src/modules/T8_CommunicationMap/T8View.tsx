@@ -588,13 +588,13 @@ function TabButton({ active, label, badge, onClick }: {
       className={[
         'px-4 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 flex items-center gap-1.5',
         active
-          ? 'border-navy/50 bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft shadow-sm'
+          ? 'border-navy/50 bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 shadow-sm'
           : 'border-border dark:border-white/10 text-text-muted hover:border-navy/30 hover:text-navy/70',
       ].join(' ')}
     >
       {label}
       {badge && (
-        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-navy/15 dark:bg-navy/30 text-navy dark:text-info-soft">
+        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-navy/15 dark:bg-navy/30 text-navy dark:text-warm-100">
           {badge}
         </span>
       )}
@@ -738,7 +738,7 @@ function TimelineTab({ actions }: { actions: CommAction[] }) {
                           <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
                             <span className="text-[10px] font-mono text-text-subtle">Materiales:</span>
                             {action.materials.map((m, i) => (
-                              <span key={i} className="text-[10px] text-navy dark:text-info-soft bg-navy/8 dark:bg-navy/20 px-2 py-0.5 rounded-full">
+                              <span key={i} className="text-[10px] text-navy dark:text-warm-100 bg-navy/8 dark:bg-navy/20 px-2 py-0.5 rounded-full">
                                 {m}
                               </span>
                             ))}
@@ -785,7 +785,7 @@ function ArchetypeMessagesTab({ messages }: { messages: ReturnType<typeof genera
               className={[
                 'w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition-all border text-xs',
                 selected === m.archetypeCode
-                  ? 'bg-navy/8 dark:bg-navy/15 border-navy/30 text-navy dark:text-info-soft'
+                  ? 'bg-navy/8 dark:bg-navy/15 border-navy/30 text-navy dark:text-warm-100'
                   : 'border-border dark:border-white/6 text-text-muted hover:border-navy/20 bg-white dark:bg-gray-900',
               ].join(' ')}
             >
@@ -819,7 +819,7 @@ function ArchetypeMessagesTab({ messages }: { messages: ReturnType<typeof genera
               <div className="space-y-2.5">
                 {msg.keyPoints.map((pt, i) => (
                   <div key={i} className="flex gap-2 items-start">
-                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-navy/10 dark:bg-navy/25 flex items-center justify-center text-[9px] font-bold text-navy dark:text-info-soft mt-0.5">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-navy/10 dark:bg-navy/25 flex items-center justify-center text-[9px] font-bold text-navy dark:text-warm-100 mt-0.5">
                       {i + 1}
                     </span>
                     <p className="text-xs text-text-muted leading-relaxed">{pt}</p>
@@ -881,7 +881,7 @@ function MaterialsTab({ materials }: { materials: MaterialTemplate[] }) {
           >
             <span className="text-lg flex-shrink-0 mt-0.5">{m.icon}</span>
             <div className="min-w-0">
-              <p className={`text-xs font-semibold leading-tight ${selected === m.id ? 'text-navy dark:text-info-soft' : 'text-lean-black dark:text-gray-100'}`}>
+              <p className={`text-xs font-semibold leading-tight ${selected === m.id ? 'text-navy dark:text-warm-100' : 'text-lean-black dark:text-gray-100'}`}>
                 {m.title}
               </p>
               <p className="text-[10px] text-text-subtle mt-0.5 leading-tight">{m.subtitle}</p>

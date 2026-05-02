@@ -17,7 +17,7 @@ export interface AppSidebarProps {
 
 // ── Paleta de fases (índice 0–5) ──────────────────────────────
 const PHASE_COLORS = [
-  '#1B2A4E', // f1 Listen — navy
+  '#2A2822', // f1 Listen — warm charcoal (era navy)
   '#2D6A4F', // f2 Evaluate — green dark
   '#E29B3B', // f3 Activate — amber
   '#7B5EA7', // f4 Normalize — purple
@@ -95,16 +95,16 @@ export function AppSidebar({ phases, activeToolCode }: AppSidebarProps) {
           'fixed top-[72px] left-0 z-30',
           'flex items-center justify-center',
           'h-10 w-10 rounded-r-xl',
-          'bg-white dark:bg-gray-900 border border-l-0 border-black/10 dark:border-white/10 shadow-sm',
-          'hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150',
+          'bg-white dark:bg-warm-800 border border-l-0 border-black/10 dark:border-warm-600/30 shadow-sm',
+          'hover:bg-[#F0EDE8] dark:hover:bg-warm-700 transition-colors duration-150',
         ].join(' ')}
       >
         {open ? (
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#1B2A4E" strokeWidth="1.8" strokeLinecap="round" className="dark:stroke-gray-300">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#3E3B35" strokeWidth="1.8" strokeLinecap="round" className="dark:stroke-warm-100">
             <path d="M2 2l10 10M12 2L2 12" />
           </svg>
         ) : (
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#1B2A4E" strokeWidth="1.8" strokeLinecap="round" className="dark:stroke-gray-300">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#3E3B35" strokeWidth="1.8" strokeLinecap="round" className="dark:stroke-warm-100">
             <path d="M2 4h10M2 7h10M2 10h10" />
           </svg>
         )}
@@ -123,7 +123,7 @@ export function AppSidebar({ phases, activeToolCode }: AppSidebarProps) {
       <aside
         className={[
           'fixed top-[57px] left-0 z-30 h-[calc(100vh-57px)]',
-          'w-64 bg-white dark:bg-gray-950 border-r border-black/8 dark:border-white/8 shadow-xl',
+          'w-64 bg-white dark:bg-warm-900 border-r border-black/8 dark:border-warm-600/20 shadow-xl',
           'flex flex-col overflow-hidden',
           'transition-transform duration-300 ease-in-out',
           open ? 'translate-x-0' : '-translate-x-full',
@@ -155,9 +155,9 @@ export function AppSidebar({ phases, activeToolCode }: AppSidebarProps) {
             <div
               className="h-7 w-7 rounded-full flex items-center justify-center shrink-0"
               style={{
-                backgroundColor: isCompanyProfileActive ? '#1B2A4E15' : '#f3f4f6',
-                border: `1.5px solid ${isCompanyProfileActive ? '#1B2A4E' : '#d1d5db'}`,
-                color:  isCompanyProfileActive ? '#1B2A4E' : '#6b7280',
+                backgroundColor: isCompanyProfileActive ? 'rgba(42,40,34,0.12)' : '#F0EDE8',
+                border: `1.5px solid ${isCompanyProfileActive ? '#2A2822' : '#D4D0C8'}`,
+                color:  isCompanyProfileActive ? '#2A2822' : '#6B6864',
               }}
             >
               {/* Icono edificio */}
@@ -167,7 +167,7 @@ export function AppSidebar({ phases, activeToolCode }: AppSidebarProps) {
               </svg>
             </div>
             <div className="min-w-0 flex-1">
-              <p className={`text-xs font-semibold truncate ${isCompanyProfileActive ? 'text-navy dark:text-info-soft' : 'text-black/70 dark:text-gray-300'}`}>
+              <p className={`text-xs font-semibold truncate ${isCompanyProfileActive ? 'text-navy dark:text-warm-100' : 'text-black/70 dark:text-gray-300'}`}>
                 Perfil de Empresa
               </p>
               <p className="text-[10px] text-black/30 dark:text-white/25 font-mono mt-0.5">

@@ -49,14 +49,14 @@ const phaseNodeCfg: Record<PhaseStatus, {
   label:  string
 }> = {
   complete: {
-    node:  'bg-navy border-navy dark:bg-info-soft dark:border-info-soft',
+    node:  'bg-navy border-navy dark:bg-warm-600 dark:border-warm-300',
     icon:  'check',
     label: 'text-lean-black dark:text-gray-100 font-semibold',
   },
   active: {
-    node:  'bg-white border-navy dark:bg-gray-900 dark:border-info-soft',
+    node:  'bg-white border-navy dark:bg-gray-900 dark:border-warm-300',
     icon:  'play',
-    label: 'text-navy dark:text-info-soft font-bold',
+    label: 'text-navy dark:text-warm-100 font-bold',
   },
   upcoming: {
     node:  'bg-white border-border dark:bg-gray-900 dark:border-gray-600',
@@ -93,7 +93,7 @@ function IconCheck() {
 
 function IconPlay() {
   return (
-    <svg className="h-3 w-3 text-navy dark:text-info-soft ml-0.5" viewBox="0 0 12 12" fill="currentColor">
+    <svg className="h-3 w-3 text-navy dark:text-warm-100 ml-0.5" viewBox="0 0 12 12" fill="currentColor">
       <path d="M3 2.5L9.5 6 3 9.5V2.5Z" />
     </svg>
   )
@@ -260,7 +260,7 @@ function PhaseDetail({
           </span>
           <div className="w-36 h-1.5 rounded-full bg-border dark:bg-gray-700 overflow-hidden">
             <div
-              className="h-full rounded-full bg-navy dark:bg-info-soft transition-all duration-700 ease-out"
+              className="h-full rounded-full bg-navy dark:bg-warm-600 transition-all duration-700 ease-out"
               style={{ width: `${pct}%` }}
             />
           </div>

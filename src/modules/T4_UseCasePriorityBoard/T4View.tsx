@@ -1080,7 +1080,7 @@ function AIActClassificationModal({
                   className={[
                     'text-left px-3 py-2 rounded-xl border text-xs transition-all duration-100',
                     scope === key
-                      ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft font-medium'
+                      ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 font-medium'
                       : 'border-border text-text-muted hover:border-navy/30 hover:text-lean-black dark:hover:text-gray-200',
                   ].join(' ')}
                 >
@@ -1108,7 +1108,7 @@ function AIActClassificationModal({
                   className={[
                     'text-left px-3 py-2 rounded-xl border text-xs transition-all duration-100',
                     personImpact === v
-                      ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft font-medium'
+                      ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 font-medium'
                       : 'border-border text-text-muted hover:border-navy/30 hover:text-lean-black dark:hover:text-gray-200',
                   ].join(' ')}
                 >
@@ -1132,7 +1132,7 @@ function AIActClassificationModal({
                   className={[
                     'flex-1 px-3 py-2 rounded-xl border text-xs font-medium transition-all duration-100',
                     sensitiveData === v
-                      ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft'
+                      ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100'
                       : 'border-border text-text-muted hover:border-navy/30',
                   ].join(' ')}
                 >
@@ -1159,7 +1159,7 @@ function AIActClassificationModal({
                   className={[
                     'flex-1 text-left px-3 py-2 rounded-xl border text-xs transition-all duration-100',
                     explainability === v
-                      ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft font-medium'
+                      ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 font-medium'
                       : 'border-border text-text-muted hover:border-navy/30 hover:text-lean-black dark:hover:text-gray-200',
                   ].join(' ')}
                 >
@@ -1289,7 +1289,7 @@ function UseCaseDetailPanel({
             <CategoryBadge category={useCase.aiCategory} />
             {useCase.roadmap?.quarter && (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold
-                bg-navy/8 dark:bg-navy/20 text-navy dark:text-info-soft">
+                bg-navy/8 dark:bg-navy/20 text-navy dark:text-warm-100">
                 {useCase.roadmap.quarter}
               </span>
             )}
@@ -1375,7 +1375,7 @@ function UseCaseDetailPanel({
             className={[
               'px-4 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150',
               tab === key
-                ? 'border-navy/50 bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft shadow-sm'
+                ? 'border-navy/50 bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 shadow-sm'
                 : 'border-border dark:border-white/10 text-text-muted hover:border-navy/30 hover:text-navy/70 dark:hover:text-info-soft/70',
             ].join(' ')}
           >
@@ -1524,7 +1524,7 @@ function UseCaseDetailPanel({
                         <div className="flex items-center gap-2 mb-1.5">
                           <div className="h-5 w-5 rounded-full bg-navy/10 dark:bg-navy/20
                             flex items-center justify-center text-[9px] font-bold
-                            text-navy dark:text-info-soft shrink-0">
+                            text-navy dark:text-warm-100 shrink-0">
                             {ss.stakeholderName.charAt(0)}
                           </div>
                           <p className="text-xs font-semibold text-lean-black dark:text-gray-200">
@@ -1737,7 +1737,7 @@ function UseCaseDetailPanel({
                         </span>
                         {useCase.roadmap.estimatedDuration && (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold
-                            bg-navy/8 dark:bg-navy/20 text-navy dark:text-info-soft">
+                            bg-navy/8 dark:bg-navy/20 text-navy dark:text-warm-100">
                             {useCase.roadmap.estimatedDuration}
                           </span>
                         )}
@@ -1807,7 +1807,7 @@ function UseCaseDetailPanel({
               bg-white dark:bg-gray-900/50 px-5 py-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-6 w-6 rounded-lg bg-navy/10 dark:bg-navy/20
-                  flex items-center justify-center text-xs font-bold text-navy dark:text-info-soft">
+                  flex items-center justify-center text-xs font-bold text-navy dark:text-warm-100">
                   T1
                 </div>
                 <p className="text-xs font-semibold text-lean-black dark:text-gray-200">
@@ -1822,7 +1822,7 @@ function UseCaseDetailPanel({
                       <div className="flex flex-wrap gap-1.5">
                         {useCase.t1Context.relevantDimensions.map((d) => (
                           <span key={d} className="px-2 py-0.5 rounded-full text-[10px] font-semibold
-                            bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft">{d}</span>
+                            bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100">{d}</span>
                         ))}
                       </div>
                     </div>
@@ -1951,7 +1951,7 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
-              <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-info-soft uppercase tracking-wider">T4</span>
+              <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">T4</span>
               <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100">Use Case Priority Board</h1>
               <PhaseMiniMap phaseId="evaluate" toolCode="T4" />
             </div>

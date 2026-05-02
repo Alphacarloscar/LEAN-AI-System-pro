@@ -104,7 +104,7 @@ function NewInterviewModal({ onClose, onSubmit }: NewInterviewModalProps) {
         <div className="flex items-center justify-between px-6 py-5 border-b border-border">
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <span className="px-1.5 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-info-soft uppercase">
+              <span className="px-1.5 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase">
                 T1
               </span>
               <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100">
@@ -347,7 +347,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
 
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-info-soft uppercase tracking-wider">
+            <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">
               T1
             </span>
             <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100 truncate">
@@ -415,7 +415,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
                 Entrevistado activo
               </span>
               <span className="px-2 py-0.5 rounded-full bg-navy/8 dark:bg-navy/15 text-[10px]
-                font-semibold text-navy dark:text-info-soft">
+                font-semibold text-navy dark:text-warm-100">
                 {liveInterviewees.length} entrevistados
               </span>
               <span className="text-[10px] text-text-subtle">
@@ -466,7 +466,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
                         isActive
                           ? 'bg-white/20 text-white'
                           : person.type === 'it'
-                            ? 'bg-navy/10 text-navy dark:bg-navy/20 dark:text-info-soft'
+                            ? 'bg-navy/10 text-navy dark:bg-navy/20 dark:text-warm-100'
                             : 'bg-warning-light text-warning-dark',
                       ].join(' ')}>
                         {person.type === 'it' ? 'IT' : 'BIZ'}

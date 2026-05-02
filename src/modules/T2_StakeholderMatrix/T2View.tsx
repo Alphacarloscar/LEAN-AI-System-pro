@@ -27,7 +27,7 @@ import { PhaseMiniMap }                  from '@/shared/components/PhaseMiniMap'
 const ARCH_HEX: Record<ArchetypeCode, string> = {
   adoptador:    '#5FAF8A',
   ambassador:   '#6A90C0',
-  decisor:      '#1B2A4E',
+  decisor:      '#2A2822',  // warm charcoal (era navy #1B2A4E)
   critico:      '#C06060',
   especialista: '#D4A85C',
 }
@@ -199,7 +199,7 @@ function MiniPositionMap({
     <svg viewBox={`0 0 ${S} ${S}`} width={S} height={S} style={{ display: 'block' }}>
       {/* Quadrant fills — more visible at larger sizes */}
       <rect x={P}       y={P}       width={IN/2-0.5} height={IN/2-0.5} fill="#C06060" opacity={0.07} rx={1} />
-      <rect x={MID+0.5} y={P}       width={IN/2-0.5} height={IN/2-0.5} fill="#1B2A4E" opacity={0.07} rx={1} />
+      <rect x={MID+0.5} y={P}       width={IN/2-0.5} height={IN/2-0.5} fill="#2A2822" opacity={0.07} rx={1} />
       <rect x={P}       y={MID+0.5} width={IN/2-0.5} height={IN/2-0.5} fill="#D4A85C" opacity={0.07} rx={1} />
       <rect x={MID+0.5} y={MID+0.5} width={IN/2-0.5} height={IN/2-0.5} fill="#5FAF8A" opacity={0.07} rx={1} />
       {/* Grid border */}
@@ -523,7 +523,7 @@ function DepartmentMatrix({
                     >
                       <ArchetypeDot archetype={s.archetype} size="md" />
                       <div className="flex-1 min-w-0">
-                        <p className={`text-xs font-semibold truncate ${isActive ? 'text-navy dark:text-info-soft' : 'text-lean-black dark:text-gray-200'}`}>
+                        <p className={`text-xs font-semibold truncate ${isActive ? 'text-navy dark:text-warm-100' : 'text-lean-black dark:text-gray-200'}`}>
                           {s.name}
                           {isRisk && (
                             <svg className="inline h-3 w-3 text-danger-dark ml-1" viewBox="0 0 16 16" fill="currentColor">
@@ -802,7 +802,7 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
           <span className="text-text-subtle">·</span>
 
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-info-soft uppercase tracking-wider">
+            <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">
               T2
             </span>
             <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100 truncate">

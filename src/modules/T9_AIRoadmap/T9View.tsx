@@ -42,7 +42,7 @@ type GanttRow     = AIGanttRow | FreeGanttRow
 
 // ── Design System tokens (hex refs — source of truth: tailwind.config.ts) ──────
 const DS = {
-  navy:           '#1B2A4E',
+  navy:           '#2A2822',  // warm charcoal (era #1B2A4E)
   successLight:   '#D4EDE3',
   successDark:    '#5FAF8A',
   warningLight:   '#FAF0D7',
@@ -51,12 +51,12 @@ const DS = {
   dangerDark:     '#C06060',
   infoLight:      '#DDE8F5',
   infoDark:       '#6A90C0',
-  surface:        '#F9FAFB',
-  textMuted:      '#6B7280',
+  surface:        '#F7F4EE',  // warm ivory (era #F9FAFB)
+  textMuted:      '#6B6864',  // warm text-muted (era #6B7280)
   // Neutral decorative — free/initiative bars (warm gray, intentional)
-  freeBarPending: '#D3D1C7',
-  freeBar:        '#B4B2A9',
-  freeBarText:    '#2C2C2A',
+  freeBarPending: '#D4D0C8',  // warm (era #D3D1C7)
+  freeBar:        '#B4B0A8',  // warm (era #B4B2A9)
+  freeBarText:    '#2C2A26',  // warm (era #2C2C2A)
   freeSourceColor:'#444441',
 } as const
 
@@ -588,7 +588,7 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
             Volver al dashboard
           </button>
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-info-soft uppercase tracking-wider">T9</span>
+            <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">T9</span>
             <h1 className="text-base font-semibold text-lean-black dark:text-gray-100">Roadmap IA — 6 meses</h1>
             <PhaseMiniMap phaseId="activate" toolCode="T9" />
           </div>

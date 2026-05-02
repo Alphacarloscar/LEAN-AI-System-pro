@@ -36,9 +36,9 @@ interface T1ExecutiveOutputProps {
 // IT  → navy (#1B2A4E) light / info-soft (#9BB5D9) dark — contraste claro en ambos modos
 // BIZ → warning-dark (#D4A85C) — ámbar/dorado visible en light y dark
 
-const IT_BAR_CLASS  = 'bg-navy dark:bg-info-soft'
+const IT_BAR_CLASS  = 'bg-navy dark:bg-warm-600'
 const BIZ_BAR_CLASS = 'bg-warning-dark'
-const IT_TEXT_CLASS  = 'text-navy dark:text-info-soft'
+const IT_TEXT_CLASS  = 'text-navy dark:text-warm-100'
 const BIZ_TEXT_CLASS = 'text-warning-dark'
 
 // ── Mensaje dinámico de gap IT / Negocio — rule-based ────────

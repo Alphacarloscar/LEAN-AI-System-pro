@@ -47,13 +47,13 @@ export interface PolicyPDFData {
 
 // ── Paleta de colores del design system ────────────────────────
 
-const NAVY    = '#1B2A4E'
+const NAVY    = '#2A2822'   // warm charcoal (era #1B2A4E navy)
 const WHITE   = '#FFFFFF'
-const GRAY_50 = '#F9FAFB'
-const GRAY_200= '#E5E7EB'
-const GRAY_400= '#9CA3AF'
-const GRAY_600= '#4B5563'
-const ORANGE  = '#EA580C'
+const GRAY_50 = '#F7F4EE'   // warm ivory (era #F9FAFB)
+const GRAY_200= '#D4D0C8'   // warm border (era #E5E7EB)
+const GRAY_400= '#9A9790'   // warm muted (era #9CA3AF)
+const GRAY_600= '#6B6864'   // warm text-muted (era #4B5563)
+const ORANGE  = '#C8860A'   // gold accent (era orange #EA580C)
 
 // ── Estilos ────────────────────────────────────────────────────
 
@@ -61,7 +61,7 @@ const s = StyleSheet.create({
   page: {
     fontFamily: 'Helvetica',
     fontSize:   9,
-    color:      '#374151',
+    color:      '#1C1A16',  // warm near-black (era #374151)
     paddingTop: 0,
     paddingBottom: 40,
   },

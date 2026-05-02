@@ -23,7 +23,7 @@ export const STATUS_CONFIG: Record<UseCaseStatus, {
   priorizado: { label: 'Priorizado', badgeBg: 'bg-info-light',                       badgeText: 'text-info-dark',           dotBg: 'bg-info-dark',           hex: '#6A90C0', order: 2 },
   candidato:  { label: 'Candidato',  badgeBg: 'bg-gray-100 dark:bg-gray-800',        badgeText: 'text-gray-500',            dotBg: 'bg-gray-400',            hex: '#94A3B8', order: 3 },
   no_go:      { label: 'No-Go',      badgeBg: 'bg-danger-light',                     badgeText: 'text-danger-dark',         dotBg: 'bg-danger-dark',         hex: '#C06060', order: 4 },
-  completado: { label: 'Completado', badgeBg: 'bg-navy/10 dark:bg-navy/20',          badgeText: 'text-navy dark:text-info-soft', dotBg: 'bg-navy',          hex: '#1B2A4E', order: 5 },
+  completado: { label: 'Completado', badgeBg: 'bg-navy/10 dark:bg-navy/20',          badgeText: 'text-navy dark:text-warm-100', dotBg: 'bg-navy',          hex: '#2A2822', order: 5 },
 }
 
 // ── Configuración de dimensiones de scoring ───────────────────
@@ -187,7 +187,7 @@ export const AI_CATEGORY_LABELS: Record<string, string> = {
 export const AI_CATEGORY_HEX: Record<string, string> = {
   automatizacion_inteligente: '#6A90C0',
   automatizacion_rpa:         '#5FAF8A',
-  analitica_predictiva:       '#1B2A4E',
+  analitica_predictiva:       '#2A2822',
   asistente_ia:               '#D4A85C',
   optimizacion_proceso:       '#C06060',
   agéntica:                   '#7C3AED',

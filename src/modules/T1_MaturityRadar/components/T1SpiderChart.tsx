@@ -73,15 +73,15 @@ function useIsDark(): boolean {
 
 function palette(isDark: boolean) {
   return {
-    grid:        isDark ? '#374151' : '#E5E7EB',    // anillos de grilla
-    axis:        isDark ? '#4B5563' : '#D1D5DB',    // líneas de ejes
-    fill:        isDark ? 'rgba(155,181,217,0.18)' : 'rgba(27,42,78,0.12)',  // fill polígono actual
-    stroke:      isDark ? '#9BB5D9' : '#1B2A4E',   // trazo polígono actual
-    dot:         isDark ? '#9BB5D9' : '#1B2A4E',   // puntos de score
+    grid:        isDark ? '#3E3B35' : '#D4D0C8',    // anillos de grilla — warm
+    axis:        isDark ? '#333028' : '#E8E5DC',    // líneas de ejes — warm
+    fill:        isDark ? 'rgba(196,192,184,0.14)' : 'rgba(42,40,34,0.10)',  // fill polígono
+    stroke:      isDark ? '#C4C0B8' : '#2A2822',   // trazo polígono — warm metallic
+    dot:         isDark ? '#C8860A' : '#2A2822',   // puntos de score — gold en dark, charcoal en light
     target:      '#5FAF8A',                         // target siempre verde
-    label:       isDark ? '#9CA3AF' : '#6B7280',   // texto labels
-    labelScore:  isDark ? '#E5E7EB' : '#1B2A4E',   // texto score en dot
-    gridLabel:   isDark ? '#4B5563' : '#D1D5DB',   // valores de anillos (1,2,3,4)
+    label:       isDark ? '#9A9790' : '#6B6864',   // texto labels — warm
+    labelScore:  isDark ? '#F0EDE8' : '#1C1A16',   // texto score en dot — warm
+    gridLabel:   isDark ? '#4A4740' : '#C4C0B8',   // valores de anillos (1,2,3,4)
   }
 }
 
@@ -119,14 +119,14 @@ export function T1SpiderChart({ dimensions }: T1SpiderChartProps) {
       <defs>
         {/* Gradientes para los dots del radar — luz desde arriba-izquierda */}
         <radialGradient id="spider-dot-light" cx="35%" cy="28%" r="70%" fx="35%" fy="28%">
-          <stop offset="0%"   stopColor="#6B7E9E" />
-          <stop offset="50%"  stopColor="#1B2A4E" />
-          <stop offset="100%" stopColor="#0D1B35" />
+          <stop offset="0%"   stopColor="#5A5550" />
+          <stop offset="50%"  stopColor="#2A2822" />
+          <stop offset="100%" stopColor="#1C1A16" />
         </radialGradient>
         <radialGradient id="spider-dot-dark" cx="35%" cy="28%" r="70%" fx="35%" fy="28%">
-          <stop offset="0%"   stopColor="#D5E4F2" />
-          <stop offset="50%"  stopColor="#9BB5D9" />
-          <stop offset="100%" stopColor="#6A90C0" />
+          <stop offset="0%"   stopColor="#E0A018" />
+          <stop offset="50%"  stopColor="#C8860A" />
+          <stop offset="100%" stopColor="#A06808" />
         </radialGradient>
       </defs>
       {/* ── Anillos de grilla ── */}

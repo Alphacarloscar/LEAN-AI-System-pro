@@ -419,7 +419,7 @@ export function InterviewModal({ onClose, onSubmit, existingDepartments }: Inter
         <div className="sticky top-0 bg-white dark:bg-gray-900 flex items-center justify-between px-6 py-4 border-b border-border z-10">
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <span className="px-1.5 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-info-soft uppercase">
+              <span className="px-1.5 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase">
                 T2
               </span>
               <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100">

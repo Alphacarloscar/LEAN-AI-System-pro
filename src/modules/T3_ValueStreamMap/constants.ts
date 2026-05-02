@@ -17,7 +17,7 @@ export const PHASE_CONFIG: Record<ProcessPhase, {
   validacion:      { label: 'Validación',      badgeBg: 'bg-warning-light',             badgeText: 'text-warning-dark', order: 1 },
   piloto:          { label: 'Piloto',          badgeBg: 'bg-info-light',                badgeText: 'text-info-dark', order: 2 },
   estandarizacion: { label: 'Estandarización', badgeBg: 'bg-success-light',             badgeText: 'text-success-dark', order: 3 },
-  escalado:        { label: 'Escalado',        badgeBg: 'bg-navy/10 dark:bg-navy/20',   badgeText: 'text-navy dark:text-info-soft', order: 4 },
+  escalado:        { label: 'Escalado',        badgeBg: 'bg-navy/10 dark:bg-navy/20',   badgeText: 'text-navy dark:text-warm-100', order: 4 },
 }
 
 // ── Configuración de categorías IA ───────────────────────────
@@ -85,9 +85,9 @@ export const AI_CATEGORY_CONFIG: Record<AICategoryCode, AICategoryConfig> = {
     tagline:     'Datos ricos + impacto alto. Transforma datos en decisiones.',
     description: 'El proceso genera o consume datos valiosos con potencial para modelos predictivos. La IA puede anticipar resultados, detectar anomalías y recomendar acciones antes de que ocurran los problemas.',
     badgeBg:     'bg-navy/10 dark:bg-navy/20',
-    badgeText:   'text-navy dark:text-info-soft',
+    badgeText:   'text-navy dark:text-warm-100',
     dotBg:       'bg-navy',
-    hex:         '#1B2A4E',
+    hex:         '#2A2822',
     opportunityTemplates: [
       {
         title:       'Modelo predictivo de demanda / riesgo',
@@ -208,7 +208,7 @@ export const OPPORTUNITY_CONFIG: Record<OpportunityLevel, {
   baja:   { label: 'Oportunidad Baja',   badgeBg: 'bg-gray-100 dark:bg-gray-800', badgeText: 'text-gray-500' },
   media:  { label: 'Oportunidad Media',  badgeBg: 'bg-warning-light',  badgeText: 'text-warning-dark' },
   alta:   { label: 'Oportunidad Alta',   badgeBg: 'bg-info-light',     badgeText: 'text-info-dark' },
-  critica:{ label: 'Oportunidad Crítica',badgeBg: 'bg-navy/10 dark:bg-navy/20', badgeText: 'text-navy dark:text-info-soft' },
+  critica:{ label: 'Oportunidad Crítica',badgeBg: 'bg-navy/10 dark:bg-navy/20', badgeText: 'text-navy dark:text-warm-100' },
 }
 
 // ── Preguntas de la entrevista (6 MCQ) ───────────────────────

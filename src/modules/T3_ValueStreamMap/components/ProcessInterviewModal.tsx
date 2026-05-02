@@ -342,7 +342,7 @@ function InterviewPhase({
             <span
               key={pq.id}
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full
-                bg-navy/5 dark:bg-navy/15 text-[10px] text-navy dark:text-info-soft font-medium"
+                bg-navy/5 dark:bg-navy/15 text-[10px] text-navy dark:text-warm-100 font-medium"
             >
               P{pq.id} <span className="opacity-60">·</span> {answers[pq.id]}
             </span>

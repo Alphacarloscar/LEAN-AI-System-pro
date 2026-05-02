@@ -33,7 +33,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
   analitica_predictiva: {
     label:       'Analítica Predictiva',
     shortLabel:  'Predictiva',
-    hex:         '#1B2A4E',
+    hex:         '#2A2822',  // warm charcoal (era navy #1B2A4E)
     tagline:     'Anticipar para decidir mejor y más rápido',
     description: 'Modelos que predicen demanda, riesgo, fallos o comportamientos a partir de datos históricos y señales en tiempo real.',
     icon:        '📊',

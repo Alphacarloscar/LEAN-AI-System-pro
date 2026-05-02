@@ -195,13 +195,13 @@ function TabButton({
       className={[
         'px-4 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 flex items-center gap-1.5',
         active
-          ? 'border-navy/50 bg-navy/8 dark:bg-navy/15 text-navy dark:text-info-soft shadow-sm'
+          ? 'border-navy/50 bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 shadow-sm'
           : 'border-border dark:border-white/10 text-text-muted hover:border-navy/30 hover:text-navy/70',
       ].join(' ')}
     >
       {label}
       {badge && (
-        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-navy/15 dark:bg-navy/30 text-navy dark:text-info-soft">
+        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-navy/15 dark:bg-navy/30 text-navy dark:text-warm-100">
           {badge}
         </span>
       )}
@@ -271,7 +271,7 @@ function CondensedCard({
           </div>
 
           <div className="mt-3 flex gap-2.5 items-start">
-            <span className="flex-shrink-0 mt-0.5 w-5 h-5 rounded-full bg-navy/10 dark:bg-navy/25 flex items-center justify-center text-navy dark:text-info-soft">
+            <span className="flex-shrink-0 mt-0.5 w-5 h-5 rounded-full bg-navy/10 dark:bg-navy/25 flex items-center justify-center text-navy dark:text-warm-100">
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                 <path d="M2 5h6M5 2l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -838,7 +838,7 @@ function ChangeManagementPlanTab() {
           <div className="flex items-start gap-4 mb-4">
             <div className="flex-shrink-0 text-center">
               <div className="text-2xl">{step.icon}</div>
-              <span className="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-navy/10 dark:bg-navy/20 text-navy dark:text-info-soft">
+              <span className="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-navy/10 dark:bg-navy/20 text-navy dark:text-warm-100">
                 {step.phase}
               </span>
             </div>
@@ -859,7 +859,7 @@ function ChangeManagementPlanTab() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
             {step.actions.map((action, j) => (
               <div key={j} className="flex gap-2 items-start">
-                <span className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full bg-navy/10 dark:bg-navy/25 flex items-center justify-center text-[9px] font-bold text-navy dark:text-info-soft">
+                <span className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full bg-navy/10 dark:bg-navy/25 flex items-center justify-center text-[9px] font-bold text-navy dark:text-warm-100">
                   {j + 1}
                 </span>
                 <p className="text-xs text-text-muted leading-relaxed">{action}</p>

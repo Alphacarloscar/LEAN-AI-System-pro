@@ -65,7 +65,7 @@ export const ARCHETYPE_CONFIG: Record<ArchetypeCode, ArchetypeConfig> = {
     tagline:     'Firma el presupuesto. Necesita ROI, no demos.',
     description: 'Autoridad de decisión sobre inversión tecnológica. Su apoyo desbloquea recursos; su oposición bloquea el proyecto. Evalúa en términos de riesgo, coste y resultado de negocio.',
     badgeBg:     'bg-navy/10 dark:bg-navy/20',
-    badgeText:   'text-navy dark:text-info-soft',
+    badgeText:   'text-navy dark:text-warm-100',
     dotBg:       'bg-navy',
     interventions: {
       baja:  [
