@@ -220,7 +220,7 @@ function HeroOpportunityMatrix({
     {/* Tooltip */}
     {hovered && (
       <div
-        className="pointer-events-none absolute z-50 bg-white dark:bg-gray-900 border border-border dark:border-white/10 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[148px]"
+        className="pointer-events-none absolute z-50 bg-white dark:bg-warm-800 border border-border dark:border-white/10 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[148px]"
         style={{
           left:      `${hovered.leftPct}%`,
           top:       `${hovered.topPct}%`,
@@ -476,7 +476,7 @@ function HeroCategoryDonut({
     {/* Tooltip */}
     {donutHovered && (
       <div
-        className="pointer-events-none absolute z-50 bg-white dark:bg-gray-900 border border-border dark:border-white/10 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[148px]"
+        className="pointer-events-none absolute z-50 bg-white dark:bg-warm-800 border border-border dark:border-white/10 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[148px]"
         style={{
           left:      `${donutHovered.leftPct}%`,
           top:       `${donutHovered.topPct}%`,
@@ -674,7 +674,7 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
     alto:  'bg-danger-light text-danger-dark',
   }
   const impactColors = {
-    bajo:  'bg-gray-100 dark:bg-gray-800 text-gray-500',
+    bajo:  'bg-warm-100 dark:bg-warm-700 text-gray-500',
     medio: 'bg-info-light text-info-dark',
     alto:  'bg-navy/10 dark:bg-navy/20 text-navy dark:text-warm-100',
   }
@@ -689,7 +689,7 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
   }
 
   return (
-    <div className="border-t border-border dark:border-white/6 bg-white dark:bg-gray-950">
+    <div className="border-t border-border dark:border-white/6 bg-surface dark:bg-warm-950">
 
       {/* Panel header */}
       <div className="flex items-start gap-6 px-8 py-5 border-b border-border dark:border-white/6">
@@ -791,7 +791,7 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center text-center gap-3 py-8">
-                <div className="h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xl">
+                <div className="h-10 w-10 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center text-xl">
                   ◎
                 </div>
                 <p className="text-xs text-text-muted">
@@ -820,7 +820,7 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
                           'rounded-2xl border px-4 py-3.5 flex flex-col gap-2',
                           isValidated
                             ? 'border-success-dark/20 bg-success-light/8 dark:bg-success-dark/5'
-                            : 'border-border dark:border-white/8 bg-white dark:bg-gray-900/50',
+                            : 'border-border dark:border-white/8 bg-white dark:bg-warm-800/50',
                         ].join(' ')}>
                         <div className="flex items-start gap-2">
                           <span className={`h-1.5 w-1.5 rounded-full mt-1 shrink-0 ${
@@ -854,7 +854,7 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
 
               {/* Notas del consultor */}
               {process.notes && (
-                <div className="mt-6 rounded-2xl bg-gray-50 dark:bg-gray-800/50
+                <div className="mt-6 rounded-2xl bg-warm-50 dark:bg-warm-800/40
                   border border-border dark:border-white/6 px-4 py-3">
                   <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
                     Notas del consultor
@@ -881,7 +881,7 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
                     {Object.entries(process.interview!.answers).map(([qId, answer]) => (
                       <div key={qId}
                         className="rounded-xl border border-border dark:border-white/8
-                          bg-white dark:bg-gray-900/50 px-4 py-3">
+                          bg-white dark:bg-warm-800/50 px-4 py-3">
                         <p className="text-[10px] font-mono text-text-subtle mb-0.5">
                           P{qId}
                         </p>
@@ -903,7 +903,7 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
                 </>
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center
+                  <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center
                     justify-center text-2xl">
                     ✎
                   </div>
@@ -929,7 +929,7 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
                   readinessScore={process.interview!.readinessScore}
                   trackWidth={200}
                 />
-                <div className="mt-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50
+                <div className="mt-4 rounded-2xl bg-warm-50 dark:bg-warm-800/40
                   border border-border dark:border-white/6 px-4 py-3">
                   <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
                     Score oportunidad compuesto
@@ -1010,16 +1010,16 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
   }
 
   return (
-    <div className="flex flex-col bg-white dark:bg-gray-950 min-h-screen">
+    <div className="flex flex-col bg-surface dark:bg-warm-950 min-h-screen">
 
       {/* ── HEADER ──────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm
+      <div className="sticky top-0 z-20 bg-surface/95 dark:bg-warm-950/95 backdrop-blur-sm
         border-b border-border dark:border-white/6 px-8 py-3">
         <div className="flex items-center gap-4 max-w-7xl mx-auto">
           <button
             onClick={() => onBack ? onBack() : navigate('/')}
             className="h-8 w-8 rounded-full flex items-center justify-center
-              text-text-subtle hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
+              text-text-subtle hover:bg-warm-100 dark:hover:bg-warm-700 transition-colors shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 2L4 7l5 5" />
@@ -1065,7 +1065,7 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
           <div className="grid grid-cols-2 gap-6 items-stretch">
 
             {/* Opportunity Matrix */}
-            <div className="rounded-3xl bg-white dark:bg-gray-900 border border-border
+            <div className="rounded-3xl bg-white dark:bg-warm-800 border border-border
               dark:border-white/6 p-6 flex flex-col">
               <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">
                 Matriz de oportunidad
@@ -1092,7 +1092,7 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
             </div>
 
             {/* Category Donut Chart */}
-            <div className="rounded-3xl bg-white dark:bg-gray-900 border border-border
+            <div className="rounded-3xl bg-white dark:bg-warm-800 border border-border
               dark:border-white/6 p-6 flex flex-col">
               <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">
                 Distribución por categoría IA
@@ -1161,7 +1161,7 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
           {/* Process cards — compact grid style */}
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
+              <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700
                 flex items-center justify-center text-2xl">◎</div>
               <p className="text-sm font-bold text-text-muted">Sin procesos mapeados</p>
               <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
@@ -1185,7 +1185,7 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
                       'border flex flex-col gap-2',
                       isActive
                         ? 'border-navy/40 bg-navy/5 dark:bg-navy/10 shadow-sm ring-1 ring-navy/20'
-                        : 'border-border dark:border-white/6 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-white/14 hover:shadow-sm',
+                        : 'border-border dark:border-white/6 bg-white dark:bg-warm-800 hover:border-gray-300 dark:hover:border-white/14 hover:shadow-sm',
                     ].join(' ')}
                   >
                     {/* Header row: color bar + name + chevron */}

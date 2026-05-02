@@ -136,7 +136,7 @@ function ExecDashboard({ useCases }: ExecDashboardProps) {
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {kpis.map((kpi) => (
         <div key={kpi.label}
-          className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6
+          className="rounded-2xl bg-white dark:bg-warm-800 border border-border dark:border-white/6
             px-5 py-4 flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
             <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${kpi.dotColor}`} />
@@ -187,7 +187,7 @@ function QuarterlyRoadmap({
   const unassigned = useCases.filter((uc) => !uc.roadmap?.quarter)
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 px-6 py-5">
+    <div className="rounded-2xl bg-white dark:bg-warm-800 border border-border dark:border-white/6 px-6 py-5">
       <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-5">
         Roadmap trimestral — distribución planificada
       </p>
@@ -236,7 +236,7 @@ function QuarterlyRoadmap({
                             'shrink-0 w-52 text-left rounded-xl border px-3 py-2.5 transition-all duration-150',
                             isActive
                               ? 'border-navy/40 bg-navy/5 dark:bg-navy/10 ring-1 ring-navy/20 shadow-sm'
-                              : 'border-border dark:border-white/8 bg-white dark:bg-gray-950 hover:border-navy/30 hover:shadow-sm',
+                              : 'border-border dark:border-white/8 bg-white dark:bg-warm-900 hover:border-navy/30 hover:shadow-sm',
                           ].join(' ')}
                         >
                           <div className="flex items-center justify-between mb-1.5">
@@ -280,7 +280,7 @@ function QuarterlyRoadmap({
                   key={uc.id}
                   onClick={() => onSelect(uc.id)}
                   className="shrink-0 text-left rounded-xl border border-dashed border-border
-                    dark:border-white/8 bg-gray-50 dark:bg-gray-900/50 px-3 py-2 transition-all
+                    dark:border-white/8 bg-warm-50 dark:bg-warm-900/50 px-3 py-2 transition-all
                     hover:border-gray-400 hover:opacity-100"
                 >
                   <p className="text-[10px] font-semibold text-text-muted truncate max-w-[160px]">{uc.name}</p>
@@ -420,7 +420,7 @@ function PriorityMatrix({
     {/* Tooltip */}
     {hovered && (
       <div
-        className="pointer-events-none absolute z-50 bg-white dark:bg-gray-900 border border-border dark:border-white/10 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[148px]"
+        className="pointer-events-none absolute z-50 bg-white dark:bg-warm-800 border border-border dark:border-white/10 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[148px]"
         style={{
           left:      `${hovered.leftPct}%`,
           top:       `${hovered.topPct}%`,
@@ -482,7 +482,7 @@ function T4ScoreBars({ scores }: { scores: UseCaseScores }) {
             </div>
 
             {/* Barra — ocupa el espacio restante */}
-            <div className="flex-1 h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+            <div className="flex-1 h-2 rounded-full bg-warm-100 dark:bg-warm-700 overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-300"
                 style={{ width: `${val}%`, backgroundColor: cfg.hex, opacity: 0.85 }}
@@ -552,7 +552,7 @@ function ScoreInput({
       {/* Slider */}
       <div className="relative h-5 flex items-center">
         {/* Track */}
-        <div className="w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
+        <div className="w-full h-1.5 rounded-full bg-warm-100 dark:bg-warm-700 relative overflow-hidden">
           <div
             className="absolute left-0 top-0 h-full rounded-full transition-all duration-100"
             style={{ width: `${pct}%`, backgroundColor: barColor, opacity: 0.7 }}
@@ -649,7 +649,7 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
           },
         ].map((kpi) => (
           <div key={kpi.label}
-            className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-border
+            className="rounded-2xl bg-warm-50 dark:bg-warm-800/40 border border-border
               dark:border-white/6 px-4 py-3">
             <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
               {kpi.label}
@@ -720,7 +720,7 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
 
       {/* Fields grid — datos en tarjetas */}
       <div className="rounded-2xl border border-border dark:border-white/8
-        bg-gray-50 dark:bg-gray-900/50 px-5 py-4 flex flex-col gap-5">
+        bg-warm-50 dark:bg-warm-900/50 px-5 py-4 flex flex-col gap-5">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* KPI principal */}
@@ -733,7 +733,7 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
               onChange={(e) => patch('kpiPrincipal', e.target.value)}
               placeholder="ej. Tiempo de resolución L1, Coste por contratación..."
               className="w-full px-3 py-2 rounded-xl border border-border dark:border-white/10
-                bg-white dark:bg-gray-900 text-xs text-lean-black dark:text-gray-200
+                bg-white dark:bg-warm-800 text-xs text-lean-black dark:text-gray-200
                 focus:outline-none focus:ring-1 focus:ring-navy/30"
             />
           ) : (
@@ -755,7 +755,7 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
                 value={local.processHoursPerWeek}
                 onChange={(e) => patch('processHoursPerWeek', Number(e.target.value))}
                 className="w-20 px-2 py-1.5 rounded-xl border border-border dark:border-white/10
-                  bg-white dark:bg-gray-900 text-xs text-lean-black dark:text-gray-200
+                  bg-white dark:bg-warm-800 text-xs text-lean-black dark:text-gray-200
                   focus:outline-none focus:ring-1 focus:ring-navy/30 tabular-nums"
               />
               <span className="text-[10px] text-text-subtle">horas por semana</span>
@@ -780,7 +780,7 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
                 value={local.headcount}
                 onChange={(e) => patch('headcount', Number(e.target.value))}
                 className="w-20 px-2 py-1.5 rounded-xl border border-border dark:border-white/10
-                  bg-white dark:bg-gray-900 text-xs text-lean-black dark:text-gray-200
+                  bg-white dark:bg-warm-800 text-xs text-lean-black dark:text-gray-200
                   focus:outline-none focus:ring-1 focus:ring-navy/30 tabular-nums"
               />
               <span className="text-[10px] text-text-subtle">personas</span>
@@ -814,7 +814,7 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
                       'px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all',
                       local.efficiencyGainMode === mode
                         ? 'bg-navy text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-text-muted',
+                        : 'bg-warm-100 dark:bg-warm-700 text-text-muted',
                     ].join(' ')}
                   >
                     {mode}
@@ -831,7 +831,7 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
                 onChange={(e) => patch('efficiencyGain', Number(e.target.value) / 100)}
                 disabled={local.efficiencyGainMode === 'benchmark'}
                 className="w-20 px-2 py-1.5 rounded-xl border border-border dark:border-white/10
-                  bg-white dark:bg-gray-900 text-xs text-lean-black dark:text-gray-200
+                  bg-white dark:bg-warm-800 text-xs text-lean-black dark:text-gray-200
                   focus:outline-none focus:ring-1 focus:ring-navy/30 tabular-nums
                   disabled:opacity-50 disabled:cursor-not-allowed"
               />
@@ -864,7 +864,7 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
                       'px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all',
                       local.hourlyRateMode === mode
                         ? 'bg-navy text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-text-muted',
+                        : 'bg-warm-100 dark:bg-warm-700 text-text-muted',
                     ].join(' ')}
                   >
                     {mode}
@@ -903,7 +903,7 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
                   value={local.hourlyRate}
                   onChange={(e) => patch('hourlyRate', Number(e.target.value))}
                   className="w-24 px-2 py-1.5 rounded-xl border border-border dark:border-white/10
-                    bg-white dark:bg-gray-900 text-xs text-lean-black dark:text-gray-200
+                    bg-white dark:bg-warm-800 text-xs text-lean-black dark:text-gray-200
                     focus:outline-none focus:ring-1 focus:ring-navy/30 tabular-nums"
                 />
                 <span className="text-[10px] text-text-subtle">/hora</span>
@@ -942,7 +942,7 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
                       'px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all',
                       local.implementationCostMode === mode
                         ? 'bg-navy text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-text-muted',
+                        : 'bg-warm-100 dark:bg-warm-700 text-text-muted',
                     ].join(' ')}
                   >
                     {mode}
@@ -960,7 +960,7 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
                 onChange={(e) => patch('implementationCost', Number(e.target.value))}
                 disabled={local.implementationCostMode === 'benchmark'}
                 className="w-32 px-2 py-1.5 rounded-xl border border-border dark:border-white/10
-                  bg-white dark:bg-gray-900 text-xs text-lean-black dark:text-gray-200
+                  bg-white dark:bg-warm-800 text-xs text-lean-black dark:text-gray-200
                   focus:outline-none focus:ring-1 focus:ring-navy/30 tabular-nums
                   disabled:opacity-50 disabled:cursor-not-allowed"
               />
@@ -995,7 +995,7 @@ const AIACT_RISK_CONFIG = {
   alto:           { label: 'Alto riesgo',    badgeBg: 'bg-danger-light dark:bg-red-900/20', badgeText: 'text-danger-dark',                    hex: '#EA580C', icon: '🔴' },
   limitado:       { label: 'Riesgo limitado',badgeBg: 'bg-warning-light',                  badgeText: 'text-warning-dark',                   hex: '#D97706', icon: '🟡' },
   minimo:         { label: 'Riesgo mínimo',  badgeBg: 'bg-success-light',                  badgeText: 'text-success-dark',                   hex: '#16A34A', icon: '🟢' },
-  sin_clasificar: { label: 'Sin clasificar', badgeBg: 'bg-gray-100 dark:bg-gray-800',       badgeText: 'text-gray-500 dark:text-gray-400',    hex: '#94A3B8', icon: '⬜' },
+  sin_clasificar: { label: 'Sin clasificar', badgeBg: 'bg-warm-100 dark:bg-warm-700',        badgeText: 'text-gray-500 dark:text-gray-400',    hex: '#94A3B8', icon: '⬜' },
 } as const
 
 const AIACT_SCOPE_LABELS: Record<AIActScope, string> = {
@@ -1048,7 +1048,7 @@ function AIActClassificationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-border shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-warm-800 rounded-2xl border border-border shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
 
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-5 border-b border-border shrink-0">
@@ -1197,7 +1197,7 @@ function AIActClassificationModal({
         <div className="flex justify-end gap-3 px-6 py-4 border-t border-border shrink-0">
           <button
             onClick={onCancel}
-            className="px-4 py-2 rounded-xl border border-border text-sm text-text-muted hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="px-4 py-2 rounded-xl border border-border text-sm text-text-muted hover:bg-warm-50 dark:hover:bg-warm-700 transition-colors"
           >
             Cancelar
           </button>
@@ -1271,7 +1271,7 @@ function UseCaseDetailPanel({
   const previewScore = computePriorityScore(localScores)
 
   return (
-    <div className="border-t border-border dark:border-white/6 bg-white dark:bg-gray-950">
+    <div className="border-t border-border dark:border-white/6 bg-surface dark:bg-warm-950">
 
       {/* Panel header */}
       <div className="flex items-start gap-6 px-8 py-5 border-b border-border dark:border-white/6">
@@ -1323,7 +1323,7 @@ function UseCaseDetailPanel({
                     'px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all duration-100',
                     useCase.status === st
                       ? `${cfg.badgeBg} ${cfg.badgeText} cursor-default`
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700',
+                      : 'bg-warm-100 dark:bg-warm-700 text-gray-500 hover:bg-warm-200 dark:hover:bg-warm-600',
                   ].join(' ')}
                 >
                   {cfg.label}
@@ -1448,7 +1448,7 @@ function UseCaseDetailPanel({
               {!editingScore ? (
                 <>
                   <T4ScoreBars scores={useCase.scores} />
-                  <div className="mt-5 rounded-2xl bg-gray-50 dark:bg-gray-800/50
+                  <div className="mt-5 rounded-2xl bg-warm-50 dark:bg-warm-800/40
                     border border-border dark:border-white/6 px-4 py-3">
                     <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
                       Score compuesto · ponderado
@@ -1520,7 +1520,7 @@ function UseCaseDetailPanel({
                     {useCase.stakeholderScores.map((ss) => (
                       <div key={ss.id}
                         className="rounded-xl border border-border dark:border-white/8
-                          bg-white dark:bg-gray-900/50 px-4 py-2.5">
+                          bg-white dark:bg-warm-800/50 px-4 py-2.5">
                         <div className="flex items-center gap-2 mb-1.5">
                           <div className="h-5 w-5 rounded-full bg-navy/10 dark:bg-navy/20
                             flex items-center justify-center text-[9px] font-bold
@@ -1563,7 +1563,7 @@ function UseCaseDetailPanel({
                     ? 'border-success-dark/20 bg-success-light/8 dark:bg-success-dark/5'
                     : useCase.goNoGo.decision === 'no_go'
                     ? 'border-danger-dark/20 bg-danger-light/8'
-                    : 'border-border dark:border-white/8 bg-gray-50 dark:bg-gray-800/50'
+                    : 'border-border dark:border-white/8 bg-warm-50 dark:bg-warm-800/40'
                   }`}>
                   <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
                     Decisión go/no-go
@@ -1648,7 +1648,7 @@ function UseCaseDetailPanel({
               </div>
 
               {/* Respuestas */}
-              <div className="rounded-2xl border border-border bg-gray-50 dark:bg-gray-800/50 px-5 py-4 flex flex-col gap-3">
+              <div className="rounded-2xl border border-border bg-warm-50 dark:bg-warm-800/40 px-5 py-4 flex flex-col gap-3">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">Respuestas del cuestionario</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
@@ -1679,7 +1679,7 @@ function UseCaseDetailPanel({
               </div>
 
               {/* Obligaciones según nivel */}
-              <div className="rounded-2xl border border-border bg-white dark:bg-gray-900 px-5 py-4">
+              <div className="rounded-2xl border border-border bg-white dark:bg-warm-800 px-5 py-4">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">Obligaciones regulatorias aplicables</p>
                 {cls.riskLevel === 'prohibido' && (
                   <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3">
@@ -1755,7 +1755,7 @@ function UseCaseDetailPanel({
                     </div>
                   )}
                   {useCase.roadmap.nextSteps && (
-                    <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50
+                    <div className="rounded-2xl bg-warm-50 dark:bg-warm-800/40
                       border border-border dark:border-white/6 px-4 py-3">
                       <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
                         Próximos pasos
@@ -1778,7 +1778,7 @@ function UseCaseDetailPanel({
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
+                  <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700
                     flex items-center justify-center text-2xl">◎</div>
                   <p className="text-sm font-medium text-text-muted">Sin hoja de ruta asignada</p>
                   <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
@@ -1788,7 +1788,7 @@ function UseCaseDetailPanel({
               )}
             </div>
             {useCase.notes && (
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50
+              <div className="rounded-2xl bg-warm-50 dark:bg-warm-800/40
                 border border-border dark:border-white/6 px-4 py-3 h-fit">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
                   Notas del consultor
@@ -1804,7 +1804,7 @@ function UseCaseDetailPanel({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* T1 */}
             <div className="rounded-2xl border border-border dark:border-white/8
-              bg-white dark:bg-gray-900/50 px-5 py-4">
+              bg-white dark:bg-warm-800/50 px-5 py-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-6 w-6 rounded-lg bg-navy/10 dark:bg-navy/20
                   flex items-center justify-center text-xs font-bold text-navy dark:text-warm-100">
@@ -1840,7 +1840,7 @@ function UseCaseDetailPanel({
 
             {/* T2 */}
             <div className="rounded-2xl border border-border dark:border-white/8
-              bg-white dark:bg-gray-900/50 px-5 py-4">
+              bg-white dark:bg-warm-800/50 px-5 py-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-6 w-6 rounded-lg bg-info-light flex items-center
                   justify-center text-xs font-bold text-info-dark">T2</div>
@@ -1877,7 +1877,7 @@ function UseCaseDetailPanel({
 
             {/* Categoría IA */}
             <div className="rounded-2xl border border-border dark:border-white/8
-              bg-white dark:bg-gray-900/50 px-5 py-4">
+              bg-white dark:bg-warm-800/50 px-5 py-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: catHex }} />
                 <p className="text-xs font-semibold text-lean-black dark:text-gray-200">Categoría IA</p>
@@ -1934,16 +1934,16 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
   }
 
   return (
-    <div className="flex flex-col bg-white dark:bg-gray-950 min-h-screen">
+    <div className="flex flex-col bg-surface dark:bg-warm-950 min-h-screen">
 
       {/* ── HEADER ──────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm
+      <div className="sticky top-0 z-20 bg-surface/95 dark:bg-warm-950/95 backdrop-blur-sm
         border-b border-border dark:border-white/6 px-8 py-3">
         <div className="flex items-center gap-4 max-w-7xl mx-auto">
           <button
             onClick={() => onBack ? onBack() : navigate('/')}
             className="h-8 w-8 rounded-full flex items-center justify-center
-              text-text-subtle hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
+              text-text-subtle hover:bg-warm-100 dark:hover:bg-warm-700 transition-colors shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 2L4 7l5 5" />
@@ -1995,7 +1995,7 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
         {/* Sin casos — estado vacío */}
         {useCases.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
+            <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700
               flex items-center justify-center text-2xl">◎</div>
             <p className="text-sm font-bold text-text-muted">Sin casos de uso</p>
             <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
