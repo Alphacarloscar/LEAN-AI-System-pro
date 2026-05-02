@@ -131,9 +131,58 @@
 
 ---
 
+---
+
+### ✅ V-01c (rev3) | Logo AC incrustado como PNG oficial
+**Fecha:** 2026-05-02
+**Severidad:** 🔴 Bloqueante (resolución definitiva)
+
+**Problema:** SVG text descartado por inconsistencias de font rendering entre browsers (Inter no garantizado, métricas de C/A variables). El logo oficial AC existe como PNG en dos tonalidades.
+
+**Solución:** Incrustar los PNG originales del cliente directamente mediante `<img>` tag.
+
+**Archivos modificados:**
+| Archivo | Cambio |
+|---------|--------|
+| `public/logos/logo-alpha-dark.png` | **NUEVO** — Logo AC blanco sobre negro (para dark mode) |
+| `public/logos/logo-alpha-light.png` | **NUEVO** — Logo AC negro sobre blanco (para light mode) |
+| `src/shared/components/AlphaLogo.tsx` | Eliminado `ACMark` SVG. Nuevo componente usa `<img src={dark ? '/logos/logo-alpha-dark.png' : '/logos/logo-alpha-light.png'}>`. size sm: 48px width. size lg: 160px width + product name. |
+
+**Resultado compilación:** ✅ 0 errores TypeScript
+**Nota de swap:** Para actualizar el logo en el futuro: reemplazar solo los PNG en `public/logos/`. Todas las pantallas se actualizan automáticamente.
+
+---
+
+### ✅ V-02 | Dark mode T7 — colores adaptativos
+**Fecha:** 2026-05-02
+**Severidad:** 🟠 Importante
+
+**Problema:** T7View.tsx tenía múltiples colores hardcoded light-only:
+1. `SEG_LABELS` bg: `#EFF6FF`, `#F0FDF4`, `#FEFCE8`, `#FFF7ED`, `#F9FAFB` — manchas claras en dark mode sobre SVG oscuro
+2. Bell curve fill: `rgba(255,255,255,0.5)` — overlay blanco visible en dark
+3. Divisores + baseline: `#CBD5E1` — muy claro en dark
+4. `Dirección General` fill `#0D1B2A` — invisible sobre fondos oscuros
+5. Arrow SVG con `stroke="#0D1B2A"` — hardcoded, sin adaptar
+
+**Archivos modificados:**
+| Archivo | Cambio |
+|---------|--------|
+| `src/modules/T7_AdoptionHeatmap/T7View.tsx` | Import `useDarkMode`. `SEG_LABELS` ampliado con `darkBg`. `DeptCfg` ampliado con `darkFill`. Nueva función `deptFill(dept, dark)`. SVG bell curve: fondos, fill, divisores, baseline y textos ahora usan colores dark-conditional. `CondensedCard`, `BellCurveTab`, `DeptRecommendationsTab` reciben prop `dark`. Arrow icon: `stroke="#0D1B2A"` → `stroke="currentColor"`. |
+
+**Colores dark mode añadidos:**
+| Departamento | Light | Dark |
+|---|---|---|
+| Dirección General | `#0D1B2A` | `#7BA7D4` |
+| IT / Tecnología | `#6366F1` | `#818CF8` |
+| Operaciones | `#F97316` | `#FB923C` |
+| Marketing & Comercial | `#10B981` | `#34D399` |
+
+**Resultado compilación:** ✅ 0 errores TypeScript
+
+---
+
 ## BLOQUE B — Importantes (pendiente)
 
-- [ ] U-01 — Añadir hilo conductor metodológico (breadcrumb/indicador de fase) en T1–T9
 - [ ] U-02 — Reemplazar `window.print()` en T6 por exportación PDF real
 - [ ] U-03 — Añadir timeline visual y KPI strip en T8
 - [ ] V-02 — Corregir dark mode en T7 (colores hardcoded no adaptativos)

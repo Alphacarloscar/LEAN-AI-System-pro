@@ -15,6 +15,7 @@ import { useState, useMemo } from 'react'
 import { useT2Store }        from '@/modules/T2_StakeholderMatrix/store'
 import { ARCHETYPE_CONFIG }  from '@/modules/T2_StakeholderMatrix/constants'
 import { PhaseMiniMap }      from '@/shared/components/PhaseMiniMap'
+import { useDarkMode }       from '@/shared/hooks/useDarkMode'
 import type {
   ArchetypeCode,
   ResistanceLevel,
@@ -89,31 +90,37 @@ function buildBellStrokePath(): string {
 const BELL_FILL   = buildBellFillPath()
 const BELL_STROKE = buildBellStrokePath()
 
-const SEG_LABELS: Record<RogersSegment, { label: string; pct: string; bg: string }> = {
-  innovators:     { label: 'Innovadores',    pct: '2.5%',  bg: '#EFF6FF' },
-  early_adopters: { label: 'Early Adopters', pct: '13.5%', bg: '#F0FDF4' },
-  early_majority: { label: 'Mayoría Temp.',  pct: '34%',   bg: '#FEFCE8' },
-  late_majority:  { label: 'Mayoría Tardía', pct: '34%',   bg: '#FFF7ED' },
-  laggards:       { label: 'Rezagados',      pct: '16%',   bg: '#F9FAFB' },
+const SEG_LABELS: Record<RogersSegment, { label: string; pct: string; bg: string; darkBg: string }> = {
+  innovators:     { label: 'Innovadores',    pct: '2.5%',  bg: '#EFF6FF', darkBg: 'rgba(59,130,246,0.07)'  },
+  early_adopters: { label: 'Early Adopters', pct: '13.5%', bg: '#F0FDF4', darkBg: 'rgba(34,197,94,0.07)'   },
+  early_majority: { label: 'Mayoría Temp.',  pct: '34%',   bg: '#FEFCE8', darkBg: 'rgba(234,179,8,0.07)'   },
+  late_majority:  { label: 'Mayoría Tardía', pct: '34%',   bg: '#FFF7ED', darkBg: 'rgba(249,115,22,0.07)'  },
+  laggards:       { label: 'Rezagados',      pct: '16%',   bg: '#F9FAFB', darkBg: 'rgba(148,163,184,0.05)' },
 }
 
 // ── Departamentos ─────────────────────────────────────────────
 
 interface DeptCfg {
-  fill:      string
+  fill:      string  // light mode dot/swatch color
+  darkFill:  string  // dark mode dot/swatch color (más visible sobre fondos oscuros)
   badgeBg:   string
   badgeText: string
 }
 
 const DEPT_CFG: Record<string, DeptCfg> = {
-  'Dirección General':     { fill: '#0D1B2A', badgeBg: 'bg-slate-100  dark:bg-slate-800', badgeText: 'text-slate-700  dark:text-slate-300' },
-  'IT / Tecnología':       { fill: '#6366F1', badgeBg: 'bg-indigo-100 dark:bg-indigo-900/40', badgeText: 'text-indigo-700 dark:text-indigo-300' },
-  'Operaciones':           { fill: '#F97316', badgeBg: 'bg-orange-100 dark:bg-orange-900/40', badgeText: 'text-orange-700 dark:text-orange-300' },
-  'Marketing & Comercial': { fill: '#10B981', badgeBg: 'bg-emerald-100 dark:bg-emerald-900/40', badgeText: 'text-emerald-700 dark:text-emerald-300' },
+  'Dirección General':     { fill: '#0D1B2A', darkFill: '#7BA7D4', badgeBg: 'bg-slate-100  dark:bg-slate-800', badgeText: 'text-slate-700  dark:text-slate-300' },
+  'IT / Tecnología':       { fill: '#6366F1', darkFill: '#818CF8', badgeBg: 'bg-indigo-100 dark:bg-indigo-900/40', badgeText: 'text-indigo-700 dark:text-indigo-300' },
+  'Operaciones':           { fill: '#F97316', darkFill: '#FB923C', badgeBg: 'bg-orange-100 dark:bg-orange-900/40', badgeText: 'text-orange-700 dark:text-orange-300' },
+  'Marketing & Comercial': { fill: '#10B981', darkFill: '#34D399', badgeBg: 'bg-emerald-100 dark:bg-emerald-900/40', badgeText: 'text-emerald-700 dark:text-emerald-300' },
 }
 
 function deptCfg(dept: string): DeptCfg {
-  return DEPT_CFG[dept] ?? { fill: '#94A3B8', badgeBg: 'bg-gray-100', badgeText: 'text-gray-700' }
+  return DEPT_CFG[dept] ?? { fill: '#94A3B8', darkFill: '#CBD5E1', badgeBg: 'bg-gray-100', badgeText: 'text-gray-700' }
+}
+
+function deptFill(dept: string, dark: boolean): string {
+  const cfg = deptCfg(dept)
+  return dark ? cfg.darkFill : cfg.fill
 }
 
 // ── Resistencia ───────────────────────────────────────────────
@@ -205,19 +212,20 @@ function TabButton({
 // ── Condensed Stakeholder Card ────────────────────────────────
 
 function CondensedCard({
-  dot, stakeholders, onClose,
+  dot, stakeholders, onClose, dark,
 }: {
   dot:          DotPosition
   stakeholders: Stakeholder[]
   onClose:      () => void
+  dark:         boolean
 }) {
   const sh = stakeholders.find(s => s.id === dot.stakeholderId)
   if (!sh) return null
 
   const arcCfg   = ARCHETYPE_CONFIG[sh.archetype]
   const resCfg   = RES_CFG[sh.resistance]
-  const dc       = deptCfg(sh.department)
   const segLabel = SEG_LABELS[dot.segment].label
+  const avatarFill = deptFill(sh.department, dark)
   const tip      = arcCfg.interventions[sh.resistance][0]
   const initials = sh.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
 
@@ -234,7 +242,7 @@ function CondensedCard({
       <div className="flex items-start gap-3">
         <div
           className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm"
-          style={{ backgroundColor: dc.fill }}
+          style={{ backgroundColor: avatarFill }}
         >
           {initials}
         </div>
@@ -251,7 +259,7 @@ function CondensedCard({
           </div>
 
           <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
-            <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${dc.badgeBg} ${dc.badgeText}`}>
+            <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${deptCfg(sh.department).badgeBg} ${deptCfg(sh.department).badgeText}`}>
               {sh.department}
             </span>
             <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${arcCfg.badgeBg} ${arcCfg.badgeText}`}>
@@ -263,9 +271,9 @@ function CondensedCard({
           </div>
 
           <div className="mt-3 flex gap-2.5 items-start">
-            <span className="flex-shrink-0 mt-0.5 w-5 h-5 rounded-full bg-navy/10 dark:bg-navy/25 flex items-center justify-center">
+            <span className="flex-shrink-0 mt-0.5 w-5 h-5 rounded-full bg-navy/10 dark:bg-navy/25 flex items-center justify-center text-navy dark:text-info-soft">
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M2 5h6M5 2l3 3-3 3" stroke="#0D1B2A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 5h6M5 2l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </span>
             <p className="text-xs text-text-muted leading-relaxed">{tip}</p>
@@ -383,7 +391,7 @@ function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) {
 
 // ── Tab 1: Bell Curve ─────────────────────────────────────────
 
-function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
+function BellCurveTab({ stakeholders, dark }: { stakeholders: Stakeholder[]; dark: boolean }) {
   // Spotlight: null = todos visibles; string = solo ese dept visible
   const [focusDept, setFocusDept] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -430,7 +438,7 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
           Filtrar por dpto.
         </span>
         {depts.map(dept => {
-          const cfg     = deptCfg(dept)
+          const fill    = deptFill(dept, dark)
           const active  = focusDept === dept
           return (
             <button
@@ -444,11 +452,11 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
                     ? 'bg-transparent text-text-subtle border-border dark:border-white/10 opacity-40'
                     : 'bg-transparent text-text-muted border-border dark:border-white/10 hover:border-current',
               ].join(' ')}
-              style={active ? { backgroundColor: cfg.fill, borderColor: cfg.fill } : { color: cfg.fill }}
+              style={active ? { backgroundColor: fill, borderColor: fill } : { color: fill }}
             >
               <span
                 className={`w-2 h-2 rounded-full flex-shrink-0 ${active ? 'bg-white/60' : ''}`}
-                style={!active ? { backgroundColor: cfg.fill } : undefined}
+                style={!active ? { backgroundColor: fill } : undefined}
               />
               {dept}
             </button>
@@ -478,7 +486,7 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
             <defs>
               {/* Gradientes 3D por departamento */}
               {depts.map(dept => {
-                const fill = deptCfg(dept).fill
+                const fill = deptFill(dept, dark)
                 return (
                   <radialGradient key={dept} id={gradId(dept)} cx="35%" cy="28%" r="65%">
                     <stop offset="0%"   stopColor="white" stopOpacity={0.45}/>
@@ -488,7 +496,7 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
               })}
               {/* Gradiente seleccionado (más brillante) */}
               {depts.map(dept => {
-                const fill = deptCfg(dept).fill
+                const fill = deptFill(dept, dark)
                 return (
                   <radialGradient key={`sel-${dept}`} id={`${gradId(dept)}-sel`} cx="35%" cy="28%" r="65%">
                     <stop offset="0%"   stopColor="white" stopOpacity={0.7}/>
@@ -507,8 +515,8 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
                   key={seg}
                   x={x1} y={0}
                   width={x2 - x1} height={BASELINE}
-                  fill={cfg.bg}
-                  opacity={0.7}
+                  fill={dark ? cfg.darkBg : cfg.bg}
+                  opacity={0.85}
                 />
               )
             })}
@@ -518,25 +526,25 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
               <line
                 key={x}
                 x1={x} y1={0} x2={x} y2={BASELINE}
-                stroke="#CBD5E1"
+                stroke={dark ? 'rgba(255,255,255,0.1)' : '#CBD5E1'}
                 strokeWidth={1}
                 strokeDasharray="4 3"
               />
             ))}
 
             {/* Bell curve fill */}
-            <path d={BELL_FILL} fill="rgba(255,255,255,0.5)" />
+            <path d={BELL_FILL} fill={dark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.5)'} />
 
             {/* Bell curve stroke */}
             <path
               d={BELL_STROKE}
               fill="none"
-              stroke="#475569"
+              stroke={dark ? '#64748B' : '#475569'}
               strokeWidth={2}
             />
 
             {/* Baseline */}
-            <line x1={0} y1={BASELINE} x2={W} y2={BASELINE} stroke="#CBD5E1" strokeWidth={1} />
+            <line x1={0} y1={BASELINE} x2={W} y2={BASELINE} stroke={dark ? 'rgba(255,255,255,0.1)' : '#CBD5E1'} strokeWidth={1} />
 
             {/* Etiquetas de segmento */}
             {SEGMENT_ORDER.map(seg => {
@@ -544,6 +552,9 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
               const cx    = (x1 + x2) / 2
               const cfg   = SEG_LABELS[seg]
               const count = countBySeg[seg]
+              const labelFill  = dark ? '#94A3B8' : '#475569'
+              const pctFill    = dark ? '#64748B' : '#94A3B8'
+              const countFill  = dark ? '#64748B' : '#64748B'
               return (
                 <g key={seg}>
                   <text
@@ -551,7 +562,7 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
                     textAnchor="middle"
                     fontSize={8.5}
                     fontWeight="600"
-                    fill="#475569"
+                    fill={labelFill}
                     fontFamily="ui-monospace, monospace"
                   >
                     {cfg.label}
@@ -560,7 +571,7 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
                     x={cx} y={25}
                     textAnchor="middle"
                     fontSize={7}
-                    fill="#94A3B8"
+                    fill={pctFill}
                     fontFamily="ui-monospace, monospace"
                   >
                     {cfg.pct}
@@ -570,7 +581,7 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
                       x={cx} y={BASELINE + 22}
                       textAnchor="middle"
                       fontSize={8}
-                      fill="#64748B"
+                      fill={countFill}
                       fontFamily="sans-serif"
                     >
                       {count} persona{count !== 1 ? 's' : ''}
@@ -654,21 +665,19 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
           dot={selectedDot}
           stakeholders={stakeholders}
           onClose={() => setSelectedId(null)}
+          dark={dark}
         />
       )}
 
       {/* Leyenda */}
       <div className="flex items-center gap-4 flex-wrap">
         <span className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">Leyenda</span>
-        {depts.map(dept => {
-          const cfg = deptCfg(dept)
-          return (
-            <div key={dept} className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cfg.fill }} />
-              <span className="text-xs text-text-muted">{dept}</span>
-            </div>
-          )
-        })}
+        {depts.map(dept => (
+          <div key={dept} className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: deptFill(dept, dark) }} />
+            <span className="text-xs text-text-muted">{dept}</span>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -676,7 +685,7 @@ function BellCurveTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
 
 // ── Tab 2: Recomendaciones por Departamento ───────────────────
 
-function DeptRecommendationsTab({ stakeholders }: { stakeholders: Stakeholder[] }) {
+function DeptRecommendationsTab({ stakeholders, dark }: { stakeholders: Stakeholder[]; dark: boolean }) {
   const byDept = useMemo(() => {
     const map: Record<string, Stakeholder[]> = {}
     for (const sh of stakeholders) {
@@ -700,7 +709,7 @@ function DeptRecommendationsTab({ stakeholders }: { stakeholders: Stakeholder[] 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
       {Object.entries(byDept).map(([dept, deptShs]) => {
-        const cfg       = deptCfg(dept)
+        const fill      = deptFill(dept, dark)
         const readiness = deptReadiness(deptShs)
 
         const recs = deptShs.flatMap(sh => {
@@ -722,7 +731,7 @@ function DeptRecommendationsTab({ stakeholders }: { stakeholders: Stakeholder[] 
           >
             <div className="flex items-start justify-between gap-3 mb-4">
               <div className="flex items-center gap-2.5">
-                <span className="w-3.5 h-3.5 rounded-full flex-shrink-0 mt-0.5" style={{ backgroundColor: cfg.fill }} />
+                <span className="w-3.5 h-3.5 rounded-full flex-shrink-0 mt-0.5" style={{ backgroundColor: fill }} />
                 <div>
                   <p className="font-semibold text-sm text-lean-black dark:text-gray-100">{dept}</p>
                   <p className="text-xs text-text-muted">{deptShs.length} stakeholders</p>
@@ -739,7 +748,7 @@ function DeptRecommendationsTab({ stakeholders }: { stakeholders: Stakeholder[] 
                 const seg    = SEG_LABELS[getSegment(sh.archetype, sh.resistance)].label
                 return (
                   <div key={sh.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-50 dark:bg-gray-800 border border-border dark:border-white/6">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cfg.fill }} />
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: fill }} />
                     <span className="text-xs font-medium text-lean-black dark:text-gray-200">{sh.name}</span>
                     <span className={`text-[10px] px-1.5 rounded-full ${arcCfg.badgeBg} ${arcCfg.badgeText}`}>{arcCfg.label}</span>
                     <span className="text-[10px] text-text-subtle font-mono">{seg}</span>
@@ -754,7 +763,7 @@ function DeptRecommendationsTab({ stakeholders }: { stakeholders: Stakeholder[] 
                 <div key={i} className="flex gap-2.5 items-start">
                   <span
                     className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-                    style={{ backgroundColor: cfg.fill }}
+                    style={{ backgroundColor: fill }}
                   >
                     {i + 1}
                   </span>
@@ -880,6 +889,7 @@ interface T7ViewProps {
 
 export function T7View({ companyName, onBack }: T7ViewProps) {
   const stakeholders = useT2Store(s => s.stakeholders)
+  const { dark }     = useDarkMode()
   const [activeTab, setActiveTab] = useState<'curve' | 'dept' | 'plan'>('curve')
 
   const segCounts = useMemo(() => {
@@ -958,8 +968,8 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
         </div>
       ) : (
         <>
-          {activeTab === 'curve' && <BellCurveTab stakeholders={stakeholders} />}
-          {activeTab === 'dept'  && <DeptRecommendationsTab stakeholders={stakeholders} />}
+          {activeTab === 'curve' && <BellCurveTab stakeholders={stakeholders} dark={dark} />}
+          {activeTab === 'dept'  && <DeptRecommendationsTab stakeholders={stakeholders} dark={dark} />}
           {activeTab === 'plan'  && <ChangeManagementPlanTab />}
         </>
       )}
