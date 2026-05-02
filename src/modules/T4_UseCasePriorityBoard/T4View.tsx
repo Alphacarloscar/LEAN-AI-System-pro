@@ -694,8 +694,7 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
           <button
             onClick={() => { setLocal(useCase.economics ?? defaultEcon); setEditing(true) }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold
-              border border-navy/40 text-navy dark:text-info-soft bg-navy/5 dark:bg-navy/10
-              hover:bg-navy/10 transition-colors"
+              bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm"
           >
             ✎ Editar
           </button>
@@ -1422,8 +1421,7 @@ function UseCaseDetailPanel({
                   <button
                     onClick={() => { setEditingScore(true); setLocalScores(useCase.scores) }}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold
-                      border border-navy/40 text-navy dark:text-info-soft bg-navy/5 dark:bg-navy/10
-                      hover:bg-navy/10 transition-colors"
+                      bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm"
                   >
                     ✎ Editar scores
                   </button>
@@ -1641,8 +1639,8 @@ function UseCaseDetailPanel({
                   </div>
                   <button
                     onClick={() => setShowAIActModal(true)}
-                    className="shrink-0 px-3 py-1.5 rounded-xl border border-navy/40 text-navy dark:text-info-soft
-                      bg-white dark:bg-gray-900 text-xs font-medium hover:bg-navy/5 transition-colors"
+                    className="shrink-0 px-3 py-1.5 rounded-xl bg-navy-metallic text-white
+                      text-xs font-medium hover:bg-navy-metallic-hover transition-colors shadow-sm"
                   >
                     Reclasificar
                   </button>
@@ -1962,8 +1960,8 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
           <button
             onClick={() => setShowImport(true)}
             className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl
-              text-xs font-semibold border border-navy text-navy dark:text-info-soft
-              hover:bg-navy/5 transition-colors"
+              text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover
+              transition-colors shadow-sm"
           >
             ↓ Importar desde T3
           </button>

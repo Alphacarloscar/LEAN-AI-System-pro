@@ -626,8 +626,8 @@ function DomainCard({
         </div>
         <button
           onClick={onEdit}
-          className="shrink-0 px-3 py-1.5 rounded-xl border border-navy/40 text-navy bg-navy/5 text-xs font-medium
-            hover:bg-navy/10 transition-colors dark:text-info-soft dark:border-info-soft/30 dark:bg-info-soft/5"
+          className="shrink-0 px-3 py-1.5 rounded-xl bg-navy-metallic text-white text-xs font-medium
+            hover:bg-navy-metallic-hover transition-colors shadow-sm"
         >
           Editar
         </button>

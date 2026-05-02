@@ -431,16 +431,6 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
               )}
             </div>
             <div className="flex items-center gap-3">
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowNewModal(true) }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold
-                  bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm"
-              >
-                <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M8 2v12M2 8h12" />
-                </svg>
-                Nueva
-              </button>
               <svg
                 className={`h-3.5 w-3.5 text-text-subtle transition-transform duration-200 ${showInterviewees ? 'rotate-180' : ''}`}
                 viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"

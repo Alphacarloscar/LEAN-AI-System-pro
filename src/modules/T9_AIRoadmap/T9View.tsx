@@ -595,7 +595,7 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">{companyName} · Sprint L.E.A.N.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="px-4 py-1.5 text-xs border border-border dark:border-white/10 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-text-muted transition-colors">
+          <button className="px-4 py-1.5 text-xs bg-navy-metallic text-white rounded-lg hover:bg-navy-metallic-hover transition-all shadow-sm">
             Crear snapshot
           </button>
           <button
