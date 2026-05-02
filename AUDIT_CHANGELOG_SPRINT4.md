@@ -181,11 +181,29 @@
 
 ---
 
-## BLOQUE B — Importantes (pendiente)
+---
 
-- [ ] U-02 — Reemplazar `window.print()` en T6 por exportación PDF real
-- [ ] U-03 — Añadir timeline visual y KPI strip en T8
-- [ ] V-02 — Corregir dark mode en T7 (colores hardcoded no adaptativos)
+### ✅ U-02 | PDF export real en T6 (reemplazar window.print)
+**Fecha:** 2026-05-02
+**Severidad:** 🟠 Importante
+
+**Problema:** `PolicyTab` en T6 usaba `window.print()` — abre el diálogo de impresión del OS, aspecto no profesional en demo con cliente.
+
+**Solución:** PDF generado client-side con `@react-pdf/renderer` (ya en dependencias). Componente `PolicyPDFDocument` replica todas las secciones del documento HTML (declaración, alcance, principios, catálogo AI aprobada, controles alto riesgo condicionales, roles, revisión). `BlobProvider` para estado loading → `<a>` programático en onClick para descargar.
+
+**Archivos modificados:**
+| Archivo | Cambio |
+|---------|--------|
+| `src/modules/T6_RiskGovernance/PolicyPDF.tsx` | **NUEVO** — `PolicyPDFDocument` (Document + Page A4 con 7 secciones) + `PolicyDownloadButton` (BlobProvider con estado loading/error). |
+| `src/modules/T6_RiskGovernance/T6View.tsx` | Import `PolicyDownloadButton`. `handlePrint` + botón `window.print()` eliminados. `pdfData` construido desde datos de T4/T5. `PolicyDownloadButton data={pdfData}` en action bar. |
+
+**Nota API:** `@react-pdf/renderer` v3 eliminó render prop en `PDFDownloadLink`. Se usa `BlobProvider` (que sí mantiene render prop) + `<a>` programático.
+
+**Resultado compilación:** ✅ 0 errores TypeScript
+
+---
+
+## BLOQUE B — Importantes (pendiente)
 - [ ] V-03 — Mapear hexadecimales hardcoded de T7/T9 a tokens del design system
 - [ ] U-10 — Añadir tooltips a scatter charts en T3 (HeroOpportunityMatrix) y T4 (PriorityMatrix)
 - [ ] U-08 — Añadir cabeceras de agrupación Q1/Q2 en Gantt de T9

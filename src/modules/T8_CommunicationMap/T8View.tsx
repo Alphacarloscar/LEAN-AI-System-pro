@@ -577,6 +577,150 @@ function generateDeptKits(stakeholders: Stakeholder[]): DeptKit[] {
   })
 }
 
+// ── parseStartWeek — extrae semana inicial de strings como "Semana 9-10" ──
+
+function parseStartWeek(weekStr: string): number {
+  const match = weekStr.match(/(\d+)/)
+  return match ? parseInt(match[1], 10) : 1
+}
+
+// ── CommSummaryStrip — KPI strip + timeline visual ─────────────
+
+function CommSummaryStrip({ actions }: { actions: CommAction[] }) {
+  const phases: CommPhase[] = ['phase1', 'phase2', 'phase3']
+
+  const phaseStats = phases.map(ph => ({
+    phase: ph,
+    total: actions.filter(a => a.phase === ph).length,
+    high:  actions.filter(a => a.phase === ph && a.priority === 'alta').length,
+  }))
+
+  // SVG timeline constants
+  const W   = 800
+  const H   = 72
+  const PAD = 0
+
+  // Phase boundaries on the 24-week timeline
+  const PHASE_BOUNDS = {
+    phase1: { x1: 0,   x2: W * (8 / 24),  color: '#EEF2FF', border: '#C7D2FE', label: '#4338CA' },
+    phase2: { x1: W * (8 / 24), x2: W * (16 / 24), color: '#FFFBEB', border: '#FDE68A', label: '#92400E' },
+    phase3: { x1: W * (16 / 24), x2: W, color: '#ECFDF5', border: '#A7F3D0', label: '#065F46' },
+  }
+
+  const PRIORITY_DOT: Record<string, string> = {
+    alta:  '#DC2626',
+    media: '#D97706',
+    baja:  '#16A34A',
+  }
+
+  // Position dots along the timeline
+  const dots = actions.map(a => {
+    const w  = parseStartWeek(a.week)
+    const x  = PAD + ((w - 0.5) / 24) * (W - PAD * 2)
+    return { ...a, x, y: H / 2 }
+  })
+
+  return (
+    <div className="space-y-3">
+
+      {/* KPI strip — 3 phase cards */}
+      <div className="grid grid-cols-3 gap-3">
+        {phaseStats.map(({ phase, total, high }) => {
+          const cfg = PHASE_CFG[phase]
+          return (
+            <div key={phase} className={`rounded-xl border ${cfg.border} ${cfg.bg} dark:bg-opacity-10 px-4 py-3`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-[9px] font-mono uppercase tracking-widest font-bold ${cfg.color}`}>
+                  {cfg.label}
+                </span>
+                <span className="text-[9px] text-text-subtle font-mono">{cfg.period}</span>
+              </div>
+              <div className="flex items-end gap-4">
+                <div>
+                  <p className={`text-2xl font-bold tabular-nums leading-none ${cfg.color}`}>{total}</p>
+                  <p className="text-[9px] text-text-subtle mt-0.5">acciones</p>
+                </div>
+                <div className="pb-0.5">
+                  <p className="text-sm font-semibold text-danger-dark tabular-nums leading-none">{high}</p>
+                  <p className="text-[9px] text-text-subtle mt-0.5">alta prior.</p>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Visual timeline */}
+      <div className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 px-5 pt-4 pb-3 overflow-hidden">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle">
+            Sprint 6 meses — distribución de acciones
+          </p>
+          <div className="flex items-center gap-3">
+            {(['alta', 'media', 'baja'] as const).map(p => (
+              <div key={p} className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PRIORITY_DOT[p] }} />
+                <span className="text-[9px] text-text-subtle capitalize">{p}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 56, overflow: 'visible' }}>
+          {/* Phase background rects */}
+          {(Object.entries(PHASE_BOUNDS) as [CommPhase, typeof PHASE_BOUNDS.phase1][]).map(([ph, b]) => (
+            <rect
+              key={ph}
+              x={b.x1 + 1} y={2}
+              width={b.x2 - b.x1 - 2} height={H - 4}
+              rx={4} fill={b.color} stroke={b.border} strokeWidth={1}
+            />
+          ))}
+
+          {/* Phase labels */}
+          {(Object.entries(PHASE_BOUNDS) as [CommPhase, typeof PHASE_BOUNDS.phase1][]).map(([ph, b]) => (
+            <text
+              key={`lbl-${ph}`}
+              x={(b.x1 + b.x2) / 2} y={15}
+              textAnchor="middle"
+              fontSize={8} fontWeight="600"
+              fill={b.label} fontFamily="ui-monospace,monospace"
+            >
+              {PHASE_CFG[ph].label} · {PHASE_CFG[ph].period}
+            </text>
+          ))}
+
+          {/* Action dots */}
+          {dots.map((dot) => (
+            <g key={dot.id}>
+              <circle
+                cx={dot.x} cy={H / 2 + 6}
+                r={5}
+                fill={PRIORITY_DOT[dot.priority]}
+                opacity={0.85}
+              />
+              <title>{dot.title} — {dot.week}</title>
+            </g>
+          ))}
+
+          {/* Week ruler */}
+          {[1, 4, 8, 12, 16, 20, 24].map(w => {
+            const x = ((w - 0.5) / 24) * W
+            return (
+              <g key={w}>
+                <line x1={x} y1={H - 6} x2={x} y2={H - 2} stroke="#CBD5E1" strokeWidth={0.8} />
+                <text x={x} y={H + 10} textAnchor="middle" fontSize={7} fill="#94A3B8" fontFamily="ui-monospace,monospace">
+                  S{w}
+                </text>
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+    </div>
+  )
+}
+
 // ── TabButton ─────────────────────────────────────────────────
 
 function TabButton({ active, label, badge, onClick }: {
@@ -1095,6 +1239,11 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
           </div>
         </div>
       </div>
+
+      {/* Summary strip — visible siempre, independiente del tab activo */}
+      {stakeholders.length > 0 && (
+        <CommSummaryStrip actions={commActions} />
+      )}
 
       {/* Tabs */}
       <div className="flex items-center gap-2 flex-wrap">

@@ -18,7 +18,8 @@ import {
 } from './constants'
 import type { ISO42001Status } from './types'
 import type { AIActRiskLevel } from '@/modules/T4_UseCasePriorityBoard/types'
-import { PhaseMiniMap }        from '@/shared/components/PhaseMiniMap'
+import { PhaseMiniMap }          from '@/shared/components/PhaseMiniMap'
+import { PolicyDownloadButton }  from './PolicyPDF'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -61,17 +62,25 @@ function TabButton({
 // ── ── ── Tab 1: POLÍTICA IA ── ── ──────────────────────────────
 
 function PolicyTab({ companyName }: { companyName: string }) {
-  const { useCases }     = useT4Store()
-  const { canvas }       = useT5Store()
-  const now              = new Date()
-  const dateStr          = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
+  const { useCases }  = useT4Store()
+  const { canvas }    = useT5Store()
+  const now           = new Date()
+  const dateStr       = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
+  const nextReviewStr = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
+    .toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })
 
-  const approvedCases    = useCases.filter((uc) => uc.status === 'go' || uc.status === 'en_piloto')
-  const highRiskCases    = useCases.filter((uc) => uc.aiActClassification?.riskLevel === 'alto' || uc.aiActClassification?.riskLevel === 'prohibido')
-  const activeDomains    = canvas.activationSequence.slice(0, 3)
+  const approvedCases = useCases.filter((uc) => uc.status === 'go' || uc.status === 'en_piloto')
+  const highRiskCases = useCases.filter((uc) => uc.aiActClassification?.riskLevel === 'alto' || uc.aiActClassification?.riskLevel === 'prohibido')
+  const activeDomains = canvas.activationSequence.slice(0, 3)
 
-  function handlePrint() {
-    window.print()
+  const pdfData = {
+    companyName,
+    dateStr,
+    nextReviewStr,
+    approvedCases,
+    highRiskCases,
+    activeDomains: activeDomains.map(code => ({ code, domain: canvas.domains[code] })),
+    ownerDomains: Object.values(canvas.domains).slice(0, 4),
   }
 
   return (
@@ -84,13 +93,7 @@ function PolicyTab({ companyName }: { companyName: string }) {
             Documento generado dinámicamente desde los datos de T4 y T5. Se actualiza con cada cambio.
           </p>
         </div>
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-navy text-white text-xs font-semibold
-            hover:bg-navy/90 transition-colors print:hidden"
-        >
-          ↓ Descargar PDF
-        </button>
+        <PolicyDownloadButton data={pdfData} />
       </div>
 
       {/* Documento */}
