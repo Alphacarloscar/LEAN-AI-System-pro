@@ -356,6 +356,17 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
             <PhaseMiniMap phaseId="listen" toolCode="T1" />
           </div>
 
+          {/* Nueva entrevista — acceso directo desde header (U-04) */}
+          <button
+            onClick={() => setShowNewModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-navy text-white hover:bg-navy/80 transition-colors shrink-0"
+          >
+            <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M8 2v12M2 8h12" />
+            </svg>
+            Nueva entrevista
+          </button>
+
           {/* Progreso + score */}
           <div className="flex items-center gap-4 shrink-0">
             <span className="text-xs text-text-subtle tabular-nums">

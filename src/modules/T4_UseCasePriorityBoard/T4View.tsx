@@ -311,7 +311,15 @@ function PriorityMatrix({
   const P  = 40
   const IN = S - P * 2
 
+  type T4Hovered = {
+    leftPct: number; topPct: number
+    name: string; hex: string; statusLabel: string
+    feasibility: number; kpiImpact: number
+  }
+  const [hovered, setHovered] = useState<T4Hovered | null>(null)
+
   return (
+    <div className="relative">
     <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ display: 'block' }}>
       <defs>
         <clipPath id="t4matrix-clip">
@@ -382,7 +390,19 @@ function PriorityMatrix({
         const r        = isActive ? 9 : 7
 
         return (
-          <g key={uc.id} style={{ cursor: 'pointer' }} onClick={() => onSelect(uc.id)}>
+          <g key={uc.id} style={{ cursor: 'pointer' }}
+            onClick={() => onSelect(uc.id)}
+            onMouseEnter={() => setHovered({
+              leftPct:     (x / S) * 100,
+              topPct:      (y / S) * 100,
+              name:        uc.name,
+              hex,
+              statusLabel: STATUS_CONFIG[uc.status].label,
+              feasibility: uc.scores.feasibility,
+              kpiImpact:   uc.scores.kpiImpact,
+            })}
+            onMouseLeave={() => setHovered(null)}
+          >
             <circle cx={x} cy={y} r={r * 3.5} fill={`url(#t4mglow-${uc.id})`} />
             <circle cx={x} cy={y} r={r * 1.8} fill={hex} opacity={isActive ? 0.25 : 0.12} />
             <circle cx={x} cy={y} r={r} fill={hex}
@@ -396,6 +416,37 @@ function PriorityMatrix({
         )
       })}
     </svg>
+
+    {/* Tooltip */}
+    {hovered && (
+      <div
+        className="pointer-events-none absolute z-50 bg-white dark:bg-gray-900 border border-border dark:border-white/10 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[148px]"
+        style={{
+          left:      `${hovered.leftPct}%`,
+          top:       `${hovered.topPct}%`,
+          transform: `translate(${hovered.leftPct > 65 ? 'calc(-100% - 10px)' : '10px'}, -50%)`,
+        }}
+      >
+        <p className="font-semibold text-lean-black dark:text-gray-100 mb-1 leading-tight truncate max-w-[160px]">
+          {hovered.name}
+        </p>
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: hovered.hex }} />
+          <span className="text-text-muted">{hovered.statusLabel}</span>
+        </div>
+        <div className="space-y-0.5 text-text-muted">
+          <div className="flex justify-between gap-4">
+            <span>Facilidad</span>
+            <span className="font-medium text-lean-black dark:text-gray-200">{hovered.feasibility}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span>Impacto KPI</span>
+            <span className="font-medium text-lean-black dark:text-gray-200">{hovered.kpiImpact}</span>
+          </div>
+        </div>
+      </div>
+    )}
+    </div>
   )
 }
 
@@ -1896,7 +1947,9 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
             className="h-8 w-8 rounded-full flex items-center justify-center
               text-text-subtle hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
           >
-            ←
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 2L4 7l5 5" />
+            </svg>
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">

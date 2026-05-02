@@ -346,7 +346,7 @@ function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) {
             className="h-full rounded-full transition-all duration-500"
             style={{
               width: `${momentumPct}%`,
-              backgroundColor: momentumPct >= 65 ? '#16a34a' : momentumPct >= 40 ? '#d97706' : '#dc2626',
+              backgroundColor: momentumPct >= 65 ? '#5FAF8A' : momentumPct >= 40 ? '#D4A85C' : '#C06060',
             }}
           />
         </div>
@@ -363,8 +363,8 @@ function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) {
         <div className="flex gap-2 items-start">
           <div className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full bg-danger-light flex items-center justify-center">
             <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-              <path d="M4 1L1 7h6L4 1z" stroke="#dc2626" strokeWidth="1.2" strokeLinejoin="round"/>
-              <circle cx="4" cy="5.5" r="0.4" fill="#dc2626"/>
+              <path d="M4 1L1 7h6L4 1z" stroke="#C06060" strokeWidth="1.2" strokeLinejoin="round"/>
+              <circle cx="4" cy="5.5" r="0.4" fill="#C06060"/>
             </svg>
           </div>
           <p className="text-[11px] text-text-muted leading-relaxed">{topRisk}</p>
@@ -379,7 +379,7 @@ function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) {
         <div className="flex gap-2 items-start">
           <div className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full bg-success-light flex items-center justify-center">
             <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-              <path d="M1.5 4.5l2 2 3-3.5" stroke="#16a34a" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M1.5 4.5l2 2 3-3.5" stroke="#5FAF8A" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
           <p className="text-[11px] text-text-muted leading-relaxed">{topOpp}</p>

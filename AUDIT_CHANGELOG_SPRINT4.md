@@ -203,21 +203,42 @@
 
 ---
 
-## BLOQUE B — Importantes (pendiente)
-- [ ] V-03 — Mapear hexadecimales hardcoded de T7/T9 a tokens del design system
-- [ ] U-10 — Añadir tooltips a scatter charts en T3 (HeroOpportunityMatrix) y T4 (PriorityMatrix)
-- [ ] U-08 — Añadir cabeceras de agrupación Q1/Q2 en Gantt de T9
-- [ ] U-05 — Expandir primer departamento por defecto en T2
-- [ ] U-12 — Pre-seleccionar primer stakeholder en T2 para demo
+---
 
-## BLOQUE C — Cosméticos (pendiente)
+### ✅ V-03 | Tokens design system en T7 y T9 (eliminar hex hardcoded)
+**Fecha:** 2026-05-02
+**Severidad:** 🟠 Importante
 
-- [ ] U-04 — Añadir botón "Nueva entrevista" en header de T1
-- [ ] C-01 — Eliminar dead code `filterCat` en T3View
-- [ ] C-02 — Reemplazar `←` (texto) por icono svg en botones Back
-- [ ] C-03 — Sustituir emoji 🔍 en T5 empty state por icono SVG
-- [ ] C-04 — Eliminar `LeanRadarChart`/`LeanBarChart` de shared si siguen sin uso
+**Problema:** T7 y T9 tenían colores hexadecimales hardcoded que no referenciaban el design system: colores semánticos de riesgo/estado en RISK_META, T4_STATUS_META y FREE_STATUS_META, colores de barra Gantt, cabeceras Q1/Q2, hito de entrega, y SVG de iconos en T7 — todos usaban hex propios que divergían (ej. `#A32D2D` vs `danger.dark #C06060`, `#16a34a` vs `success.dark #5FAF8A`).
+
+**Solución:**
+- T7: Reemplazados 4 hex hardcoded (barra momentum progress, SVG warning/check icons) por tokens DS directos.
+- T9: Añadido objeto `DS` como single source of truth (17 entradas: tokens semánticos + neutrales decorativos para barras free). RISK_META, T4_STATUS_META, FREE_STATUS_META, GanttRowItem bars/source badges, Q1/Q2 headers, milestone dot y leyenda — todos referenciando `DS.xxx`.
+
+**Archivos modificados:**
+| Archivo | Cambio |
+|---------|--------|
+| `src/modules/T7_AdoptionHeatmap/T7View.tsx` | momentum bar: `#16a34a/#d97706/#dc2626` → `DS.successDark/warningDark/dangerDark`. SVG warning icon: `#dc2626` → `#C06060`. SVG check icon: `#16a34a` → `#5FAF8A`. |
+| `src/modules/T9_AIRoadmap/T9View.tsx` | Añadido objeto `const DS` (17 tokens). RISK_META, T4_STATUS_META, FREE_STATUS_META mapeados a DS. GanttRowItem: barBg navy, sourceBg/sourceColor info tokens, free bars a DS.freeBar*. Milestone: `#E24B4A` → `DS.dangerDark`. Q1/Q2: info/success tokens. Leyenda: navy, freeBar, dangerDark. |
+
+**Resultado compilación:** ✅ 0 errores TypeScript
 
 ---
 
-*Última actualización: 2026-05-01 | Compilación base: ✅ 0 errores TypeScript*
+## BLOQUE B — Importantes (pendiente)
+- [x] ✅ U-10 — Tooltips en scatter charts T3 y T4 (2026-05-02) — hover state + div absoluto, flip automático si dot > 65% del eje X, muestra nombre/categoría/scores. 0 errores TypeScript.
+- [x] ✅ U-08 — Cabeceras Q1/Q2 en Gantt de T9 — ya implementadas en T9View original (líneas 618–649). Tokenizadas en V-03.
+- [x] ✅ U-05 — Primer departamento expandido por defecto en T2 (2026-05-02) — `useState` lazy initializer con `stakeholders[0].department`. 0 errores TypeScript.
+- [x] ✅ U-12 — Primer stakeholder pre-seleccionado en T2 para demo (2026-05-02) — `useState` lazy initializer con `stakeholders[0] ?? null`. 0 errores TypeScript.
+
+## BLOQUE C — Cosméticos
+
+- [x] ✅ U-04 — Botón "Nueva entrevista" en header sticky de T1 (2026-05-02) — botón navy con icono + en sticky header; el colapsible mantiene el botón "Nueva" compacto interno.
+- [x] ✅ C-01 — Dead code `filterCat` eliminado de T3View (2026-05-02) — estado, filter y dependencia del useMemo eliminados. setFilterCat(null) en "Limpiar filtros" simplificado a setFilterPhase(null).
+- [x] ✅ C-02 — `←` texto → SVG chevron-left en botones Back (2026-05-02) — T3, T4 (circular icon button), T5, T6 (text links). Mismo viewBox `0 0 14 14` consistente.
+- [x] ✅ C-03 — Emoji 🔍 → icono SVG search en T5 empty states (2026-05-02) — 2 instancias. Contenedor `w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800`, icono `text-text-subtle`.
+- [x] N/A C-04 — `LeanRadarChart`/`LeanBarChart` siguen en uso en App.tsx (líneas 246, 249). No eliminar.
+
+---
+
+*Última actualización: 2026-05-02 | Compilación final Sprint 4: ✅ 0 errores TypeScript | Todos los ítems de Bloque A, B y C cerrados.*

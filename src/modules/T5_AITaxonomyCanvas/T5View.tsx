@@ -241,7 +241,12 @@ function DeptCategoryModal({
 
           {filteredUCs.length === 0 && filteredProcs.length === 0 && (
             <div className="text-center py-10">
-              <span className="text-3xl block mb-3">🔍</span>
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 mb-3">
+                <svg className="w-5 h-5 text-text-subtle" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="9" r="6" />
+                  <path d="M15 15l3 3" />
+                </svg>
+              </div>
               <p className="text-sm text-text-muted">
                 Sin proyectos en <strong>{department.split('/')[0].trim()}</strong> para este dominio.
               </p>
@@ -806,7 +811,12 @@ function DomainProjectsModal({
 
           {domainUCs.length === 0 && domainProcs.length === 0 && (
             <div className="text-center py-8">
-              <span className="text-3xl block mb-3">🔍</span>
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 mb-3">
+                <svg className="w-5 h-5 text-text-subtle" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="9" r="6" />
+                  <path d="M15 15l3 3" />
+                </svg>
+              </div>
               <p className="text-sm text-text-muted">No hay proyectos identificados en este dominio todavía.</p>
               <p className="text-[11px] text-text-subtle mt-1">
                 Completa el diagnóstico T3 y prioriza casos de uso en T4.
@@ -1017,7 +1027,10 @@ export function T5View({
             onClick={onBack}
             className="flex items-center gap-1.5 text-sm text-text-muted hover:text-lean-black dark:hover:text-gray-200 transition-colors"
           >
-            ← Volver
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 2L4 7l5 5" />
+            </svg>
+            Volver
           </button>
           <div className="w-px h-5 bg-border" />
           <div>

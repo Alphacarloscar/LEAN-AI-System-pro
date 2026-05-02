@@ -104,7 +104,15 @@ function HeroOpportunityMatrix({
     { qx: 0.03, qy: 0.82, text: 'EVALUAR',           color: '#94A3B8' },
   ]
 
+  type T3Hovered = {
+    leftPct: number; topPct: number
+    name: string; hex: string; catLabel: string
+    opportunity: number; readiness: number
+  }
+  const [hovered, setHovered] = useState<T3Hovered | null>(null)
+
   return (
+    <div className="relative">
     <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ display: 'block' }}>
       <defs>
         <clipPath id="t3hero-clip">
@@ -173,8 +181,22 @@ function HeroOpportunityMatrix({
         const isActive = p.id === activeId
         const r        = isActive ? 9 : 7
 
+        const catLabel = AI_CATEGORY_CONFIG[p.aiCategory]?.label ?? p.aiCategory
+
         return (
-          <g key={p.id} style={{ cursor: 'pointer' }} onClick={() => onSelect(p.id)}>
+          <g key={p.id} style={{ cursor: 'pointer' }}
+            onClick={() => onSelect(p.id)}
+            onMouseEnter={() => setHovered({
+              leftPct: (dx / S) * 100,
+              topPct:  (dy / S) * 100,
+              name:    p.name,
+              hex,
+              catLabel,
+              opportunity: score,
+              readiness:   ready,
+            })}
+            onMouseLeave={() => setHovered(null)}
+          >
             {/* Outer glow */}
             <circle cx={dx} cy={dy} r={r * 3.5}
               fill={`url(#glow-${p.id})`} />
@@ -194,6 +216,37 @@ function HeroOpportunityMatrix({
         )
       })}
     </svg>
+
+    {/* Tooltip */}
+    {hovered && (
+      <div
+        className="pointer-events-none absolute z-50 bg-white dark:bg-gray-900 border border-border dark:border-white/10 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[148px]"
+        style={{
+          left:      `${hovered.leftPct}%`,
+          top:       `${hovered.topPct}%`,
+          transform: `translate(${hovered.leftPct > 65 ? 'calc(-100% - 10px)' : '10px'}, -50%)`,
+        }}
+      >
+        <p className="font-semibold text-lean-black dark:text-gray-100 mb-1 leading-tight truncate max-w-[160px]">
+          {hovered.name}
+        </p>
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: hovered.hex }} />
+          <span className="text-text-muted">{hovered.catLabel}</span>
+        </div>
+        <div className="space-y-0.5 text-text-muted">
+          <div className="flex justify-between gap-4">
+            <span>Oportunidad</span>
+            <span className="font-medium text-lean-black dark:text-gray-200">{hovered.opportunity}/4</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span>Readiness</span>
+            <span className="font-medium text-lean-black dark:text-gray-200">{hovered.readiness}/4</span>
+          </div>
+        </div>
+      </div>
+    )}
+    </div>
   )
 }
 
@@ -866,7 +919,6 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
   const [activeId, setActiveId]           = useState<string | null>(null)
   const [showModal, setShowModal]         = useState(false)
   const [filterPhase, setFilterPhase]     = useState<ProcessPhase | null>(null)
-  const [filterCat, setFilterCat]         = useState<AICategoryCode | null>(null)
 
   const activeProcess = useMemo(
     () => processes.find((p) => p.id === activeId) ?? null,
@@ -877,13 +929,12 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
   const filtered = useMemo(
     () => processes
       .filter((p) => !filterPhase || p.phase === filterPhase)
-      .filter((p) => !filterCat   || p.aiCategory === filterCat)
       .sort((a, b) => {
         const oA = a.interview?.opportunityScore ?? 0
         const oB = b.interview?.opportunityScore ?? 0
         return oB - oA
       }),
-    [processes, filterPhase, filterCat]
+    [processes, filterPhase]
   )
 
   // KPIs globales
@@ -917,7 +968,9 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
             className="h-8 w-8 rounded-full flex items-center justify-center
               text-text-subtle hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
           >
-            ←
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 2L4 7l5 5" />
+            </svg>
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
@@ -1044,7 +1097,7 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
                 )
               })}
               {filterPhase && (
-                <button onClick={() => { setFilterPhase(null); setFilterCat(null) }}
+                <button onClick={() => setFilterPhase(null) }
                   className="text-[10px] text-text-subtle hover:text-text-muted transition-colors ml-1">
                   Limpiar filtros ×
                 </button>

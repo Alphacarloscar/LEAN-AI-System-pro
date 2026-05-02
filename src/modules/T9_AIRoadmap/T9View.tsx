@@ -40,6 +40,26 @@ type AIGanttRow   = { kind: 'ai';   uc: UseCase; override: T9ItemOverride }
 type FreeGanttRow = { kind: 'free'; item: FreeItem }
 type GanttRow     = AIGanttRow | FreeGanttRow
 
+// ── Design System tokens (hex refs — source of truth: tailwind.config.ts) ──────
+const DS = {
+  navy:           '#1B2A4E',
+  successLight:   '#D4EDE3',
+  successDark:    '#5FAF8A',
+  warningLight:   '#FAF0D7',
+  warningDark:    '#D4A85C',
+  dangerLight:    '#F5DEDE',
+  dangerDark:     '#C06060',
+  infoLight:      '#DDE8F5',
+  infoDark:       '#6A90C0',
+  surface:        '#F9FAFB',
+  textMuted:      '#6B7280',
+  // Neutral decorative — free/initiative bars (warm gray, intentional)
+  freeBarPending: '#D3D1C7',
+  freeBar:        '#B4B2A9',
+  freeBarText:    '#2C2C2A',
+  freeSourceColor:'#444441',
+} as const
+
 // ── Helpers de riesgo ─────────────────────────────────────────
 
 function mapAIActRisk(r?: AIActRiskLevel): RoadmapRiskLevel {
@@ -49,26 +69,26 @@ function mapAIActRisk(r?: AIActRiskLevel): RoadmapRiskLevel {
 }
 
 const RISK_META: Record<RoadmapRiskLevel, { label: string; bg: string; color: string }> = {
-  alto:  { label: 'Riesgo alto',  bg: '#FCEBEB', color: '#A32D2D' },
-  medio: { label: 'Riesgo medio', bg: '#FAEEDA', color: '#633806' },
-  bajo:  { label: 'Riesgo bajo',  bg: '#EAF3DE', color: '#27500A' },
+  alto:  { label: 'Riesgo alto',  bg: DS.dangerLight,  color: DS.dangerDark  },
+  medio: { label: 'Riesgo medio', bg: DS.warningLight, color: DS.warningDark },
+  bajo:  { label: 'Riesgo bajo',  bg: DS.successLight, color: DS.successDark },
 }
 
 // ── Helpers de status ─────────────────────────────────────────
 
 const T4_STATUS_META = {
-  go:         { label: 'Aprobado',   bg: '#E1F5EE', color: '#085041' },
-  en_piloto:  { label: 'En piloto',  bg: '#E6F1FB', color: '#0C447C' },
-  completado: { label: 'Completado', bg: '#EAF3DE', color: '#27500A' },
-  priorizado: { label: 'Priorizado', bg: '#FAEEDA', color: '#633806' },
-  candidato:  { label: 'Candidato',  bg: '#F1EFE8', color: '#5F5E5A' },
-  no_go:      { label: 'No Go',      bg: '#FCEBEB', color: '#A32D2D' },
+  go:         { label: 'Aprobado',   bg: DS.successLight, color: DS.successDark },
+  en_piloto:  { label: 'En piloto',  bg: DS.infoLight,    color: DS.infoDark   },
+  completado: { label: 'Completado', bg: DS.successLight, color: DS.successDark },
+  priorizado: { label: 'Priorizado', bg: DS.warningLight, color: DS.warningDark },
+  candidato:  { label: 'Candidato',  bg: DS.surface,      color: DS.textMuted  },
+  no_go:      { label: 'No Go',      bg: DS.dangerLight,  color: DS.dangerDark  },
 } as const
 
 const FREE_STATUS_META: Record<FreeItemStatus, { label: string; bg: string; color: string }> = {
-  pendiente:  { label: 'Pendiente',  bg: '#F1EFE8', color: '#5F5E5A' },
-  en_curso:   { label: 'En curso',   bg: '#E6F1FB', color: '#0C447C' },
-  completado: { label: 'Completado', bg: '#EAF3DE', color: '#27500A' },
+  pendiente:  { label: 'Pendiente',  bg: DS.surface,      color: DS.textMuted  },
+  en_curso:   { label: 'En curso',   bg: DS.infoLight,    color: DS.infoDark   },
+  completado: { label: 'Completado', bg: DS.successLight, color: DS.successDark },
 }
 
 // ── Helpers de posición ───────────────────────────────────────
@@ -183,13 +203,13 @@ function GanttRowItem({
     riskMeta      = RISK_META[mapAIActRisk(uc.aiActClassification?.riskLevel)]
     const sm      = T4_STATUS_META[uc.status] ?? T4_STATUS_META.candidato
     statusBadge   = <Badge label={sm.label} bg={sm.bg} color={sm.color} />
-    barBg         = '#0D1B2A'
+    barBg         = DS.navy
     barTextColor  = '#ffffff'
     barOpacity    = uc.status === 'completado' ? 0.45 : 1
     showMilestone = !!uc.roadmap?.quarter
     sourceLabel   = 'T4 · Go'
-    sourceBg      = '#E6F1FB'
-    sourceColor   = '#0C447C'
+    sourceBg      = DS.infoLight
+    sourceColor   = DS.infoDark
   } else {
     const { item } = row
     name          = item.name
@@ -200,13 +220,13 @@ function GanttRowItem({
     riskMeta      = RISK_META[item.riskLevel]
     const sm      = FREE_STATUS_META[item.status]
     statusBadge   = <Badge label={sm.label} bg={sm.bg} color={sm.color} />
-    barBg         = item.status === 'pendiente' ? '#D3D1C7' : '#B4B2A9'
-    barTextColor  = '#2C2C2A'
+    barBg         = item.status === 'pendiente' ? DS.freeBarPending : DS.freeBar
+    barTextColor  = DS.freeBarText
     barOpacity    = item.status === 'completado' ? 0.5 : 1
     showMilestone = false
     sourceLabel   = 'Libre'
-    sourceBg      = '#F1EFE8'
-    sourceColor   = '#444441'
+    sourceBg      = DS.surface
+    sourceColor   = DS.freeSourceColor
   }
 
   return (
@@ -320,7 +340,7 @@ function GanttRowItem({
               left:      milestoneLeftPct(endMonth),
               top:       '50%',
               transform: 'translateY(-50%)',
-              background: '#E24B4A',
+              background: DS.dangerDark,
             }}
           />
         )}
@@ -618,13 +638,13 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
             <div className="grid border-b border-border dark:border-white/6" style={{ gridTemplateColumns: '1fr 1fr' }}>
               <div
                 className="py-1.5 text-center text-[10px] font-medium uppercase tracking-widest border-r border-border dark:border-white/6"
-                style={{ background: '#E6F1FB', color: '#0C447C' }}
+                style={{ background: DS.infoLight, color: DS.infoDark }}
               >
                 Q1 — Meses 1 a 3
               </div>
               <div
                 className="py-1.5 text-center text-[10px] font-medium uppercase tracking-widest"
-                style={{ background: '#E1F5EE', color: '#085041' }}
+                style={{ background: DS.successLight, color: DS.successDark }}
               >
                 Q2 — Meses 4 a 6
               </div>
@@ -690,15 +710,15 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
       {/* ── Leyenda ──────────────────────────────────────────── */}
       <div className="flex items-center gap-5 flex-wrap pb-2">
         <div className="flex items-center gap-2 text-[11px] text-text-muted">
-          <div className="w-6 h-2 rounded" style={{ background: '#0D1B2A' }} />
+          <div className="w-6 h-2 rounded" style={{ background: DS.navy }} />
           Caso de uso IA (T4 · Go)
         </div>
         <div className="flex items-center gap-2 text-[11px] text-text-muted">
-          <div className="w-6 h-2 rounded" style={{ background: '#B4B2A9' }} />
+          <div className="w-6 h-2 rounded" style={{ background: DS.freeBar }} />
           Iniciativa libre
         </div>
         <div className="flex items-center gap-2 text-[11px] text-text-muted">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#E24B4A' }} />
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: DS.dangerDark }} />
           Hito de entrega
         </div>
         <div className="flex items-center gap-2 text-[11px] text-text-muted">

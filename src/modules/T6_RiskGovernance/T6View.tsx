@@ -625,7 +625,10 @@ export function T6View({
             onClick={onBack}
             className="flex items-center gap-1.5 text-sm text-text-muted hover:text-lean-black dark:hover:text-gray-200 transition-colors"
           >
-            ← Volver
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 2L4 7l5 5" />
+            </svg>
+            Volver
           </button>
           <div className="w-px h-5 bg-border" />
           <div>

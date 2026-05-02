@@ -387,8 +387,11 @@ function DepartmentMatrix({
   activeId:     string | null
   onSelect:     (s: Stakeholder) => void
 }) {
-  // expandedDepts = set de depts EXPANDIDOS (vacío por defecto → todos colapsados)
-  const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set())
+  // expandedDepts = set de depts EXPANDIDOS. Por defecto: primer departamento expandido (U-05)
+  const [expandedDepts, setExpandedDepts] = useState<Set<string>>(() => {
+    if (stakeholders.length === 0) return new Set<string>()
+    return new Set<string>([stakeholders[0].department])
+  })
 
   function toggleDept(dept: string) {
     setExpandedDepts((prev) => {
@@ -757,7 +760,10 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
   const { stakeholders, addStakeholder } = useT2Store()
   const navigate = useNavigate()
 
-  const [activeStakeholder, setActiveStakeholder] = useState<Stakeholder | null>(null)
+  // Pre-seleccionar primer stakeholder al cargar (U-12 — demo flow)
+  const [activeStakeholder, setActiveStakeholder] = useState<Stakeholder | null>(
+    () => stakeholders[0] ?? null
+  )
   const [showModal,         setShowModal]         = useState(false)
 
   const existingDepartments = useMemo(
