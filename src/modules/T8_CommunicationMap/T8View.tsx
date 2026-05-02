@@ -311,7 +311,7 @@ function generateArchetypeMessages(stakeholders: Stakeholder[]) {
         ],
         doNotSay: 'No decir: "Ya verás que funciona." → Genera confrontación y refuerza la posición crítica.',
         openingLine: '"¿Cuál es la condición mínima que debería cumplir el piloto para que lo consideraras válido?"',
-        channel: 'sesion_bilateral' as CommChannel,
+        channel: 'reunion_presencial' as CommChannel,
         resistanceNote: 'Crítico con alta resistencia: NO intentar cambiar su postura en grupo. Sesión privada, escucha activa, incorporar sus criterios de éxito en el diseño del piloto.',
       },
     }
@@ -848,7 +848,7 @@ function ArchetypeMessagesTab({ messages }: { messages: ReturnType<typeof genera
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Nota de resistencia</p>
               <p className="text-xs text-text-muted leading-relaxed">{msg.resistanceNote}</p>
               <p className="text-[10px] text-text-subtle mt-2">
-                Canal recomendado: <span className="font-medium text-text-muted">{CHANNEL_CFG[msg.channel].icon} {CHANNEL_CFG[msg.channel].label}</span>
+                Canal recomendado: <span className="font-medium text-text-muted">{CHANNEL_CFG[msg.channel]?.icon} {CHANNEL_CFG[msg.channel]?.label ?? msg.channel}</span>
               </p>
             </div>
           </div>
