@@ -22,6 +22,7 @@ import { T6View }                               from '@/modules/T6_RiskGovernanc
 import { T7View }                               from '@/modules/T7_AdoptionHeatmap'
 import { T8View }                               from '@/modules/T8_CommunicationMap'
 import { T9View }                               from '@/modules/T9_AIRoadmap'
+import { T11View }                              from '@/modules/T11_OperatingRhythm'
 import { T12View }                              from '@/modules/T12_ISOAssessment'
 import { CompanyProfileView }                   from '@/modules/CompanyProfile'
 import {
@@ -208,6 +209,7 @@ function DashboardView() {
     if (tool.code === 'T7') navigate('/t7')
     if (tool.code === 'T8') navigate('/t8')
     if (tool.code === 'T9') navigate('/t9')
+    if (tool.code === 'T11') navigate('/t11')
     if (tool.code === 'T12') navigate('/t12')
   }
 
@@ -346,6 +348,21 @@ function T9RouteView() {
   return <T9View companyName={scenario.company.name} onBack={() => navigate('/')} />
 }
 
+// ── T11 route wrapper ─────────────────────────────────────────
+
+function T11RouteView() {
+  const { scenario } = useDemoContext()
+  const navigate     = useNavigate()
+  return (
+    <T11View
+      companyName={scenario.company.name}
+      t1Radar={scenario.t1Radar}
+      employees={scenario.company.employees}
+      onBack={() => navigate('/')}
+    />
+  )
+}
+
 // ── T12 route wrapper ─────────────────────────────────────────
 
 function T12RouteView() {
@@ -389,6 +406,7 @@ export default function App() {
           <Route path="t7"             element={<T7RouteView />} />
           <Route path="t8"             element={<T8RouteView />} />
           <Route path="t9"             element={<T9RouteView />} />
+          <Route path="t11"            element={<T11RouteView />} />
           <Route path="t12"            element={<T12RouteView />} />
         </Route>
 
