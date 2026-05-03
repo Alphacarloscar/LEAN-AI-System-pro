@@ -413,6 +413,18 @@ function DepartmentMatrix({
     return map
   }, [stakeholders])
 
+  // ⚠️ TODOS los hooks deben ir antes de cualquier early return (Rules of Hooks)
+  // Resumen de distribución de arquetipos
+  const archetypeCounts = useMemo(() => {
+    const counts: Partial<Record<ArchetypeCode, number>> = {}
+    stakeholders.forEach((s) => { counts[s.archetype] = (counts[s.archetype] ?? 0) + 1 })
+    return counts
+  }, [stakeholders])
+
+  const highRiskCount = stakeholders.filter(
+    (s) => s.resistance === 'alta' && (s.archetype === 'critico' || s.archetype === 'decisor')
+  ).length
+
   if (stakeholders.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -426,17 +438,6 @@ function DepartmentMatrix({
       </div>
     )
   }
-
-  // Resumen de distribución de arquetipos
-  const archetypeCounts = useMemo(() => {
-    const counts: Partial<Record<ArchetypeCode, number>> = {}
-    stakeholders.forEach((s) => { counts[s.archetype] = (counts[s.archetype] ?? 0) + 1 })
-    return counts
-  }, [stakeholders])
-
-  const highRiskCount = stakeholders.filter(
-    (s) => s.resistance === 'alta' && (s.archetype === 'critico' || s.archetype === 'decisor')
-  ).length
 
   return (
     <div className="space-y-6">
