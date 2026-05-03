@@ -450,7 +450,7 @@ function PortfolioMatrix({
             <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 pointer-events-none">
               <div className="bg-warning-light/45 border-r border-b border-border/30" />
               <div className="bg-success-light/45 border-b border-border/30" />
-              <div className="bg-gray-100/80 border-r border-border/30 dark:bg-gray-400/15" />
+              <div className="bg-gray-100/80 border-r border-border/30 dark:bg-warm-400/15" />
               <div className="bg-info-light/20" />
             </div>
 

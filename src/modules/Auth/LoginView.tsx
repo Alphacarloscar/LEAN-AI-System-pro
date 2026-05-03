@@ -37,7 +37,7 @@ function Field({
           'w-full px-4 py-2.5 rounded-lg text-sm text-gray-900',
           'bg-white border border-gray-200',
           'placeholder:text-gray-300',
-          'focus:outline-none focus:ring-2 focus:ring-[#0D1B2A]/20 focus:border-[#0D1B2A]',
+          'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy',
           'transition-all duration-150',
         ].join(' ')}
       />
@@ -104,10 +104,10 @@ export function LoginView() {
   // ── Formulario de nueva contraseña (recovery) ─────────────────
   if (isRecovery) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(to right, rgba(13,27,42,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(13,27,42,0.03) 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
+      <div className="min-h-screen bg-surface flex items-center justify-center px-4">
+        <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(to right, rgba(42,40,34,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(42,40,34,0.03) 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
         <div className="relative w-full max-w-sm">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/60 px-8 py-10 space-y-8">
+          <div className="bg-white rounded-2xl border border-border shadow-xl shadow-warm-200/60 px-8 py-10 space-y-8">
             <AlphaLogo size="lg" />
             {recOk ? (
               <div className="text-center space-y-2">
@@ -124,7 +124,7 @@ export function LoginView() {
                     <p className="text-xs text-red-600">{recError}</p>
                   </div>
                 )}
-                <button type="submit" disabled={loading || !newPass || !newPass2} className={['w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-150', loading || !newPass || !newPass2 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-[#0D1B2A] text-white hover:bg-[#1a2e44]'].join(' ')}>
+                <button type="submit" disabled={loading || !newPass || !newPass2} className={['w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-150', loading || !newPass || !newPass2 ? 'bg-warm-100 text-warm-300 cursor-not-allowed' : 'bg-navy-metallic text-white hover:bg-navy-metallic-hover'].join(' ')}>
                   {loading ? 'Guardando…' : 'Guardar contraseña'}
                 </button>
               </form>
@@ -136,7 +136,7 @@ export function LoginView() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-surface flex items-center justify-center px-4">
 
       {/* Fondo sutil — grid */}
       <div
@@ -152,7 +152,7 @@ export function LoginView() {
 
       {/* Card central */}
       <div className="relative w-full max-w-sm">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/60 px-8 py-10 space-y-8">
+        <div className="bg-white rounded-2xl border border-border shadow-xl shadow-warm-200/60 px-8 py-10 space-y-8">
 
           <AlphaLogo size="lg" />
 
@@ -191,8 +191,8 @@ export function LoginView() {
               className={[
                 'w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-150',
                 loading || !email || !password
-                  ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                  : 'bg-[#0D1B2A] text-white hover:bg-[#1a2e44] active:scale-[0.98] shadow-sm',
+                  ? 'bg-warm-100 text-warm-300 cursor-not-allowed'
+                  : 'bg-navy-metallic text-white hover:bg-navy-metallic-hover active:scale-[0.98] shadow-sm',
               ].join(' ')}
             >
               {loading ? (

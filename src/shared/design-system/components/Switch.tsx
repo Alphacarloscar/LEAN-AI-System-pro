@@ -51,7 +51,7 @@ export function Switch({
           'bg-gray-300 peer-checked:bg-navy',
           'peer-focus-visible:ring-2 peer-focus-visible:ring-navy peer-focus-visible:ring-offset-2',
           'peer-disabled:opacity-50 peer-disabled:cursor-not-allowed',
-          'dark:bg-gray-600 peer-checked:dark:bg-navy',
+          'dark:bg-warm-600 peer-checked:dark:bg-navy',
         ].join(' ')}
       >
         {/* Thumb */}

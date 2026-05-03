@@ -766,7 +766,7 @@ function ArchetypeMessagesTab({ messages }: { messages: ReturnType<typeof genera
   const DEPT_CFG_LOCAL: Record<string, { badgeBg: string; badgeText: string; fill: string }> = {
     adoptador:    { fill: '#10B981', badgeBg: 'bg-emerald-100', badgeText: 'text-emerald-700' },
     ambassador:   { fill: '#6366F1', badgeBg: 'bg-indigo-100',  badgeText: 'text-indigo-700'  },
-    decisor:      { fill: '#0D1B2A', badgeBg: 'bg-slate-100',   badgeText: 'text-slate-700'   },
+    decisor:      { fill: '#2A2822', badgeBg: 'bg-slate-100',   badgeText: 'text-slate-700'   },
     especialista: { fill: '#F97316', badgeBg: 'bg-orange-100',  badgeText: 'text-orange-700'  },
     critico:      { fill: '#EF4444', badgeBg: 'bg-red-100',     badgeText: 'text-red-700'     },
   }
@@ -926,7 +926,7 @@ function MaterialsTab({ materials }: { materials: MaterialTemplate[] }) {
 
 function DeptKitTab({ kits }: { kits: DeptKit[] }) {
   const DEPT_COLORS: Record<string, string> = {
-    'Dirección General':     '#0D1B2A',
+    'Dirección General':     '#2A2822',
     'IT / Tecnología':       '#6366F1',
     'Operaciones':           '#F97316',
     'Marketing & Comercial': '#10B981',
