@@ -16,6 +16,7 @@
 
 import { useState } from 'react'
 import { useT3Store } from '../store'
+import { useEngagementStore } from '@/modules/Engagement/store'
 import type { ProcessStage } from '../types'
 
 // ── Paleta de valor ──────────────────────────────────────────
@@ -58,6 +59,7 @@ interface StageModalProps {
 
 function StageModal({ processId, stage, onClose }: StageModalProps) {
   const { addStage, updateStage, removeStage } = useT3Store()
+  const engagementId = useEngagementStore((s) => s.activeEngagementId)
 
   const [form, setForm] = useState(
     stage
@@ -92,14 +94,14 @@ function StageModal({ processId, stage, onClose }: StageModalProps) {
       valueContribution: form.valueContribution,
       notes:             form.notes        || undefined,
     }
-    if (isEdit) updateStage(processId, stage!.id, payload)
-    else        addStage(processId, payload)
+    if (isEdit) updateStage(processId, stage!.id, payload, engagementId)
+    else        addStage(processId, payload, engagementId)
     onClose()
   }
 
   function handleDelete() {
     if (!stage) return
-    removeStage(processId, stage.id)
+    removeStage(processId, stage.id, engagementId)
     onClose()
   }
 

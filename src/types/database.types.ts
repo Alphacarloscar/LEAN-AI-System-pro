@@ -95,6 +95,7 @@ export interface T1DimensionScoreRow {
   interviewee_id:    string | null
   interviewee_name:  string | null
   interviewee_role:  string | null
+  interviewee_type:  'it' | 'business'
   updated_at:        string
 }
 
@@ -192,7 +193,7 @@ export interface ISO42001ControlRow {
 export type EngagementInsert      = Omit<EngagementRow, 'created_at' | 'updated_at'> & { id?: string }
 export type CompanyProfileInsert  = Omit<CompanyProfileRow, 'created_at' | 'updated_at'> & { id?: string }
 export type FrictionInsert        = Omit<FrictionRow, 'created_at'> & { id?: string }
-export type T1DimensionScoreInsert = Omit<T1DimensionScoreRow, never>  // id requerido (UNIQUE key)
+export type T1DimensionScoreInsert = Omit<T1DimensionScoreRow, 'id' | 'updated_at'> & { id?: string }
 export type StakeholderInsert     = Omit<StakeholderRow, 'created_at'> & { id?: string }
 export type ValueStreamInsert     = Omit<ValueStreamRow, 'created_at'> & { id?: string }
 export type UseCaseInsert         = Omit<UseCaseRow, 'created_at' | 'updated_at'> & { id?: string }

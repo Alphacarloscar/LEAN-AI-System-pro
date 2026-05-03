@@ -12,9 +12,10 @@
 // Sprint 3+: Supabase tabla `value_stream`.
 // ============================================================
 
-import { useState, useMemo }         from 'react'
-import { useNavigate }               from 'react-router-dom'
-import { useT3Store }                from './store'
+import { useState, useMemo, useEffect } from 'react'
+import { useNavigate }                 from 'react-router-dom'
+import { useT3Store }                  from './store'
+import { useEngagementStore }          from '@/modules/Engagement/store'
 import {
   AI_CATEGORY_CONFIG,
   READINESS_CONFIG,
@@ -968,7 +969,18 @@ interface T3ViewProps {
 
 export function T3View({ companyName, onBack }: T3ViewProps) {
   const navigate                          = useNavigate()
-  const { processes, addProcess }         = useT3Store()
+  const { processes, addProcess, load, initDemo } = useT3Store()
+  const engagementId                      = useEngagementStore((s) => s.activeEngagementId)
+
+  // Carga: real (Supabase) o demo
+  useEffect(() => {
+    if (engagementId) {
+      load(engagementId)
+    } else {
+      initDemo()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId])
   const [activeId, setActiveId]           = useState<string | null>(null)
   const [showModal, setShowModal]         = useState(false)
   const [filterPhase, setFilterPhase]     = useState<ProcessPhase | null>(null)
@@ -1001,7 +1013,7 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
   const existingDepts = Array.from(new Set(processes.map((p) => p.department)))
 
   function handleAddProcess(p: Omit<ValueStream, 'id' | 'createdAt'>) {
-    addProcess(p)
+    addProcess(p, engagementId)
     setShowModal(false)
   }
 

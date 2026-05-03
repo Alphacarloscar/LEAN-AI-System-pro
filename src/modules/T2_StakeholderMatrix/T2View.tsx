@@ -14,9 +14,10 @@
 // Sprint 3+: leer/escribir desde Supabase.
 // ============================================================
 
-import { useState, useMemo }             from 'react'
+import { useState, useMemo, useEffect }  from 'react'
 import { useNavigate }                   from 'react-router-dom'
 import { useT2Store }                    from './store'
+import { useEngagementStore }            from '@/modules/Engagement/store'
 import { ARCHETYPE_CONFIG, RESISTANCE_CONFIG } from './constants'
 import { InterviewModal }                from './components/InterviewModal'
 import { StakeholderQuadrantChart }      from './components/StakeholderQuadrantChart'
@@ -757,8 +758,19 @@ interface T2ViewProps {
 }
 
 export function T2View({ companyName, onBack }: T2ViewProps) {
-  const { stakeholders, addStakeholder } = useT2Store()
+  const { stakeholders, addStakeholder, load, initDemo } = useT2Store()
+  const engagementId = useEngagementStore((s) => s.activeEngagementId)
   const navigate = useNavigate()
+
+  // Carga: real (Supabase) o demo (datos predefinidos del store)
+  useEffect(() => {
+    if (engagementId) {
+      load(engagementId)
+    } else {
+      initDemo()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId])
 
   // Pre-seleccionar primer stakeholder al cargar (U-12 — demo flow)
   const [activeStakeholder, setActiveStakeholder] = useState<Stakeholder | null>(
@@ -772,7 +784,7 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
   )
 
   function handleAddStakeholder(s: Omit<Stakeholder, 'id' | 'createdAt'>) {
-    addStakeholder(s)
+    addStakeholder(s, engagementId)
     setShowModal(false)
     // Seleccionar el recién añadido (último en la lista)
     // Hacemos un pequeño delay para que el store se actualice

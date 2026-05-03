@@ -1,24 +1,25 @@
 // ============================================================
-// T2 — Zustand store con persist
+// T2 — Zustand store con Supabase
 //
-// Gestiona la lista de stakeholders del engagement activo.
-// MVP: datos demo pre-cargados para mostrar matrix poblada.
-// Sprint 3+: leer/escribir desde Supabase tabla `stakeholders`.
+// Sprint 5: Supabase como fuente de verdad.
+// Eliminado: persist middleware (localStorage).
+// Añadido: load(engagementId) + mutaciones optimistas con sync.
+//
+// Modo demo (engagementId = null): estado local sin persistencia.
+// Modo real (engagementId presente): Supabase.
 // ============================================================
 
-import { create }             from 'zustand'
-import { persist }            from 'zustand/middleware'
-import type { Stakeholder }   from './types'
+import { create } from 'zustand'
+import type { Stakeholder } from './types'
+import {
+  fetchStakeholders,
+  insertStakeholder,
+  updateStakeholderInDb,
+  deleteStakeholderFromDb,
+} from '@/services/t2.service'
 
 // ── Demo data — 8 stakeholders en 4 departamentos ─────────────
-// Distribución realista para el patrón 'vendor-sprawl':
-// Dirección General (2), IT/Tecnología (2), Operaciones (2), Marketing (2)
-
-// Scores computados con el algoritmo actual (constants.ts v1.1).
-// MAX: adoption=7, influence=6, openness=9, connector=2.
-// Stakeholders con manualOverride=true: el algoritmo auto-asigna 'critico'
-// pero el consultor ha corregido a 'decisor'/'especialista' por contexto organizacional.
-// Esto es realista y sirve como demostración de la función de ajuste manual.
+// Usada solo cuando no hay engagement activo (demo / presentación).
 
 const DEMO_STAKEHOLDERS: Stakeholder[] = [
   // ── Dirección General ──
@@ -27,8 +28,8 @@ const DEMO_STAKEHOLDERS: Stakeholder[] = [
     name:          'Ana Villanueva',
     role:          'CEO',
     department:    'Dirección General',
-    archetype:     'decisor',      // algoritmo: 'critico' — override: CEO con autoridad de inversión
-    resistance:    'media',        // ajustado manualmente (algo: 'baja', contexto: cautela presupuestaria)
+    archetype:     'decisor',
+    resistance:    'media',
     manualOverride: true,
     notes:         'Interesada en resultados, no en tecnología. Pide ROI medible en <6 meses.',
     createdAt:     new Date('2026-04-10').toISOString(),
@@ -61,7 +62,6 @@ const DEMO_STAKEHOLDERS: Stakeholder[] = [
       computedAt:     new Date('2026-04-10').toISOString(),
     },
   },
-
   // ── IT / Tecnología ──
   {
     id:            'demo-it-1',
@@ -101,15 +101,14 @@ const DEMO_STAKEHOLDERS: Stakeholder[] = [
       computedAt:     new Date('2026-04-11').toISOString(),
     },
   },
-
   // ── Operaciones ──
   {
     id:            'demo-ops-1',
     name:          'Javier Morales',
     role:          'COO',
     department:    'Operaciones',
-    archetype:     'decisor',      // algoritmo: 'critico' — override: COO con control sobre procesos e inversión
-    resistance:    'media',        // ajustado manualmente (algo: 'baja', contexto: exige evidencia operacional)
+    archetype:     'decisor',
+    resistance:    'media',
     manualOverride: true,
     notes:         'Abierto si ve impacto en eficiencia. Tiene autoridad sobre los procesos clave.',
     createdAt:     new Date('2026-04-11').toISOString(),
@@ -128,7 +127,7 @@ const DEMO_STAKEHOLDERS: Stakeholder[] = [
     name:          'Susana Prats',
     role:          'Head of Digital Ops',
     department:    'Operaciones',
-    archetype:     'especialista', // algoritmo: 'adoptador' — override: perfil de dominio experto con miedo al reemplazo
+    archetype:     'especialista',
     resistance:    'media',
     manualOverride: true,
     notes:         'Conoce los procesos a fondo. Preocupada por si la IA reemplazará su equipo de analistas.',
@@ -143,7 +142,6 @@ const DEMO_STAKEHOLDERS: Stakeholder[] = [
       computedAt:     new Date('2026-04-11').toISOString(),
     },
   },
-
   // ── Marketing & Comercial ──
   {
     id:            'demo-mkt-1',
@@ -188,44 +186,111 @@ const DEMO_STAKEHOLDERS: Stakeholder[] = [
 // ── Store ─────────────────────────────────────────────────────
 
 interface T2Store {
-  stakeholders:      Stakeholder[]
-  addStakeholder:    (s: Omit<Stakeholder, 'id' | 'createdAt'>) => void
-  updateStakeholder: (id: string, updates: Partial<Omit<Stakeholder, 'id'>>) => void
-  removeStakeholder: (id: string) => void
+  stakeholders: Stakeholder[]
+  isLoading:    boolean
+
+  /** Carga stakeholders desde Supabase para el engagement activo */
+  load: (engagementId: string) => Promise<void>
+
+  /** Inicializa con datos demo (sin engagement activo) */
+  initDemo: () => void
+
+  addStakeholder:    (s: Omit<Stakeholder, 'id' | 'createdAt'>, engagementId: string | null) => Promise<void>
+  updateStakeholder: (id: string, updates: Partial<Omit<Stakeholder, 'id'>>, engagementId: string | null) => Promise<void>
+  removeStakeholder: (id: string, engagementId: string | null) => Promise<void>
+
+  reset: () => void
 }
 
-export const useT2Store = create<T2Store>()(
-  persist(
-    (set) => ({
-      stakeholders: DEMO_STAKEHOLDERS,
+export const useT2Store = create<T2Store>()((set, get) => ({
+  stakeholders: [],
+  isLoading:    false,
 
-      addStakeholder: (s) =>
-        set((state) => ({
-          stakeholders: [
-            ...state.stakeholders,
-            {
-              ...s,
-              id:        `sh-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        })),
-
-      updateStakeholder: (id, updates) =>
-        set((state) => ({
-          stakeholders: state.stakeholders.map((sh) =>
-            sh.id === id ? { ...sh, ...updates } : sh
-          ),
-        })),
-
-      removeStakeholder: (id) =>
-        set((state) => ({
-          stakeholders: state.stakeholders.filter((sh) => sh.id !== id),
-        })),
-    }),
-    {
-      name:    'lean-t2-stakeholders',
-      version: 1,
+  // ── load ───────────────────────────────────────────────────
+  load: async (engagementId) => {
+    set({ isLoading: true })
+    try {
+      const stakeholders = await fetchStakeholders(engagementId)
+      set({ stakeholders, isLoading: false })
+    } catch (err) {
+      console.error('[T2Store] load:', err)
+      set({ isLoading: false })
     }
-  )
-)
+  },
+
+  // ── initDemo ───────────────────────────────────────────────
+  initDemo: () => set({ stakeholders: DEMO_STAKEHOLDERS, isLoading: false }),
+
+  // ── addStakeholder ─────────────────────────────────────────
+  addStakeholder: async (s, engagementId) => {
+    const newStakeholder: Stakeholder = {
+      ...s,
+      id:        `sh-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      createdAt: new Date().toISOString(),
+    }
+
+    // Optimistic update
+    set((state) => ({ stakeholders: [...state.stakeholders, newStakeholder] }))
+
+    if (engagementId) {
+      try {
+        await insertStakeholder(newStakeholder, engagementId)
+      } catch (err) {
+        console.error('[T2Store] addStakeholder sync:', err)
+        // Rollback optimistic update
+        set((state) => ({
+          stakeholders: state.stakeholders.filter((sh) => sh.id !== newStakeholder.id),
+        }))
+      }
+    }
+  },
+
+  // ── updateStakeholder ──────────────────────────────────────
+  updateStakeholder: async (id, updates, engagementId) => {
+    const prev = get().stakeholders.find((sh) => sh.id === id)
+
+    // Optimistic update
+    set((state) => ({
+      stakeholders: state.stakeholders.map((sh) =>
+        sh.id === id ? { ...sh, ...updates } : sh
+      ),
+    }))
+
+    if (engagementId) {
+      try {
+        await updateStakeholderInDb(id, engagementId, updates)
+      } catch (err) {
+        console.error('[T2Store] updateStakeholder sync:', err)
+        // Rollback
+        if (prev) {
+          set((state) => ({
+            stakeholders: state.stakeholders.map((sh) => sh.id === id ? prev : sh),
+          }))
+        }
+      }
+    }
+  },
+
+  // ── removeStakeholder ──────────────────────────────────────
+  removeStakeholder: async (id, engagementId) => {
+    const prev = get().stakeholders
+
+    // Optimistic update
+    set((state) => ({
+      stakeholders: state.stakeholders.filter((sh) => sh.id !== id),
+    }))
+
+    if (engagementId) {
+      try {
+        await deleteStakeholderFromDb(id, engagementId)
+      } catch (err) {
+        console.error('[T2Store] removeStakeholder sync:', err)
+        // Rollback
+        set({ stakeholders: prev })
+      }
+    }
+  },
+
+  // ── reset ──────────────────────────────────────────────────
+  reset: () => set({ stakeholders: [], isLoading: false }),
+}))

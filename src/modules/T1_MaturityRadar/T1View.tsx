@@ -23,6 +23,8 @@ import { T1RadarPanel }                         from './components/T1RadarPanel'
 import { T1ExecutiveOutput }                    from './components/T1ExecutiveOutput'
 import { PhaseMiniMap }                         from '@/shared/components/PhaseMiniMap'
 import type { IntervieweeAggregate }            from './components/T1ExecutiveOutput'
+import { useT1Store }                           from './store'
+import { useEngagementStore }                   from '@/modules/Engagement/store'
 
 interface T1ViewProps {
   scenario: DemoScenario
@@ -235,50 +237,73 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
   const [showNewModal,      setShowNewModal]      = useState(false)
   const [showInterviewees,  setShowInterviewees]  = useState(false)
 
-  // Lista de entrevistados: los del scenario + los añadidos en vivo
-  const [liveInterviewees, setLiveInterviewees] = useState(scenario.interviewees)
+  // ── Store T1 + engagement ────────────────────────────────────
+  const store          = useT1Store()
+  const engagementId   = useEngagementStore((s) => s.activeEngagementId)
 
-  // Estado por entrevistado: Record<id, T1DimensionState[]>
-  const [intervieweeStates, setIntervieweeStates] = useState<Record<string, T1DimensionState[]>>(
-    () => Object.fromEntries(
-      scenario.interviewees.map((i) => [
-        i.id,
-        buildDimensionsForInterviewee(i.scores, i.evidence ?? {}),
-      ])
-    )
-  )
+  const liveInterviewees  = store.interviewees
+  const intervieweeStates = store.dimensionStates
+  const activeId          = store.activeId
 
-  const [activeId, setActiveId] = useState<string>(scenario.interviewees[0]?.id ?? '')
+  // Carga: real (Supabase) o demo (datos del scenario)
+  useEffect(() => {
+    if (engagementId) {
+      store.load(engagementId)
+    } else {
+      store.initFromScenario(
+        scenario.interviewees,
+        Object.fromEntries(
+          scenario.interviewees.map((i) => [
+            i.id,
+            buildDimensionsForInterviewee(i.scores, i.evidence ?? {}),
+          ])
+        )
+      )
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId])
 
   // Añadir nuevo entrevistado en vivo
-  function addInterviewee(form: NewIntervieweeForm) {
-    const newId = `live-${Date.now()}`
-    const newPerson = {
-      id:        newId,
-      name:      form.name.trim(),
-      role:      form.role.trim(),
-      archetype: form.type === 'it' ? 'Perfil IT' : 'Perfil Negocio',
-      type:      form.type,
-      scores:    {} as Record<string, number>,
-    }
-    setLiveInterviewees((prev) => [...prev, newPerson])
-    setIntervieweeStates((prev) => ({
-      ...prev,
-      [newId]: buildDimensionsForInterviewee({}),
-    }))
-    setActiveId(newId)
+  async function addInterviewee(form: NewIntervieweeForm) {
+    await store.addInterviewee(
+      {
+        name:      form.name.trim(),
+        role:      form.role.trim(),
+        archetype: form.type === 'it' ? 'Ejecutivo TI' : 'Líder de Negocio',
+        type:      form.type,
+      },
+      engagementId,
+    )
     setShowNewModal(false)
   }
 
   // Dimensiones activas del entrevistado seleccionado
   const activeDimensions = intervieweeStates[activeId] ?? []
 
-  // Actualizar una dimensión del entrevistado activo
+  // Actualizar una dimensión del entrevistado activo.
+  // DimensionCard entrega el objeto completo; difamos para llamar
+  // la acción granular del store correcta.
   function updateDimension(updated: T1DimensionState) {
-    setIntervieweeStates((prev) => ({
-      ...prev,
-      [activeId]: prev[activeId].map((d) => d.code === updated.code ? updated : d),
-    }))
+    const oldDim = (intervieweeStates[activeId] ?? []).find((d) => d.code === updated.code)
+    if (!oldDim) return
+
+    for (const updatedSub of updated.subdimensions) {
+      const oldSub = oldDim.subdimensions.find((s) => s.code === updatedSub.code)
+      if (!oldSub) continue
+
+      if (updatedSub.score !== oldSub.score) {
+        store.setScore(activeId, updated.code, updatedSub.code, updatedSub.score, engagementId)
+      }
+      if (updatedSub.evidence !== oldSub.evidence) {
+        store.setEvidence(activeId, updated.code, updatedSub.code, updatedSub.evidence, engagementId)
+      }
+      if (updatedSub.showCriteria !== oldSub.showCriteria) {
+        store.toggleCriteria(activeId, updated.code, updatedSub.code)
+      }
+      if (updatedSub.showEvidence !== oldSub.showEvidence) {
+        store.toggleEvidence(activeId, updated.code, updatedSub.code)
+      }
+    }
   }
 
   // Métricas de progreso del entrevistado activo
@@ -453,7 +478,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
                   return (
                     <button
                       key={person.id}
-                      onClick={() => setActiveId(person.id)}
+                      onClick={() => store.setActiveId(person.id)}
                       className={[
                         'flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all duration-150',
                         isActive

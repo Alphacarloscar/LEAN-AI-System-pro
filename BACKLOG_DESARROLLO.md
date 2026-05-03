@@ -1,7 +1,7 @@
 # BACKLOG DE DESARROLLO — L.E.A.N. AI System
 
 Documento vivo. Sprints se actualizan al cierre de cada uno.
-Última actualización: 2026-04-18
+Última actualización: 2026-05-03
 
 ---
 
@@ -178,29 +178,35 @@ Cada sprint produce: (a) código que se merge a `develop`, (b) documentación de
 
 ---
 
-## Sprint 4 — Fase Normalize + ISO 42001 (T10, T11, T12, T13)
+## Sprint 5 — Fase Normalize + ISO 42001 (EN CURSO — 2026-05-03)
 
-**Objetivo:** cerrar la metodología completa y habilitar la propuesta ISO 42001.
+**Objetivo:** cerrar la metodología completa, unificar el reporting y habilitar la auditoría ISO 42001.
+
+**Cambio estructural respecto a plan original:** T12 Backlog Board ELIMINADA del scope por solapamiento con T4 y T9. La Fase Normalize queda con 3 herramientas. El ecosistema L.E.A.N. pasa de 13 a 12 herramientas.
+
+**Orden de construcción (confirmado):**
+1. Cerrar 6 items bloqueantes del Audit Sprint 4 (T7 dark mode, T6 PDF, T8 datos, gráfico Rogers)
+2. Implementar Supabase completo en T1-T3 (service layer + persistencia real)
+3. Implementar context_refs mínimo viable (pipes: T1→T11, T1+T2→T12-ISO, T4+T9→T10)
+4. Construir T12 AI System Impact Assessment (ISO 42001)
+5. Construir T11 AI Operating Rhythm
+6. Construir T10 AI Value Dashboard
 
 **Entregables:**
-1. T10 AI Value Dashboard:
-   - 4 dimensiones (adopción, valor, gobierno, productividad).
-   - **Quick Win QW7** instrumentado.
-2. T11 AI Operating Rhythm:
-   - Daily/Weekly/Monthly/Quarterly templates.
-   - Roles, agendas, formato de actas, escalado.
-3. T12 AI Backlog Board:
-   - **Quick Win QW8** instrumentado.
-   - Punto central del servicio Managed Service post-proyecto.
-4. T13 AI System Impact Assessment:
-   - Plantilla ISO 42001 completa.
-   - Mapping ~78% del AIMS desde outputs T1-T12.
-5. Capa de acceso condicional por tipología de empresa × madurez × rol.
+1. **T10 AI Value Dashboard** — Home screen del producto. Dashboard visual del ecosistema completo. 4 dimensiones de métricas (adopción, valor, gobierno, productividad). Datos reales de T1-T11. **Quick Win QW7** instrumentado. Puede romper patrón de layout T1-T9 de forma intencional. Construir al final.
+2. **T11 AI Operating Rhythm** — Inspirado en DMS Lean adaptado a gobierno IA. Recomienda dinámicamente rituales (agendas, frecuencias, roles, escalado) basado en datos del ecosistema. Exporta documentación lista para usar fuera de LEAN. **Scope MVP:** recomienda y exporta únicamente. No gestiona rituales dentro del sistema (futura evolución).
+3. **T12 AI System Impact Assessment (ISO 42001)** — Extraída y ampliada desde T6. Cláusulas ISO 42001 completas. Va ingiriendo datos del ecosistema y construye el proceso hacia la certificación. Renumerada desde T13.
+
+**Infraestructura:**
+- Supabase completo en T1-T3 (actualmente conectado sin service layer)
+- context_refs mínimo viable implementado
+- Acceso condicional por perfil × madurez (parkeado si tensiona el scope)
 
 **Criterios de éxito:**
 - Sprint completo de cliente puede ejecutarse end-to-end en la herramienta.
-- T13 produce un AIMS auditable por una certificadora externa.
-- Acceso condicional habilita/deshabilita herramientas según perfil.
+- T12 produce un AIMS auditable por una certificadora externa.
+- T10 muestra datos reales del ecosistema (no mock data).
+- T11 genera recomendaciones de rituales distintas para perfiles de madurez distintos.
 
 ---
 
