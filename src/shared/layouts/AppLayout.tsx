@@ -16,6 +16,7 @@ import { AppSidebar }                            from '@/shared/components/AppSi
 import { AlphaLogo }                             from '@/shared/components/AlphaLogo'
 import { useDarkMode }                           from '@/shared/hooks/useDarkMode'
 import { useAuthStore }                          from '@/modules/Auth'
+import { ErrorBoundary }                         from '@/shared/components/ErrorBoundary'
 import type { LeanPhase }                        from '@/shared/components/PhaseRoadmap'
 
 // ── Contexto compartido hacia las rutas hijas ─────────────────
@@ -157,7 +158,9 @@ export function AppLayout({ phases }: AppLayoutProps) {
 
       {/* ── Contenido de la ruta activa ── */}
       <main>
-        <Outlet context={{ dark } satisfies AppLayoutContext} />
+        <ErrorBoundary>
+          <Outlet context={{ dark } satisfies AppLayoutContext} />
+        </ErrorBoundary>
       </main>
 
     </div>
