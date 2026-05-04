@@ -190,47 +190,32 @@ const EVENT_LEVEL_COLOR: Record<string, string> = {
   team:      '#86C7A8',
 }
 
-// ── Hero variants ─────────────────────────────────────────────
+// ── HeroMetric — componente único para todas las tarjetas ─────
+//
+// label:      texto en mayúsculas (MADUREZ IA, INVERSIÓN TOTAL…)
+// value:      dato limpio (1.6, €259K, 38%…)
+// colorScore: 0-100 → semáforo rojo/naranja/verde
+//             undefined → gold neutro (para valores absolutos)
 
-function HeroDark({ score, sublabel, tier }: { score: string; sublabel: string; tier: string }) {
-  return (
-    <div className="flex-shrink-0 rounded-xl bg-lean-black dark:bg-warm-950 px-3 py-2 text-center min-w-[72px]">
-      <div className="flex items-baseline gap-0.5 justify-center">
-        <span className="text-[1.6rem] font-semibold text-gold tabular-nums leading-none">{score}</span>
-        <span className="text-sm text-warm-400 leading-none">{sublabel}</span>
-      </div>
-      <p className="text-[10px] text-warm-300 mt-0.5 leading-tight">{tier}</p>
-    </div>
-  )
+function heroColor(score?: number): string {
+  if (score == null) return '#C8860A'          // gold neutro
+  if (score < 30)   return '#C05035'           // rojo
+  if (score < 60)   return '#C8860A'           // naranja/amber
+  return '#2A7A52'                             // verde
 }
 
-function HeroBox({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="flex-shrink-0 rounded-xl bg-surface dark:bg-warm-700 border border-border dark:border-warm-500 px-3 py-2 text-right min-w-[80px]">
-      <p className="text-base font-semibold text-lean-black dark:text-warm-50 tabular-nums leading-tight">{value}</p>
-      <p className="text-[10px] text-text-muted dark:text-warm-300 leading-tight">{label}</p>
-    </div>
-  )
-}
-
-function HeroPlain({ value, label, valueColor }: { value: string; label?: string; valueColor?: string }) {
+function HeroMetric({ label, value, colorScore }: {
+  label:       string
+  value:       string
+  colorScore?: number   // 0-100, o undefined para neutro
+}) {
+  const color = heroColor(colorScore)
   return (
     <div className="flex-shrink-0 text-right">
-      <p className="text-[1.6rem] font-semibold tabular-nums leading-none"
-        style={{ color: valueColor ?? '#1C1A16' }}>
-        {value}
+      <p className="text-[9px] font-mono uppercase tracking-wider text-text-muted dark:text-warm-300 leading-tight mb-0.5">
+        {label}
       </p>
-      {label && <p className="text-[10px] text-text-muted dark:text-warm-300 mt-0.5 leading-tight">{label}</p>}
-    </div>
-  )
-}
-
-function HeroStacked({ topLabel, value, valueColor }: { topLabel: string; value: string; valueColor?: string }) {
-  return (
-    <div className="flex-shrink-0 text-right">
-      <p className="text-[9px] font-mono uppercase tracking-wide text-text-muted dark:text-warm-300 leading-tight">{topLabel}</p>
-      <p className="text-[1.4rem] font-semibold tabular-nums leading-none mt-0.5"
-        style={{ color: valueColor ?? '#C8860A' }}>
+      <p className="text-[1.6rem] font-semibold tabular-nums leading-none" style={{ color }}>
         {value}
       </p>
     </div>
@@ -415,7 +400,7 @@ export function T10View({
             tag="T1 · Readiness" tagColor="warning"
             title="Madurez IA" subtitle={`${t1Radar.length} dimensiones · Score ${avg}/4`}
             animDelay={0}
-            heroSlot={<HeroDark score={avg.toFixed(1)} sublabel="/4" tier={tier} />}
+            heroSlot={<HeroMetric label="Madurez IA" value={avg.toFixed(1)} colorScore={(avg / 4) * 100} />}
           >
             <div className="space-y-[5px]">
               {t1Radar.slice(0, 4).map(dim => (
@@ -472,7 +457,7 @@ export function T10View({
             tag="T4 · Portfolio IA  ★" tagColor="success"
             title="Iniciativas activas" subtitle={`${d.t4.totalInitiatives} iniciativas · ${d.t4.statuses.active} activas`}
             animDelay={80}
-            heroSlot={<HeroBox value={`€${(d.t4.totalInvestment / 1000).toFixed(0)}K`} label="Inversión total" />}
+            heroSlot={<HeroMetric label="Inversión total" value={`€${(d.t4.totalInvestment / 1000).toFixed(0)}K`} />}
           >
             <StatusBar segments={t4Segments} />
             {/* 3 metric chips — always visible */}
@@ -513,7 +498,7 @@ export function T10View({
             tag="T2 + T7 · Adopción" tagColor="info"
             title="Velocidad de adopción" subtitle={`${d.t2t7.totalStakeholders} stakeholders · ${d.t2t7.activePercent}% activos`}
             animDelay={160}
-            heroSlot={<HeroPlain value={`${d.t2t7.activePercent}%`} valueColor="#185FA5" />}
+            heroSlot={<HeroMetric label="Adopción activa" value={`${d.t2t7.activePercent}%`} colorScore={d.t2t7.activePercent} />}
           >
             {/* Department chart */}
             <div className="mb-2">
@@ -560,7 +545,7 @@ export function T10View({
             tag="T3 + T5 · Taxonomía" tagColor="purple"
             title="Ecosistema IA" subtitle={`${d.t3t5.processesTotal} procesos · ${d.t3t5.aiTypes.length} tipos IA activos`}
             animDelay={240}
-            heroSlot={<HeroPlain value={`${d.t3t5.efficiencyPct}%`} label="Eficiencia" valueColor="#534AB7" />}
+            heroSlot={<HeroMetric label="Eficiencia" value={`${d.t3t5.efficiencyPct}%`} colorScore={d.t3t5.efficiencyPct} />}
           >
             {/* AI type distribution — donut + legend */}
             <div className="flex items-center gap-3">
@@ -604,7 +589,7 @@ export function T10View({
             tag="T6 + T12 · Riesgos" tagColor="danger"
             title="Riesgo + ISO 42001" subtitle={`${d.t6t12.risks.total} riesgos · ${d.t6t12.isoCompliance}% ISO`}
             animDelay={320}
-            heroSlot={<HeroPlain value={`${d.t6t12.isoCompliance}%`} label="ISO" valueColor="#C8860A" />}
+            heroSlot={<HeroMetric label="ISO 42001" value={`${d.t6t12.isoCompliance}%`} colorScore={d.t6t12.isoCompliance} />}
           >
             <div className="flex items-center gap-3">
               <DonutChart segments={riskSegments} size={60} strokeWidth={12} centerLabel={`${d.t6t12.risks.total}`} />
@@ -660,12 +645,7 @@ export function T10View({
             tag="T8 · T9 · T11 · Gobierno" tagColor="amber"
             title="Gobierno activo" subtitle="Próximos eventos · Hitos · Vendors"
             animDelay={400}
-            heroSlot={
-              <HeroStacked
-                topLabel="Gobierno activo"
-                value={`${d.t8t9t11.gobiernoActivoPct}%`}
-              />
-            }
+            heroSlot={<HeroMetric label="Gobierno activo" value={`${d.t8t9t11.gobiernoActivoPct}%`} colorScore={d.t8t9t11.gobiernoActivoPct} />}
           >
             <div className="space-y-1.5">
               {d.t8t9t11.upcomingEvents.map((ev, i) => (
