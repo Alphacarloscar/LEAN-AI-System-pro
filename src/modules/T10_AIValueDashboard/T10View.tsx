@@ -2,15 +2,13 @@
 // T10 — AI Value Dashboard · "Wow Moment" Screen
 //
 // Home screen del L.E.A.N. AI System.
-// Modo demo siempre activo: datos estáticos realistas (T10_DEMO)
-// + T1 Radar del escenario activo (prop).
-//
-// Diseño: Obsidian Amber palette · 6 paneles · click-to-expand
+// Modo demo siempre activo. 6 paneles con hero metric.
+// Paleta Obsidian Amber · click-to-expand por panel.
 // ============================================================
 
-import { useState, useEffect }               from 'react'
-import type { RadarDimension }               from '@/shared/components/charts/LeanRadarChart'
-import { T10_DEMO }                          from './demo-data'
+import { useState, useEffect }       from 'react'
+import type { RadarDimension }       from '@/shared/components/charts/LeanRadarChart'
+import { T10_DEMO }                  from './demo-data'
 
 // ── Tipos ────────────────────────────────────────────────────
 
@@ -29,7 +27,7 @@ export interface T10ViewProps {
 
 // ── Helpers ──────────────────────────────────────────────────
 
-function t1Avg(radar: RadarDimension[]): number {
+function calcAvg(radar: RadarDimension[]): number {
   if (!radar.length) return 2.1
   return Math.round((radar.reduce((s, d) => s + d.current, 0) / radar.length) * 10) / 10
 }
@@ -49,39 +47,25 @@ function weakestDimension(radar: RadarDimension[]): string {
 
 // ── Sub-componentes ──────────────────────────────────────────
 
-interface DimBarProps {
-  label:      string
-  value:      number
-  max:        number
-  color:      string
-  showValue?: boolean
-}
-
-function DimBar({ label, value, max, color, showValue = false }: DimBarProps) {
-  const pct = Math.max(0, Math.min(100, (value / max) * 100))
+// DimBar — barra horizontal de dimensión
+function DimBar({ label, value, max, color, showValue = false }: {
+  label: string; value: number; max: number; color: string; showValue?: boolean
+}) {
   return (
     <div className="flex items-center gap-2">
       <span className="text-[10px] text-text-muted dark:text-warm-300 w-[76px] flex-shrink-0 truncate">{label}</span>
       <div className="flex-1 h-[5px] rounded-full bg-border dark:bg-warm-500">
-        <div
-          className="h-full rounded-full"
-          style={{ width: `${pct}%`, background: color }}
-        />
+        <div className="h-full rounded-full" style={{ width: `${Math.max(0, Math.min(100, (value / max) * 100))}%`, background: color }} />
       </div>
       {showValue && (
-        <span className="text-[10px] text-text-muted dark:text-warm-300 w-6 text-right tabular-nums">
-          {value.toFixed(1)}
-        </span>
+        <span className="text-[10px] text-text-muted dark:text-warm-300 w-6 text-right tabular-nums">{value.toFixed(1)}</span>
       )}
     </div>
   )
 }
 
-interface StatusBarProps {
-  segments: Array<{ pct: number; color: string; label: string }>
-}
-
-function StatusBar({ segments }: StatusBarProps) {
+// StatusBar — barra apilada horizontal
+function StatusBar({ segments }: { segments: Array<{ pct: number; color: string; label: string }> }) {
   return (
     <div>
       <div className="flex h-[7px] rounded-full overflow-hidden mb-2 gap-px">
@@ -101,51 +85,34 @@ function StatusBar({ segments }: StatusBarProps) {
   )
 }
 
-interface DonutChartProps {
+// DonutChart — SVG donut con segmentos
+function DonutChart({ segments, size = 64, strokeWidth = 13, centerLabel }: {
   segments: Array<{ pct: number; color: string }>
-  size?: number
-  strokeWidth?: number
-  centerLabel?: string
-}
-
-function DonutChart({ segments, size = 64, strokeWidth = 13, centerLabel }: DonutChartProps) {
+  size?: number; strokeWidth?: number; centerLabel?: string
+}) {
   const r    = (size - strokeWidth) / 2
   const cx   = size / 2
   const cy   = size / 2
   const circ = 2 * Math.PI * r
-
-  let cumulativeLen = 0
-  const rendered = segments.map((seg, i) => {
-    const dashLen    = (seg.pct / 100) * circ
-    const dashOffset = -cumulativeLen
-    cumulativeLen   += dashLen
-    return (
-      <circle
-        key={i}
-        cx={cx} cy={cy} r={r}
-        fill="none"
-        stroke={seg.color}
-        strokeWidth={strokeWidth}
-        strokeDasharray={`${dashLen} ${circ}`}
-        strokeDashoffset={dashOffset}
-        transform={`rotate(-90 ${cx} ${cy})`}
-      />
-    )
-  })
+  let cum    = 0
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="#D4D0C8" strokeWidth={strokeWidth} className="dark:stroke-warm-500" />
-      {rendered}
+      {segments.map((seg, i) => {
+        const dashLen = (seg.pct / 100) * circ
+        const offset  = -cum
+        cum += dashLen
+        return (
+          <circle key={i} cx={cx} cy={cy} r={r} fill="none"
+            stroke={seg.color} strokeWidth={strokeWidth}
+            strokeDasharray={`${dashLen} ${circ}`} strokeDashoffset={offset}
+            transform={`rotate(-90 ${cx} ${cy})`} />
+        )
+      })}
       {centerLabel && (
-        <text
-          x={cx} y={cy + 4}
-          textAnchor="middle"
-          fontSize="12"
-          fontWeight="500"
-          fill="currentColor"
-          className="text-lean-black dark:text-warm-50"
-        >
+        <text x={cx} y={cy + 4} textAnchor="middle" fontSize="12" fontWeight="500" fill="currentColor"
+          className="fill-lean-black dark:fill-warm-50">
           {centerLabel}
         </text>
       )}
@@ -153,21 +120,51 @@ function DonutChart({ segments, size = 64, strokeWidth = 13, centerLabel }: Donu
   )
 }
 
-function NavButton({
-  label, onClick, secondary = false,
-}: {
-  label: string
-  onClick: () => void
-  secondary?: boolean
+// MetricChip — tarjeta pequeña de métrica
+function MetricChip({ label, value, valueColor }: {
+  label: string; value: string; valueColor?: string
+}) {
+  return (
+    <div className="bg-surface dark:bg-warm-700 rounded-lg p-2 text-center flex-1 min-w-0">
+      <p className="text-[9px] font-mono uppercase tracking-wide text-text-muted dark:text-warm-300 mb-0.5 leading-tight">{label}</p>
+      <p className="text-sm font-semibold tabular-nums leading-snug"
+        style={{ color: valueColor ?? 'var(--color-text-primary)' }}>
+        {value}
+      </p>
+    </div>
+  )
+}
+
+// DeptBar — barra de departamento para adopción
+function DeptBar({ label, innovadores, early, rezagados, total }: {
+  label: string; innovadores: number; early: number; rezagados: number; total: number
+}) {
+  const pI = (innovadores / total) * 100
+  const pE = (early       / total) * 100
+  const pR = (rezagados   / total) * 100
+  return (
+    <div className="flex items-center gap-2 mb-1.5">
+      <span className="text-[9px] text-text-muted dark:text-warm-300 w-20 flex-shrink-0 truncate">{label}</span>
+      <div className="flex flex-1 h-[6px] rounded-full overflow-hidden gap-px">
+        <div style={{ width: `${pI}%`, background: '#86C7A8' }} />
+        <div style={{ width: `${pE}%`, background: '#9BB5D9' }} />
+        <div style={{ width: `${pR}%`, background: '#C4C0B8' }} />
+      </div>
+      <span className="text-[9px] text-text-muted dark:text-warm-300 w-4 text-right">{total}</span>
+    </div>
+  )
+}
+
+// NavButton — enlace de navegación a herramienta
+function NavButton({ label, onClick, secondary = false }: {
+  label: string; onClick: () => void; secondary?: boolean
 }) {
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick() }}
       className={[
         'flex items-center gap-1 text-[11px] font-medium transition-colors',
-        secondary
-          ? 'text-text-muted dark:text-warm-300 hover:text-gold'
-          : 'text-gold hover:text-gold-hover',
+        secondary ? 'text-text-muted dark:text-warm-300 hover:text-gold' : 'text-gold hover:text-gold-hover',
       ].join(' ')}
     >
       {label}
@@ -178,6 +175,7 @@ function NavButton({
   )
 }
 
+// ExpandedSection
 function ExpandedSection({ children }: { children: React.ReactNode }) {
   return (
     <div className="mt-3 pt-3 border-t border-border dark:border-warm-500 animate-fade-in">
@@ -192,7 +190,54 @@ const EVENT_LEVEL_COLOR: Record<string, string> = {
   team:      '#86C7A8',
 }
 
-// ── Panel Card ───────────────────────────────────────────────
+// ── Hero variants ─────────────────────────────────────────────
+
+function HeroDark({ score, sublabel, tier }: { score: string; sublabel: string; tier: string }) {
+  return (
+    <div className="flex-shrink-0 rounded-xl bg-lean-black dark:bg-warm-950 px-3 py-2 text-center min-w-[72px]">
+      <div className="flex items-baseline gap-0.5 justify-center">
+        <span className="text-[1.6rem] font-semibold text-gold tabular-nums leading-none">{score}</span>
+        <span className="text-sm text-warm-400 leading-none">{sublabel}</span>
+      </div>
+      <p className="text-[10px] text-warm-300 mt-0.5 leading-tight">{tier}</p>
+    </div>
+  )
+}
+
+function HeroBox({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex-shrink-0 rounded-xl bg-surface dark:bg-warm-700 border border-border dark:border-warm-500 px-3 py-2 text-right min-w-[80px]">
+      <p className="text-base font-semibold text-lean-black dark:text-warm-50 tabular-nums leading-tight">{value}</p>
+      <p className="text-[10px] text-text-muted dark:text-warm-300 leading-tight">{label}</p>
+    </div>
+  )
+}
+
+function HeroPlain({ value, label, valueColor }: { value: string; label?: string; valueColor?: string }) {
+  return (
+    <div className="flex-shrink-0 text-right">
+      <p className="text-[1.6rem] font-semibold tabular-nums leading-none"
+        style={{ color: valueColor ?? '#1C1A16' }}>
+        {value}
+      </p>
+      {label && <p className="text-[10px] text-text-muted dark:text-warm-300 mt-0.5 leading-tight">{label}</p>}
+    </div>
+  )
+}
+
+function HeroStacked({ topLabel, value, valueColor }: { topLabel: string; value: string; valueColor?: string }) {
+  return (
+    <div className="flex-shrink-0 text-right">
+      <p className="text-[9px] font-mono uppercase tracking-wide text-text-muted dark:text-warm-300 leading-tight">{topLabel}</p>
+      <p className="text-[1.4rem] font-semibold tabular-nums leading-none mt-0.5"
+        style={{ color: valueColor ?? '#C8860A' }}>
+        {value}
+      </p>
+    </div>
+  )
+}
+
+// ── PanelCard ─────────────────────────────────────────────────
 
 type TagColor = 'warning' | 'success' | 'info' | 'danger' | 'purple' | 'amber'
 
@@ -205,30 +250,23 @@ const TAG_CLASSES: Record<TagColor, string> = {
   amber:   'bg-warning-light text-warning-dark',
 }
 
-interface PanelCardProps {
-  id:        PanelId
-  featured?: boolean
-  expanded:  boolean
-  onClick:   () => void
-  tag:       string
-  tagColor:  TagColor
-  title:     string
-  subtitle:  string
-  animDelay: number
-  children:  React.ReactNode
-}
-
 function PanelCard({
-  featured = false,
-  expanded,
-  onClick,
-  tag,
-  tagColor,
-  title,
-  subtitle,
-  animDelay,
-  children,
-}: PanelCardProps) {
+  featured = false, expanded, onClick,
+  tag, tagColor, title, subtitle,
+  animDelay, heroSlot, children,
+}: {
+  id?:        string
+  featured?:  boolean
+  expanded:   boolean
+  onClick:    () => void
+  tag:        string
+  tagColor:   TagColor
+  title:      string
+  subtitle:   string
+  animDelay:  number
+  heroSlot?:  React.ReactNode
+  children:   React.ReactNode
+}) {
   return (
     <div
       onClick={onClick}
@@ -246,24 +284,23 @@ function PanelCard({
         borderTop: featured ? '2px solid #C8860A' : undefined,
       }}
     >
-      {/* Featured: subtle gold tint layer */}
       {featured && (
-        <div
-          className="absolute inset-0 pointer-events-none opacity-[0.03]"
-          style={{ background: 'linear-gradient(135deg, #C8860A 0%, transparent 60%)' }}
-        />
+        <div className="absolute inset-0 pointer-events-none opacity-[0.025]"
+          style={{ background: 'linear-gradient(135deg, #C8860A 0%, transparent 60%)' }} />
       )}
 
-      {/* Tag */}
-      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full inline-block mb-2 ${TAG_CLASSES[tagColor]}`}>
-        {tag}
-      </span>
+      {/* Header row: tag + hero */}
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex-1 min-w-0">
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full inline-block mb-1.5 ${TAG_CLASSES[tagColor]}`}>
+            {tag}
+          </span>
+          <p className="text-sm font-medium text-lean-black dark:text-warm-50 leading-snug">{title}</p>
+          <p className="text-[11px] text-text-muted dark:text-warm-300 mt-0.5">{subtitle}</p>
+        </div>
+        {heroSlot}
+      </div>
 
-      {/* Title */}
-      <p className="text-sm font-medium text-lean-black dark:text-warm-50 mb-0.5 leading-snug">{title}</p>
-      <p className="text-[11px] text-text-muted dark:text-warm-300 mb-3">{subtitle}</p>
-
-      {/* Content (summary + expanded) */}
       {children}
     </div>
   )
@@ -272,50 +309,35 @@ function PanelCard({
 // ── T10View ──────────────────────────────────────────────────
 
 export function T10View({
-  companyName,
-  sector,
-  employees,
-  t1Radar,
-  onNavigate,
-  demoPattern,
-  demoScenarios,
-  onPatternChange,
+  companyName, sector, employees, t1Radar, onNavigate,
+  demoPattern, demoScenarios, onPatternChange,
 }: T10ViewProps) {
 
   const [expanded,  setExpanded]  = useState<PanelId | null>(null)
   const [aiDisplay, setAiDisplay] = useState(0)
 
-  const avg     = t1Avg(t1Radar)
+  const avg     = calcAvg(t1Radar)
   const weakest = weakestDimension(t1Radar)
   const tier    = maturityLabel(avg)
 
-  // ── AI Index counter animation ─────────────────────────────
+  // AI Index counter animation
   useEffect(() => {
-    const target   = avg
-    const duration = 1300
-    const start    = Date.now()
+    const target = avg; const duration = 1300; const start = Date.now()
     let frame: number
-
     const tick = () => {
-      const elapsed  = Date.now() - start
-      const progress = Math.min(elapsed / duration, 1)
-      const eased    = 1 - Math.pow(1 - progress, 3)
-      setAiDisplay(Math.round(eased * target * 10) / 10)
-      if (progress < 1) frame = requestAnimationFrame(tick)
+      const p = Math.min((Date.now() - start) / duration, 1)
+      setAiDisplay(Math.round((1 - Math.pow(1 - p, 3)) * target * 10) / 10)
+      if (p < 1) frame = requestAnimationFrame(tick)
     }
-
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
   }, [avg])
 
-  function togglePanel(id: PanelId) {
-    setExpanded(prev => prev === id ? null : id)
-  }
+  function toggle(id: PanelId) { setExpanded(prev => prev === id ? null : id) }
 
-  // ── T4 stacked bar ─────────────────────────────────────────
-  const d    = T10_DEMO
-  const t4n  = d.t4.totalInitiatives
-  const t4s  = d.t4.statuses
+  const d   = T10_DEMO
+  const t4n = d.t4.totalInitiatives
+  const t4s = d.t4.statuses
   const t4Segments = [
     { pct: Math.round((t4s.active     / t4n) * 100), color: '#86C7A8', label: `Activas ${t4s.active}` },
     { pct: Math.round((t4s.validating / t4n) * 100), color: '#E8C281', label: `Validando ${t4s.validating}` },
@@ -323,7 +345,6 @@ export function T10View({
     { pct: Math.round((t4s.stopped   / t4n) * 100), color: '#C4C0B8', label: `Paradas ${t4s.stopped}` },
   ]
 
-  // ── Risk donut segments ────────────────────────────────────
   const rTotal = d.t6t12.risks.total
   const riskSegments = [
     { pct: Math.round((d.t6t12.risks.high   / rTotal) * 100), color: '#D85A30' },
@@ -331,30 +352,22 @@ export function T10View({
     { pct: Math.round((d.t6t12.risks.low    / rTotal) * 100), color: '#97C459' },
   ]
 
-  // ── Adoption donut segments ────────────────────────────────
-  const adoptionSegments = d.t2t7.groups.map(g => ({ pct: g.pct, color: g.color }))
+  const aiTypeSegments = d.t3t5.aiTypes.map(t => ({ pct: t.pct, color: t.color }))
 
-  // ── Render ─────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-surface dark:bg-warm-900">
 
       {/* ── Dashboard header ─────────────────────────────── */}
       <div className="bg-lean-black dark:bg-warm-950">
         <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between gap-4 flex-wrap">
-
-          {/* Left: company info */}
           <div>
             <p className="text-[10px] font-mono uppercase tracking-widest text-warm-300 mb-0.5">
               {sector} · {employees.toLocaleString('es-ES')} empleados
             </p>
             <h1 className="text-base font-semibold text-warm-50 leading-tight">{companyName}</h1>
           </div>
-
-          {/* Center: AI Index */}
           <div className="text-center flex-1">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-warm-400 mb-1">
-              Índice IA global
-            </p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-warm-400 mb-1">Índice IA global</p>
             <div className="flex items-baseline gap-1.5 justify-center">
               <span className="text-[2.5rem] font-semibold leading-none text-gold tabular-nums tracking-tight">
                 {aiDisplay.toFixed(1)}
@@ -363,12 +376,9 @@ export function T10View({
             </div>
             <p className="text-[10px] text-warm-300 mt-0.5">{tier}</p>
           </div>
-
-          {/* Right: sprint + date */}
           <div className="text-right">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold/15 text-gold text-xs font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
-              Sprint 3 / 6
+              <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />Sprint 3 / 6
             </span>
             <p className="text-[10px] text-warm-400 mt-1">Mayo 2026</p>
           </div>
@@ -378,21 +388,14 @@ export function T10View({
         {demoScenarios && onPatternChange && (
           <div className="border-t border-warm-700 dark:border-warm-800">
             <div className="max-w-6xl mx-auto px-8 py-2 flex items-center gap-3">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-warm-400 flex-shrink-0">
-                Escenario demo
-              </span>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-warm-400 flex-shrink-0">Escenario demo</span>
               <div className="flex gap-1.5 flex-wrap">
                 {demoScenarios.map(s => (
-                  <button
-                    key={s.id}
-                    onClick={() => onPatternChange(s.id)}
+                  <button key={s.id} onClick={() => onPatternChange(s.id)}
                     className={[
                       'px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all',
-                      s.id === demoPattern
-                        ? 'bg-gold text-lean-black'
-                        : 'bg-warm-700 text-warm-200 hover:bg-warm-600',
-                    ].join(' ')}
-                  >
+                      s.id === demoPattern ? 'bg-gold text-lean-black' : 'bg-warm-700 text-warm-200 hover:bg-warm-600',
+                    ].join(' ')}>
                     {s.label}
                   </button>
                 ))}
@@ -406,83 +409,79 @@ export function T10View({
       <div className="max-w-6xl mx-auto px-8 py-7">
         <div className="grid grid-cols-3 gap-5">
 
-          {/* P1: T1 AI Readiness ─────────────────────────────── */}
+          {/* ── P1: T1 Madurez IA ──────────────────────────── */}
           <PanelCard
-            id="p1"
-            expanded={expanded === 'p1'}
-            onClick={() => togglePanel('p1')}
-            tag="T1 · Readiness"
-            tagColor="warning"
-            title="Madurez IA"
-            subtitle={`${t1Radar.length} dimensiones · Score ${avg}/4`}
+            id="p1" expanded={expanded === 'p1'} onClick={() => toggle('p1')}
+            tag="T1 · Readiness" tagColor="warning"
+            title="Madurez IA" subtitle={`${t1Radar.length} dimensiones · Score ${avg}/4`}
             animDelay={0}
+            heroSlot={<HeroDark score={avg.toFixed(1)} sublabel="/4" tier={tier} />}
           >
-            {/* Summary: first 4 bars */}
             <div className="space-y-[5px]">
-              {t1Radar.slice(0, 4).map(d => (
-                <DimBar key={d.dimension} label={d.dimension} value={d.current} max={4} color="#C8860A" />
+              {t1Radar.slice(0, 4).map(dim => (
+                <DimBar key={dim.dimension} label={dim.dimension} value={dim.current} max={4} color="#C8860A" />
               ))}
               {t1Radar.length > 4 && (
-                <p className="text-[10px] text-text-subtle dark:text-warm-400 pt-0.5">
-                  +{t1Radar.length - 4} más
-                </p>
+                <p className="text-[10px] text-text-subtle dark:text-warm-400 pt-0.5">+{t1Radar.length - 4} más</p>
               )}
             </div>
 
-            {/* Expanded */}
             {expanded === 'p1' && (
               <ExpandedSection>
-                <div className="space-y-[5px] mb-3">
-                  {t1Radar.map(dim => (
-                    <DimBar
-                      key={dim.dimension}
-                      label={dim.dimension}
-                      value={dim.current}
-                      max={4}
-                      color="#C8860A"
-                      showValue
-                    />
-                  ))}
+                {/* IT vs Negocio */}
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="text-center">
+                    <p className="text-[10px] text-text-muted dark:text-warm-300">IT (avg)</p>
+                    <p className="text-xl font-semibold text-gold tabular-nums">{d.t1.itAvg}</p>
+                  </div>
+                  <div className="flex-1 relative mx-1">
+                    <div className="h-1.5 bg-border dark:bg-warm-500 rounded-full overflow-hidden">
+                      <div className="absolute left-0 top-0 h-full rounded-full bg-gold"
+                        style={{ width: `${(d.t1.itAvg / 4) * 100}%` }} />
+                    </div>
+                    <div className="h-1.5 bg-border dark:bg-warm-500 rounded-full overflow-hidden mt-1">
+                      <div className="absolute left-0 top-0 h-full rounded-full bg-info"
+                        style={{ width: `${(d.t1.bizAvg / 4) * 100}%` }} />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-text-muted dark:text-warm-300">Negocio (avg)</p>
+                    <p className="text-xl font-semibold text-info-dark dark:text-info tabular-nums">{d.t1.bizAvg}</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${avg < 2 ? 'bg-warning-light text-warning-dark' : 'bg-info-light text-info-dark'}`}>
-                    {tier}
-                  </span>
+                <p className="text-[10px] text-text-muted dark:text-warm-300 mb-2">
+                  → Negocio +{d.t1.gapPts} pts sobre IT
+                </p>
+                <div className="flex items-center justify-between mb-3">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${avg < 2 ? 'bg-warning-light text-warning-dark' : 'bg-info-light text-info-dark'}`}>{tier}</span>
                   <span className="text-[10px] text-text-muted dark:text-warm-300">
-                    Área más débil: <span className="font-medium">{weakest}</span>
+                    Nº entrevistas: <span className="font-semibold text-lean-black dark:text-warm-50">{d.t1.interviewsCount}</span>
                   </span>
                 </div>
+                <p className="text-[10px] text-text-muted dark:text-warm-300 mb-2">
+                  Área más débil: <span className="font-medium text-lean-black dark:text-warm-100">{weakest}</span>
+                </p>
                 <NavButton label="Abrir T1 Assessment" onClick={() => onNavigate('/t1')} />
               </ExpandedSection>
             )}
           </PanelCard>
 
-          {/* P2: T4 Portfolio IA — FEATURED ─────────────────── */}
+          {/* ── P2: T4 Portfolio IA — FEATURED ─────────────── */}
           <PanelCard
-            id="p2"
-            featured
-            expanded={expanded === 'p2'}
-            onClick={() => togglePanel('p2')}
-            tag="T4 · Portfolio IA  ★"
-            tagColor="success"
-            title="Iniciativas activas"
-            subtitle={`${d.t4.totalInitiatives} iniciativas · ${d.t4.statuses.active} activas`}
+            id="p2" featured expanded={expanded === 'p2'} onClick={() => toggle('p2')}
+            tag="T4 · Portfolio IA  ★" tagColor="success"
+            title="Iniciativas activas" subtitle={`${d.t4.totalInitiatives} iniciativas · ${d.t4.statuses.active} activas`}
             animDelay={80}
+            heroSlot={<HeroBox value={`€${(d.t4.totalInvestment / 1000).toFixed(0)}K`} label="Inversión total" />}
           >
-            {/* Status bar */}
             <StatusBar segments={t4Segments} />
-
-            {/* Hero metric */}
-            <div className="mt-3">
-              <p className="text-[1.875rem] font-semibold text-success-dark tabular-nums leading-none">
-                €{(d.t4.estimatedValue / 1000).toFixed(0)}K
-              </p>
-              <p className="text-[11px] text-text-muted dark:text-warm-300 mt-0.5">
-                valor estimado en cartera
-              </p>
+            {/* 3 metric chips — always visible */}
+            <div className="flex gap-2 mt-3">
+              <MetricChip label="Ahorro anual est." value={`€${(d.t4.ahorroAnual / 1000).toFixed(0)}K`} valueColor="#5FAF8A" />
+              <MetricChip label="Payback promedio" value={`${d.t4.paybackMeses} meses`} />
+              <MetricChip label="ROI 3 años" value={`${d.t4.roi3years}%`} valueColor="#C8860A" />
             </div>
 
-            {/* Expanded */}
             {expanded === 'p2' && (
               <ExpandedSection>
                 <div className="space-y-1.5 mb-3">
@@ -490,8 +489,7 @@ export function T10View({
                     <div key={i} className="flex items-center gap-2 text-[11px]">
                       <span className="text-text-primary dark:text-warm-100 flex-1 truncate">{ini.name}</span>
                       <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0 ${
-                        ini.status === 'active' ? 'bg-success-light text-success-dark' : 'bg-warning-light text-warning-dark'
-                      }`}>
+                        ini.status === 'active' ? 'bg-success-light text-success-dark' : 'bg-warning-light text-warning-dark'}`}>
                         {ini.status === 'active' ? 'Activa' : 'Validando'}
                       </span>
                       <span className="text-text-muted dark:text-warm-300 tabular-nums flex-shrink-0">
@@ -509,53 +507,43 @@ export function T10View({
             )}
           </PanelCard>
 
-          {/* P3: T2+T7 Adopción ─────────────────────────────── */}
+          {/* ── P3: T2+T7 Adopción ──────────────────────────── */}
           <PanelCard
-            id="p3"
-            expanded={expanded === 'p3'}
-            onClick={() => togglePanel('p3')}
-            tag="T2 + T7 · Adopción"
-            tagColor="info"
-            title="Velocidad de adopción"
-            subtitle={`${d.t2t7.totalStakeholders} stakeholders · ${d.t2t7.activePercent}% activos`}
+            id="p3" expanded={expanded === 'p3'} onClick={() => toggle('p3')}
+            tag="T2 + T7 · Adopción" tagColor="info"
+            title="Velocidad de adopción" subtitle={`${d.t2t7.totalStakeholders} stakeholders · ${d.t2t7.activePercent}% activos`}
             animDelay={160}
+            heroSlot={<HeroPlain value={`${d.t2t7.activePercent}%`} valueColor="#185FA5" />}
           >
-            <div className="flex items-center gap-3">
-              <DonutChart
-                segments={adoptionSegments}
-                centerLabel={`${d.t2t7.activePercent}%`}
-              />
-              <div className="space-y-1.5 flex-1">
+            {/* Department chart */}
+            <div className="mb-2">
+              <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle dark:text-warm-400 mb-1.5">
+                Composición por departamento
+              </p>
+              {d.t2t7.departments.map((dept, i) => (
+                <DeptBar key={i} {...dept} />
+              ))}
+              {/* Legend */}
+              <div className="flex gap-3 mt-1.5">
                 {d.t2t7.groups.map((g, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-[10px]">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: g.color }} />
-                    <span className="text-text-muted dark:text-warm-300 flex-1">{g.label}</span>
-                    <span className="text-text-primary dark:text-warm-100 font-medium">{g.count}</span>
+                  <div key={i} className="flex items-center gap-1 text-[9px] text-text-muted dark:text-warm-300">
+                    <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: g.color }} />
+                    {g.label.split(' ')[0]} {g.count}
                   </div>
                 ))}
               </div>
             </div>
-            <div className="mt-2">
-              <span className="text-[10px] text-info-dark dark:text-info font-medium">
-                Curva Rogers: {d.t2t7.rogersPhase}
-              </span>
-            </div>
 
-            {/* Expanded */}
             {expanded === 'p3' && (
               <ExpandedSection>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
                     <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Score de cambio</p>
-                    <p className="text-lg font-semibold text-info-dark dark:text-info tabular-nums">
-                      {d.t2t7.changeScore} / 5
-                    </p>
+                    <p className="text-lg font-semibold text-info-dark dark:text-info tabular-nums">{d.t2t7.changeScore} / 5</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Fase de difusión</p>
-                    <p className="text-[11px] font-medium text-text-primary dark:text-warm-100">
-                      {d.t2t7.rogersPhase}
-                    </p>
+                    <p className="text-[11px] font-medium text-text-primary dark:text-warm-100">{d.t2t7.rogersPhase}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -566,45 +554,41 @@ export function T10View({
             )}
           </PanelCard>
 
-          {/* P4: T3+T5 Taxonomía IA ─────────────────────────── */}
+          {/* ── P4: T3+T5 Ecosistema IA ─────────────────────── */}
           <PanelCard
-            id="p4"
-            expanded={expanded === 'p4'}
-            onClick={() => togglePanel('p4')}
-            tag="T3 + T5 · Taxonomía"
-            tagColor="purple"
-            title="Ecosistema IA"
-            subtitle={`${d.t3t5.processesTotal} procesos · ${d.t3t5.aiTypes.length} tipos IA activos`}
+            id="p4" expanded={expanded === 'p4'} onClick={() => toggle('p4')}
+            tag="T3 + T5 · Taxonomía" tagColor="purple"
+            title="Ecosistema IA" subtitle={`${d.t3t5.processesTotal} procesos · ${d.t3t5.aiTypes.length} tipos IA activos`}
             animDelay={240}
+            heroSlot={<HeroPlain value={`${d.t3t5.efficiencyPct}%`} label="Eficiencia" valueColor="#534AB7" />}
           >
-            <div className="space-y-[5px] mb-2">
-              {d.t3t5.aiTypes.map((t) => (
-                <DimBar key={t.label} label={t.label} value={t.count} max={6} color={t.color} showValue />
-              ))}
+            {/* AI type distribution — donut + legend */}
+            <div className="flex items-center gap-3">
+              <DonutChart segments={aiTypeSegments} size={68} strokeWidth={14} />
+              <div className="space-y-1.5 flex-1">
+                {d.t3t5.aiTypes.map((t, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-[10px]">
+                    <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: t.color }} />
+                    <span className="text-text-muted dark:text-warm-300 flex-1">{t.label}</span>
+                    <span className="font-medium text-lean-black dark:text-warm-100">{t.count}</span>
+                    <span className="text-text-subtle dark:text-warm-400">{t.pct}%</span>
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="rounded-md px-2.5 py-1.5 mt-2" style={{ background: 'rgba(127, 119, 221, 0.08)' }}>
               <p className="text-[10px] text-[#534AB7] dark:text-[#AFA9EC]">
-                Cuello de botella: <span className="font-semibold">{d.t3t5.bottleneck}</span>
-                {' '}· Eficiencia: <span className="font-semibold">{d.t3t5.efficiencyPct}%</span>
+                Cuello: <span className="font-semibold">{d.t3t5.bottleneck}</span>
               </p>
             </div>
 
-            {/* Expanded */}
             {expanded === 'p4' && (
               <ExpandedSection>
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div>
-                    <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Procesos mapeados</p>
-                    <p className="text-lg font-semibold text-[#534AB7] tabular-nums">
-                      {d.t3t5.processesMapped} / {d.t3t5.processesTotal}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Severidad cuello</p>
-                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-medium bg-danger-light text-danger-dark">
-                      {d.t3t5.bottleneckSeverity}
-                    </span>
-                  </div>
+                <div className="flex gap-2 mb-3">
+                  <MetricChip label="Procesos mapeados" value={`${d.t3t5.processesMapped}/${d.t3t5.processesTotal}`} />
+                  <MetricChip label="Opp crítica" value={String(d.t3t5.oppCritica)} valueColor="#C06060" />
+                  <MetricChip label="Opp alta" value={String(d.t3t5.oppAlta)} valueColor="#D4A85C" />
+                  <MetricChip label="Total" value={String(d.t3t5.total)} />
                 </div>
                 <div className="flex items-center gap-3">
                   <NavButton label="Abrir T3" onClick={() => onNavigate('/t3')} />
@@ -614,22 +598,16 @@ export function T10View({
             )}
           </PanelCard>
 
-          {/* P5: T6+T12 Riesgos + ISO ───────────────────────── */}
+          {/* ── P5: T6+T12 Riesgos + ISO ────────────────────── */}
           <PanelCard
-            id="p5"
-            expanded={expanded === 'p5'}
-            onClick={() => togglePanel('p5')}
-            tag="T6 + T12 · Riesgos"
-            tagColor="danger"
-            title="Riesgo + ISO 42001"
-            subtitle={`${d.t6t12.risks.total} riesgos · ${d.t6t12.isoCompliance}% ISO`}
+            id="p5" expanded={expanded === 'p5'} onClick={() => toggle('p5')}
+            tag="T6 + T12 · Riesgos" tagColor="danger"
+            title="Riesgo + ISO 42001" subtitle={`${d.t6t12.risks.total} riesgos · ${d.t6t12.isoCompliance}% ISO`}
             animDelay={320}
+            heroSlot={<HeroPlain value={`${d.t6t12.isoCompliance}%`} label="ISO" valueColor="#C8860A" />}
           >
             <div className="flex items-center gap-3">
-              <DonutChart
-                segments={riskSegments}
-                centerLabel={`${d.t6t12.risks.total}`}
-              />
+              <DonutChart segments={riskSegments} size={60} strokeWidth={12} centerLabel={`${d.t6t12.risks.total}`} />
               <div className="space-y-1.5 flex-1">
                 <div className="flex items-center gap-1.5 text-[10px]">
                   <span className="w-2 h-2 rounded-full flex-shrink-0 bg-danger" />
@@ -648,22 +626,16 @@ export function T10View({
                 </div>
               </div>
             </div>
-
-            {/* ISO bar */}
             <div className="mt-3">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[10px] text-text-muted dark:text-warm-300">ISO 42001 cumplimiento</span>
                 <span className="text-[10px] font-semibold text-gold">{d.t6t12.isoCompliance}%</span>
               </div>
               <div className="h-[5px] rounded-full bg-border dark:bg-warm-500">
-                <div
-                  className="h-full rounded-full bg-gold"
-                  style={{ width: `${d.t6t12.isoCompliance}%` }}
-                />
+                <div className="h-full rounded-full bg-gold" style={{ width: `${d.t6t12.isoCompliance}%` }} />
               </div>
             </div>
 
-            {/* Expanded */}
             {expanded === 'p5' && (
               <ExpandedSection>
                 <div className="mb-2">
@@ -682,39 +654,43 @@ export function T10View({
             )}
           </PanelCard>
 
-          {/* P6: T8+T9+T11 Gobierno Activo ─────────────────── */}
+          {/* ── P6: T8+T9+T11 Gobierno Activo ───────────────── */}
           <PanelCard
-            id="p6"
-            expanded={expanded === 'p6'}
-            onClick={() => togglePanel('p6')}
-            tag="T8 · T9 · T11 · Gobierno"
-            tagColor="amber"
-            title="Gobierno activo"
-            subtitle="Próximos eventos · Hitos · Vendors"
+            id="p6" expanded={expanded === 'p6'} onClick={() => toggle('p6')}
+            tag="T8 · T9 · T11 · Gobierno" tagColor="amber"
+            title="Gobierno activo" subtitle="Próximos eventos · Hitos · Vendors"
             animDelay={400}
+            heroSlot={
+              <HeroStacked
+                topLabel="Gobierno activo"
+                value={`${d.t8t9t11.gobiernoActivoPct}%`}
+              />
+            }
           >
             <div className="space-y-1.5">
               {d.t8t9t11.upcomingEvents.map((ev, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ background: EVENT_LEVEL_COLOR[ev.level] ?? '#C8860A' }}
-                  />
+                  <span className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ background: EVENT_LEVEL_COLOR[ev.level] ?? '#C8860A' }} />
                   <span className="text-[11px] text-text-primary dark:text-warm-100 flex-1 truncate">{ev.name}</span>
                   <span className="text-[10px] text-text-muted dark:text-warm-300 flex-shrink-0">{ev.date}</span>
                 </div>
               ))}
             </div>
-
-            {/* Critical vendor alert */}
-            <div className="mt-3 flex items-center gap-1.5">
+            <div className="mt-2 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse flex-shrink-0" />
               <span className="text-[10px] text-danger-dark dark:text-danger truncate">
                 {d.t8t9t11.criticalVendor} · renovación {d.t8t9t11.vendorRenewal}
               </span>
             </div>
+            {/* 4 metric chips — always visible */}
+            <div className="flex gap-1.5 mt-3">
+              <MetricChip label="Casos en GO" value={String(d.t8t9t11.casosEnGO)} valueColor="#C8860A" />
+              <MetricChip label="Inic. libres" value={String(d.t8t9t11.iniciativasLibres)} />
+              <MetricChip label="Completadas" value={String(d.t8t9t11.archivosCompletados)} />
+              <MetricChip label="Riesgos altos" value={String(d.t8t9t11.riesgosAltos)} valueColor="#C06060" />
+            </div>
 
-            {/* Expanded */}
             {expanded === 'p6' && (
               <ExpandedSection>
                 <div className="mb-3">
@@ -731,8 +707,8 @@ export function T10View({
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
                   <NavButton label="Abrir T11 Gobierno" onClick={() => onNavigate('/t11')} />
-                  <NavButton label="Abrir T9 Roadmap"  onClick={() => onNavigate('/t9')}  secondary />
-                  <NavButton label="Abrir T8 Vendors"  onClick={() => onNavigate('/t8')}  secondary />
+                  <NavButton label="Abrir T9 Roadmap"   onClick={() => onNavigate('/t9')} secondary />
+                  <NavButton label="Abrir T8 Vendors"   onClick={() => onNavigate('/t8')} secondary />
                 </div>
               </ExpandedSection>
             )}
@@ -740,7 +716,6 @@ export function T10View({
 
         </div>
 
-        {/* Footer note */}
         <p className="text-center text-[10px] text-text-subtle dark:text-warm-400 mt-6">
           Datos demo · L.E.A.N. AI System Enterprise · Alpha Consulting Solutions
         </p>

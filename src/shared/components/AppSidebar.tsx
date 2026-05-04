@@ -30,7 +30,7 @@ const TOOL_ROUTES: Record<string, string> = {
   T1: '/t1', T2: '/t2', T3: '/t3',
   T4: '/t4', T5: '/t5', T6: '/t6',
   T7: '/t7', T8: '/t8', T9: '/t9',
-  T10: '/t10', T11: '/t11', T12: '/t12', T13: '/t13',
+  T10: '/t10', T11: '/t11', T12: '/t12',
 }
 
 // ── Iconos SVG por fase ───────────────────────────────────────
@@ -135,7 +135,7 @@ export function AppSidebar({ phases, activeToolCode }: AppSidebarProps) {
             Herramientas
           </span>
           <span className="text-[10px] font-mono text-black/25 dark:text-white/20">
-            T1 – T13
+            T1 – T12
           </span>
         </div>
 

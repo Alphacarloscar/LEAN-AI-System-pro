@@ -124,18 +124,7 @@ export const slowDecisionsScenario: DemoScenario = {
       tools: [
         { code: 'T10', name: 'AI Value Dashboard',  status: 'pending', output: 'Dashboard que el Comité consulta sin necesitar reunión' },
         { code: 'T11', name: 'AI Operating Rhythm', status: 'pending', output: 'Cadencia de revisión IA integrada en el ritmo directivo' },
-        { code: 'T12', name: 'AI Backlog Board',    status: 'pending', output: 'Pipeline de iniciativas con criterios de priorización claros' },
-      ],
-    },
-    {
-      id:          'iso',
-      label:       'ISO 42001',
-      shortLabel:  'ISO',
-      status:      'upcoming',
-      duration:    'Semana 24',
-      description: 'AIMS generado — gobierno IA documentado y auditable',
-      tools: [
-        { code: 'T13', name: 'AI System Impact Assessment', status: 'pending', output: 'AIMS completo (~78% ISO 42001)' },
+        { code: 'T12', name: 'ISO 42001',         status: 'pending', output: 'Pipeline de iniciativas con criterios de priorización claros' },
       ],
     },
     {

@@ -262,10 +262,10 @@ export function CompanyProfileView() {
     : null
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-gray-950">
+    <div className="min-h-screen bg-surface dark:bg-warm-900">
 
       {/* ── Header de herramienta ── */}
-      <div className="sticky top-[57px] z-10 bg-white/90 dark:bg-gray-950/95 backdrop-blur-sm border-b border-border dark:border-white/6 px-8 py-4">
+      <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm border-b border-border dark:border-white/6 px-8 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
 
           <div className="flex items-center gap-3">

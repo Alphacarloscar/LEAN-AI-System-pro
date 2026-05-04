@@ -125,18 +125,7 @@ export const dataVisibilityScenario: DemoScenario = {
       tools: [
         { code: 'T10', name: 'AI Value Dashboard',    status: 'pending', output: '4 KPIs de adopción, valor, gobierno, productividad' },
         { code: 'T11', name: 'AI Operating Rhythm',   status: 'pending', output: 'Templates Daily/Weekly/Monthly para el COO' },
-        { code: 'T12', name: 'AI Backlog Board',      status: 'pending', output: '10-15 iniciativas priorizadas para post-sprint' },
-      ],
-    },
-    {
-      id:          'iso',
-      label:       'ISO 42001',
-      shortLabel:  'ISO',
-      status:      'upcoming',
-      duration:    'Semana 24',
-      description: '~78% del AIMS documentado automáticamente desde T1-T12',
-      tools: [
-        { code: 'T13', name: 'AI System Impact Assessment', status: 'pending', output: 'AIMS auditable por certificadora externa' },
+        { code: 'T12', name: 'ISO 42001',           status: 'pending', output: '10-15 iniciativas priorizadas para post-sprint' },
       ],
     },
     {

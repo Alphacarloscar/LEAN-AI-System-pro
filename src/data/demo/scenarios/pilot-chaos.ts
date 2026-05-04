@@ -132,18 +132,7 @@ export const pilotChaosScenario: DemoScenario = {
       tools: [
         { code: 'T10', name: 'AI Value Dashboard',  status: 'in_progress', output: 'Dashboard: estado de cada piloto + ROI en tiempo real' },
         { code: 'T11', name: 'AI Operating Rhythm', status: 'pending',     output: 'Weekly de programa IA — todos los pilotos sincronizados' },
-        { code: 'T12', name: 'AI Backlog Board',    status: 'in_progress', output: 'Backlog de pilotos: cola priorizada con criterios de entrada' },
-      ],
-    },
-    {
-      id:          'iso',
-      label:       'ISO 42001',
-      shortLabel:  'ISO',
-      status:      'upcoming',
-      duration:    'Semana 24',
-      description: 'AIMS con historial de pilotos, lecciones aprendidas y governance trail',
-      tools: [
-        { code: 'T13', name: 'AI System Impact Assessment', status: 'pending', output: 'AIMS con programa de pilotos documentado y auditable' },
+        { code: 'T12', name: 'ISO 42001',         status: 'in_progress', output: 'Backlog de pilotos: cola priorizada con criterios de entrada' },
       ],
     },
     {
