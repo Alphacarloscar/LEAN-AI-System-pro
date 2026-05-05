@@ -126,7 +126,17 @@ export const changeResistanceScenario: DemoScenario = {
       tools: [
         { code: 'T10', name: 'AI Value Dashboard',  status: 'pending', output: 'Dashboard: adoption rate por área vs. objetivo' },
         { code: 'T11', name: 'AI Operating Rhythm', status: 'pending', output: 'Ritmo de feedback y mejora continua de adopción' },
-        { code: 'T12', name: 'ISO 42001',         status: 'pending', output: 'Pipeline de nuevas capacidades IA con plan de adopción' },
+      ],
+    },
+    {
+      id:          'iso',
+      label:       'ISO 42001',
+      shortLabel:  'ISO',
+      status:      'upcoming',
+      duration:    'Semana 24',
+      description: 'AIMS con foco en AI Act sanitario y gestión de impacto humano',
+      tools: [
+        { code: 'T12', name: 'ISO 42001', status: 'pending', output: 'AIMS con mapeo AI Act sanitario + plan de cambio' },
       ],
     },
     {

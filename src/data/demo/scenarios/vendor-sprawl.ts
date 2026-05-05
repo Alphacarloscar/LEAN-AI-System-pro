@@ -125,7 +125,17 @@ export const vendorSprawlScenario: DemoScenario = {
       tools: [
         { code: 'T10', name: 'AI Value Dashboard',  status: 'pending', output: 'Dashboard: gasto IA consolidado vs. valor generado' },
         { code: 'T11', name: 'AI Operating Rhythm', status: 'pending', output: 'Revisión trimestral de portfolio IA con criterios' },
-        { code: 'T12', name: 'ISO 42001',         status: 'pending', output: 'Pipeline de nuevas herramientas con proceso de evaluación' },
+      ],
+    },
+    {
+      id:          'iso',
+      label:       'ISO 42001',
+      shortLabel:  'ISO',
+      status:      'upcoming',
+      duration:    'Semana 24',
+      description: 'AIMS con inventario IA, risk register y AI Policy documentados',
+      tools: [
+        { code: 'T12', name: 'ISO 42001', status: 'pending', output: 'AIMS auditable — portfolio IA completo y gobernado' },
       ],
     },
     {
