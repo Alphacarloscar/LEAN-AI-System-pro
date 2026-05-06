@@ -2,15 +2,24 @@
 // CompanyProfile — Zustand store
 //
 // Estado global del perfil de empresa para el engagement activo.
-// Persistido en localStorage en modo demo/dev.
-// Sprint 5+: se reemplaza por lectura/escritura en Supabase
-// via company_profiles + friction_register tables.
+//
+// Modo demo  (engagementId = null): persiste en localStorage.
+// Modo real  (engagementId presente): Supabase es la fuente de verdad.
+//   - loadProfile(id)   → carga desde Supabase al seleccionar engagement
+//   - saveProfile(id)   → upsert a Supabase + actualiza localStorage como cache
+//
+// Los componentes nunca llaman al servicio directamente:
+// siempre pasan por este store.
 // ============================================================
 
-import { create }                from 'zustand'
-import { persist }               from 'zustand/middleware'
+import { create }             from 'zustand'
+import { persist }            from 'zustand/middleware'
 import type { CompanyProfile, Friction, BusinessArea } from './types'
-import { EMPTY_PROFILE }         from './types'
+import { EMPTY_PROFILE }      from './types'
+import {
+  fetchCompanyProfile,
+  upsertCompanyProfile,
+}                             from '@/services/company-profile.service'
 
 // ── Generador de ID simple (sin uuid dependency) ──────────────
 function genId(): string {
@@ -20,13 +29,24 @@ function genId(): string {
 // ── Store ─────────────────────────────────────────────────────
 
 interface CompanyProfileStore {
-  profile:     CompanyProfile
-  isDirty:     boolean  // cambios sin guardar
+  profile:    CompanyProfile
+  isDirty:    boolean   // cambios sin guardar
+  isLoading:  boolean   // operación Supabase en curso
+  saveError:  string | null
+
+  // Ciclo de vida — engagement
+  /** Carga el perfil desde Supabase al seleccionar un engagement */
+  loadProfile:  (engagementId: string) => Promise<void>
 
   // Acciones — perfil
   updateField:  <K extends keyof CompanyProfile>(key: K, value: CompanyProfile[K]) => void
   toggleArea:   (area: BusinessArea) => void
-  saveProfile:  () => void
+  /**
+   * Persiste el perfil.
+   * - Con engagementId: guarda en Supabase (fuente de verdad).
+   * - Sin engagementId: solo actualiza localStorage (modo demo).
+   */
+  saveProfile:  (engagementId?: string) => Promise<void>
   resetProfile: () => void
 
   // Acciones — fricciones
@@ -37,9 +57,40 @@ interface CompanyProfileStore {
 
 export const useCompanyProfileStore = create<CompanyProfileStore>()(
   persist(
-    (set) => ({
-      profile:  { ...EMPTY_PROFILE },
-      isDirty:  false,
+    (set, get) => ({
+      profile:    { ...EMPTY_PROFILE },
+      isDirty:    false,
+      isLoading:  false,
+      saveError:  null,
+
+      // ── Carga desde Supabase ──────────────────────────────────
+
+      loadProfile: async (engagementId: string) => {
+        set({ isLoading: true, saveError: null })
+        try {
+          const result = await fetchCompanyProfile(engagementId)
+          if (result) {
+            set({
+              profile:   { ...result.profile, fricciones: result.frictions },
+              isDirty:   false,
+              isLoading: false,
+            })
+          } else {
+            // Engagement nuevo — perfil vacío
+            set({
+              profile:   { ...EMPTY_PROFILE },
+              isDirty:   false,
+              isLoading: false,
+            })
+          }
+        } catch (err) {
+          console.error('[CompanyProfileStore] loadProfile:', err)
+          set({ isLoading: false })
+          // Si falla la carga, se usa el estado local como fallback silencioso
+        }
+      },
+
+      // ── Mutadores del perfil ──────────────────────────────────
 
       updateField: (key, value) =>
         set((s) => ({
@@ -56,14 +107,35 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
           return { profile: { ...s.profile, areasPrioritarias: next }, isDirty: true }
         }),
 
-      saveProfile: () =>
-        set((s) => ({
-          profile: { ...s.profile, savedAt: new Date().toISOString() },
-          isDirty: false,
-        })),
+      saveProfile: async (engagementId?: string) => {
+        const { profile } = get()
+        const now = new Date().toISOString()
+        const updatedProfile = { ...profile, savedAt: now }
+
+        // Actualizar estado local inmediatamente (UX responsivo)
+        set({ profile: updatedProfile, isDirty: false, saveError: null })
+
+        if (!engagementId) {
+          // Modo demo: solo localStorage (persist middleware lo maneja)
+          return
+        }
+
+        // Modo real: persistir en Supabase
+        set({ isLoading: true })
+        try {
+          await upsertCompanyProfile(updatedProfile, engagementId)
+          set({ isLoading: false })
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Error desconocido al guardar'
+          console.error('[CompanyProfileStore] saveProfile:', err)
+          set({ isLoading: false, saveError: msg, isDirty: true })
+        }
+      },
 
       resetProfile: () =>
-        set({ profile: { ...EMPTY_PROFILE }, isDirty: false }),
+        set({ profile: { ...EMPTY_PROFILE }, isDirty: false, saveError: null }),
+
+      // ── Mutadores de fricciones ───────────────────────────────
 
       addFriction: () =>
         set((s) => ({
@@ -72,12 +144,12 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
             fricciones: [
               ...s.profile.fricciones,
               {
-                id:           genId(),
-                tipo:         '',
-                areaFuncional:'',
-                frecuencia:   null,
-                impacto:      null,
-                notas:        '',
+                id:            genId(),
+                tipo:          '',
+                areaFuncional: '',
+                frecuencia:    null,
+                impacto:       null,
+                notas:         '',
               } satisfies Friction,
             ],
           },

@@ -6,9 +6,10 @@
 // Ruta: /company-profile
 // ============================================================
 
-import { useState }               from 'react'
+import { useState, useEffect }    from 'react'
 import { useNavigate }            from 'react-router-dom'
 import { useCompanyProfileStore } from './store'
+import { useEngagementStore }     from '@/modules/Engagement/store'
 import {
   ALL_BUSINESS_AREAS,
   SECTOR_OPTIONS,
@@ -241,17 +242,29 @@ function FrictionCard({
 export function CompanyProfileView() {
   const navigate = useNavigate()
   const {
-    profile, isDirty,
-    updateField, toggleArea, saveProfile,
+    profile, isDirty, isLoading, saveError,
+    loadProfile, updateField, toggleArea, saveProfile,
     addFriction, updateFriction, removeFriction,
   } = useCompanyProfileStore()
 
+  const engagementId = useEngagementStore((s) => s.activeEngagementId)
+
   const [savedFlash, setSavedFlash] = useState(false)
 
-  function handleSave() {
-    saveProfile()
-    setSavedFlash(true)
-    setTimeout(() => setSavedFlash(false), 2000)
+  // Carga desde Supabase cuando se selecciona un engagement real
+  useEffect(() => {
+    if (engagementId) {
+      loadProfile(engagementId)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId])
+
+  async function handleSave() {
+    await saveProfile(engagementId ?? undefined)
+    if (!saveError) {
+      setSavedFlash(true)
+      setTimeout(() => setSavedFlash(false), 2000)
+    }
   }
 
   const savedDate = profile.savedAt
@@ -301,26 +314,41 @@ export function CompanyProfileView() {
 
           {/* Guardar */}
           <div className="flex items-center gap-3 shrink-0">
-            {savedDate && !isDirty && (
+            {saveError && (
+              <span className="text-[10px] text-red-500 font-mono max-w-[200px] truncate" title={saveError}>
+                Error al guardar
+              </span>
+            )}
+            {savedDate && !isDirty && !saveError && (
               <span className="text-[10px] text-text-subtle dark:text-gray-600 font-mono">
                 Guardado {savedDate}
               </span>
             )}
-            {isDirty && (
+            {isDirty && !isLoading && (
               <span className="text-[10px] text-warning-dark font-mono animate-pulse">
                 Cambios sin guardar
               </span>
             )}
             <button
               onClick={handleSave}
+              disabled={isLoading}
               className={[
                 'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
-                savedFlash
+                isLoading
+                  ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+                  : savedFlash
                   ? 'bg-success-dark text-white'
                   : 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm',
               ].join(' ')}
             >
-              {savedFlash ? (
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin" width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M7 1a6 6 0 11-6 6" strokeLinecap="round" />
+                  </svg>
+                  Guardando...
+                </>
+              ) : savedFlash ? (
                 <>
                   <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M2 7l4 4 6-7" />
