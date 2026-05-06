@@ -25,6 +25,9 @@ import { PhaseMiniMap }                         from '@/shared/components/PhaseM
 import type { IntervieweeAggregate }            from './components/T1ExecutiveOutput'
 import { useT1Store }                           from './store'
 import { useEngagementStore }                   from '@/modules/Engagement/store'
+import { useCompanyProfileStore }              from '@/modules/CompanyProfile/store'
+import { RecommendationPanel }                 from '@/components/RecommendationPanel'
+import { buildT1RecommendationContext }        from './t1ContextBuilder'
 
 interface T1ViewProps {
   scenario: DemoScenario
@@ -325,6 +328,9 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
     dimensions: intervieweeStates[i.id] ?? [],
   }))
 
+  // CompanyProfile — contexto de empresa para el motor LLM
+  const companyProfile = useCompanyProfileStore((s) => s.profile)
+
   const activeInterviewee = liveInterviewees.find((i) => i.id === activeId)
 
   // Dimensiones agregadas: promedio de todos los entrevistados → para el QW1 Executive Output
@@ -349,6 +355,13 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
       }),
     }))
   }, [intervieweeStates])
+
+  // Contexto para el motor LLM — se recalcula cuando cambian las dimensiones o el perfil
+  const t1LLMContext = useMemo(
+    () => buildT1RecommendationContext(aggregateDimensions, allIntervieweeAggregates, companyProfile),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [aggregateDimensions, companyProfile]
+  )
 
   return (
     <div className="min-h-screen bg-surface dark-page-bg">
@@ -555,6 +568,17 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
             dimensions={aggregateDimensions}
             companyName={scenario.company.name}
             allInterviewees={allIntervieweeAggregates}
+          />
+        </div>
+
+        {/* ── Motor LLM — Recomendaciones dinámicas Sprint 6 ── */}
+        <div className="mt-6 max-w-6xl">
+          <RecommendationPanel
+            tool="t1"
+            context={t1LLMContext}
+            engagementId={engagementId}
+            title="Recomendaciones IA — Madurez"
+            subtitle="Generadas por Claude · Específicas para este engagement"
           />
         </div>
       </div>
