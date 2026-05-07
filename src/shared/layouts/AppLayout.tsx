@@ -11,11 +11,14 @@
 //   <main>          — <Outlet /> con la vista activa
 // ============================================================
 
+import { useEffect }                              from 'react'
 import { Outlet, useOutletContext, useNavigate } from 'react-router-dom'
 import { AppSidebar }                            from '@/shared/components/AppSidebar'
 import { AlphaLogo }                             from '@/shared/components/AlphaLogo'
+import { EngagementSelector }                    from '@/shared/components/EngagementSelector'
 import { useDarkMode }                           from '@/shared/hooks/useDarkMode'
 import { useAuthStore }                          from '@/modules/Auth'
+import { useEngagementStore }                    from '@/modules/Engagement/store'
 import { ErrorBoundary }                         from '@/shared/components/ErrorBoundary'
 import type { LeanPhase }                        from '@/shared/components/PhaseRoadmap'
 
@@ -129,7 +132,14 @@ function LogoutButton({ dark }: { dark: boolean }) {
 
 // ── Layout principal ──────────────────────────────────────────
 export function AppLayout({ phases }: AppLayoutProps) {
-  const { dark, toggle } = useDarkMode()
+  const { dark, toggle }        = useDarkMode()
+  const { user }                = useAuthStore()
+  const { loadMyEngagements }   = useEngagementStore()
+
+  // Cargar engagements del usuario en cuanto esté autenticado
+  useEffect(() => {
+    if (user) loadMyEngagements()
+  }, [user?.id])
 
   return (
     <div className="min-h-screen bg-surface dark:bg-warm-900">
@@ -142,7 +152,10 @@ export function AppLayout({ phases }: AppLayoutProps) {
           ? 'bg-warm-900/92 border-warm-600/20'
           : 'bg-[rgba(247,244,238,0.95)] border-[rgba(28,26,22,0.12)]',
       ].join(' ')}>
-        <AlphaLogo dark={dark} />
+        <div className="flex items-center gap-4">
+          <AlphaLogo dark={dark} />
+          <EngagementSelector dark={dark} />
+        </div>
         <span className="text-[10px] font-mono uppercase tracking-widest text-black/25 dark:text-white/25">
           L.E.A.N. AI System
         </span>
