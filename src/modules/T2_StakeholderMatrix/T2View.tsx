@@ -18,9 +18,12 @@ import { useState, useMemo, useEffect }  from 'react'
 import { useNavigate }                   from 'react-router-dom'
 import { useT2Store }                    from './store'
 import { useEngagementStore }            from '@/modules/Engagement/store'
+import { useCompanyProfileStore }        from '@/modules/CompanyProfile/store'
 import { ARCHETYPE_CONFIG, RESISTANCE_CONFIG } from './constants'
 import { InterviewModal }                from './components/InterviewModal'
 import { StakeholderQuadrantChart }      from './components/StakeholderQuadrantChart'
+import { RecommendationPanel }           from '@/components/RecommendationPanel'
+import { buildT2RecommendationContext }  from './t2ContextBuilder'
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from './types'
 import { PhaseMiniMap }                  from '@/shared/components/PhaseMiniMap'
 
@@ -760,8 +763,9 @@ interface T2ViewProps {
 
 export function T2View({ companyName, onBack }: T2ViewProps) {
   const { stakeholders, addStakeholder, load, initDemo } = useT2Store()
-  const engagementId = useEngagementStore((s) => s.activeEngagementId)
-  const navigate = useNavigate()
+  const engagementId   = useEngagementStore((s) => s.activeEngagementId)
+  const companyProfile = useCompanyProfileStore((s) => s.profile)
+  const navigate       = useNavigate()
 
   // Carga: real (Supabase) o demo (datos predefinidos del store)
   useEffect(() => {
@@ -782,6 +786,11 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
   const existingDepartments = useMemo(
     () => [...new Set(stakeholders.map((s) => s.department))],
     [stakeholders]
+  )
+
+  const t2LLMContext = useMemo(
+    () => buildT2RecommendationContext(stakeholders, companyProfile),
+    [stakeholders, companyProfile]
   )
 
   function handleAddStakeholder(s: Omit<Stakeholder, 'id' | 'createdAt'>) {
@@ -889,6 +898,17 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
           </div>
 
         </div>
+      </div>
+
+      {/* ── Recomendaciones IA ── */}
+      <div className="max-w-6xl mx-auto px-8 pb-10">
+        <RecommendationPanel
+          tool="t2"
+          context={t2LLMContext}
+          engagementId={engagementId}
+          title="Recomendaciones IA — Gestión del Cambio"
+          subtitle="Generadas por Claude · Específicas para este mapa de stakeholders"
+        />
       </div>
 
       {/* ── Modal nueva entrevista ── */}

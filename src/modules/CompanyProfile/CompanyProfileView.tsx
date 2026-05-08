@@ -315,8 +315,8 @@ export function CompanyProfileView() {
           {/* Guardar */}
           <div className="flex items-center gap-3 shrink-0">
             {saveError && (
-              <span className="text-[10px] text-red-500 font-mono max-w-[200px] truncate" title={saveError}>
-                Error al guardar
+              <span className="text-[10px] text-red-500 font-mono max-w-[320px] truncate" title={saveError}>
+                {saveError}
               </span>
             )}
             {savedDate && !isDirty && !saveError && (

@@ -135,6 +135,98 @@ ${deltas.length > 0
 }
 
 // ═══════════════════════════════════════════════════════════════
+// PROMPT T2 — Stakeholder Matrix
+// ═══════════════════════════════════════════════════════════════
+
+const T2_SYSTEM_PROMPT = `Eres un consultor senior especializado en gestión del cambio y adopción de IA en empresas B2B medianas y grandes del mercado español y europeo.
+
+Tu tarea es analizar el mapa de stakeholders de un proyecto de adopción IA y generar recomendaciones ejecutivas específicas, priorizadas y accionables para el consultor que gestiona el engagement.
+
+PRINCIPIOS DE TRABAJO:
+1. Prioriza siempre los stakeholders con resistencia alta y rol de decisor o crítico — son los que pueden matar el proyecto.
+2. Un sponsor ejecutivo (decisor con bajo bloqueo) es el activo más valioso. Si falta, recomienda cómo conseguirlo.
+3. Los stakeholders con manualOverride tienen asignación manual del consultor — úsalos con mayor peso en el análisis.
+4. Si hay pocos stakeholders entrevistados, señala explícitamente que el mapa tiene cobertura baja y las recomendaciones son provisionales.
+5. Conecta las recomendaciones con el sector y objetivo IA de la empresa cuando sea relevante.
+6. El destinatario es el consultor de Alpha Consulting, no el cliente. Tono directo, orientado a acción.
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin ningún texto adicional antes o después.
+
+Estructura JSON requerida:
+{
+  "recommendations": [
+    {
+      "title": "Acción concreta en 8–12 palabras (imperativo)",
+      "dimension": "código de dimensión: sponsor|blockers|coverage|communication|coalition",
+      "rationale": "Por qué esta acción es prioritaria para ESTE mapa de stakeholders (2–3 frases)",
+      "effort": "bajo|medio|alto",
+      "horizon": "0–3m|3–6m|6–12m"
+    }
+  ],
+  "contextualNote": "Patrón crítico observado en este mapa de stakeholders, en 1–2 frases. Específico, no genérico."
+}
+
+Genera entre 4 y 5 recomendaciones. Ordénalas de mayor a menor riesgo/impacto para el proyecto.`
+
+function buildT2UserMessage(ctx: Record<string, unknown>): string {
+  const company      = (ctx.company      ?? {}) as Record<string, unknown>
+  const stakeholders = (ctx.stakeholders ?? {}) as Record<string, unknown>
+  const coverage     = (ctx.coverage     ?? {}) as Record<string, unknown>
+
+  const critical     = (stakeholders.critical     as unknown[]) ?? []
+  const byArchetype  = (stakeholders.byArchetype  as unknown[]) ?? []
+  const byResistance = (stakeholders.byResistance as unknown[]) ?? []
+
+  const companyBlock = `## PERFIL DE EMPRESA
+
+Sector: ${company.sector || 'No especificado'}
+Tamaño: ${company.size || 'No especificado'}
+Objetivo principal de IA: ${company.mainAIObjective || 'No especificado'}
+Horizonte de valor esperado: ${company.valueHorizon || 'No especificado'}`
+
+  const archLines = (byArchetype as Record<string, unknown>[])
+    .map(a => `  ${a.label} (${a.archetype}): ${a.count} — resistencia promedio: ${a.avgResistance}`)
+    .join('\n')
+
+  const resistLines = (byResistance as Record<string, unknown>[])
+    .map(r => `  ${r.level}: ${r.count}`)
+    .join('\n')
+
+  const criticalLines = (critical as Record<string, unknown>[])
+    .map(s => {
+      const override = s.manualOverride ? ' [asignación manual]' : ''
+      const interview = s.hasInterview ? ' ✓ entrevistado' : ' ✗ sin entrevista'
+      return `  - ${s.name} (${s.role}, ${s.department}) → ${s.archetype} / resistencia ${s.resistance}${override}${interview}`
+    })
+    .join('\n')
+
+  const missingArchetypes = (coverage.missingArchetypes as string[]) ?? []
+
+  const stakeholderBlock = `## MAPA DE STAKEHOLDERS
+
+Total stakeholders: ${stakeholders.total ?? 0}
+Con entrevista completada: ${stakeholders.withInterview ?? 0}
+Con asignación manual (override): ${stakeholders.withManualOverride ?? 0}
+
+Distribución por arquetipo:
+${archLines || '  Sin datos'}
+
+Distribución por resistencia:
+${resistLines || '  Sin datos'}
+
+Stakeholders críticos (alta resistencia o bloqueadores potenciales):
+${criticalLines || '  Ninguno identificado'}
+
+## COBERTURA DEL MAPA
+
+Sponsor ejecutivo identificado: ${coverage.hasSponsor ? 'SÍ' : 'NO — riesgo crítico'}
+Departamentos representados: ${(coverage.departmentsRepresented as string[])?.join(', ') || 'No especificado'}
+Arquetipos sin representación: ${missingArchetypes.length > 0 ? missingArchetypes.join(', ') : 'Ninguno — mapa completo'}`
+
+  return `${companyBlock}\n\n${stakeholderBlock}\n\nGenera las recomendaciones de gestión del cambio para este mapa de stakeholders.`
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ROUTER DE PROMPTS
 // ═══════════════════════════════════════════════════════════════
 
@@ -143,6 +235,8 @@ function buildPrompt(tool: string, context: unknown): { system: string; user: st
   switch (tool) {
     case 't1':
       return { system: T1_SYSTEM_PROMPT, user: buildT1UserMessage(ctx) }
+    case 't2':
+      return { system: T2_SYSTEM_PROMPT, user: buildT2UserMessage(ctx) }
     default:
       throw new Error(`Tool no soportado: ${tool}`)
   }
