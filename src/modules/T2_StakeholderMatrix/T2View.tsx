@@ -762,7 +762,7 @@ interface T2ViewProps {
 }
 
 export function T2View({ companyName, onBack }: T2ViewProps) {
-  const { stakeholders, addStakeholder, load, initDemo } = useT2Store()
+  const { stakeholders, addStakeholder, load, initDemo, lastError } = useT2Store()
   const engagementId   = useEngagementStore((s) => s.activeEngagementId)
   const companyProfile = useCompanyProfileStore((s) => s.profile)
   const navigate       = useNavigate()
@@ -851,6 +851,11 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
         <p className="text-xs text-text-subtle mt-0.5">
           Haz clic en un stakeholder para ver su perfil y las intervenciones recomendadas.
         </p>
+        {lastError && (
+          <p className="mt-2 text-[11px] text-red-500 font-mono bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg">
+            {lastError}
+          </p>
+        )}
       </div>
 
       {/* ── Two-column layout ── */}

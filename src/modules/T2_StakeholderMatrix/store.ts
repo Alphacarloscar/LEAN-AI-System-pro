@@ -188,6 +188,7 @@ const DEMO_STAKEHOLDERS: Stakeholder[] = [
 interface T2Store {
   stakeholders: Stakeholder[]
   isLoading:    boolean
+  lastError:    string | null
 
   /** Carga stakeholders desde Supabase para el engagement activo */
   load: (engagementId: string) => Promise<void>
@@ -205,6 +206,7 @@ interface T2Store {
 export const useT2Store = create<T2Store>()((set, get) => ({
   stakeholders: [],
   isLoading:    false,
+  lastError:    null,
 
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
@@ -225,7 +227,7 @@ export const useT2Store = create<T2Store>()((set, get) => ({
   addStakeholder: async (s, engagementId) => {
     const newStakeholder: Stakeholder = {
       ...s,
-      id:        `sh-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id:        crypto.randomUUID(),
       createdAt: new Date().toISOString(),
     }
 
@@ -235,8 +237,11 @@ export const useT2Store = create<T2Store>()((set, get) => ({
     if (engagementId) {
       try {
         await insertStakeholder(newStakeholder, engagementId)
+        set({ lastError: null })
       } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Error al guardar stakeholder'
         console.error('[T2Store] addStakeholder sync:', err)
+        set({ lastError: msg })
         // Rollback optimistic update
         set((state) => ({
           stakeholders: state.stakeholders.filter((sh) => sh.id !== newStakeholder.id),
