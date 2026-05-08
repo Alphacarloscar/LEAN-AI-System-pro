@@ -58,10 +58,11 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
     createAndSelect,
   } = useEngagementStore()
 
-  const [open,       setOpen]       = useState(false)
-  const [creating,   setCreating]   = useState(false)
-  const [newName,    setNewName]    = useState('')
-  const [createBusy, setCreateBusy] = useState(false)
+  const [open,        setOpen]        = useState(false)
+  const [creating,    setCreating]    = useState(false)
+  const [newName,     setNewName]     = useState('')
+  const [createBusy,  setCreateBusy]  = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef    = useRef<HTMLInputElement>(null)
@@ -73,6 +74,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
         setOpen(false)
         setCreating(false)
         setNewName('')
+        setCreateError(null)
       }
     }
     if (open) document.addEventListener('mousedown', handleOutside)
@@ -92,13 +94,16 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
     const name = newName.trim()
     if (!name) return
     setCreateBusy(true)
+    setCreateError(null)
     try {
       await createAndSelect(name)
       setOpen(false)
       setCreating(false)
       setNewName('')
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al crear engagement'
       console.error('[EngagementSelector] createAndSelect:', err)
+      setCreateError(msg)
     } finally {
       setCreateBusy(false)
     }
@@ -180,28 +185,37 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
 
           {/* Crear nuevo engagement */}
           {creating ? (
-            <form onSubmit={handleCreate} className="p-3 flex gap-2">
-              <input
-                ref={inputRef}
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Nombre del cliente..."
-                className={[
-                  'flex-1 text-xs px-2.5 py-1.5 rounded-lg border outline-none',
-                  dark
-                    ? 'bg-white/8 border-white/12 text-white placeholder:text-gray-500 focus:border-amber-500/50'
-                    : 'bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-[#C8860A]/50',
-                ].join(' ')}
-                disabled={createBusy}
-              />
-              <button
-                type="submit"
-                disabled={createBusy || !newName.trim()}
-                className="px-2.5 py-1.5 rounded-lg bg-[#C8860A] text-white text-xs font-medium disabled:opacity-40 hover:bg-[#B57609] transition-colors"
-              >
-                {createBusy ? <SpinnerIcon /> : 'Crear'}
-              </button>
-            </form>
+            <div className="p-3 flex flex-col gap-1.5">
+              <form onSubmit={handleCreate} className="flex gap-2">
+                <input
+                  ref={inputRef}
+                  value={newName}
+                  onChange={(e) => { setNewName(e.target.value); setCreateError(null) }}
+                  placeholder="Nombre del cliente..."
+                  className={[
+                    'flex-1 text-xs px-2.5 py-1.5 rounded-lg border outline-none',
+                    createError
+                      ? 'border-red-400 dark:border-red-500'
+                      : dark
+                        ? 'bg-white/8 border-white/12 text-white placeholder:text-gray-500 focus:border-amber-500/50'
+                        : 'bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-[#C8860A]/50',
+                  ].join(' ')}
+                  disabled={createBusy}
+                />
+                <button
+                  type="submit"
+                  disabled={createBusy || !newName.trim()}
+                  className="px-2.5 py-1.5 rounded-lg bg-[#C8860A] text-white text-xs font-medium disabled:opacity-40 hover:bg-[#B57609] transition-colors"
+                >
+                  {createBusy ? <SpinnerIcon /> : 'Crear'}
+                </button>
+              </form>
+              {createError && (
+                <p className="text-[10px] text-red-500 dark:text-red-400 px-0.5 leading-snug">
+                  {createError}
+                </p>
+              )}
+            </div>
           ) : (
             <button
               onClick={() => setCreating(true)}
