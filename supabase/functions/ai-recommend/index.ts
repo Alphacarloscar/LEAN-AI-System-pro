@@ -774,6 +774,102 @@ Decisiones con owner definido: ${governance.decisionsWithOwner ?? 0}`
 }
 
 // ═══════════════════════════════════════════════════════════════
+// PROMPT T6 — Risk & Governance
+// ═══════════════════════════════════════════════════════════════
+
+const T6_SYSTEM_PROMPT = `Eres un consultor senior especializado en gobernanza de IA, cumplimiento normativo (AI Act europeo) e implementación de estándares ISO 42001 en empresas B2B medianas y grandes del mercado español y europeo.
+
+Tu tarea es analizar la exposición de riesgo AI Act de la empresa, el nivel de implementación ISO 42001 y el portfolio de casos de uso activos, para generar recomendaciones de gobernanza específicas y accionables.
+
+PRINCIPIOS DE TRABAJO:
+1. El AI Act europeo es ya una realidad regulatoria. Los casos de uso de alto riesgo no son un problema futuro, son un problema hoy.
+2. ISO 42001 no es una certificación decorativa. Los controles de liderazgo y planificación son pre-requisito para cualquier despliegue en producción.
+3. Las brechas entre casos de uso aprobados y controles implementados son el principal riesgo de cumplimiento.
+4. Una empresa con 0 controles implementados y 3 casos de uso en producción tiene un problema de gobernanza inmediato.
+5. El destinatario es el consultor de Alpha Consulting, no el cliente. Tono directo, orientado a acción, sin suavizar riesgos.
+
+DIMENSIONES DE ANÁLISIS:
+- compliance: Cumplimiento AI Act — priorización por nivel de riesgo real
+- iso42001: Implementación ISO 42001 — controles críticos con mayor impacto
+- policy: Política IA corporativa — qué falta o debe reforzarse
+- governance: Estructura de gobernanza — roles, decisiones, escalada
+- riskMitigation: Mitigación de riesgos concretos de los casos activos
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin ningún texto adicional antes o después.
+
+Estructura JSON requerida:
+{
+  "recommendations": [
+    {
+      "title": "Acción concreta en 8–12 palabras (imperativo)",
+      "dimension": "código de dimensión: compliance|iso42001|policy|governance|riskMitigation",
+      "rationale": "Por qué esta acción es prioritaria dado el estado real de este cliente (2–3 frases específicas)",
+      "effort": "bajo|medio|alto",
+      "horizon": "0–3m|3–6m|6–12m"
+    }
+  ],
+  "contextualNote": "Evaluación directa del mayor riesgo de cumplimiento de este cliente en 1–2 frases. Sin eufemismos."
+}
+
+Genera entre 4 y 5 recomendaciones. Ordénalas por urgencia regulatoria y riesgo real, no por facilidad de implementación.`
+
+function buildT6UserMessage(ctx: Record<string, unknown>): string {
+  const company  = (ctx.company  ?? {}) as Record<string, unknown>
+  const aiActRisk = (ctx.aiActRisk ?? {}) as Record<string, unknown>
+  const iso42001  = (ctx.iso42001  ?? {}) as Record<string, unknown>
+  const t5Domains = (ctx.t5Domains ?? {}) as Record<string, unknown>
+  const useCases  = (ctx.useCases  ?? {}) as Record<string, unknown>
+
+  const highRiskCases = (aiActRisk.highRiskCases ?? []) as Array<{ name: string; department: string }>
+  const criticalGaps  = (iso42001.criticalGaps   ?? []) as Array<{ code: string; title: string; clause: string }>
+
+  const companyBlock = `## PERFIL DE EMPRESA
+
+Nombre: ${company.name || 'No especificado'}
+Sector: ${company.sector || 'No especificado'}
+Tamaño: ${company.size || 'No especificado'}`
+
+  const riskBlock = `## EXPOSICIÓN AI ACT
+
+Total casos de uso: ${aiActRisk.total ?? 0}
+Casos prohibidos: ${aiActRisk.prohibido ?? 0}
+Casos de alto riesgo: ${aiActRisk.alto ?? 0}
+Casos de riesgo limitado: ${aiActRisk.limitado ?? 0}
+Casos de riesgo mínimo: ${aiActRisk.minimo ?? 0}
+Sin clasificar: ${aiActRisk.sinClasificar ?? 0}
+
+Casos de alto/prohibido riesgo activos:
+${highRiskCases.length > 0
+  ? highRiskCases.map(c => `  - ${c.name} (${c.department})`).join('\n')
+  : '  (ninguno clasificado como alto/prohibido)'}`
+
+  const isoBlock = `## ISO 42001 — ESTADO DE IMPLEMENTACIÓN
+
+Total controles: ${iso42001.totalControls ?? 0}
+Implementados: ${iso42001.implemented ?? 0}
+En progreso: ${iso42001.inProgress ?? 0}
+No iniciados: ${iso42001.notStarted ?? 0}
+Completitud estimada: ${iso42001.completionPercent ?? 0}%
+
+Controles críticos sin iniciar (cláusulas de liderazgo, planificación, operación):
+${criticalGaps.length > 0
+  ? criticalGaps.map(g => `  - [${g.code}] ${g.title} (${g.clause})`).join('\n')
+  : '  (sin brechas críticas identificadas en estas cláusulas)'}`
+
+  const portfolioBlock = `## PORTFOLIO Y DOMINIOS
+
+Casos de uso aprobados (go): ${useCases.go ?? 0}
+Casos en piloto: ${useCases.piloto ?? 0}
+Casos no aprobados: ${useCases.noGo ?? 0}
+Sin priorizar: ${useCases.unclassified ?? 0}
+
+Dominios T5 activos (secuencia de activación): ${(t5Domains.activationSequence as string[] ?? []).join(', ') || 'No definida'}
+Dominios con casos de uso: ${t5Domains.domainsWithContent ?? 0} / ${t5Domains.totalDomains ?? 0}`
+
+  return `${companyBlock}\n\n${riskBlock}\n\n${isoBlock}\n\n${portfolioBlock}\n\nGenera las recomendaciones de gobernanza y cumplimiento para este cliente.`
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ROUTER DE PROMPTS
 // ═══════════════════════════════════════════════════════════════
 
@@ -788,6 +884,8 @@ function buildPrompt(tool: string, context: unknown): { system: string; user: st
       return { system: T4_SYSTEM_PROMPT, user: buildT4UserMessage(ctx) }
     case 't5':
       return { system: T5_SYSTEM_PROMPT, user: buildT5UserMessage(ctx) }
+    case 't6':
+      return { system: T6_SYSTEM_PROMPT, user: buildT6UserMessage(ctx) }
     case 't7':
       return { system: T7_SYSTEM_PROMPT, user: buildT7UserMessage(ctx) }
     case 't8':

@@ -18,6 +18,10 @@ import {
 } from './constants'
 import type { ISO42001Status } from './types'
 import type { AIActRiskLevel } from '@/modules/T4_UseCasePriorityBoard/types'
+import { useCompanyProfileStore } from '@/modules/CompanyProfile/store'
+import { useEngagementStore }     from '@/modules/Engagement/store'
+import { RecommendationPanel }    from '@/components/RecommendationPanel'
+import { buildT6RecommendationContext } from './t6ContextBuilder'
 import { PhaseMiniMap }          from '@/shared/components/PhaseMiniMap'
 import { PolicyDownloadButton }  from './PolicyPDF'
 
@@ -606,8 +610,19 @@ export function T6View({
   companyName: string
   onBack:      () => void
 }) {
-  const [tab, setTab] = useState<T6Tab>('politica')
-  const { useCases }  = useT4Store()
+  const [tab, setTab]    = useState<T6Tab>('politica')
+  const { useCases }     = useT4Store()
+  const { canvas }       = useT5Store()
+  const { controls }     = useT6Store()
+  const companyProfile   = useCompanyProfileStore((s) => s.profile)
+  const engagementId     = useEngagementStore((s) => s.activeEngagementId)
+
+  const t6LLMContext = useMemo(() =>
+    companyProfile
+      ? buildT6RecommendationContext(useCases, canvas, controls, companyProfile)
+      : null,
+    [useCases, canvas, controls, companyProfile]
+  )
 
   const unclassified = useCases.filter((uc) => !uc.aiActClassification).length
   const highRisk     = useCases.filter((uc) =>
@@ -669,6 +684,17 @@ export function T6View({
       {tab === 'politica'  && <PolicyTab companyName={companyName} />}
       {tab === 'riesgos'   && <RiskDashboardTab />}
       {tab === 'iso42001'  && <ISO42001Tab />}
+
+      {/* LLM Recommendations */}
+      {t6LLMContext && (
+        <RecommendationPanel
+          tool="t6"
+          title="Análisis de Riesgo y Cumplimiento"
+          subtitle="Recomendaciones de gobernanza basadas en tu exposición AI Act e implementación ISO 42001"
+          context={t6LLMContext}
+          engagementId={engagementId}
+        />
+      )}
     </div>
   )
 }
