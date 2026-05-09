@@ -13,11 +13,14 @@
 //   4. Kit por departamento (readiness + acciones concretas)
 // ============================================================
 
-import { useState, useMemo } from 'react'
-import { useT2Store }        from '@/modules/T2_StakeholderMatrix/store'
-import { ARCHETYPE_CONFIG }  from '@/modules/T2_StakeholderMatrix/constants'
-import { useT4Store }        from '@/modules/T4_UseCasePriorityBoard/store'
-import { PhaseMiniMap }      from '@/shared/components/PhaseMiniMap'
+import { useState, useMemo }             from 'react'
+import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
+import { ARCHETYPE_CONFIG }             from '@/modules/T2_StakeholderMatrix/constants'
+import { useT4Store }                   from '@/modules/T4_UseCasePriorityBoard/store'
+import { PhaseMiniMap }                 from '@/shared/components/PhaseMiniMap'
+import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
+import { RecommendationPanel }          from '@/components/RecommendationPanel'
+import { buildT8RecommendationContext } from './t8ContextBuilder'
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from '@/modules/T2_StakeholderMatrix/types'
 import type { CommAction, CommPhase, CommType, CommChannel, DeptKit, MaterialTemplate } from './types'
 
@@ -1024,9 +1027,10 @@ interface T8ViewProps {
 }
 
 export function T8View({ companyName, onBack }: T8ViewProps) {
-  const stakeholders = useT2Store(s => s.stakeholders)
-  const useCases     = useT4Store(s => s.useCases)
-  const [activeTab, setActiveTab] = useState<'timeline' | 'messages' | 'materials' | 'dept'>('timeline')
+  const stakeholders               = useT2Store(s => s.stakeholders)
+  const useCases                   = useT4Store(s => s.useCases)
+  const { profile: companyProfile } = useCompanyProfileStore()
+  const [activeTab, setActiveTab]  = useState<'timeline' | 'messages' | 'materials' | 'dept'>('timeline')
 
   // Casos de uso con decisión "go"
   const goUseCases = useMemo(
@@ -1034,10 +1038,17 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
     [useCases]
   )
 
-  const commActions     = useMemo(() => generateCommPlan(stakeholders, companyName, goUseCases), [stakeholders, companyName, goUseCases])
+  const commActions       = useMemo(() => generateCommPlan(stakeholders, companyName, goUseCases), [stakeholders, companyName, goUseCases])
   const archetypeMessages = useMemo(() => generateArchetypeMessages(stakeholders), [stakeholders])
-  const materials       = useMemo(() => generateMaterials(companyName, goUseCases), [companyName, goUseCases])
-  const deptKits        = useMemo(() => generateDeptKits(stakeholders), [stakeholders])
+  const materials         = useMemo(() => generateMaterials(companyName, goUseCases), [companyName, goUseCases])
+  const deptKits          = useMemo(() => generateDeptKits(stakeholders), [stakeholders])
+
+  const t8LLMContext = useMemo(
+    () => companyProfile
+      ? buildT8RecommendationContext(commActions, archetypeMessages, companyProfile)
+      : null,
+    [commActions, archetypeMessages, companyProfile],
+  )
 
   // Stats summary
   const totalActions  = commActions.length
@@ -1118,6 +1129,16 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
           {activeTab === 'materials' && <MaterialsTab materials={materials} />}
           {activeTab === 'dept'      && <DeptKitTab kits={deptKits} />}
         </>
+      )}
+
+      {/* ── RECOMENDACIONES IA ──────────────────────────────── */}
+      {t8LLMContext && stakeholders.length > 0 && (
+        <RecommendationPanel
+          tool="t8"
+          title="Recomendaciones IA — Plan de Comunicación"
+          subtitle="Generadas por Claude · Específicas para este mapa de comunicación"
+          context={t8LLMContext}
+        />
       )}
     </div>
   )

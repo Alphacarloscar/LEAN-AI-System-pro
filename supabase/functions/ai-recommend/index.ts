@@ -227,6 +227,553 @@ Arquetipos sin representación: ${missingArchetypes.length > 0 ? missingArchetyp
 }
 
 // ═══════════════════════════════════════════════════════════════
+// PROMPT T4 — Use Case Priority Board
+// ═══════════════════════════════════════════════════════════════
+
+const T4_SYSTEM_PROMPT = `Eres un consultor senior especializado en priorización de casos de uso IA y diseño de portfolios de transformación digital en empresas B2B medianas y grandes del mercado español y europeo.
+
+Tu tarea es analizar el portfolio de casos de uso IA de un cliente y generar recomendaciones ejecutivas específicas, priorizadas y accionables para el consultor que gestiona el engagement.
+
+PRINCIPIOS DE TRABAJO:
+1. Focaliza en los casos "go" con mayor ROI potencial — son la prueba de valor del proyecto.
+2. Si hay casos de alto riesgo AI Act (alto o prohibido) sin governance documentado, señálalo explícitamente.
+3. Si el porcentaje de casos sin scoring de stakeholders es alto (>50%), recomienda completarlo antes de tomar decisiones go/no-go.
+4. Conecta las recomendaciones con el sector y objetivo IA principal de la empresa.
+5. Si el payback medio supera los 12 meses, propón quick wins concretos para mejorar el business case.
+6. El destinatario es el consultor de Alpha Consulting, no el cliente. Tono directo, orientado a acción.
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin ningún texto adicional antes o después.
+
+Estructura JSON requerida:
+{
+  "recommendations": [
+    {
+      "title": "Acción concreta en 8–12 palabras (imperativo)",
+      "dimension": "código de dimensión: prioritization|roi|governance|coverage|roadmap",
+      "rationale": "Por qué esta acción es prioritaria para ESTE portfolio (2–3 frases)",
+      "effort": "bajo|medio|alto",
+      "horizon": "0–3m|3–6m|6–12m"
+    }
+  ],
+  "contextualNote": "Patrón crítico observado en este portfolio, en 1–2 frases. Específico, no genérico."
+}
+
+Genera entre 4 y 5 recomendaciones. Ordénalas de mayor a menor impacto potencial.`
+
+function buildT4UserMessage(ctx: Record<string, unknown>): string {
+  const company   = (ctx.company   ?? {}) as Record<string, unknown>
+  const portfolio = (ctx.portfolio ?? {}) as Record<string, unknown>
+  const economics = (ctx.economics ?? {}) as Record<string, unknown>
+  const risk      = (ctx.risk      ?? {}) as Record<string, unknown>
+  const coverage  = (ctx.coverage  ?? {}) as Record<string, unknown>
+
+  const byStatus     = (portfolio.byStatus     as unknown[]) ?? []
+  const byAICategory = (portfolio.byAICategory as unknown[]) ?? []
+  const topCases     = (portfolio.topCases     as unknown[]) ?? []
+
+  const companyBlock = `## PERFIL DE EMPRESA
+
+Sector: ${company.sector || 'No especificado'}
+Tamaño: ${company.size || 'No especificado'}
+Objetivo principal de IA: ${company.mainAIObjective || 'No especificado'}
+Horizonte de valor esperado: ${company.valueHorizon || 'No especificado'}`
+
+  const statusLines = (byStatus as Record<string, unknown>[])
+    .map(s => `  ${s.status}: ${s.count}`)
+    .join('\n')
+
+  const catLines = (byAICategory as Record<string, unknown>[])
+    .map(c => `  ${c.category}: ${c.count} total (${c.goCount} go)`)
+    .join('\n')
+
+  const topLines = (topCases as Record<string, unknown>[])
+    .map(c => {
+      const eco = c.annualSaving ? ` | Ahorro: €${Number(c.annualSaving).toLocaleString('es')} / año` : ''
+      const payback = c.paybackMonths ? ` | Payback: ${c.paybackMonths}m` : ''
+      const risk = c.aiActRisk ? ` | AI Act: ${c.aiActRisk}` : ''
+      return `  - ${c.name} (${c.department}) → Score: ${c.priorityScore}/100 | ${c.status}${eco}${payback}${risk}`
+    })
+    .join('\n')
+
+  const fmtEur = (n: number) => n >= 1_000_000 ? `€${(n/1_000_000).toFixed(1)}M` : `€${Math.round(n/1_000)}k`
+
+  const portfolioBlock = `## PORTFOLIO DE CASOS DE USO
+
+Total casos: ${portfolio.total ?? 0}
+
+Por estado:
+${statusLines || '  Sin datos'}
+
+Por categoría IA:
+${catLines || '  Sin datos'}
+
+Top casos por prioridad:
+${topLines || '  Sin datos'}
+
+## ANÁLISIS ECONÓMICO
+
+Ahorro anual estimado (portfolio go): ${economics.totalAnnualSaving ? fmtEur(Number(economics.totalAnnualSaving)) : 'Sin datos'}
+Inversión estimada total: ${economics.totalImplCost ? fmtEur(Number(economics.totalImplCost)) : 'Sin datos'}
+Payback medio: ${economics.avgPaybackMonths ? `${economics.avgPaybackMonths} meses` : 'Sin datos'}
+Casos con modelo económico: ${economics.casesWithEconomics ?? 0} de ${portfolio.total ?? 0}
+
+## RIESGO AI ACT
+
+Casos de alto riesgo / prohibido: ${risk.highRiskCount ?? 0}
+Casos sin clasificar: ${risk.unclassifiedCount ?? 0}
+Distribución: ${(risk.aiActDistribution as Record<string, unknown>[] ?? []).map((r: Record<string, unknown>) => `${r.level}: ${r.count}`).join(', ') || 'Sin datos'}
+
+## COBERTURA
+
+Casos con scoring de stakeholders: ${coverage.casesWithScoring ?? 0} de ${portfolio.total ?? 0}
+Casos con hoja de ruta definida: ${coverage.casesWithRoadmap ?? 0} de ${portfolio.total ?? 0}
+Casos pendientes de decisión go/no-go: ${coverage.casesWithoutGoNoGo ?? 0}`
+
+  return `${companyBlock}\n\n${portfolioBlock}\n\nGenera las recomendaciones de priorización para este portfolio.`
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROMPT T5 — AI Domain Architecture Canvas
+// ═══════════════════════════════════════════════════════════════
+
+const T5_SYSTEM_PROMPT = `Eres un consultor senior especializado en arquitectura de dominios IA y diseño de estrategias de adopción tecnológica en empresas B2B medianas y grandes del mercado español y europeo.
+
+Tu tarea es analizar el canvas de dominios IA de un cliente y generar recomendaciones ejecutivas específicas sobre la secuencia de activación, governance y maduración de capacidades IA.
+
+PRINCIPIOS DE TRABAJO:
+1. La secuencia de activación importa — no todos los dominios se activan simultáneamente.
+2. Dominios con recomendación "gobernar_primero" son señal de riesgo de governance; señálalo explícitamente.
+3. Conecta la secuencia recomendada con el nivel de madurez IA de la organización.
+4. Si hay dominios con alto valor de negocio pero baja preparación técnica, propón un camino de habilitación concreto.
+5. El destinatario es el consultor de Alpha Consulting, no el cliente. Tono directo, orientado a acción.
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin ningún texto adicional antes o después.
+
+Estructura JSON requerida:
+{
+  "recommendations": [
+    {
+      "title": "Acción concreta en 8–12 palabras (imperativo)",
+      "dimension": "código de dimensión: activation|governance|sequencing|foundations|scaling",
+      "rationale": "Por qué esta acción es prioritaria para ESTE canvas (2–3 frases)",
+      "effort": "bajo|medio|alto",
+      "horizon": "0–3m|3–6m|6–12m"
+    }
+  ],
+  "contextualNote": "Patrón crítico observado en este canvas, en 1–2 frases. Específico, no genérico."
+}
+
+Genera entre 4 y 5 recomendaciones. Ordénalas de mayor a menor impacto estratégico.`
+
+function buildT5UserMessage(ctx: Record<string, unknown>): string {
+  const company  = (ctx.company  ?? {}) as Record<string, unknown>
+  const canvas   = (ctx.canvas   ?? {}) as Record<string, unknown>
+
+  const domains   = (canvas.domains   as unknown[]) ?? []
+  const sequence  = (canvas.activationSequence as string[]) ?? []
+
+  const companyBlock = `## PERFIL DE EMPRESA
+
+Sector: ${company.sector || 'No especificado'}
+Tamaño: ${company.size || 'No especificado'}
+Objetivo principal de IA: ${company.mainAIObjective || 'No especificado'}
+Nivel de madurez IA: ${canvas.maturityLevel || 'No especificado'}`
+
+  const domainLines = (domains as Record<string, unknown>[])
+    .map(d => {
+      const s = (d.scores ?? {}) as Record<string, unknown>
+      return `  - ${d.domainCode}: Valor negocio ${s.businessValue}/100 | Madurez técnica ${s.technicalReady}/100 | Preparación org ${s.orgReadiness}/100 | Riesgo ${s.riskLevel}/100 → ${d.recommendation}`
+    })
+    .join('\n')
+
+  const canvasBlock = `## CANVAS DE DOMINIOS IA
+
+Nivel de madurez global: ${canvas.maturityLevel || 'Sin datos'}
+Secuencia de activación recomendada: ${sequence.join(' → ') || 'Sin definir'}
+
+Evaluación por dominio:
+${domainLines || '  Sin datos'}`
+
+  return `${companyBlock}\n\n${canvasBlock}\n\nGenera las recomendaciones estratégicas para este canvas de dominios IA.`
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROMPT T7 — Adoption Heatmap
+// ═══════════════════════════════════════════════════════════════
+
+const T7_SYSTEM_PROMPT = `Eres un consultor senior especializado en gestión del cambio y adopción tecnológica usando la curva de Rogers en empresas B2B medianas y grandes del mercado español y europeo.
+
+Tu tarea es analizar la segmentación de adopción del mapa de calor del cliente y generar recomendaciones para acelerar la difusión de la IA a través de la organización.
+
+PRINCIPIOS DE TRABAJO:
+1. Los "Early Adopters" son el activo más valioso — son los multiplicadores de adopción.
+2. Si hay demasiados "Laggards" o "Late Majority" en posiciones de poder, el cambio se bloquea.
+3. La distancia entre "Innovators" y "Early Majority" indica el riesgo de chasm de adopción.
+4. Conecta los segmentos con los arquetipos T2 cuando sea relevante.
+5. El destinatario es el consultor de Alpha Consulting, no el cliente. Tono directo, orientado a acción.
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin ningún texto adicional antes o después.
+
+Estructura JSON requerida:
+{
+  "recommendations": [
+    {
+      "title": "Acción concreta en 8–12 palabras (imperativo)",
+      "dimension": "código de dimensión: accelerators|blockers|coalition|communication|enablement",
+      "rationale": "Por qué esta acción es prioritaria para ESTE mapa (2–3 frases)",
+      "effort": "bajo|medio|alto",
+      "horizon": "0–3m|3–6m|6–12m"
+    }
+  ],
+  "contextualNote": "Patrón crítico observado en este mapa de adopción, en 1–2 frases. Específico, no genérico."
+}
+
+Genera entre 4 y 5 recomendaciones. Ordénalas de mayor a menor impacto en velocidad de adopción.`
+
+function buildT7UserMessage(ctx: Record<string, unknown>): string {
+  const company  = (ctx.company  ?? {}) as Record<string, unknown>
+  const heatmap  = (ctx.heatmap  ?? {}) as Record<string, unknown>
+
+  const bySegment = (heatmap.bySegment as unknown[]) ?? []
+  const totalMapped = (heatmap.totalMapped as number) ?? 0
+
+  const companyBlock = `## PERFIL DE EMPRESA
+
+Sector: ${company.sector || 'No especificado'}
+Tamaño: ${company.size || 'No especificado'}
+Objetivo principal de IA: ${company.mainAIObjective || 'No especificado'}`
+
+  const segLines = (bySegment as Record<string, unknown>[])
+    .map(s => `  ${s.segment}: ${s.count} personas (${s.pct}%)${s.names ? ` — ${s.names}` : ''}`)
+    .join('\n')
+
+  const heatmapBlock = `## MAPA DE ADOPCIÓN (Curva Rogers)
+
+Total stakeholders mapeados: ${totalMapped}
+
+Distribución por segmento:
+${segLines || '  Sin datos'}
+
+Ratio adoptadores tempranos (Innovators + Early Adopters): ${heatmap.earlyAdopterRatio ?? 'Sin datos'}%
+Ratio resistentes (Late Majority + Laggards): ${heatmap.laggardRatio ?? 'Sin datos'}%`
+
+  return `${companyBlock}\n\n${heatmapBlock}\n\nGenera las recomendaciones para acelerar la adopción en esta organización.`
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROMPT T8 — Communication Map
+// ═══════════════════════════════════════════════════════════════
+
+const T8_SYSTEM_PROMPT = `Eres un consultor senior especializado en comunicación del cambio y gestión de la narrativa IA en empresas B2B medianas y grandes del mercado español y europeo.
+
+Tu tarea es analizar el mapa de comunicación del proyecto IA y generar recomendaciones para mejorar la estrategia de comunicación y maximizar el engagement de los stakeholders clave.
+
+PRINCIPIOS DE TRABAJO:
+1. La comunicación debe llegar primero a los decisores y críticos — son los que más impactan el proyecto.
+2. Si hay arquetipos sin mensajes diferenciados, la comunicación será ineficaz.
+3. Los canales deben ser coherentes con la cultura de la empresa (digital vs presencial).
+4. Las fases de comunicación deben estar alineadas con la hoja de ruta del proyecto.
+5. El destinatario es el consultor de Alpha Consulting, no el cliente. Tono directo, orientado a acción.
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin ningún texto adicional antes o después.
+
+Estructura JSON requerida:
+{
+  "recommendations": [
+    {
+      "title": "Acción concreta en 8–12 palabras (imperativo)",
+      "dimension": "código de dimensión: messaging|channels|timing|audience|materials",
+      "rationale": "Por qué esta acción es prioritaria para ESTE plan de comunicación (2–3 frases)",
+      "effort": "bajo|medio|alto",
+      "horizon": "0–3m|3–6m|6–12m"
+    }
+  ],
+  "contextualNote": "Patrón crítico observado en este plan de comunicación, en 1–2 frases. Específico, no genérico."
+}
+
+Genera entre 4 y 5 recomendaciones. Ordénalas de mayor a menor impacto en efectividad del cambio.`
+
+function buildT8UserMessage(ctx: Record<string, unknown>): string {
+  const company  = (ctx.company  ?? {}) as Record<string, unknown>
+  const commMap  = (ctx.commMap  ?? {}) as Record<string, unknown>
+
+  const actions          = (commMap.actions          as unknown[]) ?? []
+  const archetypeMessages = (commMap.archetypeMessages as unknown[]) ?? []
+  const byPhase          = (commMap.byPhase           as unknown[]) ?? []
+
+  const companyBlock = `## PERFIL DE EMPRESA
+
+Sector: ${company.sector || 'No especificado'}
+Tamaño: ${company.size || 'No especificado'}
+Objetivo principal de IA: ${company.mainAIObjective || 'No especificado'}`
+
+  const phaseLines = (byPhase as Record<string, unknown>[])
+    .map(p => `  ${p.phase}: ${p.count} acciones`)
+    .join('\n')
+
+  const archetypeLines = (archetypeMessages as Record<string, unknown>[])
+    .map(a => `  ${a.archetypeLabel}: canal principal ${a.channel}`)
+    .join('\n')
+
+  const commBlock = `## MAPA DE COMUNICACIÓN
+
+Total acciones de comunicación: ${actions.length}
+
+Por fase:
+${phaseLines || '  Sin datos'}
+
+Arquetipos con mensajes diferenciados:
+${archetypeLines || '  Ninguno definido — riesgo de comunicación genérica'}
+
+Canales utilizados: ${commMap.channelsUsed || 'Sin datos'}
+Acciones de alta prioridad: ${commMap.highPriorityCount ?? 0}`
+
+  return `${companyBlock}\n\n${commBlock}\n\nGenera las recomendaciones para este plan de comunicación del cambio.`
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROMPT T9 — AI Roadmap 6M
+// ═══════════════════════════════════════════════════════════════
+
+const T9_SYSTEM_PROMPT = `Eres un consultor senior especializado en planificación de roadmaps de transformación IA en empresas B2B medianas y grandes del mercado español y europeo.
+
+Tu tarea es analizar el roadmap de 6 meses del proyecto IA y generar recomendaciones para optimizar la secuencia de implementación, gestionar dependencias y maximizar las probabilidades de éxito del proyecto.
+
+PRINCIPIOS DE TRABAJO:
+1. Los quick wins en los primeros 3 meses son críticos para mantener el sponsorship ejecutivo.
+2. Si hay iniciativas de alto riesgo en los primeros 2 meses, recomienda moverlas o añadir governance.
+3. La distribución de carga entre departamentos debe ser equilibrada para evitar cuellos de botella.
+4. Las iniciativas sin responsable definido son un riesgo de ejecución inmediato.
+5. El destinatario es el consultor de Alpha Consulting, no el cliente. Tono directo, orientado a acción.
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin ningún texto adicional antes o después.
+
+Estructura JSON requerida:
+{
+  "recommendations": [
+    {
+      "title": "Acción concreta en 8–12 palabras (imperativo)",
+      "dimension": "código de dimensión: sequencing|quickwins|risks|resources|governance",
+      "rationale": "Por qué esta acción es prioritaria para ESTE roadmap (2–3 frases)",
+      "effort": "bajo|medio|alto",
+      "horizon": "0–3m|3–6m|6–12m"
+    }
+  ],
+  "contextualNote": "Patrón crítico observado en este roadmap, en 1–2 frases. Específico, no genérico."
+}
+
+Genera entre 4 y 5 recomendaciones. Ordénalas de mayor a menor riesgo para el proyecto.`
+
+function buildT9UserMessage(ctx: Record<string, unknown>): string {
+  const company  = (ctx.company  ?? {}) as Record<string, unknown>
+  const roadmap  = (ctx.roadmap  ?? {}) as Record<string, unknown>
+
+  const items        = (roadmap.items        as unknown[]) ?? []
+  const byMonth      = (roadmap.byMonth      as unknown[]) ?? []
+  const byRisk       = (roadmap.byRisk       as unknown[]) ?? []
+  const byDept       = (roadmap.byDept       as unknown[]) ?? []
+
+  const companyBlock = `## PERFIL DE EMPRESA
+
+Sector: ${company.sector || 'No especificado'}
+Tamaño: ${company.size || 'No especificado'}
+Objetivo principal de IA: ${company.mainAIObjective || 'No especificado'}
+Horizonte de valor esperado: ${company.valueHorizon || 'No especificado'}`
+
+  const monthLines = (byMonth as Record<string, unknown>[])
+    .map(m => `  Mes ${m.month}: ${m.count} iniciativas`)
+    .join('\n')
+
+  const riskLines = (byRisk as Record<string, unknown>[])
+    .map(r => `  ${r.level}: ${r.count}`)
+    .join('\n')
+
+  const deptLines = (byDept as Record<string, unknown>[])
+    .map(d => `  ${d.dept}: ${d.count} iniciativas`)
+    .join('\n')
+
+  const itemLines = (items as Record<string, unknown>[])
+    .slice(0, 8)
+    .map(i => `  - ${i.name} (${i.type}) → Mes ${i.startMonth+1}–${i.endMonth+1} | Riesgo: ${i.riskLevel}${i.responsible ? ` | Resp: ${i.responsible}` : ' | ⚠ Sin responsable'}`)
+    .join('\n')
+
+  const roadmapBlock = `## ROADMAP 6 MESES
+
+Total iniciativas: ${roadmap.totalItems ?? 0}
+  Importadas de T4 (casos de uso go): ${roadmap.t4ImportedCount ?? 0}
+  Iniciativas libres: ${roadmap.freeItemCount ?? 0}
+Sin responsable asignado: ${roadmap.withoutOwner ?? 0}
+
+Distribución temporal:
+${monthLines || '  Sin datos'}
+
+Distribución por nivel de riesgo:
+${riskLines || '  Sin datos'}
+
+Distribución por departamento:
+${deptLines || '  Sin datos'}
+
+Iniciativas del roadmap:
+${itemLines || '  Sin datos'}`
+
+  return `${companyBlock}\n\n${roadmapBlock}\n\nGenera las recomendaciones para optimizar este roadmap de 6 meses.`
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROMPT T11 — AI Operating Rhythm
+// ═══════════════════════════════════════════════════════════════
+
+const T11_SYSTEM_PROMPT = `Eres un consultor senior especializado en diseño de modelos operativos de IA y governance en empresas B2B medianas y grandes del mercado español y europeo.
+
+Tu tarea es analizar el modelo de gobierno operativo IA del cliente y generar recomendaciones para establecer un ritmo operativo sostenible que garantice la adopción y escalado de la IA.
+
+PRINCIPIOS DE TRABAJO:
+1. El modelo operativo debe ser proporcional a la madurez IA — no impongas SAFe completo a una empresa foundational.
+2. Si faltan eventos críticos de revisión en los primeros 3 meses, el proyecto pierde momentum.
+3. La cadena de decisiones debe estar clara antes de que el piloto entre en producción.
+4. Los KPIs de gobernanza deben ser medibles desde el primer sprint, no aspiracionales.
+5. El destinatario es el consultor de Alpha Consulting, no el cliente. Tono directo, orientado a acción.
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin ningún texto adicional antes o después.
+
+Estructura JSON requerida:
+{
+  "recommendations": [
+    {
+      "title": "Acción concreta en 8–12 palabras (imperativo)",
+      "dimension": "código de dimensión: cadence|decisions|kpis|governance|enablement",
+      "rationale": "Por qué esta acción es prioritaria para ESTE modelo operativo (2–3 frases)",
+      "effort": "bajo|medio|alto",
+      "horizon": "0–3m|3–6m|6–12m"
+    }
+  ],
+  "contextualNote": "Patrón crítico observado en este modelo operativo, en 1–2 frases. Específico, no genérico."
+}
+
+Genera entre 4 y 5 recomendaciones. Ordénalas de mayor a menor impacto en sostenibilidad del modelo.`
+
+function buildT11UserMessage(ctx: Record<string, unknown>): string {
+  const company  = (ctx.company  ?? {}) as Record<string, unknown>
+  const model    = (ctx.model    ?? {}) as Record<string, unknown>
+
+  const events    = (model.recommendedEvents as unknown[]) ?? []
+  const decisions = (model.decisions         as unknown[]) ?? []
+  const kpiGroups = (model.kpiGroups         as unknown[]) ?? []
+
+  const companyBlock = `## PERFIL DE EMPRESA
+
+Sector: ${company.sector || 'No especificado'}
+Tamaño: ${company.size || 'No especificado'}
+Objetivo principal de IA: ${company.mainAIObjective || 'No especificado'}`
+
+  const eventLines = (events as Record<string, unknown>[])
+    .slice(0, 6)
+    .map(e => `  - ${e.title} (${e.level}): ${e.frequency} | Owner: ${e.owner}${e.isCritical ? ' ★ crítico' : ''}`)
+    .join('\n')
+
+  const decisionLines = (decisions as Record<string, unknown>[])
+    .slice(0, 4)
+    .map(d => `  - ${d.decision} → Owner: ${d.owner} | Escala a: ${d.escalateTo}`)
+    .join('\n')
+
+  const kpiLines = (kpiGroups as Record<string, unknown>[])
+    .map(g => {
+      const kpis = (g.kpis as Record<string, unknown>[]) ?? []
+      return `  ${g.label}: ${kpis.map(k => k.name).join(', ')}`
+    })
+    .join('\n')
+
+  const modelBlock = `## MODELO OPERATIVO IA
+
+Tier de madurez actual: ${model.maturityTier || 'Sin datos'} (score: ${model.maturityAvg ?? 'N/A'}/4)
+
+Eventos operativos recomendados (${events.length} total):
+${eventLines || '  Sin datos'}
+
+Cadena de decisiones clave (${decisions.length} total):
+${decisionLines || '  Sin datos'}
+
+KPIs por nivel de gobierno:
+${kpiLines || '  Sin datos'}`
+
+  return `${companyBlock}\n\n${modelBlock}\n\nGenera las recomendaciones para este modelo operativo de IA.`
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROMPT T10 — AI Value Dashboard
+// ═══════════════════════════════════════════════════════════════
+
+const T10_SYSTEM_PROMPT = `Eres un consultor senior especializado en medición de valor y reporting ejecutivo de programas de transformación IA en empresas B2B medianas y grandes del mercado español y europeo.
+
+Tu tarea es analizar el estado global del programa de adopción IA del cliente (métricas de madurez, portfolio, adopción y governance) y generar recomendaciones ejecutivas para maximizar el valor demostrable y las probabilidades de continuidad del programa.
+
+PRINCIPIOS DE TRABAJO:
+1. El dashboard ejecutivo debe contar una historia de progreso, no solo mostrar métricas.
+2. Las brechas entre madurez actual y objetivo son la base del business case para la siguiente fase.
+3. Si el ROI demostrado es bajo en los primeros 6 meses, el sponsorship ejecutivo se pone en riesgo.
+4. La coherencia entre herramientas (T1→T4→T9→T11) es el indicador de calidad del engagement.
+5. El destinatario es el consultor de Alpha Consulting, no el cliente. Tono directo, orientado a acción.
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin ningún texto adicional antes o después.
+
+Estructura JSON requerida:
+{
+  "recommendations": [
+    {
+      "title": "Acción concreta en 8–12 palabras (imperativo)",
+      "dimension": "código de dimensión: value|maturity|adoption|governance|reporting",
+      "rationale": "Por qué esta acción es prioritaria para ESTE programa (2–3 frases)",
+      "effort": "bajo|medio|alto",
+      "horizon": "0–3m|3–6m|6–12m"
+    }
+  ],
+  "contextualNote": "Patrón crítico observado en este programa, en 1–2 frases. Específico, no genérico."
+}
+
+Genera entre 4 y 5 recomendaciones. Ordénalas de mayor a menor impacto en continuidad del programa.`
+
+function buildT10UserMessage(ctx: Record<string, unknown>): string {
+  const company   = (ctx.company   ?? {}) as Record<string, unknown>
+  const dashboard = (ctx.dashboard ?? {}) as Record<string, unknown>
+
+  const maturity   = (dashboard.maturity   ?? {}) as Record<string, unknown>
+  const portfolio  = (dashboard.portfolio  ?? {}) as Record<string, unknown>
+  const adoption   = (dashboard.adoption   ?? {}) as Record<string, unknown>
+  const governance = (dashboard.governance ?? {}) as Record<string, unknown>
+
+  const companyBlock = `## PERFIL DE EMPRESA
+
+Sector: ${company.sector || 'No especificado'}
+Tamaño: ${company.size || 'No especificado'}
+Objetivo principal de IA: ${company.mainAIObjective || 'No especificado'}
+Horizonte de valor esperado: ${company.valueHorizon || 'No especificado'}`
+
+  const dashboardBlock = `## ESTADO DEL PROGRAMA IA
+
+### Madurez IA (T1)
+Score global: ${maturity.overallScore ?? 'Sin datos'} / 4.0
+Dimensión más fuerte: ${maturity.topDimension || 'Sin datos'}
+Brecha crítica: ${maturity.criticalGap || 'Sin datos'}
+
+### Portfolio de casos de uso (T4)
+Casos activos (go + piloto): ${portfolio.activeCases ?? 0}
+Ahorro anual estimado: ${portfolio.totalAnnualSaving ? `€${Math.round(Number(portfolio.totalAnnualSaving)/1000)}k` : 'Sin datos'}
+Casos de alto riesgo AI Act: ${portfolio.highRiskCases ?? 0}
+
+### Adopción y stakeholders (T2/T7)
+Total stakeholders mapeados: ${adoption.totalStakeholders ?? 0}
+Ratio adoptadores tempranos: ${adoption.earlyAdopterRatio ?? 'Sin datos'}%
+Stakeholders sin entrevistar: ${adoption.uninterviewedCount ?? 0}
+
+### Governance operativo (T11)
+Tier de madurez operativa: ${governance.maturityTier || 'Sin datos'}
+Eventos críticos configurados: ${governance.criticalEventsCount ?? 0}
+Decisiones con owner definido: ${governance.decisionsWithOwner ?? 0}`
+
+  return `${companyBlock}\n\n${dashboardBlock}\n\nGenera las recomendaciones ejecutivas para este programa de adopción IA.`
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ROUTER DE PROMPTS
 // ═══════════════════════════════════════════════════════════════
 
@@ -237,6 +784,20 @@ function buildPrompt(tool: string, context: unknown): { system: string; user: st
       return { system: T1_SYSTEM_PROMPT, user: buildT1UserMessage(ctx) }
     case 't2':
       return { system: T2_SYSTEM_PROMPT, user: buildT2UserMessage(ctx) }
+    case 't4':
+      return { system: T4_SYSTEM_PROMPT, user: buildT4UserMessage(ctx) }
+    case 't5':
+      return { system: T5_SYSTEM_PROMPT, user: buildT5UserMessage(ctx) }
+    case 't7':
+      return { system: T7_SYSTEM_PROMPT, user: buildT7UserMessage(ctx) }
+    case 't8':
+      return { system: T8_SYSTEM_PROMPT, user: buildT8UserMessage(ctx) }
+    case 't9':
+      return { system: T9_SYSTEM_PROMPT, user: buildT9UserMessage(ctx) }
+    case 't11':
+      return { system: T11_SYSTEM_PROMPT, user: buildT11UserMessage(ctx) }
+    case 't10':
+      return { system: T10_SYSTEM_PROMPT, user: buildT10UserMessage(ctx) }
     default:
       throw new Error(`Tool no soportado: ${tool}`)
   }

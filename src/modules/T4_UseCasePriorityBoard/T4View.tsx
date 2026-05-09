@@ -16,7 +16,10 @@
 
 import { useState, useMemo } from 'react'
 import { useNavigate }       from 'react-router-dom'
-import { useT4Store }        from './store'
+import { useT4Store }                   from './store'
+import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
+import { RecommendationPanel }          from '@/components/RecommendationPanel'
+import { buildT4RecommendationContext } from './t4ContextBuilder'
 import {
   STATUS_CONFIG,
   STATUS_ORDER,
@@ -1921,12 +1924,18 @@ interface T4ViewProps {
 export function T4View({ companyName, onBack }: T4ViewProps) {
   const navigate                      = useNavigate()
   const { useCases }                  = useT4Store()
+  const { profile: companyProfile }   = useCompanyProfileStore()
   const [activeId, setActiveId]     = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)
 
   const activeUseCase = useMemo(
     () => useCases.find((uc) => uc.id === activeId) ?? null,
     [useCases, activeId]
+  )
+
+  const t4LLMContext = useMemo(
+    () => companyProfile ? buildT4RecommendationContext(useCases, companyProfile) : null,
+    [useCases, companyProfile]
   )
 
   function handleSelectUseCase(id: string) {
@@ -2012,6 +2021,18 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
             useCase={activeUseCase}
             allUseCases={useCases}
             onSelect={handleSelectUseCase}
+          />
+        </div>
+      )}
+
+      {/* ── RECOMENDACIONES IA ──────────────────────────────── */}
+      {t4LLMContext && useCases.length > 0 && (
+        <div className="max-w-7xl mx-auto w-full px-8 pb-8">
+          <RecommendationPanel
+            tool="t4"
+            title="Recomendaciones IA — Portfolio de Casos de Uso"
+            subtitle="Generadas por Claude · Específicas para este portfolio"
+            context={t4LLMContext}
           />
         </div>
       )}

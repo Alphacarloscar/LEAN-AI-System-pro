@@ -14,10 +14,13 @@
 // Sprint 4: edición de milestones, drag & drop, export PDF.
 // ============================================================
 
-import { useState }     from 'react'
-import { useT4Store }   from '@/modules/T4_UseCasePriorityBoard/store'
-import { useT9Store }   from './store'
-import { PhaseMiniMap } from '@/shared/components/PhaseMiniMap'
+import { useState, useMemo }              from 'react'
+import { useT4Store }                     from '@/modules/T4_UseCasePriorityBoard/store'
+import { useT9Store }                     from './store'
+import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
+import { PhaseMiniMap }                   from '@/shared/components/PhaseMiniMap'
+import { RecommendationPanel }            from '@/components/RecommendationPanel'
+import { buildT9RecommendationContext }   from './t9ContextBuilder'
 import type { AIActRiskLevel, UseCase } from '@/modules/T4_UseCasePriorityBoard/types'
 import type {
   AddFreeForm,
@@ -495,9 +498,17 @@ function AddFreeItemForm({ form, onChange, onSave, onCancel }: AddFormProps) {
 export function T9View({ companyName, onBack }: T9ViewProps) {
   const { useCases }                                    = useT4Store()
   const { overrides, freeItems, setOverride, addFreeItem, updateFreeItem } = useT9Store()
+  const { profile: companyProfile }                     = useCompanyProfileStore()
 
   // Solo casos con decisión Go confirmada
   const goCases = useCases.filter((uc) => uc.goNoGo?.decision === 'go')
+
+  const t9LLMContext = useMemo(
+    () => companyProfile
+      ? buildT9RecommendationContext(goCases, freeItems, overrides, companyProfile)
+      : null,
+    [goCases, freeItems, overrides, companyProfile]
+  )
 
   // Construir filas ai_import: merge T4 data + override persistido (o default calculado)
   const aiRows: AIGanttRow[] = goCases.map((uc) => {
@@ -728,6 +739,16 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
           Clic en responsable para editar
         </div>
       </div>
+
+      {/* ── RECOMENDACIONES IA ──────────────────────────────── */}
+      {t9LLMContext && (
+        <RecommendationPanel
+          tool="t9"
+          title="Recomendaciones IA — Roadmap 6 Meses"
+          subtitle="Generadas por Claude · Específicas para este roadmap"
+          context={t9LLMContext}
+        />
+      )}
     </div>
   )
 }

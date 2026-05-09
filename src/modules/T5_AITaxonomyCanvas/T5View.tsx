@@ -2,7 +2,10 @@
 // T5 — AI Domain Architecture Canvas
 // ============================================================
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo }              from 'react'
+import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
+import { RecommendationPanel }            from '@/components/RecommendationPanel'
+import { buildT5RecommendationContext }   from './t5ContextBuilder'
 import type { T5Canvas, T5DomainCode, T5DomainScores, T5DomainAssessment } from './types'
 import {
   T5_DOMAIN_CONFIG,
@@ -1012,10 +1015,16 @@ export function T5View({
 }) {
   const { canvas, updateDomainScores } = useT5Store()
   const processes                      = useT3Store(s => s.processes)
+  const { profile: companyProfile }    = useCompanyProfileStore()
 
   const [selectedDomain,  setSelectedDomain]  = useState<T5DomainCode>('automatizacion_inteligente')
   const [editingDomain,   setEditingDomain]    = useState<T5DomainCode | null>(null)
   const [projectsDomain,  setProjectsDomain]   = useState<T5DomainCode | null>(null)
+
+  const t5LLMContext = useMemo(
+    () => companyProfile ? buildT5RecommendationContext(canvas, companyProfile) : null,
+    [canvas, companyProfile],
+  )
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-5 px-8 py-8">
@@ -1092,6 +1101,16 @@ export function T5View({
         <DomainProjectsModal
           domainCode={projectsDomain}
           onClose={() => setProjectsDomain(null)}
+        />
+      )}
+
+      {/* ── RECOMENDACIONES IA ──────────────────────────────── */}
+      {t5LLMContext && (
+        <RecommendationPanel
+          tool="t5"
+          title="Recomendaciones IA — Arquitectura de Dominios"
+          subtitle="Generadas por Claude · Específicas para este canvas"
+          context={t5LLMContext}
         />
       )}
     </div>

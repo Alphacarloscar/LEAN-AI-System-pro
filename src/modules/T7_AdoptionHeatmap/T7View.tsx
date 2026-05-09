@@ -11,11 +11,14 @@
 // 7. Tarjeta dinámica de Momentum / Riesgos / Oportunidades
 // ============================================================
 
-import { useState, useMemo } from 'react'
-import { useT2Store }        from '@/modules/T2_StakeholderMatrix/store'
-import { ARCHETYPE_CONFIG }  from '@/modules/T2_StakeholderMatrix/constants'
-import { PhaseMiniMap }      from '@/shared/components/PhaseMiniMap'
-import { useDarkMode }       from '@/shared/hooks/useDarkMode'
+import { useState, useMemo }             from 'react'
+import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
+import { ARCHETYPE_CONFIG }             from '@/modules/T2_StakeholderMatrix/constants'
+import { PhaseMiniMap }                 from '@/shared/components/PhaseMiniMap'
+import { useDarkMode }                  from '@/shared/hooks/useDarkMode'
+import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
+import { RecommendationPanel }          from '@/components/RecommendationPanel'
+import { buildT7RecommendationContext } from './t7ContextBuilder'
 import type {
   ArchetypeCode,
   ResistanceLevel,
@@ -888,9 +891,10 @@ interface T7ViewProps {
 }
 
 export function T7View({ companyName, onBack }: T7ViewProps) {
-  const stakeholders = useT2Store(s => s.stakeholders)
-  const { dark }     = useDarkMode()
-  const [activeTab, setActiveTab] = useState<'curve' | 'dept' | 'plan'>('curve')
+  const stakeholders               = useT2Store(s => s.stakeholders)
+  const { dark }                   = useDarkMode()
+  const { profile: companyProfile } = useCompanyProfileStore()
+  const [activeTab, setActiveTab]  = useState<'curve' | 'dept' | 'plan'>('curve')
 
   const segCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -902,6 +906,11 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
   }, [stakeholders])
 
   const laggardCount = (segCounts['laggards'] ?? 0) + (segCounts['late_majority'] ?? 0)
+
+  const t7LLMContext = useMemo(
+    () => companyProfile ? buildT7RecommendationContext(stakeholders, companyProfile) : null,
+    [stakeholders, companyProfile],
+  )
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 px-8 py-8">
@@ -972,6 +981,16 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
           {activeTab === 'dept'  && <DeptRecommendationsTab stakeholders={stakeholders} dark={dark} />}
           {activeTab === 'plan'  && <ChangeManagementPlanTab />}
         </>
+      )}
+
+      {/* ── RECOMENDACIONES IA ──────────────────────────────── */}
+      {t7LLMContext && stakeholders.length > 0 && (
+        <RecommendationPanel
+          tool="t7"
+          title="Recomendaciones IA — Mapa de Adopción"
+          subtitle="Generadas por Claude · Específicas para esta curva de Rogers"
+          context={t7LLMContext}
+        />
       )}
     </div>
   )

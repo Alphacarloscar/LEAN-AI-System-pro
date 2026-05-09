@@ -12,9 +12,12 @@
 //   Datos a Medir — KPIs por nivel
 // ============================================================
 
-import { useState, useMemo }   from 'react'
-import { PhaseMiniMap }        from '@/shared/components/PhaseMiniMap'
-import { buildOperatingModel } from './engine'
+import { useState, useMemo }              from 'react'
+import { PhaseMiniMap }                   from '@/shared/components/PhaseMiniMap'
+import { buildOperatingModel }            from './engine'
+import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
+import { RecommendationPanel }            from '@/components/RecommendationPanel'
+import { buildT11RecommendationContext }  from './t11ContextBuilder'
 import {
   T11_LEVEL_CONFIG,
   T11_FREQUENCY_LABEL,
@@ -829,12 +832,18 @@ function generateOperatingModelHTML(
 // ── Vista principal ───────────────────────────────────────────
 
 export function T11View({ companyName, t1Radar, employees = 500, onBack }: T11ViewProps) {
-  const [activeTab, setActiveTab]       = useState<T11Tab>('bigpicture')
+  const [activeTab, setActiveTab]         = useState<T11Tab>('bigpicture')
   const [selectedEvent, setSelectedEvent] = useState<T11Event | null>(null)
+  const { profile: companyProfile }       = useCompanyProfileStore()
 
   const model = useMemo(
     () => buildOperatingModel({ radar: t1Radar, employees }),
     [t1Radar, employees],
+  )
+
+  const t11LLMContext = useMemo(
+    () => companyProfile ? buildT11RecommendationContext(model, companyProfile) : null,
+    [model, companyProfile],
   )
 
   const { maturityTier, maturityAvg, recommendedEvents, decisions, phaseObjectives, kpiGroups } = model
@@ -998,6 +1007,18 @@ export function T11View({ companyName, t1Radar, employees = 500, onBack }: T11Vi
 
       {/* ── Event detail panel ── */}
       <EventDetailPanel event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+
+      {/* ── RECOMENDACIONES IA ──────────────────────────────── */}
+      {t11LLMContext && (
+        <div className="max-w-5xl mx-auto w-full px-8 pb-8">
+          <RecommendationPanel
+            tool="t11"
+            title="Recomendaciones IA — Modelo Operativo"
+            subtitle="Generadas por Claude · Específicas para este modelo de gobierno"
+            context={t11LLMContext}
+          />
+        </div>
+      )}
     </div>
   )
 }

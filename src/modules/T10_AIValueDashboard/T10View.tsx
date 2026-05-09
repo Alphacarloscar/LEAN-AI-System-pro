@@ -6,9 +6,14 @@
 // Paleta Obsidian Amber · click-to-expand por panel.
 // ============================================================
 
-import { useState, useEffect }       from 'react'
-import type { RadarDimension }       from '@/shared/components/charts/LeanRadarChart'
-import { T10_DEMO }                  from './demo-data'
+import { useState, useEffect, useMemo } from 'react'
+import type { RadarDimension }          from '@/shared/components/charts/LeanRadarChart'
+import { T10_DEMO }                     from './demo-data'
+import { useT4Store }                   from '@/modules/T4_UseCasePriorityBoard/store'
+import { useT2Store }                   from '@/modules/T2_StakeholderMatrix/store'
+import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
+import { RecommendationPanel }          from '@/components/RecommendationPanel'
+import { buildT10RecommendationContext } from './t10ContextBuilder'
 
 // ── Tipos ────────────────────────────────────────────────────
 
@@ -301,9 +306,20 @@ export function T10View({
   const [expanded,  setExpanded]  = useState<PanelId | null>(null)
   const [aiDisplay, setAiDisplay] = useState(0)
 
+  const useCases               = useT4Store(s => s.useCases)
+  const stakeholders           = useT2Store(s => s.stakeholders)
+  const { profile: companyProfile } = useCompanyProfileStore()
+
   const avg     = calcAvg(t1Radar)
   const weakest = weakestDimension(t1Radar)
   const tier    = maturityLabel(avg)
+
+  const t10LLMContext = useMemo(
+    () => companyProfile
+      ? buildT10RecommendationContext(t1Radar, useCases, stakeholders, null, companyProfile)
+      : null,
+    [t1Radar, useCases, stakeholders, companyProfile],
+  )
 
   // AI Index counter animation
   useEffect(() => {
@@ -699,6 +715,16 @@ export function T10View({
         <p className="text-center text-[10px] text-text-subtle dark:text-warm-400 mt-6">
           Datos demo · L.E.A.N. AI System Enterprise · Alpha Consulting Solutions
         </p>
+
+        {/* ── RECOMENDACIONES IA ────────────────────────────── */}
+        {t10LLMContext && (
+          <RecommendationPanel
+            tool="t10"
+            title="Recomendaciones IA — Programa de Adopción"
+            subtitle="Generadas por Claude · Visión ejecutiva del programa completo"
+            context={t10LLMContext}
+          />
+        )}
       </div>
     </div>
   )
