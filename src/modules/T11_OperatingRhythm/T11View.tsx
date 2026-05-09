@@ -16,6 +16,7 @@ import { useState, useMemo }              from 'react'
 import { PhaseMiniMap }                   from '@/shared/components/PhaseMiniMap'
 import { buildOperatingModel }            from './engine'
 import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
+import { useEngagementStore }             from '@/modules/Engagement/store'
 import { RecommendationPanel }            from '@/components/RecommendationPanel'
 import { buildT11RecommendationContext }  from './t11ContextBuilder'
 import {
@@ -835,6 +836,7 @@ export function T11View({ companyName, t1Radar, employees = 500, onBack }: T11Vi
   const [activeTab, setActiveTab]         = useState<T11Tab>('bigpicture')
   const [selectedEvent, setSelectedEvent] = useState<T11Event | null>(null)
   const { profile: companyProfile }       = useCompanyProfileStore()
+  const engagementId                      = useEngagementStore((s) => s.activeEngagementId)
 
   const model = useMemo(
     () => buildOperatingModel({ radar: t1Radar, employees }),
@@ -1016,6 +1018,7 @@ export function T11View({ companyName, t1Radar, employees = 500, onBack }: T11Vi
             title="Recomendaciones IA — Modelo Operativo"
             subtitle="Generadas por Claude · Específicas para este modelo de gobierno"
             context={t11LLMContext}
+            engagementId={engagementId}
           />
         </div>
       )}

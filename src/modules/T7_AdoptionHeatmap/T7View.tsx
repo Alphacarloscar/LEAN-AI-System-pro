@@ -17,6 +17,7 @@ import { ARCHETYPE_CONFIG }             from '@/modules/T2_StakeholderMatrix/con
 import { PhaseMiniMap }                 from '@/shared/components/PhaseMiniMap'
 import { useDarkMode }                  from '@/shared/hooks/useDarkMode'
 import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
+import { useEngagementStore }           from '@/modules/Engagement/store'
 import { RecommendationPanel }          from '@/components/RecommendationPanel'
 import { buildT7RecommendationContext } from './t7ContextBuilder'
 import type {
@@ -891,9 +892,10 @@ interface T7ViewProps {
 }
 
 export function T7View({ companyName, onBack }: T7ViewProps) {
-  const stakeholders               = useT2Store(s => s.stakeholders)
-  const { dark }                   = useDarkMode()
+  const stakeholders                = useT2Store(s => s.stakeholders)
+  const { dark }                    = useDarkMode()
   const { profile: companyProfile } = useCompanyProfileStore()
+  const engagementId                = useEngagementStore((s) => s.activeEngagementId)
   const [activeTab, setActiveTab]  = useState<'curve' | 'dept' | 'plan'>('curve')
 
   const segCounts = useMemo(() => {
@@ -990,6 +992,7 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
           title="Recomendaciones IA — Mapa de Adopción"
           subtitle="Generadas por Claude · Específicas para esta curva de Rogers"
           context={t7LLMContext}
+          engagementId={engagementId}
         />
       )}
     </div>

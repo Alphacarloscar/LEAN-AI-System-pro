@@ -19,6 +19,7 @@ import { ARCHETYPE_CONFIG }             from '@/modules/T2_StakeholderMatrix/con
 import { useT4Store }                   from '@/modules/T4_UseCasePriorityBoard/store'
 import { PhaseMiniMap }                 from '@/shared/components/PhaseMiniMap'
 import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
+import { useEngagementStore }           from '@/modules/Engagement/store'
 import { RecommendationPanel }          from '@/components/RecommendationPanel'
 import { buildT8RecommendationContext } from './t8ContextBuilder'
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from '@/modules/T2_StakeholderMatrix/types'
@@ -1027,9 +1028,10 @@ interface T8ViewProps {
 }
 
 export function T8View({ companyName, onBack }: T8ViewProps) {
-  const stakeholders               = useT2Store(s => s.stakeholders)
-  const useCases                   = useT4Store(s => s.useCases)
+  const stakeholders                = useT2Store(s => s.stakeholders)
+  const useCases                    = useT4Store(s => s.useCases)
   const { profile: companyProfile } = useCompanyProfileStore()
+  const engagementId                = useEngagementStore((s) => s.activeEngagementId)
   const [activeTab, setActiveTab]  = useState<'timeline' | 'messages' | 'materials' | 'dept'>('timeline')
 
   // Casos de uso con decisión "go"
@@ -1138,6 +1140,7 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
           title="Recomendaciones IA — Plan de Comunicación"
           subtitle="Generadas por Claude · Específicas para este mapa de comunicación"
           context={t8LLMContext}
+          engagementId={engagementId}
         />
       )}
     </div>

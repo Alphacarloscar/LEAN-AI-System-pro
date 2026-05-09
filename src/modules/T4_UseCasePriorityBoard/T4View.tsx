@@ -18,6 +18,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate }       from 'react-router-dom'
 import { useT4Store }                   from './store'
 import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
+import { useEngagementStore }           from '@/modules/Engagement/store'
 import { RecommendationPanel }          from '@/components/RecommendationPanel'
 import { buildT4RecommendationContext } from './t4ContextBuilder'
 import {
@@ -1925,6 +1926,7 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
   const navigate                      = useNavigate()
   const { useCases }                  = useT4Store()
   const { profile: companyProfile }   = useCompanyProfileStore()
+  const engagementId                  = useEngagementStore((s) => s.activeEngagementId)
   const [activeId, setActiveId]     = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)
 
@@ -2033,6 +2035,7 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
             title="Recomendaciones IA — Portfolio de Casos de Uso"
             subtitle="Generadas por Claude · Específicas para este portfolio"
             context={t4LLMContext}
+            engagementId={engagementId}
           />
         </div>
       )}

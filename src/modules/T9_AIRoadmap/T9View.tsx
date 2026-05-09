@@ -18,6 +18,7 @@ import { useState, useMemo }              from 'react'
 import { useT4Store }                     from '@/modules/T4_UseCasePriorityBoard/store'
 import { useT9Store }                     from './store'
 import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
+import { useEngagementStore }             from '@/modules/Engagement/store'
 import { PhaseMiniMap }                   from '@/shared/components/PhaseMiniMap'
 import { RecommendationPanel }            from '@/components/RecommendationPanel'
 import { buildT9RecommendationContext }   from './t9ContextBuilder'
@@ -499,6 +500,7 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
   const { useCases }                                    = useT4Store()
   const { overrides, freeItems, setOverride, addFreeItem, updateFreeItem } = useT9Store()
   const { profile: companyProfile }                     = useCompanyProfileStore()
+  const engagementId                                    = useEngagementStore((s) => s.activeEngagementId)
 
   // Solo casos con decisión Go confirmada
   const goCases = useCases.filter((uc) => uc.goNoGo?.decision === 'go')
@@ -747,6 +749,7 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
           title="Recomendaciones IA — Roadmap 6 Meses"
           subtitle="Generadas por Claude · Específicas para este roadmap"
           context={t9LLMContext}
+          engagementId={engagementId}
         />
       )}
     </div>
