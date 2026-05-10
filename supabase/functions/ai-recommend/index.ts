@@ -960,31 +960,31 @@ Dominios IA activos (T5): ${activeDomains.join(', ') || 'No definidos'}`
 // ROUTER DE PROMPTS
 // ═══════════════════════════════════════════════════════════════
 
-function buildPrompt(tool: string, context: unknown): { system: string; user: string } {
+function buildPrompt(tool: string, context: unknown): { system: string; user: string; maxTokens: number } {
   const ctx = context as Record<string, unknown>
   switch (tool) {
     case 't1':
-      return { system: T1_SYSTEM_PROMPT, user: buildT1UserMessage(ctx) }
+      return { system: T1_SYSTEM_PROMPT, user: buildT1UserMessage(ctx), maxTokens: 1500 }
     case 't2':
-      return { system: T2_SYSTEM_PROMPT, user: buildT2UserMessage(ctx) }
+      return { system: T2_SYSTEM_PROMPT, user: buildT2UserMessage(ctx), maxTokens: 1500 }
     case 't4':
-      return { system: T4_SYSTEM_PROMPT, user: buildT4UserMessage(ctx) }
+      return { system: T4_SYSTEM_PROMPT, user: buildT4UserMessage(ctx), maxTokens: 1500 }
     case 't5':
-      return { system: T5_SYSTEM_PROMPT, user: buildT5UserMessage(ctx) }
+      return { system: T5_SYSTEM_PROMPT, user: buildT5UserMessage(ctx), maxTokens: 1500 }
     case 't6':
-      return { system: T6_SYSTEM_PROMPT, user: buildT6UserMessage(ctx) }
+      return { system: T6_SYSTEM_PROMPT, user: buildT6UserMessage(ctx), maxTokens: 1500 }
     case 't6_policy':
-      return { system: T6_POLICY_SYSTEM_PROMPT, user: buildT6PolicyUserMessage(ctx) }
+      return { system: T6_POLICY_SYSTEM_PROMPT, user: buildT6PolicyUserMessage(ctx), maxTokens: 2500 }
     case 't7':
-      return { system: T7_SYSTEM_PROMPT, user: buildT7UserMessage(ctx) }
+      return { system: T7_SYSTEM_PROMPT, user: buildT7UserMessage(ctx), maxTokens: 1500 }
     case 't8':
-      return { system: T8_SYSTEM_PROMPT, user: buildT8UserMessage(ctx) }
+      return { system: T8_SYSTEM_PROMPT, user: buildT8UserMessage(ctx), maxTokens: 1500 }
     case 't9':
-      return { system: T9_SYSTEM_PROMPT, user: buildT9UserMessage(ctx) }
+      return { system: T9_SYSTEM_PROMPT, user: buildT9UserMessage(ctx), maxTokens: 1500 }
     case 't11':
-      return { system: T11_SYSTEM_PROMPT, user: buildT11UserMessage(ctx) }
+      return { system: T11_SYSTEM_PROMPT, user: buildT11UserMessage(ctx), maxTokens: 1500 }
     case 't10':
-      return { system: T10_SYSTEM_PROMPT, user: buildT10UserMessage(ctx) }
+      return { system: T10_SYSTEM_PROMPT, user: buildT10UserMessage(ctx), maxTokens: 1500 }
     default:
       throw new Error(`Tool no soportado: ${tool}`)
   }
@@ -994,7 +994,7 @@ function buildPrompt(tool: string, context: unknown): { system: string; user: st
 // CLAUDE API
 // ═══════════════════════════════════════════════════════════════
 
-async function callClaude(system: string, user: string): Promise<unknown> {
+async function callClaude(system: string, user: string, maxTokens = MAX_TOKENS): Promise<unknown> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY no configurada en Supabase Secrets')
 
@@ -1007,7 +1007,7 @@ async function callClaude(system: string, user: string): Promise<unknown> {
     },
     body: JSON.stringify({
       model:      CLAUDE_MODEL,
-      max_tokens: MAX_TOKENS,
+      max_tokens: maxTokens,
       system,
       messages: [{ role: 'user', content: user }],
     }),
@@ -1055,8 +1055,8 @@ serve(async (req: Request) => {
       })
     }
 
-    const { system, user } = buildPrompt(tool, context)
-    const result = await callClaude(system, user)
+    const { system, user, maxTokens } = buildPrompt(tool, context)
+    const result = await callClaude(system, user, maxTokens)
 
     return new Response(JSON.stringify({ data: result }), {
       status:  200,
