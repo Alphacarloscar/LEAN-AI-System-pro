@@ -73,3 +73,27 @@ export interface T6PolicyData {
   /** Nivel de completitud ISO 42001 (0-100) */
   iso42001Progress: number
 }
+
+// ── Política generada por LLM ─────────────────────────────────
+
+/**
+ * Contenido narrativo de la política generado por LLM.
+ * Las secciones estructuradas (catálogo, ISO, roles) siguen
+ * siendo datos reales — el LLM solo genera el texto narrativo.
+ */
+export interface GeneratedPolicyContent {
+  /** Sección 1 — párrafo de apertura contextualizado por sector */
+  declaracion_opening:  string
+  /** Sección 1 — mandato de registro y evaluación */
+  declaracion_mandate:  string
+  /** Sección 2 — contexto del alcance para este sector/empresa */
+  alcance_context:      string
+  /** Sección 3 — 6 principios con descripción sectorial */
+  principios: Array<{ title: string; desc: string }>
+  /** Nueva sección — riesgos regulatorios específicos del sector */
+  contexto_sectorial:   string
+  /** Metadatos de generación */
+  generatedAt:  string
+  sector:       string
+  tamano:       string
+}

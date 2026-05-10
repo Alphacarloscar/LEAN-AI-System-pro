@@ -22,6 +22,8 @@ import { useCompanyProfileStore } from '@/modules/CompanyProfile/store'
 import { useEngagementStore }     from '@/modules/Engagement/store'
 import { RecommendationPanel }    from '@/components/RecommendationPanel'
 import { buildT6RecommendationContext } from './t6ContextBuilder'
+import { usePolicyGeneration }    from '@/hooks/usePolicyGeneration'
+import type { PolicyGenerationContext } from '@/hooks/usePolicyGeneration'
 import { PhaseMiniMap }          from '@/shared/components/PhaseMiniMap'
 import { PolicyDownloadButton }  from './PolicyPDF'
 
@@ -65,11 +67,12 @@ function TabButton({
 
 // ── ── ── Tab 1: POLÍTICA IA ── ── ──────────────────────────────
 
-function PolicyTab({ companyName }: { companyName: string }) {
+function PolicyTab({ companyName, engagementId }: { companyName: string; engagementId: string | null }) {
   const { useCases }   = useT4Store()
   const { canvas }     = useT5Store()
-  const { controls }   = useT6Store()
+  const { controls, generatedPolicy, clearGeneratedPolicy } = useT6Store()
   const profile        = useCompanyProfileStore((s) => s.profile)
+  const { generate, isGenerating, error: genError, clearError } = usePolicyGeneration()
   const now            = new Date()
   const dateStr        = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
   const nextReviewStr  = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
@@ -79,10 +82,10 @@ function PolicyTab({ companyName }: { companyName: string }) {
   const highRiskCases  = useCases.filter((uc) => uc.aiActClassification?.riskLevel === 'alto' || uc.aiActClassification?.riskLevel === 'prohibido')
 
   // ISO 42001 stats for policy document
-  const isoImplemented = controls.filter(c => c.status === 'implementado').length
-  const isoInProgress  = controls.filter(c => c.status === 'en_progreso').length
-  const isoNotStarted  = controls.filter(c => c.status === 'no_iniciado').length
-  const isoPercent     = controls.length > 0
+  const isoImplemented  = controls.filter(c => c.status === 'implementado').length
+  const isoInProgress   = controls.filter(c => c.status === 'en_progreso').length
+  const isoNotStarted   = controls.filter(c => c.status === 'no_iniciado').length
+  const isoPercent      = controls.length > 0
     ? Math.round(((isoImplemented + isoInProgress * 0.5) / controls.length) * 100)
     : 0
   const isoCriticalGaps = controls
@@ -90,13 +93,60 @@ function PolicyTab({ companyName }: { companyName: string }) {
     .slice(0, 3)
 
   // Company context
-  const sector         = profile?.sector || null
-  const tamano         = profile?.tamanoEmpresa || null
-  const objetivo       = profile?.objetivoPrincipalIA || null
-  const horizonte      = profile?.horizonteEsperadoValor || null
-  const ecosistema     = profile?.ecosistemaTecnologico || null
-  const restricciones  = profile?.restriccionesRelevantes || null
-  const areas          = profile?.areasPrioritarias ?? []
+  const sector        = profile?.sector || null
+  const tamano        = profile?.tamanoEmpresa || null
+  const objetivo      = profile?.objetivoPrincipalIA || null
+  const horizonte     = profile?.horizonteEsperadoValor || null
+  const ecosistema    = profile?.ecosistemaTecnologico || null
+  const restricciones = profile?.restriccionesRelevantes || null
+  const areas         = profile?.areasPrioritarias ?? []
+
+  // Context para generación LLM de política
+  const policyGenContext: PolicyGenerationContext = {
+    company: {
+      name:          companyName,
+      sector:        sector        ?? 'No especificado',
+      tamano:        tamano        ?? 'No especificado',
+      objetivo:      objetivo      ?? 'No especificado',
+      horizonte:     horizonte     ?? 'No especificado',
+      ecosistema:    ecosistema    ?? 'No especificado',
+      restricciones: restricciones ?? 'Ninguna',
+      areas:         areas as string[],
+    },
+    aiActRisk: {
+      total:         useCases.length,
+      prohibido:     useCases.filter(uc => uc.aiActClassification?.riskLevel === 'prohibido').length,
+      alto:          highRiskCases.filter(uc => uc.aiActClassification?.riskLevel === 'alto').length,
+      limitado:      useCases.filter(uc => uc.aiActClassification?.riskLevel === 'limitado').length,
+      minimo:        useCases.filter(uc => uc.aiActClassification?.riskLevel === 'minimo').length,
+      sinClasificar: useCases.filter(uc => !uc.aiActClassification).length,
+      highRiskCases: highRiskCases.slice(0, 5).map(uc => ({
+        name: uc.name, department: uc.department ?? 'Sin departamento',
+      })),
+    },
+    iso42001: {
+      completionPercent: isoPercent,
+      implemented:       isoImplemented,
+      notStarted:        isoNotStarted,
+      criticalGaps:      isoCriticalGaps.map(c => ({ code: c.code, title: c.title })),
+    },
+    useCases: {
+      total:  useCases.length,
+      go:     useCases.filter(uc => uc.status === 'go').length,
+      piloto: useCases.filter(uc => uc.status === 'en_piloto').length,
+    },
+    activeDomains: canvas.activationSequence.slice(0, 4),
+  }
+
+  // Principios a renderizar: LLM o plantilla por defecto
+  const principios = generatedPolicy?.principios ?? [
+    { title: 'Transparencia',        desc: 'Los usuarios deben saber cuándo interactúan con un sistema IA y comprender, en la medida de lo posible, cómo funciona.' },
+    { title: 'Supervisión humana',   desc: 'Los sistemas IA de alto riesgo requieren supervisión humana efectiva antes de que sus decisiones tengan efecto.' },
+    { title: 'Privacidad y datos',   desc: 'El tratamiento de datos personales por sistemas IA cumple el RGPD. Los datos sensibles requieren autorización explícita.' },
+    { title: 'No discriminación',    desc: 'Los sistemas IA no pueden generar sesgos injustificados basados en características protegidas por la legislación.' },
+    { title: 'Seguridad y robustez', desc: 'Los sistemas IA son seguros frente a manipulaciones y se monitorizan continuamente para detectar degradación del rendimiento.' },
+    { title: 'Rendición de cuentas', desc: 'Cada sistema IA tiene un responsable designado (AI Owner) que garantiza su uso conforme a esta política.' },
+  ]
   const activeDomains = canvas.activationSequence.slice(0, 3)
 
   const pdfData = {
@@ -105,21 +155,66 @@ function PolicyTab({ companyName }: { companyName: string }) {
     nextReviewStr,
     approvedCases,
     highRiskCases,
-    activeDomains: activeDomains.map(code => ({ code, domain: canvas.domains[code] })),
-    ownerDomains: Object.values(canvas.domains).slice(0, 4),
+    activeDomains:   activeDomains.map(code => ({ code, domain: canvas.domains[code] })),
+    ownerDomains:    Object.values(canvas.domains).slice(0, 4),
+    generatedPolicy: generatedPolicy ?? null,
   }
 
   return (
     <div className="flex flex-col gap-5">
 
       {/* Action bar */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs text-text-muted">
-            Documento generado dinámicamente desde los datos de T4 y T5. Se actualiza con cada cambio.
-          </p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex flex-col gap-1">
+          {generatedPolicy ? (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                ✦ Generada con IA · {generatedPolicy.sector}
+              </span>
+              <button
+                onClick={clearGeneratedPolicy}
+                className="text-[10px] text-text-subtle hover:text-red-500 transition-colors"
+              >
+                Volver a plantilla
+              </button>
+            </div>
+          ) : (
+            <p className="text-xs text-text-muted">
+              Documento generado desde los datos de T4 y T5. Genera con IA para adaptarlo a tu sector.
+            </p>
+          )}
+          {genError && (
+            <p className="text-[11px] text-red-500 flex items-center gap-1">
+              ⚠ {genError}
+              <button onClick={clearError} className="underline hover:no-underline ml-1">Cerrar</button>
+            </p>
+          )}
         </div>
-        <PolicyDownloadButton data={pdfData} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => generate(policyGenContext, engagementId)}
+            disabled={isGenerating}
+            className={[
+              'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150',
+              isGenerating
+                ? 'border-border text-text-subtle bg-gray-50 dark:bg-gray-800 cursor-not-allowed'
+                : 'border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40',
+            ].join(' ')}
+          >
+            {isGenerating ? (
+              <>
+                <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+                Generando…
+              </>
+            ) : (
+              <>✦ {generatedPolicy ? 'Regenerar con IA' : 'Generar política con IA'}</>
+            )}
+          </button>
+          <PolicyDownloadButton data={pdfData} />
+        </div>
       </div>
 
       {/* Documento */}
@@ -153,14 +248,11 @@ function PolicyTab({ companyName }: { companyName: string }) {
               1. Declaración de Política
             </h2>
             <p className="text-sm text-text-muted leading-relaxed">
-              {companyName}{sector ? `, empresa del sector ${sector}${tamano ? ` con ${tamano}` : ''},` : ''} se
-              compromete a adoptar la Inteligencia Artificial de forma responsable, ética y conforme a la
-              regulación aplicable, en particular el Reglamento Europeo de Inteligencia Artificial (EU AI Act,
-              Reglamento UE 2024/1689) y el Reglamento General de Protección de Datos (RGPD). Esta política
-              establece los principios, responsabilidades y controles que rigen el desarrollo, adquisición y
-              despliegue de sistemas IA en la organización.
+              {generatedPolicy?.declaracion_opening ?? (
+                `${companyName}${sector ? `, empresa del sector ${sector}${tamano ? ` con ${tamano}` : ''},` : ''} se compromete a adoptar la Inteligencia Artificial de forma responsable, ética y conforme a la regulación aplicable, en particular el Reglamento Europeo de Inteligencia Artificial (EU AI Act, Reglamento UE 2024/1689) y el Reglamento General de Protección de Datos (RGPD). Esta política establece los principios, responsabilidades y controles que rigen el desarrollo, adquisición y despliegue de sistemas IA en la organización.`
+              )}
             </p>
-            {objetivo && (
+            {!generatedPolicy && objetivo && (
               <p className="text-sm text-text-muted leading-relaxed mt-3">
                 El objetivo estratégico principal de adopción IA de {companyName} es <strong className="text-lean-black dark:text-gray-200">{objetivo.toLowerCase()}</strong>
                 {horizonte ? `, con un horizonte de generación de valor esperado de ${horizonte.toLowerCase()}` : ''}.
@@ -168,9 +260,9 @@ function PolicyTab({ companyName }: { companyName: string }) {
               </p>
             )}
             <p className="text-sm text-text-muted leading-relaxed mt-3">
-              Todo sistema de IA operativo en {companyName} debe ser identificado, evaluado en términos
-              de riesgo regulatorio y documentado en el catálogo corporativo de IA antes de su
-              despliegue en producción.
+              {generatedPolicy?.declaracion_mandate ?? (
+                `Todo sistema de IA operativo en ${companyName} debe ser identificado, evaluado en términos de riesgo regulatorio y documentado en el catálogo corporativo de IA antes de su despliegue en producción.`
+              )}
             </p>
           </section>
 
@@ -180,11 +272,8 @@ function PolicyTab({ companyName }: { companyName: string }) {
               2. Alcance
             </h2>
             <p className="text-sm text-text-muted leading-relaxed mb-3">
-              Esta política aplica a todos los sistemas de IA desarrollados internamente, adquiridos a
-              terceros o utilizados como servicio (AIaaS) por {companyName}, independientemente del
-              departamento o función de negocio.
-              {areas.length > 0 && (
-                ` Las áreas prioritarias en el programa actual de adopción son: ${areas.join(', ')}.`
+              {generatedPolicy?.alcance_context ?? (
+                `Esta política aplica a todos los sistemas de IA desarrollados internamente, adquiridos a terceros o utilizados como servicio (AIaaS) por ${companyName}, independientemente del departamento o función de negocio.${areas.length > 0 ? ` Las áreas prioritarias en el programa actual de adopción son: ${(areas as string[]).join(', ')}.` : ''}`
               )}
             </p>
             {(ecosistema || restricciones) && (
@@ -232,14 +321,7 @@ function PolicyTab({ companyName }: { companyName: string }) {
               3. Principios de IA Responsable
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[
-                { title: 'Transparencia',       desc: 'Los usuarios deben saber cuándo interactúan con un sistema IA y comprender, en la medida de lo posible, cómo funciona.' },
-                { title: 'Supervisión humana',  desc: 'Los sistemas IA de alto riesgo requieren supervisión humana efectiva antes de que sus decisiones tengan efecto.' },
-                { title: 'Privacidad y datos',  desc: 'El tratamiento de datos personales por sistemas IA cumple el RGPD. Los datos sensibles requieren autorización explícita.' },
-                { title: 'No discriminación',   desc: 'Los sistemas IA no pueden generar sesgos injustificados basados en características protegidas por la legislación.' },
-                { title: 'Seguridad y robustez', desc: 'Los sistemas IA son seguros frente a manipulaciones y se monitorizan continuamente para detectar degradación del rendimiento.' },
-                { title: 'Rendición de cuentas', desc: 'Cada sistema IA tiene un responsable designado (AI Owner) que garantiza su uso conforme a esta política.' },
-              ].map(({ title, desc }) => (
+              {principios.map(({ title, desc }) => (
                 <div key={title} className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/30 px-4 py-3">
                   <p className="text-xs font-bold text-lean-black dark:text-gray-100 mb-1">{title}</p>
                   <p className="text-[11px] text-text-muted leading-relaxed">{desc}</p>
@@ -248,7 +330,19 @@ function PolicyTab({ companyName }: { companyName: string }) {
             </div>
           </section>
 
-          {/* 4. Catálogo de IA aprobada */}
+          {/* 3b. Contexto regulatorio sectorial (solo si fue generado por LLM) */}
+          {generatedPolicy?.contexto_sectorial && (
+            <section>
+              <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+                4. Contexto Regulatorio Sectorial
+              </h2>
+              <p className="text-sm text-text-muted leading-relaxed">
+                {generatedPolicy.contexto_sectorial}
+              </p>
+            </section>
+          )}
+
+          {/* 4/5. Catálogo de IA aprobada */}
           <section>
             <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
               4. Catálogo de IA Aprobada
@@ -764,7 +858,7 @@ export function T6View({
       </div>
 
       {/* Tab content */}
-      {tab === 'politica'  && <PolicyTab companyName={companyName} />}
+      {tab === 'politica'  && <PolicyTab companyName={companyName} engagementId={engagementId} />}
       {tab === 'riesgos'   && <RiskDashboardTab />}
       {tab === 'iso42001'  && <ISO42001Tab />}
 

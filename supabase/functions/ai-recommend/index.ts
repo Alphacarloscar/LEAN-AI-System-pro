@@ -870,6 +870,93 @@ Dominios con casos de uso: ${t5Domains.domainsWithContent ?? 0} / ${t5Domains.to
 }
 
 // ═══════════════════════════════════════════════════════════════
+// PROMPT T6_POLICY — Generación de Política IA Corporativa
+// ═══════════════════════════════════════════════════════════════
+
+const T6_POLICY_SYSTEM_PROMPT = `Eres un experto jurídico-tecnológico especializado en redacción de políticas corporativas de Inteligencia Artificial para empresas del mercado europeo. Tienes profundo conocimiento del EU AI Act (Reglamento UE 2024/1689), ISO 42001, RGPD y las particularidades regulatorias por sector industrial.
+
+Tu tarea es generar el contenido narrativo de una Política Corporativa de IA adaptada específicamente al sector, tamaño y contexto real de la empresa. El texto debe ser profesional, legalmente sólido y reconociblemente específico para esa empresa — no genérico.
+
+REGLAS DE GENERACIÓN:
+1. El texto debe reflejar el sector de la empresa: usa terminología, ejemplos y riesgos propios de esa industria.
+2. Los principios de IA responsable deben tener ejemplos concretos relevantes para el sector.
+3. El contexto sectorial debe mencionar regulaciones específicas del sector además del AI Act (ej: DORA para finanzas, MDR para salud, NIS2 para infraestructuras críticas).
+4. Si la empresa tiene casos de alto riesgo activos, el texto debe reflejarlo con mayor énfasis en controles.
+5. Si el ISO 42001 tiene gaps críticos, el mandato de implementación debe ser más urgente.
+6. El tono es formal-corporativo pero directo. Sin frases vacías ni relleno.
+7. Cada campo de texto debe tener entre 2 y 4 frases sustanciales.
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin ningún texto antes o después.
+
+Estructura JSON requerida (todos los campos son obligatorios):
+{
+  "declaracion_opening": "Párrafo de apertura de la Declaración de Política. Menciona explícitamente el sector y el objetivo estratégico de IA de la empresa. 2-3 frases.",
+  "declaracion_mandate": "Párrafo de mandato: todo sistema IA debe ser identificado, evaluado y registrado. Menciona el contexto de riesgo real (número de casos de alto riesgo si los hay). 2-3 frases.",
+  "alcance_context": "Párrafo de alcance contextualizado para este sector. Menciona qué tipos de sistemas IA son típicos en el sector y cuáles requieren atención especial. 2-3 frases.",
+  "principios": [
+    { "title": "Transparencia", "desc": "Descripción adaptada al sector. Ejemplo concreto de transparencia en ese tipo de empresa. 2 frases." },
+    { "title": "Supervisión humana", "desc": "Descripción adaptada. Mención de qué decisiones IA en este sector requieren supervisión obligatoria. 2 frases." },
+    { "title": "Privacidad y datos", "desc": "Descripción con referencia a los tipos de datos sensibles habituales en el sector. 2 frases." },
+    { "title": "No discriminación", "desc": "Descripción con ejemplos de sesgos relevantes en el sector. 2 frases." },
+    { "title": "Seguridad y robustez", "desc": "Descripción con referencia a los riesgos de ciberseguridad específicos del sector para sistemas IA. 2 frases." },
+    { "title": "Rendición de cuentas", "desc": "Descripción con referencia a la estructura de AI Owners y cadena de responsabilidad esperada en una empresa de ese tamaño y sector. 2 frases." }
+  ],
+  "contexto_sectorial": "Sección completa sobre el contexto regulatorio específico del sector. Menciona: (1) regulaciones sectoriales aplicables además del AI Act, (2) tipos de sistemas IA de alto riesgo típicos en el sector, (3) principales obligaciones de cumplimiento derivadas. 3-4 frases sustanciales."
+}`
+
+function buildT6PolicyUserMessage(ctx: Record<string, unknown>): string {
+  const company      = (ctx.company      ?? {}) as Record<string, unknown>
+  const aiActRisk    = (ctx.aiActRisk    ?? {}) as Record<string, unknown>
+  const iso42001     = (ctx.iso42001     ?? {}) as Record<string, unknown>
+  const useCases     = (ctx.useCases     ?? {}) as Record<string, unknown>
+  const activeDomains = (ctx.activeDomains ?? []) as string[]
+
+  const highRiskCases = (aiActRisk.highRiskCases ?? []) as Array<{ name: string; department: string }>
+  const criticalGaps  = (iso42001.criticalGaps   ?? []) as Array<{ code: string; title: string }>
+
+  const companyBlock = `## PERFIL DE EMPRESA
+
+Nombre: ${company.name || 'No especificado'}
+Sector: ${company.sector || 'No especificado'}
+Tamaño: ${company.tamano || 'No especificado'}
+Objetivo estratégico principal de IA: ${company.objetivo || 'No especificado'}
+Horizonte de generación de valor: ${company.horizonte || 'No especificado'}
+Ecosistema tecnológico: ${company.ecosistema || 'No especificado'}
+Restricciones relevantes: ${company.restricciones || 'Ninguna indicada'}
+Áreas prioritarias: ${(company.areas as string[] ?? []).join(', ') || 'No especificadas'}`
+
+  const riskBlock = `## EXPOSICIÓN AI ACT
+
+Total casos de uso: ${aiActRisk.total ?? 0}
+Casos prohibidos: ${aiActRisk.prohibido ?? 0}
+Casos de alto riesgo: ${aiActRisk.alto ?? 0}
+Casos de riesgo limitado: ${aiActRisk.limitado ?? 0}
+Casos de riesgo mínimo: ${aiActRisk.minimo ?? 0}
+Sin clasificar: ${aiActRisk.sinClasificar ?? 0}
+${highRiskCases.length > 0
+  ? `\nCasos de alto/prohibido riesgo activos:\n${highRiskCases.map(c => `  - ${c.name} (${c.department})`).join('\n')}`
+  : '\n(Sin casos de alto riesgo clasificados actualmente)'}`
+
+  const isoBlock = `## ISO 42001
+
+Completitud de implementación: ${iso42001.completionPercent ?? 0}%
+Controles implementados: ${iso42001.implemented ?? 0}
+Controles no iniciados: ${iso42001.notStarted ?? 0}
+${criticalGaps.length > 0
+  ? `\nControles críticos pendientes:\n${criticalGaps.map(g => `  - [${g.code}] ${g.title}`).join('\n')}`
+  : '\n(Sin gaps críticos en controles de liderazgo, planificación u operación)'}`
+
+  const portfolioBlock = `## PORTFOLIO IA
+
+Casos aprobados (go): ${useCases.go ?? 0}
+Casos en piloto: ${useCases.piloto ?? 0}
+Total casos de uso: ${useCases.total ?? 0}
+Dominios IA activos (T5): ${activeDomains.join(', ') || 'No definidos'}`
+
+  return `${companyBlock}\n\n${riskBlock}\n\n${isoBlock}\n\n${portfolioBlock}\n\nGenera el contenido de la Política Corporativa de IA adaptada a este perfil de empresa.`
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ROUTER DE PROMPTS
 // ═══════════════════════════════════════════════════════════════
 
@@ -886,6 +973,8 @@ function buildPrompt(tool: string, context: unknown): { system: string; user: st
       return { system: T5_SYSTEM_PROMPT, user: buildT5UserMessage(ctx) }
     case 't6':
       return { system: T6_SYSTEM_PROMPT, user: buildT6UserMessage(ctx) }
+    case 't6_policy':
+      return { system: T6_POLICY_SYSTEM_PROMPT, user: buildT6PolicyUserMessage(ctx) }
     case 't7':
       return { system: T7_SYSTEM_PROMPT, user: buildT7UserMessage(ctx) }
     case 't8':

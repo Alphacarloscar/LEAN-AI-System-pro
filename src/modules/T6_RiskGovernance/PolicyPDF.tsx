@@ -43,6 +43,15 @@ export interface PolicyPDFData {
   highRiskCases:    UseCase[]
   activeDomains:    Array<{ code: string; domain: Domain }>
   ownerDomains:     Domain[]
+  /** Contenido narrativo generado por LLM (opcional — si no existe, se usa plantilla) */
+  generatedPolicy?: {
+    declaracion_opening:  string
+    declaracion_mandate:  string
+    alcance_context:      string
+    principios:           Array<{ title: string; desc: string }>
+    contexto_sectorial:   string
+    sector:               string
+  } | null
 }
 
 // ── Paleta de colores del design system ────────────────────────
@@ -337,9 +346,23 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
     companyName, dateStr, nextReviewStr,
     approvedCases, highRiskCases,
     activeDomains, ownerDomains,
+    generatedPolicy,
   } = data
 
+  const gp = generatedPolicy ?? null
+  const hasGenerated = !!gp
+  // Si hay contexto sectorial generado, añade una sección extra
+  const extraSection  = hasGenerated && gp.contexto_sectorial ? 1 : 0
   const sectionOffset = highRiskCases.length > 0 ? 1 : 0
+
+  const principios = gp?.principios ?? [
+    { title: 'Transparencia',        desc: 'Los usuarios deben saber cuándo interactúan con un sistema IA y comprender, en la medida de lo posible, cómo funciona.' },
+    { title: 'Supervisión humana',   desc: 'Los sistemas IA de alto riesgo requieren supervisión humana efectiva antes de que sus decisiones tengan efecto.' },
+    { title: 'Privacidad y datos',   desc: 'El tratamiento de datos personales por sistemas IA cumple el RGPD. Los datos sensibles requieren autorización explícita.' },
+    { title: 'No discriminación',    desc: 'Los sistemas IA no pueden generar sesgos injustificados basados en características protegidas por la legislación.' },
+    { title: 'Seguridad y robustez', desc: 'Los sistemas IA son seguros frente a manipulaciones y se monitorizan continuamente para detectar degradación del rendimiento.' },
+    { title: 'Rendición de cuentas', desc: 'Cada sistema IA tiene un responsable designado (AI Owner) que garantiza su uso conforme a esta política.' },
+  ]
 
   return (
     <Document
@@ -366,26 +389,23 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
           <View style={s.section}>
             <Text style={s.sectionTitle}>1. Declaración de Política</Text>
             <Text style={s.paragraph}>
-              {companyName} se compromete a adoptar la Inteligencia Artificial de forma responsable, ética
-              y conforme a la regulación aplicable, en particular el Reglamento Europeo de Inteligencia
-              Artificial (EU AI Act, Reglamento UE 2024/1689) y el Reglamento General de Protección de
-              Datos (RGPD). Esta política establece los principios, responsabilidades y controles que
-              rigen el desarrollo, adquisición y despliegue de sistemas IA en la organización.
+              {gp?.declaracion_opening ?? `${companyName} se compromete a adoptar la Inteligencia Artificial de forma responsable, ética y conforme a la regulación aplicable, en particular el Reglamento Europeo de Inteligencia Artificial (EU AI Act, Reglamento UE 2024/1689) y el Reglamento General de Protección de Datos (RGPD). Esta política establece los principios, responsabilidades y controles que rigen el desarrollo, adquisición y despliegue de sistemas IA en la organización.`}
             </Text>
             <Text style={s.paragraph}>
-              Todo sistema de IA operativo en {companyName} debe ser identificado, evaluado en términos
-              de riesgo regulatorio y documentado en el catálogo corporativo de IA antes de su
-              despliegue en producción.
+              {gp?.declaracion_mandate ?? `Todo sistema de IA operativo en ${companyName} debe ser identificado, evaluado en términos de riesgo regulatorio y documentado en el catálogo corporativo de IA antes de su despliegue en producción.`}
             </Text>
+            {hasGenerated && (
+              <Text style={{ fontSize: 7, color: '#C8860A', marginTop: 4 }}>
+                ✦ Contenido generado con IA · Sector: {gp?.sector}
+              </Text>
+            )}
           </View>
 
           {/* 2. Alcance */}
           <View style={s.section}>
             <Text style={s.sectionTitle}>2. Alcance</Text>
             <Text style={s.paragraph}>
-              Esta política aplica a todos los sistemas de IA desarrollados internamente, adquiridos a
-              terceros o utilizados como servicio (AIaaS) por {companyName}, independientemente del
-              departamento o función de negocio.
+              {gp?.alcance_context ?? `Esta política aplica a todos los sistemas de IA desarrollados internamente, adquiridos a terceros o utilizados como servicio (AIaaS) por ${companyName}, independientemente del departamento o función de negocio.`}
             </Text>
             {activeDomains.length > 0 && (
               <View style={s.domainsBox}>
@@ -407,14 +427,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
           <View style={s.section}>
             <Text style={s.sectionTitle}>3. Principios de IA Responsable</Text>
             <View style={s.principlesGrid}>
-              {[
-                { title: 'Transparencia',        desc: 'Los usuarios deben saber cuándo interactúan con un sistema IA y comprender, en la medida de lo posible, cómo funciona.' },
-                { title: 'Supervisión humana',   desc: 'Los sistemas IA de alto riesgo requieren supervisión humana efectiva antes de que sus decisiones tengan efecto.' },
-                { title: 'Privacidad y datos',   desc: 'El tratamiento de datos personales por sistemas IA cumple el RGPD. Los datos sensibles requieren autorización explícita.' },
-                { title: 'No discriminación',    desc: 'Los sistemas IA no pueden generar sesgos injustificados basados en características protegidas por la legislación.' },
-                { title: 'Seguridad y robustez', desc: 'Los sistemas IA son seguros frente a manipulaciones y se monitorizan continuamente para detectar degradación del rendimiento.' },
-                { title: 'Rendición de cuentas', desc: 'Cada sistema IA tiene un responsable designado (AI Owner) que garantiza su uso conforme a esta política.' },
-              ].map(({ title, desc }) => (
+              {principios.map(({ title, desc }) => (
                 <View key={title} style={s.principleCard}>
                   <Text style={s.principleTitle}>{title}</Text>
                   <Text style={s.principleDesc}>{desc}</Text>
@@ -423,9 +436,17 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
             </View>
           </View>
 
-          {/* 4. Catálogo */}
+          {/* 3b. Contexto regulatorio sectorial (solo si fue generado) */}
+          {hasGenerated && gp?.contexto_sectorial ? (
+            <View style={s.section}>
+              <Text style={s.sectionTitle}>4. Contexto Regulatorio Sectorial</Text>
+              <Text style={s.paragraph}>{gp.contexto_sectorial}</Text>
+            </View>
+          ) : null}
+
+          {/* Catálogo */}
           <View style={s.section}>
-            <Text style={s.sectionTitle}>4. Catálogo de IA Aprobada</Text>
+            <Text style={s.sectionTitle}>{4 + extraSection}. Catálogo de IA Aprobada</Text>
             <Text style={s.paragraph}>
               Los siguientes sistemas IA han sido evaluados, aprobados (Go) e incorporados al
               pipeline de implementación de {companyName} a la fecha de emisión de esta política.
@@ -493,7 +514,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
 
           {/* Roles y responsabilidades */}
           <View style={s.section}>
-            <Text style={s.sectionTitle}>{4 + sectionOffset + 1}. Roles y Responsabilidades</Text>
+            <Text style={s.sectionTitle}>{4 + extraSection + sectionOffset + 1}. Roles y Responsabilidades</Text>
             {ownerDomains.map((d) => (
               <View key={d.domainCode} style={s.ownerRow}>
                 <Text style={s.ownerLabel}>AI Owner</Text>
@@ -509,7 +530,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
 
           {/* Revisión */}
           <View style={s.section}>
-            <Text style={s.sectionTitle}>{4 + sectionOffset + 2}. Revisión y Vigencia</Text>
+            <Text style={s.sectionTitle}>{4 + extraSection + sectionOffset + 2}. Revisión y Vigencia</Text>
             <Text style={s.paragraph}>
               Esta política será revisada anualmente o ante cambios regulatorios significativos
               (nuevas disposiciones del AI Act, actualizaciones del RGPD o cambios en el catálogo
