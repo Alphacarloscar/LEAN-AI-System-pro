@@ -66,15 +66,37 @@ function TabButton({
 // ── ── ── Tab 1: POLÍTICA IA ── ── ──────────────────────────────
 
 function PolicyTab({ companyName }: { companyName: string }) {
-  const { useCases }  = useT4Store()
-  const { canvas }    = useT5Store()
-  const now           = new Date()
-  const dateStr       = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
-  const nextReviewStr = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
+  const { useCases }   = useT4Store()
+  const { canvas }     = useT5Store()
+  const { controls }   = useT6Store()
+  const profile        = useCompanyProfileStore((s) => s.profile)
+  const now            = new Date()
+  const dateStr        = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
+  const nextReviewStr  = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
     .toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })
 
-  const approvedCases = useCases.filter((uc) => uc.status === 'go' || uc.status === 'en_piloto')
-  const highRiskCases = useCases.filter((uc) => uc.aiActClassification?.riskLevel === 'alto' || uc.aiActClassification?.riskLevel === 'prohibido')
+  const approvedCases  = useCases.filter((uc) => uc.status === 'go' || uc.status === 'en_piloto')
+  const highRiskCases  = useCases.filter((uc) => uc.aiActClassification?.riskLevel === 'alto' || uc.aiActClassification?.riskLevel === 'prohibido')
+
+  // ISO 42001 stats for policy document
+  const isoImplemented = controls.filter(c => c.status === 'implementado').length
+  const isoInProgress  = controls.filter(c => c.status === 'en_progreso').length
+  const isoNotStarted  = controls.filter(c => c.status === 'no_iniciado').length
+  const isoPercent     = controls.length > 0
+    ? Math.round(((isoImplemented + isoInProgress * 0.5) / controls.length) * 100)
+    : 0
+  const isoCriticalGaps = controls
+    .filter(c => c.status === 'no_iniciado' && ['leadership', 'planning', 'operation'].includes(c.clause))
+    .slice(0, 3)
+
+  // Company context
+  const sector         = profile?.sector || null
+  const tamano         = profile?.tamanoEmpresa || null
+  const objetivo       = profile?.objetivoPrincipalIA || null
+  const horizonte      = profile?.horizonteEsperadoValor || null
+  const ecosistema     = profile?.ecosistemaTecnologico || null
+  const restricciones  = profile?.restriccionesRelevantes || null
+  const areas          = profile?.areasPrioritarias ?? []
   const activeDomains = canvas.activationSequence.slice(0, 3)
 
   const pdfData = {
@@ -131,12 +153,20 @@ function PolicyTab({ companyName }: { companyName: string }) {
               1. Declaración de Política
             </h2>
             <p className="text-sm text-text-muted leading-relaxed">
-              {companyName} se compromete a adoptar la Inteligencia Artificial de forma responsable, ética
-              y conforme a la regulación aplicable, en particular el Reglamento Europeo de Inteligencia
-              Artificial (EU AI Act, Reglamento UE 2024/1689) y el Reglamento General de Protección de
-              Datos (RGPD). Esta política establece los principios, responsabilidades y controles que
-              rigen el desarrollo, adquisición y despliegue de sistemas IA en la organización.
+              {companyName}{sector ? `, empresa del sector ${sector}${tamano ? ` con ${tamano}` : ''},` : ''} se
+              compromete a adoptar la Inteligencia Artificial de forma responsable, ética y conforme a la
+              regulación aplicable, en particular el Reglamento Europeo de Inteligencia Artificial (EU AI Act,
+              Reglamento UE 2024/1689) y el Reglamento General de Protección de Datos (RGPD). Esta política
+              establece los principios, responsabilidades y controles que rigen el desarrollo, adquisición y
+              despliegue de sistemas IA en la organización.
             </p>
+            {objetivo && (
+              <p className="text-sm text-text-muted leading-relaxed mt-3">
+                El objetivo estratégico principal de adopción IA de {companyName} es <strong className="text-lean-black dark:text-gray-200">{objetivo.toLowerCase()}</strong>
+                {horizonte ? `, con un horizonte de generación de valor esperado de ${horizonte.toLowerCase()}` : ''}.
+                Esta política enmarca y habilita dicha transformación dentro de los requisitos regulatorios aplicables.
+              </p>
+            )}
             <p className="text-sm text-text-muted leading-relaxed mt-3">
               Todo sistema de IA operativo en {companyName} debe ser identificado, evaluado en términos
               de riesgo regulatorio y documentado en el catálogo corporativo de IA antes de su
@@ -153,7 +183,26 @@ function PolicyTab({ companyName }: { companyName: string }) {
               Esta política aplica a todos los sistemas de IA desarrollados internamente, adquiridos a
               terceros o utilizados como servicio (AIaaS) por {companyName}, independientemente del
               departamento o función de negocio.
+              {areas.length > 0 && (
+                ` Las áreas prioritarias en el programa actual de adopción son: ${areas.join(', ')}.`
+              )}
             </p>
+            {(ecosistema || restricciones) && (
+              <div className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/50 px-4 py-3 mb-3 flex flex-col gap-2">
+                {ecosistema && (
+                  <div>
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Ecosistema tecnológico base</p>
+                    <p className="text-xs text-text-muted">{ecosistema}</p>
+                  </div>
+                )}
+                {restricciones && (
+                  <div>
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Restricciones relevantes</p>
+                    <p className="text-xs text-text-muted">{restricciones}</p>
+                  </div>
+                )}
+              </div>
+            )}
             {activeDomains.length > 0 && (
               <div className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/50 px-4 py-3">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
@@ -275,10 +324,44 @@ function PolicyTab({ companyName }: { companyName: string }) {
             </section>
           )}
 
-          {/* 6. Roles y responsabilidades */}
+          {/* ISO 42001 — Estado de implementación */}
           <section>
             <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
-              {highRiskCases.length > 0 ? '6.' : '5.'} Roles y Responsabilidades
+              {highRiskCases.length > 0 ? '6.' : '5.'} Estado de Implementación ISO 42001
+            </h2>
+            <p className="text-sm text-text-muted leading-relaxed mb-4">
+              {companyName} está implementando el estándar ISO 42001 como marco de gestión del sistema
+              de IA. A la fecha de esta política, el nivel de implementación es del{' '}
+              <strong className="text-lean-black dark:text-gray-200">{isoPercent}%</strong>{' '}
+              ({isoImplemented} controles implementados, {isoInProgress} en progreso,{' '}
+              {isoNotStarted} no iniciados sobre un total de {controls.length} controles).
+            </p>
+            {isoCriticalGaps.length > 0 && (
+              <div className="rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/10 px-4 py-3 mb-3">
+                <p className="text-[10px] font-mono uppercase tracking-widest text-amber-700 dark:text-amber-400 mb-2">
+                  Controles críticos pendientes (liderazgo · planificación · operación)
+                </p>
+                <ul className="flex flex-col gap-1">
+                  {isoCriticalGaps.map(c => (
+                    <li key={c.id} className="text-xs text-amber-700 dark:text-amber-300 flex items-start gap-1.5">
+                      <span className="shrink-0">▶</span>
+                      <span><strong>[{c.code}]</strong> {c.title}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {isoPercent === 100 && (
+              <p className="text-xs text-success-dark font-semibold">
+                ✓ Todos los controles ISO 42001 están implementados a la fecha de esta política.
+              </p>
+            )}
+          </section>
+
+          {/* Roles y responsabilidades */}
+          <section>
+            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+              {highRiskCases.length > 0 ? '7.' : '6.'} Roles y Responsabilidades
             </h2>
             <div className="flex flex-col gap-2">
               {Object.values(canvas.domains).slice(0, 4).map((d) => (
@@ -295,10 +378,10 @@ function PolicyTab({ companyName }: { companyName: string }) {
             </div>
           </section>
 
-          {/* 7. Revisión */}
+          {/* Revisión */}
           <section>
             <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
-              {highRiskCases.length > 0 ? '7.' : '6.'} Revisión y Vigencia
+              {highRiskCases.length > 0 ? '8.' : '7.'} Revisión y Vigencia
             </h2>
             <p className="text-sm text-text-muted leading-relaxed">
               Esta política será revisada anualmente o ante cambios regulatorios significativos
