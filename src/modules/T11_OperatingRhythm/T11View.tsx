@@ -868,7 +868,7 @@ export function T11View({ companyName, t1Radar, employees = 500, onBack }: T11Vi
     <div className="min-h-screen bg-surface dark:bg-warm-900">
 
       {/* ── Header ── */}
-      <div className="sticky top-0 z-30 bg-white dark:bg-warm-800 border-b border-border dark:border-warm-600">
+      <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm border-b border-border dark:border-white/6">
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center gap-4 flex-wrap">
           <button
             onClick={onBack}

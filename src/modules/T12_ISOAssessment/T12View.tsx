@@ -332,7 +332,7 @@ export function T12View({ companyName, onBack }: T12ViewProps) {
     <div className="min-h-screen bg-surface dark:bg-warm-900">
 
       {/* ── Header sticky ── */}
-      <div className="sticky top-0 z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm border-b border-border px-8 py-3">
+      <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm border-b border-border px-8 py-3">
         <div className="max-w-7xl mx-auto flex items-center gap-4">
 
           <button

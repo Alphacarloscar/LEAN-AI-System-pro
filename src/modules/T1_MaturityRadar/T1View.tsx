@@ -66,25 +66,31 @@ interface NewIntervieweeForm {
 
 interface NewInterviewModalProps {
   onClose:  () => void
-  onSubmit: (form: NewIntervieweeForm) => void
+  onSubmit: (form: NewIntervieweeForm) => Promise<void>
 }
 
 function NewInterviewModal({ onClose, onSubmit }: NewInterviewModalProps) {
-  const [form, setForm] = useState<NewIntervieweeForm>({
+  const [form, setForm]         = useState<NewIntervieweeForm>({
     name: '',
     role: '',
     type: 'business',
   })
+  const [submitting, setSubmitting] = useState(false)
   const nameRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { nameRef.current?.focus() }, [])
 
   const canSubmit = form.name.trim().length > 0 && form.role.trim().length > 0
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!canSubmit) return
-    onSubmit(form)
+    if (!canSubmit || submitting) return
+    setSubmitting(true)
+    try {
+      await onSubmit(form)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   // Cerrar con Escape
@@ -210,21 +216,29 @@ function NewInterviewModal({ onClose, onSubmit }: NewInterviewModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2 rounded-lg text-xs font-medium text-text-muted border border-border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              disabled={submitting}
+              className="flex-1 py-2 rounded-lg text-xs font-medium text-text-muted border border-border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-40"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              disabled={!canSubmit}
+              disabled={!canSubmit || submitting}
               className={[
-                'flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
-                canSubmit
+                'flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center justify-center gap-1.5',
+                canSubmit && !submitting
                   ? 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98]'
                   : 'bg-gray-100 text-gray-300 cursor-not-allowed',
               ].join(' ')}
             >
-              Crear entrevista
+              {submitting ? (
+                <>
+                  <svg className="animate-spin h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M6 1a5 5 0 11-5 5" strokeLinecap="round" />
+                  </svg>
+                  Guardando...
+                </>
+              ) : 'Crear entrevista'}
             </button>
           </div>
         </form>
@@ -268,16 +282,25 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
 
   // Añadir nuevo entrevistado en vivo
   async function addInterviewee(form: NewIntervieweeForm) {
-    await store.addInterviewee(
-      {
-        name:      form.name.trim(),
-        role:      form.role.trim(),
-        archetype: form.type === 'it' ? 'Ejecutivo TI' : 'Líder de Negocio',
-        type:      form.type,
-      },
-      engagementId,
-    )
-    setShowNewModal(false)
+    try {
+      await store.addInterviewee(
+        {
+          name:      form.name.trim(),
+          role:      form.role.trim(),
+          archetype: form.type === 'it' ? 'Ejecutivo TI' : 'Líder de Negocio',
+          type:      form.type,
+        },
+        engagementId,
+      )
+    } finally {
+      setShowNewModal(false)
+    }
+  }
+
+  // Eliminar entrevistado (solo si hay más de uno)
+  async function deleteInterviewee(id: string) {
+    if (liveInterviewees.length <= 1) return
+    await store.removeInterviewee(id, engagementId)
   }
 
   // Dimensiones activas del entrevistado seleccionado
@@ -367,7 +390,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
     <div className="min-h-screen bg-surface dark-page-bg">
 
       {/* ── Header de herramienta ── */}
-      <div className="sticky top-0 z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm border-b border-border px-8 py-4">
+      <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm border-b border-border px-8 py-4">
         <div className="max-w-6xl mx-auto flex items-center gap-4">
 
           {/* Back button */}
@@ -489,44 +512,67 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
                   const isComplete   = personScored === TOTAL_SUBDIMENSIONS
 
                   return (
-                    <button
+                    <div
                       key={person.id}
-                      onClick={() => store.setActiveId(person.id)}
                       className={[
-                        'flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all duration-150',
+                        'flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all duration-150 group',
                         isActive
                           ? 'bg-navy-metallic text-white border-navy shadow-sm'
                           : 'bg-white dark:bg-gray-900 border-border hover:border-navy/30 hover:bg-gray-50 dark:hover:bg-gray-800',
                       ].join(' ')}
                     >
-                      <span className={[
-                        'text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider',
-                        isActive
-                          ? 'bg-white/20 text-white'
-                          : person.type === 'it'
-                            ? 'bg-navy/10 text-navy dark:bg-navy/20 dark:text-warm-100'
-                            : 'bg-warning-light text-warning-dark',
-                      ].join(' ')}>
-                        {person.type === 'it' ? 'IT' : 'BIZ'}
-                      </span>
-                      <div className="min-w-0">
-                        <p className={`text-xs font-semibold truncate ${isActive ? 'text-white' : 'text-lean-black dark:text-gray-100'}`}>
-                          {person.name}
-                        </p>
-                        <p className={`text-[10px] truncate ${isActive ? 'text-white/70' : 'text-text-muted'}`}>
-                          {person.role}
-                        </p>
-                      </div>
-                      <span className={`text-[10px] tabular-nums shrink-0 ${isActive ? 'text-white/70' : 'text-text-subtle'}`}>
-                        {isComplete ? (
-                          <svg className="h-3.5 w-3.5 text-current" viewBox="0 0 16 16" fill="currentColor">
-                            <path fillRule="evenodd" d="M8 1a7 7 0 100 14A7 7 0 008 1zm3.78 5.22a.75.75 0 010 1.06l-4 4a.75.75 0 01-1.06 0l-2-2a.75.75 0 011.06-1.06L7.25 9.69l3.47-3.47a.75.75 0 011.06 0z" />
+                      {/* Selección del entrevistado */}
+                      <button
+                        onClick={() => store.setActiveId(person.id)}
+                        className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                      >
+                        <span className={[
+                          'text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0',
+                          isActive
+                            ? 'bg-white/20 text-white'
+                            : person.type === 'it'
+                              ? 'bg-navy/10 text-navy dark:bg-navy/20 dark:text-warm-100'
+                              : 'bg-warning-light text-warning-dark',
+                        ].join(' ')}>
+                          {person.type === 'it' ? 'IT' : 'BIZ'}
+                        </span>
+                        <div className="min-w-0">
+                          <p className={`text-xs font-semibold truncate ${isActive ? 'text-white' : 'text-lean-black dark:text-gray-100'}`}>
+                            {person.name}
+                          </p>
+                          <p className={`text-[10px] truncate ${isActive ? 'text-white/70' : 'text-text-muted'}`}>
+                            {person.role}
+                          </p>
+                        </div>
+                        <span className={`text-[10px] tabular-nums shrink-0 ${isActive ? 'text-white/70' : 'text-text-subtle'}`}>
+                          {isComplete ? (
+                            <svg className="h-3.5 w-3.5 text-current" viewBox="0 0 16 16" fill="currentColor">
+                              <path fillRule="evenodd" d="M8 1a7 7 0 100 14A7 7 0 008 1zm3.78 5.22a.75.75 0 010 1.06l-4 4a.75.75 0 01-1.06 0l-2-2a.75.75 0 011.06-1.06L7.25 9.69l3.47-3.47a.75.75 0 011.06 0z" />
+                            </svg>
+                          ) : (
+                            `${personScored}/${TOTAL_SUBDIMENSIONS}`
+                          )}
+                        </span>
+                      </button>
+
+                      {/* Botón eliminar (solo si hay más de un entrevistado) */}
+                      {liveInterviewees.length > 1 && (
+                        <button
+                          onClick={() => deleteInterviewee(person.id)}
+                          title="Eliminar entrevistado"
+                          className={[
+                            'shrink-0 h-5 w-5 rounded-md flex items-center justify-center transition-all duration-150 opacity-0 group-hover:opacity-100',
+                            isActive
+                              ? 'hover:bg-white/20 text-white/60 hover:text-white'
+                              : 'hover:bg-red-100 dark:hover:bg-red-900/30 text-text-subtle hover:text-red-500',
+                          ].join(' ')}
+                        >
+                          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                            <path d="M1 1l10 10M11 1L1 11" />
                           </svg>
-                        ) : (
-                          `${personScored}/${TOTAL_SUBDIMENSIONS}`
-                        )}
-                      </span>
-                    </button>
+                        </button>
+                      )}
+                    </div>
                   )
                 })}
               </div>

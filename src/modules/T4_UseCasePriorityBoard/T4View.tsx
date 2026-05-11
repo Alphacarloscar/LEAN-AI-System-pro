@@ -1948,7 +1948,7 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
     <div className="flex flex-col bg-surface dark:bg-warm-950 min-h-screen">
 
       {/* ── HEADER ──────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-surface/95 dark:bg-warm-950/95 backdrop-blur-sm
+      <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm
         border-b border-border dark:border-white/6 px-8 py-3">
         <div className="flex items-center gap-4 max-w-7xl mx-auto">
           <button

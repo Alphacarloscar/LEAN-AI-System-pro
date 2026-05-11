@@ -41,8 +41,17 @@ export const useEngagementStore = create<EngagementStore>()(
 
       loadMyEngagements: async () => {
         set({ isLoading: true })
+        // Timeout de seguridad: isLoading no puede quedarse atascado
+        const timeout = setTimeout(() => {
+          const { isLoading } = get()
+          if (isLoading) {
+            console.warn('[EngagementStore] loadMyEngagements timeout — resetting isLoading')
+            set({ isLoading: false })
+          }
+        }, 10_000)
         try {
           const engagements = await listMyEngagements()
+          clearTimeout(timeout)
           set({ engagements, isLoading: false })
 
           // Auto-select si hay exactamente uno
@@ -58,6 +67,7 @@ export const useEngagementStore = create<EngagementStore>()(
             set({ activeEngagementId: engagements[0]?.id ?? null })
           }
         } catch (err) {
+          clearTimeout(timeout)
           console.error('[EngagementStore] loadMyEngagements:', err)
           set({ isLoading: false })
         }
