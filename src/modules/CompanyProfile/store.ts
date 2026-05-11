@@ -177,8 +177,11 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
         })),
     }),
     {
-      name:    'lean-company-profile',
-      version: 1,
+      name:       'lean-company-profile',
+      version:    2,  // bumped: partialize excluye isLoading/saveError
+      // isLoading y saveError son estado transitorio — nunca persistir
+      // Si se persiste isLoading:true (save a medias) la UI se queda bloqueada
+      partialize: (s) => ({ profile: s.profile, isDirty: s.isDirty }),
     }
   )
 )
