@@ -172,19 +172,19 @@ export const useT1Store = create<T1Store>()((set, get) => ({
       activeId:        id,
     }))
 
+    // Sync a Supabase en background (fire-and-forget).
+    // No bloqueamos la UI esperando las 24 filas de la llamada bulk.
     if (engagementId) {
-      try {
-        await upsertAllScoresForInterviewee({
-          engagementId,
-          intervieweeId:   id,
-          intervieweeName: person.name,
-          intervieweeRole: person.role,
-          intervieweeType: person.type,
-          dimensions:      blankDims,
-        })
-      } catch (err) {
+      upsertAllScoresForInterviewee({
+        engagementId,
+        intervieweeId:   id,
+        intervieweeName: person.name,
+        intervieweeRole: person.role,
+        intervieweeType: person.type,
+        dimensions:      blankDims,
+      }).catch((err) => {
         console.error('[T1Store] addInterviewee sync:', err)
-      }
+      })
     }
   },
 
