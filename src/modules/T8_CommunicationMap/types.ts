@@ -68,12 +68,12 @@ export interface DeptKit {
   ambassadors: string[]     // Names of ambassadors in this dept
 }
 
-// ── Contenido generado por LLM (Route B) ─────────────────────
+// ── Mensajes generados por LLM (Route B) ─────────────────────
+// Solo archetypeMessages — el contenido más valioso y de respuesta más rápida.
+// Materials y DeptKits se mantienen deterministas (ya están bien construidos).
 
 export interface GeneratedT8Content {
   archetypeMessages: ArchetypeMessage[]
-  materials:         MaterialTemplate[]
-  deptKits:          DeptKit[]
   contextualNote:    string
   generatedAt:       string
 }

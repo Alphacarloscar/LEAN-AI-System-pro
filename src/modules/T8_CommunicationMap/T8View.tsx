@@ -1063,12 +1063,12 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
     [generatedContent, stakeholders]
   )
   const materials = useMemo(
-    () => generatedContent?.materials ?? generateMaterials(companyName, goUseCases),
-    [generatedContent, companyName, goUseCases]
+    () => generateMaterials(companyName, goUseCases),
+    [companyName, goUseCases]
   )
   const deptKits = useMemo(
-    () => generatedContent?.deptKits ?? generateDeptKits(stakeholders),
-    [generatedContent, stakeholders]
+    () => generateDeptKits(stakeholders),
+    [stakeholders]
   )
 
   const t8LLMContext = useMemo(

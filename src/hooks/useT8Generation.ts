@@ -46,10 +46,18 @@ export function useT8Generation(): UseT8GenerationReturn {
     setError(null)
 
     try {
-      const { data: result, error: fnError } = await supabase.functions.invoke(
+      const TIMEOUT_MS = 30_000
+
+      const invokePromise = supabase.functions.invoke(
         'ai-recommend',
         { body: { tool: 't8_comms', context, engagementId } },
       )
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('La generación tardó demasiado. Inténtalo de nuevo.')), TIMEOUT_MS)
+      )
+
+      const { data: result, error: fnError } = await Promise.race([invokePromise, timeoutPromise])
 
       if (fnError) {
         throw new Error(fnError.message ?? 'Error al llamar a la Edge Function')
@@ -60,13 +68,8 @@ export function useT8Generation(): UseT8GenerationReturn {
       }
 
       const content = result?.data as GeneratedT8Content | null
-      if (
-        !content ||
-        !Array.isArray(content.archetypeMessages) ||
-        !Array.isArray(content.materials) ||
-        !Array.isArray(content.deptKits)
-      ) {
-        throw new Error('La Edge Function no devolvió contenido de comunicación válido.')
+      if (!content || !Array.isArray(content.archetypeMessages) || content.archetypeMessages.length === 0) {
+        throw new Error('La Edge Function no devolvió mensajes por arquetipo válidos.')
       }
 
       saveGeneratedContent({
