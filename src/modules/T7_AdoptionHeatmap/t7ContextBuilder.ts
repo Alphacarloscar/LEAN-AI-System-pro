@@ -254,14 +254,14 @@ export function buildT7PlanContext(
       score:      uc.priorityScore ?? 0,
     }))
 
-  const totalPilot = useCases.filter((uc) => uc.status === 'piloto').length
+  const totalPilot = useCases.filter((uc) => uc.status === 'en_piloto').length
 
   return {
     company: {
       sector:          profile.sector,
       size:            profile.tamanoEmpresa,
       mainAIObjective: profile.objetivoPrincipalIA,
-      valueHorizon:    profile.horizonteDeValor ?? 'No especificado',
+      valueHorizon:    profile.horizonteEsperadoValor ?? 'No especificado',
     },
     maturity: {
       avg:   Math.round(t1Avg * 100) / 100,
