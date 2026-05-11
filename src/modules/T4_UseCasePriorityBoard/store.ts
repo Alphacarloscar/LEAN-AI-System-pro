@@ -15,7 +15,6 @@ import { create }               from 'zustand'
 import { persist }              from 'zustand/middleware'
 import { computePriorityScore } from './constants'
 import type { UseCase, AIActClassification } from './types'
-import { computeAIActRisk }     from './types'
 import {
   fetchUseCases,
   insertUseCase,
