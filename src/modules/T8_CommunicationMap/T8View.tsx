@@ -21,7 +21,9 @@ import { PhaseMiniMap }                 from '@/shared/components/PhaseMiniMap'
 import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
 import { useEngagementStore }           from '@/modules/Engagement/store'
 import { RecommendationPanel }          from '@/components/RecommendationPanel'
-import { buildT8RecommendationContext } from './t8ContextBuilder'
+import { buildT8RecommendationContext, buildT8CommContext } from './t8ContextBuilder'
+import { useT8Store }                   from './store'
+import { useT8Generation }              from '@/hooks/useT8Generation'
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from '@/modules/T2_StakeholderMatrix/types'
 import type { CommAction, CommPhase, CommType, CommChannel, DeptKit, MaterialTemplate } from './types'
 
@@ -763,7 +765,7 @@ function TimelineTab({ actions }: { actions: CommAction[] }) {
 
 // ── Tab 2: Mensajes por Arquetipo ─────────────────────────────
 
-function ArchetypeMessagesTab({ messages }: { messages: ReturnType<typeof generateArchetypeMessages> }) {
+function ArchetypeMessagesTab({ messages }: { messages: import('./types').ArchetypeMessage[] }) {
   const [selected, setSelected] = useState(messages[0]?.archetypeCode ?? null)
   const msg = messages.find(m => m.archetypeCode === selected)
 
@@ -1034,16 +1036,40 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
   const [activeTab, setActiveTab]  = useState<'timeline' | 'messages' | 'materials' | 'dept'>('timeline')
 
+  // T8 store — contenido generado por LLM
+  const { generatedContent, clearGeneratedContent } = useT8Store()
+
+  // Hook de generación
+  const { generate, isGenerating, error } = useT8Generation()
+
+  // Contexto para la generación LLM
+  const t8CommContext = useMemo(
+    () => companyProfile
+      ? buildT8CommContext(stakeholders, useCases, companyProfile, companyName)
+      : null,
+    [stakeholders, useCases, companyProfile, companyName],
+  )
+
   // Casos de uso con decisión "go"
   const goUseCases = useMemo(
     () => useCases.filter(uc => uc.goNoGo?.decision === 'go').map(uc => uc.name),
     [useCases]
   )
 
+  // Contenido — LLM si existe, estático como fallback
   const commActions       = useMemo(() => generateCommPlan(stakeholders, companyName, goUseCases), [stakeholders, companyName, goUseCases])
-  const archetypeMessages = useMemo(() => generateArchetypeMessages(stakeholders), [stakeholders])
-  const materials         = useMemo(() => generateMaterials(companyName, goUseCases), [companyName, goUseCases])
-  const deptKits          = useMemo(() => generateDeptKits(stakeholders), [stakeholders])
+  const archetypeMessages = useMemo(
+    () => (generatedContent?.archetypeMessages ?? generateArchetypeMessages(stakeholders)) as import('./types').ArchetypeMessage[],
+    [generatedContent, stakeholders]
+  )
+  const materials = useMemo(
+    () => generatedContent?.materials ?? generateMaterials(companyName, goUseCases),
+    [generatedContent, companyName, goUseCases]
+  )
+  const deptKits = useMemo(
+    () => generatedContent?.deptKits ?? generateDeptKits(stakeholders),
+    [generatedContent, stakeholders]
+  )
 
   const t8LLMContext = useMemo(
     () => companyProfile
@@ -1056,6 +1082,7 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
   const totalActions  = commActions.length
   const highPriority  = commActions.filter(a => a.priority === 'alta').length
   const deptCount     = new Set(stakeholders.map(s => s.department)).size
+  const isLLM         = !!generatedContent
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 px-8 py-8">
@@ -1088,23 +1115,74 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-border dark:border-white/6">
-            <p className="text-lg font-bold text-lean-black dark:text-gray-100 tabular-nums">{totalActions}</p>
-            <p className="text-[10px] text-text-subtle uppercase tracking-wide">Acciones</p>
+        {/* Stats + botón IA */}
+        <div className="flex flex-col items-end gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-border dark:border-white/6">
+              <p className="text-lg font-bold text-lean-black dark:text-gray-100 tabular-nums">{totalActions}</p>
+              <p className="text-[10px] text-text-subtle uppercase tracking-wide">Acciones</p>
+            </div>
+            <div className="text-center px-3 py-2 rounded-lg bg-danger-light border border-danger-light">
+              <p className="text-lg font-bold text-danger-dark tabular-nums">{highPriority}</p>
+              <p className="text-[10px] text-danger-dark uppercase tracking-wide">Prioridad alta</p>
+            </div>
+            <div className="text-center px-3 py-2 rounded-lg bg-indigo-50 border border-indigo-100">
+              <p className="text-lg font-bold text-indigo-700 tabular-nums">{goUseCases.length}</p>
+              <p className="text-[10px] text-indigo-600 uppercase tracking-wide">Casos go</p>
+            </div>
+            <div className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-border dark:border-white/6">
+              <p className="text-lg font-bold text-lean-black dark:text-gray-100 tabular-nums">{deptCount}</p>
+              <p className="text-[10px] text-text-subtle uppercase tracking-wide">Dptos.</p>
+            </div>
           </div>
-          <div className="text-center px-3 py-2 rounded-lg bg-danger-light border border-danger-light">
-            <p className="text-lg font-bold text-danger-dark tabular-nums">{highPriority}</p>
-            <p className="text-[10px] text-danger-dark uppercase tracking-wide">Prioridad alta</p>
-          </div>
-          <div className="text-center px-3 py-2 rounded-lg bg-indigo-50 border border-indigo-100">
-            <p className="text-lg font-bold text-indigo-700 tabular-nums">{goUseCases.length}</p>
-            <p className="text-[10px] text-indigo-600 uppercase tracking-wide">Casos go</p>
-          </div>
-          <div className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-border dark:border-white/6">
-            <p className="text-lg font-bold text-lean-black dark:text-gray-100 tabular-nums">{deptCount}</p>
-            <p className="text-[10px] text-text-subtle uppercase tracking-wide">Dptos.</p>
+
+          {/* Botón generación IA */}
+          <div className="flex items-center gap-2">
+            {isLLM && (
+              <>
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-navy/8 dark:bg-navy/20 border border-navy/20 text-[10px] font-semibold text-navy dark:text-warm-100">
+                  <span className="h-1.5 w-1.5 rounded-full bg-navy animate-pulse" />
+                  Personalizado con IA · {generatedContent?.generatedAt
+                    ? new Date(generatedContent.generatedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                    : ''}
+                </span>
+                <button
+                  onClick={clearGeneratedContent}
+                  className="px-3 py-1.5 rounded-lg text-xs text-text-subtle border border-border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Restaurar plantilla
+                </button>
+              </>
+            )}
+            {error && (
+              <span className="text-xs text-danger-dark">{error}</span>
+            )}
+            <button
+              onClick={() => t8CommContext && generate(t8CommContext as unknown as Record<string, unknown>, engagementId)}
+              disabled={!t8CommContext || !engagementId || isGenerating}
+              className={[
+                'flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150',
+                t8CommContext && engagementId && !isGenerating
+                  ? 'bg-navy text-white hover:opacity-90 shadow-sm'
+                  : 'bg-gray-100 dark:bg-gray-800 text-text-subtle cursor-not-allowed',
+              ].join(' ')}
+            >
+              {isGenerating ? (
+                <>
+                  <svg className="animate-spin h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M6 1a5 5 0 11-5 5" strokeLinecap="round" />
+                  </svg>
+                  Generando…
+                </>
+              ) : (
+                <>
+                  <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                    <path d="M6 1v2M6 9v2M1 6h2M9 6h2M2.5 2.5l1.4 1.4M8.1 8.1l1.4 1.4M2.5 9.5l1.4-1.4M8.1 3.9l1.4-1.4"/>
+                  </svg>
+                  {isLLM ? 'Regenerar con IA' : 'Personalizar con IA'}
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>

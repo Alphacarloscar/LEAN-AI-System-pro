@@ -957,6 +957,158 @@ Dominios IA activos (T5): ${activeDomains.join(', ') || 'No definidos'}`
 }
 
 // ═══════════════════════════════════════════════════════════════
+// PROMPT T8_COMMS — Communication Map personalizado
+// ═══════════════════════════════════════════════════════════════
+
+const T8_COMMS_SYSTEM_PROMPT = `Eres un consultor senior especializado en comunicación del cambio para proyectos de adopción IA en empresas B2B medianas y grandes del mercado español y europeo. Tienes expertise en persuasión ejecutiva, gestión de resistencias y diseño de materiales de comunicación interna.
+
+Tu tarea es generar un Communication Map personalizado con tres secciones:
+1. Mensajes por arquetipo de stakeholder (usando los datos REALES de los stakeholders del cliente)
+2. Materiales de comunicación (emails, FAQ, guías) con texto listo para usar
+3. Kit por departamento (enfoque específico por área de la empresa)
+
+PRINCIPIOS DE GENERACIÓN:
+1. Menciona stakeholders REALES por nombre cuando estén disponibles.
+2. Usa los casos de uso "go" reales como anclas de los mensajes.
+3. El lenguaje debe ser ejecutivo-directo — sin eufemismos ni jerga técnica.
+4. Los materiales deben ser copiables y adaptables directamente (no esquemas).
+5. El kit por departamento debe reflejar la situación real de adopción de cada área.
+6. Adapta el canal recomendado al perfil de resistencia del arquetipo.
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin ningún texto adicional antes o después.
+
+Estructura JSON requerida:
+{
+  "archetypeMessages": [
+    {
+      "archetypeCode": "ambassador|decisor|adoptador|especialista|critico",
+      "archetypeLabel": "Etiqueta del arquetipo",
+      "headline": "Mensaje clave en 1 frase directa e impactante",
+      "keyPoints": [
+        "Punto clave 1 (2-3 frases, específico para ESTE cliente)",
+        "Punto clave 2",
+        "Punto clave 3"
+      ],
+      "doNotSay": "Frase o enfoque que NO debe usarse con este arquetipo — y por qué",
+      "openingLine": "Primera frase para abrir la conversación (entre comillas, lista para usar)",
+      "channel": "email|reunion_presencial|teams_slack|presentacion|video|documento",
+      "resistanceNote": "Nota sobre cómo gestionar la resistencia específica de este arquetipo en este cliente"
+    }
+  ],
+  "materials": [
+    {
+      "id": "email-launch",
+      "title": "Email lanzamiento CEO",
+      "subtitle": "Anuncio inicial a toda la organización — Semana 3",
+      "icon": "📢",
+      "tags": ["Fase 1", "Email", "Alta prioridad"],
+      "content": "Texto completo del material, listo para copiar y personalizar. Usar [nombre] como placeholder para personalización."
+    },
+    {
+      "id": "faq-employees",
+      "title": "FAQ para empleados",
+      "subtitle": "Respuestas a las 6 preguntas más frecuentes",
+      "icon": "❓",
+      "tags": ["Fase 1", "Documento", "Toda la organización"],
+      "content": "..."
+    },
+    {
+      "id": "ambassador-guide",
+      "title": "Guía del ambassador",
+      "subtitle": "Instrucciones operativas para ambassadors internos",
+      "icon": "🤝",
+      "tags": ["Fase 1-2", "Documento", "Ambassadors"],
+      "content": "..."
+    },
+    {
+      "id": "monthly-update",
+      "title": "Plantilla update mensual",
+      "subtitle": "Newsletter interno para toda la organización",
+      "icon": "📰",
+      "tags": ["Fase 2-3", "Email", "Toda la organización"],
+      "content": "..."
+    }
+  ],
+  "deptKits": [
+    {
+      "department": "Nombre del departamento",
+      "readiness": 75,
+      "readinessLabel": "Favorable|Neutro|Resistente",
+      "mainConcern": "Principal preocupación de este departamento respecto a la IA (1 frase)",
+      "approach": "Enfoque comunicativo recomendado para este departamento (2-3 frases)",
+      "actions": [
+        "Acción concreta 1",
+        "Acción concreta 2",
+        "Acción concreta 3"
+      ],
+      "channel": "canal_recomendado",
+      "ambassadors": ["Nombre del ambassador de este departamento si existe"]
+    }
+  ],
+  "contextualNote": "Patrón crítico de comunicación identificado para este cliente. 1-2 frases directas. Específico, no genérico."
+}
+
+Genera un mensaje por cada arquetipo presente en el cliente. Genera un kit por cada departamento del cliente.`
+
+function buildT8CommsUserMessage(ctx: Record<string, unknown>): string {
+  const company      = (ctx.company      ?? {}) as Record<string, unknown>
+  const stakeholders = (ctx.stakeholders ?? {}) as Record<string, unknown>
+  const useCases     = (ctx.useCases     ?? {}) as Record<string, unknown>
+
+  const byArchetype  = (stakeholders.byArchetype  as unknown[]) ?? []
+  const byDepartment = (stakeholders.byDepartment as unknown[]) ?? []
+  const topGo        = (useCases.topGo             as unknown[]) ?? []
+
+  const companyBlock = `## PERFIL DE EMPRESA
+
+Nombre: ${company.name || 'No especificado'}
+Sector: ${company.sector || 'No especificado'}
+Tamaño: ${company.size || 'No especificado'}
+Objetivo principal de IA: ${company.mainAIObjective || 'No especificado'}`
+
+  const archetypeLines = (byArchetype as Record<string, unknown>[])
+    .map((a) => {
+      const names = (a.names as string[]).join(', ') || 'Sin nombres'
+      const roles = (a.roles as string[]).join(', ') || 'Sin roles'
+      const depts = (a.departments as string[]).join(', ') || 'Sin departamento'
+      return `  ${a.archetypeLabel} (${a.count} personas):
+    - Nombres: ${names}
+    - Roles: ${roles}
+    - Departamentos: ${depts}
+    - Resistencia dominante: ${a.dominantResistance}`
+    })
+    .join('\n\n')
+
+  const deptLines = (byDepartment as Record<string, unknown>[])
+    .map((d) => {
+      const ambassadors = (d.ambassadors as string[]).join(', ') || 'Ninguno'
+      return `  ${d.dept}: ${d.total} personas (${d.archetypes}) | Ambassadors: ${ambassadors}`
+    })
+    .join('\n')
+
+  const stakeholderBlock = `## STAKEHOLDERS (T2)
+
+Total: ${stakeholders.total ?? 0}
+
+Por arquetipo:
+${archetypeLines || '  Sin datos'}
+
+Por departamento:
+${deptLines || '  Sin datos'}`
+
+  const ucLines = (topGo as Record<string, unknown>[])
+    .map((uc) => `  - ${uc.name} (${uc.department}) → Score: ${uc.score}/100`)
+    .join('\n')
+
+  const useCasesBlock = `## CASOS DE USO APROBADOS (T4)
+
+Casos en estado "go": ${useCases.totalGo ?? 0}
+${ucLines || '  Sin datos'}`
+
+  return `${companyBlock}\n\n${stakeholderBlock}\n\n${useCasesBlock}\n\nGenera el Communication Map personalizado para este cliente con los mensajes por arquetipo, materiales de comunicación y kit por departamento.`
+}
+
+// ═══════════════════════════════════════════════════════════════
 // PROMPT T7_PLAN — Plan de Gestión del Cambio Personalizado
 // ═══════════════════════════════════════════════════════════════
 
@@ -1101,6 +1253,8 @@ function buildPrompt(tool: string, context: unknown): { system: string; user: st
       return { system: T7_PLAN_SYSTEM_PROMPT, user: buildT7PlanUserMessage(ctx), maxTokens: 2500 }
     case 't8':
       return { system: T8_SYSTEM_PROMPT, user: buildT8UserMessage(ctx), maxTokens: 1500 }
+    case 't8_comms':
+      return { system: T8_COMMS_SYSTEM_PROMPT, user: buildT8CommsUserMessage(ctx), maxTokens: 4000 }
     case 't9':
       return { system: T9_SYSTEM_PROMPT, user: buildT9UserMessage(ctx), maxTokens: 1500 }
     case 't11':

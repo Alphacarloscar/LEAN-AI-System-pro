@@ -67,3 +67,13 @@ export interface DeptKit {
   channel:     CommChannel
   ambassadors: string[]     // Names of ambassadors in this dept
 }
+
+// ── Contenido generado por LLM (Route B) ─────────────────────
+
+export interface GeneratedT8Content {
+  archetypeMessages: ArchetypeMessage[]
+  materials:         MaterialTemplate[]
+  deptKits:          DeptKit[]
+  contextualNote:    string
+  generatedAt:       string
+}
