@@ -957,6 +957,126 @@ Dominios IA activos (T5): ${activeDomains.join(', ') || 'No definidos'}`
 }
 
 // ═══════════════════════════════════════════════════════════════
+// PROMPT T7_PLAN — Plan de Gestión del Cambio Personalizado
+// ═══════════════════════════════════════════════════════════════
+
+const T7_PLAN_SYSTEM_PROMPT = `Eres un consultor senior especializado en gestión del cambio para proyectos de adopción IA en empresas B2B medianas y grandes del mercado español y europeo. Tienes expertise en la curva de Rogers, gestión de resistencias y diseño de planes de adopción acelerada.
+
+Tu tarea es generar un Plan de Gestión del Cambio personalizado en 3 fases de 2 meses cada una (6 meses en total), adaptado exactamente al perfil de stakeholders, nivel de madurez IA y casos de uso reales de la empresa.
+
+REGLAS DE GENERACIÓN:
+1. Cada fase debe tener un objetivo claro y diferenciado — no repitas acciones entre fases.
+2. Las acciones deben mencionar EXPLÍCITAMENTE a los champions o bloqueadores reales identificados (por nombre o rol si están disponibles).
+3. Los segmentos Rogers deben estar alineados con la distribución real del cliente.
+4. Los casos de uso "go" deben aparecer en las fases donde sean relevantes como palancas de adopción.
+5. El nivel de madurez IA determina la velocidad del plan: madurez baja = más capacitación y ceremonias; madurez alta = más escalado y governance.
+6. El riesgo de cada fase debe ser el más probable y específico para ESTE cliente, no genérico.
+7. El tono es ejecutivo-operativo. Las acciones deben ser imperativas y concretas.
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin ningún texto adicional antes o después.
+
+Estructura JSON requerida (exactamente 3 fases):
+{
+  "phases": [
+    {
+      "phase": "Mes 1–2",
+      "title": "Título de la fase en 4-6 palabras",
+      "icon": "emoji representativo",
+      "objective": "Objetivo de adopción de esta fase en 1-2 frases. Menciona el segmento Rogers objetivo.",
+      "segments": ["Segmento Rogers 1", "Segmento Rogers 2"],
+      "actions": [
+        "Acción concreta 1 (menciona roles/casos de uso reales si están disponibles)",
+        "Acción concreta 2",
+        "Acción concreta 3",
+        "Acción concreta 4"
+      ],
+      "risk": "Riesgo principal específico de esta fase para ESTE cliente. 1 frase directa."
+    },
+    {
+      "phase": "Mes 3–4",
+      ...
+    },
+    {
+      "phase": "Mes 5–6",
+      ...
+    }
+  ],
+  "contextualNote": "Patrón crítico de adopción observado en este cliente específico. 1-2 frases directas. No genérico."
+}`
+
+function buildT7PlanUserMessage(ctx: Record<string, unknown>): string {
+  const company   = (ctx.company   ?? {}) as Record<string, unknown>
+  const maturity  = (ctx.maturity  ?? {}) as Record<string, unknown>
+  const heatmap   = (ctx.heatmap   ?? {}) as Record<string, unknown>
+  const useCases  = (ctx.useCases  ?? {}) as Record<string, unknown>
+
+  const bySegment    = (heatmap.bySegment    as unknown[]) ?? []
+  const byDepartment = (heatmap.byDepartment as unknown[]) ?? []
+  const keyChampions = (heatmap.keyChampions as unknown[]) ?? []
+  const keyBlockers  = (heatmap.keyBlockers  as unknown[]) ?? []
+  const topGo        = (useCases.topGo       as unknown[]) ?? []
+
+  const companyBlock = `## PERFIL DE EMPRESA
+
+Sector: ${company.sector || 'No especificado'}
+Tamaño: ${company.size || 'No especificado'}
+Objetivo principal de IA: ${company.mainAIObjective || 'No especificado'}
+Horizonte de valor: ${company.valueHorizon || 'No especificado'}`
+
+  const maturityBlock = `## MADUREZ IA (T1)
+
+Score global: ${maturity.avg ?? 'N/A'} / 4.0 (${maturity.label || 'Sin datos'})`
+
+  const segLines = (bySegment as Record<string, unknown>[])
+    .map(s => `  ${s.segment}: ${s.count} personas (${s.pct}%)${s.names ? ` — ${s.names}` : ''}`)
+    .join('\n')
+
+  const deptLines = (byDepartment as Record<string, unknown>[])
+    .map(d => `  ${d.dept}: ${d.total} total, ${d.favorable} favorables (${d.pct}%)`)
+    .join('\n')
+
+  const championLines = (keyChampions as Record<string, unknown>[])
+    .map(c => `  - ${c.name} (${c.role}, ${c.department}) → ${c.segment}`)
+    .join('\n')
+
+  const blockerLines = (keyBlockers as Record<string, unknown>[])
+    .map(b => `  - ${b.name} (${b.role}, ${b.department}) → ${b.segment}`)
+    .join('\n')
+
+  const heatmapBlock = `## MAPA DE ADOPCIÓN (Curva Rogers)
+
+Total stakeholders: ${heatmap.totalMapped ?? 0}
+Ratio adoptadores tempranos (Innovators + Early Adopters): ${heatmap.earlyAdopterRatio ?? 0}%
+Ratio resistentes (Late Majority + Laggards): ${heatmap.laggardRatio ?? 0}%
+
+Distribución por segmento:
+${segLines || '  Sin datos'}
+
+Distribución por departamento:
+${deptLines || '  Sin datos'}
+
+Champions identificados (aliados del cambio):
+${championLines || '  Ninguno identificado aún'}
+
+Bloqueadores de alta resistencia:
+${blockerLines || '  Ninguno identificado'}`
+
+  const ucLines = (topGo as Record<string, unknown>[])
+    .map(uc => `  - ${uc.name} (${uc.department}) → Score: ${uc.score}/100`)
+    .join('\n')
+
+  const useCasesBlock = `## CASOS DE USO IA (T4)
+
+Casos aprobados (go): ${useCases.totalGo ?? 0}
+Casos en piloto: ${useCases.totalPilot ?? 0}
+
+Top casos por prioridad:
+${ucLines || '  Sin datos'}`
+
+  return `${companyBlock}\n\n${maturityBlock}\n\n${heatmapBlock}\n\n${useCasesBlock}\n\nGenera el Plan de Gestión del Cambio personalizado en 3 fases para esta empresa.`
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ROUTER DE PROMPTS
 // ═══════════════════════════════════════════════════════════════
 
@@ -977,6 +1097,8 @@ function buildPrompt(tool: string, context: unknown): { system: string; user: st
       return { system: T6_POLICY_SYSTEM_PROMPT, user: buildT6PolicyUserMessage(ctx), maxTokens: 2500 }
     case 't7':
       return { system: T7_SYSTEM_PROMPT, user: buildT7UserMessage(ctx), maxTokens: 1500 }
+    case 't7_plan':
+      return { system: T7_PLAN_SYSTEM_PROMPT, user: buildT7PlanUserMessage(ctx), maxTokens: 2500 }
     case 't8':
       return { system: T8_SYSTEM_PROMPT, user: buildT8UserMessage(ctx), maxTokens: 1500 }
     case 't9':

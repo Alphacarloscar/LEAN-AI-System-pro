@@ -13,19 +13,24 @@
 
 import { useState, useMemo }             from 'react'
 import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
+import { useT4Store }                    from '@/modules/T4_UseCasePriorityBoard'
+import { useT1Store }                    from '@/modules/T1_MaturityRadar/store'
 import { ARCHETYPE_CONFIG }             from '@/modules/T2_StakeholderMatrix/constants'
 import { PhaseMiniMap }                 from '@/shared/components/PhaseMiniMap'
 import { useDarkMode }                  from '@/shared/hooks/useDarkMode'
 import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
 import { useEngagementStore }           from '@/modules/Engagement/store'
 import { RecommendationPanel }          from '@/components/RecommendationPanel'
-import { buildT7RecommendationContext } from './t7ContextBuilder'
+import { buildT7RecommendationContext, buildT7PlanContext } from './t7ContextBuilder'
+import { useT7Store }                   from './store'
+import { useChangePlanGeneration }      from '@/hooks/useChangePlanGeneration'
+import { computeOverallScore }          from '@/modules/T1_MaturityRadar/types'
 import type {
   ArchetypeCode,
   ResistanceLevel,
   Stakeholder,
 }                            from '@/modules/T2_StakeholderMatrix/types'
-import type { RogersSegment, DotPosition } from './types'
+import type { RogersSegment, DotPosition, GeneratedChangePlanPhase } from './types'
 
 // ── Constantes ────────────────────────────────────────────────
 
@@ -782,7 +787,8 @@ function DeptRecommendationsTab({ stakeholders, dark }: { stakeholders: Stakehol
   )
 }
 
-// ── Tab 3: Plan Global de Gestión del Cambio ──────────────────
+// ── Tab 3: Plan Global de Gestión del Cambio ─────────────────
+// Plan estático de fallback (se usa si el LLM aún no ha generado)
 
 const CHANGE_PLAN = [
   {
@@ -829,56 +835,157 @@ const CHANGE_PLAN = [
   },
 ]
 
-function ChangeManagementPlanTab() {
+// ── PlanPhaseCard — reutilizable para LLM y estático ─────────
+
+function PlanPhaseCard({ step }: { step: GeneratedChangePlanPhase }) {
   return (
-    <div className="space-y-5">
-      <p className="text-sm text-text-muted leading-relaxed">
-        Plan de gestión del cambio alineado con el sprint L.E.A.N. de 6 meses.
-        Cada fase tiene un objetivo de adopción, las acciones concretas y el riesgo principal a gestionar.
-      </p>
-
-      {CHANGE_PLAN.map((step, i) => (
-        <div key={i} className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-6">
-          <div className="flex items-start gap-4 mb-4">
-            <div className="flex-shrink-0 text-center">
-              <div className="text-2xl">{step.icon}</div>
-              <span className="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-navy/10 dark:bg-navy/20 text-navy dark:text-warm-100">
-                {step.phase}
+    <div className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-6">
+      <div className="flex items-start gap-4 mb-4">
+        <div className="flex-shrink-0 text-center">
+          <div className="text-2xl">{step.icon}</div>
+          <span className="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-navy/10 dark:bg-navy/20 text-navy dark:text-warm-100">
+            {step.phase}
+          </span>
+        </div>
+        <div className="flex-1">
+          <h3 className="font-semibold text-lean-black dark:text-gray-100 text-sm">{step.title}</h3>
+          <p className="text-xs text-text-muted mt-1 leading-relaxed">{step.objective}</p>
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+            <span className="text-[10px] font-mono text-text-subtle uppercase tracking-wide">Foco:</span>
+            {step.segments.map(s => (
+              <span key={s} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-text-muted font-medium">
+                {s}
               </span>
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-lean-black dark:text-gray-100 text-sm">{step.title}</h3>
-              <p className="text-xs text-text-muted mt-1 leading-relaxed">{step.objective}</p>
-              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                <span className="text-[10px] font-mono text-text-subtle uppercase tracking-wide">Foco:</span>
-                {step.segments.map(s => (
-                  <span key={s} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-text-muted font-medium">
-                    {s}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
-            {step.actions.map((action, j) => (
-              <div key={j} className="flex gap-2 items-start">
-                <span className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full bg-navy/10 dark:bg-navy/25 flex items-center justify-center text-[9px] font-bold text-navy dark:text-warm-100">
-                  {j + 1}
-                </span>
-                <p className="text-xs text-text-muted leading-relaxed">{action}</p>
-              </div>
             ))}
           </div>
-
-          <div className="flex gap-2 items-start p-3 rounded-lg bg-danger-light/30 dark:bg-red-900/15 border border-danger-light dark:border-red-800/30">
-            <svg className="flex-shrink-0 mt-0.5 w-3.5 h-3.5 text-danger-dark" fill="none" viewBox="0 0 16 16">
-              <path d="M8 2L1 14h14L8 2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-              <path d="M8 7v3M8 12v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            <p className="text-xs text-danger-dark leading-relaxed">{step.risk}</p>
-          </div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+        {step.actions.map((action, j) => (
+          <div key={j} className="flex gap-2 items-start">
+            <span className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full bg-navy/10 dark:bg-navy/25 flex items-center justify-center text-[9px] font-bold text-navy dark:text-warm-100">
+              {j + 1}
+            </span>
+            <p className="text-xs text-text-muted leading-relaxed">{action}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2 items-start p-3 rounded-lg bg-danger-light/30 dark:bg-red-900/15 border border-danger-light dark:border-red-800/30">
+        <svg className="flex-shrink-0 mt-0.5 w-3.5 h-3.5 text-danger-dark" fill="none" viewBox="0 0 16 16">
+          <path d="M8 2L1 14h14L8 2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+          <path d="M8 7v3M8 12v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+        <p className="text-xs text-danger-dark leading-relaxed">{step.risk}</p>
+      </div>
+    </div>
+  )
+}
+
+// ── ChangeManagementPlanTab ───────────────────────────────────
+
+interface ChangeManagementPlanTabProps {
+  generatedPlan: import('./types').GeneratedChangePlan | null
+  isGenerating:  boolean
+  error:         string | null
+  canGenerate:   boolean
+  onGenerate:    () => void
+  onClear:       () => void
+}
+
+function ChangeManagementPlanTab({
+  generatedPlan,
+  isGenerating,
+  error,
+  canGenerate,
+  onGenerate,
+  onClear,
+}: ChangeManagementPlanTabProps) {
+
+  const isLLM  = !!generatedPlan
+  const phases = isLLM
+    ? generatedPlan!.phases
+    : CHANGE_PLAN
+
+  return (
+    <div className="space-y-5">
+
+      {/* Header con botón de generación */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-sm text-text-muted leading-relaxed">
+            {isLLM
+              ? 'Plan generado por IA, personalizado para este cliente.'
+              : 'Plan de referencia de 6 meses. Genera la versión personalizada para este cliente con IA.'}
+          </p>
+          {isLLM && generatedPlan?.contextualNote && (
+            <p className="text-xs text-text-subtle mt-1 italic">
+              💡 {generatedPlan.contextualNote}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {isLLM && (
+            <button
+              onClick={onClear}
+              className="px-3 py-1.5 rounded-lg text-xs text-text-subtle border border-border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              Restaurar plantilla
+            </button>
+          )}
+          <button
+            onClick={onGenerate}
+            disabled={!canGenerate || isGenerating}
+            className={[
+              'flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150',
+              canGenerate && !isGenerating
+                ? 'bg-navy text-white hover:opacity-90 shadow-sm'
+                : 'bg-gray-100 dark:bg-gray-800 text-text-subtle cursor-not-allowed',
+            ].join(' ')}
+          >
+            {isGenerating ? (
+              <>
+                <svg className="animate-spin h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 1a5 5 0 11-5 5" strokeLinecap="round" />
+                </svg>
+                Generando plan…
+              </>
+            ) : (
+              <>
+                <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M6 1v2M6 9v2M1 6h2M9 6h2M2.5 2.5l1.4 1.4M8.1 8.1l1.4 1.4M2.5 9.5l1.4-1.4M8.1 3.9l1.4-1.4"/>
+                </svg>
+                {isLLM ? 'Regenerar plan con IA' : 'Generar plan con IA'}
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="rounded-lg border border-danger-light bg-danger-light/30 dark:bg-red-900/15 px-4 py-3">
+          <p className="text-xs text-danger-dark">{error}</p>
+        </div>
+      )}
+
+      {/* Badge LLM */}
+      {isLLM && (
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-navy/8 dark:bg-navy/20 border border-navy/20 dark:border-navy/30 w-fit">
+          <span className="h-1.5 w-1.5 rounded-full bg-navy animate-pulse" />
+          <span className="text-[10px] font-semibold text-navy dark:text-warm-100">
+            Plan generado por IA · {generatedPlan?.generatedAt
+              ? new Date(generatedPlan.generatedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+              : ''}
+          </span>
+        </div>
+      )}
+
+      {/* Fases */}
+      {phases.map((step, i) => (
+        <PlanPhaseCard key={i} step={step as GeneratedChangePlanPhase} />
       ))}
     </div>
   )
@@ -897,6 +1004,47 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
   const { profile: companyProfile } = useCompanyProfileStore()
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
   const [activeTab, setActiveTab]  = useState<'curve' | 'dept' | 'plan'>('curve')
+
+  // T4 use cases para contexto del plan de cambio
+  const useCases = useT4Store(s => s.useCases)
+
+  // T1 — promedio de madurez agregado de todos los entrevistados
+  const dimensionStates = useT1Store(s => s.dimensionStates)
+  const t1Avg = useMemo(() => {
+    const allStates = Object.values(dimensionStates)
+    if (allStates.length === 0) return 2  // fallback neutro
+    const template = allStates[0]
+    const aggregated = template.map((dim) => ({
+      ...dim,
+      subdimensions: dim.subdimensions.map((sub) => {
+        const scores = allStates
+          .map((state) =>
+            state.find((d) => d.code === dim.code)
+              ?.subdimensions.find((s) => s.code === sub.code)?.score ?? null
+          )
+          .filter((s): s is number => s !== null)
+        const avg = scores.length > 0
+          ? scores.reduce((a, b) => a + b, 0) / scores.length
+          : null
+        return { ...sub, score: avg }
+      }),
+    }))
+    return computeOverallScore(aggregated)
+  }, [dimensionStates])
+
+  // T7 store — plan generado por LLM
+  const { generatedPlan, clearGeneratedPlan } = useT7Store()
+
+  // Hook de generación del plan de cambio
+  const { generate, isGenerating, error } = useChangePlanGeneration()
+
+  // Contexto para el plan de cambio IA
+  const planContext = useMemo(
+    () => companyProfile
+      ? buildT7PlanContext(stakeholders, t1Avg, useCases, companyProfile)
+      : null,
+    [stakeholders, t1Avg, useCases, companyProfile],
+  )
 
   const segCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -981,7 +1129,16 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
         <>
           {activeTab === 'curve' && <BellCurveTab stakeholders={stakeholders} dark={dark} />}
           {activeTab === 'dept'  && <DeptRecommendationsTab stakeholders={stakeholders} dark={dark} />}
-          {activeTab === 'plan'  && <ChangeManagementPlanTab />}
+          {activeTab === 'plan'  && (
+            <ChangeManagementPlanTab
+              generatedPlan={generatedPlan}
+              isGenerating={isGenerating}
+              error={error}
+              canGenerate={!!planContext && !!engagementId}
+              onGenerate={() => planContext && generate(planContext, engagementId)}
+              onClear={clearGeneratedPlan}
+            />
+          )}
         </>
       )}
 

@@ -23,3 +23,21 @@ export interface DotPosition {
   cx:            number
   cy:            number
 }
+
+// ── Plan de cambio generado por LLM ──────────────────────────
+
+export interface GeneratedChangePlanPhase {
+  phase:     string    // e.g. "Mes 1–2"
+  title:     string
+  icon:      string    // emoji
+  objective: string
+  segments:  string[]  // segmentos Rogers a los que se dirige la fase
+  actions:   string[]  // 3–4 acciones concretas
+  risk:      string    // riesgo principal de la fase
+}
+
+export interface GeneratedChangePlan {
+  phases:          GeneratedChangePlanPhase[]
+  contextualNote:  string   // patrón crítico observado
+  generatedAt:     string   // ISO timestamp
+}
