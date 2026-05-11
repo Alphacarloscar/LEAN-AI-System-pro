@@ -16,6 +16,10 @@ export interface T11RecommendationContext {
   model: {
     maturityTier:        string
     maturityAvg:         number
+    /** Modo adaptativo aplicado: basic | standard | full */
+    adaptiveMode:        string
+    /** Nº de eventos activos en la cadencia recomendada */
+    activeEventCount:    number
     recommendedEvents: {
       title:       string
       level:       string
@@ -46,8 +50,10 @@ export function buildT11RecommendationContext(
       mainAIObjective: profile.objetivoPrincipalIA,
     },
     model: {
-      maturityTier: model.maturityTier,
-      maturityAvg:  model.maturityAvg,
+      maturityTier:     model.maturityTier,
+      maturityAvg:      model.maturityAvg,
+      adaptiveMode:     model.adaptiveMode,
+      activeEventCount: model.recommendedEvents.length,
       recommendedEvents: model.recommendedEvents.map((e) => ({
         title:      e.title,
         level:      e.level,

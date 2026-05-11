@@ -26,7 +26,7 @@ import {
   T11_EVENTS_CATALOG,
 } from './constants'
 import type {
-  T11Event, T11Level, T11MaturityTier,
+  T11Event, T11Level, T11MaturityTier, T11AdaptiveMode,
   T11DecisionNode, T11PhaseObjective, T11KpiGroup,
 } from './types'
 import type { RadarDimension } from '@/shared/components/charts/LeanRadarChart'
@@ -51,6 +51,54 @@ const TABS: { id: T11Tab; label: string }[] = [
   { id: 'decisiones',  label: 'Decisiones y Escalada' },
   { id: 'kpis',        label: 'Datos a Medir' },
 ]
+
+// ── AdaptiveModeBadge ─────────────────────────────────────────
+
+const ADAPTIVE_MODE_CONFIG: Record<T11AdaptiveMode, {
+  label:       string
+  description: string
+  bg:          string
+  text:        string
+  border:      string
+  dot:         string
+}> = {
+  basic: {
+    label:       'Modo Básico',
+    description: 'Solo ceremonias esenciales. Amplía la cadencia cuando tu madurez supere 2.0.',
+    bg:          'bg-red-50 dark:bg-red-900/15',
+    text:        'text-red-700 dark:text-red-400',
+    border:      'border-red-200 dark:border-red-800/40',
+    dot:         'bg-red-400 dark:bg-red-500',
+  },
+  standard: {
+    label:       'Modo Estándar',
+    description: 'Cadencia adaptada a tu nivel de madurez actual.',
+    bg:          'bg-blue-50 dark:bg-blue-900/15',
+    text:        'text-blue-700 dark:text-blue-400',
+    border:      'border-blue-200 dark:border-blue-800/40',
+    dot:         'bg-blue-400 dark:bg-blue-500',
+  },
+  full: {
+    label:       'SAFe Completo',
+    description: 'Tu madurez permite adoptar el catálogo SAFe completo.',
+    bg:          'bg-emerald-50 dark:bg-emerald-900/15',
+    text:        'text-emerald-700 dark:text-emerald-400',
+    border:      'border-emerald-200 dark:border-emerald-800/40',
+    dot:         'bg-emerald-400 dark:bg-emerald-500',
+  },
+}
+
+function AdaptiveModeBadge({ mode }: { mode: T11AdaptiveMode }) {
+  const cfg = ADAPTIVE_MODE_CONFIG[mode]
+  return (
+    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[11px] ${cfg.bg} ${cfg.border}`}>
+      <span className={`h-2 w-2 rounded-full shrink-0 ${cfg.dot}`} />
+      <span className={`font-semibold ${cfg.text}`}>{cfg.label}</span>
+      <span className="text-text-subtle dark:text-warm-400 hidden sm:inline">·</span>
+      <span className="text-text-subtle dark:text-warm-400 hidden sm:inline">{cfg.description}</span>
+    </div>
+  )
+}
 
 // ── MaturityPill ──────────────────────────────────────────────
 
@@ -291,10 +339,12 @@ function EventNode({
 function BigPictureTab({
   recommendedEvents,
   maturityTier,
+  adaptiveMode,
   onSelectEvent,
 }: {
   recommendedEvents: T11Event[]
   maturityTier:      T11MaturityTier
+  adaptiveMode:      T11AdaptiveMode
   onSelectEvent:     (e: T11Event) => void
 }) {
   const recommendedIds = new Set(recommendedEvents.map((e) => e.id))
@@ -305,7 +355,7 @@ function BigPictureTab({
     <div className="space-y-2">
 
       {/* Legend */}
-      <div className="flex items-center gap-4 px-1 mb-4 flex-wrap">
+      <div className="flex items-center gap-4 px-1 mb-3 flex-wrap">
         <div className="flex items-center gap-1.5 text-[10px] text-text-subtle">
           <svg className="h-3 w-3 text-amber-500" viewBox="0 0 12 12" fill="currentColor">
             <path d="M6 1l1.5 3L11 4.5 8.5 7l.5 3.5L6 9 3 10.5 3.5 7 1 4.5 4.5 4z"/>
@@ -323,6 +373,23 @@ function BigPictureTab({
           Disponible en mayor madurez · Nivel {T11_MATURITY_CONFIG[maturityTier].label}
         </div>
       </div>
+
+      {/* Callout adaptativo — solo en modo básico */}
+      {adaptiveMode === 'basic' && (
+        <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-900/15 px-4 py-3">
+          <svg className="h-4 w-4 text-red-500 dark:text-red-400 shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="8" cy="8" r="6" />
+            <path d="M8 5v3M8 11h.01" />
+          </svg>
+          <div>
+            <p className="text-[11px] font-semibold text-red-700 dark:text-red-400 mb-0.5">Modo Básico activo</p>
+            <p className="text-[10px] text-red-600/80 dark:text-red-400/70 leading-relaxed">
+              Tu madurez IA está por debajo de 2.0. Se muestran únicamente las ceremonias esenciales para no sobrecargar la organización.
+              Los eventos adicionales se desbloquearán automáticamente al superar ese umbral.
+            </p>
+          </div>
+        </div>
+      )}
 
       {levelsTop.map((level, idx) => {
         const lcfg      = T11_LEVEL_CONFIG[level]
@@ -848,7 +915,7 @@ export function T11View({ companyName, t1Radar, employees = 500, onBack }: T11Vi
     [model, companyProfile],
   )
 
-  const { maturityTier, maturityAvg, recommendedEvents, decisions, phaseObjectives, kpiGroups } = model
+  const { maturityTier, maturityAvg, adaptiveMode, recommendedEvents, decisions, phaseObjectives, kpiGroups } = model
   const matCfg        = T11_MATURITY_CONFIG[maturityTier]
   const criticalCount = recommendedEvents.filter((e) => e.isCritical).length
   const totalKpis     = kpiGroups.reduce((acc, g) => acc + g.kpis.length, 0)
@@ -925,6 +992,7 @@ export function T11View({ companyName, t1Radar, employees = 500, onBack }: T11Vi
             <div className="space-y-2">
               <MaturityPill tier={maturityTier} avg={maturityAvg} />
               <p className="text-[11px] text-text-subtle dark:text-warm-300 max-w-xs">{matCfg.description}</p>
+              <AdaptiveModeBadge mode={adaptiveMode} />
             </div>
           </div>
         </div>
@@ -990,6 +1058,7 @@ export function T11View({ companyName, t1Radar, employees = 500, onBack }: T11Vi
             <BigPictureTab
               recommendedEvents={recommendedEvents}
               maturityTier={maturityTier}
+              adaptiveMode={adaptiveMode}
               onSelectEvent={setSelectedEvent}
             />
           )}

@@ -69,9 +69,17 @@ export interface T11KpiGroup {
   }[]
 }
 
+/** Modo adaptativo de cadencia basado en score de madurez T1
+ *  basic    — avg < 2  → solo ceremonias esenciales (isCritical)
+ *  standard — avg 2–3  → filtrado estándar por tier
+ *  full     — avg > 3  → catálogo SAFe completo
+ */
+export type T11AdaptiveMode = 'basic' | 'standard' | 'full'
+
 export interface T11OperatingModel {
   maturityTier:       T11MaturityTier
   maturityAvg:        number
+  adaptiveMode:       T11AdaptiveMode
   recommendedEvents:  T11Event[]
   decisions:          T11DecisionNode[]
   phaseObjectives:    T11PhaseObjective[]

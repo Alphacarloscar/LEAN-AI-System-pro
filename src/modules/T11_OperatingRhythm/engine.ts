@@ -9,7 +9,7 @@
 // ============================================================
 
 import type { RadarDimension }   from '@/shared/components/charts/LeanRadarChart'
-import type { T11MaturityTier, T11OperatingModel } from './types'
+import type { T11MaturityTier, T11AdaptiveMode, T11OperatingModel } from './types'
 import {
   T11_EVENTS_CATALOG,
   T11_DECISIONS,
@@ -41,11 +41,39 @@ const TIER_ORDER: Record<T11MaturityTier, number> = {
   optimised:    3,
 }
 
-/** Filtra eventos del catálogo según el tier del cliente */
-export function getRecommendedEvents(tier: T11MaturityTier) {
-  return T11_EVENTS_CATALOG.filter(
+/**
+ * Clasifica el score en un modo adaptativo de cadencia.
+ *
+ * basic    (avg < 2)  → solo ceremonias esenciales (isCritical)
+ * standard (2 ≤ avg ≤ 3) → filtrado estándar por tier
+ * full     (avg > 3)  → catálogo SAFe completo
+ */
+export function getAdaptiveMode(avg: number): T11AdaptiveMode {
+  if (avg < 2) return 'basic'
+  if (avg > 3) return 'full'
+  return 'standard'
+}
+
+/**
+ * Filtra eventos del catálogo aplicando dos capas:
+ *   1. Filtro por tier (minTier ≤ tier actual)
+ *   2. Filtro adaptativo por avg de madurez
+ */
+export function getRecommendedEvents(tier: T11MaturityTier, avg: number) {
+  const byTier = T11_EVENTS_CATALOG.filter(
     (e) => TIER_ORDER[e.minTier] <= TIER_ORDER[tier]
   )
+
+  if (avg < 2) {
+    // Modo básico: solo ceremonias esenciales dentro del tier
+    return byTier.filter((e) => e.isCritical)
+  }
+  if (avg > 3) {
+    // Modo SAFe completo: todos los eventos del catálogo
+    return [...T11_EVENTS_CATALOG]
+  }
+  // Modo estándar: filtrado por tier
+  return byTier
 }
 
 // ── Función principal ─────────────────────────────────────────
@@ -58,13 +86,15 @@ export interface EngineInput {
 export function buildOperatingModel(input: EngineInput): T11OperatingModel {
   const { radar } = input
 
-  const avg      = calcMaturityAvg(radar)
-  const tier     = scoreToTier(avg)
-  const events   = getRecommendedEvents(tier)
+  const avg          = calcMaturityAvg(radar)
+  const tier         = scoreToTier(avg)
+  const adaptiveMode = getAdaptiveMode(avg)
+  const events       = getRecommendedEvents(tier, avg)
 
   return {
     maturityTier:      tier,
     maturityAvg:       avg,
+    adaptiveMode,
     recommendedEvents: events,
     decisions:         T11_DECISIONS,
     phaseObjectives:   T11_PHASE_OBJECTIVES,
