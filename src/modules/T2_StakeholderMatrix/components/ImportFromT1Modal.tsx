@@ -57,18 +57,21 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
     setSelected(new Set(available))
   }
 
-  async function handleImport() {
+  function handleImport() {
     setImporting(true)
 
     const toImport = interviewees.filter(
       (i) => selected.has(i.id) && !alreadyInT2(i.name)
     )
 
-    for (const person of toImport) {
+    // El optimistic update de addStakeholder es síncrono — la UI se actualiza
+    // de inmediato. La sync a Supabase ocurre en background (fire-and-forget).
+    // No bloqueamos el modal esperando cada insert individual.
+    toImport.forEach((person) => {
       const archetype: ArchetypeCode = person.type === 'it' ? 'especialista' : 'decisor'
       const department  = person.type === 'it' ? 'IT / Tecnología' : 'Sin asignar'
 
-      await addStakeholder(
+      addStakeholder(
         {
           name:       person.name,
           role:       person.role,
@@ -79,8 +82,8 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
           manualOverride: false,
         },
         engagementId,
-      )
-    }
+      ).catch((err) => console.error('[ImportFromT1] addStakeholder:', err))
+    })
 
     setImportCount(toImport.length)
     setImporting(false)
