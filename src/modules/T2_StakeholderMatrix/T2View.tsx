@@ -21,6 +21,7 @@ import { useEngagementStore }            from '@/modules/Engagement/store'
 import { useCompanyProfileStore }        from '@/modules/CompanyProfile/store'
 import { ARCHETYPE_CONFIG, RESISTANCE_CONFIG } from './constants'
 import { InterviewModal }                from './components/InterviewModal'
+import { ImportFromT1Modal }             from './components/ImportFromT1Modal'
 import { StakeholderQuadrantChart }      from './components/StakeholderQuadrantChart'
 import { RecommendationPanel }           from '@/components/RecommendationPanel'
 import { buildT2RecommendationContext }  from './t2ContextBuilder'
@@ -782,6 +783,7 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
     () => stakeholders[0] ?? null
   )
   const [showModal,         setShowModal]         = useState(false)
+  const [showImportT1,      setShowImportT1]      = useState(false)
 
   const existingDepartments = useMemo(
     () => [...new Set(stakeholders.map((s) => s.department))],
@@ -833,15 +835,27 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
             <PhaseMiniMap phaseId="listen" toolCode="T2" />
           </div>
 
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-navy-metallic text-white text-xs font-semibold hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98] transition-all duration-150 shrink-0"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M8 2v12M2 8h12" />
-            </svg>
-            Nueva entrevista
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowImportT1(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border dark:border-white/12 text-xs font-semibold text-text-muted hover:text-text-base hover:border-gray-300 dark:hover:border-white/20 transition-all duration-150 shrink-0"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 8h10M8 4l4 4-4 4" />
+                <path d="M14 3v10" strokeWidth="1.5" />
+              </svg>
+              Importar desde T1
+            </button>
+            <button
+              onClick={() => setShowModal(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-navy-metallic text-white text-xs font-semibold hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98] transition-all duration-150 shrink-0"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 2v12M2 8h12" />
+              </svg>
+              Nueva entrevista
+            </button>
+          </div>
         </div>
       </div>
 
@@ -923,6 +937,11 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
           onSubmit={handleAddStakeholder}
           existingDepartments={existingDepartments}
         />
+      )}
+
+      {/* ── Modal importar desde T1 ── */}
+      {showImportT1 && (
+        <ImportFromT1Modal onClose={() => setShowImportT1(false)} />
       )}
     </div>
   )
