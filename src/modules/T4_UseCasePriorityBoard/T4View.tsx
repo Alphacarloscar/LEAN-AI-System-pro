@@ -14,7 +14,7 @@
 // Sprint 3+: Supabase tabla `use_cases`.
 // ============================================================
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate }       from 'react-router-dom'
 import { useT4Store }                   from './store'
 import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
@@ -1924,9 +1924,14 @@ interface T4ViewProps {
 
 export function T4View({ companyName, onBack }: T4ViewProps) {
   const navigate                      = useNavigate()
-  const { useCases }                  = useT4Store()
+  const { useCases, loadEngagement }  = useT4Store()
   const { profile: companyProfile }   = useCompanyProfileStore()
   const engagementId                  = useEngagementStore((s) => s.activeEngagementId)
+
+  // Recargar datos cuando cambia el engagement activo
+  useEffect(() => {
+    if (engagementId) loadEngagement(engagementId)
+  }, [engagementId, loadEngagement])
   const [activeId, setActiveId]     = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)
 

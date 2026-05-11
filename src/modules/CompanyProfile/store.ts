@@ -21,9 +21,9 @@ import {
   upsertCompanyProfile,
 }                             from '@/services/company-profile.service'
 
-// ── Generador de ID simple (sin uuid dependency) ──────────────
+// ── Generador de UUID — compatible con Supabase (columna tipo uuid) ──
 function genId(): string {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
+  return crypto.randomUUID()
 }
 
 // ── Store ─────────────────────────────────────────────────────

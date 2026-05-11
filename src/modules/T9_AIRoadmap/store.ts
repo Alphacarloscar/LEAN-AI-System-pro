@@ -16,9 +16,9 @@ import { create }  from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { FreeItem, T9ItemOverride } from './types'
 
-// ── ID local ─────────────────────────────────────────────────
+// ── ID local — UUID compatible con columna uuid en Supabase ──
 function genId(): string {
-  return `t9-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
+  return crypto.randomUUID()
 }
 
 // ── Store interface ───────────────────────────────────────────

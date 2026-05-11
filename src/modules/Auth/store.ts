@@ -15,6 +15,9 @@
 import { create }        from 'zustand'
 import { supabase }      from '@/lib/supabase'
 import type { AuthUser } from './types'
+import { useT1Store }    from '@/modules/T1_MaturityRadar/store'
+import { useT2Store }    from '@/modules/T2_StakeholderMatrix/store'
+import { useT4Store }    from '@/modules/T4_UseCasePriorityBoard/store'
 
 interface AuthStore {
   isAuthenticated: boolean
@@ -85,6 +88,10 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       }
       if (event === 'SIGNED_OUT') {
         set({ isAuthenticated: false, user: null })
+        // Limpiar stores con datos de cliente al cerrar sesión
+        useT1Store.getState().reset()
+        useT2Store.getState().reset()
+        useT4Store.setState({ useCases: [], engagementId: null })
       }
       if (event === 'TOKEN_REFRESHED' && session?.user) {
         // Sesión renovada automáticamente — no necesitamos hacer nada

@@ -162,7 +162,7 @@ export const useT1Store = create<T1Store>()((set, get) => ({
 
   // ── addInterviewee ─────────────────────────────────────────
   addInterviewee: async (person, engagementId) => {
-    const id = `iw-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    const id = crypto.randomUUID()
     const newInterviewee: T1IntervieweeContext = { ...person, id }
     const blankDims = buildBlankDimensions()
 

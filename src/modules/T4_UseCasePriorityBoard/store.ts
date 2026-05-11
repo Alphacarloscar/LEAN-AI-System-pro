@@ -21,12 +21,11 @@ import {
   insertUseCase,
   updateUseCaseInDb,
   deleteUseCaseFromDb,
-  bulkInsertUseCases,
 } from '@/services/t4.service'
 
 // ── Generador de ID local ────────────────────────────────────
 function genId(): string {
-  return `uc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
+  return crypto.randomUUID()
 }
 
 // ── Demo data — 8 casos (Industrias Nexus S.A.) ──────────────
@@ -193,7 +192,7 @@ interface T4Store {
 export const useT4Store = create<T4Store>()(
   persist(
     (set, get) => ({
-      useCases:     DEMO_USE_CASES,
+      useCases:     [],
       engagementId: null,
       isLoading:    false,
 
@@ -206,12 +205,8 @@ export const useT4Store = create<T4Store>()(
             // Hay datos reales en Supabase → usarlos
             set({ useCases, isLoading: false })
           } else {
-            // Primer engagement nuevo → sembrar con demo data
-            set({ useCases: DEMO_USE_CASES, isLoading: false })
-            // Persistir demo data en Supabase para que el viewer también la vea
-            bulkInsertUseCases(DEMO_USE_CASES, engagementId).catch((err) =>
-              console.error('[T4] seed demo data:', err)
-            )
+            // Engagement nuevo → arrancar vacío (sin demo data en producción)
+            set({ useCases: [], isLoading: false })
           }
         } catch (err) {
           console.error('[T4] loadEngagement:', err)
@@ -302,8 +297,9 @@ export const useT4Store = create<T4Store>()(
       },
     }),
     {
-      name:    'lean-t4-usecases',
-      version: 3,  // bumped: añadido engagementId + Supabase sync
+      name:       'lean-t4-usecases',
+      version:    4,  // bumped: partialize — useCases nunca en localStorage
+      partialize: (s) => ({ engagementId: s.engagementId }),
     }
   )
 )

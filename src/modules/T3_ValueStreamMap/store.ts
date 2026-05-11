@@ -225,7 +225,7 @@ export const useT3Store = create<T3Store>()((set, get) => ({
   addProcess: async (p, engagementId) => {
     const newProcess: ValueStream = {
       ...p,
-      id:        `vs-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id:        crypto.randomUUID(),
       createdAt: new Date().toISOString(),
     }
 
@@ -279,7 +279,7 @@ export const useT3Store = create<T3Store>()((set, get) => ({
   addStage: async (processId, stage, engagementId) => {
     const newStage: ProcessStage = {
       ...stage,
-      id: `st-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      id: crypto.randomUUID(),
     }
 
     let updatedStages: ProcessStage[] = []
