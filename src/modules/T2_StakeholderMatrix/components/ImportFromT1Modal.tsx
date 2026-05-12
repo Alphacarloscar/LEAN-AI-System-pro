@@ -36,12 +36,14 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
   const [done, setDone]           = useState(false)
   const [importCount, setImportCount] = useState(0)
 
-  // Nombres ya presentes en T2 (comparación case-insensitive)
-  const existingNames = new Set(
-    stakeholders.map((s) => s.name.trim().toLowerCase())
+  // Clave nombre+cargo para detectar duplicados: dos personas con el mismo nombre
+  // pero distinto cargo (ej. Pilar CTO vs Pilar RRHH) son personas distintas.
+  const existingKeys = new Set(
+    stakeholders.map((s) => `${s.name.trim().toLowerCase()}::${s.role.trim().toLowerCase()}`)
   )
 
-  const alreadyInT2 = (name: string) => existingNames.has(name.trim().toLowerCase())
+  const alreadyInT2 = (name: string, role: string) =>
+    existingKeys.has(`${name.trim().toLowerCase()}::${role.trim().toLowerCase()}`)
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -53,7 +55,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
   }
 
   function selectAll() {
-    const available = interviewees.filter((i) => !alreadyInT2(i.name)).map((i) => i.id)
+    const available = interviewees.filter((i) => !alreadyInT2(i.name, i.role)).map((i) => i.id)
     setSelected(new Set(available))
   }
 
@@ -61,7 +63,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
     setImporting(true)
 
     const toImport = interviewees.filter(
-      (i) => selected.has(i.id) && !alreadyInT2(i.name)
+      (i) => selected.has(i.id) && !alreadyInT2(i.name, i.role)
     )
 
     // El optimistic update de addStakeholder es síncrono — la UI se actualiza
@@ -90,10 +92,11 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
     setDone(true)
   }
 
-  const availableCount = interviewees.filter((i) => !alreadyInT2(i.name)).length
-  const selectedCount  = [...selected].filter(
-    (id) => !alreadyInT2(interviewees.find((i) => i.id === id)?.name ?? '')
-  ).length
+  const availableCount = interviewees.filter((i) => !alreadyInT2(i.name, i.role)).length
+  const selectedCount  = [...selected].filter((id) => {
+    const person = interviewees.find((i) => i.id === id)
+    return person ? !alreadyInT2(person.name, person.role) : false
+  }).length
 
   return (
     <div
@@ -168,7 +171,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
 
               {/* Disponibles */}
               {interviewees
-                .filter((i) => !alreadyInT2(i.name))
+                .filter((i) => !alreadyInT2(i.name, i.role))
                 .map((person) => {
                   const isSelected  = selected.has(person.id)
                   const archetype   = person.type === 'it' ? 'Especialista' : 'Decisor'
@@ -227,14 +230,14 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
                 })}
 
               {/* Ya importados */}
-              {interviewees.filter((i) => alreadyInT2(i.name)).length > 0 && (
+              {interviewees.filter((i) => alreadyInT2(i.name, i.role)).length > 0 && (
                 <>
                   <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle
                     mt-4 mb-1 px-1">
                     Ya en T2
                   </p>
                   {interviewees
-                    .filter((i) => alreadyInT2(i.name))
+                    .filter((i) => alreadyInT2(i.name, i.role))
                     .map((person) => (
                       <div
                         key={person.id}
