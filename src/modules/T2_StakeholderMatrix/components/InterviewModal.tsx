@@ -66,15 +66,29 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 function StakeholderFormPhase({
   onNext,
   existingDepartments,
+  initialValues,
 }: {
-  onNext: (form: NewStakeholderForm) => void
+  onNext:              (form: NewStakeholderForm) => void
   existingDepartments: string[]
+  initialValues?:      NewStakeholderForm
 }) {
-  const [form, setForm]       = useState<NewStakeholderForm>({ name: '', role: '', department: '' })
+  const [form, setForm]       = useState<NewStakeholderForm>(
+    initialValues ?? { name: '', role: '', department: '' }
+  )
   const [showDepts, setShowDepts] = useState(false)
   const nameRef               = useRef<HTMLInputElement>(null)
+  const deptRef               = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { nameRef.current?.focus() }, [])
+  // Si vienen valores iniciales (stakeholder existente), hacer foco en Departamento.
+  // Si es formulario en blanco, hacer foco en Nombre.
+  useEffect(() => {
+    if (initialValues?.name) {
+      deptRef.current?.focus()
+    } else {
+      nameRef.current?.focus()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const canContinue = form.name.trim() && form.role.trim() && form.department.trim()
   const filteredDepts = existingDepartments.filter((d) =>
@@ -114,6 +128,7 @@ function StakeholderFormPhase({
       <div className="space-y-1.5 relative">
         <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">Departamento</label>
         <input
+          ref={deptRef}
           type="text"
           value={form.department}
           onChange={(e) => { setForm((f) => ({ ...f, department: e.target.value })); setShowDepts(true) }}
@@ -462,7 +477,7 @@ export function InterviewModal({ onClose, onSubmit, existingDepartments, existin
 
         {/* Contenido por fase */}
         <div className="px-6 py-5">
-          {phase === 'form'      && <StakeholderFormPhase  onNext={handleFormNext}               existingDepartments={existingDepartments} />}
+          {phase === 'form'      && <StakeholderFormPhase  onNext={handleFormNext} existingDepartments={existingDepartments} initialValues={existingStakeholder ? form : undefined} />}
           {phase === 'interview' && <InterviewPhase         onComplete={handleInterviewComplete} />}
           {phase === 'result'    && <ResultPhase            form={form} answers={answers}         onConfirm={handleConfirm} />}
         </div>
