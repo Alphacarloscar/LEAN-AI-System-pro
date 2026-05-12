@@ -1175,6 +1175,91 @@ ${ucLines || '  Sin datos'}`
 }
 
 // ═══════════════════════════════════════════════════════════════
+// PROMPT T3 — Oportunidades IA por Proceso
+// ═══════════════════════════════════════════════════════════════
+
+const T3_OPPORTUNITIES_SYSTEM_PROMPT = `Eres un consultor senior especializado en adopción de IA en empresas B2B del mercado español y europeo. Tu tarea es responder a la pregunta concreta de un CIO o consultor: "¿qué herramienta o solución IA tiene más lógica para este proceso?"
+
+CONTEXTO DE USO:
+El consultor ha documentado un proceso de negocio — sus etapas, los sistemas que usa hoy (SAP, ServiceNow, Excel, Salesforce, etc.) y el nivel de madurez IA de la empresa. Tú debes recomendar herramientas IA específicas y realizables, no categorías genéricas.
+
+PRINCIPIOS:
+1. Recomienda herramientas o productos concretos (Copilot for Excel, UiPath, Power Automate, OpenAI GPT-4o, Azure AI Document Intelligence, etc.), no conceptos abstractos como "IA generativa" o "machine learning".
+2. Prioriza herramientas que se integren bien con los sistemas ya usados (campo "sistema/herramienta" de cada etapa). Si el proceso usa SAP, recomienda dentro del ecosistema SAP cuando sea posible.
+3. Calibra la complejidad a la madurez IA de la empresa: madurez baja (0–1.5) → copilots y automatizaciones sencillas; madurez media (1.5–2.5) → automatización avanzada + IA predictiva; madurez alta (2.5–4) → IA generativa, agentes autónomos, modelos propios.
+4. Adapta al departamento: finanzas ≠ RRHH ≠ logística ≠ IT. Sé específico en el valor para esa función.
+5. Si el ecosistema tecnológico principal de la empresa es Microsoft/SAP/Salesforce/Google, prioriza soluciones de ese ecosistema (menor fricción de adopción, menor coste de integración).
+6. El esfuerzo de implementación debe ser realista para el tamaño y madurez de la empresa.
+7. Máximo 4 oportunidades. Ordénalas de mayor a menor impacto potencial para ESTE proceso concreto.
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin ningún texto adicional antes o después.
+
+Estructura JSON requerida:
+{
+  "opportunities": [
+    {
+      "title": "Nombre de la herramienta/solución IA en 6–10 palabras. Incluye el producto concreto si procede.",
+      "description": "Qué hace esta herramienta en este proceso y por qué tiene sentido para ESTA empresa. Menciona la integración con los sistemas existentes. 2–3 frases directas.",
+      "effort": "bajo|medio|alto",
+      "impact": "bajo|medio|alto"
+    }
+  ]
+}
+
+Genera entre 2 y 4 oportunidades. Sé específico: el consultor necesita poder presentar esto a un CIO mañana.`
+
+function buildT3OpportunitiesUserMessage(ctx: Record<string, unknown>): string {
+  const process       = (ctx.process       ?? {}) as Record<string, unknown>
+  const company       = (ctx.company       ?? {}) as Record<string, unknown>
+  const stages        = (process.stages    as Record<string, unknown>[]) ?? []
+
+  // Extraer sistemas usados en las etapas del proceso
+  const systemsUsed = stages
+    .map(s => s.system as string | undefined)
+    .filter((s): s is string => Boolean(s?.trim()))
+
+  const stagesBlock = stages.length > 0
+    ? stages.map((s, i) =>
+        `  Etapa ${i + 1}: ${s.name || 'Sin nombre'}` +
+        (s.system ? ` | Sistema/herramienta: ${s.system}` : '') +
+        (s.description ? ` | Descripción: ${s.description}` : '')
+      ).join('\n')
+    : '  Sin etapas documentadas'
+
+  const maturityLabel = (maturityScore: number | undefined): string => {
+    if (maturityScore === undefined || maturityScore === null) return 'No disponible'
+    if (maturityScore < 1.5) return `Baja (${maturityScore.toFixed(1)}/4.0)`
+    if (maturityScore < 2.5) return `Media (${maturityScore.toFixed(1)}/4.0)`
+    return `Alta (${maturityScore.toFixed(1)}/4.0)`
+  }
+
+  return `## PROCESO A ANALIZAR
+
+Nombre del proceso: ${process.name || 'Sin nombre'}
+Departamento: ${process.department || 'No especificado'}
+Categoría IA asignada por el consultor: ${process.aiCategory || 'No especificada'}
+Madurez organizativa para adopción IA: ${process.orgReadiness || 'No especificada'}
+${process.description ? `Descripción: ${process.description}` : ''}
+${typeof process.opportunityScore === 'number' ? `Potencial de automatización (0–5): ${process.opportunityScore}/5` : ''}
+
+Etapas del proceso:
+${stagesBlock}
+
+Sistemas/herramientas actualmente en uso en este proceso:
+${systemsUsed.length > 0 ? systemsUsed.map(s => `  - ${s}`).join('\n') : '  No documentados'}
+
+## PERFIL DE EMPRESA
+
+Sector: ${company.sector || 'No especificado'}
+Tamaño: ${company.size || 'No especificado'}
+Ecosistema tecnológico principal: ${company.techEcosystem || 'No especificado'}
+Madurez IA global de la empresa: ${maturityLabel(ctx.maturityScore as number | undefined)}
+Objetivo principal de IA: ${company.mainAIObjective || 'No especificado'}
+
+Responde con las herramientas IA más concretas y específicas para ESTE proceso en ESTA empresa.`
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ROUTER DE PROMPTS
 // ═══════════════════════════════════════════════════════════════
 
@@ -1201,6 +1286,8 @@ function buildPrompt(tool: string, context: unknown): { system: string; user: st
       return { system: T8_SYSTEM_PROMPT, user: buildT8UserMessage(ctx), maxTokens: 1500 }
     case 't8_comms':
       return { system: T8_COMMS_SYSTEM_PROMPT, user: buildT8CommsUserMessage(ctx), maxTokens: 1500 }
+    case 't3_opportunities':
+      return { system: T3_OPPORTUNITIES_SYSTEM_PROMPT, user: buildT3OpportunitiesUserMessage(ctx), maxTokens: 1200 }
     case 't9':
       return { system: T9_SYSTEM_PROMPT, user: buildT9UserMessage(ctx), maxTokens: 1500 }
     case 't11':

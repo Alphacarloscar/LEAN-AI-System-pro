@@ -12,10 +12,15 @@
 // Sprint 3+: Supabase tabla `value_stream`.
 // ============================================================
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useNavigate }                 from 'react-router-dom'
 import { useT3Store }                  from './store'
 import { useEngagementStore }          from '@/modules/Engagement/store'
+import { useCompanyProfileStore }      from '@/modules/CompanyProfile/store'
+import { useT1Store }                  from '@/modules/T1_MaturityRadar/store'
+import { computeOverallScore }         from '@/modules/T1_MaturityRadar/types'
+import { buildT3OpportunitiesContext } from './t3OpportunitiesContextBuilder'
+import { supabase }                    from '@/lib/supabase'
 import {
   AI_CATEGORY_CONFIG,
   READINESS_CONFIG,
@@ -27,7 +32,7 @@ import { StagesTab }                 from './components/StagesTab'
 import { PhaseMiniMap }              from '@/shared/components/PhaseMiniMap'
 import type {
   ValueStream, AICategoryCode, OrgReadinessLevel,
-  ProcessPhase,
+  ProcessPhase, AIOpportunity,
 } from './types'
 
 // ── Constantes de color ───────────────────────────────────────
@@ -666,6 +671,68 @@ type DetailTab = 'oportunidades' | 'entrevista' | 'etapas'
 function ProcessDetailPanel({ process }: { process: ValueStream }) {
   const [tab, setTab] = useState<DetailTab>('oportunidades')
 
+  // ── AI personalización de oportunidades ────────────────────
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError,   setAiError]   = useState<string | null>(null)
+
+  const updateProcess   = useT3Store((s) => s.updateProcess)
+  const engagementId    = useEngagementStore((s) => s.activeEngagementId)
+  const companyProfile  = useCompanyProfileStore((s) => s.profile)
+  const t1DimStates     = useT1Store((s) => s.dimensionStates)
+
+  // Score T1 para calibrar complejidad de recomendaciones.
+  // Usa los datos del primer entrevistado como proxy del estado global de madurez.
+  const t1MaturityScore = useMemo(() => {
+    const allDims = Object.values(t1DimStates)
+    if (allDims.length === 0) return undefined
+    try { return computeOverallScore(allDims[0]) }
+    catch { return undefined }
+  }, [t1DimStates])
+
+  const handlePersonalizeWithAI = useCallback(async () => {
+    setAiLoading(true)
+    setAiError(null)
+
+    const context = buildT3OpportunitiesContext(process, companyProfile, t1MaturityScore)
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('La generación tardó demasiado. Inténtalo de nuevo.')), 90_000)
+    )
+
+    try {
+      const { data: result, error: fnError } = await Promise.race([
+        supabase.functions.invoke('ai-recommend', {
+          body: { tool: 't3_opportunities', context, engagementId },
+        }),
+        timeoutPromise,
+      ])
+
+      if (fnError) throw new Error(fnError.message ?? 'Error al llamar a la Edge Function')
+      if (result?.error) throw new Error(result.error)
+
+      const raw = result?.data as { opportunities?: Array<{ title: string; description: string; effort: string; impact: string }> } | null
+      if (!raw?.opportunities?.length) throw new Error('La IA no devolvió oportunidades. Inténtalo de nuevo.')
+
+      const newOpportunities: AIOpportunity[] = raw.opportunities.map((o) => ({
+        id:          crypto.randomUUID(),
+        title:       o.title,
+        description: o.description,
+        effort:      (o.effort as AIOpportunity['effort'])   ?? 'medio',
+        impact:      (o.impact as AIOpportunity['impact'])   ?? 'medio',
+        status:      'sugerida' as const,
+      }))
+
+      await updateProcess(process.id, { opportunities: newOpportunities }, engagementId)
+
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error desconocido'
+      setAiError(msg)
+      console.error('[T3] personalizeWithAI:', err)
+    } finally {
+      setAiLoading(false)
+    }
+  }, [process, companyProfile, t1MaturityScore, engagementId, updateProcess])
+
   const catCfg       = AI_CATEGORY_CONFIG[process.aiCategory]
   const hasInterview = !!process.interview
 
@@ -803,14 +870,85 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
 
             {/* RIGHT — oportunidades IA */}
             <div>
-              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-4">
-                Oportunidades IA identificadas · {process.opportunities.length}
-              </p>
+              {/* Cabecera con contador + botón IA */}
+              {(() => {
+                const hasStages  = (process.stages ?? []).length > 0
+                // Botón habilitado solo si hay etapas documentadas — sin ellas la LLM
+                // no tiene el signal clave (sistemas usados) y daría recomendaciones genéricas.
+                const canGenerate = hasStages && !aiLoading
+                return (
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
+                      Oportunidades IA identificadas · {process.opportunities.length}
+                    </p>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <button
+                        onClick={handlePersonalizeWithAI}
+                        disabled={!canGenerate}
+                        title={
+                          !hasStages
+                            ? 'Documenta las etapas del proceso primero — los sistemas usados son la señal clave para las recomendaciones'
+                            : 'Genera recomendaciones específicas con IA basadas en los sistemas usados, departamento y ecosistema tecnológico'
+                        }
+                        className={[
+                          'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-semibold',
+                          'transition-all border',
+                          aiLoading
+                            ? 'border-navy/20 bg-navy/5 text-navy/50 cursor-not-allowed'
+                            : !hasStages
+                              ? 'border-border bg-gray-50 dark:bg-gray-800/50 text-text-subtle cursor-not-allowed'
+                              : 'border-navy/30 bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 hover:bg-navy/15 dark:hover:bg-navy/25',
+                        ].join(' ')}
+                      >
+                        {aiLoading ? (
+                          <>
+                            <svg className="animate-spin h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                            Generando…
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-[11px]">✦</span>
+                            {process.opportunities.length > 0 ? 'Regenerar con IA' : 'Personalizar con IA'}
+                          </>
+                        )}
+                      </button>
+                      {/* Hint cuando no hay etapas */}
+                      {!hasStages && !aiLoading && (
+                        <p className="text-[9px] text-text-subtle text-right max-w-[180px] leading-tight">
+                          Documenta las etapas primero
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Error de generación */}
+              {aiError && (
+                <div className="mb-4 rounded-xl border border-danger-dark/20 bg-danger-light/10
+                  px-3 py-2 flex items-start gap-2">
+                  <span className="text-danger-dark text-xs mt-0.5 shrink-0">!</span>
+                  <p className="text-xs text-danger-dark leading-relaxed">{aiError}</p>
+                </div>
+              )}
 
               {process.opportunities.length === 0 ? (
-                <p className="text-xs text-text-subtle">
-                  Completa la entrevista para generar oportunidades automáticamente.
-                </p>
+                <div className="flex flex-col gap-2">
+                  {(process.stages ?? []).length === 0 ? (
+                    <p className="text-xs text-text-subtle leading-relaxed">
+                      Ve a la pestaña <strong>Etapas del proceso</strong>, documenta qué sistemas
+                      usa cada etapa y vuelve aquí para generar recomendaciones IA específicas.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-text-subtle leading-relaxed">
+                      Usa el botón <strong>"Personalizar con IA"</strong> para recibir recomendaciones
+                      concretas basadas en los sistemas de este proceso y el ecosistema tecnológico de la empresa.
+                    </p>
+                  )}
+                </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {process.opportunities.map((opp) => {
