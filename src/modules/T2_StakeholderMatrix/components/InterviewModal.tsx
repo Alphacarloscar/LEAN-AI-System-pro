@@ -366,8 +366,10 @@ function ResultPhase({
 // ── Componente principal ──────────────────────────────────────
 
 export function InterviewModal({ onClose, onSubmit, existingDepartments, existingStakeholder }: InterviewModalProps) {
-  // Si hay un stakeholder existente, arrancamos directamente en 'interview'
-  const [phase,   setPhase]   = useState<Phase>(existingStakeholder ? 'interview' : 'form')
+  // Si hay stakeholder existente con departamento, saltamos el formulario.
+  // Si le falta departamento (importado sin ese dato), mostramos el form pre-relleno para que lo complete.
+  const hasDepartment = Boolean(existingStakeholder?.department?.trim())
+  const [phase,   setPhase]   = useState<Phase>(existingStakeholder && hasDepartment ? 'interview' : 'form')
   const [form,    setForm]    = useState<NewStakeholderForm>(
     existingStakeholder
       ? { name: existingStakeholder.name, role: existingStakeholder.role, department: existingStakeholder.department }
