@@ -131,7 +131,7 @@ export async function updateUseCaseInDb(
   if (updates.aiActClassification !== undefined) patch.ai_act_classification = updates.aiActClassification ?? null
   if (updates.notes            !== undefined) patch.notes = updates.notes ?? null
 
-  patch.updated_at = new Date().toISOString()
+  // NOTA: la tabla use_cases no tiene columna updated_at — no añadir al patch.
 
   const { error } = await supabase
     .from('use_cases')
