@@ -186,12 +186,30 @@ export function StakeholderQuadrantChart({
   const withScores    = stakeholders.filter((s) =>  s.interview)
   const withoutScores = stakeholders.filter((s) => !s.interview)
 
-  // Posiciones base → jitter
-  const basePositions = withScores.map((s) => ({
-    id: s.id,
-    cx: toSvgX(s.interview!.adoptionScore),
-    cy: toSvgY(s.interview!.influenceScore),
-  }))
+  // Posición canónica por arquetipo para stakeholders sin entrevista
+  // Centros aproximados de cada cuadrante (score 0–4):
+  //   adopción:  eje X (baja=izq, alta=der)
+  //   influencia: eje Y (baja=abajo, alta=arriba)
+  const ARCHETYPE_CANONICAL: Record<ArchetypeCode, [number, number]> = {
+    decisor:      [2.8, 3.2],   // alta influencia, adopción media
+    ambassador:   [3.2, 3.0],   // alta influencia + alta adopción
+    adoptador:    [3.2, 0.8],   // baja influencia, alta adopción
+    critico:      [0.8, 3.2],   // alta influencia, baja adopción
+    especialista: [1.0, 1.0],   // baja influencia, baja adopción
+  }
+
+  // Posiciones base → jitter (ALL: interviewed + ghost)
+  const basePositions = [
+    ...withScores.map((s) => ({
+      id: s.id,
+      cx: toSvgX(s.interview!.adoptionScore),
+      cy: toSvgY(s.interview!.influenceScore),
+    })),
+    ...withoutScores.map((s) => {
+      const [ad, inf] = ARCHETYPE_CANONICAL[s.archetype]
+      return { id: s.id, cx: toSvgX(ad), cy: toSvgY(inf) }
+    }),
+  ]
   const jittered = applyJitter(basePositions)
 
   // Arquetipos presentes
@@ -276,6 +294,63 @@ export function StakeholderQuadrantChart({
             <rect x={CX + 4} y={0}      width={VB - CX - 4} height={CY - 4}      fill={QUADRANT_FILLS.decisor}      opacity={0.5} />
             <rect x={0}      y={CY + 4} width={CX - 4}      height={VB - CY - 4} fill={QUADRANT_FILLS.especialista} opacity={0.5} />
             <rect x={CX + 4} y={CY + 4} width={VB - CX - 4} height={VB - CY - 4} fill={QUADRANT_FILLS.adoptador}   opacity={0.5} />
+
+            {/* ── Ghost: stakeholders sin entrevista ──
+                Posicionados en el centroide de su cuadrante arquetipo.
+                Estilo outline: sin fill sólido, anillo discontinuo, "?" */}
+            {withoutScores.map((s) => {
+              const pos     = jittered.get(s.id) ?? { cx: CX, cy: CY }
+              const isActive = s.id === activeId
+              const fill    = ARCHETYPE_HEX[s.archetype]
+              const ini     = initials(s.name)
+
+              return (
+                <g
+                  key={s.id}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => onSelect(s)}
+                  onMouseEnter={() => setHoverId(s.id)}
+                  onMouseLeave={() => setHoverId(null)}
+                >
+                  {/* Aura selección */}
+                  {(isActive || s.id === hoverId) && (
+                    <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 8} fill={fill} opacity={0.10} />
+                  )}
+                  {/* Anillo discontinuo — indica "pendiente de entrevista" */}
+                  <circle
+                    cx={pos.cx} cy={pos.cy}
+                    r={DOT_R + 3}
+                    fill="none"
+                    stroke={fill}
+                    strokeWidth={1.5}
+                    strokeDasharray="4 3"
+                    opacity={0.55}
+                  />
+                  {/* Cuerpo del punto — semitransparente */}
+                  <circle
+                    cx={pos.cx} cy={pos.cy}
+                    r={DOT_R}
+                    fill={fill}
+                    opacity={0.18}
+                    stroke={isActive ? 'rgba(255,255,255,0.85)' : 'none'}
+                    strokeWidth={isActive ? 1.5 : 0}
+                  />
+                  {/* Iniciales */}
+                  <text
+                    x={pos.cx} y={pos.cy + 4}
+                    textAnchor="middle"
+                    fontSize={9}
+                    fontWeight="700"
+                    fill={fill}
+                    opacity={0.70}
+                    fontFamily="ui-sans-serif,system-ui,sans-serif"
+                    style={{ pointerEvents: 'none', userSelect: 'none' }}
+                  >
+                    {ini}
+                  </text>
+                </g>
+              )
+            })}
 
             {/* ── Puntos de stakeholders — dentro del clipPath ──
                 El clipPath garantiza que auras, anillos y círculos

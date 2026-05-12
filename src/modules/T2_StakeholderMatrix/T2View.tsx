@@ -236,9 +236,11 @@ function MiniPositionMap({
 function StakeholderPanel({
   stakeholder,
   onClose,
+  onStartInterview,
 }: {
-  stakeholder: Stakeholder
-  onClose:     () => void
+  stakeholder:      Stakeholder
+  onClose:          () => void
+  onStartInterview: (s: Stakeholder) => void
 }) {
   const cfg = ARCHETYPE_CONFIG[stakeholder.archetype]
   const res = RESISTANCE_CONFIG[stakeholder.resistance]
@@ -336,11 +338,22 @@ function StakeholderPanel({
                 size={160}
               /></div>
           ) : (
-            <div className="flex flex-col items-center justify-center flex-1 gap-1 opacity-35 py-6">
-              <svg className="h-8 w-8 text-text-subtle" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round">
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <p className="text-[9px] text-text-subtle text-center leading-snug">Sin entrevista</p>
+            <div className="flex flex-col items-center justify-center flex-1 gap-2 py-5">
+              <div className="opacity-30">
+                <svg className="h-7 w-7 text-text-subtle" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round">
+                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <p className="text-[9px] text-text-subtle text-center leading-snug opacity-50">Sin entrevista</p>
+              <button
+                onClick={() => onStartInterview(stakeholder)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-navy-metallic text-white text-[10px] font-semibold hover:bg-navy-metallic-hover transition-colors shadow-sm"
+              >
+                <svg className="h-2.5 w-2.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <path d="M8 2v12M2 8h12" />
+                </svg>
+                Iniciar entrevista
+              </button>
             </div>
           )}
         </div>
@@ -763,7 +776,7 @@ interface T2ViewProps {
 }
 
 export function T2View({ companyName, onBack }: T2ViewProps) {
-  const { stakeholders, addStakeholder, load, initDemo, lastError } = useT2Store()
+  const { stakeholders, addStakeholder, updateStakeholder, load, initDemo, lastError } = useT2Store()
   const engagementId   = useEngagementStore((s) => s.activeEngagementId)
   const companyProfile = useCompanyProfileStore((s) => s.profile)
   const navigate       = useNavigate()
@@ -782,8 +795,9 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
   const [activeStakeholder, setActiveStakeholder] = useState<Stakeholder | null>(
     () => stakeholders[0] ?? null
   )
-  const [showModal,         setShowModal]         = useState(false)
-  const [showImportT1,      setShowImportT1]      = useState(false)
+  const [showModal,           setShowModal]           = useState(false)
+  const [showImportT1,        setShowImportT1]        = useState(false)
+  const [interviewingExisting, setInterviewingExisting] = useState<Stakeholder | null>(null)
 
   const existingDepartments = useMemo(
     () => [...new Set(stakeholders.map((s) => s.department))],
@@ -905,6 +919,7 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
               <StakeholderPanel
                 stakeholder={activeStakeholder}
                 onClose={() => setActiveStakeholder(null)}
+                onStartInterview={(s) => setInterviewingExisting(s)}
               />
             ) : (
               <div className="rounded-xl border border-dashed border-border bg-white/50 dark:bg-gray-900/50 p-6 flex flex-col items-center justify-center text-center gap-2 min-h-[200px]">
@@ -936,6 +951,28 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
           onClose={() => setShowModal(false)}
           onSubmit={handleAddStakeholder}
           existingDepartments={existingDepartments}
+        />
+      )}
+
+      {/* ── Modal entrevista para stakeholder ya importado ── */}
+      {interviewingExisting && (
+        <InterviewModal
+          onClose={() => setInterviewingExisting(null)}
+          onSubmit={(data) => {
+            updateStakeholder(
+              interviewingExisting.id,
+              { interview: data.interview, archetype: data.archetype, resistance: data.resistance, notes: data.notes },
+              engagementId,
+            )
+            setInterviewingExisting(null)
+            // Refrescar panel derecho con datos actualizados
+            setTimeout(() => {
+              const updated = useT2Store.getState().stakeholders.find((s) => s.id === interviewingExisting.id)
+              if (updated) setActiveStakeholder(updated)
+            }, 50)
+          }}
+          existingDepartments={existingDepartments}
+          existingStakeholder={interviewingExisting}
         />
       )}
 

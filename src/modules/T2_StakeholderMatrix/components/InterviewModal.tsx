@@ -32,6 +32,11 @@ interface InterviewModalProps {
   onSubmit: (stakeholder: Omit<Stakeholder, 'id' | 'createdAt'>) => void
   /** Departamentos existentes para sugerencias en el autocomplete */
   existingDepartments: string[]
+  /**
+   * Si se pasa, el modal OMITE la fase de formulario y empieza directamente
+   * en la entrevista. Útil para entrevistar stakeholders importados desde T1.
+   */
+  existingStakeholder?: Pick<Stakeholder, 'name' | 'role' | 'department' | 'archetype' | 'resistance' | 'notes' | 'manualOverride'>
 }
 
 // ── Fases del modal ───────────────────────────────────────────
@@ -360,9 +365,14 @@ function ResultPhase({
 
 // ── Componente principal ──────────────────────────────────────
 
-export function InterviewModal({ onClose, onSubmit, existingDepartments }: InterviewModalProps) {
-  const [phase,   setPhase]   = useState<Phase>('form')
-  const [form,    setForm]    = useState<NewStakeholderForm>({ name: '', role: '', department: '' })
+export function InterviewModal({ onClose, onSubmit, existingDepartments, existingStakeholder }: InterviewModalProps) {
+  // Si hay un stakeholder existente, arrancamos directamente en 'interview'
+  const [phase,   setPhase]   = useState<Phase>(existingStakeholder ? 'interview' : 'form')
+  const [form,    setForm]    = useState<NewStakeholderForm>(
+    existingStakeholder
+      ? { name: existingStakeholder.name, role: existingStakeholder.role, department: existingStakeholder.department }
+      : { name: '', role: '', department: '' }
+  )
   const [answers, setAnswers] = useState<Record<number, InterviewAnswerCode>>({})
 
   // Cerrar con Escape
@@ -391,6 +401,7 @@ export function InterviewModal({ onClose, onSubmit, existingDepartments }: Inter
       archetype,
       resistance,
       manualOverride,
+      notes:      existingStakeholder?.notes,
       interview: {
         ...result,
         archetype,
@@ -401,7 +412,7 @@ export function InterviewModal({ onClose, onSubmit, existingDepartments }: Inter
   }
 
   const phaseTitle: Record<Phase, string> = {
-    form:      'Nuevo stakeholder',
+    form:      existingStakeholder ? 'Entrevista de clasificación' : 'Nuevo stakeholder',
     interview: 'Entrevista de clasificación',
     result:    'Resultado del assessment',
   }
