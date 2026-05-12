@@ -64,8 +64,8 @@ export function valueStreamToInsert(vs: ValueStream, engagementId: string): Valu
     org_readiness:    vs.orgReadiness,
     opportunity_level: vs.opportunityLevel,
     interview:        toJson(vs.interview),
-    opportunities:    toJson(vs.opportunities),
-    stages:           toJson(vs.stages),
+    opportunities:    toJson(vs.opportunities ?? []),   // NOT NULL — default []
+    stages:           toJson(vs.stages ?? []),           // NOT NULL — default []
     notes:            vs.notes ?? null,
     manual_override:  vs.manualOverride ?? false,
   }
@@ -112,8 +112,8 @@ export async function updateValueStreamInDb(
   if (updates.orgReadiness     !== undefined) patch.org_readiness = updates.orgReadiness
   if (updates.opportunityLevel !== undefined) patch.opportunity_level = updates.opportunityLevel
   if (updates.interview        !== undefined) patch.interview = toJson(updates.interview)
-  if (updates.opportunities    !== undefined) patch.opportunities = toJson(updates.opportunities)
-  if (updates.stages           !== undefined) patch.stages = toJson(updates.stages)
+  if (updates.opportunities    !== undefined) patch.opportunities = toJson(updates.opportunities ?? [])
+  if (updates.stages           !== undefined) patch.stages = toJson(updates.stages ?? [])
   if (updates.notes            !== undefined) patch.notes = updates.notes ?? null
   if (updates.manualOverride   !== undefined) patch.manual_override = updates.manualOverride ?? false
 
