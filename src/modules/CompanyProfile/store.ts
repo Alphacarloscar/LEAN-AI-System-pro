@@ -29,9 +29,12 @@ function genId(): string {
 // ── Store ─────────────────────────────────────────────────────
 
 interface CompanyProfileStore {
-  profile:    CompanyProfile
-  isDirty:    boolean   // cambios sin guardar
-  isLoading:  boolean   // operación Supabase en curso
+  profile:       CompanyProfile
+  isDirty:       boolean         // cambios sin guardar
+  isLoadingData: boolean         // fetchCompanyProfile en curso (carga inicial)
+  isSaving:      boolean         // upsertCompanyProfile en curso (guardado)
+  /** @deprecated usa isLoadingData o isSaving según contexto */
+  isLoading:     boolean         // alias: isLoadingData || isSaving (para compatibilidad UI)
   saveError:  string | null
 
   // Ciclo de vida — engagement
@@ -58,34 +61,49 @@ interface CompanyProfileStore {
 export const useCompanyProfileStore = create<CompanyProfileStore>()(
   persist(
     (set, get) => ({
-      profile:    { ...EMPTY_PROFILE },
-      isDirty:    false,
-      isLoading:  false,
-      saveError:  null,
+      profile:       { ...EMPTY_PROFILE },
+      isDirty:       false,
+      isLoadingData: false,
+      isSaving:      false,
+      isLoading:     false,
+      saveError:     null,
 
       // ── Carga desde Supabase ──────────────────────────────────
 
       loadProfile: async (engagementId: string) => {
-        set({ isLoading: true, saveError: null })
+        set({ isLoadingData: true, isLoading: true, saveError: null })
+
+        // Timeout de seguridad: evita spinner infinito si Supabase no responde
+        const timeout = setTimeout(() => {
+          if (get().isLoadingData) {
+            console.warn('[CompanyProfileStore] loadProfile timeout — resetting isLoadingData')
+            set({ isLoadingData: false, isLoading: get().isSaving })
+          }
+        }, 10_000)
+
         try {
           const result = await fetchCompanyProfile(engagementId)
+          clearTimeout(timeout)
           if (result) {
             set({
-              profile:   { ...result.profile, fricciones: result.frictions },
-              isDirty:   false,
-              isLoading: false,
+              profile:       { ...result.profile, fricciones: result.frictions },
+              isDirty:       false,
+              isLoadingData: false,
+              isLoading:     get().isSaving,
             })
           } else {
             // Engagement nuevo — perfil vacío
             set({
-              profile:   { ...EMPTY_PROFILE },
-              isDirty:   false,
-              isLoading: false,
+              profile:       { ...EMPTY_PROFILE },
+              isDirty:       false,
+              isLoadingData: false,
+              isLoading:     get().isSaving,
             })
           }
         } catch (err) {
+          clearTimeout(timeout)
           console.error('[CompanyProfileStore] loadProfile:', err)
-          set({ isLoading: false })
+          set({ isLoadingData: false, isLoading: get().isSaving })
           // Si falla la carga, se usa el estado local como fallback silencioso
         }
       },
@@ -121,19 +139,19 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
         }
 
         // Modo real: persistir en Supabase
-        set({ isLoading: true })
+        set({ isSaving: true, isLoading: true })
         try {
           await upsertCompanyProfile(updatedProfile, engagementId)
-          set({ isLoading: false })
+          set({ isSaving: false, isLoading: get().isLoadingData })
         } catch (err) {
           const msg = err instanceof Error ? err.message : 'Error desconocido al guardar'
           console.error('[CompanyProfileStore] saveProfile:', err)
-          set({ isLoading: false, saveError: msg, isDirty: true })
+          set({ isSaving: false, isLoading: get().isLoadingData, saveError: msg, isDirty: true })
         }
       },
 
       resetProfile: () =>
-        set({ profile: { ...EMPTY_PROFILE }, isDirty: false, saveError: null }),
+        set({ profile: { ...EMPTY_PROFILE }, isDirty: false, saveError: null, isLoadingData: false, isSaving: false, isLoading: false }),
 
       // ── Mutadores de fricciones ───────────────────────────────
 
@@ -178,9 +196,8 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
     }),
     {
       name:       'lean-company-profile',
-      version:    2,  // bumped: partialize excluye isLoading/saveError
-      // isLoading y saveError son estado transitorio — nunca persistir
-      // Si se persiste isLoading:true (save a medias) la UI se queda bloqueada
+      version:    3,  // bumped: separados isLoadingData/isSaving, timeout en loadProfile
+      // Solo persistir datos de negocio. Todo estado transitorio (loading/error) se reinicia en cada sesión.
       partialize: (s) => ({ profile: s.profile, isDirty: s.isDirty }),
     }
   )

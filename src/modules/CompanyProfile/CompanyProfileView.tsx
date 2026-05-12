@@ -242,7 +242,7 @@ function FrictionCard({
 export function CompanyProfileView() {
   const navigate = useNavigate()
   const {
-    profile, isDirty, isLoading, saveError,
+    profile, isDirty, isSaving, saveError,
     loadProfile, updateField, toggleArea, saveProfile,
     addFriction, updateFriction, removeFriction,
   } = useCompanyProfileStore()
@@ -324,24 +324,24 @@ export function CompanyProfileView() {
                 Guardado {savedDate}
               </span>
             )}
-            {isDirty && !isLoading && (
+            {isDirty && !isSaving && (
               <span className="text-[10px] text-warning-dark font-mono animate-pulse">
                 Cambios sin guardar
               </span>
             )}
             <button
               onClick={handleSave}
-              disabled={isLoading}
+              disabled={isSaving}
               className={[
                 'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
-                isLoading
+                isSaving
                   ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
                   : savedFlash
                   ? 'bg-success-dark text-white'
                   : 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm',
               ].join(' ')}
             >
-              {isLoading ? (
+              {isSaving ? (
                 <>
                   <svg className="animate-spin" width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M7 1a6 6 0 11-6 6" strokeLinecap="round" />
