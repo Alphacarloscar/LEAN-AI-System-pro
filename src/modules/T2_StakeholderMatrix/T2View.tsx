@@ -913,8 +913,10 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
             />
           </div>
 
-          {/* Columna derecha: panel sticky con scroll propio */}
-          <div className="w-96 shrink-0 sticky top-20 max-h-[calc(100vh-5.5rem)] overflow-y-auto">
+          {/* Columna derecha: panel sticky con scroll propio.
+              top-[130px]: global nav (57px) + T2 sticky header (~68px) + 5px margen.
+              max-h: viewport minus that offset minus bottom breathing room. */}
+          <div className="w-96 shrink-0 sticky top-[130px] max-h-[calc(100vh-9rem)] overflow-y-auto">
             {activeStakeholder ? (
               <StakeholderPanel
                 stakeholder={activeStakeholder}

@@ -366,13 +366,20 @@ function ResultPhase({
 // ── Componente principal ──────────────────────────────────────
 
 export function InterviewModal({ onClose, onSubmit, existingDepartments, existingStakeholder }: InterviewModalProps) {
-  // Si hay stakeholder existente con departamento, saltamos el formulario.
-  // Si le falta departamento (importado sin ese dato), mostramos el form pre-relleno para que lo complete.
-  const hasDepartment = Boolean(existingStakeholder?.department?.trim())
+  // Si hay stakeholder existente con departamento REAL (no 'Sin asignar'), saltamos el formulario.
+  // 'Sin asignar' se asigna automáticamente en el import de T1 → hay que forzar el form para que el consultor lo corrija.
+  const dept = existingStakeholder?.department?.trim() ?? ''
+  const hasDepartment = dept.length > 0 && dept !== 'Sin asignar'
   const [phase,   setPhase]   = useState<Phase>(existingStakeholder && hasDepartment ? 'interview' : 'form')
   const [form,    setForm]    = useState<NewStakeholderForm>(
     existingStakeholder
-      ? { name: existingStakeholder.name, role: existingStakeholder.role, department: existingStakeholder.department }
+      ? {
+          name:       existingStakeholder.name,
+          role:       existingStakeholder.role,
+          // Si el departamento es 'Sin asignar' (auto-asignado en import), dejarlo vacío
+          // para que el consultor escriba el real sin tener que borrar nada primero.
+          department: hasDepartment ? existingStakeholder.department : '',
+        }
       : { name: '', role: '', department: '' }
   )
   const [answers, setAnswers] = useState<Record<number, InterviewAnswerCode>>({})
