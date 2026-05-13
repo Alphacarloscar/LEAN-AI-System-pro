@@ -97,6 +97,9 @@ function LoadingState() {
       <p className="text-xs text-text-muted dark:text-gray-400">
         Analizando datos del cliente…
       </p>
+      <p className="text-[10px] text-text-subtle dark:text-gray-500 text-center max-w-[220px] leading-relaxed">
+        Puede tardar hasta 1–2 minutos según la complejidad del portfolio.
+      </p>
     </div>
   )
 }

@@ -80,12 +80,13 @@ export function useRecommendations(
     setIsLoading(true)
     setError(null)
 
-    // Timeout de 90s: las Edge Functions tienen cold start + llamada a LLM.
-    // 90s cubre el peor caso sin dejar al usuario esperando indefinidamente.
+    // Timeout de 120s: cold start Edge Function (~3s) + llamada Claude API (hasta 90s
+    // en prompts complejos con portfolio grande). 90s era demasiado justo para T4
+    // con 7+ casos de uso con datos económicos.
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(
-        () => reject(new Error('La generación tardó demasiado. Comprueba la conexión y vuelve a intentarlo.')),
-        90_000,
+        () => reject(new Error('La generación tardó demasiado (>2 min). Inténtalo de nuevo — puede ser pico de carga en la API.')),
+        120_000,
       )
     )
 

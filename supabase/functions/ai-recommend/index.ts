@@ -13,8 +13,14 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 // ── Config ───────────────────────────────────────────────────
 
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages'
-const CLAUDE_MODEL   = 'claude-sonnet-4-6'
+// Haiku es ~5-10x más rápido que Sonnet para JSON estructurado (<10s).
+// Suficiente para recomendaciones; evita timeouts en Edge Function.
+const CLAUDE_MODEL   = 'claude-haiku-4-5-20251001'
 const MAX_TOKENS     = 1500
+// Timeout interno de la llamada a Claude: 55s < límite Supabase (150s).
+// Si Claude no responde, devolvemos JSON de error en vez de que Supabase
+// mate la función abruptamente y el SDK genere un error genérico.
+const CLAUDE_TIMEOUT_MS = 55_000
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin':  '*',
@@ -1307,20 +1313,36 @@ async function callClaude(system: string, user: string, maxTokens = MAX_TOKENS):
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY no configurada en Supabase Secrets')
 
-  const response = await fetch(CLAUDE_API_URL, {
-    method:  'POST',
-    headers: {
-      'x-api-key':         apiKey,
-      'anthropic-version': '2023-06-01',
-      'content-type':      'application/json',
-    },
-    body: JSON.stringify({
-      model:      CLAUDE_MODEL,
-      max_tokens: maxTokens,
-      system,
-      messages: [{ role: 'user', content: user }],
-    }),
-  })
+  // AbortController: si Claude no responde en CLAUDE_TIMEOUT_MS, lanzamos error
+  // controlado en vez de dejar que Supabase mate la función (→ error genérico SDK).
+  const controller = new AbortController()
+  const timeoutId  = setTimeout(() => controller.abort(), CLAUDE_TIMEOUT_MS)
+
+  let response: Response
+  try {
+    response = await fetch(CLAUDE_API_URL, {
+      method:  'POST',
+      signal:  controller.signal,
+      headers: {
+        'x-api-key':         apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type':      'application/json',
+      },
+      body: JSON.stringify({
+        model:      CLAUDE_MODEL,
+        max_tokens: maxTokens,
+        system,
+        messages: [{ role: 'user', content: user }],
+      }),
+    })
+  } catch (err) {
+    clearTimeout(timeoutId)
+    if ((err as Error)?.name === 'AbortError') {
+      throw new Error('La generación tardó demasiado. Inténtalo de nuevo en unos segundos.')
+    }
+    throw err
+  }
+  clearTimeout(timeoutId)
 
   if (!response.ok) {
     const err = await response.text()
