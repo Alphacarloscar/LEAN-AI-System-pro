@@ -46,7 +46,8 @@ export function useT8Generation(): UseT8GenerationReturn {
     setError(null)
 
     try {
-      const TIMEOUT_MS = 30_000
+      // 90s: Haiku responde en <10s pero dejamos margen para cold starts y picos de carga
+      const TIMEOUT_MS = 90_000
 
       const invokePromise = supabase.functions.invoke(
         'ai-recommend',
@@ -54,7 +55,7 @@ export function useT8Generation(): UseT8GenerationReturn {
       )
 
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('La generación tardó demasiado. Inténtalo de nuevo.')), TIMEOUT_MS)
+        setTimeout(() => reject(new Error('La generación tardó demasiado (>90s). Inténtalo de nuevo.')), TIMEOUT_MS)
       )
 
       const { data: result, error: fnError } = await Promise.race([invokePromise, timeoutPromise])
@@ -75,7 +76,7 @@ export function useT8Generation(): UseT8GenerationReturn {
       saveGeneratedContent({
         ...content,
         generatedAt: new Date().toISOString(),
-      })
+      }, engagementId)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error desconocido'
       setError(msg)

@@ -11,7 +11,7 @@
 // 7. Tarjeta dinámica de Momentum / Riesgos / Oportunidades
 // ============================================================
 
-import { useState, useMemo }             from 'react'
+import { useState, useMemo, useEffect }  from 'react'
 import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
 import { useT4Store }                    from '@/modules/T4_UseCasePriorityBoard'
 import { useT1Store }                    from '@/modules/T1_MaturityRadar/store'
@@ -1032,8 +1032,9 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
     return computeOverallScore(aggregated)
   }, [dimensionStates])
 
-  // T7 store — plan generado por LLM
-  const { generatedPlan, clearGeneratedPlan } = useT7Store()
+  // T7 store — plan generado por LLM (scoped al engagement)
+  const { generatedPlan, clearGeneratedPlan, syncEngagement: syncT7 } = useT7Store()
+  useEffect(() => { syncT7(engagementId) }, [engagementId])
 
   // Hook de generación del plan de cambio
   const { generate, isGenerating, error } = useChangePlanGeneration()

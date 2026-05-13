@@ -2,7 +2,7 @@
 // T5 — AI Domain Architecture Canvas
 // ============================================================
 
-import { useState, useMemo }              from 'react'
+import { useState, useMemo, useEffect }   from 'react'
 import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
 import { RecommendationPanel }            from '@/components/RecommendationPanel'
@@ -1014,10 +1014,23 @@ export function T5View({
   companyName: string
   onBack:      () => void
 }) {
-  const { canvas, updateDomainScores } = useT5Store()
-  const processes                      = useT3Store(s => s.processes)
-  const { profile: companyProfile }    = useCompanyProfileStore()
-  const engagementId                   = useEngagementStore((s) => s.activeEngagementId)
+  const { canvas, updateDomainScores }      = useT5Store()
+  const { processes, load: loadT3, initDemo: initT3Demo } = useT3Store(s => ({
+    processes: s.processes,
+    load:      s.load,
+    initDemo:  s.initDemo,
+  }))
+  const { profile: companyProfile }         = useCompanyProfileStore()
+  const engagementId                        = useEngagementStore((s) => s.activeEngagementId)
+
+  // Carga T3 si no hay procesos (el usuario llegó a T5 sin pasar por T3View)
+  useEffect(() => {
+    if (processes.length === 0) {
+      if (engagementId) loadT3(engagementId)
+      else              initT3Demo()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId])
 
   const [selectedDomain,  setSelectedDomain]  = useState<T5DomainCode>('automatizacion_inteligente')
   const [editingDomain,   setEditingDomain]    = useState<T5DomainCode | null>(null)

@@ -8,6 +8,9 @@
 // Las filas T4-import se derivan en runtime desde useT4Store.
 // El status y el riesgo de esas filas siempre son live desde T4.
 //
+// Los datos están scoped al engagement: si cambia el engagement
+// activo, overrides y freeItems se limpian automáticamente.
+//
 // Sprint 3: Zustand persist (localStorage).
 // Sprint 4: migrar a Supabase tabla roadmap_items.
 // ============================================================
@@ -24,6 +27,7 @@ function genId(): string {
 // ── Store interface ───────────────────────────────────────────
 
 interface T9Store {
+  engagementId: string | null
   /** Overrides de posición/responsable para filas T4-import */
   overrides: T9ItemOverride[]
   /** Iniciativas libres añadidas por el consultor */
@@ -40,15 +44,27 @@ interface T9Store {
 
   /** Elimina una iniciativa libre */
   removeFreeItem: (id: string) => void
+
+  /** Llama al montar T9View con el engagementId activo.
+   *  Si difiere del guardado, limpia overrides y freeItems (eran de otro cliente). */
+  syncEngagement: (id: string | null) => void
 }
 
 // ── Store ─────────────────────────────────────────────────────
 
 export const useT9Store = create<T9Store>()(
   persist(
-    (set) => ({
+    (set, get) => ({
+      engagementId: null,
       overrides: [],
       freeItems: [],
+
+      // ── syncEngagement ─────────────────────────────────────
+      syncEngagement: (id) => {
+        if (get().engagementId !== id) {
+          set({ engagementId: id, overrides: [], freeItems: [] })
+        }
+      },
 
       // ── setOverride ────────────────────────────────────────
       // Reemplaza el override existente para ese useCaseId,
@@ -86,7 +102,7 @@ export const useT9Store = create<T9Store>()(
     }),
     {
       name:    'lean-t9-roadmap',
-      version: 1,
+      version: 2,
     }
   )
 )

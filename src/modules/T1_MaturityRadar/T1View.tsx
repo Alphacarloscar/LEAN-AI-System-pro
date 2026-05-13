@@ -261,6 +261,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
   const liveInterviewees  = store.interviewees
   const intervieweeStates = store.dimensionStates
   const activeId          = store.activeId
+  const isLoadingT1       = store.isLoading
 
   // Carga: real (Supabase) o demo (datos del scenario)
   useEffect(() => {
@@ -462,6 +463,24 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
         </p>
       </div>
 
+      {/* ── Loading guard — mientras carga desde Supabase ── */}
+      {isLoadingT1 && (
+        <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex gap-1.5">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="w-2 h-2 rounded-full bg-navy/40 animate-bounce"
+                  style={{ animationDelay: `${i * 0.15}s` }} />
+              ))}
+            </div>
+            <p className="text-xs text-text-muted">Cargando datos de la evaluación…</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Contenido principal (oculto durante carga) ── */}
+      <div className={isLoadingT1 ? 'hidden' : ''}>
+
       {/* ── Selector de entrevistados — collapsible ── */}
       <div className="max-w-6xl mx-auto px-8 py-3">
         <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
@@ -628,6 +647,8 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
           />
         </div>
       </div>
+
+      </div> {/* fin contenido principal */}
 
       {/* ── Modal nueva entrevista ── */}
       {showNewModal && (

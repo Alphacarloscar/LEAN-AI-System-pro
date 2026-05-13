@@ -1107,7 +1107,7 @@ interface T3ViewProps {
 
 export function T3View({ companyName, onBack }: T3ViewProps) {
   const navigate                          = useNavigate()
-  const { processes, addProcess, load, initDemo } = useT3Store()
+  const { processes, addProcess, load, initDemo, isLoading: isLoadingT3 } = useT3Store()
   const engagementId                      = useEngagementStore((s) => s.activeEngagementId)
 
   // Carga: real (Supabase) o demo
@@ -1207,6 +1207,24 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
           </button>
         </div>
       </div>
+
+      {/* ── Loading guard ── */}
+      {isLoadingT3 && (
+        <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex gap-1.5">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="w-2 h-2 rounded-full bg-navy/40 animate-bounce"
+                  style={{ animationDelay: `${i * 0.15}s` }} />
+              ))}
+            </div>
+            <p className="text-xs text-text-muted">Cargando procesos del Value Stream…</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Contenido principal (oculto durante carga) ── */}
+      <div className={isLoadingT3 ? 'hidden' : ''}>
 
       <div className="flex-1 max-w-7xl mx-auto w-full px-8">
 
@@ -1385,6 +1403,8 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
           <ProcessDetailPanel process={activeProcess} />
         </div>
       )}
+
+      </div> {/* fin contenido principal */}
 
       {/* Modal de nueva entrevista */}
       {showModal && (

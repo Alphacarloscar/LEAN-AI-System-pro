@@ -13,7 +13,7 @@
 //   4. Kit por departamento (readiness + acciones concretas)
 // ============================================================
 
-import { useState, useMemo }             from 'react'
+import { useState, useMemo, useEffect }  from 'react'
 import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
 import { ARCHETYPE_CONFIG }             from '@/modules/T2_StakeholderMatrix/constants'
 import { useT4Store }                   from '@/modules/T4_UseCasePriorityBoard/store'
@@ -1036,8 +1036,9 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
   const [activeTab, setActiveTab]  = useState<'timeline' | 'messages' | 'materials' | 'dept'>('timeline')
 
-  // T8 store — contenido generado por LLM
-  const { generatedContent, clearGeneratedContent } = useT8Store()
+  // T8 store — contenido generado por LLM (scoped al engagement)
+  const { generatedContent, clearGeneratedContent, syncEngagement: syncT8 } = useT8Store()
+  useEffect(() => { syncT8(engagementId) }, [engagementId])
 
   // Hook de generación
   const { generate, isGenerating, error } = useT8Generation()

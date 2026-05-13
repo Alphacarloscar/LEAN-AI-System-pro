@@ -776,7 +776,7 @@ interface T2ViewProps {
 }
 
 export function T2View({ companyName, onBack }: T2ViewProps) {
-  const { stakeholders, addStakeholder, updateStakeholder, load, initDemo, lastError } = useT2Store()
+  const { stakeholders, addStakeholder, updateStakeholder, load, initDemo, lastError, isLoading: isLoadingT2 } = useT2Store()
   const engagementId   = useEngagementStore((s) => s.activeEngagementId)
   const companyProfile = useCompanyProfileStore((s) => s.profile)
   const navigate       = useNavigate()
@@ -886,6 +886,24 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
         )}
       </div>
 
+      {/* ── Loading guard ── */}
+      {isLoadingT2 && (
+        <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex gap-1.5">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="w-2 h-2 rounded-full bg-navy/40 animate-bounce"
+                  style={{ animationDelay: `${i * 0.15}s` }} />
+              ))}
+            </div>
+            <p className="text-xs text-text-muted">Cargando stakeholders…</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Contenido principal (oculto durante carga) ── */}
+      <div className={isLoadingT2 ? 'hidden' : ''}>
+
       {/* ── Two-column layout ── */}
       <div className="max-w-6xl mx-auto px-8 py-5">
         <div className="flex gap-6 items-start">
@@ -946,6 +964,8 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
           subtitle="Generadas por Claude · Específicas para este mapa de stakeholders"
         />
       </div>
+
+      </div> {/* fin contenido principal */}
 
       {/* ── Modal nueva entrevista ── */}
       {showModal && (

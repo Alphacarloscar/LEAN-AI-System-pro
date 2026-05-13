@@ -14,7 +14,7 @@
 // Sprint 4: edición de milestones, drag & drop, export PDF.
 // ============================================================
 
-import { useState, useMemo }              from 'react'
+import { useState, useMemo, useEffect }   from 'react'
 import { useT4Store }                     from '@/modules/T4_UseCasePriorityBoard/store'
 import { useT9Store }                     from './store'
 import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
@@ -498,9 +498,12 @@ function AddFreeItemForm({ form, onChange, onSave, onCancel }: AddFormProps) {
 
 export function T9View({ companyName, onBack }: T9ViewProps) {
   const { useCases }                                    = useT4Store()
-  const { overrides, freeItems, setOverride, addFreeItem, updateFreeItem } = useT9Store()
+  const { overrides, freeItems, setOverride, addFreeItem, updateFreeItem, syncEngagement: syncT9 } = useT9Store()
   const { profile: companyProfile }                     = useCompanyProfileStore()
   const engagementId                                    = useEngagementStore((s) => s.activeEngagementId)
+
+  // Scoping: si cambia el engagement, limpia overrides y freeItems del cliente anterior
+  useEffect(() => { syncT9(engagementId) }, [engagementId])
 
   // Solo casos con decisión Go confirmada
   const goCases = useCases.filter((uc) => uc.goNoGo?.decision === 'go')

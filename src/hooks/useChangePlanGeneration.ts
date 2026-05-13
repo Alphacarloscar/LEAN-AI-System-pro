@@ -68,7 +68,7 @@ export function useChangePlanGeneration(): UseChangePlanGenerationReturn {
       saveGeneratedPlan({
         ...plan,
         generatedAt: new Date().toISOString(),
-      })
+      }, engagementId)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error desconocido'
       setError(msg)
