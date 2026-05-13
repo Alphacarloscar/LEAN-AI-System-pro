@@ -1313,27 +1313,30 @@ function UseCaseDetailPanel({
               )
             })()}
           </div>
-          {/* Cambiar estado */}
-          <div className="flex items-center gap-1.5 mt-2">
-            <span className="text-[9px] font-mono uppercase text-text-subtle">Estado:</span>
-            {STATUS_ORDER.map((st) => {
-              const cfg = STATUS_CONFIG[st]
-              return (
-                <button
-                  key={st}
-                  onClick={() => handleStatusChange(st)}
-                  disabled={useCase.status === st}
-                  className={[
-                    'px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all duration-100',
-                    useCase.status === st
-                      ? `${cfg.badgeBg} ${cfg.badgeText} cursor-default`
-                      : 'bg-warm-100 dark:bg-warm-700 text-gray-500 hover:bg-warm-200 dark:hover:bg-warm-600',
-                  ].join(' ')}
-                >
-                  {cfg.label}
-                </button>
-              )
-            })}
+          {/* Cambiar estado — segmented control prominente */}
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
+            <span className="text-[10px] font-mono uppercase text-text-subtle shrink-0">Estado:</span>
+            <div className="flex flex-wrap gap-1.5">
+              {STATUS_ORDER.map((st) => {
+                const cfg     = STATUS_CONFIG[st]
+                const isActive = useCase.status === st
+                return (
+                  <button
+                    key={st}
+                    onClick={() => handleStatusChange(st)}
+                    disabled={isActive}
+                    className={[
+                      'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-100',
+                      isActive
+                        ? `${cfg.badgeBg} ${cfg.badgeText} border-transparent cursor-default ring-2 ring-offset-1 ring-current/20`
+                        : 'bg-white dark:bg-warm-800/60 border-border dark:border-white/10 text-text-muted hover:border-gray-300 dark:hover:border-white/20 hover:text-lean-black dark:hover:text-gray-200',
+                    ].join(' ')}
+                  >
+                    {cfg.label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
           {useCase.description && (
             <p className="text-xs text-text-muted mt-2 leading-relaxed max-w-2xl">
@@ -1725,83 +1728,126 @@ function UseCaseDetailPanel({
         {tab === 'economia' && <EconomicsTab useCase={useCase} />}
 
         {/* ── TAB: HOJA DE RUTA ────────────────────────────── */}
-        {tab === 'roadmap' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div>
-              {useCase.roadmap ? (
-                <div className="flex flex-col gap-5">
-                  {useCase.roadmap.quarter && (
-                    <div>
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
-                        Quarter planificado
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold text-lean-black dark:text-gray-100">
-                          {useCase.roadmap.quarter}
-                        </span>
-                        {useCase.roadmap.estimatedDuration && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold
-                            bg-navy/8 dark:bg-navy/20 text-navy dark:text-warm-100">
-                            {useCase.roadmap.estimatedDuration}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  {useCase.roadmap.owner && (
-                    <div>
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
-                        Responsable
-                      </p>
-                      <p className="text-sm font-semibold text-lean-black dark:text-gray-200">
-                        {useCase.roadmap.owner}
-                      </p>
-                    </div>
-                  )}
-                  {useCase.roadmap.nextSteps && (
-                    <div className="rounded-2xl bg-warm-50 dark:bg-warm-800/40
-                      border border-border dark:border-white/6 px-4 py-3">
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
-                        Próximos pasos
-                      </p>
-                      <p className="text-xs text-text-muted leading-relaxed">
-                        {useCase.roadmap.nextSteps}
-                      </p>
-                    </div>
-                  )}
-                  {useCase.roadmap.dependencies && (
-                    <div className="rounded-2xl bg-warning-light/20 border border-warning-dark/20 px-4 py-3">
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-warning-dark mb-2">
-                        Dependencias
-                      </p>
-                      <p className="text-xs text-text-muted leading-relaxed">
-                        {useCase.roadmap.dependencies}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700
-                    flex items-center justify-center text-2xl">◎</div>
-                  <p className="text-sm font-medium text-text-muted">Sin hoja de ruta asignada</p>
-                  <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
-                    Asigna un quarter de implementación tras la decisión de go/no-go.
+        {tab === 'roadmap' && (() => {
+          const rm = useCase.roadmap ?? {}
+          function saveRoadmap(patch: Partial<typeof rm>) {
+            updateUseCase(useCase.id, { roadmap: { ...rm, ...patch } as typeof useCase.roadmap })
+          }
+          return (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="flex flex-col gap-6">
+
+                {/* ── Quarter ────────────────────────────────── */}
+                <div>
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+                    Quarter de implementación
                   </p>
+                  <div className="flex flex-wrap gap-2">
+                    {(ROADMAP_QUARTERS as readonly string[]).map((q) => {
+                      const isActive = rm.quarter === q
+                      return (
+                        <button
+                          key={q}
+                          onClick={() => saveRoadmap({ quarter: isActive ? undefined : q })}
+                          className={[
+                            'px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all',
+                            isActive
+                              ? 'bg-navy text-white border-navy shadow-sm'
+                              : 'border-border dark:border-white/10 text-text-muted hover:border-navy/40 hover:text-lean-black dark:hover:text-gray-200',
+                          ].join(' ')}
+                        >
+                          {q}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {rm.quarter && (
+                    <p className="mt-2 text-[10px] text-text-subtle">
+                      Click en el quarter activo para quitar la asignación.
+                    </p>
+                  )}
                 </div>
-              )}
-            </div>
-            {useCase.notes && (
-              <div className="rounded-2xl bg-warm-50 dark:bg-warm-800/40
-                border border-border dark:border-white/6 px-4 py-3 h-fit">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
-                  Notas del consultor
-                </p>
-                <p className="text-xs text-text-muted leading-relaxed italic">{useCase.notes}</p>
+
+                {/* ── Duración estimada ─────────────────────── */}
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+                    Duración estimada
+                  </label>
+                  <input
+                    type="text"
+                    value={rm.estimatedDuration ?? ''}
+                    onChange={(e) => saveRoadmap({ estimatedDuration: e.target.value || undefined })}
+                    placeholder="ej. 6 semanas, 3 meses…"
+                    className="w-full rounded-xl border border-border dark:border-white/10 bg-white dark:bg-warm-800/50
+                      px-3 py-2 text-xs text-lean-black dark:text-gray-200 placeholder:text-text-subtle
+                      focus:outline-none focus:ring-1 focus:ring-navy/30 focus:border-navy/40 transition-colors"
+                  />
+                </div>
+
+                {/* ── Responsable ───────────────────────────── */}
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+                    Responsable de implementación
+                  </label>
+                  <input
+                    type="text"
+                    value={rm.owner ?? ''}
+                    onChange={(e) => saveRoadmap({ owner: e.target.value || undefined })}
+                    placeholder="Nombre o rol responsable…"
+                    className="w-full rounded-xl border border-border dark:border-white/10 bg-white dark:bg-warm-800/50
+                      px-3 py-2 text-xs text-lean-black dark:text-gray-200 placeholder:text-text-subtle
+                      focus:outline-none focus:ring-1 focus:ring-navy/30 focus:border-navy/40 transition-colors"
+                  />
+                </div>
               </div>
-            )}
-          </div>
-        )}
+
+              <div className="flex flex-col gap-6">
+
+                {/* ── Próximos pasos ────────────────────────── */}
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+                    Próximos pasos
+                  </label>
+                  <textarea
+                    value={rm.nextSteps ?? ''}
+                    onChange={(e) => saveRoadmap({ nextSteps: e.target.value || undefined })}
+                    rows={4}
+                    placeholder="Acciones concretas para arrancar este caso de uso…"
+                    className="w-full rounded-xl border border-border dark:border-white/10 bg-white dark:bg-warm-800/50
+                      px-3 py-2 text-xs text-lean-black dark:text-gray-200 placeholder:text-text-subtle
+                      focus:outline-none focus:ring-1 focus:ring-navy/30 focus:border-navy/40 transition-colors resize-none"
+                  />
+                </div>
+
+                {/* ── Dependencias ──────────────────────────── */}
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+                    Dependencias
+                  </label>
+                  <textarea
+                    value={rm.dependencies ?? ''}
+                    onChange={(e) => saveRoadmap({ dependencies: e.target.value || undefined })}
+                    rows={3}
+                    placeholder="Dependencias con otros casos de uso, sistemas o equipos…"
+                    className="w-full rounded-xl border border-border dark:border-white/10 bg-white dark:bg-warm-800/50
+                      px-3 py-2 text-xs text-lean-black dark:text-gray-200 placeholder:text-text-subtle
+                      focus:outline-none focus:ring-1 focus:ring-navy/30 focus:border-navy/40 transition-colors resize-none"
+                  />
+                </div>
+
+                {useCase.notes && (
+                  <div className="rounded-2xl bg-warm-50 dark:bg-warm-800/40
+                    border border-border dark:border-white/6 px-4 py-3">
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
+                      Notas del consultor
+                    </p>
+                    <p className="text-xs text-text-muted leading-relaxed italic">{useCase.notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* ── TAB: CONTEXTO T1/T2 ──────────────────────────── */}
         {tab === 'contexto' && (
