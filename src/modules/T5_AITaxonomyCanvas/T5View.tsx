@@ -1014,14 +1014,12 @@ export function T5View({
   companyName: string
   onBack:      () => void
 }) {
-  const { canvas, updateDomainScores }      = useT5Store()
-  const { processes, load: loadT3, initDemo: initT3Demo } = useT3Store(s => ({
-    processes: s.processes,
-    load:      s.load,
-    initDemo:  s.initDemo,
-  }))
-  const { profile: companyProfile }         = useCompanyProfileStore()
-  const engagementId                        = useEngagementStore((s) => s.activeEngagementId)
+  const { canvas, updateDomainScores }  = useT5Store()
+  const processes                       = useT3Store(s => s.processes)
+  const loadT3                          = useT3Store(s => s.load)
+  const initT3Demo                      = useT3Store(s => s.initDemo)
+  const { profile: companyProfile }     = useCompanyProfileStore()
+  const engagementId                    = useEngagementStore((s) => s.activeEngagementId)
 
   // Carga T3 si no hay procesos (el usuario llegó a T5 sin pasar por T3View)
   useEffect(() => {
