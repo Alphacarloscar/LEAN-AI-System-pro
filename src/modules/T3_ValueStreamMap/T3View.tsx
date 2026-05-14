@@ -495,79 +495,6 @@ function HeroCategoryDonut({
   )
 }
 
-// ── Score bars T3 ─────────────────────────────────────────────
-
-const T3_SCORE_BARS = [
-  { key: 'aut', label: 'AUTOMATIZACIÓN', hex: '#6A90C0', light: '#B8D0E8' },
-  { key: 'dat', label: 'DATOS',          hex: '#5FAF8A', light: '#B4E4CF' },
-  { key: 'vol', label: 'VOLUMEN',        hex: '#9AAEC8', light: '#C8DAE8' },
-  { key: 'imp', label: 'IMPACTO',        hex: '#D4A85C', light: '#E8D0A0' },
-  { key: 'rdy', label: 'READINESS',      hex: '#C06060', light: '#DDA8A8' },
-] as const
-
-function T3ScoreBars({
-  automationScore, dataScore, volumeScore, impactScore, readinessScore,
-  trackWidth = 200,
-}: {
-  automationScore: number; dataScore: number; volumeScore: number
-  impactScore: number; readinessScore: number; trackWidth?: number
-}) {
-  const MAX = 4
-  const LBL_W = 80, G1 = 10, TRACK_W = trackWidth, G2 = 8, VAL_COL = 28
-  const VBW = LBL_W + G1 + TRACK_W + G2 + VAL_COL
-  const TX  = LBL_W + G1
-  const ROW_H = 36, VBH = T3_SCORE_BARS.length * ROW_H + 8
-  const values = [automationScore, dataScore, volumeScore, impactScore, readinessScore]
-
-  return (
-    <svg viewBox={`0 0 ${VBW} ${VBH}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
-      <defs>
-        {T3_SCORE_BARS.map(({ key, hex, light }, i) => {
-          const fillW = Math.max((values[i] / MAX) * TRACK_W, 2)
-          return (
-            <linearGradient key={key} id={`t3sb-${key}`}
-              x1={TX} y1="0" x2={TX + fillW} y2="0"
-              gradientUnits="userSpaceOnUse">
-              <stop offset="0%"   stopColor={hex}   stopOpacity="0.15" />
-              <stop offset="30%"  stopColor={hex}   stopOpacity="0.92" />
-              <stop offset="58%"  stopColor={light} stopOpacity="1" />
-              <stop offset="85%"  stopColor={hex}   stopOpacity="0.80" />
-              <stop offset="100%" stopColor={hex}   stopOpacity="0.40" />
-            </linearGradient>
-          )
-        })}
-      </defs>
-      {T3_SCORE_BARS.map(({ key, label, hex, light }, i) => {
-        const val   = values[i]
-        const fillW = Math.max((val / MAX) * TRACK_W, 2)
-        const cy    = i * ROW_H + ROW_H / 2 + 3
-        return (
-          <g key={key}>
-            <text x={0} y={cy + 3} fontSize={7.5} fill="#64748B"
-              fontFamily="ui-monospace,monospace" letterSpacing="0.05em">
-              {label}
-            </text>
-            <rect x={TX} y={cy - 0.4} width={TRACK_W} height={0.8}
-              fill={hex} opacity={0.08} rx={0.4} />
-            <rect x={TX} y={cy - 3.5} width={fillW} height={7}
-              fill={hex} opacity={0.10} rx={3.5} />
-            <rect x={TX} y={cy - 1.5} width={fillW} height={3}
-              fill={`url(#t3sb-${key})`} rx={1.5} />
-            <rect x={TX + fillW * 0.08} y={cy - 2}
-              width={fillW * 0.45} height={0.7}
-              fill={light} opacity={0.60} rx={0.35} />
-            <text x={TX + TRACK_W + G2} y={cy + 3}
-              fontSize={8} fontWeight="600" fill="#94A3B8"
-              fontFamily="ui-monospace,monospace">
-              {val.toFixed(1)}<tspan fontSize={6.5} opacity={0.5}>/4</tspan>
-            </text>
-          </g>
-        )
-      })}
-    </svg>
-  )
-}
-
 // ── Mini matrix de posición para el panel de detalle ──────────
 
 function DetailPositionMap({
@@ -719,15 +646,6 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
     bajo:  'bg-warm-100 dark:bg-warm-700 text-gray-500',
     medio: 'bg-info-light text-info-dark',
     alto:  'bg-navy/10 dark:bg-navy/20 text-navy dark:text-warm-100',
-  }
-
-  const INTERVIEW_LABELS: Record<number, string> = {
-    1: '¿Qué % es repetitivo?',
-    2: '¿Disponibilidad de datos?',
-    3: '¿Frecuencia y volumen?',
-    4: '¿Impacto de mejora?',
-    5: '¿Actitud del equipo?',
-    6: '¿Tiempo manual/semana?',
   }
 
   return (
