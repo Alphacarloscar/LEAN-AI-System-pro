@@ -7,7 +7,7 @@
 //   3. ISO 42001 — checklist de 14 controles con progreso
 // ============================================================
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useT4Store }        from '@/modules/T4_UseCasePriorityBoard'
 import { useT5Store }        from '@/modules/T5_AITaxonomyCanvas'
 import { useT6Store }        from './store'
@@ -790,9 +790,11 @@ export function T6View({
   const [tab, setTab]    = useState<T6Tab>('politica')
   const { useCases }     = useT4Store()
   const { canvas }       = useT5Store()
-  const { controls }     = useT6Store()
+  const { controls, syncEngagement: syncT6 } = useT6Store()
   const companyProfile   = useCompanyProfileStore((s) => s.profile)
   const engagementId     = useEngagementStore((s) => s.activeEngagementId)
+
+  useEffect(() => { syncT6(engagementId) }, [engagementId])
 
   const t6LLMContext = useMemo(() =>
     companyProfile

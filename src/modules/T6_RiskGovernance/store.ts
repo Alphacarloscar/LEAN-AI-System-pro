@@ -26,6 +26,9 @@ function buildInitialControls(): ISO42001Control[] {
 // ── Store ─────────────────────────────────────────────────────
 
 interface T6Store {
+  // Engagement scoping
+  engagementId:        string | null
+  syncEngagement:      (id: string | null) => void
   // ISO 42001
   controls:            ISO42001Control[]
   updateControl:       (id: string, status: ISO42001Status, notes?: string) => void
@@ -40,7 +43,20 @@ interface T6Store {
 
 export const useT6Store = create<T6Store>()(
   persist(
-    (set) => ({
+    (set, get) => ({
+      // ── Engagement scoping ──
+      engagementId: null,
+
+      syncEngagement: (id) => {
+        if (get().engagementId !== id) {
+          set({
+            engagementId:    id,
+            controls:        buildInitialControls(),
+            generatedPolicy: null,
+          })
+        }
+      },
+
       // ── ISO 42001 ──
       controls: buildInitialControls(),
 
@@ -68,6 +84,6 @@ export const useT6Store = create<T6Store>()(
       setPolicyGenerating: (value) =>
         set({ isPolicyGenerating: value }),
     }),
-    { name: 'lean-t6-governance', version: 2 },
+    { name: 'lean-t6-governance', version: 3 },
   ),
 )
