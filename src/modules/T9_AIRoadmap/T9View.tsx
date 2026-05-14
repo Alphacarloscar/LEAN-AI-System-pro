@@ -101,9 +101,9 @@ function quarterToStartMonth(quarter?: string): number {
   if (!quarter) return 0
   const q = quarter.toUpperCase()
   if (q.includes('Q1')) return 0
-  if (q.includes('Q2')) return 1
-  if (q.includes('Q3')) return 3
-  if (q.includes('Q4')) return 4
+  if (q.includes('Q2')) return 3
+  if (q.includes('Q3')) return 6
+  if (q.includes('Q4')) return 9
   return 0
 }
 
@@ -125,7 +125,7 @@ function computeDefaultOverride(uc: UseCase): T9ItemOverride {
   return {
     useCaseId:   uc.id,
     startMonth:  start,
-    endMonth:    Math.min(start + span - 1, 5),
+    endMonth:    Math.min(start + span - 1, 11),
     responsible: uc.roadmap?.owner ?? uc.sponsorName ?? '—',
   }
 }
@@ -133,16 +133,16 @@ function computeDefaultOverride(uc: UseCase): T9ItemOverride {
 // ── Estilos de barra (posición dinámica) ─────────────────────
 
 function barLeftPct(startMonth: number): string {
-  return `${(startMonth / 6) * 100}%`
+  return `${(startMonth / 12) * 100}%`
 }
 
 function barWidthPct(startMonth: number, endMonth: number): string {
-  return `${Math.max(((endMonth - startMonth + 1) / 6) * 100, 8)}%`
+  return `${Math.max(((endMonth - startMonth + 1) / 12) * 100, 4)}%`
 }
 
 function milestoneLeftPct(endMonth: number): string {
   // borde derecho del mes — centrado en el marcador (5px = mitad del dot)
-  return `calc(${((endMonth + 1) / 6) * 100}% - 5px)`
+  return `calc(${((endMonth + 1) / 12) * 100}% - 5px)`
 }
 
 // ── Badge ─────────────────────────────────────────────────────
@@ -301,21 +301,24 @@ function GanttRowItem({
         {/* Líneas de mes */}
         <div
           className="absolute inset-0 grid pointer-events-none"
-          style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}
+          style={{ gridTemplateColumns: 'repeat(12, 1fr)' }}
         >
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 12 }).map((_, i) => (
             <div
               key={i}
-              className={i < 5 ? 'border-r border-border/25 dark:border-white/5' : ''}
+              className={i < 11 ? 'border-r border-border/25 dark:border-white/5' : ''}
             />
           ))}
         </div>
 
-        {/* Divisor Q1/Q2 (mes 3 → mes 4) */}
-        <div
-          className="absolute top-0 bottom-0 pointer-events-none"
-          style={{ left: '50%', width: 1, background: 'rgba(0,0,0,0.08)' }}
-        />
+        {/* Separadores de trimestre Q1|Q2|Q3|Q4 */}
+        {[25, 50, 75].map((pct) => (
+          <div
+            key={pct}
+            className="absolute top-0 bottom-0 pointer-events-none"
+            style={{ left: `${pct}%`, width: 1, background: 'rgba(0,0,0,0.10)' }}
+          />
+        ))}
 
         {/* Barra */}
         <div
@@ -355,10 +358,9 @@ function GanttRowItem({
 
 // ── AddFreeItemForm ───────────────────────────────────────────
 
-const MONTH_OPTIONS = Array.from({ length: 6 }, (_, i) => ({
-  value: i,
-  label: `Mes ${i + 1}`,
-}))
+const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+const MONTH_OPTIONS = MONTH_NAMES.map((name, i) => ({ value: i, label: name }))
 
 const SELECT_CLS =
   'w-full text-xs border border-border dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-lean-black dark:text-gray-100 outline-none focus:ring-1 focus:ring-blue-300'
@@ -586,7 +588,10 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
     setShowAddForm(false)
   }
 
-  const MONTHS = ['Mes 1', 'Mes 2', 'Mes 3', 'Mes 4', 'Mes 5', 'Mes 6']
+  const MONTHS = MONTH_NAMES
+
+  // ── Selector de año ─────────────────────────────────────────
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
@@ -611,6 +616,26 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">{companyName} · Sprint L.E.A.N.</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Selector de año */}
+          <div className="flex items-center gap-0.5 border border-border dark:border-white/10 rounded-lg px-2 py-1 bg-white dark:bg-gray-900">
+            <button
+              onClick={() => setSelectedYear((y) => y - 1)}
+              className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-lean-black dark:hover:text-gray-100 transition-colors rounded"
+              aria-label="Año anterior"
+            >
+              ‹
+            </button>
+            <span className="text-xs font-mono font-medium text-lean-black dark:text-gray-100 px-1.5 tabular-nums">
+              {selectedYear}
+            </span>
+            <button
+              onClick={() => setSelectedYear((y) => y + 1)}
+              className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-lean-black dark:hover:text-gray-100 transition-colors rounded"
+              aria-label="Año siguiente"
+            >
+              ›
+            </button>
+          </div>
           <button className="px-4 py-1.5 text-xs bg-navy-metallic text-white rounded-lg hover:bg-navy-metallic-hover transition-all shadow-sm">
             Crear snapshot
           </button>
@@ -650,29 +675,34 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
             Iniciativa / responsable
           </div>
           <div className="border-l border-border dark:border-white/6">
-            {/* Trimestres */}
-            <div className="grid border-b border-border dark:border-white/6" style={{ gridTemplateColumns: '1fr 1fr' }}>
-              <div
-                className="py-1.5 text-center text-[10px] font-medium uppercase tracking-widest border-r border-border dark:border-white/6"
-                style={{ background: DS.infoLight, color: DS.infoDark }}
-              >
-                Q1 — Meses 1 a 3
-              </div>
-              <div
-                className="py-1.5 text-center text-[10px] font-medium uppercase tracking-widest"
-                style={{ background: DS.successLight, color: DS.successDark }}
-              >
-                Q2 — Meses 4 a 6
-              </div>
+            {/* Trimestres — 4Q */}
+            <div className="grid border-b border-border dark:border-white/6" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+              {([
+                { q: 'Q1', months: 'Ene–Mar', bg: DS.infoLight,    color: DS.infoDark    },
+                { q: 'Q2', months: 'Abr–Jun', bg: DS.successLight,  color: DS.successDark },
+                { q: 'Q3', months: 'Jul–Sep', bg: DS.warningLight,  color: DS.warningDark },
+                { q: 'Q4', months: 'Oct–Dic', bg: DS.dangerLight,   color: DS.dangerDark  },
+              ] as const).map(({ q, months, bg, color }, i) => (
+                <div
+                  key={q}
+                  className={[
+                    'py-1.5 text-center text-[10px] font-medium uppercase tracking-widest',
+                    i < 3 ? 'border-r border-border dark:border-white/6' : '',
+                  ].join(' ')}
+                  style={{ background: bg, color }}
+                >
+                  {q} {selectedYear} · {months}
+                </div>
+              ))}
             </div>
-            {/* Meses */}
-            <div className="grid" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
+            {/* Meses — 12 columnas */}
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)' }}>
               {MONTHS.map((m, i) => (
                 <div
                   key={m}
                   className={[
                     'py-1.5 text-center text-[11px] text-text-subtle',
-                    i < 5 ? 'border-r border-border dark:border-white/6' : '',
+                    i < 11 ? 'border-r border-border dark:border-white/6' : '',
                   ].join(' ')}
                 >
                   {m}
@@ -704,22 +734,14 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
           )
         })}
 
-        {/* Formulario añadir / botón añadir */}
-        {showAddForm ? (
+        {/* Formulario añadir */}
+        {showAddForm && (
           <AddFreeItemForm
             form={addForm}
             onChange={(updates) => setAddForm((prev) => ({ ...prev, ...updates }))}
             onSave={handleAddFree}
             onCancel={() => setShowAddForm(false)}
           />
-        ) : (
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="w-full flex items-center gap-1.5 px-4 py-2.5 text-xs text-text-muted hover:bg-gray-50 dark:hover:bg-gray-800/30 border-t border-border dark:border-white/6 transition-colors"
-          >
-            <span className="text-sm leading-none">+</span>
-            Añadir iniciativa libre
-          </button>
         )}
       </div>
 

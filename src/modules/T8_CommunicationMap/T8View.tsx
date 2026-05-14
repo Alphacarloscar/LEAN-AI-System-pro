@@ -31,11 +31,12 @@ import type { CommAction, CommPhase, CommType, CommChannel, DeptKit, MaterialTem
 
 type RogersSegment = 'innovators' | 'early_adopters' | 'early_majority' | 'late_majority' | 'laggards'
 
-const ARCHETYPE_BASE_SEG: Record<ArchetypeCode, RogersSegment> = {
+const ARCHETYPE_BASE_SEG: Record<string, RogersSegment> = {
   adoptador:    'early_adopters',
   ambassador:   'early_majority',
   decisor:      'early_majority',
-  reticente: 'late_majority',
+  reticente:    'late_majority',
+  especialista: 'late_majority',  // compat: datos antiguos en localStorage
   critico:      'laggards',
 }
 

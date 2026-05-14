@@ -19,16 +19,17 @@ const SEGMENT_ORDER: RogersSegment[] = [
   'innovators', 'early_adopters', 'early_majority', 'late_majority', 'laggards',
 ]
 
-const ARCHETYPE_BASE_SEG: Record<ArchetypeCode, RogersSegment> = {
+const ARCHETYPE_BASE_SEG: Record<string, RogersSegment> = {
   adoptador:    'early_adopters',
   ambassador:   'early_majority',
   decisor:      'early_majority',
-  reticente: 'late_majority',
+  reticente:    'late_majority',
+  especialista: 'late_majority',  // compat: datos antiguos en localStorage
   critico:      'laggards',
 }
 
-function getSegment(archetype: ArchetypeCode, resistance: ResistanceLevel): RogersSegment {
-  const base = ARCHETYPE_BASE_SEG[archetype]
+function getSegment(archetype: string, resistance: ResistanceLevel): RogersSegment {
+  const base = ARCHETYPE_BASE_SEG[archetype] ?? 'early_majority'
   if (resistance === 'alta') {
     const idx = SEGMENT_ORDER.indexOf(base)
     return SEGMENT_ORDER[Math.min(idx + 1, SEGMENT_ORDER.length - 1)]

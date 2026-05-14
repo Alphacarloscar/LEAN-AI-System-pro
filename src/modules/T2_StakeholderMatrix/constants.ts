@@ -138,6 +138,12 @@ export const ARCHETYPE_CONFIG: Record<ArchetypeCode, ArchetypeConfig> = {
   },
 }
 
+// ── Backward compatibility: datos en localStorage con código antiguo ──
+// Los stakeholders guardados antes del rename 'especialista' → 'reticente'
+// siguen teniendo archetype='especialista'. Este alias evita crash en runtime.
+;(ARCHETYPE_CONFIG as Record<string, typeof ARCHETYPE_CONFIG.reticente>)['especialista'] =
+  ARCHETYPE_CONFIG.reticente
+
 // ── Etiquetas de resistencia ──────────────────────────────────
 
 export const RESISTANCE_CONFIG: Record<ResistanceLevel, {
