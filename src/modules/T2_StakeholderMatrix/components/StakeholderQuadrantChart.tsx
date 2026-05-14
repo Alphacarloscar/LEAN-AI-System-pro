@@ -79,7 +79,7 @@ const ARCHETYPE_HEX: Record<ArchetypeCode, string> = {
   ambassador:   '#6A90C0',
   decisor:      '#2A2822',  // warm charcoal (era navy #1B2A4E)
   critico:      '#C06060',
-  especialista: '#D4A85C',
+  reticente: '#D4A85C',
 }
 
 const ARCHETYPE_BG_HEX: Record<ArchetypeCode, string> = {
@@ -87,7 +87,7 @@ const ARCHETYPE_BG_HEX: Record<ArchetypeCode, string> = {
   ambassador:   '#DDE8F5',
   decisor:      'rgba(42,40,34,0.10)',  // warm charcoal bg sutil
   critico:      '#F5DEDE',
-  especialista: '#FAF0D7',
+  reticente: '#FAF0D7',
 }
 
 const RESISTANCE_STROKE: Record<ResistanceLevel, { color: string; width: number; dasharray?: string }> = {
@@ -173,7 +173,7 @@ export function StakeholderQuadrantChart({
   const QUADRANT_FILLS = {
     critico:      isDark ? 'rgba(192,96,96,0.28)'    : ARCHETYPE_BG_HEX.critico,
     decisor:      isDark ? 'rgba(196,192,184,0.18)'  : ARCHETYPE_BG_HEX.decisor,
-    especialista: isDark ? 'rgba(212,168,92,0.28)'   : ARCHETYPE_BG_HEX.especialista,
+    reticente: isDark ? 'rgba(212,168,92,0.28)'   : ARCHETYPE_BG_HEX.reticente,
     adoptador:    isDark ? 'rgba(95,175,138,0.28)'   : ARCHETYPE_BG_HEX.adoptador,
   }
 
@@ -195,7 +195,7 @@ export function StakeholderQuadrantChart({
     ambassador:   [3.2, 3.0],   // alta influencia + alta adopción
     adoptador:    [3.2, 0.8],   // baja influencia, alta adopción
     critico:      [0.8, 3.2],   // alta influencia, baja adopción
-    especialista: [1.0, 1.0],   // baja influencia, baja adopción
+    reticente: [1.0, 1.0],   // baja influencia, baja adopción
   }
 
   // Posiciones base → jitter (ALL: interviewed + ghost)
@@ -278,7 +278,7 @@ export function StakeholderQuadrantChart({
               <stop offset="52%"  stopColor="#C06060" />
               <stop offset="100%" stopColor="#864343" />
             </radialGradient>
-            <radialGradient id="grad-especialista" cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
+            <radialGradient id="grad-reticente" cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
               <stop offset="0%"   stopColor="#EAD4AE" />
               <stop offset="52%"  stopColor="#D4A85C" />
               <stop offset="100%" stopColor="#947640" />
@@ -292,7 +292,7 @@ export function StakeholderQuadrantChart({
             {/* El espacio entre rects (GAP=4px cada lado) actúa como separador visual  */}
             <rect x={0}      y={0}      width={CX - 4}      height={CY - 4}      fill={QUADRANT_FILLS.critico}      opacity={0.5} />
             <rect x={CX + 4} y={0}      width={VB - CX - 4} height={CY - 4}      fill={QUADRANT_FILLS.decisor}      opacity={0.5} />
-            <rect x={0}      y={CY + 4} width={CX - 4}      height={VB - CY - 4} fill={QUADRANT_FILLS.especialista} opacity={0.5} />
+            <rect x={0}      y={CY + 4} width={CX - 4}      height={VB - CY - 4} fill={QUADRANT_FILLS.reticente} opacity={0.5} />
             <rect x={CX + 4} y={CY + 4} width={VB - CX - 4} height={VB - CY - 4} fill={QUADRANT_FILLS.adoptador}   opacity={0.5} />
 
             {/* ── Ghost: stakeholders sin entrevista ──
@@ -473,12 +473,12 @@ export function StakeholderQuadrantChart({
           {/* BL: Especialista */}
           <text x={94} y={424} textAnchor="middle"
             fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace"
-            fill={ARCHETYPE_HEX.especialista} letterSpacing="0.06em">
+            fill={ARCHETYPE_HEX.reticente} letterSpacing="0.06em">
             ESPECIALISTA
           </text>
           <text x={94} y={436} textAnchor="middle"
             fontSize={7.5} fontFamily="ui-monospace, monospace"
-            fill={ARCHETYPE_HEX.especialista} opacity={0.65}>
+            fill={ARCHETYPE_HEX.reticente} opacity={0.65}>
             dominio / miedo
           </text>
 

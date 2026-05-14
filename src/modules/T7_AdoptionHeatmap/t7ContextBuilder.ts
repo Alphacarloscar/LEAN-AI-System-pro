@@ -23,7 +23,7 @@ const ARCHETYPE_BASE_SEG: Record<ArchetypeCode, RogersSegment> = {
   adoptador:    'early_adopters',
   ambassador:   'early_majority',
   decisor:      'early_majority',
-  especialista: 'late_majority',
+  reticente: 'late_majority',
   critico:      'laggards',
 }
 

@@ -13,7 +13,7 @@ export type ArchetypeCode =
   | 'ambassador'   // Connector IT-Negocio, multiplica adopción
   | 'decisor'      // Autoridad presupuestaria, necesita ROI claro
   | 'critico'      // Escéptico activo, puede bloquear
-  | 'especialista' // Conocimiento profundo, preocupado por su rol
+  | 'reticente'    // Conocimiento profundo, baja adopción y openness
 
 export type ResistanceLevel = 'baja' | 'media' | 'alta'
 

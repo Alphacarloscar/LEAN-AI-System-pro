@@ -124,13 +124,6 @@ function HeroOpportunityMatrix({
         <clipPath id="t3hero-clip">
           <rect x={P} y={P} width={IN} height={IN} rx={6} />
         </clipPath>
-        {processes.map((p) => (
-          <radialGradient key={`glow-${p.id}`} id={`glow-${p.id}`}
-            cx="50%" cy="50%" r="50%">
-            <stop offset="0%"   stopColor={CAT_HEX[p.aiCategory]} stopOpacity="0.35" />
-            <stop offset="100%" stopColor={CAT_HEX[p.aiCategory]} stopOpacity="0" />
-          </radialGradient>
-        ))}
       </defs>
 
       {/* Quadrant fills */}
@@ -203,21 +196,11 @@ function HeroOpportunityMatrix({
             })}
             onMouseLeave={() => setHovered(null)}
           >
-            {/* Outer glow */}
-            <circle cx={dx} cy={dy} r={r * 3.5}
-              fill={`url(#glow-${p.id})`} />
-            {/* Mid halo */}
-            <circle cx={dx} cy={dy} r={r * 1.8}
-              fill={hex} opacity={isActive ? 0.25 : 0.12} />
             {/* Main dot */}
             <circle cx={dx} cy={dy} r={r} fill={hex}
-              opacity={isActive ? 1 : 0.80}
-              stroke={isActive ? '#fff' : 'rgba(255,255,255,0.5)'}
-              strokeWidth={isActive ? 1.5 : 0.8} />
-            {/* Metallic shine */}
-            <ellipse cx={dx - r * 0.22} cy={dy - r * 0.30}
-              rx={r * 0.38} ry={r * 0.22}
-              fill="#fff" opacity={0.40} />
+              opacity={isActive ? 1 : 0.82}
+              stroke={isActive ? '#fff' : 'rgba(255,255,255,0.6)'}
+              strokeWidth={isActive ? 2 : 1} />
           </g>
         )
       })}
@@ -617,10 +600,6 @@ function DetailPositionMap({
         <clipPath id="detail-map-clip">
           <rect x={P} y={P} width={IN} height={IN} rx={5} />
         </clipPath>
-        <radialGradient id="detail-glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%"   stopColor={hex} stopOpacity="0.40" />
-          <stop offset="100%" stopColor={hex} stopOpacity="0" />
-        </radialGradient>
       </defs>
 
       <g clipPath="url(#detail-map-clip)">
@@ -646,14 +625,9 @@ function DetailPositionMap({
         </text>
       ))}
 
-      {/* Glow + dot */}
-      <circle cx={dx} cy={dy} r={r * 3.5} fill="url(#detail-glow)" />
-      <circle cx={dx} cy={dy} r={r * 1.8} fill={hex} opacity={0.20} />
-      <circle cx={dx} cy={dy} r={r}       fill={hex}
+      {/* Dot */}
+      <circle cx={dx} cy={dy} r={r} fill={hex}
         stroke="#fff" strokeWidth={1.5} />
-      <ellipse cx={dx - r * 0.22} cy={dy - r * 0.30}
-        rx={r * 0.40} ry={r * 0.22}
-        fill="#fff" opacity={0.42} />
 
       {/* Crosshair lines from dot to axes */}
       <line x1={P} y1={dy} x2={dx - r} y2={dy}
@@ -666,7 +640,7 @@ function DetailPositionMap({
 
 // ── Panel de detalle del proceso (desplegado debajo) ──────────
 
-type DetailTab = 'oportunidades' | 'entrevista' | 'etapas'
+type DetailTab = 'oportunidades' | 'etapas'
 
 function ProcessDetailPanel({ process }: { process: ValueStream }) {
   const [tab, setTab] = useState<DetailTab>('oportunidades')
@@ -808,7 +782,6 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
       <div className="flex gap-0 border-b border-border dark:border-white/6 px-8">
         {([
           { key: 'oportunidades', label: 'Oportunidades IA' },
-          { key: 'entrevista',    label: 'Entrevista' },
           { key: 'etapas',       label: 'Etapas del proceso' },
         ] as { key: DetailTab; label: string }[]).map(({ key, label }) => (
           <button
@@ -1002,87 +975,6 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
                 </div>
               )}
             </div>
-          </div>
-        )}
-
-        {/* ── TAB: ENTREVISTA ──────────────────────────────── */}
-        {tab === 'entrevista' && (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
-
-            {/* Preguntas + respuestas */}
-            <div>
-              {hasInterview ? (
-                <>
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-4">
-                    Respuestas de la entrevista
-                  </p>
-                  <div className="flex flex-col gap-3">
-                    {Object.entries(process.interview!.answers).map(([qId, answer]) => (
-                      <div key={qId}
-                        className="rounded-xl border border-border dark:border-white/8
-                          bg-white dark:bg-warm-800/50 px-4 py-3">
-                        <p className="text-[10px] font-mono text-text-subtle mb-0.5">
-                          P{qId}
-                        </p>
-                        <p className="text-xs text-text-muted mb-1.5">
-                          {INTERVIEW_LABELS[parseInt(qId)] ?? `Pregunta ${qId}`}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <span className="h-6 w-6 rounded-full bg-navy flex items-center justify-center
-                            text-[10px] font-bold text-white shrink-0">
-                            {answer}
-                          </span>
-                          <p className="text-xs font-medium text-lean-black dark:text-gray-200">
-                            Respuesta {answer}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center
-                    justify-center text-2xl">
-                    ✎
-                  </div>
-                  <p className="text-sm font-medium text-text-muted">Sin entrevista registrada</p>
-                  <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
-                    Usa el botón "+ Proceso" y selecciona este proceso para completar la entrevista estructurada.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Score bars */}
-            {hasInterview && (
-              <div>
-                <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-4">
-                  Scores del diagnóstico
-                </p>
-                <T3ScoreBars
-                  automationScore={process.interview!.automationScore}
-                  dataScore={process.interview!.dataScore}
-                  volumeScore={process.interview!.volumeScore}
-                  impactScore={process.interview!.impactScore}
-                  readinessScore={process.interview!.readinessScore}
-                  trackWidth={200}
-                />
-                <div className="mt-4 rounded-2xl bg-warm-50 dark:bg-warm-800/40
-                  border border-border dark:border-white/6 px-4 py-3">
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
-                    Score oportunidad compuesto
-                  </p>
-                  <p className="text-2xl font-bold text-lean-black dark:text-gray-100 tabular-nums">
-                    {process.interview!.opportunityScore.toFixed(2)}
-                    <span className="text-sm font-normal text-text-subtle">/4.00</span>
-                  </p>
-                  <p className="text-[10px] text-text-subtle mt-1">
-                    Ponderación: automatización 35% · datos 25% · volumen 20% · impacto 20%
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         )}
 

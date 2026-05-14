@@ -6,7 +6,7 @@
 //
 // Mapeo automático:
 //   name, role          → directo desde T1
-//   type 'it'           → archetype 'especialista', dept 'IT / Tecnología'
+//   type 'it'           → archetype 'reticente', dept 'IT / Tecnología'
 //   type 'business'     → archetype 'decisor',      dept 'Sin asignar'
 //   resistance          → 'media' (neutro — ajustar tras importar)
 //   department          → sobrescrito si el consultor edita en T2
@@ -70,7 +70,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
     // de inmediato. La sync a Supabase ocurre en background (fire-and-forget).
     // No bloqueamos el modal esperando cada insert individual.
     toImport.forEach((person) => {
-      const archetype: ArchetypeCode = person.type === 'it' ? 'especialista' : 'decisor'
+      const archetype: ArchetypeCode = person.type === 'it' ? 'reticente' : 'decisor'
       const department  = person.type === 'it' ? 'IT / Tecnología' : 'Sin asignar'
 
       addStakeholder(

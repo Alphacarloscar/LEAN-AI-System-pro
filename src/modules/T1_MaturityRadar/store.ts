@@ -133,8 +133,16 @@ export const useT1Store = create<T1Store>()((set, get) => ({
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
     set({ isLoading: true })
+
+    const LOAD_TIMEOUT_MS = 15_000
+
+    const fetchPromise = fetchT1Data(engagementId)
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('T1_LOAD_TIMEOUT')), LOAD_TIMEOUT_MS)
+    )
+
     try {
-      const { interviewees, dimensionStates } = await fetchT1Data(engagementId)
+      const { interviewees, dimensionStates } = await Promise.race([fetchPromise, timeoutPromise])
       set({
         interviewees,
         dimensionStates,
@@ -142,7 +150,8 @@ export const useT1Store = create<T1Store>()((set, get) => ({
         isLoading: false,
       })
     } catch (err) {
-      console.error('[T1Store] load:', err)
+      const isTimeout = (err as Error)?.message === 'T1_LOAD_TIMEOUT'
+      console.error('[T1Store] load:', isTimeout ? 'timeout (>15s) — check Supabase connection' : err)
       set({ isLoading: false })
     }
   },

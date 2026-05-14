@@ -34,10 +34,10 @@ const ARCH_HEX: Record<ArchetypeCode, string> = {
   ambassador:   '#6A90C0',
   decisor:      '#2A2822',  // warm charcoal (era navy #1B2A4E)
   critico:      '#C06060',
-  especialista: '#D4A85C',
+  reticente: '#D4A85C',
 }
 
-const ARCH_ORDER: ArchetypeCode[] = ['decisor', 'ambassador', 'adoptador', 'critico', 'especialista']
+const ARCH_ORDER: ArchetypeCode[] = ['decisor', 'ambassador', 'adoptador', 'critico', 'reticente']
 
 // ── Utilidades de UI ──────────────────────────────────────────
 
@@ -747,23 +747,6 @@ function DepartmentOverviewChart({ stakeholders }: { stakeholders: Stakeholder[]
         </svg>
       </div>
 
-      {/* Archetype legend */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5">
-        {ARCH_ORDER.map((arch) => {
-          const count = stakeholders.filter((s) => s.archetype === arch).length
-          if (count === 0) return null
-          const cfg = ARCHETYPE_CONFIG[arch]
-          return (
-            <div key={arch} className="flex items-center gap-1.5">
-              <span
-                className="h-1.5 w-3.5 rounded-sm inline-block shrink-0"
-                style={{ backgroundColor: ARCH_HEX[arch] }}
-              />
-              <span className="text-[9px] text-text-subtle">{cfg.label}</span>
-            </div>
-          )
-        })}
-      </div>
     </div>
   )
 }

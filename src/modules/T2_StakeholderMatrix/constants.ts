@@ -111,9 +111,9 @@ export const ARCHETYPE_CONFIG: Record<ArchetypeCode, ArchetypeConfig> = {
     },
   },
 
-  especialista: {
-    code:        'especialista',
-    label:       'Especialista',
+  reticente: {
+    code:        'reticente',
+    label:       'Reticente',
     tagline:     'Sabe más que nadie. Teme que la IA lo reemplace.',
     description: 'Conocimiento técnico o de dominio profundo. Puede aportar más que ningún otro al diseño del piloto, pero teme que la IA amenace su valor o su rol. La intervención correcta lo convierte en el mayor activo del proyecto.',
     badgeBg:     'bg-warning-light',
@@ -126,7 +126,7 @@ export const ARCHETYPE_CONFIG: Record<ArchetypeCode, ArchetypeConfig> = {
       ],
       media: [
         'Sesión específica sobre cómo la IA amplifica al experto versus reemplazar al genérico.',
-        'Mostrar casos de rol análogo donde el especialista ganó relevancia con IA, no la perdió.',
+        'Mostrar casos de rol análogo donde el perfil reticente ganó relevancia con IA, no la perdió.',
         'Involucrarle en el diseño del prompt o del flujo de trabajo — su input es irremplazable.',
       ],
       alta:  [
@@ -245,7 +245,7 @@ export function computeInterviewResult(
   } else if (influenceScore >= 2.5 && adoptionScore < 2) {
     archetype = 'critico'
   } else if (adoptionScore < 1.5 && opennessScore < 1.5) {
-    archetype = 'especialista'
+    archetype = 'reticente'
   } else {
     archetype = 'adoptador'
   }

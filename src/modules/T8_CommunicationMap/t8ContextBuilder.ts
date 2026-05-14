@@ -69,7 +69,7 @@ const ARCHETYPE_LABELS: Record<ArchetypeCode, string> = {
   adoptador:    'Adoptador temprano',
   ambassador:   'Ambassador',
   decisor:      'Decisor',
-  especialista: 'Especialista',
+  reticente:    'Reticente',
   critico:      'Crítico',
 }
 
@@ -80,7 +80,7 @@ export function buildT8CommContext(
   companyName:  string,
 ): T8CommContext {
 
-  const archetypes: ArchetypeCode[] = ['adoptador', 'ambassador', 'decisor', 'especialista', 'critico']
+  const archetypes: ArchetypeCode[] = ['adoptador', 'ambassador', 'decisor', 'reticente', 'critico']
   const byArchetype = archetypes
     .map((arch) => {
       const shs = stakeholders.filter((s) => s.archetype === arch)

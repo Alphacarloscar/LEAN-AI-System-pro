@@ -74,7 +74,7 @@ export function buildT2RecommendationContext(
 ): T2RecommendationContext {
 
   // ── Por arquetipo ──
-  const archetypeCodes: ArchetypeCode[] = ['decisor', 'ambassador', 'adoptador', 'critico', 'especialista']
+  const archetypeCodes: ArchetypeCode[] = ['decisor', 'ambassador', 'adoptador', 'critico', 'reticente']
 
   const byArchetype = archetypeCodes
     .map((archetype) => {

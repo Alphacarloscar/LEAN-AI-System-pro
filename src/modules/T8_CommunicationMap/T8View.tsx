@@ -35,7 +35,7 @@ const ARCHETYPE_BASE_SEG: Record<ArchetypeCode, RogersSegment> = {
   adoptador:    'early_adopters',
   ambassador:   'early_majority',
   decisor:      'early_majority',
-  especialista: 'late_majority',
+  reticente: 'late_majority',
   critico:      'laggards',
 }
 
@@ -91,7 +91,7 @@ function generateCommPlan(
   const ambassadors  = stakeholders.filter(s => s.archetype === 'ambassador')
   const decisors     = stakeholders.filter(s => s.archetype === 'decisor')
   const critics      = stakeholders.filter(s => s.archetype === 'critico')
-  const specialists  = stakeholders.filter(s => s.archetype === 'especialista')
+  const specialists  = stakeholders.filter(s => s.archetype === 'reticente')
   const adopters     = stakeholders.filter(s => s.archetype === 'adoptador')
 
   const topUseCase   = goUseCases[0] ?? 'la iniciativa de IA'
@@ -173,9 +173,9 @@ function generateCommPlan(
   if (specialists.length > 0) {
     actions.push({
       id: id(), phase: 'phase2', week: 'Semana 11-12', type: 'sesion_bilateral',
-      title: 'Sesiones individuales con especialistas resistentes',
+      title: 'Sesiones individuales con perfiles reticentes',
       audience: specialists.map(s => s.name).join(', '),
-      message: `Reuniones 1:1 para clarificar el rol de cada especialista en el entorno con IA. Mensaje clave: "La IA asume el volumen rutinario — tu expertise se vuelve más valioso, no menos relevante."`,
+      message: `Reuniones 1:1 para clarificar el rol de cada perfil reticente en el entorno con IA. Mensaje clave: "La IA asume el volumen rutinario — tu expertise se vuelve más valioso, no menos relevante."`,
       channel: 'reunion_presencial', owner: 'Consultor LEAN', priority: 'alta',
       materials: ['Guía de conversación difícil (T8 Kit)'],
     })
@@ -294,12 +294,12 @@ function generateArchetypeMessages(stakeholders: Stakeholder[]) {
           ? 'Decisor resistente: centrarse en el control (pueden parar el piloto) y en el modelo de gobierno, no en el entusiasmo.'
           : 'Decisor alineado: convertirle en sponsor público del programa — su visibilidad acelera la adopción interna.',
       },
-      especialista: {
+      reticente: {
         headline: 'La IA asume el volumen rutinario. Tu expertise se vuelve más escaso y más valioso, no menos.',
         keyPoints: [
           'Nadie está quitando trabajo — estamos quitando el trabajo que consume tiempo sin aportar valor.',
           'Tu criterio experto es lo que valida que la IA funciona bien. Sin ti, el modelo no tiene control.',
-          'Los especialistas que entienden IA antes que sus pares son los más solicitados del mercado.',
+          'Los perfiles reticentes que entienden IA antes que sus pares son los más solicitados del mercado.',
         ],
         doNotSay: 'No decir: "No te preocupes, tu trabajo no corre peligro." → Suena defensivo y poco creíble.',
         openingLine: '"¿Qué parte de tu trabajo actual consume más tiempo sin que sientas que aporta lo que sabes hacer?"',
@@ -531,7 +531,7 @@ function generateDeptKits(stakeholders: Stakeholder[]): DeptKit[] {
       .map(s => s.name)
 
     const critics = deptShs.filter(s => s.archetype === 'critico')
-    const specialists = deptShs.filter(s => s.archetype === 'especialista')
+    const specialists = deptShs.filter(s => s.archetype === 'reticente')
     const hasHighResistance = deptShs.some(s => s.resistance === 'alta')
 
     // Concern principal
@@ -773,7 +773,7 @@ function ArchetypeMessagesTab({ messages }: { messages: import('./types').Archet
     adoptador:    { fill: '#10B981', badgeBg: 'bg-emerald-100', badgeText: 'text-emerald-700' },
     ambassador:   { fill: '#6366F1', badgeBg: 'bg-indigo-100',  badgeText: 'text-indigo-700'  },
     decisor:      { fill: '#2A2822', badgeBg: 'bg-slate-100',   badgeText: 'text-slate-700'   },
-    especialista: { fill: '#F97316', badgeBg: 'bg-orange-100',  badgeText: 'text-orange-700'  },
+    reticente:    { fill: '#F97316', badgeBg: 'bg-orange-100',  badgeText: 'text-orange-700'  },
     critico:      { fill: '#EF4444', badgeBg: 'bg-red-100',     badgeText: 'text-red-700'     },
   }
 

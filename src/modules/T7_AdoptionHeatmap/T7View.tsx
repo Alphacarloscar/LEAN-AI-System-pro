@@ -42,7 +42,7 @@ const ARCHETYPE_BASE_SEG: Record<ArchetypeCode, RogersSegment> = {
   adoptador:    'early_adopters',
   ambassador:   'early_majority',
   decisor:      'early_majority',
-  especialista: 'late_majority',
+  reticente: 'late_majority',
   critico:      'laggards',
 }
 
@@ -813,7 +813,7 @@ const CHANGE_PLAN = [
     segments:  ['Early Majority', 'Mayoría Temprana'],
     actions: [
       'Publicar los primeros resultados del piloto con métricas concretas (no titulares, datos reales).',
-      'Abordar a los especialistas resistentes individualmente — clarificar su rol en el entorno con IA.',
+      'Abordar a los perfiles reticentes individualmente — clarificar su rol en el entorno con IA.',
       'Ejecutar workshop de casos de uso con Operaciones y Dirección General.',
       'Escalar comunicación interna liderada por ambassadors — no por IT o consultores externos.',
     ],

@@ -452,10 +452,10 @@ function PortfolioMatrix({
           >
             {/* Quadrant backgrounds */}
             <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 pointer-events-none">
-              <div className="bg-warning-light/45 border-r border-b border-border/30" />
-              <div className="bg-success-light/45 border-b border-border/30" />
-              <div className="bg-gray-100/80 border-r border-border/30 dark:bg-warm-400/15" />
-              <div className="bg-info-light/20" />
+              <div className="bg-warning-light/45 dark:bg-amber-900/20 border-r border-b border-border/30" />
+              <div className="bg-success-light/45 dark:bg-emerald-900/20 border-b border-border/30" />
+              <div className="bg-gray-100/80 dark:bg-gray-700/35 border-r border-border/30" />
+              <div className="bg-info-light/20 dark:bg-blue-900/20" />
             </div>
 
             {/* Quadrant labels */}
