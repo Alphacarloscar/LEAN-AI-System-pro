@@ -206,7 +206,8 @@ export function StakeholderQuadrantChart({
       cy: toSvgY(s.interview!.influenceScore),
     })),
     ...withoutScores.map((s) => {
-      const [ad, inf] = ARCHETYPE_CANONICAL[s.archetype]
+      const canonical = ARCHETYPE_CANONICAL[s.archetype as ArchetypeCode] ?? ARCHETYPE_CANONICAL.adoptador
+      const [ad, inf] = canonical
       return { id: s.id, cx: toSvgX(ad), cy: toSvgY(inf) }
     }),
   ]

@@ -57,11 +57,11 @@ export class ErrorBoundary extends Component<Props, State> {
           <p style={{ fontSize: 12, color: '#333', marginBottom: 16, whiteSpace: 'pre-wrap' }}>
             {msg}
           </p>
-          <details style={{ marginTop: 8 }}>
+          <details open style={{ marginTop: 8 }}>
             <summary style={{ fontSize: 11, color: '#666', cursor: 'pointer', marginBottom: 6 }}>
               Stack trace
             </summary>
-            <pre style={{ fontSize: 10, color: '#666', whiteSpace: 'pre-wrap', overflowX: 'auto' }}>
+            <pre style={{ fontSize: 10, color: '#666', whiteSpace: 'pre-wrap', overflowX: 'auto', maxHeight: 300, overflow: 'auto', background: '#f9f0f0', padding: 8, borderRadius: 6 }}>
               {stack}
             </pre>
           </details>
