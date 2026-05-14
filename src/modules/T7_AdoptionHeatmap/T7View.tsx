@@ -26,7 +26,6 @@ import { useT7Store }                   from './store'
 import { useChangePlanGeneration }      from '@/hooks/useChangePlanGeneration'
 import { computeOverallScore }          from '@/modules/T1_MaturityRadar/types'
 import type {
-  ArchetypeCode,
   ResistanceLevel,
   Stakeholder,
 }                            from '@/modules/T2_StakeholderMatrix/types'
