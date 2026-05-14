@@ -47,8 +47,8 @@ const ARCHETYPE_BASE_SEG: Record<string, RogersSegment> = {
   critico:      'laggards',
 }
 
-function getSegment(archetype: ArchetypeCode, resistance: ResistanceLevel): RogersSegment {
-  const base = ARCHETYPE_BASE_SEG[archetype]
+function getSegment(archetype: string, resistance: ResistanceLevel): RogersSegment {
+  const base = ARCHETYPE_BASE_SEG[archetype] ?? 'early_majority'  // fallback para arquetipos desconocidos
   if (resistance === 'alta') {
     const idx = SEGMENT_ORDER.indexOf(base)
     return SEGMENT_ORDER[Math.min(idx + 1, SEGMENT_ORDER.length - 1)]
@@ -232,11 +232,11 @@ function CondensedCard({
   const sh = stakeholders.find(s => s.id === dot.stakeholderId)
   if (!sh) return null
 
-  const arcCfg   = ARCHETYPE_CONFIG[sh.archetype]
+  const arcCfg   = ARCHETYPE_CONFIG[sh.archetype] ?? ARCHETYPE_CONFIG.adoptador
   const resCfg   = RES_CFG[sh.resistance]
-  const segLabel = SEG_LABELS[dot.segment].label
+  const segLabel = SEG_LABELS[dot.segment]?.label ?? '—'
   const avatarFill = deptFill(sh.department, dark)
-  const tip      = arcCfg.interventions[sh.resistance][0]
+  const tip      = arcCfg?.interventions?.[sh.resistance]?.[0] ?? ''
   const initials = sh.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
 
   return (
@@ -723,8 +723,8 @@ function DeptRecommendationsTab({ stakeholders, dark }: { stakeholders: Stakehol
         const readiness = deptReadiness(deptShs)
 
         const recs = deptShs.flatMap(sh => {
-          const arc  = ARCHETYPE_CONFIG[sh.archetype]
-          const tips = arc.interventions[sh.resistance]
+          const arc  = ARCHETYPE_CONFIG[sh.archetype] ?? ARCHETYPE_CONFIG.adoptador
+          const tips = arc?.interventions?.[sh.resistance] ?? []
           return tips.slice(0, 2).map(tip => ({ sh, tip }))
         })
         const seen = new Set<string>()
@@ -754,8 +754,8 @@ function DeptRecommendationsTab({ stakeholders, dark }: { stakeholders: Stakehol
 
             <div className="flex flex-wrap gap-2 mb-4">
               {deptShs.map(sh => {
-                const arcCfg = ARCHETYPE_CONFIG[sh.archetype]
-                const seg    = SEG_LABELS[getSegment(sh.archetype, sh.resistance)].label
+                const arcCfg = ARCHETYPE_CONFIG[sh.archetype] ?? ARCHETYPE_CONFIG.adoptador
+                const seg    = SEG_LABELS[getSegment(sh.archetype, sh.resistance)]?.label ?? '—'
                 return (
                   <div key={sh.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-50 dark:bg-gray-800 border border-border dark:border-white/6">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: fill }} />

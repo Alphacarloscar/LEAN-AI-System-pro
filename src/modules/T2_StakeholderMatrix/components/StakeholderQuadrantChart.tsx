@@ -236,7 +236,7 @@ export function StakeholderQuadrantChart({
                 className="h-2.5 w-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: ARCHETYPE_HEX[code] }}
               />
-              <span className="text-[10px] text-text-subtle">{ARCHETYPE_CONFIG[code].label}</span>
+              <span className="text-[10px] text-text-subtle">{(ARCHETYPE_CONFIG[code] ?? ARCHETYPE_CONFIG.adoptador).label}</span>
             </div>
           ))}
         </div>
@@ -544,7 +544,7 @@ export function StakeholderQuadrantChart({
                 <text x={ttX + ttW / 2} y={ttY + 27}
                   textAnchor="middle" fontSize={9.5}
                   fill={fill} fontFamily="Inter, sans-serif">
-                  {ARCHETYPE_CONFIG[s.archetype].label} · {RESISTANCE_CONFIG[s.resistance].label}
+                  {(ARCHETYPE_CONFIG[s.archetype] ?? ARCHETYPE_CONFIG.adoptador).label} · {RESISTANCE_CONFIG[s.resistance].label}
                 </text>
               </g>
             )
@@ -587,7 +587,7 @@ export function StakeholderQuadrantChart({
           </p>
           <div className="flex flex-wrap gap-2">
             {withoutScores.map((s) => {
-              const cfg = ARCHETYPE_CONFIG[s.archetype]
+              const cfg = ARCHETYPE_CONFIG[s.archetype] ?? ARCHETYPE_CONFIG.adoptador
               return (
                 <button
                   key={s.id}

@@ -81,7 +81,7 @@ export function buildT2RecommendationContext(
       const group = stakeholders.filter((s) => s.archetype === archetype)
       return {
         archetype,
-        label:        ARCHETYPE_CONFIG[archetype].label,
+        label:        (ARCHETYPE_CONFIG[archetype] ?? ARCHETYPE_CONFIG.adoptador).label,
         count:        group.length,
         avgResistance: avgResistanceLabel(group),
       }
@@ -109,7 +109,7 @@ export function buildT2RecommendationContext(
       name:          s.name,
       role:          s.role,
       department:    s.department,
-      archetype:     ARCHETYPE_CONFIG[s.archetype].label,
+      archetype:     (ARCHETYPE_CONFIG[s.archetype] ?? ARCHETYPE_CONFIG.adoptador).label,
       resistance:    s.resistance,
       hasInterview:  !!s.interview,
       manualOverride: !!s.manualOverride,
@@ -119,7 +119,7 @@ export function buildT2RecommendationContext(
   const presentArchetypes = new Set(stakeholders.map((s) => s.archetype))
   const missingArchetypes = archetypeCodes
     .filter((a) => !presentArchetypes.has(a))
-    .map((a) => ARCHETYPE_CONFIG[a].label)
+    .map((a) => (ARCHETYPE_CONFIG[a] ?? ARCHETYPE_CONFIG.adoptador).label)
 
   // Sponsor = decisor con resistencia baja (o ambassador con baja)
   const hasSponsor = stakeholders.some(

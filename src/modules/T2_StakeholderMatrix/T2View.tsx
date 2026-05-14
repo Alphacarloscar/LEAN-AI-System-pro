@@ -242,9 +242,9 @@ function StakeholderPanel({
   onClose:          () => void
   onStartInterview: (s: Stakeholder) => void
 }) {
-  const cfg = ARCHETYPE_CONFIG[stakeholder.archetype]
+  const cfg = ARCHETYPE_CONFIG[stakeholder.archetype] ?? ARCHETYPE_CONFIG.adoptador
   const res = RESISTANCE_CONFIG[stakeholder.resistance]
-  const interventions = cfg.interventions[stakeholder.resistance]
+  const interventions = cfg?.interventions?.[stakeholder.resistance] ?? []
 
   const isHighRisk =
     (stakeholder.archetype === 'critico' || stakeholder.archetype === 'decisor') &&
