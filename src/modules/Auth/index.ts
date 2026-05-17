@@ -1,6 +1,7 @@
 // ============================================================
 // Auth — Barrel export
 // ============================================================
-export { LoginView }    from './LoginView'
+export { LoginView }         from './LoginView'
+export { ResetPasswordView } from './ResetPasswordView'
 export { useAuthStore } from './store'
 export type { AuthUser, AuthState } from './types'

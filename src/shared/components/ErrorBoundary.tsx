@@ -52,7 +52,7 @@ export class ErrorBoundary extends Component<Props, State> {
           fontFamily:   'ui-monospace, monospace',
         }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: '#C06060', marginBottom: 12 }}>
-            ❌ Error de renderizado — L.E.A.N. AI System
+            ❌ Error de renderizado — GOBY
           </p>
           <p style={{ fontSize: 12, color: '#333', marginBottom: 16, whiteSpace: 'pre-wrap' }}>
             {msg}

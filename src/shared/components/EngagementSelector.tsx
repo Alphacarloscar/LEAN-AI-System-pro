@@ -87,7 +87,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
   }, [creating])
 
   const activeEngagement = engagements.find((e) => e.id === activeEngagementId)
-  const label = activeEngagement?.name ?? 'Seleccionar engagement'
+  const label = activeEngagement?.name ?? 'Seleccionar proyecto'
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
@@ -101,7 +101,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
       setCreating(false)
       setNewName('')
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Error al crear engagement'
+      const msg = err instanceof Error ? err.message : 'Error al crear proyecto'
       console.error('[EngagementSelector] createAndSelect:', err)
       setCreateError(msg)
     } finally {
@@ -176,7 +176,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
             </div>
           ) : (
             <div className={['px-4 py-3 text-xs', dark ? 'text-gray-500' : 'text-gray-400'].join(' ')}>
-              Sin engagements disponibles
+              Sin proyectos disponibles
             </div>
           )}
 
@@ -191,7 +191,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                   ref={inputRef}
                   value={newName}
                   onChange={(e) => { setNewName(e.target.value); setCreateError(null) }}
-                  placeholder="Nombre del cliente..."
+                  placeholder="Nombre del proyecto..."
                   className={[
                     'flex-1 text-xs px-2.5 py-1.5 rounded-lg border outline-none',
                     createError
@@ -227,7 +227,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
               ].join(' ')}
             >
               <PlusIcon />
-              Nuevo engagement
+              Nuevo proyecto
             </button>
           )}
         </div>

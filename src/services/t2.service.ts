@@ -45,7 +45,7 @@ export function rowToStakeholder(row: StakeholderRow): Stakeholder {
 export function stakeholderToInsert(s: Stakeholder, engagementId: string): StakeholderInsert {
   return {
     id:             s.id,
-    engagement_id:  engagementId,
+    project_id:  engagementId,
     name:           s.name,
     role:           s.role,
     department:     s.department,
@@ -64,7 +64,7 @@ export async function fetchStakeholders(engagementId: string): Promise<Stakehold
   const { data, error } = await supabase
     .from('stakeholders')
     .select('*')
-    .eq('engagement_id', engagementId)
+    .eq('project_id', engagementId)
     .order('created_at', { ascending: true })
 
   if (error) throw new Error(`[T2] fetchStakeholders: ${error.message}`)
@@ -101,7 +101,7 @@ export async function updateStakeholderInDb(
     .from('stakeholders')
     .update(patch)
     .eq('id', id)
-    .eq('engagement_id', engagementId)
+    .eq('project_id', engagementId)
 
   if (error) throw new Error(`[T2] updateStakeholderInDb: ${error.message}`)
 }
@@ -112,7 +112,7 @@ export async function deleteStakeholderFromDb(id: string, engagementId: string):
     .from('stakeholders')
     .delete()
     .eq('id', id)
-    .eq('engagement_id', engagementId)
+    .eq('project_id', engagementId)
 
   if (error) throw new Error(`[T2] deleteStakeholderFromDb: ${error.message}`)
 }

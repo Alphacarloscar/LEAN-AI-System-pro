@@ -6,7 +6,7 @@
 // Este store trackea cuál está seleccionado ahora mismo.
 //
 // Flujo:
-//   1. Tras login → loadMyEngagements()
+//   1. Tras login → loadMyProjects()
 //   2. Si hay uno solo → auto-select
 //   3. Si hay varios → mostrar selector (Sprint 4 UI)
 //   4. selectEngagement(id) → el resto de stores cargan sus datos
@@ -14,16 +14,16 @@
 
 import { create }                     from 'zustand'
 import { persist }                    from 'zustand/middleware'
-import { listMyEngagements, createEngagement } from '@/services/engagements.service'
+import { listMyProjects, createProject } from '@/services/projects.service'
 import type { EngagementRow }         from '@/types/database.types'
 
 interface EngagementStore {
-  engagements:        EngagementRow[]
+  projects:        EngagementRow[]
   activeEngagementId: string | null
   isLoading:          boolean
 
   // Carga los engagements del usuario logueado
-  loadMyEngagements:  () => Promise<void>
+  loadMyProjects:  () => Promise<void>
   // Selecciona el engagement activo (y notifica a los stores T1-T6)
   selectEngagement:   (id: string) => void
   // Crea un nuevo engagement y lo selecciona
@@ -35,11 +35,11 @@ interface EngagementStore {
 export const useEngagementStore = create<EngagementStore>()(
   persist(
     (set, get) => ({
-      engagements:        [],
+      projects:        [],
       activeEngagementId: null,
       isLoading:          false,
 
-      loadMyEngagements: async () => {
+      loadMyProjects: async () => {
         set({ isLoading: true })
         // Timeout de seguridad: isLoading no puede quedarse atascado
         const timeout = setTimeout(() => {
@@ -50,7 +50,7 @@ export const useEngagementStore = create<EngagementStore>()(
           }
         }, 10_000)
         try {
-          const engagements = await listMyEngagements()
+          const engagements = await listMyProjects()
           clearTimeout(timeout)
           set({ engagements, isLoading: false })
 
@@ -68,7 +68,7 @@ export const useEngagementStore = create<EngagementStore>()(
           }
         } catch (err) {
           clearTimeout(timeout)
-          console.error('[EngagementStore] loadMyEngagements:', err)
+          console.error('[EngagementStore] loadMyProjects:', err)
           set({ isLoading: false })
         }
       },
@@ -80,9 +80,9 @@ export const useEngagementStore = create<EngagementStore>()(
       createAndSelect: async (name) => {
         set({ isLoading: true })
         try {
-          const engagement = await createEngagement({ name })
+          const engagement = await createProject({ name })
           set((s) => ({
-            engagements:        [...s.engagements, engagement],
+            projects:        [...s.engagements, engagement],
             activeEngagementId: engagement.id,
             isLoading:          false,
           }))
@@ -93,7 +93,7 @@ export const useEngagementStore = create<EngagementStore>()(
         }
       },
 
-      reset: () => set({ engagements: [], activeEngagementId: null, isLoading: false }),
+      reset: () => set({ projects: [], activeEngagementId: null, isLoading: false }),
     }),
     {
       name:       'lean-active-engagement',

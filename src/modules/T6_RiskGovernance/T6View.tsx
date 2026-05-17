@@ -234,7 +234,7 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
             </div>
             <div className="text-right shrink-0">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold bg-white/15">
-                L.E.A.N. AI System · T6
+                GOBY · T6
               </span>
             </div>
           </div>
@@ -486,7 +486,7 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
               </strong>.
             </p>
             <p className="text-[11px] text-text-subtle mt-3 pt-3 border-t border-border dark:border-white/6">
-              Documento generado automáticamente por el L.E.A.N. AI System Enterprise (T6 — Risk &amp; Governance).
+              Documento generado automáticamente por el GOBY — powered by Alpha Consulting (T6 — Risk &amp; Governance).
               Alpha Consulting Solutions S.L. · {dateStr}
             </p>
           </section>

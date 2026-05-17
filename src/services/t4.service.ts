@@ -58,7 +58,7 @@ function toJson<T>(v: T | undefined | null): Json {
 export function useCaseToInsert(uc: UseCase, engagementId: string): UseCaseInsert {
   return {
     id:                    uc.id,
-    engagement_id:         engagementId,
+    project_id:         engagementId,
     name:                  uc.name,
     description:           uc.description ?? null,
     department:            uc.department,
@@ -88,7 +88,7 @@ export async function fetchUseCases(engagementId: string): Promise<UseCase[]> {
   const { data, error } = await supabase
     .from('use_cases')
     .select('*')
-    .eq('engagement_id', engagementId)
+    .eq('project_id', engagementId)
     .order('created_at', { ascending: true })
 
   if (error) throw new Error(`[T4] fetchUseCases: ${error.message}`)
@@ -137,7 +137,7 @@ export async function updateUseCaseInDb(
     .from('use_cases')
     .update(patch)
     .eq('id', id)
-    .eq('engagement_id', engagementId)
+    .eq('project_id', engagementId)
 
   if (error) throw new Error(`[T4] updateUseCaseInDb: ${error.message}`)
 }
@@ -148,7 +148,7 @@ export async function deleteUseCaseFromDb(id: string, engagementId: string): Pro
     .from('use_cases')
     .delete()
     .eq('id', id)
-    .eq('engagement_id', engagementId)
+    .eq('project_id', engagementId)
 
   if (error) throw new Error(`[T4] deleteUseCaseFromDb: ${error.message}`)
 }

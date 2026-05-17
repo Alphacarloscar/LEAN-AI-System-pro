@@ -134,11 +134,11 @@ function LogoutButton({ dark }: { dark: boolean }) {
 export function AppLayout({ phases }: AppLayoutProps) {
   const { dark, toggle }        = useDarkMode()
   const { user }                = useAuthStore()
-  const { loadMyEngagements }   = useEngagementStore()
+  const { loadMyProjects }   = useEngagementStore()
 
   // Cargar engagements del usuario en cuanto esté autenticado
   useEffect(() => {
-    if (user) loadMyEngagements()
+    if (user) loadMyProjects()
   }, [user?.id])
 
   return (
@@ -157,7 +157,7 @@ export function AppLayout({ phases }: AppLayoutProps) {
           <EngagementSelector dark={dark} />
         </div>
         <span className="text-[10px] font-mono uppercase tracking-widest text-black/25 dark:text-white/25">
-          L.E.A.N. AI System
+          GOBY
         </span>
         <div className="flex items-center gap-3">
           <LogoutButton dark={dark} />

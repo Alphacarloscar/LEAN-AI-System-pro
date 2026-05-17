@@ -505,7 +505,7 @@ export function T1ExecutiveOutput({
         {/* ── Footer ── */}
         <div className="border-t border-border pt-4 flex items-center justify-between gap-4 flex-wrap">
           <p className="text-[11px] text-text-subtle">
-            Generado por L.E.A.N. AI System · Alpha Consulting Solutions S.L.
+            Generado por GOBY · Alpha Consulting Solutions S.L.
           </p>
           <p className="text-[11px] text-text-subtle">
             Este informe cubre el ~12% del AIMS requerido para ISO/IEC 42001:2023

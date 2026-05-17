@@ -9,7 +9,8 @@
 import { useState, createContext, useContext, useEffect }  from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AppLayout }                            from '@/shared/layouts/AppLayout'
-import { LoginView, useAuthStore }              from '@/modules/Auth'
+import { LoginView, ResetPasswordView, useAuthStore } from '@/modules/Auth'
+import { AdminView }                              from '@/modules/Admin'
 import { T1View }                               from '@/modules/T1_MaturityRadar'
 import { T2View }                               from '@/modules/T2_StakeholderMatrix'
 import { T3View }                               from '@/modules/T3_ValueStreamMap'
@@ -191,8 +192,9 @@ export default function App() {
   return (
     <DemoContext.Provider value={{ scenario, setPattern: setActivePattern }}>
       <Routes>
-        {/* Ruta pública — Login (sin AppLayout) */}
-        <Route path="login" element={<LoginView />} />
+        {/* Rutas públicas — sin AppLayout */}
+        <Route path="login"          element={<LoginView />} />
+        <Route path="reset-password" element={<ResetPasswordView />} />
 
         {/* Rutas protegidas — AppLayout persistente (header + sidebar) */}
         <Route
@@ -215,6 +217,7 @@ export default function App() {
           <Route path="t9"             element={<T9RouteView />} />
           <Route path="t11"            element={<T11RouteView />} />
           <Route path="t12"            element={<T12RouteView />} />
+          <Route path="admin"          element={<AdminView />} />
         </Route>
 
         {/* Fallback */}

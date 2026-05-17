@@ -863,7 +863,7 @@ function generateOperatingModelHTML(
 <body>
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;">
     <div>
-      <p style="font-size:10px;font-family:monospace;text-transform:uppercase;letter-spacing:.1em;color:#9ca3af;margin:0 0 6px;">L.E.A.N. AI System · T11</p>
+      <p style="font-size:10px;font-family:monospace;text-transform:uppercase;letter-spacing:.1em;color:#9ca3af;margin:0 0 6px;">GOBY · T11</p>
       <h1 style="font-size:22px;font-weight:700;margin:0 0 4px;">AI Operating Rhythm</h1>
       <p style="font-size:13px;color:#6b7280;margin:0;">${companyName}</p>
     </div>
@@ -891,7 +891,7 @@ function generateOperatingModelHTML(
   <tbody>${decisionsHTML}</tbody></table>
   <h2>KPIs por Nivel de Gobierno</h2>${kpiHTML}
   <p style="margin-top:40px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;">
-    Generado por L.E.A.N. AI System Enterprise · Alpha Consulting Solutions S.L. · ${now}
+    Generado por GOBY — powered by Alpha Consulting · Alpha Consulting Solutions S.L. · ${now}
   </p>
 </body>
 </html>`

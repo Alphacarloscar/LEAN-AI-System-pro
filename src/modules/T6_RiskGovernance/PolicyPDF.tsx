@@ -368,8 +368,8 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
     <Document
       title={`Política Corporativa de IA — ${companyName}`}
       author="Alpha Consulting Solutions S.L."
-      subject="L.E.A.N. AI System — T6 Risk & Governance"
-      creator="L.E.A.N. AI System Enterprise"
+      subject="GOBY — T6 Risk & Governance"
+      creator="GOBY"
     >
       <Page size="A4" style={s.page}>
 
@@ -380,7 +380,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
             <Text style={s.headerTitle}>{companyName}</Text>
             <Text style={s.headerSub}>Versión 1.0 · {dateStr}</Text>
           </View>
-          <Text style={s.headerBadge}>L.E.A.N. AI System · T6</Text>
+          <Text style={s.headerBadge}>GOBY · T6</Text>
         </View>
 
         <View style={s.body}>
@@ -538,7 +538,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
             </Text>
             <View style={s.footer}>
               <Text style={s.footerText}>
-                Documento generado automáticamente por el L.E.A.N. AI System Enterprise (T6 — Risk & Governance).{'\n'}
+                Documento generado automáticamente por el GOBY (T6 — Risk & Governance).{'\n'}
                 Alpha Consulting Solutions S.L. · {dateStr}
               </Text>
             </View>

@@ -60,7 +60,7 @@ export function AlphaLogo({ size = 'sm', dark = false }: AlphaLogoProps) {
             marginBottom:  4,
           }}
         >
-          L.E.A.N. AI System
+          GOBY
         </p>
         <p
           style={{

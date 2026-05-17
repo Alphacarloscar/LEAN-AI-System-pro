@@ -52,8 +52,8 @@ export function rowToFriction(row: FrictionRow): Friction {
 
 function profileToUpsert(profile: CompanyProfile, engagementId: string) {
   return {
-    engagement_id:          engagementId,
-    engagement_name:        profile.engagementName,
+    project_id:          engagementId,
+    project_name:        profile.engagementName,
     sector:                 profile.sector,
     tamano_empresa:         profile.tamanoEmpresa,
     objetivo_principal_ia:  profile.objetivoPrincipalIA,
@@ -69,7 +69,7 @@ function profileToUpsert(profile: CompanyProfile, engagementId: string) {
 function frictionToInsert(f: Friction, engagementId: string) {
   return {
     id:            f.id,
-    engagement_id: engagementId,
+    project_id: engagementId,
     tipo:          f.tipo,
     area_funcional: f.areaFuncional,
     frecuencia:    f.frecuencia ?? null,
@@ -91,12 +91,12 @@ export async function fetchCompanyProfile(
     supabase
       .from('company_profiles')
       .select('*')
-      .eq('engagement_id', engagementId)
+      .eq('project_id', engagementId)
       .maybeSingle(),
     supabase
       .from('frictions')
       .select('*')
-      .eq('engagement_id', engagementId)
+      .eq('project_id', engagementId)
       .order('created_at', { ascending: true }),
   ])
 
@@ -116,7 +116,7 @@ export async function fetchCompanyProfile(
 }
 
 /**
- * Guarda el perfil en Supabase (UPSERT por engagement_id).
+ * Guarda el perfil en Supabase (UPSERT por project_id).
  * Sincroniza frictions: elimina las existentes y re-inserta las actuales.
  * Estrategia delete+insert es segura aquí — máximo ~10 filas por engagement.
  */
@@ -127,7 +127,7 @@ export async function upsertCompanyProfile(
   // 1. Upsert perfil principal
   const { error: profileError } = await supabase
     .from('company_profiles')
-    .upsert(profileToUpsert(profile, engagementId), { onConflict: 'engagement_id' })
+    .upsert(profileToUpsert(profile, engagementId), { onConflict: 'project_id' })
 
   if (profileError) {
     throw new Error(`[CompanyProfile] upsertCompanyProfile: ${profileError.message}`)
@@ -137,7 +137,7 @@ export async function upsertCompanyProfile(
   const { error: deleteError } = await supabase
     .from('frictions')
     .delete()
-    .eq('engagement_id', engagementId)
+    .eq('project_id', engagementId)
 
   if (deleteError) {
     throw new Error(`[CompanyProfile] syncFrictions (delete): ${deleteError.message}`)

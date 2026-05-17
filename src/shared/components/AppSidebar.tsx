@@ -276,7 +276,7 @@ export function AppSidebar({ phases, activeToolCode }: AppSidebarProps) {
         {/* Footer */}
         <div className="px-4 py-3 border-t border-black/6 dark:border-white/6">
           <p className="text-[10px] font-mono text-black/20 dark:text-white/15 text-center">
-            L.E.A.N. AI System · Alpha Consulting
+            GOBY · Alpha Consulting
           </p>
         </div>
       </aside>

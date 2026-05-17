@@ -243,7 +243,7 @@ function generateAuditReport(controls: T12Control[], companyName: string): strin
 <body>
   <div style="border-bottom:3px solid #2A2822;padding-bottom:20px;margin-bottom:24px;">
     <p style="font-family:monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin:0 0 6px;">
-      L.E.A.N. AI System — AI System Impact Assessment
+      GOBY — AI System Impact Assessment
     </p>
     <h1 style="margin:0 0 4px;font-size:24px;font-weight:800;color:#2A2822;">Informe ISO 42001</h1>
     <p style="margin:0;font-size:14px;color:#64748b;">${companyName} · Generado el ${now}</p>
@@ -272,7 +272,7 @@ function generateAuditReport(controls: T12Control[], companyName: string): strin
   ${clauseSections}
 
   <div style="margin-top:40px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;font-family:monospace;">
-    Generado por L.E.A.N. AI System Enterprise · Alpha Consulting Solutions S.L. · ${now}
+    Generado por GOBY — powered by Alpha Consulting · Alpha Consulting Solutions S.L. · ${now}
     · ${total - notStarted}/${total} controles iniciados · Referencia normativa: ISO/IEC 42001:2023
   </div>
 </body>

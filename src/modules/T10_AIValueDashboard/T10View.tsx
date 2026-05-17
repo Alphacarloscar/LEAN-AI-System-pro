@@ -715,7 +715,7 @@ export function T10View({
         </div>
 
         <p className="text-center text-[10px] text-text-subtle dark:text-warm-400 mt-6">
-          Datos demo · L.E.A.N. AI System Enterprise · Alpha Consulting Solutions
+          Datos demo · GOBY · Alpha Consulting Solutions
         </p>
 
         {/* ── RECOMENDACIONES IA ────────────────────────────── */}

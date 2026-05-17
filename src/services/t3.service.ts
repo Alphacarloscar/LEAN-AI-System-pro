@@ -53,7 +53,7 @@ export function rowToValueStream(row: ValueStreamRow): ValueStream {
 export function valueStreamToInsert(vs: ValueStream, engagementId: string): ValueStreamInsert {
   return {
     id:               vs.id,
-    engagement_id:    engagementId,
+    project_id:    engagementId,
     name:             vs.name,
     department:       vs.department,
     owner:            vs.owner ?? null,
@@ -78,7 +78,7 @@ export async function fetchValueStreams(engagementId: string): Promise<ValueStre
   const { data, error } = await supabase
     .from('value_streams')
     .select('*')
-    .eq('engagement_id', engagementId)
+    .eq('project_id', engagementId)
     .order('created_at', { ascending: true })
 
   if (error) throw new Error(`[T3] fetchValueStreams: ${error.message}`)
@@ -121,7 +121,7 @@ export async function updateValueStreamInDb(
     .from('value_streams')
     .update(patch)
     .eq('id', id)
-    .eq('engagement_id', engagementId)
+    .eq('project_id', engagementId)
 
   if (error) throw new Error(`[T3] updateValueStreamInDb: ${error.message}`)
 }
@@ -132,7 +132,7 @@ export async function deleteValueStreamFromDb(id: string, engagementId: string):
     .from('value_streams')
     .delete()
     .eq('id', id)
-    .eq('engagement_id', engagementId)
+    .eq('project_id', engagementId)
 
   if (error) throw new Error(`[T3] deleteValueStreamFromDb: ${error.message}`)
 }

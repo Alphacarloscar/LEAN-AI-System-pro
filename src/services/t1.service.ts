@@ -87,7 +87,7 @@ export async function fetchT1Data(engagementId: string): Promise<T1LoadResult> {
   const { data, error } = await supabase
     .from('t1_dimension_scores')
     .select('*')
-    .eq('engagement_id', engagementId)
+    .eq('project_id', engagementId)
     .order('updated_at', { ascending: true })
 
   if (error) throw new Error(`[T1] fetchT1Data: ${error.message}`)
@@ -142,7 +142,7 @@ export async function upsertT1Score(params: {
   evidence:         string
 }): Promise<void> {
   const row: T1DimensionScoreInsert = {
-    engagement_id:     params.engagementId,
+    project_id:     params.engagementId,
     dimension_code:    params.dimensionCode,
     subdimension_code: params.subdimensionCode,
     score:             params.score,
@@ -156,7 +156,7 @@ export async function upsertT1Score(params: {
   const { error } = await supabase
     .from('t1_dimension_scores')
     .upsert(row, {
-      onConflict: 'engagement_id,dimension_code,subdimension_code,interviewee_id',
+      onConflict: 'project_id,dimension_code,subdimension_code,interviewee_id',
       ignoreDuplicates: false,
     })
 
@@ -180,7 +180,7 @@ export async function upsertAllScoresForInterviewee(params: {
   for (const dim of params.dimensions) {
     for (const sub of dim.subdimensions) {
       rows.push({
-        engagement_id:     params.engagementId,
+        project_id:     params.engagementId,
         dimension_code:    dim.code,
         subdimension_code: sub.code,
         score:             sub.score,
@@ -196,7 +196,7 @@ export async function upsertAllScoresForInterviewee(params: {
   const { error } = await supabase
     .from('t1_dimension_scores')
     .upsert(rows, {
-      onConflict: 'engagement_id,dimension_code,subdimension_code,interviewee_id',
+      onConflict: 'project_id,dimension_code,subdimension_code,interviewee_id',
       ignoreDuplicates: false,
     })
 
@@ -213,7 +213,7 @@ export async function deleteIntervieweeScores(
   const { error } = await supabase
     .from('t1_dimension_scores')
     .delete()
-    .eq('engagement_id', engagementId)
+    .eq('project_id', engagementId)
     .eq('interviewee_id', intervieweeId)
 
   if (error) throw new Error(`[T1] deleteIntervieweeScores: ${error.message}`)
