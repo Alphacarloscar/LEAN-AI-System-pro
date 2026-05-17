@@ -213,6 +213,6 @@ export const useT5Store = create<T5Store>()(
 
       resetCanvas: () => set({ canvas: buildDemoCanvas() }),
     }),
-    { name: 'lean-t5-canvas', version: 1 },
+    { name: 'lean-t5-canvas', version: 2 },
   ),
 )
