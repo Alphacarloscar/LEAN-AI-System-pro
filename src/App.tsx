@@ -11,6 +11,7 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AppLayout }                            from '@/shared/layouts/AppLayout'
 import { LoginView, ResetPasswordView, useAuthStore } from '@/modules/Auth'
 import { AdminView }                              from '@/modules/Admin'
+import { isDemoEnabled }                          from '@/lib/config'
 import { T1View }                               from '@/modules/T1_MaturityRadar'
 import { T2View }                               from '@/modules/T2_StakeholderMatrix'
 import { T3View }                               from '@/modules/T3_ValueStreamMap'
@@ -53,16 +54,19 @@ export function useDemoContext() {
 function T10RouteView() {
   const { scenario, setPattern } = useDemoContext()
   const navigate                 = useNavigate()
+
+  // En producción (isDemoEnabled=false) no pasamos datos de escenario demo.
+  // T10View tiene su propio guard que muestra un placeholder si no hay proyecto.
   return (
     <T10View
-      companyName={scenario.company.name}
-      sector={scenario.company.industry}
-      employees={scenario.company.employees}
-      t1Radar={scenario.t1Radar}
+      companyName={isDemoEnabled ? scenario.company.name    : ''}
+      sector={isDemoEnabled      ? scenario.company.industry : ''}
+      employees={isDemoEnabled   ? scenario.company.employees : 0}
+      t1Radar={isDemoEnabled     ? scenario.t1Radar           : []}
       onNavigate={(path) => navigate(path)}
-      demoPattern={scenario.id}
-      demoScenarios={DEMO_SCENARIOS.map(s => ({ id: s.id, label: s.label }))}
-      onPatternChange={(p) => setPattern(p as DemoPattern)}
+      demoPattern={isDemoEnabled  ? scenario.id : undefined}
+      demoScenarios={isDemoEnabled ? DEMO_SCENARIOS.map(s => ({ id: s.id, label: s.label })) : undefined}
+      onPatternChange={isDemoEnabled ? (p) => setPattern(p as DemoPattern) : undefined}
     />
   )
 }

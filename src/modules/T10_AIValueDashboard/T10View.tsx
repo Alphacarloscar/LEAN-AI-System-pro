@@ -15,6 +15,7 @@ import { useCompanyProfileStore }        from '@/modules/CompanyProfile/store'
 import { useEngagementStore }            from '@/modules/Engagement/store'
 import { RecommendationPanel }           from '@/components/RecommendationPanel'
 import { buildT10RecommendationContext } from './t10ContextBuilder'
+import { isDemoEnabled }                 from '@/lib/config'
 
 // ── Tipos ────────────────────────────────────────────────────
 
@@ -338,6 +339,26 @@ export function T10View({
 
   function toggle(id: PanelId) { setExpanded(prev => prev === id ? null : id) }
 
+  // ── Guard producción: sin demo y sin proyecto ─────────────────
+  if (!isDemoEnabled && !engagementId) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center px-6">
+        <div className="text-center max-w-sm">
+          <div className="w-14 h-14 rounded-2xl bg-gold/10 flex items-center justify-center mx-auto mb-5">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C8860A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+          </div>
+          <h2 className="text-base font-semibold text-[#2A2822] mb-2">Selecciona un proyecto</h2>
+          <p className="text-sm text-gray-500">
+            Elige un proyecto desde el selector superior para ver el dashboard de adopción IA de tu empresa.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   const d   = T10_DEMO
   const t4n = d.t4.totalInitiatives
   const t4s = d.t4.statuses
@@ -387,8 +408,8 @@ export function T10View({
           </div>
         </div>
 
-        {/* Demo scenario selector */}
-        {demoScenarios && onPatternChange && (
+        {/* Demo scenario selector — solo visible en entorno demo */}
+        {isDemoEnabled && demoScenarios && onPatternChange && (
           <div className="border-t border-warm-700 dark:border-warm-800">
             <div className="max-w-6xl mx-auto px-8 py-2 flex items-center gap-3">
               <span className="text-[10px] font-mono uppercase tracking-widest text-warm-400 flex-shrink-0">Escenario demo</span>
@@ -714,9 +735,11 @@ export function T10View({
 
         </div>
 
-        <p className="text-center text-[10px] text-text-subtle dark:text-warm-400 mt-6">
-          Datos demo · GOBY · Alpha Consulting Solutions
-        </p>
+        {isDemoEnabled && (
+          <p className="text-center text-[10px] text-text-subtle dark:text-warm-400 mt-6">
+            Datos demo · GOBY · Alpha Consulting Solutions
+          </p>
+        )}
 
         {/* ── RECOMENDACIONES IA ────────────────────────────── */}
         {t10LLMContext && (
