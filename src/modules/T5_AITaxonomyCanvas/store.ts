@@ -14,6 +14,7 @@ import {
   computeMaturityLevel,
   computeActivationSequence,
 } from './constants'
+import { isDemoEnabled } from '@/lib/config'
 
 // ── Helper ────────────────────────────────────────────────────
 
@@ -152,6 +153,28 @@ function buildDemoCanvas(): T5Canvas {
   }
 }
 
+// Canvas vacío para modo producción (sin datos demo)
+const EMPTY_DOMAINS: Record<T5DomainCode, T5DomainAssessment> = {
+  automatizacion_rpa:          { ...DEMO_DOMAINS.automatizacion_rpa,          scores: { businessValue: 0, technicalReady: 0, orgReadiness: 0, riskLevel: 0 }, priorityScore: 0, recommendation: 'preparar_foundations' },
+  automatizacion_inteligente:  { ...DEMO_DOMAINS.automatizacion_inteligente,  scores: { businessValue: 0, technicalReady: 0, orgReadiness: 0, riskLevel: 0 }, priorityScore: 0, recommendation: 'preparar_foundations' },
+  analitica_predictiva:        { ...DEMO_DOMAINS.analitica_predictiva,        scores: { businessValue: 0, technicalReady: 0, orgReadiness: 0, riskLevel: 0 }, priorityScore: 0, recommendation: 'preparar_foundations' },
+  asistente_ia:                { ...DEMO_DOMAINS.asistente_ia,                scores: { businessValue: 0, technicalReady: 0, orgReadiness: 0, riskLevel: 0 }, priorityScore: 0, recommendation: 'preparar_foundations' },
+  optimizacion_proceso:        { ...DEMO_DOMAINS.optimizacion_proceso,        scores: { businessValue: 0, technicalReady: 0, orgReadiness: 0, riskLevel: 0 }, priorityScore: 0, recommendation: 'preparar_foundations' },
+  'agéntica':                  { ...DEMO_DOMAINS['agéntica'],                 scores: { businessValue: 0, technicalReady: 0, orgReadiness: 0, riskLevel: 0 }, priorityScore: 0, recommendation: 'preparar_foundations' },
+}
+
+function buildEmptyCanvas(): T5Canvas {
+  return {
+    id:                 '',
+    companyName:        '',
+    createdAt:          new Date().toISOString(),
+    updatedAt:          new Date().toISOString(),
+    domains:            EMPTY_DOMAINS,
+    maturityLevel:      'inicial',
+    activationSequence: [],
+  }
+}
+
 // ── Store ─────────────────────────────────────────────────────
 
 interface T5Store {
@@ -163,7 +186,7 @@ interface T5Store {
 export const useT5Store = create<T5Store>()(
   persist(
     (set) => ({
-      canvas: buildDemoCanvas(),
+      canvas: isDemoEnabled ? buildDemoCanvas() : buildEmptyCanvas(),
 
       updateDomainScores: (code, scores) =>
         set((state) => {
