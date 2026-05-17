@@ -27,6 +27,7 @@ import { RecommendationPanel }           from '@/components/RecommendationPanel'
 import { buildT2RecommendationContext }  from './t2ContextBuilder'
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from './types'
 import { PhaseMiniMap }                  from '@/shared/components/PhaseMiniMap'
+import { isDemoEnabled }                 from '@/lib/config'
 
 // Colores hex por arquetipo (para SVG — mirrors StakeholderQuadrantChart)
 const ARCH_HEX: Record<ArchetypeCode, string> = {
@@ -768,7 +769,7 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
   useEffect(() => {
     if (engagementId) {
       load(engagementId)
-    } else {
+    } else if (isDemoEnabled) {
       initDemo()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

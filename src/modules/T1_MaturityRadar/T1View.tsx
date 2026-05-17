@@ -28,6 +28,7 @@ import { useEngagementStore }                   from '@/modules/Engagement/store
 import { useCompanyProfileStore }              from '@/modules/CompanyProfile/store'
 import { RecommendationPanel }                 from '@/components/RecommendationPanel'
 import { buildT1RecommendationContext }        from './t1ContextBuilder'
+import { isDemoEnabled }                       from '@/lib/config'
 
 interface T1ViewProps {
   scenario: DemoScenario
@@ -267,7 +268,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
   useEffect(() => {
     if (engagementId) {
       store.load(engagementId)
-    } else {
+    } else if (isDemoEnabled) {
       store.initFromScenario(
         scenario.interviewees,
         Object.fromEntries(

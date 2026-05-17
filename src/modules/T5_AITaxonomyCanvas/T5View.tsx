@@ -19,6 +19,7 @@ import { useT5Store }    from './store'
 import { useT3Store }    from '@/modules/T3_ValueStreamMap'
 import { useT4Store }    from '@/modules/T4_UseCasePriorityBoard'
 import { PhaseMiniMap }  from '@/shared/components/PhaseMiniMap'
+import { isDemoEnabled } from '@/lib/config'
 
 // ── Collision resolution ──────────────────────────────────────
 // Reference container dimensions for physics calculations
@@ -1024,8 +1025,8 @@ export function T5View({
   // Carga T3 si no hay procesos (el usuario llegó a T5 sin pasar por T3View)
   useEffect(() => {
     if (processes.length === 0) {
-      if (engagementId) loadT3(engagementId)
-      else              initT3Demo()
+      if (engagementId)       loadT3(engagementId)
+      else if (isDemoEnabled) initT3Demo()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])

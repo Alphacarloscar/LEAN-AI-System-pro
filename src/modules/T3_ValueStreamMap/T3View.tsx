@@ -30,6 +30,7 @@ import {
 import { ProcessInterviewModal }     from './components/ProcessInterviewModal'
 import { StagesTab }                 from './components/StagesTab'
 import { PhaseMiniMap }              from '@/shared/components/PhaseMiniMap'
+import { isDemoEnabled }             from '@/lib/config'
 import type {
   ValueStream, AICategoryCode, OrgReadinessLevel,
   ProcessPhase, AIOpportunity,
@@ -924,7 +925,7 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
   useEffect(() => {
     if (engagementId) {
       load(engagementId)
-    } else {
+    } else if (isDemoEnabled) {
       initDemo()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
