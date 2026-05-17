@@ -60,7 +60,12 @@ export async function inviteUserToCompany(params: {
   companyId: string
   role?:     'consultant' | 'viewer'
 }): Promise<void> {
+  // redirectTo asegura que el link del email lleve a /reset-password
+  // (sin esto Supabase redirige al Site URL raíz y el token expira sin procesarse)
+  const redirectTo = `${window.location.origin}/reset-password`
+
   const { error } = await supabase.auth.admin.inviteUserByEmail(params.email, {
+    redirectTo,
     data: {
       name:       params.name,
       company_id: params.companyId,
