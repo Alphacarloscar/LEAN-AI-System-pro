@@ -24,7 +24,7 @@ function toJson<T>(v: T): Json { return v as unknown as Json }
 
 export function rowToCompanyProfile(row: CompanyProfileRow): CompanyProfile {
   return {
-    engagementName:          row.engagement_name,
+    engagementName:          row.project_name,
     sector:                  row.sector,
     tamanoEmpresa:           row.tamano_empresa,
     objetivoPrincipalIA:     row.objetivo_principal_ia,
@@ -53,7 +53,7 @@ export function rowToFriction(row: FrictionRow): Friction {
 function profileToUpsert(profile: CompanyProfile, engagementId: string) {
   return {
     project_id:          engagementId,
-    project_name:        profile.engagementName,
+    project_name:        profile.engagementName ?? '',
     sector:                 profile.sector,
     tamano_empresa:         profile.tamanoEmpresa,
     objetivo_principal_ia:  profile.objetivoPrincipalIA,

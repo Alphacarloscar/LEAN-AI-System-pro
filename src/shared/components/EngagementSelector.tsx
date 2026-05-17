@@ -51,7 +51,7 @@ interface EngagementSelectorProps {
 
 export function EngagementSelector({ dark }: EngagementSelectorProps) {
   const {
-    engagements,
+    projects,
     activeEngagementId,
     isLoading,
     selectEngagement,
@@ -86,7 +86,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
     if (creating) inputRef.current?.focus()
   }, [creating])
 
-  const activeEngagement = engagements.find((e) => e.id === activeEngagementId)
+  const activeEngagement = projects.find((e) => e.id === activeEngagementId)
   const label = activeEngagement?.name ?? 'Seleccionar proyecto'
 
   async function handleCreate(e: React.FormEvent) {
@@ -150,9 +150,9 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
         ].join(' ')}>
 
           {/* Lista de engagements */}
-          {engagements.length > 0 ? (
+          {projects.length > 0 ? (
             <div className="py-1">
-              {engagements.map((eng) => (
+              {projects.map((eng) => (
                 <button
                   key={eng.id}
                   onClick={() => { selectEngagement(eng.id); setOpen(false) }}

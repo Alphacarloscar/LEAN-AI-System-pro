@@ -15,19 +15,19 @@
 import { create }                     from 'zustand'
 import { persist }                    from 'zustand/middleware'
 import { listMyProjects, createProject } from '@/services/projects.service'
-import type { EngagementRow }         from '@/types/database.types'
+import type { ProjectRow }         from '@/types/database.types'
 
 interface EngagementStore {
-  projects:        EngagementRow[]
+  projects: ProjectRow[]
   activeEngagementId: string | null
   isLoading:          boolean
 
   // Carga los engagements del usuario logueado
-  loadMyProjects:  () => Promise<void>
+  loadMyProjects: () => Promise<void>
   // Selecciona el engagement activo (y notifica a los stores T1-T6)
   selectEngagement:   (id: string) => void
   // Crea un nuevo engagement y lo selecciona
-  createAndSelect:    (name: string) => Promise<EngagementRow>
+  createAndSelect: (name: string) => Promise<ProjectRow>
   // Limpia el estado al logout
   reset:              () => void
 }
@@ -50,21 +50,21 @@ export const useEngagementStore = create<EngagementStore>()(
           }
         }, 10_000)
         try {
-          const engagements = await listMyProjects()
+          const projects = await listMyProjects()
           clearTimeout(timeout)
-          set({ engagements, isLoading: false })
+          set({ projects, isLoading: false })
 
           // Auto-select si hay exactamente uno
           const { activeEngagementId } = get()
-          if (!activeEngagementId && engagements.length === 1) {
-            set({ activeEngagementId: engagements[0].id })
+          if (!activeEngagementId && projects.length === 1) {
+            set({ activeEngagementId: projects[0].id })
           }
           // Si el activeEngagementId guardado ya no existe → limpiar
           if (
             activeEngagementId &&
-            !engagements.find((e) => e.id === activeEngagementId)
+            !projects.find((p) => p.id === activeEngagementId)
           ) {
-            set({ activeEngagementId: engagements[0]?.id ?? null })
+            set({ activeEngagementId: projects[0]?.id ?? null })
           }
         } catch (err) {
           clearTimeout(timeout)
@@ -80,13 +80,13 @@ export const useEngagementStore = create<EngagementStore>()(
       createAndSelect: async (name) => {
         set({ isLoading: true })
         try {
-          const engagement = await createProject({ name })
+          const project = await createProject({ name })
           set((s) => ({
-            projects:        [...s.engagements, engagement],
-            activeEngagementId: engagement.id,
+            projects: [...s.projects, project],
+            activeEngagementId: project.id,
             isLoading:          false,
           }))
-          return engagement
+          return project
         } catch (err) {
           set({ isLoading: false })
           throw err

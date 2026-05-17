@@ -20,13 +20,10 @@ import {
   listCompanies,
   createCompany,
   inviteUserToCompany,
-  listCompanyUsers,
-  listCompanyProjects,
 } from '@/services/companies.service'
 import {
   listMyProjects,
   createProject,
-  addProjectMember,
 } from '@/services/projects.service'
 import type { CompanyRow, ProjectRow } from '@/types/database.types'
 
