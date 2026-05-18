@@ -154,13 +154,28 @@ function buildDemoCanvas(): T5Canvas {
 }
 
 // Canvas vacío para modo producción (sin datos demo)
+function emptyDomain(domainCode: T5DomainCode): T5DomainAssessment {
+  return {
+    domainCode,
+    scores:               { businessValue: 0, technicalReady: 0, orgReadiness: 0, riskLevel: 0 },
+    priorityScore:        0,
+    recommendation:       'preparar_foundations',
+    suggestedOwner:       '',
+    primaryKPI:           '',
+    activationConditions: [],
+    governanceNotes:      undefined,
+    useCaseCount:         0,
+    assessedAt:           new Date().toISOString(),
+  }
+}
+
 const EMPTY_DOMAINS: Record<T5DomainCode, T5DomainAssessment> = {
-  automatizacion_rpa:          { ...DEMO_DOMAINS.automatizacion_rpa,          scores: { businessValue: 0, technicalReady: 0, orgReadiness: 0, riskLevel: 0 }, priorityScore: 0, recommendation: 'preparar_foundations' },
-  automatizacion_inteligente:  { ...DEMO_DOMAINS.automatizacion_inteligente,  scores: { businessValue: 0, technicalReady: 0, orgReadiness: 0, riskLevel: 0 }, priorityScore: 0, recommendation: 'preparar_foundations' },
-  analitica_predictiva:        { ...DEMO_DOMAINS.analitica_predictiva,        scores: { businessValue: 0, technicalReady: 0, orgReadiness: 0, riskLevel: 0 }, priorityScore: 0, recommendation: 'preparar_foundations' },
-  asistente_ia:                { ...DEMO_DOMAINS.asistente_ia,                scores: { businessValue: 0, technicalReady: 0, orgReadiness: 0, riskLevel: 0 }, priorityScore: 0, recommendation: 'preparar_foundations' },
-  optimizacion_proceso:        { ...DEMO_DOMAINS.optimizacion_proceso,        scores: { businessValue: 0, technicalReady: 0, orgReadiness: 0, riskLevel: 0 }, priorityScore: 0, recommendation: 'preparar_foundations' },
-  'agéntica':                  { ...DEMO_DOMAINS['agéntica'],                 scores: { businessValue: 0, technicalReady: 0, orgReadiness: 0, riskLevel: 0 }, priorityScore: 0, recommendation: 'preparar_foundations' },
+  automatizacion_rpa:         emptyDomain('automatizacion_rpa'),
+  automatizacion_inteligente: emptyDomain('automatizacion_inteligente'),
+  analitica_predictiva:       emptyDomain('analitica_predictiva'),
+  asistente_ia:               emptyDomain('asistente_ia'),
+  optimizacion_proceso:       emptyDomain('optimizacion_proceso'),
+  'agéntica':                 emptyDomain('agéntica'),
 }
 
 function buildEmptyCanvas(): T5Canvas {
@@ -213,6 +228,6 @@ export const useT5Store = create<T5Store>()(
 
       resetCanvas: () => set({ canvas: buildDemoCanvas() }),
     }),
-    { name: 'lean-t5-canvas', version: 2 },
+    { name: 'lean-t5-canvas', version: 3 },
   ),
 )
