@@ -10,6 +10,7 @@ import { useState, useEffect }    from 'react'
 import { useNavigate }            from 'react-router-dom'
 import { useCompanyProfileStore } from './store'
 import { useEngagementStore }     from '@/modules/Engagement/store'
+import { supabase }               from '@/lib/supabase'
 import {
   ALL_BUSINESS_AREAS,
   SECTOR_OPTIONS,
@@ -249,12 +250,25 @@ export function CompanyProfileView() {
 
   const engagementId = useEngagementStore((s) => s.activeEngagementId)
 
-  const [savedFlash, setSavedFlash] = useState(false)
+  const [savedFlash,   setSavedFlash]   = useState(false)
+  const [companyName,  setCompanyName]  = useState<string>('')
 
   // Carga desde Supabase cuando se selecciona un engagement real
   useEffect(() => {
     if (engagementId) {
       loadProfile(engagementId)
+      // Obtener nombre de empresa del proyecto activo
+      supabase
+        .from('projects')
+        .select('company_id, companies(name)')
+        .eq('id', engagementId)
+        .single()
+        .then(({ data }) => {
+          const name = (data?.companies as { name?: string } | null)?.name ?? ''
+          setCompanyName(name)
+        })
+    } else {
+      setCompanyName('')
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])
@@ -303,12 +317,17 @@ export function CompanyProfileView() {
                   <path d="M5 13V9h4v4M2 6h10" />
                 </svg>
               </div>
-              <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100">
-                Perfil de Empresa
-              </h1>
+              <div>
+                <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100">
+                  Perfil de Empresa
+                </h1>
+                {companyName && (
+                  <p className="text-[11px] text-[#C8860A] font-medium mt-0.5">{companyName}</p>
+                )}
+              </div>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-gray-800 text-text-muted dark:text-gray-400">
-              Contexto global del engagement
+              Contexto global del proyecto
             </span>
           </div>
 
@@ -377,9 +396,9 @@ export function CompanyProfileView() {
         <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 p-6 space-y-6">
           <SectionLabel>Contexto del cliente</SectionLabel>
 
-          {/* Nombre del engagement */}
+          {/* Nombre del proyecto */}
           <div>
-            <FieldLabel>Nombre del engagement</FieldLabel>
+            <FieldLabel>Nombre del proyecto</FieldLabel>
             <input
               type="text"
               value={profile.engagementName}
