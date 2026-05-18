@@ -27,6 +27,9 @@ export async function listMyProjects(): Promise<ProjectRow[]> {
 }
 
 // ── Crear proyecto ───────────────────────────────────────────
+// Sprint 8: usa RPC con SECURITY DEFINER en lugar de INSERT directo.
+// Esto resuelve el desajuste auth.uid() en RLS vs owner_id del cliente.
+// La función SQL maneja también el INSERT en project_members.
 
 export async function createProject(params: {
   name:          string
@@ -34,33 +37,17 @@ export async function createProject(params: {
   currentPhase?: ProjectRow['current_phase']
   startDate?:    string
 }): Promise<ProjectRow> {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('[Projects] Usuario no autenticado')
-
-  const { data, error } = await supabase
-    .from('projects')
-    .insert({
-      name:          params.name,
-      owner_id:      user.id,
-      company_id:    params.companyId ?? null,
-      current_phase: params.currentPhase ?? 'listen',
-      start_date:    params.startDate ?? null,
-    })
-    .select()
-    .single()
-
-  if (error || !data) throw new Error(`[Projects] createProject: ${error?.message}`)
-
-  // Auto-añadir al creador como consultant (propietario del proyecto)
-  // El resto de la empresa verá el proyecto via RLS de company_id (migración 005)
-  // — no hace falta añadirlos a project_members para lectura
-  await supabase.from('project_members').insert({
-    project_id: data.id,
-    user_id:    user.id,
-    role:       'consultant',
+  const { data, error } = await supabase.rpc('create_project', {
+    p_name:       params.name,
+    p_company_id: params.companyId ?? null,
+    p_phase:      params.currentPhase ?? 'listen',
   })
 
-  return data
+  if (error || !data || (data as ProjectRow[]).length === 0) {
+    throw new Error(`[Projects] createProject: ${error?.message ?? 'No data returned'}`)
+  }
+
+  return (data as ProjectRow[])[0]
 }
 
 // ── Añadir miembro a proyecto ────────────────────────────────
