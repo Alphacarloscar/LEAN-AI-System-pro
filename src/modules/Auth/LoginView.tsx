@@ -47,15 +47,20 @@ function Field({
 
 // ── Vista principal ───────────────────────────────────────────
 export function LoginView() {
-  const [email,       setEmail]       = useState('')
-  const [password,    setPassword]    = useState('')
-  const [loading,     setLoading]     = useState(false)
+  const [email,        setEmail]        = useState('')
+  const [password,     setPassword]     = useState('')
+  const [loading,      setLoading]      = useState(false)
+  // Forgot password flow
+  const [isForgot,     setIsForgot]     = useState(false)
+  const [forgotEmail,  setForgotEmail]  = useState('')
+  const [forgotSent,   setForgotSent]   = useState(false)
+  const [forgotError,  setForgotError]  = useState('')
   // Recovery flow
-  const [isRecovery,  setIsRecovery]  = useState(false)
-  const [newPass,     setNewPass]     = useState('')
-  const [newPass2,    setNewPass2]    = useState('')
-  const [recError,    setRecError]    = useState('')
-  const [recOk,       setRecOk]       = useState(false)
+  const [isRecovery,   setIsRecovery]   = useState(false)
+  const [newPass,      setNewPass]      = useState('')
+  const [newPass2,     setNewPass2]     = useState('')
+  const [recError,     setRecError]     = useState('')
+  const [recOk,        setRecOk]        = useState(false)
 
   const { login, error, clearError, isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
@@ -72,6 +77,18 @@ export function LoginView() {
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  async function handleForgotPassword(e: FormEvent) {
+    e.preventDefault()
+    if (!forgotEmail) return
+    setLoading(true)
+    setForgotError('')
+    const redirectTo = `${window.location.origin}/reset-password`
+    const { error: err } = await supabase.auth.resetPasswordForEmail(forgotEmail, { redirectTo })
+    setLoading(false)
+    if (err) { setForgotError(err.message); return }
+    setForgotSent(true)
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -99,6 +116,45 @@ export function LoginView() {
     if (err) { setRecError(err.message); return }
     setRecOk(true)
     setTimeout(() => { setIsRecovery(false); setRecOk(false); setNewPass(''); setNewPass2('') }, 2000)
+  }
+
+  // ── Formulario "olvidé mi contraseña" ────────────────────────
+  if (isForgot) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center px-4">
+        <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(to right, rgba(42,40,34,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(42,40,34,0.03) 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
+        <div className="relative w-full max-w-sm">
+          <div className="bg-white rounded-2xl border border-border shadow-xl shadow-warm-200/60 px-8 py-10 space-y-8">
+            <AlphaLogo size="lg" />
+            {forgotSent ? (
+              <div className="text-center space-y-3">
+                <p className="text-sm font-semibold text-green-600">✓ Enlace enviado</p>
+                <p className="text-xs text-gray-500">Revisa tu bandeja de entrada y sigue el enlace para crear una nueva contraseña.</p>
+                <button onClick={() => { setIsForgot(false); setForgotSent(false); setForgotEmail('') }} className="text-xs text-navy underline underline-offset-2 mt-2">
+                  Volver al acceso
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <p className="text-xs text-gray-500 text-center">Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.</p>
+                <Field label="Email" type="email" value={forgotEmail} onChange={setForgotEmail} placeholder="tu@empresa.com" autoComplete="email" />
+                {forgotError && (
+                  <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-50 border border-red-100">
+                    <p className="text-xs text-red-600">{forgotError}</p>
+                  </div>
+                )}
+                <button type="submit" disabled={loading || !forgotEmail} className={['w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-150', loading || !forgotEmail ? 'bg-warm-100 text-warm-300 cursor-not-allowed' : 'bg-navy-metallic text-white hover:bg-navy-metallic-hover active:scale-[0.98] shadow-sm'].join(' ')}>
+                  {loading ? 'Enviando…' : 'Enviar enlace'}
+                </button>
+                <button type="button" onClick={() => setIsForgot(false)} className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors pt-1">
+                  Volver al acceso
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // ── Formulario de nueva contraseña (recovery) ─────────────────
@@ -165,14 +221,25 @@ export function LoginView() {
               placeholder="tu@empresa.com"
               autoComplete="email"
             />
-            <Field
-              label="Contraseña"
-              type="password"
-              value={password}
-              onChange={setPassword}
-              placeholder="••••••••"
-              autoComplete="current-password"
-            />
+            <div className="space-y-1">
+              <Field
+                label="Contraseña"
+                type="password"
+                value={password}
+                onChange={setPassword}
+                placeholder="••••••••"
+                autoComplete="current-password"
+              />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => { setIsForgot(true); setForgotEmail(email) }}
+                  className="text-[11px] text-gray-400 hover:text-navy transition-colors underline underline-offset-2"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+            </div>
 
             {/* Error */}
             {error && (
