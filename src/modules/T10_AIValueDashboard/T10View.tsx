@@ -17,7 +17,8 @@ import { RecommendationPanel }           from '@/components/RecommendationPanel'
 import { buildT10RecommendationContext } from './t10ContextBuilder'
 import { isDemoEnabled }                 from '@/lib/config'
 import { useT1Store }                    from '@/modules/T1_MaturityRadar/store'
-import { computeDimensionScore }         from '@/modules/T1_MaturityRadar/types'
+import { computeDimensionScore, computeOverallScore } from '@/modules/T1_MaturityRadar/types'
+import { useT3Store }                    from '@/modules/T3_ValueStreamMap/store'
 import { useAuthStore }                  from '@/modules/Auth'
 
 // ── Tipos ────────────────────────────────────────────────────
@@ -318,15 +319,15 @@ export function T10View({
   const { profile: companyProfile, loadProfile } = useCompanyProfileStore()
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
   const projects                    = useEngagementStore((s) => s.projects)
-  const { dimensionStates, load: loadT1 } = useT1Store()
+  const { dimensionStates, interviewees, load: loadT1 } = useT1Store()
+  const { processes, load: loadT3 }   = useT3Store()
 
   // ── Carga de todos los stores cuando cambia el proyecto activo ──
-  // Sin esto, T10 siempre muestra vacío salvo que el usuario haya
-  // visitado T1/T2/T4 manualmente antes de volver al home.
   useEffect(() => {
     if (!engagementId || isDemoEnabled) return
     loadT1(engagementId)
     loadT2(engagementId)
+    loadT3(engagementId)
     loadT4(engagementId)
     loadProfile(engagementId)
   }, [engagementId])
@@ -451,6 +452,62 @@ export function T10View({
     }
   }, [stakeholders])
 
+  // ── T1: desglose IT vs Negocio para panel expandido ──────────
+  const liveT1Breakdown = useMemo(() => {
+    if (isDemoEnabled || interviewees.length === 0) {
+      return { itAvg: 0, bizAvg: 0, gapPts: 0, interviewsCount: interviewees.length }
+    }
+    function avgForType(type: 'it' | 'business'): number {
+      const group = interviewees.filter(i => i.type === type)
+      if (group.length === 0) return 0
+      const scores = group
+        .map(i => { const dims = dimensionStates[i.id]; return dims ? computeOverallScore(dims) : null })
+        .filter((s): s is number => s !== null)
+      if (scores.length === 0) return 0
+      return Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
+    }
+    const itAvg  = avgForType('it')
+    const bizAvg = avgForType('business')
+    return {
+      itAvg,
+      bizAvg,
+      gapPts:          Math.abs(Math.round((bizAvg - itAvg) * 10) / 10),
+      gapSign:         bizAvg >= itAvg ? 'Negocio' : 'IT',
+      interviewsCount: interviewees.length,
+    }
+  }, [isDemoEnabled, interviewees, dimensionStates])
+
+  // ── T3: ecosistema de procesos para P4 ───────────────────────
+  const AI_CAT_META: Record<string, { label: string; color: string }> = {
+    automatizacion_inteligente: { label: 'Automatización Inteligente', color: '#86C7A8' },
+    analitica_predictiva:       { label: 'Analítica Predictiva',       color: '#9BB5D9' },
+    automatizacion_rpa:         { label: 'RPA',                        color: '#E8C281' },
+    asistente_ia:               { label: 'Asistente IA',               color: '#C8860A' },
+  }
+
+  const liveT3 = useMemo(() => {
+    if (processes.length === 0) return null
+    const catCounts: Record<string, number> = {}
+    processes.forEach(p => { const c = p.aiCategory ?? 'sin_categoria'; catCounts[c] = (catCounts[c] ?? 0) + 1 })
+    const total    = processes.length
+    const aiTypes  = Object.entries(catCounts)
+      .map(([cat, count]) => ({ label: AI_CAT_META[cat]?.label ?? cat, color: AI_CAT_META[cat]?.color ?? '#C4C0B8', count, pct: Math.round((count / total) * 100) }))
+      .sort((a, b) => b.count - a.count)
+    const oppCritica      = processes.filter(p => p.opportunityLevel === 'critica').length
+    const oppAlta         = processes.filter(p => p.opportunityLevel === 'alta').length
+    const processesMapped = processes.filter(p => p.stages && p.stages.length > 0).length
+    const withScore       = processes.filter(p => p.interview?.opportunityScore != null)
+    const avgOpp          = withScore.length ? withScore.reduce((s, p) => s + p.interview!.opportunityScore, 0) / withScore.length : 0
+    const bottleneck      = [...processes]
+      .filter(p => p.stages && p.stages.length > 0)
+      .map(p => ({ name: p.name, ratio: p.stages.reduce((s, st) => s + st.waitTimeHours, 0) / Math.max(p.stages.reduce((s, st) => s + st.procTimeHours, 0), 0.01) }))
+      .sort((a, b) => b.ratio - a.ratio)[0]?.name ?? '—'
+    return {
+      processesTotal: total, processesMapped, efficiencyPct: Math.round((avgOpp / 4) * 100),
+      bottleneck, oppCritica, oppAlta, total: oppCritica + oppAlta, aiTypes,
+    }
+  }, [processes])
+
   // AI Index counter animation
   useEffect(() => {
     const target = avg; const duration = 1300; const start = Date.now()
@@ -489,6 +546,7 @@ export function T10View({
   const d      = T10_DEMO
   const t4data = isDemoEnabled ? d.t4     : liveT4
   const t2data = isDemoEnabled ? d.t2t7   : liveT2
+  const t3data = isDemoEnabled ? d.t3t5   : liveT3   // null = sin datos aún
   const t4n    = t4data.totalInitiatives
   const t4s    = t4data.statuses
   const t4Segments = t4n > 0 ? [
@@ -504,8 +562,6 @@ export function T10View({
     { pct: Math.round((d.t6t12.risks.medium / rTotal) * 100), color: '#EF9F27' },
     { pct: Math.round((d.t6t12.risks.low    / rTotal) * 100), color: '#97C459' },
   ]
-
-  const aiTypeSegments = d.t3t5.aiTypes.map(t => ({ pct: t.pct, color: t.color }))
 
   return (
     <div className="min-h-screen bg-surface dark:bg-warm-900">
@@ -596,38 +652,52 @@ export function T10View({
 
             {expanded === 'p1' && (
               <ExpandedSection>
-                {/* IT vs Negocio */}
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="text-center">
-                    <p className="text-[10px] text-text-muted dark:text-warm-300">IT (avg)</p>
-                    <p className="text-xl font-semibold text-gold tabular-nums">{d.t1.itAvg}</p>
-                  </div>
-                  <div className="flex-1 relative mx-1">
-                    <div className="h-1.5 bg-border dark:bg-warm-500 rounded-full overflow-hidden">
-                      <div className="absolute left-0 top-0 h-full rounded-full bg-gold"
-                        style={{ width: `${(d.t1.itAvg / 4) * 100}%` }} />
+                {/* IT vs Negocio — datos reales o demo */}
+                {(isDemoEnabled || liveT1Breakdown.interviewsCount > 0) ? (
+                  <>
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="text-center">
+                        <p className="text-[10px] text-text-muted dark:text-warm-300">IT (avg)</p>
+                        <p className="text-xl font-semibold text-gold tabular-nums">
+                          {isDemoEnabled ? d.t1.itAvg : liveT1Breakdown.itAvg}
+                        </p>
+                      </div>
+                      <div className="flex-1 relative mx-1">
+                        <div className="h-1.5 bg-border dark:bg-warm-500 rounded-full overflow-hidden">
+                          <div className="absolute left-0 top-0 h-full rounded-full bg-gold"
+                            style={{ width: `${((isDemoEnabled ? d.t1.itAvg : liveT1Breakdown.itAvg) / 4) * 100}%` }} />
+                        </div>
+                        <div className="h-1.5 bg-border dark:bg-warm-500 rounded-full overflow-hidden mt-1">
+                          <div className="absolute left-0 top-0 h-full rounded-full bg-info"
+                            style={{ width: `${((isDemoEnabled ? d.t1.bizAvg : liveT1Breakdown.bizAvg) / 4) * 100}%` }} />
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] text-text-muted dark:text-warm-300">Negocio (avg)</p>
+                        <p className="text-xl font-semibold text-info-dark dark:text-info tabular-nums">
+                          {isDemoEnabled ? d.t1.bizAvg : liveT1Breakdown.bizAvg}
+                        </p>
+                      </div>
                     </div>
-                    <div className="h-1.5 bg-border dark:bg-warm-500 rounded-full overflow-hidden mt-1">
-                      <div className="absolute left-0 top-0 h-full rounded-full bg-info"
-                        style={{ width: `${(d.t1.bizAvg / 4) * 100}%` }} />
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-[10px] text-text-muted dark:text-warm-300">Negocio (avg)</p>
-                    <p className="text-xl font-semibold text-info-dark dark:text-info tabular-nums">{d.t1.bizAvg}</p>
-                  </div>
-                </div>
-                <p className="text-[10px] text-text-muted dark:text-warm-300 mb-2">
-                  → Negocio +{d.t1.gapPts} pts sobre IT
-                </p>
+                    <p className="text-[10px] text-text-muted dark:text-warm-300 mb-2">
+                      → {isDemoEnabled ? `Negocio +${d.t1.gapPts} pts sobre IT` : `${liveT1Breakdown.gapSign} +${liveT1Breakdown.gapPts} pts`}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-[10px] text-text-muted dark:text-warm-300 mb-2">
+                    Sin entrevistas registradas aún — abre T1 para añadir la primera.
+                  </p>
+                )}
                 <div className="flex items-center justify-between mb-3">
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${avg < 2 ? 'bg-warning-light text-warning-dark' : 'bg-info-light text-info-dark'}`}>{tier}</span>
                   <span className="text-[10px] text-text-muted dark:text-warm-300">
-                    Nº entrevistas: <span className="font-semibold text-lean-black dark:text-warm-50">{d.t1.interviewsCount}</span>
+                    Nº entrevistas: <span className="font-semibold text-lean-black dark:text-warm-50">
+                      {isDemoEnabled ? d.t1.interviewsCount : liveT1Breakdown.interviewsCount}
+                    </span>
                   </span>
                 </div>
                 <p className="text-[10px] text-text-muted dark:text-warm-300 mb-2">
-                  Área más débil: <span className="font-medium text-lean-black dark:text-warm-100">{weakest}</span>
+                  Área más débil: <span className="font-medium text-lean-black dark:text-warm-100">{weakest || '—'}</span>
                 </p>
                 <NavButton label="Abrir T1 Assessment" onClick={() => onNavigate('/t1')} />
               </ExpandedSection>
@@ -731,43 +801,59 @@ export function T10View({
           {/* ── P4: T3+T5 Ecosistema IA ─────────────────────── */}
           <PanelCard
             id="p4" expanded={expanded === 'p4'} onClick={() => toggle('p4')}
-            tag="T3 + T5 · Taxonomía" tagColor="purple"
-            title="Ecosistema IA" subtitle={`${d.t3t5.processesTotal} procesos · ${d.t3t5.aiTypes.length} tipos IA activos`}
+            tag="T3 · Ecosistema IA" tagColor="purple"
+            title="Ecosistema IA"
+            subtitle={t3data
+              ? `${t3data.processesTotal} procesos · ${t3data.aiTypes.length} tipos IA`
+              : 'Sin procesos mapeados aún'}
             animDelay={240}
-            heroSlot={<HeroMetric label="Eficiencia" value={`${d.t3t5.efficiencyPct}%`} colorScore={d.t3t5.efficiencyPct} />}
+            heroSlot={<HeroMetric
+              label="Eficiencia"
+              value={t3data ? `${t3data.efficiencyPct}%` : '—'}
+              colorScore={t3data?.efficiencyPct}
+            />}
           >
-            {/* AI type distribution — donut + legend */}
-            <div className="flex items-center gap-3">
-              <DonutChart segments={aiTypeSegments} size={68} strokeWidth={14} />
-              <div className="space-y-1.5 flex-1">
-                {d.t3t5.aiTypes.map((t, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-[10px]">
-                    <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: t.color }} />
-                    <span className="text-text-muted dark:text-warm-300 flex-1">{t.label}</span>
-                    <span className="font-medium text-lean-black dark:text-warm-100">{t.count}</span>
-                    <span className="text-text-subtle dark:text-warm-400">{t.pct}%</span>
+            {t3data ? (
+              <>
+                {/* AI type distribution — donut + legend */}
+                <div className="flex items-center gap-3">
+                  <DonutChart
+                    segments={t3data.aiTypes.map(t => ({ pct: t.pct, color: t.color }))}
+                    size={68} strokeWidth={14}
+                  />
+                  <div className="space-y-1.5 flex-1">
+                    {t3data.aiTypes.map((t, i) => (
+                      <div key={i} className="flex items-center gap-1.5 text-[10px]">
+                        <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: t.color }} />
+                        <span className="text-text-muted dark:text-warm-300 flex-1 truncate">{t.label}</span>
+                        <span className="font-medium text-lean-black dark:text-warm-100">{t.count}</span>
+                        <span className="text-text-subtle dark:text-warm-400">{t.pct}%</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-md px-2.5 py-1.5 mt-2" style={{ background: 'rgba(127, 119, 221, 0.08)' }}>
-              <p className="text-[10px] text-[#534AB7] dark:text-[#AFA9EC]">
-                Cuello: <span className="font-semibold">{d.t3t5.bottleneck}</span>
+                </div>
+                <div className="rounded-md px-2.5 py-1.5 mt-2" style={{ background: 'rgba(127, 119, 221, 0.08)' }}>
+                  <p className="text-[10px] text-[#534AB7] dark:text-[#AFA9EC]">
+                    Mayor espera: <span className="font-semibold truncate">{t3data.bottleneck}</span>
+                  </p>
+                </div>
+              </>
+            ) : (
+              <p className="text-[11px] text-text-muted dark:text-warm-300 py-2">
+                Abre T3 para mapear los procesos de la empresa y ver la distribución de tipos de IA.
               </p>
-            </div>
+            )}
 
             {expanded === 'p4' && (
               <ExpandedSection>
-                <div className="flex gap-2 mb-3">
-                  <MetricChip label="Procesos mapeados" value={`${d.t3t5.processesMapped}/${d.t3t5.processesTotal}`} />
-                  <MetricChip label="Opp crítica" value={String(d.t3t5.oppCritica)} valueColor="#C06060" />
-                  <MetricChip label="Opp alta" value={String(d.t3t5.oppAlta)} valueColor="#D4A85C" />
-                  <MetricChip label="Total" value={String(d.t3t5.total)} />
-                </div>
-                <div className="flex items-center gap-3">
-                  <NavButton label="Abrir T3" onClick={() => onNavigate('/t3')} />
-                  <NavButton label="Abrir T5" onClick={() => onNavigate('/t5')} secondary />
-                </div>
+                {t3data ? (
+                  <div className="flex gap-2 mb-3">
+                    <MetricChip label="Mapeados" value={`${t3data.processesMapped}/${t3data.processesTotal}`} />
+                    <MetricChip label="Opp crítica" value={String(t3data.oppCritica)} valueColor="#C06060" />
+                    <MetricChip label="Opp alta"   value={String(t3data.oppAlta)}    valueColor="#D4A85C" />
+                  </div>
+                ) : null}
+                <NavButton label="Abrir T3 Procesos" onClick={() => onNavigate('/t3')} />
               </ExpandedSection>
             )}
           </PanelCard>
@@ -776,50 +862,67 @@ export function T10View({
           <PanelCard
             id="p5" expanded={expanded === 'p5'} onClick={() => toggle('p5')}
             tag="T6 + T12 · Riesgos" tagColor="danger"
-            title="Riesgo + ISO 42001" subtitle={`${d.t6t12.risks.total} riesgos · ${d.t6t12.isoCompliance}% ISO`}
+            title="Riesgo + ISO 42001"
+            subtitle={isDemoEnabled ? `${d.t6t12.risks.total} riesgos · ${d.t6t12.isoCompliance}% ISO` : 'Pendiente de mapeo'}
             animDelay={320}
-            heroSlot={<HeroMetric label="ISO 42001" value={`${d.t6t12.isoCompliance}%`} colorScore={d.t6t12.isoCompliance} />}
+            heroSlot={<HeroMetric
+              label="ISO 42001"
+              value={isDemoEnabled ? `${d.t6t12.isoCompliance}%` : '—'}
+              colorScore={isDemoEnabled ? d.t6t12.isoCompliance : undefined}
+            />}
           >
-            <div className="flex items-center gap-3">
-              <DonutChart segments={riskSegments} size={60} strokeWidth={12} centerLabel={`${d.t6t12.risks.total}`} />
-              <div className="space-y-1.5 flex-1">
-                <div className="flex items-center gap-1.5 text-[10px]">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0 bg-danger" />
-                  <span className="text-text-muted dark:text-warm-300 flex-1">Alto</span>
-                  <span className="font-semibold text-danger-dark dark:text-danger">{d.t6t12.risks.high}</span>
+            {isDemoEnabled ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <DonutChart segments={riskSegments} size={60} strokeWidth={12} centerLabel={`${d.t6t12.risks.total}`} />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0 bg-danger" />
+                      <span className="text-text-muted dark:text-warm-300 flex-1">Alto</span>
+                      <span className="font-semibold text-danger-dark dark:text-danger">{d.t6t12.risks.high}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0 bg-warning" />
+                      <span className="text-text-muted dark:text-warm-300 flex-1">Medio</span>
+                      <span className="font-medium text-warning-dark dark:text-warning">{d.t6t12.risks.medium}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0 bg-success" />
+                      <span className="text-text-muted dark:text-warm-300 flex-1">Bajo</span>
+                      <span className="font-medium text-success-dark">{d.t6t12.risks.low}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px]">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0 bg-warning" />
-                  <span className="text-text-muted dark:text-warm-300 flex-1">Medio</span>
-                  <span className="font-medium text-warning-dark dark:text-warning">{d.t6t12.risks.medium}</span>
+                <div className="mt-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-text-muted dark:text-warm-300">ISO 42001 cumplimiento</span>
+                    <span className="text-[10px] font-semibold text-gold">{d.t6t12.isoCompliance}%</span>
+                  </div>
+                  <div className="h-[5px] rounded-full bg-border dark:bg-warm-500">
+                    <div className="h-full rounded-full bg-gold" style={{ width: `${d.t6t12.isoCompliance}%` }} />
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px]">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0 bg-success" />
-                  <span className="text-text-muted dark:text-warm-300 flex-1">Bajo</span>
-                  <span className="font-medium text-success-dark">{d.t6t12.risks.low}</span>
-                </div>
-              </div>
-            </div>
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] text-text-muted dark:text-warm-300">ISO 42001 cumplimiento</span>
-                <span className="text-[10px] font-semibold text-gold">{d.t6t12.isoCompliance}%</span>
-              </div>
-              <div className="h-[5px] rounded-full bg-border dark:bg-warm-500">
-                <div className="h-full rounded-full bg-gold" style={{ width: `${d.t6t12.isoCompliance}%` }} />
-              </div>
-            </div>
+              </>
+            ) : (
+              <p className="text-[11px] text-text-muted dark:text-warm-300 py-2">
+                Completa T6 (Riesgos) y T12 (ISO 42001) para ver el mapa de riesgo real del proyecto.
+              </p>
+            )}
 
             {expanded === 'p5' && (
               <ExpandedSection>
-                <div className="mb-2">
-                  <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Riesgo crítico identificado</p>
-                  <p className="text-[11px] font-medium text-danger-dark dark:text-danger">{d.t6t12.topRisk}</p>
-                </div>
-                <div className="mb-3">
-                  <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Próximo objetivo ISO</p>
-                  <p className="text-[11px] font-medium text-text-primary dark:text-warm-100">{d.t6t12.nextClause}</p>
-                </div>
+                {isDemoEnabled && (
+                  <>
+                    <div className="mb-2">
+                      <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Riesgo crítico identificado</p>
+                      <p className="text-[11px] font-medium text-danger-dark dark:text-danger">{d.t6t12.topRisk}</p>
+                    </div>
+                    <div className="mb-3">
+                      <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Próximo objetivo ISO</p>
+                      <p className="text-[11px] font-medium text-text-primary dark:text-warm-100">{d.t6t12.nextClause}</p>
+                    </div>
+                  </>
+                )}
                 <div className="flex items-center gap-3">
                   <NavButton label="Abrir T6 Riesgos" onClick={() => onNavigate('/t6')} />
                   <NavButton label="Abrir T12 ISO" onClick={() => onNavigate('/t12')} secondary />
@@ -832,48 +935,58 @@ export function T10View({
           <PanelCard
             id="p6" expanded={expanded === 'p6'} onClick={() => toggle('p6')}
             tag="T8 · T9 · T11 · Gobierno" tagColor="amber"
-            title="Gobierno activo" subtitle="Próximos eventos · Hitos · Vendors"
+            title="Gobierno activo"
+            subtitle={isDemoEnabled ? 'Próximos eventos · Hitos · Vendors' : 'Pendiente de configurar'}
             animDelay={400}
-            heroSlot={<HeroMetric label="Gobierno activo" value={`${d.t8t9t11.gobiernoActivoPct}%`} colorScore={d.t8t9t11.gobiernoActivoPct} />}
+            heroSlot={<HeroMetric
+              label="Gobierno activo"
+              value={isDemoEnabled ? `${d.t8t9t11.gobiernoActivoPct}%` : '—'}
+              colorScore={isDemoEnabled ? d.t8t9t11.gobiernoActivoPct : undefined}
+            />}
           >
-            <div className="space-y-1.5">
-              {d.t8t9t11.upcomingEvents.map((ev, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ background: EVENT_LEVEL_COLOR[ev.level] ?? '#C8860A' }} />
-                  <span className="text-[11px] text-text-primary dark:text-warm-100 flex-1 truncate">{ev.name}</span>
-                  <span className="text-[10px] text-text-muted dark:text-warm-300 flex-shrink-0">{ev.date}</span>
+            {isDemoEnabled ? (
+              <>
+                <div className="space-y-1.5">
+                  {d.t8t9t11.upcomingEvents.map((ev, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ background: EVENT_LEVEL_COLOR[ev.level] ?? '#C8860A' }} />
+                      <span className="text-[11px] text-text-primary dark:text-warm-100 flex-1 truncate">{ev.name}</span>
+                      <span className="text-[10px] text-text-muted dark:text-warm-300 flex-shrink-0">{ev.date}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <div className="mt-2 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse flex-shrink-0" />
-              <span className="text-[10px] text-danger-dark dark:text-danger truncate">
-                {d.t8t9t11.criticalVendor} · renovación {d.t8t9t11.vendorRenewal}
-              </span>
-            </div>
-            {/* 4 metric chips — always visible */}
-            <div className="flex gap-1.5 mt-3">
-              <MetricChip label="Casos en GO" value={String(d.t8t9t11.casosEnGO)} valueColor="#C8860A" />
-              <MetricChip label="Inic. libres" value={String(d.t8t9t11.iniciativasLibres)} />
-              <MetricChip label="Completadas" value={String(d.t8t9t11.archivosCompletados)} />
-              <MetricChip label="Riesgos altos" value={String(d.t8t9t11.riesgosAltos)} valueColor="#C06060" />
-            </div>
+                <div className="mt-2 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse flex-shrink-0" />
+                  <span className="text-[10px] text-danger-dark dark:text-danger truncate">
+                    {d.t8t9t11.criticalVendor} · renovación {d.t8t9t11.vendorRenewal}
+                  </span>
+                </div>
+                <div className="flex gap-1.5 mt-3">
+                  <MetricChip label="Casos en GO"    value={String(d.t8t9t11.casosEnGO)}             valueColor="#C8860A" />
+                  <MetricChip label="Inic. libres"   value={String(d.t8t9t11.iniciativasLibres)} />
+                  <MetricChip label="Completadas"    value={String(d.t8t9t11.archivosCompletados)} />
+                  <MetricChip label="Riesgos altos"  value={String(d.t8t9t11.riesgosAltos)}          valueColor="#C06060" />
+                </div>
+              </>
+            ) : (
+              <p className="text-[11px] text-text-muted dark:text-warm-300 py-2">
+                Usa T8 (Comunicación), T9 (Roadmap) y T11 (Gobierno) para construir el panel de gobierno del proyecto.
+              </p>
+            )}
 
             {expanded === 'p6' && (
               <ExpandedSection>
-                <div className="mb-3">
-                  <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Próximo hito</p>
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-success flex-shrink-0" />
-                    <p className="text-[11px] font-medium text-text-primary dark:text-warm-100">
-                      {d.t8t9t11.nextMilestone}
-                    </p>
-                    <span className="text-[10px] text-text-muted dark:text-warm-300 flex-shrink-0">
-                      {d.t8t9t11.nextMilestoneDate}
-                    </span>
+                {isDemoEnabled && (
+                  <div className="mb-3">
+                    <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Próximo hito</p>
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-success flex-shrink-0" />
+                      <p className="text-[11px] font-medium text-text-primary dark:text-warm-100">{d.t8t9t11.nextMilestone}</p>
+                      <span className="text-[10px] text-text-muted dark:text-warm-300 flex-shrink-0">{d.t8t9t11.nextMilestoneDate}</span>
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="flex items-center gap-3 flex-wrap">
                   <NavButton label="Abrir T11 Gobierno" onClick={() => onNavigate('/t11')} />
                   <NavButton label="Abrir T9 Roadmap"   onClick={() => onNavigate('/t9')} secondary />
