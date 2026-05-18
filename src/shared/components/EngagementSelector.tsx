@@ -10,6 +10,7 @@
 
 import { useState, useRef, useEffect }   from 'react'
 import { useEngagementStore }            from '@/modules/Engagement/store'
+import { useAuthStore }                  from '@/modules/Auth'
 
 // ── Iconos ────────────────────────────────────────────────────
 
@@ -57,6 +58,8 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
     selectEngagement,
     createAndSelect,
   } = useEngagementStore()
+  const { user } = useAuthStore()
+  const myUserId = user?.id ?? null
 
   const [open,        setOpen]        = useState(false)
   const [creating,    setCreating]    = useState(false)
@@ -152,27 +155,43 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
           {/* Lista de engagements */}
           {projects.length > 0 ? (
             <div className="py-1">
-              {projects.map((eng) => (
-                <button
-                  key={eng.id}
-                  onClick={() => { selectEngagement(eng.id); setOpen(false) }}
-                  className={[
-                    'w-full text-left px-4 py-2.5 text-xs transition-colors',
-                    eng.id === activeEngagementId
-                      ? dark
-                        ? 'bg-amber-900/30 text-amber-300 font-medium'
-                        : 'bg-amber-50 text-[#C8860A] font-medium'
-                      : dark
-                        ? 'text-gray-300 hover:bg-white/6'
-                        : 'text-gray-700 hover:bg-gray-50',
-                  ].join(' ')}
-                >
-                  <span className="truncate block">{eng.name}</span>
-                  {eng.id === activeEngagementId && (
-                    <span className="text-[10px] font-mono opacity-60">activo</span>
-                  )}
-                </button>
-              ))}
+              {projects.map((eng) => {
+                const isOwn     = !myUserId || eng.owner_id === myUserId
+                const isActive  = eng.id === activeEngagementId
+                return (
+                  <button
+                    key={eng.id}
+                    onClick={() => { selectEngagement(eng.id); setOpen(false) }}
+                    className={[
+                      'w-full text-left px-4 py-2.5 text-xs transition-colors',
+                      isActive
+                        ? dark
+                          ? 'bg-amber-900/30 text-amber-300 font-medium'
+                          : 'bg-amber-50 text-[#C8860A] font-medium'
+                        : dark
+                          ? 'text-gray-300 hover:bg-white/6'
+                          : 'text-gray-700 hover:bg-gray-50',
+                    ].join(' ')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="truncate flex-1">{eng.name}</span>
+                      {!isOwn && (
+                        <span className={[
+                          'flex-shrink-0 text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded',
+                          dark ? 'bg-white/10 text-white/40' : 'bg-gray-100 text-gray-400',
+                        ].join(' ')}>
+                          Vista
+                        </span>
+                      )}
+                    </div>
+                    {isActive && (
+                      <span className="text-[10px] font-mono opacity-60">
+                        {isOwn ? 'activo' : 'activo · solo lectura'}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           ) : (
             <div className={['px-4 py-3 text-xs', dark ? 'text-gray-500' : 'text-gray-400'].join(' ')}>

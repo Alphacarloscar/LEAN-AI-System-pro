@@ -18,6 +18,7 @@ import { buildT10RecommendationContext } from './t10ContextBuilder'
 import { isDemoEnabled }                 from '@/lib/config'
 import { useT1Store }                    from '@/modules/T1_MaturityRadar/store'
 import { computeDimensionScore }         from '@/modules/T1_MaturityRadar/types'
+import { useAuthStore }                  from '@/modules/Auth'
 
 // ── Tipos ────────────────────────────────────────────────────
 
@@ -311,10 +312,24 @@ export function T10View({
   const [aiDisplay, setAiDisplay] = useState(0)
 
   const useCases                    = useT4Store(s => s.useCases)
+  const loadT4                      = useT4Store(s => s.loadEngagement)
   const stakeholders                = useT2Store(s => s.stakeholders)
-  const { profile: companyProfile } = useCompanyProfileStore()
+  const loadT2                      = useT2Store(s => s.load)
+  const { profile: companyProfile, loadProfile } = useCompanyProfileStore()
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
-  const { dimensionStates }         = useT1Store()
+  const projects                    = useEngagementStore((s) => s.projects)
+  const { dimensionStates, load: loadT1 } = useT1Store()
+
+  // ── Carga de todos los stores cuando cambia el proyecto activo ──
+  // Sin esto, T10 siempre muestra vacío salvo que el usuario haya
+  // visitado T1/T2/T4 manualmente antes de volver al home.
+  useEffect(() => {
+    if (!engagementId || isDemoEnabled) return
+    loadT1(engagementId)
+    loadT2(engagementId)
+    loadT4(engagementId)
+    loadProfile(engagementId)
+  }, [engagementId])
 
   // ── T1: radar desde store real (producción) o prop demo ──────
   const liveT1Radar = useMemo((): RadarDimension[] => {
@@ -336,6 +351,19 @@ export function T10View({
   const avg     = calcAvg(liveT1Radar)
   const weakest = weakestDimension(liveT1Radar)
   const tier    = maturityLabel(avg)
+
+  // ── Datos de cabecera: demo → props, producción → stores ─────
+  const activeProject    = projects.find(p => p.id === engagementId)
+  const displayName      = isDemoEnabled ? companyName  : (activeProject?.name ?? '')
+  const displaySector    = isDemoEnabled ? sector       : (companyProfile?.sector ?? '')
+  const displayTamano    = isDemoEnabled ? `${employees.toLocaleString('es-ES')} empleados` : (companyProfile?.tamanoEmpresa ?? '')
+
+  // ── Proyecto de compañero: read-only (owner_id ≠ usuario actual) ──
+  const { user: currentUser } = useAuthStore()
+  const isReadOnlyProject = !isDemoEnabled
+    && !!activeProject
+    && !!currentUser
+    && activeProject.owner_id !== currentUser.id
 
   const t10LLMContext = useMemo(
     () => companyProfile
@@ -487,9 +515,9 @@ export function T10View({
         <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between gap-4 flex-wrap">
           <div>
             <p className="text-[10px] font-mono uppercase tracking-widest text-warm-300 mb-0.5">
-              {sector} · {employees.toLocaleString('es-ES')} empleados
+              {[displaySector, displayTamano].filter(Boolean).join(' · ')}
             </p>
-            <h1 className="text-base font-semibold text-warm-50 leading-tight">{companyName}</h1>
+            <h1 className="text-base font-semibold text-warm-50 leading-tight">{displayName}</h1>
           </div>
           <div className="text-center flex-1">
             <p className="text-[10px] font-mono uppercase tracking-widest text-warm-400 mb-1">Índice IA global</p>
@@ -508,6 +536,21 @@ export function T10View({
             <p className="text-[10px] text-warm-400 mt-1">Mayo 2026</p>
           </div>
         </div>
+
+        {/* Banner solo-lectura — visible cuando el proyecto es de un compañero */}
+        {isReadOnlyProject && (
+          <div className="border-t border-warm-700">
+            <div className="max-w-6xl mx-auto px-8 py-2 flex items-center gap-2">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#9BB5D9" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="7" width="10" height="7" rx="1.5" />
+                <path d="M5 7V5a3 3 0 016 0v2" />
+              </svg>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#9BB5D9]">
+                Proyecto de tu empresa · Solo lectura — no puedes guardar cambios en este proyecto
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Demo scenario selector — solo visible en entorno demo */}
         {isDemoEnabled && demoScenarios && onPatternChange && (
