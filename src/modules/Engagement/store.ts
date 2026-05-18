@@ -12,10 +12,11 @@
 //   4. selectEngagement(id) → el resto de stores cargan sus datos
 // ============================================================
 
-import { create }                     from 'zustand'
-import { persist }                    from 'zustand/middleware'
-import { listMyProjects, createProject } from '@/services/projects.service'
-import type { ProjectRow }         from '@/types/database.types'
+import { create }                         from 'zustand'
+import { persist }                        from 'zustand/middleware'
+import { listMyProjects, createProject }  from '@/services/projects.service'
+import { supabase }                       from '@/lib/supabase'
+import type { ProjectRow }                from '@/types/database.types'
 
 interface EngagementStore {
   projects: ProjectRow[]
@@ -80,9 +81,22 @@ export const useEngagementStore = create<EngagementStore>()(
       createAndSelect: async (name) => {
         set({ isLoading: true })
         try {
-          const project = await createProject({ name })
+          // Obtener company_id del perfil del usuario autenticado
+          // para que el proyecto quede ligado a su empresa
+          const { data: { user } } = await supabase.auth.getUser()
+          let companyId: string | undefined
+          if (user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('company_id')
+              .eq('id', user.id)
+              .single()
+            companyId = profile?.company_id ?? undefined
+          }
+
+          const project = await createProject({ name, companyId })
           set((s) => ({
-            projects: [...s.projects, project],
+            projects:           [...s.projects, project],
             activeEngagementId: project.id,
             isLoading:          false,
           }))
