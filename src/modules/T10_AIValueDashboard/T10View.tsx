@@ -500,7 +500,7 @@ export function T10View({
     const avgOpp          = withScore.length ? withScore.reduce((s, p) => s + p.interview!.opportunityScore, 0) / withScore.length : 0
     const bottleneck      = [...processes]
       .filter(p => p.stages && p.stages.length > 0)
-      .map(p => ({ name: p.name, ratio: p.stages.reduce((s, st) => s + st.waitTimeHours, 0) / Math.max(p.stages.reduce((s, st) => s + st.procTimeHours, 0), 0.01) }))
+      .map(p => ({ name: p.name, ratio: (p.stages ?? []).reduce((s, st) => s + st.waitTimeHours, 0) / Math.max((p.stages ?? []).reduce((s, st) => s + st.procTimeHours, 0), 0.01) }))
       .sort((a, b) => b.ratio - a.ratio)[0]?.name ?? '—'
     return {
       processesTotal: total, processesMapped, efficiencyPct: Math.round((avgOpp / 4) * 100),
