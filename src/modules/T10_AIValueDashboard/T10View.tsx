@@ -16,6 +16,8 @@ import { useEngagementStore }            from '@/modules/Engagement/store'
 import { RecommendationPanel }           from '@/components/RecommendationPanel'
 import { buildT10RecommendationContext } from './t10ContextBuilder'
 import { isDemoEnabled }                 from '@/lib/config'
+import { useT1Store }                    from '@/modules/T1_MaturityRadar/store'
+import { computeDimensionScore }         from '@/modules/T1_MaturityRadar/types'
 
 // ── Tipos ────────────────────────────────────────────────────
 
@@ -312,17 +314,114 @@ export function T10View({
   const stakeholders                = useT2Store(s => s.stakeholders)
   const { profile: companyProfile } = useCompanyProfileStore()
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
+  const { dimensionStates }         = useT1Store()
 
-  const avg     = calcAvg(t1Radar)
-  const weakest = weakestDimension(t1Radar)
+  // ── T1: radar desde store real (producción) o prop demo ──────
+  const liveT1Radar = useMemo((): RadarDimension[] => {
+    if (isDemoEnabled) return t1Radar
+    const allDimStates = Object.values(dimensionStates)
+    if (allDimStates.length === 0) return []
+    const template = allDimStates[0]
+    return template.map(dim => {
+      const scores: number[] = []
+      allDimStates.forEach(dims => {
+        const d = dims.find(x => x.code === dim.code)
+        if (d) { const s = computeDimensionScore(d); if (s !== null) scores.push(s) }
+      })
+      const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0
+      return { dimension: dim.label, current: Math.round(avg * 10) / 10, target: 4 }
+    })
+  }, [isDemoEnabled, t1Radar, dimensionStates])
+
+  const avg     = calcAvg(liveT1Radar)
+  const weakest = weakestDimension(liveT1Radar)
   const tier    = maturityLabel(avg)
 
   const t10LLMContext = useMemo(
     () => companyProfile
-      ? buildT10RecommendationContext(t1Radar, useCases, stakeholders, null, companyProfile)
+      ? buildT10RecommendationContext(liveT1Radar, useCases, stakeholders, null, companyProfile)
       : null,
-    [t1Radar, useCases, stakeholders, companyProfile],
+    [liveT1Radar, useCases, stakeholders, companyProfile],
   )
+
+  // ── T4: portfolio desde store real ───────────────────────────
+  const liveT4 = useMemo(() => {
+    if (useCases.length === 0) return {
+      totalInitiatives: 0, estimatedValue: 0, totalInvestment: 0, ahorroAnual: 0,
+      paybackMeses: 0, roi3years: 0, roi: 0,
+      statuses: { active: 0, validating: 0, backlog: 0, stopped: 0 },
+      topInitiatives: [] as Array<{ name: string; status: string; value: number }>,
+    }
+    const active     = useCases.filter(uc => ['go', 'en_piloto', 'completado'].includes(uc.status)).length
+    const validating = useCases.filter(uc => uc.status === 'priorizado').length
+    const backlog    = useCases.filter(uc => uc.status === 'candidato').length
+    const stopped    = useCases.filter(uc => uc.status === 'no_go').length
+    const ucWithEco  = useCases.filter(uc => uc.economics)
+    const totalInvestment = ucWithEco.reduce((s, uc) => s + (uc.economics?.implementationCost ?? 0), 0)
+    const savings = ucWithEco.map(uc => {
+      const e = uc.economics!
+      return e.processHoursPerWeek * e.headcount * 52 * e.efficiencyGain * e.hourlyRate
+    })
+    const totalSaving = savings.reduce((a, b) => a + b, 0)
+    const paybacks = ucWithEco.map((uc, i) => {
+      const s = savings[i]; const c = uc.economics?.implementationCost ?? 0
+      return s > 0 && c > 0 ? (c / s) * 12 : null
+    }).filter((p): p is number => p !== null)
+    const roi3List = ucWithEco.map((uc, i) => {
+      const s = savings[i]; const c = uc.economics?.implementationCost ?? 0
+      return s > 0 && c > 0 ? ((s * 3 - c) / c) * 100 : null
+    }).filter((r): r is number => r !== null)
+    const topInitiatives = [...useCases]
+      .filter(uc => ['go', 'en_piloto', 'priorizado'].includes(uc.status))
+      .sort((a, b) => b.priorityScore - a.priorityScore).slice(0, 3)
+      .map(uc => ({
+        name:   uc.name,
+        status: ['go', 'en_piloto'].includes(uc.status) ? 'active' : 'validating',
+        value:  uc.economics?.implementationCost ?? 0,
+      }))
+    return {
+      totalInitiatives: useCases.length, estimatedValue: 0, totalInvestment, ahorroAnual: totalSaving,
+      paybackMeses: paybacks.length ? Math.round(paybacks.reduce((a, b) => a + b, 0) / paybacks.length) : 0,
+      roi3years: roi3List.length ? Math.round(roi3List.reduce((a, b) => a + b, 0) / roi3List.length) : 0,
+      roi: totalInvestment > 0 ? Math.round((totalSaving * 3 / totalInvestment) * 10) / 10 : 0,
+      statuses: { active, validating, backlog, stopped }, topInitiatives,
+    }
+  }, [useCases])
+
+  // ── T2: adopción desde store real ────────────────────────────
+  const liveT2 = useMemo(() => {
+    if (stakeholders.length === 0) return {
+      totalStakeholders: 0, activeAdopters: 0, activePercent: 0,
+      rogersPhase: 'Early Adopters', changeScore: 0,
+      groups:      [] as Array<{ label: string; count: number; pct: number; color: string }>,
+      departments: [] as Array<{ label: string; innovadores: number; early: number; rezagados: number; total: number }>,
+    }
+    const total = stakeholders.length
+    const innov = stakeholders.filter(s => s.archetype === 'adoptador').length
+    const early = stakeholders.filter(s => s.archetype === 'ambassador' || s.archetype === 'decisor').length
+    const rezag = stakeholders.filter(s => s.archetype === 'critico' || s.archetype === 'reticente').length
+    const activePercent = total > 0 ? Math.round(((innov + early) / total) * 100) : 0
+    const deptMap: Record<string, { innovadores: number; early: number; rezagados: number; total: number }> = {}
+    stakeholders.forEach(s => {
+      if (!deptMap[s.department]) deptMap[s.department] = { innovadores: 0, early: 0, rezagados: 0, total: 0 }
+      const dept = deptMap[s.department]; dept.total++
+      if (s.archetype === 'adoptador') dept.innovadores++
+      else if (s.archetype === 'ambassador' || s.archetype === 'decisor') dept.early++
+      else dept.rezagados++
+    })
+    return {
+      totalStakeholders: total, activeAdopters: innov + early, activePercent,
+      rogersPhase: activePercent > 50 ? 'Early Majority' : 'Early Adopters', changeScore: 0,
+      groups: [
+        { label: 'Innovadores',    count: innov, pct: Math.round((innov / total) * 100), color: '#86C7A8' },
+        { label: 'Early Majority', count: early, pct: Math.round((early / total) * 100), color: '#9BB5D9' },
+        { label: 'Rezagados',      count: rezag, pct: Math.round((rezag / total) * 100), color: '#C4C0B8' },
+      ],
+      departments: Object.entries(deptMap)
+        .map(([label, data]) => ({ label, ...data }))
+        .sort((a, b) => b.total - a.total).slice(0, 4),
+    }
+  }, [stakeholders])
 
   // AI Index counter animation
   useEffect(() => {
@@ -359,15 +458,17 @@ export function T10View({
     )
   }
 
-  const d   = T10_DEMO
-  const t4n = d.t4.totalInitiatives
-  const t4s = d.t4.statuses
-  const t4Segments = [
+  const d      = T10_DEMO
+  const t4data = isDemoEnabled ? d.t4     : liveT4
+  const t2data = isDemoEnabled ? d.t2t7   : liveT2
+  const t4n    = t4data.totalInitiatives
+  const t4s    = t4data.statuses
+  const t4Segments = t4n > 0 ? [
     { pct: Math.round((t4s.active     / t4n) * 100), color: '#86C7A8', label: `Activas ${t4s.active}` },
     { pct: Math.round((t4s.validating / t4n) * 100), color: '#E8C281', label: `Validando ${t4s.validating}` },
     { pct: Math.round((t4s.backlog    / t4n) * 100), color: '#9BB5D9', label: `Backlog ${t4s.backlog}` },
     { pct: Math.round((t4s.stopped   / t4n) * 100), color: '#C4C0B8', label: `Paradas ${t4s.stopped}` },
-  ]
+  ] : [{ pct: 100, color: '#D4D0C8', label: 'Sin datos' }]
 
   const rTotal = d.t6t12.risks.total
   const riskSegments = [
@@ -437,16 +538,16 @@ export function T10View({
           <PanelCard
             id="p1" expanded={expanded === 'p1'} onClick={() => toggle('p1')}
             tag="T1 · Readiness" tagColor="warning"
-            title="Madurez IA" subtitle={`${t1Radar.length} dimensiones · Score ${avg}/4`}
+            title="Madurez IA" subtitle={`${liveT1Radar.length} dimensiones · Score ${avg}/4`}
             animDelay={0}
             heroSlot={<HeroMetric label="Madurez IA" value={avg.toFixed(1)} colorScore={(avg / 4) * 100} />}
           >
             <div className="space-y-[5px]">
-              {t1Radar.slice(0, 4).map(dim => (
+              {liveT1Radar.slice(0, 4).map(dim => (
                 <DimBar key={dim.dimension} label={dim.dimension} value={dim.current} max={4} color="#C8860A" />
               ))}
-              {t1Radar.length > 4 && (
-                <p className="text-[10px] text-text-subtle dark:text-warm-400 pt-0.5">+{t1Radar.length - 4} más</p>
+              {liveT1Radar.length > 4 && (
+                <p className="text-[10px] text-text-subtle dark:text-warm-400 pt-0.5">+{liveT1Radar.length - 4} más</p>
               )}
             </div>
 
@@ -494,37 +595,40 @@ export function T10View({
           <PanelCard
             id="p2" featured expanded={expanded === 'p2'} onClick={() => toggle('p2')}
             tag="T4 · Portfolio IA  ★" tagColor="success"
-            title="Iniciativas activas" subtitle={`${d.t4.totalInitiatives} iniciativas · ${d.t4.statuses.active} activas`}
+            title="Iniciativas activas" subtitle={`${t4data.totalInitiatives} iniciativas · ${t4data.statuses.active} activas`}
             animDelay={80}
-            heroSlot={<HeroMetric label="Inversión total" value={`€${(d.t4.totalInvestment / 1000).toFixed(0)}K`} />}
+            heroSlot={<HeroMetric label="Inversión total" value={t4data.totalInvestment > 0 ? `€${(t4data.totalInvestment / 1000).toFixed(0)}K` : '—'} />}
           >
             <StatusBar segments={t4Segments} />
             {/* 3 metric chips — always visible */}
             <div className="flex gap-2 mt-3">
-              <MetricChip label="Ahorro anual est." value={`€${(d.t4.ahorroAnual / 1000).toFixed(0)}K`} valueColor="#5FAF8A" />
-              <MetricChip label="Payback promedio" value={`${d.t4.paybackMeses} meses`} />
-              <MetricChip label="ROI 3 años" value={`${d.t4.roi3years}%`} valueColor="#C8860A" />
+              <MetricChip label="Ahorro anual est." value={t4data.ahorroAnual > 0 ? `€${(t4data.ahorroAnual / 1000).toFixed(0)}K` : '—'} valueColor="#5FAF8A" />
+              <MetricChip label="Payback promedio" value={t4data.paybackMeses > 0 ? `${t4data.paybackMeses} meses` : '—'} />
+              <MetricChip label="ROI 3 años" value={t4data.roi3years > 0 ? `${t4data.roi3years}%` : '—'} valueColor="#C8860A" />
             </div>
 
             {expanded === 'p2' && (
               <ExpandedSection>
                 <div className="space-y-1.5 mb-3">
-                  {d.t4.topInitiatives.map((ini, i) => (
-                    <div key={i} className="flex items-center gap-2 text-[11px]">
-                      <span className="text-text-primary dark:text-warm-100 flex-1 truncate">{ini.name}</span>
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0 ${
-                        ini.status === 'active' ? 'bg-success-light text-success-dark' : 'bg-warning-light text-warning-dark'}`}>
-                        {ini.status === 'active' ? 'Activa' : 'Validando'}
-                      </span>
-                      <span className="text-text-muted dark:text-warm-300 tabular-nums flex-shrink-0">
-                        €{(ini.value / 1000).toFixed(0)}K
-                      </span>
-                    </div>
-                  ))}
+                  {t4data.topInitiatives.length > 0
+                    ? t4data.topInitiatives.map((ini, i) => (
+                        <div key={i} className="flex items-center gap-2 text-[11px]">
+                          <span className="text-text-primary dark:text-warm-100 flex-1 truncate">{ini.name}</span>
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0 ${
+                            ini.status === 'active' ? 'bg-success-light text-success-dark' : 'bg-warning-light text-warning-dark'}`}>
+                            {ini.status === 'active' ? 'Activa' : 'Validando'}
+                          </span>
+                          <span className="text-text-muted dark:text-warm-300 tabular-nums flex-shrink-0">
+                            €{(ini.value / 1000).toFixed(0)}K
+                          </span>
+                        </div>
+                      ))
+                    : <p className="text-[11px] text-text-muted dark:text-warm-300">Sin iniciativas priorizadas aún</p>
+                  }
                 </div>
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-[10px] text-text-muted dark:text-warm-300">ROI estimado:</span>
-                  <span className="text-[10px] font-semibold text-success-dark">{d.t4.roi}x retorno</span>
+                  <span className="text-[10px] font-semibold text-success-dark">{t4data.roi > 0 ? `${t4data.roi}x retorno` : '—'}</span>
                 </div>
                 <NavButton label="Abrir T4 Portfolio" onClick={() => onNavigate('/t4')} />
               </ExpandedSection>
@@ -535,27 +639,30 @@ export function T10View({
           <PanelCard
             id="p3" expanded={expanded === 'p3'} onClick={() => toggle('p3')}
             tag="T2 + T7 · Adopción" tagColor="info"
-            title="Velocidad de adopción" subtitle={`${d.t2t7.totalStakeholders} stakeholders · ${d.t2t7.activePercent}% activos`}
+            title="Velocidad de adopción" subtitle={`${t2data.totalStakeholders} stakeholders · ${t2data.activePercent}% activos`}
             animDelay={160}
-            heroSlot={<HeroMetric label="Adopción activa" value={`${d.t2t7.activePercent}%`} colorScore={d.t2t7.activePercent} />}
+            heroSlot={<HeroMetric label="Adopción activa" value={`${t2data.activePercent}%`} colorScore={t2data.activePercent} />}
           >
             {/* Department chart */}
             <div className="mb-2">
               <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle dark:text-warm-400 mb-1.5">
                 Composición por departamento
               </p>
-              {d.t2t7.departments.map((dept, i) => (
-                <DeptBar key={i} {...dept} />
-              ))}
+              {t2data.departments.length > 0
+                ? t2data.departments.map((dept, i) => <DeptBar key={i} {...dept} />)
+                : <p className="text-[10px] text-text-muted dark:text-warm-300">Sin stakeholders registrados aún</p>
+              }
               {/* Legend */}
-              <div className="flex gap-3 mt-1.5">
-                {d.t2t7.groups.map((g, i) => (
-                  <div key={i} className="flex items-center gap-1 text-[9px] text-text-muted dark:text-warm-300">
-                    <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: g.color }} />
-                    {g.label.split(' ')[0]} {g.count}
-                  </div>
-                ))}
-              </div>
+              {t2data.groups.length > 0 && (
+                <div className="flex gap-3 mt-1.5">
+                  {t2data.groups.map((g, i) => (
+                    <div key={i} className="flex items-center gap-1 text-[9px] text-text-muted dark:text-warm-300">
+                      <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: g.color }} />
+                      {g.label.split(' ')[0]} {g.count}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {expanded === 'p3' && (
@@ -563,11 +670,11 @@ export function T10View({
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
                     <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Score de cambio</p>
-                    <p className="text-lg font-semibold text-info-dark dark:text-info tabular-nums">{d.t2t7.changeScore} / 5</p>
+                    <p className="text-lg font-semibold text-info-dark dark:text-info tabular-nums">{t2data.changeScore} / 5</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Fase de difusión</p>
-                    <p className="text-[11px] font-medium text-text-primary dark:text-warm-100">{d.t2t7.rogersPhase}</p>
+                    <p className="text-[11px] font-medium text-text-primary dark:text-warm-100">{t2data.rogersPhase}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
