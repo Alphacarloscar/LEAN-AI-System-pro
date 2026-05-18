@@ -58,6 +58,26 @@ export async function createProject(params: {
     role:       'consultant',
   })
 
+  // Auto-añadir todos los usuarios de la empresa al proyecto
+  // (sin esto, RLS bloquea que vean el proyecto aunque pertenezcan a la empresa)
+  if (params.companyId) {
+    const { data: companyUsers } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .eq('company_id', params.companyId)
+      .neq('id', user.id)           // el creador ya está añadido
+
+    if (companyUsers && companyUsers.length > 0) {
+      await supabase.from('project_members').insert(
+        companyUsers.map((u) => ({
+          project_id: data.id,
+          user_id:    u.id,
+          role:       u.role === 'consultant' ? 'consultant' : 'viewer',
+        }))
+      )
+    }
+  }
+
   return data
 }
 
