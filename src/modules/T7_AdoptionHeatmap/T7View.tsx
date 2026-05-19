@@ -1000,10 +1000,16 @@ interface T7ViewProps {
 
 export function T7View({ companyName, onBack }: T7ViewProps) {
   const stakeholders                = useT2Store(s => s.stakeholders)
+  const loadT2                      = useT2Store(s => s.load)
   const { dark }                    = useDarkMode()
   const { profile: companyProfile } = useCompanyProfileStore()
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
   const [activeTab, setActiveTab]  = useState<'curve' | 'dept' | 'plan'>('curve')
+
+  // Cargar T2 al montar T7 (por si el usuario llega directamente sin pasar por T2)
+  useEffect(() => {
+    if (engagementId && stakeholders.length === 0) loadT2(engagementId)
+  }, [engagementId])
 
   // T4 use cases para contexto del plan de cambio
   const useCases = useT4Store(s => s.useCases)

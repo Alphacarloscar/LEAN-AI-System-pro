@@ -175,11 +175,14 @@ function HeroOpportunityMatrix({
       {processes.map((p) => {
         const score    = p.interview?.opportunityScore ?? 0
         const ready    = p.interview?.readinessScore   ?? 0
-        const dx       = P + (ready / 4) * IN
-        const dy       = P + (1 - score / 4) * IN
-        const hex      = CAT_HEX[p.aiCategory]
         const isActive = p.id === activeId
         const r        = isActive ? 9 : 7
+        // Clamp dots so the circle never exits the grid boundary
+        const rawDx    = P + (ready / 4) * IN
+        const rawDy    = P + (1 - score / 4) * IN
+        const dx       = Math.max(P + r + 1, Math.min(P + IN - r - 1, rawDx))
+        const dy       = Math.max(P + r + 1, Math.min(P + IN - r - 1, rawDy))
+        const hex      = CAT_HEX[p.aiCategory]
 
         const catLabel = AI_CATEGORY_CONFIG[p.aiCategory]?.label ?? p.aiCategory
 

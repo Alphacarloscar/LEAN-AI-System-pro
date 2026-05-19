@@ -499,13 +499,18 @@ function AddFreeItemForm({ form, onChange, onSave, onCancel }: AddFormProps) {
 // ── T9View ────────────────────────────────────────────────────
 
 export function T9View({ companyName, onBack }: T9ViewProps) {
-  const { useCases }                                    = useT4Store()
+  const { useCases, loadEngagement: loadT4 }            = useT4Store()
   const { overrides, freeItems, setOverride, addFreeItem, updateFreeItem, syncEngagement: syncT9 } = useT9Store()
   const { profile: companyProfile }                     = useCompanyProfileStore()
   const engagementId                                    = useEngagementStore((s) => s.activeEngagementId)
 
   // Scoping: si cambia el engagement, limpia overrides y freeItems del cliente anterior
   useEffect(() => { syncT9(engagementId) }, [engagementId])
+
+  // Cargar T4 al montar T9 (por si el usuario llega directamente sin pasar por T4)
+  useEffect(() => {
+    if (engagementId && useCases.length === 0) loadT4(engagementId)
+  }, [engagementId])
 
   // Solo casos con decisión Go confirmada
   const goCases = useCases.filter((uc) => uc.goNoGo?.decision === 'go')

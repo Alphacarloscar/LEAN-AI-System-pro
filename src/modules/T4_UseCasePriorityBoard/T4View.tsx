@@ -17,6 +17,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate }       from 'react-router-dom'
 import { useT4Store }                   from './store'
+import { useT1Store }                   from '@/modules/T1_MaturityRadar/store'
+import { useT2Store }                   from '@/modules/T2_StakeholderMatrix/store'
 import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
 import { useEngagementStore }           from '@/modules/Engagement/store'
 import { RecommendationPanel }          from '@/components/RecommendationPanel'
@@ -1227,10 +1229,17 @@ function UseCaseDetailPanel({
   useCase,
   allUseCases,
   onSelect,
+  autoT1Context,
+  autoT2Context,
 }: {
-  useCase:     UseCase
-  allUseCases: UseCase[]
-  onSelect:    (id: string) => void
+  useCase:        UseCase
+  allUseCases:    UseCase[]
+  onSelect:       (id: string) => void
+  autoT1Context?: { weakDimensions: string[]; total: number } | null
+  autoT2Context?: {
+    champions: import('@/modules/T2_StakeholderMatrix/types').Stakeholder[]
+    blockers:  import('@/modules/T2_StakeholderMatrix/types').Stakeholder[]
+  } | null
 }) {
   const { updateUseCase, recalcScore, updateAIActClassification } = useT4Store()
   const [tab, setTab]                 = useState<DetailTab>('scoring')
@@ -1883,8 +1892,28 @@ function UseCaseDetailPanel({
                     </p>
                   )}
                 </>
+              ) : autoT1Context ? (
+                <>
+                  <p className="text-[10px] font-mono text-text-subtle mb-1.5 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-navy/40 inline-block" />
+                    Auto-calculado desde T1 · {autoT1Context.total} dimensiones evaluadas
+                  </p>
+                  {autoT1Context.weakDimensions.length > 0 ? (
+                    <div className="mb-2">
+                      <p className="text-[10px] font-mono text-warning-dark mb-1.5">Dimensiones con madurez baja (≤2)</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {autoT1Context.weakDimensions.map((d) => (
+                          <span key={d} className="px-2 py-0.5 rounded-full text-[10px] font-semibold
+                            bg-warning-light text-warning-dark">{d}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-success-dark">✓ Madurez IA suficiente en todas las dimensiones</p>
+                  )}
+                </>
               ) : (
-                <p className="text-xs text-text-subtle italic">Sin contexto T1 registrado.</p>
+                <p className="text-xs text-text-subtle italic">Sin datos de T1. Completa el Madurez Radar primero.</p>
               )}
             </div>
 
@@ -1920,8 +1949,34 @@ function UseCaseDetailPanel({
                     </p>
                   )}
                 </div>
+              ) : autoT2Context ? (
+                <div className="flex flex-col gap-3">
+                  <p className="text-[10px] font-mono text-text-subtle flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-navy/40 inline-block" />
+                    Auto-calculado desde T2 · {autoT2Context.champions.length + autoT2Context.blockers.length} stakeholders relevantes
+                  </p>
+                  {autoT2Context.champions.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-mono text-success-dark mb-1">Champions potenciales</p>
+                      {autoT2Context.champions.map((s) => (
+                        <p key={s.id} className="text-xs font-medium text-success-dark">✓ {s.name} · {s.role}</p>
+                      ))}
+                    </div>
+                  )}
+                  {autoT2Context.blockers.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-mono text-danger-dark mb-1">Posibles bloqueos</p>
+                      {autoT2Context.blockers.map((s) => (
+                        <p key={s.id} className="text-xs font-medium text-danger-dark">▲ {s.name} · {s.role}</p>
+                      ))}
+                    </div>
+                  )}
+                  {autoT2Context.champions.length === 0 && autoT2Context.blockers.length === 0 && (
+                    <p className="text-xs text-text-muted">Sin perfiles críticos detectados en T2</p>
+                  )}
+                </div>
               ) : (
-                <p className="text-xs text-text-subtle italic">Sin contexto T2 registrado.</p>
+                <p className="text-xs text-text-subtle italic">Sin datos de T2. Completa la Stakeholder Matrix primero.</p>
               )}
             </div>
 
@@ -1974,10 +2029,15 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
   const { profile: companyProfile }   = useCompanyProfileStore()
   const engagementId                  = useEngagementStore((s) => s.activeEngagementId)
 
+  // T1 y T2 — para auto-computar el contexto en la tab "Contexto T1/T2"
+  const dimensionStates = useT1Store(s => s.dimensionStates)
+  const stakeholders    = useT2Store(s => s.stakeholders)
+
   // Recargar datos cuando cambia el engagement activo
   useEffect(() => {
     if (engagementId) loadEngagement(engagementId)
   }, [engagementId, loadEngagement])
+
   const [activeId, setActiveId]     = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)
 
@@ -1985,6 +2045,38 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
     () => useCases.find((uc) => uc.id === activeId) ?? null,
     [useCases, activeId]
   )
+
+  // ── Auto-contexto T1 — dimensiones con score promedio bajo (≤2) ─────────────
+  // Se computa en tiempo real desde el store T1 si hay datos; nunca requiere
+  // que el consultor rellene campos manuales en T4.
+  const autoT1Context = useMemo(() => {
+    const allStates = Object.values(dimensionStates)
+    if (allStates.length === 0) return null
+    const template = allStates[0]
+    const weakDimensions: string[] = []
+    for (const dim of template) {
+      const avgScore = dim.subdimensions.reduce((sum, sub) => {
+        const scores = allStates
+          .map(state => state.find(d => d.code === dim.code)?.subdimensions.find(s => s.code === sub.code)?.score ?? null)
+          .filter((s): s is number => s !== null)
+        return sum + (scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0)
+      }, 0) / Math.max(dim.subdimensions.length, 1)
+      if (avgScore <= 2) weakDimensions.push(dim.code)
+    }
+    return { weakDimensions, total: template.length }
+  }, [dimensionStates])
+
+  // ── Auto-contexto T2 — champions y blockers desde stakeholders ──────────────
+  const autoT2Context = useMemo(() => {
+    if (stakeholders.length === 0) return null
+    const champions = stakeholders.filter(s =>
+      (s.archetype === 'ambassador' || s.archetype === 'adoptador') && s.resistance !== 'alta'
+    )
+    const blockers = stakeholders.filter(s =>
+      (s.archetype === 'critico' || s.archetype === 'reticente') && s.resistance === 'alta'
+    )
+    return { champions, blockers }
+  }, [stakeholders])
 
   const t4LLMContext = useMemo(
     () => companyProfile ? buildT4RecommendationContext(useCases, companyProfile) : null,
@@ -2074,6 +2166,8 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
             useCase={activeUseCase}
             allUseCases={useCases}
             onSelect={handleSelectUseCase}
+            autoT1Context={autoT1Context}
+            autoT2Context={autoT2Context}
           />
         </div>
       )}

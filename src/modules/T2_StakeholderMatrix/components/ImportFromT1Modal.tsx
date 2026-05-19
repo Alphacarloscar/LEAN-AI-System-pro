@@ -116,7 +116,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
               Importar entrevistados desde T1
             </h2>
             <p className="text-xs text-text-muted mt-0.5">
-              Las personas del Madurez Radar pasan como stakeholders. Arquetipo y resistencia se asignan por defecto — edítalos tras importar.
+              Las personas del Madurez Radar pasan como stakeholders. IT → arquetipo Reticente · Negocio → arquetipo Decisor, departamento "Sin asignar" (edítalo tras importar).
             </p>
           </div>
           <button
@@ -174,7 +174,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
                 .filter((i) => !alreadyInT2(i.name, i.role))
                 .map((person) => {
                   const isSelected  = selected.has(person.id)
-                  const archetype   = person.type === 'it' ? 'Especialista' : 'Decisor'
+                  const archetype   = person.type === 'it' ? 'Reticente' : 'Decisor'
                   const department  = person.type === 'it' ? 'IT / Tecnología' : 'Sin asignar'
                   const typeLabel   = person.type === 'it' ? 'IT' : 'Negocio'
                   const typeBg      = person.type === 'it'
