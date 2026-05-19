@@ -37,7 +37,8 @@ function mapT6Status(t6Status: string): T12Status {
 // ── Store ─────────────────────────────────────────────────────
 
 interface T12Store {
-  controls: T12Control[]
+  controls:     T12Control[]
+  engagementId: string | null
 
   /** Actualiza estado, evidencia y nota de revisión de un control */
   updateControl: (
@@ -54,12 +55,25 @@ interface T12Store {
 
   /** Resetea todos los controles a estado inicial */
   resetAll: () => void
+
+  /** Llama al montar T12View con el engagementId activo.
+   *  Si difiere del guardado, limpia los controles (eran de otro cliente). */
+  syncEngagement: (id: string | null) => void
 }
 
 export const useT12Store = create<T12Store>()(
   persist(
-    (set) => ({
-      controls: buildInitialControls(),
+    (set, get) => ({
+      controls:     buildInitialControls(),
+      engagementId: null,
+
+      // ── syncEngagement ────────────────────────────────────────
+      // F-03: scoping por engagement — evita datos cross-client
+      syncEngagement: (id) => {
+        if (get().engagementId !== id) {
+          set({ engagementId: id, controls: buildInitialControls() })
+        }
+      },
 
       // ── updateControl ────────────────────────────────────────
       updateControl: (id, patch) => {
@@ -100,8 +114,8 @@ export const useT12Store = create<T12Store>()(
       },
 
       // ── resetAll ─────────────────────────────────────────────
-      resetAll: () => set({ controls: buildInitialControls() }),
+      resetAll: () => set({ controls: buildInitialControls(), engagementId: null }),
     }),
-    { name: 'lean-t12-iso-assessment', version: 1 },
+    { name: 'lean-t12-iso-assessment', version: 2 },  // bumped: añadido engagementId + syncEngagement (F-03)
   ),
 )

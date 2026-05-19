@@ -208,12 +208,22 @@ export const useT3Store = create<T3Store>()((set, get) => ({
 
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
+    if (get().isLoading) return  // F-06: guard contra doble-load por re-render
     set({ isLoading: true })
+
+    // F-07: timeout de seguridad — evita spinner infinito si Supabase no responde
+    const LOAD_TIMEOUT_MS = 10_000
+    const fetchPromise   = fetchValueStreams(engagementId)
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('T3_LOAD_TIMEOUT')), LOAD_TIMEOUT_MS)
+    )
+
     try {
-      const processes = await fetchValueStreams(engagementId)
+      const processes = await Promise.race([fetchPromise, timeoutPromise])
       set({ processes, isLoading: false })
     } catch (err) {
-      console.error('[T3Store] load:', err)
+      const isTimeout = (err as Error)?.message === 'T3_LOAD_TIMEOUT'
+      console.error('[T3Store] load:', isTimeout ? 'timeout (>10s) — check Supabase connection' : err)
       set({ isLoading: false })
     }
   },

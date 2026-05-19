@@ -210,6 +210,7 @@ export const useT2Store = create<T2Store>()((set, get) => ({
 
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
+    if (get().isLoading) return  // F-06: guard contra doble-load por re-render
     set({ isLoading: true })
     try {
       const stakeholders = await fetchStakeholders(engagementId)

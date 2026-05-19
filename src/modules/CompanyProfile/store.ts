@@ -71,7 +71,8 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
       // ── Carga desde Supabase ──────────────────────────────────
 
       loadProfile: async (engagementId: string) => {
-        set({ isLoadingData: true, isLoading: true, saveError: null })
+        // F-04: limpiar perfil anterior antes del fetch — evita stale data visible en T10 home
+        set({ profile: { ...EMPTY_PROFILE }, isLoadingData: true, isLoading: true, saveError: null, isDirty: false })
 
         // Timeout de seguridad: evita spinner infinito si Supabase no responde
         const timeout = setTimeout(() => {

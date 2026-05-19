@@ -17,7 +17,16 @@ import { supabase }      from '@/lib/supabase'
 import type { AuthUser } from './types'
 import { useT1Store }    from '@/modules/T1_MaturityRadar/store'
 import { useT2Store }    from '@/modules/T2_StakeholderMatrix/store'
+import { useT3Store }    from '@/modules/T3_ValueStreamMap/store'
 import { useT4Store }    from '@/modules/T4_UseCasePriorityBoard/store'
+import { useT5Store }    from '@/modules/T5_AITaxonomyCanvas/store'
+import { useT6Store }    from '@/modules/T6_RiskGovernance/store'
+import { useT7Store }    from '@/modules/T7_AdoptionHeatmap/store'
+import { useT8Store }    from '@/modules/T8_CommunicationMap/store'
+import { useT9Store }    from '@/modules/T9_AIRoadmap/store'
+import { useT12Store }   from '@/modules/T12_ISOAssessment/store'
+import { useCompanyProfileStore } from '@/modules/CompanyProfile/store'
+import { useEngagementStore }     from '@/modules/Engagement/store'
 
 interface AuthStore {
   isAuthenticated: boolean
@@ -88,10 +97,20 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       }
       if (event === 'SIGNED_OUT') {
         set({ isAuthenticated: false, user: null })
-        // Limpiar stores con datos de cliente al cerrar sesión
+        // Limpiar TODOS los stores con datos de cliente al cerrar sesión
+        // F-01: completado — antes solo limpiaba T1, T2, T4
         useT1Store.getState().reset()
         useT2Store.getState().reset()
+        useT3Store.getState().reset()
         useT4Store.setState({ useCases: [], engagementId: null })
+        useT5Store.getState().syncEngagement(null)
+        useT6Store.getState().syncEngagement(null)
+        useT7Store.getState().clearGeneratedPlan()
+        useT8Store.getState().clearGeneratedContent()
+        useT9Store.getState().syncEngagement(null)
+        useT12Store.getState().resetAll()
+        useCompanyProfileStore.getState().resetProfile()
+        useEngagementStore.getState().reset()
       }
       if (event === 'TOKEN_REFRESHED' && session?.user) {
         // Sesión renovada automáticamente — no necesitamos hacer nada

@@ -194,14 +194,28 @@ function buildEmptyCanvas(): T5Canvas {
 
 interface T5Store {
   canvas:             T5Canvas
+  engagementId:       string | null
   updateDomainScores: (code: T5DomainCode, scores: T5DomainScores) => void
   resetCanvas:        () => void
+  /** Llama al montar T5View con el engagementId activo.
+   *  Si difiere del guardado, limpia el canvas (era de otro cliente). */
+  syncEngagement:     (id: string | null) => void
 }
 
 export const useT5Store = create<T5Store>()(
   persist(
-    (set) => ({
-      canvas: isDemoEnabled ? buildDemoCanvas() : buildEmptyCanvas(),
+    (set, get) => ({
+      canvas:       isDemoEnabled ? buildDemoCanvas() : buildEmptyCanvas(),
+      engagementId: null,
+
+      syncEngagement: (id) => {
+        if (get().engagementId !== id) {
+          set({
+            engagementId: id,
+            canvas:       isDemoEnabled ? buildDemoCanvas() : buildEmptyCanvas(),
+          })
+        }
+      },
 
       updateDomainScores: (code, scores) =>
         set((state) => {
@@ -226,8 +240,8 @@ export const useT5Store = create<T5Store>()(
           }
         }),
 
-      resetCanvas: () => set({ canvas: buildDemoCanvas() }),
+      resetCanvas: () => set({ canvas: isDemoEnabled ? buildDemoCanvas() : buildEmptyCanvas() }),
     }),
-    { name: 'lean-t5-canvas', version: 3 },
+    { name: 'lean-t5-canvas', version: 4 },  // bumped: añadido engagementId + syncEngagement (F-02)
   ),
 )

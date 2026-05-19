@@ -13,10 +13,11 @@
 // Import desde T6: pre-popula controles mapeados con estado T6.
 // ============================================================
 
-import { useState, useMemo } from 'react'
-import { useNavigate }       from 'react-router-dom'
-import { useT12Store }       from './store'
-import { useT6Store }        from '@/modules/T6_RiskGovernance/store'
+import { useState, useMemo, useEffect } from 'react'
+import { useNavigate }                  from 'react-router-dom'
+import { useT12Store }                  from './store'
+import { useT6Store }                   from '@/modules/T6_RiskGovernance/store'
+import { useEngagementStore }           from '@/modules/Engagement/store'
 import {
   T12_CLAUSE_CONFIG,
   T12_CLAUSE_ORDER,
@@ -288,8 +289,12 @@ interface T12ViewProps {
 
 export function T12View({ companyName, onBack }: T12ViewProps) {
   const navigate                    = useNavigate()
-  const { controls, updateControl, importFromT6 } = useT12Store()
+  const { controls, updateControl, importFromT6, syncEngagement: syncT12 } = useT12Store()
   const t6Controls                  = useT6Store((s) => s.controls)
+  const engagementId                = useEngagementStore((s) => s.activeEngagementId)
+
+  // F-03: sincronizar controles con el engagement activo — limpia si cambia de proyecto
+  useEffect(() => { syncT12(engagementId) }, [engagementId])
 
   const [activeClause, setActiveClause] = useState<T12Clause>('context')
   const [importMsg, setImportMsg]       = useState<string | null>(null)

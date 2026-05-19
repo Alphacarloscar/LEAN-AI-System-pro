@@ -62,6 +62,7 @@ export const useT4Store = create<T4Store>()(
 
       // ── loadEngagement ──────────────────────────────────────
       loadEngagement: async (engagementId) => {
+        if (get().isLoading) return  // F-06: guard contra doble-load por re-render
         set({ isLoading: true, engagementId })
         try {
           const useCases = await fetchUseCases(engagementId)

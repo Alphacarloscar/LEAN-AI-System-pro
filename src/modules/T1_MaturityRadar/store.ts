@@ -132,6 +132,7 @@ export const useT1Store = create<T1Store>()((set, get) => ({
 
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
+    if (get().isLoading) return  // F-06: guard contra doble-load por re-render
     set({ isLoading: true })
 
     const LOAD_TIMEOUT_MS = 15_000
