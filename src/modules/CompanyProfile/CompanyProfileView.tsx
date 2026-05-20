@@ -10,6 +10,7 @@ import { useState, useEffect }    from 'react'
 import { useNavigate }            from 'react-router-dom'
 import { useCompanyProfileStore } from './store'
 import { useEngagementStore }     from '@/modules/Engagement/store'
+import { useAuthStore }           from '@/modules/Auth'
 import { supabase }               from '@/lib/supabase'
 import {
   ALL_BUSINESS_AREAS,
@@ -243,17 +244,21 @@ function FrictionCard({
 export function CompanyProfileView() {
   const navigate = useNavigate()
   const {
-    profile, isDirty, isSaving, saveError,
-    loadProfile, updateField, toggleArea, saveProfile,
+    profile, isDirty, isSaving, isLoadingData, saveError,
+    loadProfile, updateField, toggleArea, saveProfile, resetProfile,
     addFriction, updateFriction, removeFriction,
   } = useCompanyProfileStore()
 
   const engagementId = useEngagementStore((s) => s.activeEngagementId)
+  const user         = useAuthStore((s) => s.user)
+  const isAuth       = !!user
 
   const [savedFlash,   setSavedFlash]   = useState(false)
   const [companyName,  setCompanyName]  = useState<string>('')
 
-  // Carga desde Supabase cuando se selecciona un engagement real
+  // ── Carga desde Supabase cuando hay proyecto activo ──────────
+  // Si está autenticado pero sin proyecto: limpia localStorage para
+  // evitar que datos demo/stale aparezcan en el formulario.
   useEffect(() => {
     if (engagementId) {
       loadProfile(engagementId)
@@ -269,9 +274,11 @@ export function CompanyProfileView() {
         })
     } else {
       setCompanyName('')
+      // Usuario autenticado sin proyecto: limpiar datos stale de localStorage
+      if (isAuth) resetProfile()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [engagementId])
+  }, [engagementId, isAuth])
 
   async function handleSave() {
     await saveProfile(engagementId ?? undefined)
@@ -287,6 +294,52 @@ export function CompanyProfileView() {
         hour: '2-digit', minute: '2-digit',
       })
     : null
+
+  // ── Guard 1: cargando desde Supabase ─────────────────────────
+  if (isLoadingData) {
+    return (
+      <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <svg className="animate-spin h-6 w-6 text-navy dark:text-warm-200" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <p className="text-xs text-text-subtle dark:text-gray-500 font-mono">Cargando perfil...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Guard 2: autenticado pero sin proyecto seleccionado ───────
+  // No mostramos el formulario con datos stale — el usuario
+  // debe seleccionar un proyecto desde el EngagementSelector.
+  if (isAuth && !engagementId) {
+    return (
+      <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center">
+        <div className="max-w-sm text-center space-y-3 px-6">
+          <div className="h-12 w-12 mx-auto rounded-2xl bg-navy/8 dark:bg-navy/20 border border-navy/15 dark:border-navy/30 flex items-center justify-center">
+            <svg width="20" height="20" viewBox="0 0 14 14" fill="none" stroke="#2A2822" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="dark:stroke-warm-200">
+              <rect x="2" y="3" width="10" height="10" rx="1" />
+              <path d="M5 13V9h4v4M2 6h10" />
+            </svg>
+          </div>
+          <h2 className="text-sm font-semibold text-lean-black dark:text-gray-100">
+            Selecciona un proyecto
+          </h2>
+          <p className="text-xs text-text-muted dark:text-gray-500 leading-relaxed">
+            El perfil de empresa está vinculado al proyecto activo.
+            Selecciona un proyecto en el selector de la barra superior para ver o editar los datos.
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="mt-2 text-xs font-medium text-navy dark:text-warm-200 hover:underline"
+          >
+            Volver al Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-surface dark:bg-warm-900">
