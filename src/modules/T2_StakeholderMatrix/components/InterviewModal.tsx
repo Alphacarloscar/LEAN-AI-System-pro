@@ -125,6 +125,24 @@ function StakeholderFormPhase({
         />
       </div>
 
+      {/* Shadow AI — campo empático, opcional — va ANTES de Departamento
+          para evitar que el autocomplete de departamento lo cubra visualmente */}
+      <div className="space-y-1.5">
+        <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
+          Herramientas externas (opcional)
+        </label>
+        <textarea
+          rows={2}
+          value={form.unofficialTools ?? ''}
+          onChange={(e) => setForm((f) => ({ ...f, unofficialTools: e.target.value }))}
+          placeholder="Herramientas externas (IA o digitales) que empleas por tu cuenta para agilizar cuellos de botella diarios"
+          className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-800/60 border border-border text-lean-black dark:text-gray-100 placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40 transition-all resize-none leading-snug cursor-text"
+        />
+        <p className="text-[10px] text-text-subtle px-0.5">
+          Ej. ChatGPT, Notion AI, Zapier… Su uso no implica incumplimiento; nos ayuda a entender el flujo real de trabajo.
+        </p>
+      </div>
+
       <div className="space-y-1.5 relative">
         <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">Departamento</label>
         <input
@@ -137,7 +155,7 @@ function StakeholderFormPhase({
           className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 dark:bg-gray-800 border border-border text-lean-black dark:text-gray-100 placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40 transition-all"
         />
         {showDepts && filteredDepts.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-border rounded-lg shadow-md z-10 overflow-hidden">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-border rounded-lg shadow-md z-20 overflow-hidden">
             {filteredDepts.map((d) => (
               <button
                 key={d}
@@ -150,23 +168,6 @@ function StakeholderFormPhase({
             ))}
           </div>
         )}
-      </div>
-
-      {/* Shadow AI — campo empático, opcional */}
-      <div className="space-y-1.5">
-        <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
-          Herramientas externas (opcional)
-        </label>
-        <textarea
-          rows={2}
-          value={form.unofficialTools ?? ''}
-          onChange={(e) => setForm((f) => ({ ...f, unofficialTools: e.target.value }))}
-          placeholder="Herramientas externas (IA o digitales) que empleas por tu cuenta para agilizar cuellos de botella diarios"
-          className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 dark:bg-gray-800 border border-border text-lean-black dark:text-gray-100 placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40 transition-all resize-none leading-snug"
-        />
-        <p className="text-[10px] text-text-subtle px-0.5">
-          Ej. ChatGPT, Notion AI, Zapier… Su uso no implica incumplimiento; nos ayuda a entender el flujo real de trabajo.
-        </p>
       </div>
 
       <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border/60">
