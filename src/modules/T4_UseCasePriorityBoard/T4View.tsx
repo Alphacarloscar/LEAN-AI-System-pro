@@ -42,6 +42,7 @@ import {
 } from './constants'
 import { ImportFromT3Modal } from './components/ImportFromT3Modal'
 import { PhaseMiniMap }     from '@/shared/components/PhaseMiniMap'
+import { isDemoEnabled }    from '@/lib/config'
 import type {
   UseCase, UseCaseStatus, UseCaseScores, UseCaseEconomics,
   AIActScope, AIActClassification,
@@ -2192,7 +2193,8 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
   }
 
   // ── Guard 2: autenticado pero sin proyecto seleccionado ───────
-  if (isAuth && !engagementId) {
+  // isDemoEnabled + engagementId null = modo demo válido → no bloquear
+  if (isAuth && !engagementId && !isDemoEnabled) {
     return (
       <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center">
         <div className="max-w-sm text-center space-y-3 px-6">

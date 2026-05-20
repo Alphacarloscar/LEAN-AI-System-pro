@@ -12,6 +12,7 @@ import { useCompanyProfileStore } from './store'
 import { useEngagementStore }     from '@/modules/Engagement/store'
 import { useAuthStore }           from '@/modules/Auth'
 import { supabase }               from '@/lib/supabase'
+import { isDemoEnabled }          from '@/lib/config'
 import {
   ALL_BUSINESS_AREAS,
   SECTOR_OPTIONS,
@@ -311,9 +312,8 @@ export function CompanyProfileView() {
   }
 
   // ── Guard 2: autenticado pero sin proyecto seleccionado ───────
-  // No mostramos el formulario con datos stale — el usuario
-  // debe seleccionar un proyecto desde el EngagementSelector.
-  if (isAuth && !engagementId) {
+  // isDemoEnabled + engagementId null = modo demo válido → no bloquear
+  if (isAuth && !engagementId && !isDemoEnabled) {
     return (
       <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center">
         <div className="max-w-sm text-center space-y-3 px-6">
