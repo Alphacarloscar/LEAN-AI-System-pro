@@ -21,6 +21,7 @@ import { useT1Store }                   from '@/modules/T1_MaturityRadar/store'
 import { useT2Store }                   from '@/modules/T2_StakeholderMatrix/store'
 import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
 import { useEngagementStore }           from '@/modules/Engagement/store'
+import { useAuthStore }                 from '@/modules/Auth'
 import { RecommendationPanel }          from '@/components/RecommendationPanel'
 import { buildT4RecommendationContext } from './t4ContextBuilder'
 import {
@@ -2024,10 +2025,12 @@ interface T4ViewProps {
 }
 
 export function T4View({ companyName, onBack }: T4ViewProps) {
-  const navigate                      = useNavigate()
-  const { useCases, loadEngagement }  = useT4Store()
-  const { profile: companyProfile }   = useCompanyProfileStore()
-  const engagementId                  = useEngagementStore((s) => s.activeEngagementId)
+  const navigate                               = useNavigate()
+  const { useCases, isLoading, loadEngagement } = useT4Store()
+  const { profile: companyProfile }            = useCompanyProfileStore()
+  const engagementId                           = useEngagementStore((s) => s.activeEngagementId)
+  const user                                   = useAuthStore((s) => s.user)
+  const isAuth                                 = !!user
 
   // T1 y T2 — para auto-computar el contexto en la tab "Contexto T1/T2"
   const dimensionStates = useT1Store(s => s.dimensionStates)
@@ -2085,6 +2088,50 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
 
   function handleSelectUseCase(id: string) {
     setActiveId((prev) => prev === id ? null : id)
+  }
+
+  // ── Guard 1: cargando desde Supabase ─────────────────────────
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <svg className="animate-spin h-6 w-6 text-navy dark:text-warm-200" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <p className="text-xs text-text-subtle dark:text-gray-500 font-mono">Cargando casos de uso...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Guard 2: autenticado pero sin proyecto seleccionado ───────
+  if (isAuth && !engagementId) {
+    return (
+      <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center">
+        <div className="max-w-sm text-center space-y-3 px-6">
+          <div className="h-12 w-12 mx-auto rounded-2xl bg-navy/8 dark:bg-navy/20 border border-navy/15 dark:border-navy/30 flex items-center justify-center">
+            <svg width="20" height="20" viewBox="0 0 14 14" fill="none" stroke="#2A2822" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="dark:stroke-warm-200">
+              <rect x="2" y="3" width="10" height="10" rx="1" />
+              <path d="M5 13V9h4v4M2 6h10" />
+            </svg>
+          </div>
+          <h2 className="text-sm font-semibold text-lean-black dark:text-gray-100">
+            Selecciona un proyecto
+          </h2>
+          <p className="text-xs text-text-muted dark:text-gray-500 leading-relaxed">
+            Los casos de uso están vinculados al proyecto activo.
+            Usa el selector <span className="font-semibold text-lean-black dark:text-gray-300">▾ Proyecto</span> en la barra superior para seleccionar uno existente o crear uno nuevo.
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="mt-2 text-xs font-medium text-navy dark:text-warm-200 hover:underline"
+          >
+            Volver al Dashboard
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
