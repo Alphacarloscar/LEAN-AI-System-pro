@@ -471,11 +471,11 @@ export function StakeholderQuadrantChart({
             lidera
           </text>
 
-          {/* BL: Especialista */}
+          {/* BL: Reticente */}
           <text x={94} y={424} textAnchor="middle"
             fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace"
             fill={ARCHETYPE_HEX.reticente} letterSpacing="0.06em">
-            ESPECIALISTA
+            RETICENTE
           </text>
           <text x={94} y={436} textAnchor="middle"
             fontSize={7.5} fontFamily="ui-monospace, monospace"

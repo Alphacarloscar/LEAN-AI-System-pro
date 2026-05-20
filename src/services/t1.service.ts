@@ -86,9 +86,8 @@ function buildDimensionsFromRows(
 export async function fetchT1Data(engagementId: string): Promise<T1LoadResult> {
   const { data, error } = await supabase
     .from('t1_dimension_scores')
-    .select('*')
+    .select('dimension_code,subdimension_code,score,evidence,interviewee_id,interviewee_name,interviewee_role,interviewee_type')
     .eq('project_id', engagementId)
-    .order('updated_at', { ascending: true })
 
   if (error) throw new Error(`[T1] fetchT1Data: ${error.message}`)
 
