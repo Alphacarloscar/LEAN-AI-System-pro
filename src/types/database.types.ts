@@ -109,17 +109,18 @@ export interface T1DimensionScoreRow {
 }
 
 export interface StakeholderRow {
-  id:              string
-  project_id:      string
-  name:            string
-  role:            string
-  department:      string
-  archetype:       string
-  resistance:      'baja' | 'media' | 'alta'
-  interview:       Json | null
-  notes:           string | null
-  manual_override: boolean
-  created_at:      string
+  id:               string
+  project_id:       string
+  name:             string
+  role:             string
+  department:       string
+  archetype:        string
+  resistance:       'baja' | 'media' | 'alta'
+  interview:        Json | null
+  notes:            string | null
+  manual_override:  boolean
+  unofficial_tools: string | null   // Shadow AI: herramientas no oficiales declaradas
+  created_at:       string
 }
 
 export interface ValueStreamRow {

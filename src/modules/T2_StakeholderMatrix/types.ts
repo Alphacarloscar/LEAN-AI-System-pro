@@ -87,12 +87,18 @@ export interface Stakeholder {
   createdAt:   string
   /** Permite al consultor ajustar la asignación automática */
   manualOverride?: boolean
+  /**
+   * Shadow AI: herramientas externas (IA o digitales) que el stakeholder
+   * usa por su cuenta. Alimenta el indicador "Riesgo de Shadow AI" en T6 y T10.
+   */
+  unofficialTools?: string
 }
 
 // ── Formulario para crear stakeholder (antes de entrevista) ──
 
 export interface NewStakeholderForm {
-  name:       string
-  role:       string
-  department: string
+  name:           string
+  role:           string
+  department:     string
+  unofficialTools?: string
 }

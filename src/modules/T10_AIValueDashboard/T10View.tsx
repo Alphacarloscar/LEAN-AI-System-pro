@@ -458,6 +458,13 @@ export function T10View({
     }
   }, [stakeholders])
 
+  // ── Shadow AI: % stakeholders con herramientas no oficiales ──
+  const shadowAIPct = useMemo(() => {
+    if (stakeholders.length === 0) return null
+    const withTools = stakeholders.filter((s) => s.unofficialTools?.trim()).length
+    return { pct: Math.round((withTools / stakeholders.length) * 100), total: stakeholders.length, withTools }
+  }, [stakeholders])
+
   // ── T1: desglose IT vs Negocio para panel expandido ──────────
   const liveT1Breakdown = useMemo(() => {
     if (isDemoEnabled || interviewees.length === 0) {
@@ -914,6 +921,35 @@ export function T10View({
                     <p className="text-[11px] font-medium text-text-primary dark:text-warm-100">{t2data.rogersPhase}</p>
                   </div>
                 </div>
+                {/* Shadow AI mini-indicator */}
+                {shadowAIPct !== null && (
+                  <div
+                    className="rounded-xl border px-3 py-2.5 mb-3"
+                    style={{ backgroundColor: 'rgba(200,134,10,0.04)', borderColor: 'rgba(200,134,10,0.25)' }}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm">⚠️</span>
+                        <p className="text-[9px] font-mono uppercase tracking-widest" style={{ color: '#C8860A' }}>
+                          Riesgo de Shadow AI
+                        </p>
+                      </div>
+                      <span className="text-sm font-bold tabular-nums" style={{ color: '#C8860A' }}>
+                        {shadowAIPct.pct}%
+                      </span>
+                    </div>
+                    <div className="w-full h-1 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${shadowAIPct.pct}%`, backgroundColor: '#C8860A' }}
+                      />
+                    </div>
+                    <p className="text-[9px] text-text-subtle mt-1">
+                      {shadowAIPct.withTools} de {shadowAIPct.total} perfiles declaran herramientas externas · Ver detalle en T6
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-3">
                   <NavButton label="Abrir T2" onClick={() => onNavigate('/t2')} />
                   <NavButton label="Abrir T7" onClick={() => onNavigate('/t7')} secondary />

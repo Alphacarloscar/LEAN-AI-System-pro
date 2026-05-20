@@ -36,7 +36,7 @@ interface InterviewModalProps {
    * Si se pasa, el modal OMITE la fase de formulario y empieza directamente
    * en la entrevista. Útil para entrevistar stakeholders importados desde T1.
    */
-  existingStakeholder?: Pick<Stakeholder, 'name' | 'role' | 'department' | 'archetype' | 'resistance' | 'notes' | 'manualOverride'>
+  existingStakeholder?: Pick<Stakeholder, 'name' | 'role' | 'department' | 'archetype' | 'resistance' | 'notes' | 'manualOverride' | 'unofficialTools'>
 }
 
 // ── Fases del modal ───────────────────────────────────────────
@@ -73,7 +73,7 @@ function StakeholderFormPhase({
   initialValues?:      NewStakeholderForm
 }) {
   const [form, setForm]       = useState<NewStakeholderForm>(
-    initialValues ?? { name: '', role: '', department: '' }
+    initialValues ?? { name: '', role: '', department: '', unofficialTools: '' }
   )
   const [showDepts, setShowDepts] = useState(false)
   const nameRef               = useRef<HTMLInputElement>(null)
@@ -150,6 +150,23 @@ function StakeholderFormPhase({
             ))}
           </div>
         )}
+      </div>
+
+      {/* Shadow AI — campo empático, opcional */}
+      <div className="space-y-1.5">
+        <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
+          Herramientas externas (opcional)
+        </label>
+        <textarea
+          rows={2}
+          value={form.unofficialTools ?? ''}
+          onChange={(e) => setForm((f) => ({ ...f, unofficialTools: e.target.value }))}
+          placeholder="Herramientas externas (IA o digitales) que empleas por tu cuenta para agilizar cuellos de botella diarios"
+          className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 dark:bg-gray-800 border border-border text-lean-black dark:text-gray-100 placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40 transition-all resize-none leading-snug"
+        />
+        <p className="text-[10px] text-text-subtle px-0.5">
+          Ej. ChatGPT, Notion AI, Zapier… Su uso no implica incumplimiento; nos ayuda a entender el flujo real de trabajo.
+        </p>
       </div>
 
       <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border/60">
@@ -393,9 +410,10 @@ export function InterviewModal({ onClose, onSubmit, existingDepartments, existin
           role:       existingStakeholder.role,
           // Si el departamento es 'Sin asignar' (auto-asignado en import), dejarlo vacío
           // para que el consultor escriba el real sin tener que borrar nada primero.
-          department: hasDepartment ? existingStakeholder.department : '',
+          department:      hasDepartment ? existingStakeholder.department : '',
+          unofficialTools: existingStakeholder.unofficialTools ?? '',
         }
-      : { name: '', role: '', department: '' }
+      : { name: '', role: '', department: '', unofficialTools: '' }
   )
   const [answers, setAnswers] = useState<Record<number, InterviewAnswerCode>>({})
 
@@ -419,13 +437,14 @@ export function InterviewModal({ onClose, onSubmit, existingDepartments, existin
   function handleConfirm(archetype: ArchetypeCode, resistance: ResistanceLevel, manualOverride: boolean) {
     const result = computeInterviewResult(answers)
     onSubmit({
-      name:       form.name.trim(),
-      role:       form.role.trim(),
-      department: form.department.trim(),
+      name:            form.name.trim(),
+      role:            form.role.trim(),
+      department:      form.department.trim(),
       archetype,
       resistance,
       manualOverride,
-      notes:      existingStakeholder?.notes,
+      notes:           existingStakeholder?.notes,
+      unofficialTools: form.unofficialTools?.trim() || undefined,
       interview: {
         ...result,
         archetype,

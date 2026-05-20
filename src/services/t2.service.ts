@@ -27,16 +27,17 @@ function toJson<T>(v: T | undefined | null): Json {
 
 export function rowToStakeholder(row: StakeholderRow): Stakeholder {
   return {
-    id:             row.id,
-    name:           row.name,
-    role:           row.role,
-    department:     row.department,
-    archetype:      cast<Stakeholder['archetype']>(row.archetype),
-    resistance:     cast<Stakeholder['resistance']>(row.resistance),
-    interview:      castOpt<Stakeholder['interview']>(row.interview),
-    notes:          row.notes ?? undefined,
-    createdAt:      row.created_at,
-    manualOverride: row.manual_override || undefined,
+    id:              row.id,
+    name:            row.name,
+    role:            row.role,
+    department:      row.department,
+    archetype:       cast<Stakeholder['archetype']>(row.archetype),
+    resistance:      cast<Stakeholder['resistance']>(row.resistance),
+    interview:       castOpt<Stakeholder['interview']>(row.interview),
+    notes:           row.notes ?? undefined,
+    createdAt:       row.created_at,
+    manualOverride:  row.manual_override || undefined,
+    unofficialTools: row.unofficial_tools ?? undefined,
   }
 }
 
@@ -44,16 +45,17 @@ export function rowToStakeholder(row: StakeholderRow): Stakeholder {
 
 export function stakeholderToInsert(s: Stakeholder, engagementId: string): StakeholderInsert {
   return {
-    id:             s.id,
-    project_id:  engagementId,
-    name:           s.name,
-    role:           s.role,
-    department:     s.department,
-    archetype:      s.archetype,
-    resistance:     s.resistance,
-    interview:      toJson(s.interview),
-    notes:          s.notes ?? null,
-    manual_override: s.manualOverride ?? false,
+    id:               s.id,
+    project_id:       engagementId,
+    name:             s.name,
+    role:             s.role,
+    department:       s.department,
+    archetype:        s.archetype,
+    resistance:       s.resistance,
+    interview:        toJson(s.interview),
+    notes:            s.notes ?? null,
+    manual_override:  s.manualOverride ?? false,
+    unofficial_tools: s.unofficialTools ?? null,
   }
 }
 
@@ -94,8 +96,9 @@ export async function updateStakeholderInDb(
   if (updates.archetype      !== undefined) patch.archetype = updates.archetype
   if (updates.resistance     !== undefined) patch.resistance = updates.resistance
   if (updates.interview      !== undefined) patch.interview = toJson(updates.interview)
-  if (updates.notes          !== undefined) patch.notes = updates.notes ?? null
-  if (updates.manualOverride !== undefined) patch.manual_override = updates.manualOverride ?? false
+  if (updates.notes           !== undefined) patch.notes = updates.notes ?? null
+  if (updates.manualOverride  !== undefined) patch.manual_override = updates.manualOverride ?? false
+  if (updates.unofficialTools !== undefined) patch.unofficial_tools = updates.unofficialTools ?? null
 
   const { error } = await supabase
     .from('stakeholders')

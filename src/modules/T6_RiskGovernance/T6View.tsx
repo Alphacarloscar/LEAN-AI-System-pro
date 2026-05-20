@@ -10,6 +10,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useT4Store }        from '@/modules/T4_UseCasePriorityBoard'
 import { useT5Store }        from '@/modules/T5_AITaxonomyCanvas'
+import { useT2Store }        from '@/modules/T2_StakeholderMatrix'
 import { useT6Store }        from './store'
 import {
   AIACT_RISK_CONFIG,
@@ -498,6 +499,80 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
 
 // ── ── ── Tab 2: RIESGOS AI ACT ── ── ─────────────────────────
 
+function ShadowAICard() {
+  const { stakeholders } = useT2Store()
+
+  const { total, withTools } = useMemo(() => {
+    const total     = stakeholders.length
+    const withTools = stakeholders.filter((s) => s.unofficialTools?.trim()).length
+    return { total, withTools }
+  }, [stakeholders])
+
+  const pct = total > 0 ? Math.round((withTools / total) * 100) : 0
+
+  const riskLabel =
+    pct >= 60 ? 'Riesgo alto'    :
+    pct >= 30 ? 'Riesgo medio'   :
+    total === 0 ? 'Sin datos'    :
+    'Riesgo bajo'
+
+  const riskColor =
+    pct >= 60 ? '#C8860A' :
+    pct >= 30 ? '#b07a00' :
+    '#6b7280'
+
+  return (
+    <div
+      className="rounded-2xl border px-5 py-4"
+      style={{ backgroundColor: 'rgba(200,134,10,0.04)', borderColor: 'rgba(200,134,10,0.25)' }}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2.5">
+          <span className="text-xl">⚠️</span>
+          <div>
+            <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: '#C8860A' }}>
+              Riesgo de Shadow AI
+            </p>
+            <p className="text-xs text-text-muted mt-0.5">
+              Stakeholders que usan herramientas externas no aprobadas oficialmente
+            </p>
+          </div>
+        </div>
+
+        <div className="shrink-0 text-right">
+          <p className="text-3xl font-bold tabular-nums leading-none" style={{ color: '#C8860A' }}>
+            {total === 0 ? '—' : `${pct}%`}
+          </p>
+          <p className="text-[10px] font-semibold mt-0.5" style={{ color: riskColor }}>
+            {riskLabel}
+          </p>
+        </div>
+      </div>
+
+      {total > 0 && (
+        <div className="mt-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] text-text-subtle">{withTools} de {total} perfiles declaran herramientas externas</span>
+            <span className="text-[10px] font-semibold tabular-nums" style={{ color: '#C8860A' }}>{pct}%</span>
+          </div>
+          <div className="w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${pct}%`, backgroundColor: '#C8860A' }}
+            />
+          </div>
+        </div>
+      )}
+
+      {total === 0 && (
+        <p className="mt-2 text-[11px] text-text-subtle">
+          Completa entrevistas en T2 — Matriz de Stakeholders para activar este indicador.
+        </p>
+      )}
+    </div>
+  )
+}
+
 function RiskDashboardTab() {
   const { useCases } = useT4Store()
   const [selectedLevel, setSelectedLevel] = useState<AIActRiskLevel | null>(null)
@@ -525,6 +600,9 @@ function RiskDashboardTab() {
 
   return (
     <div className="flex flex-col gap-5">
+
+      {/* Shadow AI risk indicator */}
+      <ShadowAICard />
 
       {/* KPI cards — una por nivel */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
