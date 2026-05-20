@@ -11,6 +11,7 @@
 import { useState, useRef, useEffect }   from 'react'
 import { useEngagementStore }            from '@/modules/Engagement/store'
 import { useAuthStore }                  from '@/modules/Auth'
+import { isDemoEnabled }                 from '@/lib/config'
 
 // ── Iconos ────────────────────────────────────────────────────
 
@@ -90,7 +91,9 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
   }, [creating])
 
   const activeEngagement = projects.find((e) => e.id === activeEngagementId)
-  const label = activeEngagement?.name ?? 'Seleccionar proyecto'
+  // En modo demo: si no hay proyecto real seleccionado → label "Proyecto Demo"
+  const label = activeEngagement?.name
+    ?? (isDemoEnabled && !activeEngagementId ? 'Proyecto Demo' : 'Seleccionar proyecto')
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
@@ -151,6 +154,43 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
             ? 'bg-warm-800 border-white/10'
             : 'bg-white border-black/8',
         ].join(' ')}>
+
+          {/* Opción "Proyecto Demo" — solo en entorno de staging (isDemoEnabled) */}
+          {isDemoEnabled && (
+            <>
+              <div className="py-1">
+                <button
+                  onClick={() => { selectEngagement(null); setOpen(false) }}
+                  className={[
+                    'w-full text-left px-4 py-2.5 text-xs transition-colors',
+                    !activeEngagementId
+                      ? dark
+                        ? 'bg-amber-900/30 text-amber-300 font-medium'
+                        : 'bg-amber-50 text-[#C8860A] font-medium'
+                      : dark
+                        ? 'text-gray-300 hover:bg-white/6'
+                        : 'text-gray-700 hover:bg-gray-50',
+                  ].join(' ')}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="flex-shrink-0 text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded"
+                      style={{ background: 'rgba(200,134,10,0.12)', color: '#C8860A' }}
+                    >
+                      Demo
+                    </span>
+                    <span className="truncate flex-1">Proyecto Demo</span>
+                  </div>
+                  {!activeEngagementId && (
+                    <span className="text-[10px] font-mono opacity-60">activo</span>
+                  )}
+                </button>
+              </div>
+              {projects.length > 0 && (
+                <div className={['border-t', dark ? 'border-white/8' : 'border-gray-100'].join(' ')} />
+              )}
+            </>
+          )}
 
           {/* Lista de engagements */}
           {projects.length > 0 ? (

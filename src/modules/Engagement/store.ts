@@ -26,7 +26,7 @@ interface EngagementStore {
   // Carga los engagements del usuario logueado
   loadMyProjects: () => Promise<void>
   // Selecciona el engagement activo (y notifica a los stores T1-T6)
-  selectEngagement:   (id: string) => void
+  selectEngagement:   (id: string | null) => void
   // Crea un nuevo engagement y lo selecciona
   createAndSelect: (name: string) => Promise<ProjectRow>
   // Limpia el estado al logout

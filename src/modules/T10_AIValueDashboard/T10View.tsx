@@ -19,6 +19,8 @@ import { isDemoEnabled }                 from '@/lib/config'
 import { useT1Store }                    from '@/modules/T1_MaturityRadar/store'
 import { computeDimensionScore, computeOverallScore } from '@/modules/T1_MaturityRadar/types'
 import { useT3Store }                    from '@/modules/T3_ValueStreamMap/store'
+import { useT12Store }                   from '@/modules/T12_ISOAssessment/store'
+import { useT9Store }                    from '@/modules/T9_AIRoadmap/store'
 import { useAuthStore }                  from '@/modules/Auth'
 
 // ── Tipos ────────────────────────────────────────────────────
@@ -319,8 +321,10 @@ export function T10View({
   const { profile: companyProfile, loadProfile } = useCompanyProfileStore()
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
   const projects                    = useEngagementStore((s) => s.projects)
-  const { dimensionStates, interviewees, load: loadT1 } = useT1Store()
+  const { dimensionStates, interviewees, load: loadT1, isLoading: isT1Loading } = useT1Store()
   const { processes, load: loadT3 }   = useT3Store()
+  const { controls: t12Controls, syncEngagement: syncT12 } = useT12Store()
+  const { freeItems: t9FreeItems,  syncEngagement: syncT9  } = useT9Store()
 
   // ── Carga de todos los stores cuando cambia el proyecto activo ──
   useEffect(() => {
@@ -330,6 +334,8 @@ export function T10View({
     loadT3(engagementId)
     loadT4(engagementId)
     loadProfile(engagementId)
+    syncT12(engagementId)
+    syncT9(engagementId)
   }, [engagementId])
 
   // ── T1: radar desde store real (producción) o prop demo ──────
@@ -508,6 +514,42 @@ export function T10View({
     }
   }, [processes])
 
+  // ── P5: T12 compliance + T4 risk distribution ────────────────
+  const liveP5 = useMemo(() => {
+    const total    = t12Controls.length
+    const approved = t12Controls.filter(c => c.status === 'aprobado').length
+    const isoCompliance = total > 0 ? Math.round((approved / total) * 100) : 0
+    const high   = useCases.filter(uc => uc.scores.aiRisk > 60).length
+    const medium = useCases.filter(uc => uc.scores.aiRisk >= 30 && uc.scores.aiRisk <= 60).length
+    const low    = useCases.filter(uc => uc.scores.aiRisk < 30).length
+    const risks  = { high, medium, low, total: useCases.length }
+    return { isoCompliance, risks, hasData: approved > 0 || useCases.length > 0 }
+  }, [t12Controls, useCases])
+
+  // ── P6: T9 milestones + T4 active initiatives ─────────────────
+  const liveP6 = useMemo(() => {
+    const casosEnGO      = useCases.filter(uc => ['go', 'en_piloto'].includes(uc.status)).length
+    const completados    = useCases.filter(uc => uc.status === 'completado').length
+    const libres         = useCases.filter(uc => uc.status === 'candidato').length
+    const upcomingEvents = [...t9FreeItems]
+      .filter(item => item.status !== 'completado')
+      .sort((a, b) => a.startMonth - b.startMonth)
+      .slice(0, 4)
+      .map(item => ({
+        name:  item.name,
+        date:  `Mes ${item.startMonth + 1}`,
+        level: item.riskLevel === 'alto' ? 'direction' as const
+             : item.riskLevel === 'medio' ? 'program' as const
+             : 'team' as const,
+      }))
+    const total = useCases.length
+    const gobiernoActivoPct = total > 0 ? Math.round((casosEnGO / total) * 100) : 0
+    return {
+      casosEnGO, completados, libres, upcomingEvents, gobiernoActivoPct,
+      hasData: casosEnGO > 0 || t9FreeItems.length > 0,
+    }
+  }, [t9FreeItems, useCases])
+
   // AI Index counter animation
   useEffect(() => {
     const target = avg; const duration = 1300; const start = Date.now()
@@ -523,21 +565,101 @@ export function T10View({
 
   function toggle(id: PanelId) { setExpanded(prev => prev === id ? null : id) }
 
-  // ── Guard producción: sin demo y sin proyecto ─────────────────
+  // ── Guard 1: sin proyecto seleccionado ────────────────────────
   if (!isDemoEnabled && !engagementId) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center px-6">
-        <div className="text-center max-w-sm">
-          <div className="w-14 h-14 rounded-2xl bg-gold/10 flex items-center justify-center mx-auto mb-5">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C8860A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center px-6">
+        <div className="text-center max-w-sm space-y-4">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto"
+            style={{ background: 'rgba(200,134,10,0.06)', border: '1.5px solid rgba(200,134,10,0.18)' }}
+          >
+            <svg width="22" height="22" viewBox="0 0 14 14" fill="none" stroke="#C8860A" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="10" height="10" rx="1" />
+              <path d="M5 13V9h4v4M2 6h10" />
             </svg>
           </div>
-          <h2 className="text-base font-semibold text-[#2A2822] mb-2">Selecciona un proyecto</h2>
-          <p className="text-sm text-gray-500">
-            Elige un proyecto desde el selector superior para ver el dashboard de adopción IA de tu empresa.
-          </p>
+          <div>
+            <h2 className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-1.5">
+              Selecciona un proyecto
+            </h2>
+            <p className="text-xs text-text-muted dark:text-gray-500 leading-relaxed">
+              El dashboard de adopción IA está vinculado al proyecto activo.
+              Usa el selector <span className="font-semibold text-lean-black dark:text-gray-300">▾ Proyecto</span> en la barra superior para seleccionar uno existente o crear uno nuevo.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Guard 2: proyecto seleccionado pero T1 todavía sin datos ──
+  if (!isDemoEnabled && engagementId && !isT1Loading && liveT1Radar.length === 0) {
+    return (
+      <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center px-6">
+        <div className="text-center max-w-md space-y-5">
+          {/* Icono */}
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+            style={{ background: 'rgba(200,134,10,0.06)', border: '1.5px solid rgba(200,134,10,0.18)' }}
+          >
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C8860A" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4M12 16h.01" strokeWidth="1.8" />
+            </svg>
+          </div>
+          {/* Texto */}
+          <div>
+            <h2 className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-2">
+              No hay datos suficientes para calcular el valor
+            </h2>
+            <p className="text-xs text-text-muted dark:text-gray-500 leading-relaxed">
+              El dashboard se construye a partir de las herramientas del programa L.E.A.N.
+              Comienza completando el <span className="font-semibold text-lean-black dark:text-gray-300">Radar de Madurez (T1)</span> para que el sistema pueda calcular los indicadores de adopción IA de tu empresa.
+            </p>
+          </div>
+          {/* Progress de herramientas completadas */}
+          <div
+            className="rounded-xl px-4 py-3 text-left space-y-1.5"
+            style={{ background: 'rgba(200,134,10,0.04)', border: '1px solid rgba(200,134,10,0.14)' }}
+          >
+            <p className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: '#C8860A' }}>
+              Ruta de activación recomendada
+            </p>
+            {[
+              { code: 'T1', label: 'Radar de Madurez', active: true  },
+              { code: 'T2', label: 'Matriz de Stakeholders', active: false },
+              { code: 'T3', label: 'Mapa de Procesos', active: false  },
+              { code: 'T4', label: 'Portfolio de Casos de Uso', active: false },
+            ].map((step, i) => (
+              <div key={i} className="flex items-center gap-2.5">
+                <div
+                  className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-bold"
+                  style={{
+                    background: step.active ? '#C8860A' : 'rgba(200,134,10,0.08)',
+                    color:      step.active ? '#fff'    : '#C8860A',
+                    border:     step.active ? 'none'   : '1px solid rgba(200,134,10,0.25)',
+                  }}
+                >
+                  {i + 1}
+                </div>
+                <span className={`text-xs ${step.active ? 'font-semibold text-lean-black dark:text-gray-100' : 'text-text-muted dark:text-gray-500'}`}>
+                  {step.code} · {step.label}
+                </span>
+              </div>
+            ))}
+          </div>
+          {/* CTA */}
+          <button
+            onClick={() => onNavigate('/t1')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 shadow-sm"
+            style={{ background: '#C8860A' }}
+          >
+            Comenzar con T1 — Radar de Madurez
+            <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M2 6h8M6.5 2.5L10 6l-3.5 3.5" />
+            </svg>
+          </button>
         </div>
       </div>
     )
@@ -547,6 +669,8 @@ export function T10View({
   const t4data = isDemoEnabled ? d.t4     : liveT4
   const t2data = isDemoEnabled ? d.t2t7   : liveT2
   const t3data = isDemoEnabled ? d.t3t5   : liveT3   // null = sin datos aún
+  const p5data = isDemoEnabled ? d.t6t12  : liveP5
+  const p6data = isDemoEnabled ? d.t8t9t11 : liveP6
   const t4n    = t4data.totalInitiatives
   const t4s    = t4data.statuses
   const t4Segments = t4n > 0 ? [
@@ -556,12 +680,12 @@ export function T10View({
     { pct: Math.round((t4s.stopped   / t4n) * 100), color: '#C4C0B8', label: `Paradas ${t4s.stopped}` },
   ] : [{ pct: 100, color: '#D4D0C8', label: 'Sin datos' }]
 
-  const rTotal = d.t6t12.risks.total
-  const riskSegments = [
-    { pct: Math.round((d.t6t12.risks.high   / rTotal) * 100), color: '#D85A30' },
-    { pct: Math.round((d.t6t12.risks.medium / rTotal) * 100), color: '#EF9F27' },
-    { pct: Math.round((d.t6t12.risks.low    / rTotal) * 100), color: '#97C459' },
-  ]
+  const rTotal = p5data.risks.total
+  const riskSegments = p5data.risks.total > 0 ? [
+    { pct: Math.round((p5data.risks.high   / rTotal) * 100), color: '#D85A30' },
+    { pct: Math.round((p5data.risks.medium / rTotal) * 100), color: '#EF9F27' },
+    { pct: Math.round((p5data.risks.low    / rTotal) * 100), color: '#97C459' },
+  ] : [{ pct: 100, color: '#D4D0C8' }]
 
   return (
     <div className="min-h-screen bg-surface dark:bg-warm-900">
@@ -858,54 +982,60 @@ export function T10View({
             )}
           </PanelCard>
 
-          {/* ── P5: T6+T12 Riesgos + ISO ────────────────────── */}
+          {/* ── P5: T12 ISO + T4 risk distribution ──────────── */}
           <PanelCard
             id="p5" expanded={expanded === 'p5'} onClick={() => toggle('p5')}
             tag="T6 + T12 · Riesgos" tagColor="danger"
             title="Riesgo + ISO 42001"
-            subtitle={isDemoEnabled ? `${d.t6t12.risks.total} riesgos · ${d.t6t12.isoCompliance}% ISO` : 'Pendiente de mapeo'}
+            subtitle={p5data.risks.total > 0 || p5data.isoCompliance > 0
+              ? `${p5data.risks.total} casos mapeados · ${p5data.isoCompliance}% ISO`
+              : 'Pendiente de mapeo'}
             animDelay={320}
             heroSlot={<HeroMetric
               label="ISO 42001"
-              value={isDemoEnabled ? `${d.t6t12.isoCompliance}%` : '—'}
-              colorScore={isDemoEnabled ? d.t6t12.isoCompliance : undefined}
+              value={p5data.isoCompliance > 0 ? `${p5data.isoCompliance}%` : '—'}
+              colorScore={p5data.isoCompliance > 0 ? p5data.isoCompliance : undefined}
             />}
           >
-            {isDemoEnabled ? (
+            {(isDemoEnabled || liveP5.hasData) ? (
               <>
                 <div className="flex items-center gap-3">
-                  <DonutChart segments={riskSegments} size={60} strokeWidth={12} centerLabel={`${d.t6t12.risks.total}`} />
+                  <DonutChart
+                    segments={riskSegments}
+                    size={60} strokeWidth={12}
+                    centerLabel={`${p5data.risks.total}`}
+                  />
                   <div className="space-y-1.5 flex-1">
                     <div className="flex items-center gap-1.5 text-[10px]">
                       <span className="w-2 h-2 rounded-full flex-shrink-0 bg-danger" />
                       <span className="text-text-muted dark:text-warm-300 flex-1">Alto</span>
-                      <span className="font-semibold text-danger-dark dark:text-danger">{d.t6t12.risks.high}</span>
+                      <span className="font-semibold text-danger-dark dark:text-danger">{p5data.risks.high}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-[10px]">
                       <span className="w-2 h-2 rounded-full flex-shrink-0 bg-warning" />
                       <span className="text-text-muted dark:text-warm-300 flex-1">Medio</span>
-                      <span className="font-medium text-warning-dark dark:text-warning">{d.t6t12.risks.medium}</span>
+                      <span className="font-medium text-warning-dark dark:text-warning">{p5data.risks.medium}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-[10px]">
                       <span className="w-2 h-2 rounded-full flex-shrink-0 bg-success" />
                       <span className="text-text-muted dark:text-warm-300 flex-1">Bajo</span>
-                      <span className="font-medium text-success-dark">{d.t6t12.risks.low}</span>
+                      <span className="font-medium text-success-dark">{p5data.risks.low}</span>
                     </div>
                   </div>
                 </div>
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] text-text-muted dark:text-warm-300">ISO 42001 cumplimiento</span>
-                    <span className="text-[10px] font-semibold text-gold">{d.t6t12.isoCompliance}%</span>
+                    <span className="text-[10px] font-semibold text-gold">{p5data.isoCompliance}%</span>
                   </div>
                   <div className="h-[5px] rounded-full bg-border dark:bg-warm-500">
-                    <div className="h-full rounded-full bg-gold" style={{ width: `${d.t6t12.isoCompliance}%` }} />
+                    <div className="h-full rounded-full bg-gold" style={{ width: `${p5data.isoCompliance}%` }} />
                   </div>
                 </div>
               </>
             ) : (
               <p className="text-[11px] text-text-muted dark:text-warm-300 py-2">
-                Completa T6 (Riesgos) y T12 (ISO 42001) para ver el mapa de riesgo real del proyecto.
+                Completa T4 (casos de uso) y T12 (ISO 42001) para ver el mapa de riesgo real del proyecto.
               </p>
             )}
 
@@ -936,18 +1066,22 @@ export function T10View({
             id="p6" expanded={expanded === 'p6'} onClick={() => toggle('p6')}
             tag="T8 · T9 · T11 · Gobierno" tagColor="amber"
             title="Gobierno activo"
-            subtitle={isDemoEnabled ? 'Próximos eventos · Hitos · Vendors' : 'Pendiente de configurar'}
+            subtitle={isDemoEnabled
+              ? 'Próximos eventos · Hitos · Vendors'
+              : liveP6.hasData
+                ? `${liveP6.casosEnGO} en GO · ${liveP6.upcomingEvents.length} hitos próximos`
+                : 'Pendiente de configurar'}
             animDelay={400}
             heroSlot={<HeroMetric
               label="Gobierno activo"
-              value={isDemoEnabled ? `${d.t8t9t11.gobiernoActivoPct}%` : '—'}
-              colorScore={isDemoEnabled ? d.t8t9t11.gobiernoActivoPct : undefined}
+              value={p6data.gobiernoActivoPct > 0 ? `${p6data.gobiernoActivoPct}%` : '—'}
+              colorScore={p6data.gobiernoActivoPct > 0 ? p6data.gobiernoActivoPct : undefined}
             />}
           >
-            {isDemoEnabled ? (
+            {(isDemoEnabled || liveP6.hasData) ? (
               <>
                 <div className="space-y-1.5">
-                  {d.t8t9t11.upcomingEvents.map((ev, i) => (
+                  {p6data.upcomingEvents.map((ev, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full flex-shrink-0"
                         style={{ background: EVENT_LEVEL_COLOR[ev.level] ?? '#C8860A' }} />
@@ -956,28 +1090,40 @@ export function T10View({
                     </div>
                   ))}
                 </div>
-                <div className="mt-2 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse flex-shrink-0" />
-                  <span className="text-[10px] text-danger-dark dark:text-danger truncate">
-                    {d.t8t9t11.criticalVendor} · renovación {d.t8t9t11.vendorRenewal}
-                  </span>
-                </div>
+                {isDemoEnabled && (
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse flex-shrink-0" />
+                    <span className="text-[10px] text-danger-dark dark:text-danger truncate">
+                      {d.t8t9t11.criticalVendor} · renovación {d.t8t9t11.vendorRenewal}
+                    </span>
+                  </div>
+                )}
                 <div className="flex gap-1.5 mt-3">
-                  <MetricChip label="Casos en GO"    value={String(d.t8t9t11.casosEnGO)}             valueColor="#C8860A" />
-                  <MetricChip label="Inic. libres"   value={String(d.t8t9t11.iniciativasLibres)} />
-                  <MetricChip label="Completadas"    value={String(d.t8t9t11.archivosCompletados)} />
-                  <MetricChip label="Riesgos altos"  value={String(d.t8t9t11.riesgosAltos)}          valueColor="#C06060" />
+                  <MetricChip label="Casos en GO"   value={String(p6data.casosEnGO)}   valueColor="#C8860A" />
+                  {isDemoEnabled ? (
+                    <>
+                      <MetricChip label="Inic. libres"  value={String(d.t8t9t11.iniciativasLibres)} />
+                      <MetricChip label="Completadas"   value={String(d.t8t9t11.archivosCompletados)} />
+                      <MetricChip label="Riesgos altos" value={String(d.t8t9t11.riesgosAltos)} valueColor="#C06060" />
+                    </>
+                  ) : (
+                    <>
+                      <MetricChip label="Candidatos"  value={String(liveP6.libres)} />
+                      <MetricChip label="Completados" value={String(liveP6.completados)} />
+                      <MetricChip label="Riesgo alto" value={String(liveP5.risks.high)} valueColor="#C06060" />
+                    </>
+                  )}
                 </div>
               </>
             ) : (
               <p className="text-[11px] text-text-muted dark:text-warm-300 py-2">
-                Usa T8 (Comunicación), T9 (Roadmap) y T11 (Gobierno) para construir el panel de gobierno del proyecto.
+                Usa T4 (Portfolio) y T9 (Roadmap) para construir el panel de gobierno del proyecto.
               </p>
             )}
 
             {expanded === 'p6' && (
               <ExpandedSection>
-                {isDemoEnabled && (
+                {isDemoEnabled && d.t8t9t11.nextMilestone && (
                   <div className="mb-3">
                     <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Próximo hito</p>
                     <div className="flex items-center gap-2">
