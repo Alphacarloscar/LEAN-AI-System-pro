@@ -17,7 +17,7 @@ export type PhaseStatus = 'complete' | 'active' | 'upcoming' | 'locked'
 export type ToolStatus  = 'complete' | 'in_progress' | 'pending' | 'blocked'
 
 export interface PhaseTool {
-  code:         string   // T1–T13
+  code:         string   // T1–T12
   name:         string
   status:       ToolStatus
   description?: string

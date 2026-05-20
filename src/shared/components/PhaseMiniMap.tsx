@@ -36,7 +36,7 @@ const LEAN_PHASES: Array<{
   { id: 'evaluate',  letter: 'E', label: 'Evaluate',    duration: 'Semanas 4–8',  tools: ['T4','T5','T6'] },
   { id: 'activate',  letter: 'A', label: 'Activate',    duration: 'Semanas 9–16', tools: ['T7','T8','T9'] },
   { id: 'normalize', letter: 'N', label: 'Normalize',   duration: 'Meses 5–6',    tools: ['T10','T11','T12'] },
-  { id: 'iso',       letter: 'I', label: 'ISO 42001',   duration: 'Semana 24',    tools: ['T13'] },
+  { id: 'iso',       letter: 'I', label: 'ISO 42001',   duration: 'Semana 24',    tools: ['T12'] },
   { id: 'handover',  letter: '∞', label: 'Continuidad', duration: 'Post-sprint',  tools: [] },
 ]
 

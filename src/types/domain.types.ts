@@ -17,10 +17,10 @@ export type UserRole =
 // ---- Fases L.E.A.N. ----
 export type LeanPhase = 'listen' | 'evaluate' | 'activate' | 'normalize'
 
-// ---- Herramientas T1-T13 ----
+// ---- Herramientas T1-T12 ----
 export type ToolCode =
   | 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'T6' | 'T7'
-  | 'T8' | 'T9' | 'T10' | 'T11' | 'T12' | 'T13'
+  | 'T8' | 'T9' | 'T10' | 'T11' | 'T12'
 
 // ---- Estados de output ----
 export type OutputStatus = 'draft' | 'in_progress' | 'committed' | 'archived'

@@ -2,7 +2,7 @@
 // CompanyProfile — Tipos del módulo
 //
 // El perfil de empresa es el contexto global del engagement.
-// Alimenta T1–T13 vía context_refs.
+// Alimenta T1–T12 vía context_refs.
 // Cuando se conecte Supabase: tabla company_profiles + friction_register.
 // ============================================================
 
