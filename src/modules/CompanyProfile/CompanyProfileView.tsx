@@ -328,7 +328,7 @@ export function CompanyProfileView() {
           </h2>
           <p className="text-xs text-text-muted dark:text-gray-500 leading-relaxed">
             El perfil de empresa está vinculado al proyecto activo.
-            Selecciona un proyecto en el selector de la barra superior para ver o editar los datos.
+            Usa el selector <span className="font-semibold text-lean-black dark:text-gray-300">▾ Proyecto</span> en la barra superior para seleccionar uno existente o crear uno nuevo.
           </p>
           <button
             onClick={() => navigate('/')}
