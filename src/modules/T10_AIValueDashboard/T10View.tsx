@@ -1068,6 +1068,33 @@ export function T10View({
                     <div className="h-full rounded-full bg-gold" style={{ width: `${p5data.isoCompliance}%` }} />
                   </div>
                 </div>
+
+                {/* Shadow AI — mismo dato que T6 */}
+                {shadowAIPct !== null && (
+                  <div className="mt-3 pt-3 border-t border-border dark:border-white/10">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px]">⚠️</span>
+                        <span className="text-[10px] text-text-muted dark:text-warm-300">Shadow AI</span>
+                      </div>
+                      <span
+                        className="text-[10px] font-semibold tabular-nums"
+                        style={{ color: shadowAIPct.pct > 0 ? '#C8860A' : '#6b7280' }}
+                      >
+                        {shadowAIPct.pct}%
+                      </span>
+                    </div>
+                    <div className="h-[5px] rounded-full bg-border dark:bg-warm-500 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${shadowAIPct.pct}%`, backgroundColor: '#C8860A' }}
+                      />
+                    </div>
+                    <p className="text-[9px] text-text-subtle mt-1">
+                      {shadowAIPct.withTools} de {shadowAIPct.total} perfiles declaran herramientas externas
+                    </p>
+                  </div>
+                )}
               </>
             ) : (
               <p className="text-[11px] text-text-muted dark:text-warm-300 py-2">
