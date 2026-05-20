@@ -2,19 +2,21 @@
 // Companies Service
 //
 // Sprint 8: nueva entidad empresa (multi-tenant).
+// Sprint 9: sistema de 4 roles (superadmin/consultant/client_editor/client_viewer)
+//
 // Gestiona el CRUD de companies y la invitación de usuarios.
 //
 // Modelo:
 //   Company → Projects (1:N)
 //   Company → Users via profiles.company_id (1:N)
 //
-// Solo el platform_admin (role='admin') puede crear empresas
+// Solo el platform_admin (role='superadmin') puede crear empresas
 // e invitar usuarios. Los consultores Alpha se añaden a
 // proyectos específicos via addProjectMember.
 // ============================================================
 
-import { supabase }       from '@/lib/supabase'
-import type { CompanyRow } from '@/types/database.types'
+import { supabase }                      from '@/lib/supabase'
+import type { CompanyRow, UserRole }     from '@/types/database.types'
 
 // ── Listar todas las empresas ────────────────────────────────
 // (Solo accesible para autenticados — RLS lo limita)
@@ -58,22 +60,19 @@ export async function inviteUserToCompany(params: {
   email:     string
   name:      string
   companyId: string
-  role?:     'consultant' | 'viewer'
+  role?:     UserRole
 }): Promise<void> {
-  // redirectTo asegura que el link del email lleve a /reset-password
-  // (sin esto Supabase redirige al Site URL raíz y el token expira sin procesarse)
-  const redirectTo = `${window.location.origin}/reset-password`
-
-  const { error } = await supabase.auth.admin.inviteUserByEmail(params.email, {
-    redirectTo,
-    data: {
-      name:       params.name,
-      company_id: params.companyId,
-      role:       params.role ?? 'viewer',
-    },
+  // ⚠ supabase.auth.admin.inviteUserByEmail requiere service role key (no disponible
+  //   en el frontend). Esta función está MOCKEADA intencionalmente.
+  //   Implementación real: Edge Function con SUPABASE_SERVICE_ROLE_KEY → Sprint 10.
+  console.log('[Companies] inviteUserToCompany (MOCK):', {
+    email:     params.email,
+    name:      params.name,
+    companyId: params.companyId,
+    role:      params.role ?? 'client_viewer',
   })
-
-  if (error) throw new Error(`[Companies] inviteUserToCompany: ${error.message}`)
+  // Simula latencia de red
+  await new Promise((r) => setTimeout(r, 600))
 }
 
 // ── Listar usuarios de una empresa ──────────────────────────
@@ -87,6 +86,20 @@ export async function listCompanyUsers(companyId: string) {
 
   if (error) throw new Error(`[Companies] listCompanyUsers: ${error.message}`)
   return data ?? []
+}
+
+// ── Listar todos los usuarios (solo superadmin) ─────────────
+
+export async function listAllUsers(): Promise<{
+  id: string; email: string; name: string; role: UserRole; company_id: string | null; created_at: string
+}[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, email, name, role, company_id, created_at')
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(`[Companies] listAllUsers: ${error.message}`)
+  return (data ?? []) as { id: string; email: string; name: string; role: UserRole; company_id: string | null; created_at: string }[]
 }
 
 // ── Listar proyectos de una empresa ─────────────────────────

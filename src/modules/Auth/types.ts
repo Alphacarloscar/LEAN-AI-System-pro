@@ -5,7 +5,7 @@
 // Los roles se alinean con database.types.ts → UserRole.
 // ============================================================
 
-export type AuthUserRole = 'admin' | 'consultant' | 'viewer'
+export type AuthUserRole = 'superadmin' | 'consultant' | 'client_editor' | 'client_viewer'
 
 export interface AuthUser {
   id:    string   // Supabase auth.users UUID

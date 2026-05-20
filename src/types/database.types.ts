@@ -17,10 +17,11 @@ export type Json =
 
 // ── Roles ───────────────────────────────────────────────────────
 
-export type UserRole      = 'admin' | 'consultant' | 'viewer'
-// 'admin' = platform admin (Carlos) — acceso global
-// 'consultant' = consultor Alpha — acceso por project_members
-// 'viewer' = usuario cliente — acceso por project_members
+export type UserRole      = 'superadmin' | 'consultant' | 'client_editor' | 'client_viewer'
+// 'superadmin'    = Alpha platform admin (Carlos) — acceso global a todo
+// 'consultant'    = consultor Alpha — acceso por project_members
+// 'client_editor' = cliente operativo — edita proyectos de su empresa
+// 'client_viewer' = cliente directivo — solo lectura de su empresa
 export type MemberRole    = 'consultant' | 'viewer'
 export type ProjectStatus = 'active' | 'archived'
 export type LeanPhase     = 'listen' | 'evaluate' | 'activate' | 'normalize' | 'closed'
