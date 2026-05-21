@@ -28,7 +28,9 @@ interface EngagementStore {
   // Selecciona el engagement activo (y notifica a los stores T1-T6)
   selectEngagement:   (id: string | null) => void
   // Crea un nuevo engagement y lo selecciona
-  createAndSelect: (name: string) => Promise<ProjectRow>
+  // companyId: si se pasa (superadmin/consultant) se usa directamente;
+  //            si no (client_editor), se infiere del perfil del usuario.
+  createAndSelect: (name: string, companyId?: string) => Promise<ProjectRow>
   // Limpia el estado al logout
   reset:              () => void
 }
@@ -78,23 +80,25 @@ export const useEngagementStore = create<EngagementStore>()(
         set({ activeEngagementId: id })
       },
 
-      createAndSelect: async (name) => {
+      createAndSelect: async (name, companyId) => {
         set({ isLoading: true })
         try {
-          // Obtener company_id del perfil del usuario autenticado
-          // para que el proyecto quede ligado a su empresa
-          const { data: { user } } = await supabase.auth.getUser()
-          let companyId: string | undefined
-          if (user) {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('company_id')
-              .eq('id', user.id)
-              .single()
-            companyId = profile?.company_id ?? undefined
+          // Si companyId viene explícito (superadmin/consultant lo pasan desde el selector)
+          // lo usamos directamente. Si no (client_editor), lo inferimos del perfil.
+          let resolvedCompanyId = companyId
+          if (!resolvedCompanyId) {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('company_id')
+                .eq('id', user.id)
+                .single()
+              resolvedCompanyId = profile?.company_id ?? undefined
+            }
           }
 
-          const project = await createProject({ name, companyId })
+          const project = await createProject({ name, companyId: resolvedCompanyId })
           set((s) => ({
             projects:           [...s.projects, project],
             activeEngagementId: project.id,

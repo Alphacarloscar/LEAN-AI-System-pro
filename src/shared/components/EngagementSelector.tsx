@@ -1,17 +1,24 @@
 // ============================================================
-// EngagementSelector — Selector de engagement activo
+// EngagementSelector — Selector de proyecto activo
 //
 // Vive en el header global (AppLayout).
-// Muestra el engagement activo y permite cambiar entre ellos
+// Muestra el proyecto activo y permite cambiar entre ellos
 // o crear uno nuevo directamente desde el header.
+//
+// Lógica de creación por rol:
+//   superadmin / consultant → selector de empresa obligatorio
+//   client_editor           → hereda company_id del perfil (sin selector)
+//   client_viewer           → no puede crear proyectos (botón oculto)
 //
 // Paleta: Obsidian Amber — warm charcoal + gold #C8860A
 // ============================================================
 
-import { useState, useRef, useEffect }   from 'react'
-import { useEngagementStore }            from '@/modules/Engagement/store'
-import { useAuthStore }                  from '@/modules/Auth'
-import { isDemoEnabled }                 from '@/lib/config'
+import { useState, useRef, useEffect }  from 'react'
+import { useEngagementStore }           from '@/modules/Engagement/store'
+import { useAuthStore }                 from '@/modules/Auth'
+import { listCompanies }                from '@/services/companies.service'
+import { isDemoEnabled }                from '@/lib/config'
+import type { CompanyRow }              from '@/types/database.types'
 
 // ── Iconos ────────────────────────────────────────────────────
 
@@ -60,13 +67,25 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
     createAndSelect,
   } = useEngagementStore()
   const { user } = useAuthStore()
-  const myUserId = user?.id ?? null
+
+  const myUserId = user?.id   ?? null
+  const userRole = user?.role ?? 'client_viewer'
+
+  // superadmin/consultant deben elegir empresa al crear
+  const needsCompanySelector = userRole === 'superadmin' || userRole === 'consultant'
+  // client_viewer no puede crear proyectos
+  const canCreateProject     = userRole !== 'client_viewer'
 
   const [open,        setOpen]        = useState(false)
   const [creating,    setCreating]    = useState(false)
   const [newName,     setNewName]     = useState('')
   const [createBusy,  setCreateBusy]  = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+
+  // Estado solo para superadmin/consultant
+  const [companies,      setCompanies]      = useState<CompanyRow[]>([])
+  const [loadingCo,      setLoadingCo]      = useState(false)
+  const [selectedCompany, setSelectedCompany] = useState('')
 
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef    = useRef<HTMLInputElement>(null)
@@ -75,10 +94,8 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        closeCreate()
         setOpen(false)
-        setCreating(false)
-        setNewName('')
-        setCreateError(null)
       }
     }
     if (open) document.addEventListener('mousedown', handleOutside)
@@ -90,8 +107,25 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
     if (creating) inputRef.current?.focus()
   }, [creating])
 
+  // Para superadmin/consultant: cargar empresas al abrir el form de creación
+  useEffect(() => {
+    if (!creating || !needsCompanySelector) return
+    if (companies.length > 0) return // ya cargadas
+    setLoadingCo(true)
+    listCompanies()
+      .then(setCompanies)
+      .catch(() => setCreateError('No se pudieron cargar las empresas'))
+      .finally(() => setLoadingCo(false))
+  }, [creating])
+
+  function closeCreate() {
+    setCreating(false)
+    setNewName('')
+    setSelectedCompany('')
+    setCreateError(null)
+  }
+
   const activeEngagement = projects.find((e) => e.id === activeEngagementId)
-  // En modo demo: si no hay proyecto real seleccionado → label "Proyecto Demo"
   const label = activeEngagement?.name
     ?? (isDemoEnabled && !activeEngagementId ? 'Proyecto Demo' : 'Seleccionar proyecto')
 
@@ -99,13 +133,19 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
     e.preventDefault()
     const name = newName.trim()
     if (!name) return
+    // Para superadmin/consultant, empresa obligatoria
+    if (needsCompanySelector && !selectedCompany) {
+      setCreateError('Selecciona una empresa antes de crear el proyecto.')
+      return
+    }
     setCreateBusy(true)
     setCreateError(null)
     try {
-      await createAndSelect(name)
+      // Pasamos companyId explícito para superadmin/consultant;
+      // undefined para client_editor (el store lo infiere del perfil)
+      await createAndSelect(name, needsCompanySelector ? selectedCompany : undefined)
+      closeCreate()
       setOpen(false)
-      setCreating(false)
-      setNewName('')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al crear proyecto'
       console.error('[EngagementSelector] createAndSelect:', err)
@@ -114,6 +154,21 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
       setCreateBusy(false)
     }
   }
+
+  // Clases reutilizables para inputs inline del dropdown
+  const inlineInputClass = [
+    'flex-1 text-xs px-2.5 py-1.5 rounded-lg border outline-none',
+    dark
+      ? 'bg-white/8 border-white/12 text-white placeholder:text-gray-500 focus:border-amber-500/50'
+      : 'bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-[#C8860A]/50',
+  ].join(' ')
+
+  const inlineSelectClass = [
+    'w-full text-xs px-2.5 py-1.5 rounded-lg border outline-none',
+    dark
+      ? 'bg-white/8 border-white/12 text-white focus:border-amber-500/50'
+      : 'bg-gray-50 border-gray-200 text-gray-800 focus:border-[#C8860A]/50',
+  ].join(' ')
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -149,13 +204,13 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
       {/* Dropdown */}
       {open && (
         <div className={[
-          'absolute top-full left-0 mt-1.5 w-60 rounded-xl shadow-lg border overflow-hidden z-50',
+          'absolute top-full left-0 mt-1.5 w-64 rounded-xl shadow-lg border overflow-hidden z-50',
           dark
             ? 'bg-warm-800 border-white/10'
             : 'bg-white border-black/8',
         ].join(' ')}>
 
-          {/* Opción "Proyecto Demo" — solo en entorno de staging (isDemoEnabled) */}
+          {/* Opción "Proyecto Demo" — solo en staging (isDemoEnabled) */}
           {isDemoEnabled && (
             <>
               <div className="py-1">
@@ -192,12 +247,12 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
             </>
           )}
 
-          {/* Lista de engagements */}
+          {/* Lista de proyectos */}
           {projects.length > 0 ? (
             <div className="py-1">
               {projects.map((eng) => {
-                const isOwn     = !myUserId || eng.owner_id === myUserId
-                const isActive  = eng.id === activeEngagementId
+                const isOwn    = !myUserId || eng.owner_id === myUserId
+                const isActive = eng.id === activeEngagementId
                 return (
                   <button
                     key={eng.id}
@@ -239,55 +294,92 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
             </div>
           )}
 
-          {/* Separador */}
-          <div className={['border-t', dark ? 'border-white/8' : 'border-gray-100'].join(' ')} />
+          {/* Separador + formulario de creación — solo si puede crear */}
+          {canCreateProject && (
+            <>
+              <div className={['border-t', dark ? 'border-white/8' : 'border-gray-100'].join(' ')} />
 
-          {/* Crear nuevo engagement */}
-          {creating ? (
-            <div className="p-3 flex flex-col gap-1.5">
-              <form onSubmit={handleCreate} className="flex gap-2">
-                <input
-                  ref={inputRef}
-                  value={newName}
-                  onChange={(e) => { setNewName(e.target.value); setCreateError(null) }}
-                  placeholder="Nombre del proyecto..."
-                  className={[
-                    'flex-1 text-xs px-2.5 py-1.5 rounded-lg border outline-none',
-                    createError
-                      ? 'border-red-400 dark:border-red-500'
-                      : dark
-                        ? 'bg-white/8 border-white/12 text-white placeholder:text-gray-500 focus:border-amber-500/50'
-                        : 'bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-[#C8860A]/50',
-                  ].join(' ')}
-                  disabled={createBusy}
-                />
+              {creating ? (
+                <div className="p-3 flex flex-col gap-2">
+                  <form onSubmit={handleCreate} className="flex flex-col gap-2">
+
+                    {/* Nombre del proyecto */}
+                    <div className="flex gap-2">
+                      <input
+                        ref={inputRef}
+                        value={newName}
+                        onChange={(e) => { setNewName(e.target.value); setCreateError(null) }}
+                        placeholder="Nombre del proyecto..."
+                        className={[
+                          inlineInputClass,
+                          createError ? (dark ? 'border-red-500' : 'border-red-400') : '',
+                        ].join(' ')}
+                        disabled={createBusy}
+                      />
+                    </div>
+
+                    {/* Selector de empresa — solo para superadmin/consultant */}
+                    {needsCompanySelector && (
+                      <div>
+                        {loadingCo ? (
+                          <div className={['flex items-center gap-1.5 text-xs px-1', dark ? 'text-gray-400' : 'text-gray-500'].join(' ')}>
+                            <SpinnerIcon /> Cargando empresas…
+                          </div>
+                        ) : (
+                          <select
+                            value={selectedCompany}
+                            onChange={(e) => { setSelectedCompany(e.target.value); setCreateError(null) }}
+                            required
+                            disabled={createBusy}
+                            className={[
+                              inlineSelectClass,
+                              !selectedCompany && createError ? (dark ? 'border-red-500' : 'border-red-400') : '',
+                            ].join(' ')}
+                          >
+                            <option value="">Empresa (obligatorio)…</option>
+                            {companies.map((c) => (
+                              <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Botón crear */}
+                    <button
+                      type="submit"
+                      disabled={
+                        createBusy ||
+                        !newName.trim() ||
+                        (needsCompanySelector && !selectedCompany)
+                      }
+                      className="w-full py-1.5 rounded-lg bg-[#C8860A] text-white text-xs font-medium disabled:opacity-40 hover:bg-[#B57609] transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      {createBusy ? <><SpinnerIcon /> Creando…</> : 'Crear proyecto'}
+                    </button>
+                  </form>
+
+                  {createError && (
+                    <p className={['text-[10px] px-0.5 leading-snug', dark ? 'text-red-400' : 'text-red-500'].join(' ')}>
+                      {createError}
+                    </p>
+                  )}
+                </div>
+              ) : (
                 <button
-                  type="submit"
-                  disabled={createBusy || !newName.trim()}
-                  className="px-2.5 py-1.5 rounded-lg bg-[#C8860A] text-white text-xs font-medium disabled:opacity-40 hover:bg-[#B57609] transition-colors"
+                  onClick={() => setCreating(true)}
+                  className={[
+                    'w-full flex items-center gap-2 px-4 py-2.5 text-xs transition-colors',
+                    dark
+                      ? 'text-gray-400 hover:bg-white/6 hover:text-gray-200'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700',
+                  ].join(' ')}
                 >
-                  {createBusy ? <SpinnerIcon /> : 'Crear'}
+                  <PlusIcon />
+                  Nuevo proyecto
                 </button>
-              </form>
-              {createError && (
-                <p className="text-[10px] text-red-500 dark:text-red-400 px-0.5 leading-snug">
-                  {createError}
-                </p>
               )}
-            </div>
-          ) : (
-            <button
-              onClick={() => setCreating(true)}
-              className={[
-                'w-full flex items-center gap-2 px-4 py-2.5 text-xs transition-colors',
-                dark
-                  ? 'text-gray-400 hover:bg-white/6 hover:text-gray-200'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700',
-              ].join(' ')}
-            >
-              <PlusIcon />
-              Nuevo proyecto
-            </button>
+            </>
           )}
         </div>
       )}
