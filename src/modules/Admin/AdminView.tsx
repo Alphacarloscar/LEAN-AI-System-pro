@@ -2,18 +2,19 @@
 // GOBY — AdminView (/admin)
 //
 // Sprint 9: panel de administración exclusivo para superadmin.
-// Permite gestionar empresas, usuarios y proyectos.
+//
+// Arquitectura de datos:
+//   AdminView fetcha companies + users UNA SOLA VEZ al montar.
+//   Los datos se pasan como props a cada tab para evitar:
+//     - race conditions en el selector de empresa
+//     - re-fetch al cambiar de tab (tabs se remontan)
+//     - selector vacío mientras llega la respuesta de Supabase
 //
 // Roles del sistema (4 niveles):
 //   superadmin    → Alpha platform admin — acceso global
 //   consultant    → Consultor Alpha — acceso por project_members
 //   client_editor → Cliente operativo — edita su empresa
 //   client_viewer → Cliente directivo — solo lectura
-//
-// Tabs:
-//   1. Empresas  — crear y listar empresas cliente
-//   2. Usuarios  — invitar usuario (MOCK), listar todos
-//   3. Proyectos — crear proyecto, asignar a empresa
 //
 // ⚠ inviteUserToCompany está MOCKEADA (requiere Edge Function
 //   con service role key — pendiente Sprint 10).
@@ -34,9 +35,31 @@ import {
 } from '@/services/projects.service'
 import type { CompanyRow, ProjectRow, UserRole } from '@/types/database.types'
 
-// ── Tipos ─────────────────────────────────────────────────────
+// ── Tipos compartidos ─────────────────────────────────────────
 
 type Tab = 'companies' | 'users' | 'projects'
+
+type UserProfile = {
+  id:         string
+  email:      string
+  name:       string
+  role:       UserRole
+  company_id: string | null
+  created_at: string
+}
+
+// Props que pasan del padre a cada tab
+type SharedProps = {
+  companies:    CompanyRow[]
+  onCompanyAdd: (c: CompanyRow) => void
+}
+
+type UsersTabProps = SharedProps & {
+  users:       UserProfile[]
+  onUserAdded: () => void   // recarga lista tras invitación real (Sprint 10)
+}
+
+type ProjectsTabProps = SharedProps
 
 // ── Utilidades visuales ───────────────────────────────────────
 
@@ -48,12 +71,31 @@ function CheckIcon() {
   )
 }
 
-function Spinner() {
+function Spinner({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
+  const cls = size === 'sm' ? 'h-3 w-3' : size === 'lg' ? 'h-6 w-6' : 'h-4 w-4'
   return (
-    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+    <svg className={`animate-spin ${cls}`} viewBox="0 0 24 24" fill="none">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
     </svg>
+  )
+}
+
+// Pantalla de carga global — mientras AdminView fetcha companies + users
+function AdminLoadingScreen() {
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="mb-8">
+        <span className="text-[10px] font-mono uppercase tracking-widest text-[#C8860A]">
+          Platform Admin
+        </span>
+        <h1 className="text-xl font-semibold text-[#2A2822] mt-1">Panel de administración</h1>
+      </div>
+      <div className="flex items-center gap-3 text-sm text-gray-400 mt-12">
+        <Spinner size="lg" />
+        <span>Cargando datos del panel…</span>
+      </div>
+    </div>
   )
 }
 
@@ -78,17 +120,11 @@ function RoleBadge({ role }: { role: UserRole }) {
 }
 
 // ── Tab: Empresas ─────────────────────────────────────────────
-function CompaniesTab() {
-  const [companies, setCompanies] = useState<CompanyRow[]>([])
-  const [loading,   setLoading]   = useState(true)
-  const [name,      setName]      = useState('')
-  const [creating,  setCreating]  = useState(false)
-  const [success,   setSuccess]   = useState(false)
-  const [error,     setError]     = useState<string | null>(null)
-
-  useEffect(() => {
-    listCompanies().then(setCompanies).finally(() => setLoading(false))
-  }, [])
+function CompaniesTab({ companies, onCompanyAdd }: SharedProps) {
+  const [name,     setName]     = useState('')
+  const [creating, setCreating] = useState(false)
+  const [success,  setSuccess]  = useState(false)
+  const [error,    setError]    = useState<string | null>(null)
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
@@ -96,7 +132,7 @@ function CompaniesTab() {
     setCreating(true); setError(null)
     try {
       const company = await createCompany({ name: name.trim() })
-      setCompanies((prev) => [...prev, company].sort((a, b) => a.name.localeCompare(b.name)))
+      onCompanyAdd(company)
       setName('')
       setSuccess(true)
       setTimeout(() => setSuccess(false), 2000)
@@ -134,9 +170,7 @@ function CompaniesTab() {
         <h3 className="text-xs font-mono uppercase tracking-wide text-gray-400 mb-3">
           Empresas registradas ({companies.length})
         </h3>
-        {loading ? (
-          <div className="flex items-center gap-2 text-sm text-gray-400"><Spinner /> Cargando…</div>
-        ) : companies.length === 0 ? (
+        {companies.length === 0 ? (
           <p className="text-sm text-gray-400">Sin empresas todavía.</p>
         ) : (
           <div className="flex flex-col gap-2">
@@ -156,15 +190,6 @@ function CompaniesTab() {
 }
 
 // ── Tab: Usuarios ─────────────────────────────────────────────
-
-type UserProfile = {
-  id: string
-  email: string
-  name: string
-  role: UserRole
-  company_id: string | null
-  created_at: string
-}
 
 const ROLE_OPTIONS: { value: UserRole; label: string; description: string }[] = [
   {
@@ -189,11 +214,7 @@ const ROLE_OPTIONS: { value: UserRole; label: string; description: string }[] = 
   },
 ]
 
-function UsersTab() {
-  const [companies,  setCompanies]  = useState<CompanyRow[]>([])
-  const [users,      setUsers]      = useState<UserProfile[]>([])
-  const [loadingUsers, setLoadingUsers] = useState(true)
-
+function UsersTab({ companies, users }: UsersTabProps) {
   const [email,      setEmail]      = useState('')
   const [userName,   setUserName]   = useState('')
   const [companyId,  setCompanyId]  = useState('')
@@ -205,11 +226,6 @@ function UsersTab() {
   // Filtros de la lista
   const [filterRole,    setFilterRole]    = useState<UserRole | ''>('')
   const [filterCompany, setFilterCompany] = useState('')
-
-  useEffect(() => {
-    listCompanies().then(setCompanies)
-    listAllUsers().then(setUsers).finally(() => setLoadingUsers(false))
-  }, [])
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault()
@@ -273,6 +289,8 @@ function UsersTab() {
             required
             className={inputClass}
           />
+
+          {/* Selector de empresa — ya tiene datos porque viene del padre */}
           <select
             value={companyId}
             onChange={(e) => setCompanyId(e.target.value)}
@@ -342,7 +360,7 @@ function UsersTab() {
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value as UserRole | '')}
-              className="h-7 px-2 rounded-lg border border-gray-200 text-xs bg-gray-50 outline-none focus:border-[#C8860A]/60"
+              className="h-7 px-2 rounded-lg border border-gray-200 text xs bg-gray-50 outline-none focus:border-[#C8860A]/60"
             >
               <option value="">Todos los roles</option>
               {ROLE_OPTIONS.map((o) => (
@@ -362,8 +380,8 @@ function UsersTab() {
           </div>
         </div>
 
-        {loadingUsers ? (
-          <div className="flex items-center gap-2 text-sm text-gray-400"><Spinner /> Cargando usuarios…</div>
+        {users.length === 0 ? (
+          <p className="text-sm text-gray-400">Sin usuarios registrados.</p>
         ) : filteredUsers.length === 0 ? (
           <p className="text-sm text-gray-400">Sin usuarios que coincidan con los filtros.</p>
         ) : (
@@ -393,19 +411,16 @@ function UsersTab() {
 }
 
 // ── Tab: Proyectos ────────────────────────────────────────────
-function ProjectsTab() {
-  const [companies,  setCompanies]  = useState<CompanyRow[]>([])
-  const [projects,   setProjects]   = useState<ProjectRow[]>([])
-  const [name,       setName]       = useState('')
-  const [companyId,  setCompanyId]  = useState('')
-  const [creating,   setCreating]   = useState(false)
-  const [success,    setSuccess]    = useState(false)
-  const [error,      setError]      = useState<string | null>(null)
+function ProjectsTab({ companies }: ProjectsTabProps) {
+  const [projects,  setProjects]  = useState<ProjectRow[]>([])
+  const [name,      setName]      = useState('')
+  const [companyId, setCompanyId] = useState('')
+  const [creating,  setCreating]  = useState(false)
+  const [success,   setSuccess]   = useState(false)
+  const [error,     setError]     = useState<string | null>(null)
 
   useEffect(() => {
-    Promise.all([listCompanies(), listMyProjects()]).then(([c, p]) => {
-      setCompanies(c); setProjects(p)
-    })
+    listMyProjects().then(setProjects)
   }, [])
 
   async function handleCreate(e: React.FormEvent) {
@@ -439,6 +454,7 @@ function ProjectsTab() {
             required
             className={inputClass}
           />
+          {/* Selector de empresa — ya tiene datos porque viene del padre */}
           <select
             value={companyId}
             onChange={(e) => setCompanyId(e.target.value)}
@@ -490,18 +506,59 @@ function ProjectsTab() {
 }
 
 // ── Componente principal ──────────────────────────────────────
+// Fetcha companies + users UNA VEZ al montar y los pasa a los tabs.
+// Mientras carga: AdminLoadingScreen. Así los selects nunca están vacíos.
 
 export function AdminView() {
   const { user }      = useAuthStore()
   const navigate      = useNavigate()
   const [tab, setTab] = useState<Tab>('companies')
 
+  // ── Datos compartidos entre tabs ──────────────────────────
+  const [companies,    setCompanies]    = useState<CompanyRow[]>([])
+  const [users,        setUsers]        = useState<UserProfile[]>([])
+  const [initialLoad,  setInitialLoad]  = useState(true)
+  const [loadError,    setLoadError]    = useState<string | null>(null)
+
   // Redirigir si no es superadmin
   useEffect(() => {
     if (user && user.role !== 'superadmin') navigate('/', { replace: true })
   }, [user])
 
+  // Fetch único al montar: companies + users en paralelo
+  useEffect(() => {
+    if (!user || user.role !== 'superadmin') return
+
+    Promise.all([listCompanies(), listAllUsers()])
+      .then(([c, u]) => {
+        setCompanies(c)
+        setUsers(u)
+      })
+      .catch((err) => {
+        setLoadError(err instanceof Error ? err.message : 'Error al cargar datos del panel')
+      })
+      .finally(() => setInitialLoad(false))
+  }, [user])
+
   if (!user || user.role !== 'superadmin') return null
+
+  // Pantalla de carga inicial — hasta que companies y users estén listos
+  if (initialLoad) return <AdminLoadingScreen />
+
+  if (loadError) {
+    return (
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        <p className="text-sm text-red-500 bg-red-50 px-4 py-3 rounded-xl">
+          Error al cargar el panel: {loadError}
+        </p>
+      </div>
+    )
+  }
+
+  // Callbacks que actualizan el estado del padre sin re-fetch
+  function handleCompanyAdd(c: CompanyRow) {
+    setCompanies((prev) => [...prev, c].sort((a, b) => a.name.localeCompare(b.name)))
+  }
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'companies', label: 'Empresas'  },
@@ -519,7 +576,9 @@ export function AdminView() {
           </span>
         </div>
         <h1 className="text-xl font-semibold text-[#2A2822]">Panel de administración</h1>
-        <p className="text-sm text-gray-500 mt-1">Gestiona empresas, usuarios y proyectos de GOBY.</p>
+        <p className="text-sm text-gray-500 mt-1">
+          Gestiona empresas, usuarios y proyectos de GOBY.
+        </p>
       </div>
 
       {/* Tabs */}
@@ -540,11 +599,28 @@ export function AdminView() {
         ))}
       </div>
 
-      {/* Contenido */}
+      {/* Contenido — los tabs reciben companies ya cargadas, sin re-fetch */}
       <div>
-        {tab === 'companies' && <CompaniesTab />}
-        {tab === 'users'     && <UsersTab />}
-        {tab === 'projects'  && <ProjectsTab />}
+        {tab === 'companies' && (
+          <CompaniesTab
+            companies={companies}
+            onCompanyAdd={handleCompanyAdd}
+          />
+        )}
+        {tab === 'users' && (
+          <UsersTab
+            companies={companies}
+            users={users}
+            onCompanyAdd={handleCompanyAdd}
+            onUserAdded={() => {/* Sprint 10: recargar lista tras invitación real */}}
+          />
+        )}
+        {tab === 'projects' && (
+          <ProjectsTab
+            companies={companies}
+            onCompanyAdd={handleCompanyAdd}
+          />
+        )}
       </div>
     </div>
   )
