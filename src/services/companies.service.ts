@@ -51,10 +51,10 @@ export async function createCompany(params: {
 }
 
 // ── Invitar usuario a empresa ────────────────────────────────
-// Usa Supabase inviteUserByEmail — el usuario recibe un email
-// con un link mágico para establecer su propia contraseña.
-// El company_id y role se pasan como metadata y el trigger
-// handle_new_user() los aplica al perfil automáticamente.
+// Llama a la Edge Function 'invite-user', que usa la Admin API
+// de Supabase con service role key para crear el usuario y
+// enviarle el email de invitación.
+// El trigger handle_new_user() aplica name, company_id y role al perfil.
 
 export async function inviteUserToCompany(params: {
   email:     string
@@ -62,17 +62,23 @@ export async function inviteUserToCompany(params: {
   companyId: string
   role?:     UserRole
 }): Promise<void> {
-  // ⚠ supabase.auth.admin.inviteUserByEmail requiere service role key (no disponible
-  //   en el frontend). Esta función está MOCKEADA intencionalmente.
-  //   Implementación real: Edge Function con SUPABASE_SERVICE_ROLE_KEY → Sprint 10.
-  console.log('[Companies] inviteUserToCompany (MOCK):', {
-    email:     params.email,
-    name:      params.name,
-    companyId: params.companyId,
-    role:      params.role ?? 'client_viewer',
+  const { data, error } = await supabase.functions.invoke('invite-user', {
+    body: {
+      email:     params.email,
+      name:      params.name,
+      companyId: params.companyId,
+      role:      params.role ?? 'client_viewer',
+    },
   })
-  // Simula latencia de red
-  await new Promise((r) => setTimeout(r, 600))
+
+  if (error) {
+    throw new Error(`[Companies] inviteUserToCompany: ${error.message}`)
+  }
+
+  // La Edge Function devuelve { success: false, error: '...' } para errores de negocio
+  if (data && !data.success) {
+    throw new Error(data.error ?? 'Error al enviar la invitación')
+  }
 }
 
 // ── Listar usuarios de una empresa ──────────────────────────
