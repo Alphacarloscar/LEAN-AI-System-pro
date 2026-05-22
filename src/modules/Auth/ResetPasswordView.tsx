@@ -95,7 +95,11 @@ export function ResetPasswordView() {
     }
 
     setSubmitting(true)
-    const { error: updateError } = await supabase.auth.updateUser({ password })
+    // Actualiza contraseña Y borra el metadato needs_password_reset en auth.users
+    const { error: updateError } = await supabase.auth.updateUser({
+      password,
+      data: { needs_password_reset: false },
+    })
 
     if (updateError) {
       setError(updateError.message)

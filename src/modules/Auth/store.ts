@@ -83,11 +83,15 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     const { data: { session } } = await supabase.auth.getSession()
 
     if (session?.user) {
-      const profile = await loadProfile(session.user.id)
+      const profile      = await loadProfile(session.user.id)
+      // Si el metadato needs_password_reset=true, el usuario fue invitado y aún
+      // no ha fijado su contraseña → forzar a /reset-password via ProtectedRoute.
+      const needsReset   = session.user.user_metadata?.needs_password_reset === true
       set({
-        isAuthenticated: !!profile,
-        user:            profile,
-        isInitializing:  false,
+        isAuthenticated:     !!profile,
+        user:                profile,
+        needsPasswordUpdate: needsReset,
+        isInitializing:      false,
       })
     } else {
       set({ isAuthenticated: false, user: null, isInitializing: false })
@@ -96,14 +100,14 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     // Listener de cambios de sesión (token refresh, sign out en otra pestaña, etc.)
     supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
-        // El usuario llegó desde un link de "olvidé contraseña".
-        // Lo marcamos para que ProtectedRoute le fuerce a /reset-password.
-        // No lo damos por "autenticado" hasta que establezca su contraseña.
+        // Flujo "olvidé contraseña" — forzar a /reset-password.
         set({ needsPasswordUpdate: true })
       }
       if (event === 'SIGNED_IN' && session?.user) {
-        const profile = await loadProfile(session.user.id)
-        set({ isAuthenticated: !!profile, user: profile })
+        const profile    = await loadProfile(session.user.id)
+        // Invitation sign-in: el metadato needs_password_reset marca primer acceso.
+        const needsReset = session.user.user_metadata?.needs_password_reset === true
+        set({ isAuthenticated: !!profile, user: profile, needsPasswordUpdate: needsReset })
       }
       if (event === 'SIGNED_OUT') {
         set({ isAuthenticated: false, user: null })

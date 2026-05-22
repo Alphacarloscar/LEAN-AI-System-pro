@@ -76,8 +76,10 @@ Deno.serve(async (req) => {
 
     const { data, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(email, {
       redirectTo,
-      // Estos campos los recoge el trigger handle_new_user() y los graba en profiles
-      data: { name, company_id: companyId, role },
+      // Estos campos los recoge el trigger handle_new_user() y los graba en profiles.
+      // needs_password_reset=true es leído por el auth store para interceptar al usuario
+      // y forzarle a /reset-password antes de entrar a la app.
+      data: { name, company_id: companyId, role, needs_password_reset: true },
     })
 
     if (inviteErr) {
