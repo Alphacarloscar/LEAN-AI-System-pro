@@ -71,8 +71,8 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
   const myUserId = user?.id   ?? null
   const userRole = user?.role ?? 'client_viewer'
 
-  // superadmin/consultant deben elegir empresa al crear
-  const needsCompanySelector = userRole === 'superadmin' || userRole === 'consultant'
+  // Solo superadmin elige empresa al crear — los demás heredan la suya del perfil
+  const needsCompanySelector = userRole === 'superadmin'
   // client_viewer no puede crear proyectos
   const canCreateProject     = userRole !== 'client_viewer'
 
