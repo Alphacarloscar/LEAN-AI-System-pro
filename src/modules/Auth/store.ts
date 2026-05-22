@@ -29,17 +29,20 @@ import { useCompanyProfileStore } from '@/modules/CompanyProfile/store'
 import { useEngagementStore }     from '@/modules/Engagement/store'
 
 interface AuthStore {
-  isAuthenticated: boolean
-  isInitializing:  boolean    // true mientras se comprueba la sesión al arrancar
-  user:            AuthUser | null
-  error:           string | null
+  isAuthenticated:     boolean
+  isInitializing:      boolean    // true mientras se comprueba la sesión al arrancar
+  needsPasswordUpdate: boolean    // true cuando el usuario debe establecer contraseña
+  user:                AuthUser | null
+  error:               string | null
 
   // Llamar una vez al montar App — restaura sesión existente
-  initialize:  () => Promise<void>
+  initialize:          () => Promise<void>
   // Devuelve true si login correcto, false si credenciales incorrectas
-  login:       (email: string, password: string) => Promise<boolean>
-  logout:      () => Promise<void>
-  clearError:  () => void
+  login:               (email: string, password: string) => Promise<boolean>
+  logout:              () => Promise<void>
+  clearError:          () => void
+  // Llamar desde ResetPasswordView tras actualizar contraseña con éxito
+  clearPasswordUpdate: () => void
 }
 
 // ── Helper: carga el perfil extendido desde la tabla profiles ──
@@ -64,10 +67,11 @@ async function loadProfile(userId: string): Promise<AuthUser | null> {
 // ── Store ──────────────────────────────────────────────────────
 
 export const useAuthStore = create<AuthStore>()((set) => ({
-  isAuthenticated: false,
-  isInitializing:  true,
-  user:            null,
-  error:           null,
+  isAuthenticated:     false,
+  isInitializing:      true,
+  needsPasswordUpdate: false,
+  user:                null,
+  error:               null,
 
   // ── initialize ───────────────────────────────────────────────
   // Comprueba si hay sesión activa en Supabase (cookie/localStorage).
@@ -91,6 +95,12 @@ export const useAuthStore = create<AuthStore>()((set) => ({
 
     // Listener de cambios de sesión (token refresh, sign out en otra pestaña, etc.)
     supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        // El usuario llegó desde un link de "olvidé contraseña".
+        // Lo marcamos para que ProtectedRoute le fuerce a /reset-password.
+        // No lo damos por "autenticado" hasta que establezca su contraseña.
+        set({ needsPasswordUpdate: true })
+      }
       if (event === 'SIGNED_IN' && session?.user) {
         const profile = await loadProfile(session.user.id)
         set({ isAuthenticated: !!profile, user: profile })
@@ -152,5 +162,6 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     set({ isAuthenticated: false, user: null, error: null })
   },
 
-  clearError: () => set({ error: null }),
+  clearError:          () => set({ error: null }),
+  clearPasswordUpdate: () => set({ needsPasswordUpdate: false }),
 }))

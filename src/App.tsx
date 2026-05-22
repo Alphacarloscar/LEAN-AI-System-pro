@@ -74,7 +74,7 @@ function T10RouteView() {
 // ── ProtectedRoute — redirige a /login si no autenticado ──────
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isInitializing } = useAuthStore()
+  const { isAuthenticated, isInitializing, needsPasswordUpdate } = useAuthStore()
   // Mientras se comprueba la sesión de Supabase no redirigimos
   if (isInitializing) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -85,6 +85,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     </div>
   )
   if (!isAuthenticated) return <Navigate to="/login" replace />
+  // Usuario autenticado pero pendiente de establecer contraseña (PASSWORD_RECOVERY)
+  if (needsPasswordUpdate) return <Navigate to="/reset-password" replace />
   return <>{children}</>
 }
 

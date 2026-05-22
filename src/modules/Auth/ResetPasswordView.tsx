@@ -16,6 +16,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate }         from 'react-router-dom'
 import { supabase }            from '@/lib/supabase'
+import { useAuthStore }        from './store'
 
 // ── Logo GOBY inline ──────────────────────────────────────────
 
@@ -43,7 +44,8 @@ type ViewState = 'loading' | 'form' | 'success' | 'error_no_session'
 // ── Componente principal ──────────────────────────────────────
 
 export function ResetPasswordView() {
-  const navigate = useNavigate()
+  const navigate             = useNavigate()
+  const { clearPasswordUpdate } = useAuthStore()
 
   const [viewState,  setViewState]  = useState<ViewState>('loading')
   const [password,   setPassword]   = useState('')
@@ -51,18 +53,27 @@ export function ResetPasswordView() {
   const [submitting, setSubmitting] = useState(false)
   const [error,      setError]      = useState<string | null>(null)
 
-  // Esperar a que Supabase procese el token de la URL
+  // Fix de timing: el evento SIGNED_IN/PASSWORD_RECOVERY puede dispararse
+  // durante initialize() (en App.tsx) ANTES de que este componente monte
+  // su listener. Por eso comprobamos la sesión directamente al montar,
+  // además de escuchar eventos futuros.
   useEffect(() => {
+    // Comprobación inmediata — cubre el caso de token ya procesado
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setViewState('form')
+    })
+
+    // Listener para eventos que llegan mientras el componente ya está montado
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         setViewState('form')
       }
     })
 
-    // Si tras 3s no hay sesión → enlace inválido o expirado
+    // Si tras 4s no hay sesión → enlace inválido o expirado
     const timeout = setTimeout(() => {
       setViewState((s) => s === 'loading' ? 'error_no_session' : s)
-    }, 3000)
+    }, 4000)
 
     return () => {
       subscription.unsubscribe()
@@ -92,6 +103,8 @@ export function ResetPasswordView() {
       return
     }
 
+    // Limpiar el flag del store para que ProtectedRoute no vuelva a redirigir aquí
+    clearPasswordUpdate()
     setViewState('success')
     setTimeout(() => navigate('/', { replace: true }), 2500)
   }
