@@ -9,7 +9,7 @@
 import { useState, createContext, useContext, useEffect }  from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AppLayout }                            from '@/shared/layouts/AppLayout'
-import { LoginView, ResetPasswordView, useAuthStore } from '@/modules/Auth'
+import { LoginView, ResetPasswordView, UpdatePasswordView, useAuthStore } from '@/modules/Auth'
 import { AdminView }                              from '@/modules/Admin'
 import { isDemoEnabled }                          from '@/lib/config'
 import { T1View }                               from '@/modules/T1_MaturityRadar'
@@ -85,8 +85,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     </div>
   )
   if (!isAuthenticated) return <Navigate to="/login" replace />
-  // Usuario autenticado pero pendiente de establecer contraseña (PASSWORD_RECOVERY)
-  if (needsPasswordUpdate) return <Navigate to="/reset-password" replace />
+  // Usuario autenticado pero pendiente de establecer contraseña (invitación o PASSWORD_RECOVERY)
+  if (needsPasswordUpdate) return <Navigate to="/update-password" replace />
   return <>{children}</>
 }
 
@@ -199,8 +199,9 @@ export default function App() {
     <DemoContext.Provider value={{ scenario, setPattern: setActivePattern }}>
       <Routes>
         {/* Rutas públicas — sin AppLayout */}
-        <Route path="login"          element={<LoginView />} />
-        <Route path="reset-password" element={<ResetPasswordView />} />
+        <Route path="login"            element={<LoginView />} />
+        <Route path="reset-password"   element={<ResetPasswordView />} />
+        <Route path="update-password"  element={<UpdatePasswordView />} />
 
         {/* Rutas protegidas — AppLayout persistente (header + sidebar) */}
         <Route
