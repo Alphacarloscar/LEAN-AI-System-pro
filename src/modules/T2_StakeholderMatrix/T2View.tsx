@@ -28,6 +28,7 @@ import { buildT2RecommendationContext }  from './t2ContextBuilder'
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from './types'
 import { PhaseMiniMap }                  from '@/shared/components/PhaseMiniMap'
 import { isDemoEnabled }                 from '@/lib/config'
+import { usePermissions }               from '@/modules/Auth'
 
 // Colores hex por arquetipo (para SVG — mirrors StakeholderQuadrantChart)
 const ARCH_HEX: Record<ArchetypeCode, string> = {
@@ -407,6 +408,7 @@ function DepartmentMatrix({
   onSelect:     (s: Stakeholder) => void
 }) {
   // expandedDepts = set de depts EXPANDIDOS. Por defecto: primer departamento expandido (U-05)
+  const { isReadOnly } = usePermissions()
   const [expandedDepts, setExpandedDepts] = useState<Set<string>>(() => {
     if (stakeholders.length === 0) return new Set<string>()
     return new Set<string>([stakeholders[0].department])
@@ -452,7 +454,11 @@ function DepartmentMatrix({
           </svg>
         </div>
         <p className="text-sm font-medium text-lean-black dark:text-gray-200">Sin stakeholders registrados</p>
-        <p className="text-xs text-text-subtle mt-1">Usa el botón "Nueva entrevista" para añadir el primero.</p>
+        {isReadOnly ? (
+          <p className="text-xs text-text-subtle mt-1">Tu consultor está preparando los datos de esta sección.</p>
+        ) : (
+          <p className="text-xs text-text-subtle mt-1">Usa el botón "Nueva entrevista" para añadir el primero.</p>
+        )}
       </div>
     )
   }
@@ -765,6 +771,8 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
   const companyProfile = useCompanyProfileStore((s) => s.profile)
   const navigate       = useNavigate()
 
+  const { isReadOnly } = usePermissions()
+
   // Carga: real (Supabase) o demo (datos predefinidos del store)
   useEffect(() => {
     if (engagementId) {
@@ -833,27 +841,29 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
             <PhaseMiniMap phaseId="listen" toolCode="T2" />
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowImportT1(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border dark:border-white/12 text-xs font-semibold text-text-muted hover:text-text-base hover:border-gray-300 dark:hover:border-white/20 transition-all duration-150 shrink-0"
-            >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M2 8h10M8 4l4 4-4 4" />
-                <path d="M14 3v10" strokeWidth="1.5" />
-              </svg>
-              Importar desde T1
-            </button>
-            <button
-              onClick={() => setShowModal(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-navy-metallic text-white text-xs font-semibold hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98] transition-all duration-150 shrink-0"
-            >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M8 2v12M2 8h12" />
-              </svg>
-              Nueva entrevista
-            </button>
-          </div>
+          {!isReadOnly && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowImportT1(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border dark:border-white/12 text-xs font-semibold text-text-muted hover:text-text-base hover:border-gray-300 dark:hover:border-white/20 transition-all duration-150 shrink-0"
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 8h10M8 4l4 4-4 4" />
+                  <path d="M14 3v10" strokeWidth="1.5" />
+                </svg>
+                Importar desde T1
+              </button>
+              <button
+                onClick={() => setShowModal(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-navy-metallic text-white text-xs font-semibold hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98] transition-all duration-150 shrink-0"
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 2v12M2 8h12" />
+                </svg>
+                Nueva entrevista
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

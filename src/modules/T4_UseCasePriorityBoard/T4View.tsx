@@ -43,6 +43,7 @@ import {
 import { ImportFromT3Modal } from './components/ImportFromT3Modal'
 import { PhaseMiniMap }     from '@/shared/components/PhaseMiniMap'
 import { isDemoEnabled }    from '@/lib/config'
+import { usePermissions }   from '@/modules/Auth'
 import type {
   UseCase, UseCaseStatus, UseCaseScores, UseCaseEconomics,
   AIActScope, AIActClassification,
@@ -592,6 +593,7 @@ function ScoreInput({
 
 function EconomicsTab({ useCase }: { useCase: UseCase }) {
   const { updateUseCase } = useT4Store()
+  const { isReadOnly } = usePermissions()
   const [editing, setEditing] = useState(false)
 
   const benchmarkCost = IMPLEMENTATION_COST_BENCHMARKS[useCase.aiCategory]
@@ -715,13 +717,15 @@ function EconomicsTab({ useCase }: { useCase: UseCase }) {
             >
               Cancelar
             </button>
-            <button
-              onClick={handleSave}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-navy-metallic text-white
-                hover:bg-navy-metallic-hover transition-colors shadow-sm"
-            >
-              Guardar
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={handleSave}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-navy-metallic text-white
+                  hover:bg-navy-metallic-hover transition-colors shadow-sm"
+              >
+                Guardar
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -1029,6 +1033,7 @@ function AIActClassificationModal({
   onSave:      (classification: AIActClassification) => void
   onCancel:    () => void
 }) {
+  const { isReadOnly } = usePermissions()
   const [scope,          setScope]          = useState<AIActScope | ''>('')
   const [personImpact,   setPersonImpact]   = useState<'no' | 'human_review' | 'autonomous' | ''>('')
   const [sensitiveData,  setSensitiveData]  = useState<boolean | null>(null)
@@ -1209,14 +1214,16 @@ function AIActClassificationModal({
           >
             Cancelar
           </button>
-          <button
-            onClick={handleSave}
-            disabled={!allAnswered}
-            className="px-4 py-2 rounded-xl bg-navy-metallic text-white text-sm font-medium
-              hover:bg-navy-metallic-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-          >
-            Guardar clasificación
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={handleSave}
+              disabled={!allAnswered}
+              className="px-4 py-2 rounded-xl bg-navy-metallic text-white text-sm font-medium
+                hover:bg-navy-metallic-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+            >
+              Guardar clasificación
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -1329,6 +1336,7 @@ function UseCaseDetailPanel({
   } | null
 }) {
   const { updateUseCase, recalcScore, updateAIActClassification } = useT4Store()
+  const { isReadOnly } = usePermissions()
   const [tab, setTab]                 = useState<DetailTab>('scoring')
   const [editingScore, setEditingScore] = useState(false)
   const [localScores, setLocalScores]  = useState<UseCaseScores>(useCase.scores)
@@ -1537,13 +1545,15 @@ function UseCaseDetailPanel({
                     >
                       Cancelar
                     </button>
-                    <button
-                      onClick={handleSaveScores}
-                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-navy-metallic text-white
-                        hover:bg-navy-metallic-hover transition-colors shadow-sm"
-                    >
-                      Guardar
-                    </button>
+                    {!isReadOnly && (
+                      <button
+                        onClick={handleSaveScores}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-navy-metallic text-white
+                          hover:bg-navy-metallic-hover transition-colors shadow-sm"
+                      >
+                        Guardar
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

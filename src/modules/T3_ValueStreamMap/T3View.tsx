@@ -31,6 +31,8 @@ import { ProcessInterviewModal }     from './components/ProcessInterviewModal'
 import { StagesTab }                 from './components/StagesTab'
 import { PhaseMiniMap }              from '@/shared/components/PhaseMiniMap'
 import { isDemoEnabled }             from '@/lib/config'
+import { usePermissions }            from '@/modules/Auth'
+import { ViewerEmptyState }          from '@/shared/components/ViewerEmptyState'
 import type {
   ValueStream, AICategoryCode, OrgReadinessLevel,
   ProcessPhase, AIOpportunity,
@@ -924,6 +926,8 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
   const { processes, addProcess, load, initDemo, isLoading: isLoadingT3 } = useT3Store()
   const engagementId                      = useEngagementStore((s) => s.activeEngagementId)
 
+  const { isReadOnly } = usePermissions()
+
   // Carga: real (Supabase) o demo
   useEffect(() => {
     if (engagementId) {
@@ -1012,13 +1016,15 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
             ))}
           </div>
 
-          <button
-            onClick={() => setShowModal(true)}
-            className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl
-              text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm"
-          >
-            + Proceso
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl
+                text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm"
+            >
+              + Proceso
+            </button>
+          )}
         </div>
       </div>
 
@@ -1142,14 +1148,18 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
 
           {/* Process cards — compact grid style */}
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700
-                flex items-center justify-center text-2xl">◎</div>
-              <p className="text-sm font-bold text-text-muted">Sin procesos mapeados</p>
-              <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
-                Añade el primer proceso para comenzar el análisis de oportunidades IA.
-              </p>
-            </div>
+            isReadOnly ? (
+              <ViewerEmptyState />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
+                <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700
+                  flex items-center justify-center text-2xl">◎</div>
+                <p className="text-sm font-bold text-text-muted">Sin procesos mapeados</p>
+                <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
+                  Añade el primer proceso para comenzar el análisis de oportunidades IA.
+                </p>
+              </div>
+            )
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
               {filtered.map((p) => {

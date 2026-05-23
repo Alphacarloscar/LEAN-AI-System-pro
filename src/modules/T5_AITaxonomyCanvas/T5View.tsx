@@ -20,6 +20,7 @@ import { useT3Store }    from '@/modules/T3_ValueStreamMap'
 import { useT4Store }    from '@/modules/T4_UseCasePriorityBoard'
 import { PhaseMiniMap }  from '@/shared/components/PhaseMiniMap'
 import { isDemoEnabled } from '@/lib/config'
+import { usePermissions }  from '@/modules/Auth'
 
 // ── Collision resolution ──────────────────────────────────────
 // Reference container dimensions for physics calculations
@@ -920,6 +921,7 @@ function EditModal({
   onSave:     (scores: T5DomainScores) => void
   onCancel:   () => void
 }) {
+  const { isReadOnly } = usePermissions()
   const [scores, setScores] = useState<T5DomainScores>({ ...assessment.scores })
   const domCfg = T5_DOMAIN_CONFIG[domainCode]
   const rec    = computeT5Recommendation(scores)
@@ -994,12 +996,14 @@ function EditModal({
           >
             Cancelar
           </button>
-          <button
-            onClick={() => onSave(scores)}
-            className="px-4 py-2 rounded-xl bg-navy-metallic text-white text-sm font-medium hover:bg-navy-metallic-hover transition-colors shadow-sm"
-          >
-            Guardar evaluación
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={() => onSave(scores)}
+              className="px-4 py-2 rounded-xl bg-navy-metallic text-white text-sm font-medium hover:bg-navy-metallic-hover transition-colors shadow-sm"
+            >
+              Guardar evaluación
+            </button>
+          )}
         </div>
       </div>
     </div>

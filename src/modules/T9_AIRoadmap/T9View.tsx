@@ -30,6 +30,8 @@ import type {
   RoadmapRiskLevel,
   T9ItemOverride,
 } from './types'
+import { usePermissions }                     from '@/modules/Auth'
+import { ViewerEmptyState }                   from '@/shared/components/ViewerEmptyState'
 
 // ── Props ─────────────────────────────────────────────────────
 
@@ -499,6 +501,7 @@ function AddFreeItemForm({ form, onChange, onSave, onCancel }: AddFormProps) {
 // ── T9View ────────────────────────────────────────────────────
 
 export function T9View({ companyName, onBack }: T9ViewProps) {
+  const { isReadOnly } = usePermissions()
   const { useCases, loadEngagement: loadT4 }            = useT4Store()
   const { overrides, freeItems, setOverride, addFreeItem, updateFreeItem, syncEngagement: syncT9 } = useT9Store()
   const { profile: companyProfile }                     = useCompanyProfileStore()
@@ -641,15 +644,19 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
               ›
             </button>
           </div>
-          <button className="px-4 py-1.5 text-xs bg-navy-metallic text-white rounded-lg hover:bg-navy-metallic-hover transition-all shadow-sm">
-            Crear snapshot
-          </button>
-          <button
-            onClick={() => { setShowAddForm(true) }}
-            className="px-4 py-1.5 text-xs bg-navy-metallic text-white rounded-lg hover:bg-navy-metallic-hover transition-all shadow-sm"
-          >
-            + Añadir iniciativa
-          </button>
+          {!isReadOnly && (
+            <>
+              <button className="px-4 py-1.5 text-xs bg-navy-metallic text-white rounded-lg hover:bg-navy-metallic-hover transition-all shadow-sm">
+                Crear snapshot
+              </button>
+              <button
+                onClick={() => { setShowAddForm(true) }}
+                className="px-4 py-1.5 text-xs bg-navy-metallic text-white rounded-lg hover:bg-navy-metallic-hover transition-all shadow-sm"
+              >
+                + Añadir iniciativa
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -719,9 +726,13 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
 
         {/* Filas */}
         {allRows.length === 0 && (
-          <div className="px-6 py-10 text-center text-sm text-text-muted">
-            No hay casos de uso con decisión Go en T4. Añade iniciativas libres o completa el proceso de scoring en T4.
-          </div>
+          isReadOnly ? (
+            <div className="px-6 py-10"><ViewerEmptyState /></div>
+          ) : (
+            <div className="px-6 py-10 text-center text-sm text-text-muted">
+              No hay casos de uso con decisión Go en T4. Añade iniciativas libres o completa el proceso de scoring en T4.
+            </div>
+          )
         )}
 
         {allRows.map((row) => {

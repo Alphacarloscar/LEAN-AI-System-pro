@@ -29,6 +29,7 @@ import { useCompanyProfileStore }              from '@/modules/CompanyProfile/st
 import { RecommendationPanel }                 from '@/components/RecommendationPanel'
 import { buildT1RecommendationContext }        from './t1ContextBuilder'
 import { isDemoEnabled }                       from '@/lib/config'
+import { usePermissions }                      from '@/modules/Auth'
 
 interface T1ViewProps {
   scenario: DemoScenario
@@ -255,6 +256,8 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
   const [showNewModal,      setShowNewModal]      = useState(false)
   const [showInterviewees,  setShowInterviewees]  = useState(false)
 
+  const { isReadOnly } = usePermissions()
+
   // ── Store T1 + engagement ────────────────────────────────────
   const store          = useT1Store()
   const engagementId   = useEngagementStore((s) => s.activeEngagementId)
@@ -420,15 +423,17 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
           </div>
 
           {/* Nueva entrevista — acceso directo desde header (U-04) */}
-          <button
-            onClick={() => setShowNewModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm shrink-0"
-          >
-            <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-              <path d="M8 2v12M2 8h12" />
-            </svg>
-            Nueva entrevista
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={() => setShowNewModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm shrink-0"
+            >
+              <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <path d="M8 2v12M2 8h12" />
+              </svg>
+              Nueva entrevista
+            </button>
+          )}
 
           {/* Progreso + score */}
           <div className="flex items-center gap-4 shrink-0">
@@ -576,7 +581,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
                       </button>
 
                       {/* Botón eliminar (solo si hay más de un entrevistado) */}
-                      {liveInterviewees.length > 1 && (
+                      {!isReadOnly && liveInterviewees.length > 1 && (
                         <button
                           onClick={() => deleteInterviewee(person.id)}
                           title="Eliminar entrevistado"

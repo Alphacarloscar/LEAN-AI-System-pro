@@ -27,6 +27,7 @@ import { usePolicyGeneration }    from '@/hooks/usePolicyGeneration'
 import type { PolicyGenerationContext } from '@/hooks/usePolicyGeneration'
 import { PhaseMiniMap }          from '@/shared/components/PhaseMiniMap'
 import { PolicyDownloadButton }  from './PolicyPDF'
+import { usePermissions }        from '@/modules/Auth'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -69,6 +70,7 @@ function TabButton({
 // ── ── ── Tab 1: POLÍTICA IA ── ── ──────────────────────────────
 
 function PolicyTab({ companyName, engagementId }: { companyName: string; engagementId: string | null }) {
+  const { isReadOnly } = usePermissions()
   const { useCases }   = useT4Store()
   const { canvas }     = useT5Store()
   const { controls, generatedPolicy, clearGeneratedPolicy } = useT6Store()
@@ -192,28 +194,30 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => generate(policyGenContext, engagementId)}
-            disabled={isGenerating}
-            className={[
-              'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150',
-              isGenerating
-                ? 'border-border text-text-subtle bg-gray-50 dark:bg-gray-800 cursor-not-allowed'
-                : 'border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40',
-            ].join(' ')}
-          >
-            {isGenerating ? (
-              <>
-                <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                </svg>
-                Generando…
-              </>
-            ) : (
-              <>✦ {generatedPolicy ? 'Regenerar con IA' : 'Generar política con IA'}</>
-            )}
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={() => generate(policyGenContext, engagementId)}
+              disabled={isGenerating}
+              className={[
+                'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150',
+                isGenerating
+                  ? 'border-border text-text-subtle bg-gray-50 dark:bg-gray-800 cursor-not-allowed'
+                  : 'border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40',
+              ].join(' ')}
+            >
+              {isGenerating ? (
+                <>
+                  <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Generando…
+                </>
+              ) : (
+                <>✦ {generatedPolicy ? 'Regenerar con IA' : 'Generar política con IA'}</>
+              )}
+            </button>
+          )}
           <PolicyDownloadButton data={pdfData} />
         </div>
       </div>
@@ -715,6 +719,7 @@ function RiskDashboardTab() {
 // ── ── ── Tab 3: ISO 42001 ── ── ───────────────────────────────
 
 function ISO42001Tab() {
+  const { isReadOnly }              = usePermissions()
   const { controls, updateControl } = useT6Store()
   const { useCases }                = useT4Store()
 
@@ -818,14 +823,16 @@ function ISO42001Tab() {
                 return (
                   <div key={control.id} className="px-5 py-3 flex items-start gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                     {/* Status toggle */}
-                    <button
-                      onClick={() => updateControl(control.id, nextStatus)}
-                      title={`Cambiar a: ${ISO42001_STATUS_CONFIG[nextStatus].label}`}
-                      className="shrink-0 mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-sm transition-all hover:scale-110"
-                      style={{ color: statusCfg.hex }}
-                    >
-                      {statusCfg.dot}
-                    </button>
+                    {!isReadOnly && (
+                      <button
+                        onClick={() => updateControl(control.id, nextStatus)}
+                        title={`Cambiar a: ${ISO42001_STATUS_CONFIG[nextStatus].label}`}
+                        className="shrink-0 mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-sm transition-all hover:scale-110"
+                        style={{ color: statusCfg.hex }}
+                      >
+                        {statusCfg.dot}
+                      </button>
+                    )}
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">

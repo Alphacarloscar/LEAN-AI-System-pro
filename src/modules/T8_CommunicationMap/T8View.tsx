@@ -26,6 +26,7 @@ import { useT8Store }                   from './store'
 import { useT8Generation }              from '@/hooks/useT8Generation'
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from '@/modules/T2_StakeholderMatrix/types'
 import type { CommAction, CommPhase, CommType, CommChannel, DeptKit, MaterialTemplate } from './types'
+import { usePermissions }              from '@/modules/Auth'
 
 // ── Rogers helpers (mismo que T7) ─────────────────────────────
 
@@ -1031,6 +1032,7 @@ interface T8ViewProps {
 }
 
 export function T8View({ companyName, onBack }: T8ViewProps) {
+  const { isReadOnly } = usePermissions()
   const stakeholders                = useT2Store(s => s.stakeholders)
   const useCases                    = useT4Store(s => s.useCases)
   const { profile: companyProfile } = useCompanyProfileStore()
@@ -1148,43 +1150,47 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
                     ? new Date(generatedContent.generatedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
                     : ''}
                 </span>
-                <button
-                  onClick={clearGeneratedContent}
-                  className="px-3 py-1.5 rounded-lg text-xs text-text-subtle border border-border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                >
-                  Restaurar plantilla
-                </button>
+                {!isReadOnly && (
+                  <button
+                    onClick={clearGeneratedContent}
+                    className="px-3 py-1.5 rounded-lg text-xs text-text-subtle border border-border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    Restaurar plantilla
+                  </button>
+                )}
               </>
             )}
             {error && (
               <span className="text-xs text-danger-dark">{error}</span>
             )}
-            <button
-              onClick={() => t8CommContext && generate(t8CommContext as unknown as Record<string, unknown>, engagementId)}
-              disabled={!t8CommContext || !engagementId || isGenerating}
-              className={[
-                'flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150',
-                t8CommContext && engagementId && !isGenerating
-                  ? 'bg-navy text-white hover:opacity-90 shadow-sm'
-                  : 'bg-gray-100 dark:bg-gray-800 text-text-subtle cursor-not-allowed',
-              ].join(' ')}
-            >
-              {isGenerating ? (
-                <>
-                  <svg className="animate-spin h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M6 1a5 5 0 11-5 5" strokeLinecap="round" />
-                  </svg>
-                  Generando…
-                </>
-              ) : (
-                <>
-                  <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                    <path d="M6 1v2M6 9v2M1 6h2M9 6h2M2.5 2.5l1.4 1.4M8.1 8.1l1.4 1.4M2.5 9.5l1.4-1.4M8.1 3.9l1.4-1.4"/>
-                  </svg>
-                  {isLLM ? 'Regenerar con IA' : 'Personalizar con IA'}
-                </>
-              )}
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={() => t8CommContext && generate(t8CommContext as unknown as Record<string, unknown>, engagementId)}
+                disabled={!t8CommContext || !engagementId || isGenerating}
+                className={[
+                  'flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150',
+                  t8CommContext && engagementId && !isGenerating
+                    ? 'bg-navy text-white hover:opacity-90 shadow-sm'
+                    : 'bg-gray-100 dark:bg-gray-800 text-text-subtle cursor-not-allowed',
+                ].join(' ')}
+              >
+                {isGenerating ? (
+                  <>
+                    <svg className="animate-spin h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M6 1a5 5 0 11-5 5" strokeLinecap="round" />
+                    </svg>
+                    Generando…
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                      <path d="M6 1v2M6 9v2M1 6h2M9 6h2M2.5 2.5l1.4 1.4M8.1 8.1l1.4 1.4M2.5 9.5l1.4-1.4M8.1 3.9l1.4-1.4"/>
+                    </svg>
+                    {isLLM ? 'Regenerar con IA' : 'Personalizar con IA'}
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>

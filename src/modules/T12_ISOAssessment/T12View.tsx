@@ -25,6 +25,7 @@ import {
 } from './constants'
 import { PhaseMiniMap }      from '@/shared/components/PhaseMiniMap'
 import type { T12Clause, T12Control, T12Status } from './types'
+import { usePermissions } from '@/modules/Auth'
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -289,6 +290,7 @@ interface T12ViewProps {
 
 export function T12View({ companyName, onBack }: T12ViewProps) {
   const navigate                    = useNavigate()
+  const { isReadOnly } = usePermissions()
   const { controls, updateControl, importFromT6, syncEngagement: syncT12 } = useT12Store()
   const t6Controls                  = useT6Store((s) => s.controls)
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
@@ -364,15 +366,17 @@ export function T12View({ companyName, onBack }: T12ViewProps) {
 
           <div className="flex items-center gap-2 shrink-0">
             {/* Import desde T6 */}
-            <button
-              onClick={handleImportFromT6}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs font-medium text-text-muted hover:text-lean-black dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-150"
-            >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M8 2v10M4 8l4 4 4-4M2 14h12" />
-              </svg>
-              Importar desde T6
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={handleImportFromT6}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs font-medium text-text-muted hover:text-lean-black dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-150"
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 2v10M4 8l4 4 4-4M2 14h12" />
+                </svg>
+                Importar desde T6
+              </button>
+            )}
 
             {/* Exportar para auditor */}
             <button
@@ -502,6 +506,7 @@ function ControlCardWrapper({
   forceExpanded: boolean
   onUpdate:      (id: string, patch: Partial<Pick<T12Control, 'status' | 'evidence' | 'reviewNote'>>) => void
 }) {
+  const { isReadOnly } = usePermissions()
   const [localExpanded, setLocalExpanded] = useState(false)
   const expanded = forceExpanded || localExpanded
 
@@ -591,7 +596,7 @@ function ControlCardWrapper({
 
           <div className="flex items-center justify-between pt-1">
             <div>
-              {control.status !== 'no_iniciado' && (
+              {!isReadOnly && control.status !== 'no_iniciado' && (
                 <button
                   onClick={() => {
                     const order: T12Status[] = ['no_iniciado', 'en_progreso', 'pendiente_revision', 'aprobado']
@@ -605,7 +610,7 @@ function ControlCardWrapper({
               )}
             </div>
 
-            {cfg.next && nextCfg && (
+            {!isReadOnly && cfg.next && nextCfg && (
               <button
                 onClick={() => onUpdate(control.id, { status: cfg.next as T12Status })}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition-all duration-150 active:scale-[0.98]"

@@ -11,6 +11,7 @@ import { useNavigate }            from 'react-router-dom'
 import { useCompanyProfileStore } from './store'
 import { useEngagementStore }     from '@/modules/Engagement/store'
 import { useAuthStore }           from '@/modules/Auth'
+import { usePermissions }  from '@/modules/Auth'
 import { supabase }               from '@/lib/supabase'
 import { isDemoEnabled }          from '@/lib/config'
 import {
@@ -244,6 +245,7 @@ function FrictionCard({
 
 export function CompanyProfileView() {
   const navigate = useNavigate()
+  const { isReadOnly } = usePermissions()
   const {
     profile, isDirty, isSaving, isLoadingData, saveError,
     loadProfile, updateField, toggleArea, saveProfile, resetProfile,
@@ -401,42 +403,44 @@ export function CompanyProfileView() {
                 Cambios sin guardar
               </span>
             )}
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className={[
-                'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
-                isSaving
-                  ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
-                  : savedFlash
-                  ? 'bg-success-dark text-white'
-                  : 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm',
-              ].join(' ')}
-            >
-              {isSaving ? (
-                <>
-                  <svg className="animate-spin" width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M7 1a6 6 0 11-6 6" strokeLinecap="round" />
-                  </svg>
-                  Guardando...
-                </>
-              ) : savedFlash ? (
-                <>
-                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M2 7l4 4 6-7" />
-                  </svg>
-                  Guardado
-                </>
-              ) : (
-                <>
-                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 2H4L2 4v8a1 1 0 001 1h8a1 1 0 001-1V3a1 1 0 00-1-1z" />
-                    <path d="M9 2v4H5V2" /><rect x="4" y="8" width="6" height="5" rx="0.5" />
-                  </svg>
-                  Guardar contexto
-                </>
-              )}
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className={[
+                  'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
+                  isSaving
+                    ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+                    : savedFlash
+                    ? 'bg-success-dark text-white'
+                    : 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm',
+                ].join(' ')}
+              >
+                {isSaving ? (
+                  <>
+                    <svg className="animate-spin" width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M7 1a6 6 0 11-6 6" strokeLinecap="round" />
+                    </svg>
+                    Guardando...
+                  </>
+                ) : savedFlash ? (
+                  <>
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 7l4 4 6-7" />
+                    </svg>
+                    Guardado
+                  </>
+                ) : (
+                  <>
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 2H4L2 4v8a1 1 0 001 1h8a1 1 0 001-1V3a1 1 0 00-1-1z" />
+                      <path d="M9 2v4H5V2" /><rect x="4" y="8" width="6" height="5" rx="0.5" />
+                    </svg>
+                    Guardar contexto
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -557,15 +561,17 @@ export function CompanyProfileView() {
           )}
 
           {/* Añadir */}
-          <button
-            onClick={addFriction}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-border dark:border-white/10 text-xs text-text-muted dark:text-gray-500 hover:border-navy/40 hover:text-navy dark:hover:text-gray-300 hover:bg-navy/3 dark:hover:bg-navy/5 transition-all duration-150"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M7 2v10M2 7h10" />
-            </svg>
-            Añadir fricción / oportunidad
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={addFriction}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-border dark:border-white/10 text-xs text-text-muted dark:text-gray-500 hover:border-navy/40 hover:text-navy dark:hover:text-gray-300 hover:bg-navy/3 dark:hover:bg-navy/5 transition-all duration-150"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <path d="M7 2v10M2 7h10" />
+              </svg>
+              Añadir fricción / oportunidad
+            </button>
+          )}
 
           {/* Resumen */}
           {profile.fricciones.length >= 2 && (
