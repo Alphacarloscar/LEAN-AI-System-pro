@@ -30,7 +30,8 @@ import type {
   Stakeholder,
 }                            from '@/modules/T2_StakeholderMatrix/types'
 import type { RogersSegment, DotPosition, GeneratedChangePlanPhase } from './types'
-import { usePermissions } from '@/modules/Auth'
+import { usePermissions }      from '@/modules/Auth'
+import { ToolLoadingScreen }  from '@/shared/components/ToolLoadingScreen'
 
 // ── Constantes ────────────────────────────────────────────────
 
@@ -1005,6 +1006,7 @@ interface T7ViewProps {
 export function T7View({ companyName, onBack }: T7ViewProps) {
   const stakeholders                = useT2Store(s => s.stakeholders)
   const loadT2                      = useT2Store(s => s.load)
+  const isLoadingT2                 = useT2Store(s => s.isLoading)
   const { dark }                    = useDarkMode()
   const { profile: companyProfile } = useCompanyProfileStore()
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
@@ -1072,6 +1074,10 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
     () => companyProfile ? buildT7RecommendationContext(stakeholders, companyProfile) : null,
     [stakeholders, companyProfile],
   )
+
+  if (isLoadingT2) {
+    return <ToolLoadingScreen toolCode="T7" label="Cargando stakeholders…" />
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 px-8 py-8">

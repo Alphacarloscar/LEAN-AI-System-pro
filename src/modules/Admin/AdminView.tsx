@@ -20,6 +20,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate }                  from 'react-router-dom'
 import { useAuthStore }                 from '@/modules/Auth'
+import { Spinner }                      from '@/shared/components/Spinner'
 import {
   listCompanies,
   createCompany,
@@ -67,16 +68,6 @@ function CheckIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 8l3.5 3.5L13 4" />
-    </svg>
-  )
-}
-
-function Spinner({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
-  const cls = size === 'sm' ? 'h-3 w-3' : size === 'lg' ? 'h-6 w-6' : 'h-4 w-4'
-  return (
-    <svg className={`animate-spin ${cls}`} viewBox="0 0 24 24" fill="none">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
     </svg>
   )
 }

@@ -26,7 +26,8 @@ import { useT8Store }                   from './store'
 import { useT8Generation }              from '@/hooks/useT8Generation'
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from '@/modules/T2_StakeholderMatrix/types'
 import type { CommAction, CommPhase, CommType, CommChannel, DeptKit, MaterialTemplate } from './types'
-import { usePermissions }              from '@/modules/Auth'
+import { usePermissions }      from '@/modules/Auth'
+import { ToolLoadingScreen }  from '@/shared/components/ToolLoadingScreen'
 
 // ── Rogers helpers (mismo que T7) ─────────────────────────────
 
@@ -1034,10 +1035,17 @@ interface T8ViewProps {
 export function T8View({ companyName, onBack }: T8ViewProps) {
   const { isReadOnly } = usePermissions()
   const stakeholders                = useT2Store(s => s.stakeholders)
+  const loadT2                      = useT2Store(s => s.load)
+  const isLoadingT2                 = useT2Store(s => s.isLoading)
   const useCases                    = useT4Store(s => s.useCases)
   const { profile: companyProfile } = useCompanyProfileStore()
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
   const [activeTab, setActiveTab]  = useState<'timeline' | 'messages' | 'materials' | 'dept'>('timeline')
+
+  // Cargar T2 al montar T8 (por si el usuario llega directamente sin pasar por T2)
+  useEffect(() => {
+    if (engagementId && stakeholders.length === 0) loadT2(engagementId)
+  }, [engagementId])
 
   // T8 store — contenido generado por LLM (scoped al engagement)
   const { generatedContent, clearGeneratedContent, syncEngagement: syncT8 } = useT8Store()
@@ -1087,6 +1095,10 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
   const highPriority  = commActions.filter(a => a.priority === 'alta').length
   const deptCount     = new Set(stakeholders.map(s => s.department)).size
   const isLLM         = !!generatedContent
+
+  if (isLoadingT2) {
+    return <ToolLoadingScreen toolCode="T8" label="Cargando stakeholders…" />
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 px-8 py-8">
