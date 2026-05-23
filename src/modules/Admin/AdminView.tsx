@@ -15,9 +15,6 @@
 //   consultant    → Consultor Alpha — acceso por project_members
 //   client_editor → Cliente operativo — edita su empresa
 //   client_viewer → Cliente directivo — solo lectura
-//
-// ⚠ inviteUserToCompany está MOCKEADA (requiere Edge Function
-//   con service role key — pendiente Sprint 10).
 // ============================================================
 
 import { useState, useEffect, useMemo } from 'react'
@@ -28,6 +25,7 @@ import {
   createCompany,
   inviteUserToCompany,
   listAllUsers,
+  deleteUser,
 } from '@/services/companies.service'
 import {
   listMyProjects,
@@ -55,8 +53,10 @@ type SharedProps = {
 }
 
 type UsersTabProps = SharedProps & {
-  users:       UserProfile[]
-  onUserAdded: () => void   // recarga lista tras invitación real (Sprint 10)
+  users:         UserProfile[]
+  currentUserId: string          // para evitar que el superadmin se autoelimine
+  onUserAdded:   () => void
+  onUserDelete:  (userId: string) => Promise<void>
 }
 
 type ProjectsTabProps = SharedProps
@@ -81,6 +81,79 @@ function Spinner({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   )
 }
 
+function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+         strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 4h12M5 4V2.5A.5.5 0 015.5 2h5a.5.5 0 01.5.5V4M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
+    </svg>
+  )
+}
+
+// Modal de confirmación de borrado de usuario
+function DeleteConfirmModal({
+  user,
+  deleting,
+  onConfirm,
+  onCancel,
+}: {
+  user:      UserProfile
+  deleting:  boolean
+  onConfirm: () => void
+  onCancel:  () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
+        onClick={onCancel}
+      />
+      {/* Card */}
+      <div className="relative bg-white rounded-2xl shadow-lg border border-black/8 p-6 w-full max-w-sm">
+        {/* Icono de advertencia */}
+        <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <path d="M10 6v4M10 14h.01M19 10a9 9 0 11-18 0 9 9 0 0118 0z"
+                  stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <h2 className="text-base font-semibold text-[#2A2822] text-center mb-1">
+          ¿Revocar acceso?
+        </h2>
+        <p className="text-sm text-gray-500 text-center mb-1">
+          Vas a eliminar el acceso de:
+        </p>
+        <p className="text-sm font-medium text-[#2A2822] text-center truncate mb-1">
+          {user.name}
+        </p>
+        <p className="text-xs font-mono text-gray-400 text-center truncate mb-4">
+          {user.email}
+        </p>
+        <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg text-center mb-6">
+          Esta acción eliminará al usuario de la plataforma. No se puede deshacer.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            disabled={deleting}
+            className="flex-1 h-9 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={deleting}
+            className="flex-1 h-9 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
+          >
+            {deleting ? <><Spinner /> Eliminando…</> : 'Revocar acceso'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Pantalla de carga global — mientras AdminView fetcha companies + users
 function AdminLoadingScreen() {
   return (
@@ -101,10 +174,10 @@ function AdminLoadingScreen() {
 
 // Badge de rol con color por nivel
 const ROLE_META: Record<UserRole, { label: string; color: string; bg: string }> = {
-  superadmin:    { label: 'Superadmin',     color: '#C8860A', bg: 'rgba(200,134,10,0.10)' },
-  consultant:    { label: 'Consultor Alpha', color: '#2563EB', bg: '#EFF6FF'               },
-  client_editor: { label: 'Cliente editor',  color: '#059669', bg: '#ECFDF5'               },
-  client_viewer: { label: 'Cliente viewer',  color: '#6B7280', bg: '#F3F4F6'               },
+  superadmin:    { label: 'Superadmin',      color: '#C8860A', bg: 'rgba(200,134,10,0.10)' },
+  consultant:    { label: 'Consultor Alpha',  color: '#2563EB', bg: '#EFF6FF'               },
+  client_editor: { label: 'Cliente editor',   color: '#059669', bg: '#ECFDF5'               },
+  client_viewer: { label: 'Cliente viewer',   color: '#6B7280', bg: '#F3F4F6'               },
 }
 
 function RoleBadge({ role }: { role: UserRole }) {
@@ -214,7 +287,7 @@ const ROLE_OPTIONS: { value: UserRole; label: string; description: string }[] = 
   },
 ]
 
-function UsersTab({ companies, users }: UsersTabProps) {
+function UsersTab({ companies, users, currentUserId, onUserAdded, onUserDelete }: UsersTabProps) {
   const [email,      setEmail]      = useState('')
   const [userName,   setUserName]   = useState('')
   const [companyId,  setCompanyId]  = useState('')
@@ -222,6 +295,11 @@ function UsersTab({ companies, users }: UsersTabProps) {
   const [inviting,   setInviting]   = useState(false)
   const [success,    setSuccess]    = useState(false)
   const [error,      setError]      = useState<string | null>(null)
+
+  // Estado del modal de eliminación
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null)
+  const [deleting,     setDeleting]     = useState(false)
+  const [deleteError,  setDeleteError]  = useState<string | null>(null)
 
   // Filtros de la lista
   const [filterRole,    setFilterRole]    = useState<UserRole | ''>('')
@@ -240,11 +318,25 @@ function UsersTab({ companies, users }: UsersTabProps) {
       })
       setEmail(''); setUserName(''); setCompanyId(''); setRole('client_viewer')
       setSuccess(true)
+      onUserAdded()
       setTimeout(() => setSuccess(false), 3000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al invitar usuario')
     } finally {
       setInviting(false)
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    if (!userToDelete) return
+    setDeleting(true); setDeleteError(null)
+    try {
+      await onUserDelete(userToDelete.id)
+      setUserToDelete(null)
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Error al eliminar usuario')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -266,12 +358,21 @@ function UsersTab({ companies, users }: UsersTabProps) {
 
   return (
     <div className="flex flex-col gap-8">
+      {/* Modal de confirmación de borrado */}
+      {userToDelete && (
+        <DeleteConfirmModal
+          user={userToDelete}
+          deleting={deleting}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => { setUserToDelete(null); setDeleteError(null) }}
+        />
+      )}
+
       {/* Formulario de invitación */}
       <div className="max-w-md">
         <h2 className="text-sm font-semibold text-[#2A2822] mb-1">Invitar usuario</h2>
         <p className="text-xs text-gray-500 mb-4">
-          El usuario recibirá un email para crear su propia contraseña.{' '}
-          <span className="text-amber-600 font-medium">(Envío mockeado — activar en Sprint 10)</span>
+          El usuario recibirá un email para crear su propia contraseña.
         </p>
         <form onSubmit={handleInvite} className="flex flex-col gap-3">
           <input
@@ -335,7 +436,7 @@ function UsersTab({ companies, users }: UsersTabProps) {
           {error && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
           {success && (
             <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg">
-              <CheckIcon /> Invitación registrada (mock). Revisa la consola.
+              <CheckIcon /> Invitación enviada correctamente.
             </div>
           )}
 
@@ -360,7 +461,7 @@ function UsersTab({ companies, users }: UsersTabProps) {
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value as UserRole | '')}
-              className="h-7 px-2 rounded-lg border border-gray-200 text xs bg-gray-50 outline-none focus:border-[#C8860A]/60"
+              className="h-7 px-2 rounded-lg border border-gray-200 text-xs bg-gray-50 outline-none focus:border-[#C8860A]/60"
             >
               <option value="">Todos los roles</option>
               {ROLE_OPTIONS.map((o) => (
@@ -380,6 +481,10 @@ function UsersTab({ companies, users }: UsersTabProps) {
           </div>
         </div>
 
+        {deleteError && (
+          <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-3">{deleteError}</p>
+        )}
+
         {users.length === 0 ? (
           <p className="text-sm text-gray-400">Sin usuarios registrados.</p>
         ) : filteredUsers.length === 0 ? (
@@ -395,11 +500,23 @@ function UsersTab({ companies, users }: UsersTabProps) {
                   <p className="text-sm font-medium text-[#2A2822] truncate">{u.name}</p>
                   <p className="text-[10px] font-mono text-gray-400 truncate">{u.email}</p>
                 </div>
-                <div className="flex flex-col items-end gap-1 ml-4 shrink-0">
-                  <RoleBadge role={u.role} />
-                  <p className="text-[10px] text-gray-400">
-                    {u.company_id ? (companyMap[u.company_id] ?? 'Empresa desconocida') : 'Sin empresa'}
-                  </p>
+                <div className="flex items-center gap-3 ml-4 shrink-0">
+                  <div className="flex flex-col items-end gap-1">
+                    <RoleBadge role={u.role} />
+                    <p className="text-[10px] text-gray-400">
+                      {u.company_id ? (companyMap[u.company_id] ?? 'Empresa desconocida') : 'Sin empresa'}
+                    </p>
+                  </div>
+                  {/* Botón de eliminar — oculto para el propio superadmin */}
+                  {u.id !== currentUserId && (
+                    <button
+                      onClick={() => setUserToDelete(u)}
+                      title="Revocar acceso"
+                      className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                      <TrashIcon />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -515,10 +632,10 @@ export function AdminView() {
   const [tab, setTab] = useState<Tab>('companies')
 
   // ── Datos compartidos entre tabs ──────────────────────────
-  const [companies,    setCompanies]    = useState<CompanyRow[]>([])
-  const [users,        setUsers]        = useState<UserProfile[]>([])
-  const [initialLoad,  setInitialLoad]  = useState(true)
-  const [loadError,    setLoadError]    = useState<string | null>(null)
+  const [companies,   setCompanies]   = useState<CompanyRow[]>([])
+  const [users,       setUsers]       = useState<UserProfile[]>([])
+  const [initialLoad, setInitialLoad] = useState(true)
+  const [loadError,   setLoadError]   = useState<string | null>(null)
 
   // Redirigir si no es superadmin
   useEffect(() => {
@@ -558,6 +675,12 @@ export function AdminView() {
   // Callbacks que actualizan el estado del padre sin re-fetch
   function handleCompanyAdd(c: CompanyRow) {
     setCompanies((prev) => [...prev, c].sort((a, b) => a.name.localeCompare(b.name)))
+  }
+
+  // Elimina usuario de Supabase Auth y actualiza lista local
+  async function handleUserDelete(userId: string) {
+    await deleteUser(userId)
+    setUsers((prev) => prev.filter((u) => u.id !== userId))
   }
 
   const tabs: { id: Tab; label: string }[] = [
@@ -611,8 +734,10 @@ export function AdminView() {
           <UsersTab
             companies={companies}
             users={users}
+            currentUserId={user.id}
             onCompanyAdd={handleCompanyAdd}
-            onUserAdded={() => {/* Sprint 10: recargar lista tras invitación real */}}
+            onUserAdded={() => listAllUsers().then(setUsers)}
+            onUserDelete={handleUserDelete}
           />
         )}
         {tab === 'projects' && (

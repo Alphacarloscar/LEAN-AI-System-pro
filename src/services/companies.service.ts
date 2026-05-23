@@ -108,6 +108,25 @@ export async function listAllUsers(): Promise<{
   return (data ?? []) as { id: string; email: string; name: string; role: UserRole; company_id: string | null; created_at: string }[]
 }
 
+// ── Eliminar usuario (solo superadmin) ──────────────────────
+// Llama a la Edge Function 'delete-user', que usa la Admin API
+// de Supabase con service role key para eliminar el usuario de Auth
+// (el perfil se borra en cascada por la FK profiles.id → auth.users.id).
+
+export async function deleteUser(userId: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke('delete-user', {
+    body: { userId },
+  })
+
+  if (error) {
+    throw new Error(`[Companies] deleteUser: ${error.message}`)
+  }
+
+  if (data && !data.success) {
+    throw new Error(data.error ?? 'Error al eliminar el usuario')
+  }
+}
+
 // ── Listar proyectos de una empresa ─────────────────────────
 
 export async function listCompanyProjects(companyId: string) {
