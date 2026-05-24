@@ -211,13 +211,16 @@ export const useT2Store = create<T2Store>()((set, get) => ({
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
     if (get().isLoading) return  // F-06: guard contra doble-load por re-render
-    set({ isLoading: true })
+    set({ isLoading: true, lastError: null })
     try {
       const stakeholders = await fetchStakeholders(engagementId)
-      set({ stakeholders, isLoading: false })
+      set({ stakeholders, isLoading: false, lastError: null })
     } catch (err) {
       console.error('[T2Store] load:', err)
-      set({ isLoading: false })
+      set({
+        isLoading: false,
+        lastError: err instanceof Error ? err.message : 'Error al cargar stakeholders',
+      })
     }
   },
 

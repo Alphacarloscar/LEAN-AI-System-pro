@@ -44,13 +44,31 @@ interface T11ViewProps {
 
 type T11Tab = 'bigpicture' | 'cadencia' | 'objetivos' | 'decisiones' | 'kpis'
 
-const TABS: { id: T11Tab; label: string }[] = [
-  { id: 'bigpicture',  label: 'Vista Interactiva' },
-  { id: 'cadencia',    label: 'Cadencia Detallada' },
-  { id: 'objetivos',   label: 'Objetivos por Fase' },
-  { id: 'decisiones',  label: 'Decisiones y Escalada' },
-  { id: 'kpis',        label: 'Datos a Medir' },
-]
+
+// ── TabButton — mismo estilo que T8 ──────────────────────────
+
+function TabButton({ active, label, badge, onClick }: {
+  active: boolean; label: string; badge?: string; onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={[
+        'px-4 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 flex items-center gap-1.5',
+        active
+          ? 'border-navy/50 bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 shadow-sm'
+          : 'border-border dark:border-white/10 text-text-muted hover:border-navy/30 hover:text-navy/70',
+      ].join(' ')}
+    >
+      {label}
+      {badge && (
+        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-navy/15 dark:bg-navy/30 text-navy dark:text-warm-100">
+          {badge}
+        </span>
+      )}
+    </button>
+  )
+}
 
 // ── AdaptiveModeBadge ─────────────────────────────────────────
 
@@ -944,7 +962,7 @@ export function T11View({ companyName, t1Radar, employees = 500, onBack }: T11Vi
             <svg className="h-3.5 w-3.5" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
               <path d="M8 2L4 6l4 4" />
             </svg>
-            Inicio
+            Volver al dashboard
           </button>
 
           <div className="h-4 w-px bg-border dark:bg-warm-600" />
@@ -1037,21 +1055,12 @@ export function T11View({ companyName, t1Radar, employees = 500, onBack }: T11Vi
 
         {/* Tabs */}
         <div>
-          <div className="flex gap-1 p-1 rounded-xl bg-gray-100 dark:bg-warm-800 mb-6 overflow-x-auto">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={[
-                  'flex-1 px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-150',
-                  activeTab === tab.id
-                    ? 'bg-white dark:bg-warm-600 text-lean-black dark:text-warm-50 shadow-sm'
-                    : 'text-text-muted dark:text-warm-300 hover:text-lean-black dark:hover:text-warm-100',
-                ].join(' ')}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-0.5">
+            <TabButton active={activeTab === 'bigpicture'}  label="Vista Interactiva"      badge={String(recommendedEvents.length)} onClick={() => setActiveTab('bigpicture')} />
+            <TabButton active={activeTab === 'cadencia'}    label="Cadencia Detallada"      badge={String(recommendedEvents.length)} onClick={() => setActiveTab('cadencia')} />
+            <TabButton active={activeTab === 'objetivos'}   label="Objetivos por Fase"      badge={String(phaseObjectives.length)}   onClick={() => setActiveTab('objetivos')} />
+            <TabButton active={activeTab === 'decisiones'}  label="Decisiones y Escalada"   badge={String(decisions.length)}         onClick={() => setActiveTab('decisiones')} />
+            <TabButton active={activeTab === 'kpis'}        label="Datos a Medir"           badge={String(totalKpis)}                onClick={() => setActiveTab('kpis')} />
           </div>
 
           {activeTab === 'bigpicture'  && (

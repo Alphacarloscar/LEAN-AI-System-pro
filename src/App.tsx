@@ -103,7 +103,7 @@ function T1RouteView() {
 function T2RouteView() {
   const { scenario } = useDemoContext()
   const navigate     = useNavigate()
-  return <T2View companyName={scenario.company.name} onBack={() => navigate('/')} />
+  return <T2View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
 }
 
 // ── T3 route wrapper ──────────────────────────────────────────
@@ -111,7 +111,7 @@ function T2RouteView() {
 function T3RouteView() {
   const { scenario } = useDemoContext()
   const navigate     = useNavigate()
-  return <T3View companyName={scenario.company.name} onBack={() => navigate('/')} />
+  return <T3View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
 }
 
 // ── T4 route wrapper ──────────────────────────────────────────
@@ -119,7 +119,7 @@ function T3RouteView() {
 function T4RouteView() {
   const { scenario } = useDemoContext()
   const navigate     = useNavigate()
-  return <T4View companyName={scenario.company.name} onBack={() => navigate('/')} />
+  return <T4View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
 }
 
 // ── T5 route wrapper ──────────────────────────────────────────
@@ -127,7 +127,7 @@ function T4RouteView() {
 function T5RouteView() {
   const { scenario } = useDemoContext()
   const navigate     = useNavigate()
-  return <T5View companyName={scenario.company.name} onBack={() => navigate('/')} />
+  return <T5View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
 }
 
 // ── T6 route wrapper ──────────────────────────────────────────
@@ -135,7 +135,7 @@ function T5RouteView() {
 function T6RouteView() {
   const { scenario } = useDemoContext()
   const navigate     = useNavigate()
-  return <T6View companyName={scenario.company.name} onBack={() => navigate('/')} />
+  return <T6View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
 }
 
 // ── T7 route wrapper ──────────────────────────────────────────
@@ -143,7 +143,7 @@ function T6RouteView() {
 function T7RouteView() {
   const { scenario } = useDemoContext()
   const navigate     = useNavigate()
-  return <T7View companyName={scenario.company.name} onBack={() => navigate('/')} />
+  return <T7View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
 }
 
 // ── T8 route wrapper ──────────────────────────────────────────
@@ -151,7 +151,7 @@ function T7RouteView() {
 function T8RouteView() {
   const { scenario } = useDemoContext()
   const navigate     = useNavigate()
-  return <T8View companyName={scenario.company.name} onBack={() => navigate('/')} />
+  return <T8View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
 }
 
 // ── T9 route wrapper ──────────────────────────────────────────
@@ -159,7 +159,7 @@ function T8RouteView() {
 function T9RouteView() {
   const { scenario } = useDemoContext()
   const navigate     = useNavigate()
-  return <T9View companyName={scenario.company.name} onBack={() => navigate('/')} />
+  return <T9View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
 }
 
 // ── T11 route wrapper ─────────────────────────────────────────
@@ -169,9 +169,9 @@ function T11RouteView() {
   const navigate     = useNavigate()
   return (
     <T11View
-      companyName={scenario.company.name}
-      t1Radar={scenario.t1Radar}
-      employees={scenario.company.employees}
+      companyName={isDemoEnabled ? scenario.company.name : ''}
+      t1Radar={isDemoEnabled ? scenario.t1Radar : []}
+      employees={isDemoEnabled ? scenario.company.employees : 0}
       onBack={() => navigate('/')}
     />
   )
@@ -182,7 +182,7 @@ function T11RouteView() {
 function T12RouteView() {
   const { scenario } = useDemoContext()
   const navigate     = useNavigate()
-  return <T12View companyName={scenario.company.name} onBack={() => navigate('/')} />
+  return <T12View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
 }
 
 // ── App root ──────────────────────────────────────────────────

@@ -21,7 +21,7 @@ import { computeDimensionScore, computeOverallScore } from '@/modules/T1_Maturit
 import { useT3Store }                    from '@/modules/T3_ValueStreamMap/store'
 import { useT12Store }                   from '@/modules/T12_ISOAssessment/store'
 import { useT9Store }                    from '@/modules/T9_AIRoadmap/store'
-import { useAuthStore }                  from '@/modules/Auth'
+import { usePermissions }                from '@/modules/Auth'
 
 // ── Tipos ────────────────────────────────────────────────────
 
@@ -365,12 +365,8 @@ export function T10View({
   const displaySector    = isDemoEnabled ? sector       : (companyProfile?.sector ?? '')
   const displayTamano    = isDemoEnabled ? `${employees.toLocaleString('es-ES')} empleados` : (companyProfile?.tamanoEmpresa ?? '')
 
-  // ── Proyecto de compañero: read-only (owner_id ≠ usuario actual) ──
-  const { user: currentUser } = useAuthStore()
-  const isReadOnlyProject = !isDemoEnabled
-    && !!activeProject
-    && !!currentUser
-    && activeProject.owner_id !== currentUser.id
+  // ── Permisos de usuario — client_viewer = solo lectura ──────────
+  const { isReadOnly: isReadOnlyProject } = usePermissions()
 
   const t10LLMContext = useMemo(
     () => companyProfile

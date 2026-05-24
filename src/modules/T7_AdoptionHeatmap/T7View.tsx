@@ -32,6 +32,7 @@ import type {
 import type { RogersSegment, DotPosition, GeneratedChangePlanPhase } from './types'
 import { usePermissions }      from '@/modules/Auth'
 import { ToolLoadingScreen }  from '@/shared/components/ToolLoadingScreen'
+import { ToolErrorState }     from '@/shared/components/ToolErrorState'
 
 // ── Constantes ────────────────────────────────────────────────
 
@@ -1007,12 +1008,15 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
   const stakeholders                = useT2Store(s => s.stakeholders)
   const loadT2                      = useT2Store(s => s.load)
   const isLoadingT2                 = useT2Store(s => s.isLoading)
+  const t2Error                     = useT2Store(s => s.lastError)
   const { dark }                    = useDarkMode()
   const { profile: companyProfile } = useCompanyProfileStore()
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
   const [activeTab, setActiveTab]  = useState<'curve' | 'dept' | 'plan'>('curve')
 
-  // Cargar T2 al montar T7 (por si el usuario llega directamente sin pasar por T2)
+  // Cargar T2 al montar T7 (por si el usuario llega directamente sin pasar por T2).
+  // Intencional: solo re-ejecutar cuando cambia el engagement, no cuando llegan los datos.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (engagementId && stakeholders.length === 0) loadT2(engagementId)
   }, [engagementId])
@@ -1077,6 +1081,15 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
 
   if (isLoadingT2) {
     return <ToolLoadingScreen toolCode="T7" label="Cargando stakeholders…" />
+  }
+
+  if (t2Error) {
+    return (
+      <ToolErrorState
+        message="No se pudieron cargar los stakeholders. Comprueba tu conexión e inténtalo de nuevo."
+        onRetry={() => engagementId && loadT2(engagementId)}
+      />
+    )
   }
 
   return (

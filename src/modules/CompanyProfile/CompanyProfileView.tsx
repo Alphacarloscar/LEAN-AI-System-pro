@@ -359,7 +359,7 @@ export function CompanyProfileView() {
               <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10 12L6 8l4-4" />
               </svg>
-              Metro Map
+              Volver al dashboard
             </button>
 
             <span className="text-text-subtle dark:text-gray-600">·</span>
