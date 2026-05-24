@@ -9,6 +9,8 @@
 import { useState, useEffect }    from 'react'
 import { useNavigate }            from 'react-router-dom'
 import { useCompanyProfileStore } from './store'
+import { useDepartmentStore }     from './useDepartmentStore'
+import { DepartmentManager }      from './DepartmentManager'
 import { useEngagementStore }     from '@/modules/Engagement/store'
 import { useAuthStore }           from '@/modules/Auth'
 import { usePermissions }  from '@/modules/Auth'
@@ -256,8 +258,11 @@ export function CompanyProfileView() {
   const user         = useAuthStore((s) => s.user)
   const isAuth       = !!user
 
+  const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
+
   const [savedFlash,   setSavedFlash]   = useState(false)
   const [companyName,  setCompanyName]  = useState<string>('')
+  const [companyId,    setCompanyId]    = useState<string | null>(null)
 
   // ── Carga desde Supabase cuando hay proyecto activo ──────────
   // Si está autenticado pero sin proyecto: limpia localStorage para
@@ -265,7 +270,7 @@ export function CompanyProfileView() {
   useEffect(() => {
     if (engagementId) {
       loadProfile(engagementId)
-      // Obtener nombre de empresa del proyecto activo
+      // Obtener nombre y company_id de la empresa del proyecto activo
       supabase
         .from('projects')
         .select('company_id, companies(name)')
@@ -273,10 +278,15 @@ export function CompanyProfileView() {
         .single()
         .then(({ data }) => {
           const name = (data?.companies as { name?: string } | null)?.name ?? ''
+          const cid  = (data?.company_id as string | null) ?? null
           setCompanyName(name)
+          setCompanyId(cid)
+          if (cid) fetchDepartments(cid)
         })
     } else {
       setCompanyName('')
+      setCompanyId(null)
+      resetDepartments()
       // Usuario autenticado sin proyecto: limpiar datos stale de localStorage
       if (isAuth) resetProfile()
     }
@@ -524,7 +534,21 @@ export function CompanyProfileView() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════
-            SECCIÓN 2 — Fricciones y oportunidades
+            SECCIÓN 2 — Departamentos de la empresa
+        ═══════════════════════════════════════════════════════ */}
+        <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 p-6 space-y-4">
+          <div>
+            <SectionLabel>Departamentos de la empresa</SectionLabel>
+            <p className="text-xs text-text-muted dark:text-gray-500 -mt-1">
+              Lista centralizada de departamentos compartida por todos los proyectos de esta empresa.
+              Disponible como selector en T2, T3, T4 y T8 — elimina la necesidad de crearlos por herramienta.
+            </p>
+          </div>
+          <DepartmentManager companyId={companyId} />
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════
+            SECCIÓN 3 — Fricciones y oportunidades
         ═══════════════════════════════════════════════════════ */}
         <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 p-6 space-y-4">
           <div className="flex items-center justify-between">
