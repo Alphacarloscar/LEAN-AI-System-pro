@@ -39,6 +39,14 @@ export interface CompanyRow {
   created_at: string
 }
 
+export interface CompanyDepartmentRow {
+  id:         string
+  company_id: string
+  name:       string
+  color:      string
+  created_at: string
+}
+
 export interface ProfileRow {
   id:         string
   email:      string
