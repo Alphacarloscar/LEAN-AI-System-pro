@@ -33,10 +33,12 @@ export type UseCaseStatus = 'candidato' | 'priorizado' | 'go' | 'no_go' | 'en_pi
 // ============================================================
 
 export interface CompanyRow {
-  id:         string
-  name:       string
-  slug:       string | null
-  created_at: string
+  id:           string
+  name:         string
+  slug:         string | null
+  sector:       string          // Sprint 10: movido desde company_profiles
+  company_size: string          // Sprint 10: movido desde company_profiles
+  created_at:   string
 }
 
 export interface CompanyDepartmentRow {

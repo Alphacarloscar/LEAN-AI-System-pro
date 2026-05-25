@@ -14,7 +14,7 @@
 
 import { create }             from 'zustand'
 import { persist }            from 'zustand/middleware'
-import type { CompanyProfile, Friction, BusinessArea } from './types'
+import type { CompanyProfile, Friction } from './types'
 import { EMPTY_PROFILE }      from './types'
 import {
   fetchCompanyProfile,
@@ -43,7 +43,7 @@ interface CompanyProfileStore {
 
   // Acciones — perfil
   updateField:  <K extends keyof CompanyProfile>(key: K, value: CompanyProfile[K]) => void
-  toggleArea:   (area: BusinessArea) => void
+  toggleArea:   (area: string) => void
   /**
    * Persiste el perfil.
    * - Con engagementId: guarda en Supabase (fuente de verdad).

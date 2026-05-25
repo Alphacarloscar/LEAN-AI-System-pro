@@ -12,7 +12,7 @@
 
 import { supabase }         from '@/lib/supabase'
 import type { Json, CompanyProfileRow, FrictionRow } from '@/types/database.types'
-import type { CompanyProfile, Friction, BusinessArea } from '@/modules/CompanyProfile/types'
+import type { CompanyProfile, Friction } from '@/modules/CompanyProfile/types'
 
 // ── Helpers de cast ──────────────────────────────────────────
 
@@ -25,13 +25,17 @@ function toJson<T>(v: T): Json { return v as unknown as Json }
 export function rowToCompanyProfile(row: CompanyProfileRow): CompanyProfile {
   return {
     engagementName:          row.project_name,
-    sector:                  row.sector,
-    tamanoEmpresa:           row.tamano_empresa,
+    // sector/tamanoEmpresa: se leen de company_profiles para backward compat.
+    // La fuente de verdad es companies.sector / companies.company_size.
+    // Tab Empresa en CompanyProfileView.tsx escribe directamente a companies.
+    // profileToUpsert NO escribe estos campos — son readonly desde aquí.
+    sector:                  row.sector          ?? '',
+    tamanoEmpresa:           row.tamano_empresa  ?? '',
     objetivoPrincipalIA:     row.objetivo_principal_ia,
     horizonteEsperadoValor:  row.horizonte_valor,
     ecosistemaTecnologico:   row.ecosistema_tecnologico,
     restriccionesRelevantes: row.restricciones,
-    areasPrioritarias:       cast<BusinessArea[]>(row.areas_prioritarias),
+    areasPrioritarias:       cast<string[]>(row.areas_prioritarias),
     fricciones:              [],  // se cargan por separado desde la tabla frictions
     savedAt:                 row.saved_at,
   }
@@ -54,8 +58,7 @@ function profileToUpsert(profile: CompanyProfile, engagementId: string) {
   return {
     project_id:          engagementId,
     project_name:        profile.engagementName ?? '',
-    sector:                 profile.sector,
-    tamano_empresa:         profile.tamanoEmpresa,
+    // sector y tamano_empresa NO se escriben aquí — viven en `companies` tabla.
     objetivo_principal_ia:  profile.objetivoPrincipalIA,
     horizonte_valor:        profile.horizonteEsperadoValor,
     ecosistema_tecnologico: profile.ecosistemaTecnologico,

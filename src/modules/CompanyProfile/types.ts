@@ -104,18 +104,31 @@ export interface Friction {
 }
 
 // ── Perfil de empresa ─────────────────────────────────────────
+//
+// NOTA ARQUITECTÓNICA (Sprint 10):
+//   sector y tamanoEmpresa son campos de NIVEL EMPRESA.
+//   La fuente de verdad para escribirlos es la tabla `companies`
+//   (Tab Empresa en CompanyProfileView escribe directamente ahí).
+//   Se mantienen en este interface como campos de contexto de solo lectura
+//   para que los context builders T1–T11 los puedan consumir sin cambios.
+//   NO se escriben desde profileToUpsert (company-profile.service.ts).
+//
+//   areasPrioritarias es string[] — los valores son nombres de departamentos
+//   del store centralizado company_departments (tabla company_departments).
 
 export interface CompanyProfile {
-  // Identificación del engagement
+  // Identificación del proyecto
   engagementName:            string
-  // Datos del cliente
+  // Contexto nivel empresa (readonly — fuente de verdad: tabla companies)
   sector:                    string
   tamanoEmpresa:             string
+  // Contexto del proyecto
   objetivoPrincipalIA:       string
   horizonteEsperadoValor:    string
   ecosistemaTecnologico:     string
   restriccionesRelevantes:   string
-  areasPrioritarias:         BusinessArea[]
+  // Departamentos implicados en este proyecto (nombres de company_departments)
+  areasPrioritarias:         string[]
   // Registro de fricciones
   fricciones:                Friction[]
   // Meta
