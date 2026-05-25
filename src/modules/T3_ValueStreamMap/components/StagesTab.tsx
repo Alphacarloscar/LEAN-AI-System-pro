@@ -17,6 +17,9 @@
 import { useState } from 'react'
 import { useT3Store } from '../store'
 import { useEngagementStore } from '@/modules/Engagement/store'
+import { useDepartmentStore } from '@/modules/CompanyProfile/useDepartmentStore'
+import { Select } from '@/shared/design-system/components/Select'
+import type { SelectOption } from '@/shared/design-system/components/Select'
 import type { ProcessStage } from '../types'
 
 // ── Paleta de valor ──────────────────────────────────────────
@@ -60,6 +63,11 @@ interface StageModalProps {
 function StageModal({ processId, stage, onClose }: StageModalProps) {
   const { addStage, updateStage, removeStage } = useT3Store()
   const engagementId = useEngagementStore((s) => s.activeEngagementId)
+
+  // Departamentos centralizados
+  const { departments, isLoading: isLoadingDepts } = useDepartmentStore()
+  const deptOptions: SelectOption[] = departments.map((d) => ({ value: d.name, label: d.name }))
+  const hasDepts = deptOptions.length > 0
 
   const [form, setForm] = useState(
     stage
@@ -162,12 +170,25 @@ function StageModal({ processId, stage, onClose }: StageModalProps) {
               />
             </div>
             <div>
+              {/* Departamento — Select centralizado desde company_departments (opcional) */}
               <label className={labelCls}>Departamento</label>
-              <input
+              <Select
+                options={deptOptions}
                 value={form.department}
                 onChange={(e) => setF('department', e.target.value)}
-                placeholder="Ej: IT"
-                className={inputCls}
+                disabled={!hasDepts || isLoadingDepts}
+                placeholder={
+                  isLoadingDepts
+                    ? 'Cargando...'
+                    : hasDepts
+                    ? 'Selecciona (opcional)'
+                    : 'Sin departamentos'
+                }
+                helperText={
+                  !hasDepts && !isLoadingDepts
+                    ? 'Configura departamentos en Perfil de Empresa.'
+                    : undefined
+                }
               />
             </div>
           </div>
