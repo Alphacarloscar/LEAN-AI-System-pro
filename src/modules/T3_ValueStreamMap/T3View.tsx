@@ -17,6 +17,7 @@ import { useNavigate }                 from 'react-router-dom'
 import { useT3Store }                  from './store'
 import { useEngagementStore }          from '@/modules/Engagement/store'
 import { useCompanyProfileStore }      from '@/modules/CompanyProfile/store'
+import { useDepartmentStore }          from '@/modules/CompanyProfile/useDepartmentStore'
 import { useT1Store }                  from '@/modules/T1_MaturityRadar/store'
 import { computeOverallScore }         from '@/modules/T1_MaturityRadar/types'
 import { buildT3OpportunitiesContext } from './t3OpportunitiesContextBuilder'
@@ -925,6 +926,7 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
   const navigate                          = useNavigate()
   const { processes, addProcess, load, initDemo, isLoading: isLoadingT3 } = useT3Store()
   const engagementId                      = useEngagementStore((s) => s.activeEngagementId)
+  const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
 
   const { isReadOnly } = usePermissions()
 
@@ -934,6 +936,28 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
       load(engagementId)
     } else if (isDemoEnabled) {
       initDemo()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId])
+
+  // Carga departamentos centralizados desde company_departments
+  useEffect(() => {
+    if (!engagementId) return
+    let cancelled = false
+
+    supabase
+      .from('projects')
+      .select('company_id')
+      .eq('id', engagementId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled || !data?.company_id) return
+        fetchDepartments(data.company_id)
+      })
+
+    return () => {
+      cancelled = true
+      resetDepartments()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])
@@ -965,8 +989,6 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
 
   const totalCritica = processes.filter((p) => p.opportunityLevel === 'critica').length
   const totalAlta    = processes.filter((p) => p.opportunityLevel === 'alta').length
-
-  const existingDepts = Array.from(new Set(processes.map((p) => p.department)))
 
   function handleAddProcess(p: Omit<ValueStream, 'id' | 'createdAt'>) {
     addProcess(p, engagementId)
@@ -1235,7 +1257,6 @@ export function T3View({ companyName, onBack }: T3ViewProps) {
         <ProcessInterviewModal
           onClose={() => setShowModal(false)}
           onSubmit={handleAddProcess}
-          existingDepartments={existingDepts}
         />
       )}
     </div>

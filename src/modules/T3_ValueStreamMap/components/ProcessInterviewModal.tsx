@@ -28,13 +28,15 @@ import type {
   NewValueStreamForm,
   ValueStream,
 } from '../types'
+import { useDepartmentStore }            from '@/modules/CompanyProfile/useDepartmentStore'
+import { Select }                        from '@/shared/design-system/components/Select'
+import type { SelectOption }             from '@/shared/design-system/components/Select'
 
 // ── Props ─────────────────────────────────────────────────────
 
 interface ProcessInterviewModalProps {
   onClose:  () => void
   onSubmit: (process: Omit<ValueStream, 'id' | 'createdAt'>) => void
-  existingDepartments: string[]
 }
 
 // ── Fases del modal ───────────────────────────────────────────
@@ -65,23 +67,22 @@ const PHASE_ORDER: ProcessPhase[] = ['idea', 'validacion', 'piloto', 'estandariz
 
 function ProcessFormPhase({
   onNext,
-  existingDepartments,
 }: {
   onNext: (form: NewValueStreamForm) => void
-  existingDepartments: string[]
 }) {
   const [form, setForm] = useState<NewValueStreamForm>({
     name: '', department: '', owner: '', ownerRole: '', description: '', phase: 'validacion',
   })
-  const [showDepts, setShowDepts] = useState(false)
   const nameRef = useRef<HTMLInputElement>(null)
+
+  // Departamentos del store centralizado
+  const { departments, isLoading: isLoadingDepts } = useDepartmentStore()
+  const deptOptions: SelectOption[] = departments.map((d) => ({ value: d.name, label: d.name }))
+  const hasDepts = deptOptions.length > 0
 
   useEffect(() => { nameRef.current?.focus() }, [])
 
   const canContinue = form.name.trim() && form.department.trim()
-  const filteredDepts = existingDepartments.filter((d) =>
-    d.toLowerCase().includes(form.department.toLowerCase()) && d !== form.department
-  )
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -120,37 +121,29 @@ function ProcessFormPhase({
         />
       </div>
 
-      {/* Departamento — con autocomplete */}
-      <div className="flex flex-col gap-1.5 relative">
+      {/* Departamento — Select centralizado desde company_departments */}
+      <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-text-muted">
           Departamento / Área <span className="text-danger-dark">*</span>
         </label>
-        <input
-          type="text"
+        <Select
+          options={deptOptions}
           value={form.department}
-          onChange={(e) => { setForm({ ...form, department: e.target.value }); setShowDepts(true) }}
-          onFocus={() => setShowDepts(true)}
-          onBlur={() => setTimeout(() => setShowDepts(false), 150)}
-          placeholder="Ej: IT / Tecnología, Operaciones, Finanzas..."
-          className="w-full px-3 py-2 text-sm rounded-xl border border-border dark:border-white/10
-            bg-white dark:bg-gray-900 text-lean-black dark:text-gray-100
-            placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-navy/20"
+          onChange={(e) => setForm({ ...form, department: e.target.value })}
+          disabled={!hasDepts || isLoadingDepts}
+          placeholder={
+            isLoadingDepts
+              ? 'Cargando departamentos...'
+              : hasDepts
+              ? 'Selecciona un departamento'
+              : 'Configura los departamentos en el Perfil de Empresa primero'
+          }
+          helperText={
+            !hasDepts && !isLoadingDepts
+              ? 'Ve a Perfil de Empresa → Departamentos para configurarlos.'
+              : undefined
+          }
         />
-        {showDepts && filteredDepts.length > 0 && (
-          <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-white dark:bg-gray-900
-            border border-border dark:border-white/10 rounded-xl shadow-lg overflow-hidden">
-            {filteredDepts.map((d) => (
-              <button
-                key={d} type="button"
-                onMouseDown={() => { setForm({ ...form, department: d }); setShowDepts(false) }}
-                className="w-full px-3 py-2 text-left text-sm text-text-muted
-                  hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                {d}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Responsable + Rol */}
@@ -549,7 +542,7 @@ function ResultPhase({
 // ── Modal principal ───────────────────────────────────────────
 
 export function ProcessInterviewModal({
-  onClose, onSubmit, existingDepartments,
+  onClose, onSubmit,
 }: ProcessInterviewModalProps) {
   const [phase, setPhase]         = useState<Phase>('form')
   const [formData, setFormData]   = useState<NewValueStreamForm>({
@@ -646,7 +639,6 @@ export function ProcessInterviewModal({
           {phase === 'form' && (
             <ProcessFormPhase
               onNext={handleFormNext}
-              existingDepartments={existingDepartments}
             />
           )}
           {phase === 'interview' && (
