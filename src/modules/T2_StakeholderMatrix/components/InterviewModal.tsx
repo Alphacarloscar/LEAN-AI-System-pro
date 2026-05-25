@@ -24,14 +24,15 @@ import type {
   NewStakeholderForm,
   Stakeholder,
 } from '../types'
+import { useDepartmentStore }            from '@/modules/CompanyProfile/useDepartmentStore'
+import { Select }                        from '@/shared/design-system/components/Select'
+import type { SelectOption }             from '@/shared/design-system/components/Select'
 
 // ── Props ─────────────────────────────────────────────────────
 
 interface InterviewModalProps {
   onClose:  () => void
   onSubmit: (stakeholder: Omit<Stakeholder, 'id' | 'createdAt'>) => void
-  /** Departamentos existentes para sugerencias en el autocomplete */
-  existingDepartments: string[]
   /**
    * Si se pasa, el modal OMITE la fase de formulario y empieza directamente
    * en la entrevista. Útil para entrevistar stakeholders importados desde T1.
@@ -65,35 +66,28 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 
 function StakeholderFormPhase({
   onNext,
-  existingDepartments,
   initialValues,
 }: {
-  onNext:              (form: NewStakeholderForm) => void
-  existingDepartments: string[]
-  initialValues?:      NewStakeholderForm
+  onNext:         (form: NewStakeholderForm) => void
+  initialValues?: NewStakeholderForm
 }) {
-  const [form, setForm]       = useState<NewStakeholderForm>(
+  const [form, setForm] = useState<NewStakeholderForm>(
     initialValues ?? { name: '', role: '', department: '', unofficialTools: '' }
   )
-  const [showDepts, setShowDepts] = useState(false)
-  const nameRef               = useRef<HTMLInputElement>(null)
-  const deptRef               = useRef<HTMLInputElement>(null)
+  const nameRef = useRef<HTMLInputElement>(null)
 
-  // Si vienen valores iniciales (stakeholder existente), hacer foco en Departamento.
-  // Si es formulario en blanco, hacer foco en Nombre.
+  // Departamentos del store centralizado
+  const { departments, isLoading: isLoadingDepts } = useDepartmentStore()
+  const deptOptions: SelectOption[] = departments.map((d) => ({ value: d.name, label: d.name }))
+  const hasDepts = deptOptions.length > 0
+
+  // Foco en nombre al abrir (si es formulario en blanco)
   useEffect(() => {
-    if (initialValues?.name) {
-      deptRef.current?.focus()
-    } else {
-      nameRef.current?.focus()
-    }
+    if (!initialValues?.name) nameRef.current?.focus()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const canContinue = form.name.trim() && form.role.trim() && form.department.trim()
-  const filteredDepts = existingDepartments.filter((d) =>
-    d.toLowerCase().includes(form.department.toLowerCase()) && d !== form.department
-  )
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -125,8 +119,7 @@ function StakeholderFormPhase({
         />
       </div>
 
-      {/* Shadow AI — campo empático, opcional — va ANTES de Departamento
-          para evitar que el autocomplete de departamento lo cubra visualmente */}
+      {/* Shadow AI — campo empático, opcional */}
       <div className="space-y-1.5">
         <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
           Herramientas externas (opcional)
@@ -143,31 +136,29 @@ function StakeholderFormPhase({
         </p>
       </div>
 
-      <div className="space-y-1.5 relative">
-        <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">Departamento</label>
-        <input
-          ref={deptRef}
-          type="text"
+      {/* Departamento — Select centralizado desde company_departments */}
+      <div className="space-y-1.5">
+        <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
+          Departamento
+        </label>
+        <Select
+          options={deptOptions}
           value={form.department}
-          onChange={(e) => { setForm((f) => ({ ...f, department: e.target.value })); setShowDepts(true) }}
-          onBlur={() => setTimeout(() => setShowDepts(false), 150)}
-          placeholder="Ej. Operaciones, IT, Marketing…"
-          className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 dark:bg-gray-800 border border-border text-lean-black dark:text-gray-100 placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40 transition-all"
+          onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+          disabled={!hasDepts || isLoadingDepts}
+          placeholder={
+            isLoadingDepts
+              ? 'Cargando departamentos...'
+              : hasDepts
+              ? 'Selecciona un departamento'
+              : 'Configura los departamentos en el Perfil de Empresa primero'
+          }
+          helperText={
+            !hasDepts && !isLoadingDepts
+              ? 'Ve a Perfil de Empresa → Departamentos para configurarlos.'
+              : undefined
+          }
         />
-        {showDepts && filteredDepts.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-border rounded-lg shadow-md z-20 overflow-hidden">
-            {filteredDepts.map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => { setForm((f) => ({ ...f, department: d })); setShowDepts(false) }}
-                className="w-full text-left px-3 py-2 text-xs text-text-muted hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                {d}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border/60">
@@ -398,7 +389,7 @@ function ResultPhase({
 
 // ── Componente principal ──────────────────────────────────────
 
-export function InterviewModal({ onClose, onSubmit, existingDepartments, existingStakeholder }: InterviewModalProps) {
+export function InterviewModal({ onClose, onSubmit, existingStakeholder }: InterviewModalProps) {
   // Si hay stakeholder existente con departamento REAL (no 'Sin asignar'), saltamos el formulario.
   // 'Sin asignar' se asigna automáticamente en el import de T1 → hay que forzar el form para que el consultor lo corrija.
   const dept = existingStakeholder?.department?.trim() ?? ''
@@ -497,7 +488,7 @@ export function InterviewModal({ onClose, onSubmit, existingDepartments, existin
 
         {/* Contenido por fase */}
         <div className="px-6 py-5">
-          {phase === 'form'      && <StakeholderFormPhase  onNext={handleFormNext} existingDepartments={existingDepartments} initialValues={existingStakeholder ? form : undefined} />}
+          {phase === 'form'      && <StakeholderFormPhase  onNext={handleFormNext} initialValues={existingStakeholder ? form : undefined} />}
           {phase === 'interview' && <InterviewPhase         onComplete={handleInterviewComplete} />}
           {phase === 'result'    && <ResultPhase            form={form} answers={answers}         onConfirm={handleConfirm} />}
         </div>

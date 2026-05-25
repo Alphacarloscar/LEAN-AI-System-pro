@@ -19,6 +19,8 @@ import { useNavigate }                   from 'react-router-dom'
 import { useT2Store }                    from './store'
 import { useEngagementStore }            from '@/modules/Engagement/store'
 import { useCompanyProfileStore }        from '@/modules/CompanyProfile/store'
+import { useDepartmentStore }            from '@/modules/CompanyProfile/useDepartmentStore'
+import { supabase }                      from '@/lib/supabase'
 import { ARCHETYPE_CONFIG, RESISTANCE_CONFIG } from './constants'
 import { InterviewModal }                from './components/InterviewModal'
 import { ImportFromT1Modal }             from './components/ImportFromT1Modal'
@@ -772,13 +774,27 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
   const navigate       = useNavigate()
 
   const { isReadOnly } = usePermissions()
+  const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
 
   // Carga: real (Supabase) o demo (datos predefinidos del store)
+  // También obtiene company_id para inicializar el store de departamentos
   useEffect(() => {
     if (engagementId) {
       load(engagementId)
+      // Obtener company_id del proyecto para cargar departamentos centralizados
+      supabase
+        .from('projects')
+        .select('company_id')
+        .eq('id', engagementId)
+        .single()
+        .then(({ data }) => {
+          const cid = data?.company_id as string | null
+          if (cid) fetchDepartments(cid)
+        })
     } else if (isDemoEnabled) {
       initDemo()
+    } else {
+      resetDepartments()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])
@@ -791,10 +807,6 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
   const [showImportT1,        setShowImportT1]        = useState(false)
   const [interviewingExisting, setInterviewingExisting] = useState<Stakeholder | null>(null)
 
-  const existingDepartments = useMemo(
-    () => [...new Set(stakeholders.map((s) => s.department))],
-    [stakeholders]
-  )
 
   const t2LLMContext = useMemo(
     () => buildT2RecommendationContext(stakeholders, companyProfile),
@@ -966,7 +978,6 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
         <InterviewModal
           onClose={() => setShowModal(false)}
           onSubmit={handleAddStakeholder}
-          existingDepartments={existingDepartments}
         />
       )}
 
@@ -987,7 +998,6 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
               if (updated) setActiveStakeholder(updated)
             }, 50)
           }}
-          existingDepartments={existingDepartments}
           existingStakeholder={interviewingExisting}
         />
       )}

@@ -3,15 +3,14 @@
 //
 // CRUD visual de company_departments para CompanyProfileView.
 // - Chips Amber con botón de eliminar (hover reveal)
-// - Input con autocomplete contra ALL_BUSINESS_AREAS (sugerencias)
+// - Input de texto limpio (sin sugerencias)
 // - isReadOnly: oculta controles de escritura para Viewers
 // - Optimistic delete con rollback automático en error
 // ============================================================
 
-import { useState, useMemo }   from 'react'
-import { useDepartmentStore }  from './useDepartmentStore'
-import { usePermissions }      from '@/modules/Auth'
-import { ALL_BUSINESS_AREAS }  from './types'
+import { useState }          from 'react'
+import { useDepartmentStore } from './useDepartmentStore'
+import { usePermissions }     from '@/modules/Auth'
 
 // ── Props ─────────────────────────────────────────────────────
 
@@ -27,33 +26,34 @@ export function DepartmentManager({ companyId }: Props) {
   const { departments, isLoading, error, addDepartment, deleteDepartment } =
     useDepartmentStore()
 
-  const [inputValue,      setInputValue]      = useState('')
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const [isAdding,        setIsAdding]        = useState(false)
-
-  // Sugerencias: ALL_BUSINESS_AREAS filtradas por lo que ya existe
-  const unusedSuggestions = useMemo(() => {
-    const existing = new Set(departments.map((d) => d.name.toLowerCase()))
-    return ALL_BUSINESS_AREAS.filter((a) => !existing.has(a.toLowerCase()))
-  }, [departments])
-
-  const filteredSuggestions = useMemo(() => {
-    if (!inputValue.trim()) return unusedSuggestions
-    return unusedSuggestions.filter((s) =>
-      s.toLowerCase().includes(inputValue.toLowerCase())
-    )
-  }, [unusedSuggestions, inputValue])
+  const [inputValue, setInputValue] = useState('')
+  const [isAdding,   setIsAdding]   = useState(false)
+  const [localError, setLocalError] = useState<string | null>(null)
 
   // ── Handlers ──────────────────────────────────────────────
 
-  async function handleAdd(name?: string) {
-    const toAdd = (name ?? inputValue).trim()
+  async function handleAdd() {
+    const toAdd = inputValue.trim()
     if (!toAdd || !companyId) return
+
     setIsAdding(true)
-    await addDepartment(companyId, toAdd)
-    setInputValue('')
-    setShowSuggestions(false)
-    setIsAdding(false)
+    setLocalError(null)
+
+    try {
+      await addDepartment(companyId, toAdd)
+      // Solo limpiamos el input si no hubo error en el store
+      if (!useDepartmentStore.getState().error) {
+        setInputValue('')
+      }
+    } catch (err) {
+      // Captura errores inesperados que escapen del store
+      const msg = err instanceof Error ? err.message : 'Error inesperado al añadir departamento'
+      console.error('[DepartmentManager] handleAdd:', err)
+      setLocalError(msg)
+    } finally {
+      // Siempre apaga el spinner, pase lo que pase
+      setIsAdding(false)
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -62,13 +62,17 @@ export function DepartmentManager({ companyId }: Props) {
       handleAdd()
     }
     if (e.key === 'Escape') {
-      setShowSuggestions(false)
       setInputValue('')
+      setLocalError(null)
     }
   }
 
   // Guard: sin empresa activa no renderizamos nada
   if (!companyId) return null
+
+  // Mensaje de error activo: preferimos el del store (viene de Supabase),
+  // y como fallback el local (excepción inesperada en el componente)
+  const activeError = error ?? localError
 
   // ── Render ────────────────────────────────────────────────
 
@@ -122,83 +126,55 @@ export function DepartmentManager({ companyId }: Props) {
 
       {/* ── Input de alta — solo visible si no es ReadOnly ── */}
       {!isReadOnly && (
-        <div className="relative">
-          <div className="flex gap-2">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => {
+              setInputValue(e.target.value)
+              if (localError) setLocalError(null)
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="Nombre del departamento..."
+            disabled={isAdding}
+            className={[
+              'flex-1 px-4 py-2 rounded-lg text-sm transition-colors duration-150',
+              'bg-white dark:bg-gray-900',
+              'border border-border dark:border-white/8',
+              'text-lean-black dark:text-gray-100 placeholder-text-subtle dark:placeholder-gray-600',
+              'focus:outline-none focus:border-[#C8860A]/60 focus:ring-2 focus:ring-[#C8860A]/15',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+            ].join(' ')}
+          />
 
-            {/* Input + dropdown de sugerencias */}
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => {
-                  setInputValue(e.target.value)
-                  setShowSuggestions(true)
-                }}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                onKeyDown={handleKeyDown}
-                placeholder="Nombre del departamento..."
-                className={[
-                  'w-full px-4 py-2 rounded-lg text-sm transition-colors duration-150',
-                  'bg-white dark:bg-gray-900',
-                  'border border-border dark:border-white/8',
-                  'text-lean-black dark:text-gray-100 placeholder-text-subtle dark:placeholder-gray-600',
-                  'focus:outline-none focus:border-[#C8860A]/60 focus:ring-2 focus:ring-[#C8860A]/15',
-                ].join(' ')}
-              />
-
-              {/* Dropdown sugerencias */}
-              {showSuggestions && filteredSuggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 z-20 rounded-lg border border-border dark:border-white/10 bg-white dark:bg-gray-900 shadow-lg overflow-hidden">
-                  <p className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-text-subtle dark:text-gray-600 border-b border-border dark:border-white/6">
-                    Sugerencias habituales
-                  </p>
-                  <div className="max-h-44 overflow-y-auto">
-                    {filteredSuggestions.map((area) => (
-                      <button
-                        key={area}
-                        type="button"
-                        onMouseDown={(e) => { e.preventDefault(); handleAdd(area) }}
-                        className="w-full text-left px-4 py-2 text-sm text-lean-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors"
-                      >
-                        {area}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Botón añadir */}
-            <button
-              type="button"
-              onClick={() => handleAdd()}
-              disabled={!inputValue.trim() || isAdding}
-              className={[
-                'shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
-                inputValue.trim() && !isAdding
-                  ? 'bg-[#C8860A] text-white hover:bg-[#B07709] shadow-sm'
-                  : 'bg-gray-100 dark:bg-gray-800 text-text-subtle dark:text-gray-600 cursor-not-allowed',
-              ].join(' ')}
-            >
-              {isAdding ? (
-                <svg className="animate-spin h-3 w-3" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M7 1a6 6 0 11-6 6" strokeLinecap="round" />
-                </svg>
-              ) : (
-                <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M7 2v10M2 7h10" />
-                </svg>
-              )}
-              Añadir
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={!inputValue.trim() || isAdding}
+            className={[
+              'shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
+              inputValue.trim() && !isAdding
+                ? 'bg-[#C8860A] text-white hover:bg-[#B07709] shadow-sm'
+                : 'bg-gray-100 dark:bg-gray-800 text-text-subtle dark:text-gray-600 cursor-not-allowed',
+            ].join(' ')}
+          >
+            {isAdding ? (
+              <svg className="animate-spin h-3 w-3" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M7 1a6 6 0 11-6 6" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M7 2v10M2 7h10" />
+              </svg>
+            )}
+            Añadir
+          </button>
         </div>
       )}
 
       {/* ── Error ── */}
-      {error && (
-        <p className="text-[11px] text-danger-dark font-mono">{error}</p>
+      {activeError && (
+        <p className="text-[11px] text-danger-dark font-mono">{activeError}</p>
       )}
 
     </div>
