@@ -983,7 +983,7 @@ Estructura JSON requerida:
 {
   "archetypeMessages": [
     {
-      "archetypeCode": "ambassador|decisor|adoptador|especialista|critico",
+      "archetypeCode": "ambassador|decisor|adoptador|reticente|critico",
       "archetypeLabel": "Etiqueta del arquetipo",
       "headline": "Mensaje clave en 1 frase directa e impactante — menciona el contexto real del cliente",
       "keyPoints": [
@@ -1291,7 +1291,9 @@ function buildPrompt(tool: string, context: unknown): { system: string; user: st
     case 't8':
       return { system: T8_SYSTEM_PROMPT, user: buildT8UserMessage(ctx), maxTokens: 1500 }
     case 't8_comms':
-      return { system: T8_COMMS_SYSTEM_PROMPT, user: buildT8CommsUserMessage(ctx), maxTokens: 1500 }
+      // t8_comms genera hasta 5 mensajes por arquetipo con múltiples campos —
+      // 1500 tokens puede truncar el JSON. 2500 da margen suficiente.
+      return { system: T8_COMMS_SYSTEM_PROMPT, user: buildT8CommsUserMessage(ctx), maxTokens: 2500 }
     case 't3_opportunities':
       return { system: T3_OPPORTUNITIES_SYSTEM_PROMPT, user: buildT3OpportunitiesUserMessage(ctx), maxTokens: 1200 }
     case 't9':

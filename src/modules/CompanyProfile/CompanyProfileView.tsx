@@ -268,7 +268,7 @@ function FrictionCard({
 
 export function CompanyProfileView() {
   const navigate     = useNavigate()
-  const { isReadOnly } = usePermissions()
+  const { isReadOnly, canEditCompanySettings } = usePermissions()
 
   // ── Stores ────────────────────────────────────────────────────
   const {
@@ -467,7 +467,7 @@ export function CompanyProfileView() {
               </span>
             )}
 
-            {!isReadOnly && activeTab === 'empresa' && (
+            {canEditCompanySettings && activeTab === 'empresa' && (
               <button
                 onClick={handleCompanySave}
                 disabled={isCompanySaving || !companyId}
@@ -587,7 +587,7 @@ export function CompanyProfileView() {
                     onChange={(v) => setCompanySettings((s) => ({ ...s, sector: v }))}
                     options={SECTOR_OPTIONS}
                     placeholder="Seleccionar sector..."
-                    disabled={isReadOnly || !companyId}
+                    disabled={!canEditCompanySettings || !companyId}
                   />
                 </div>
                 <div>
@@ -597,7 +597,7 @@ export function CompanyProfileView() {
                     onChange={(v) => setCompanySettings((s) => ({ ...s, company_size: v }))}
                     options={COMPANY_SIZE_OPTIONS}
                     placeholder="Seleccionar tamaño..."
-                    disabled={isReadOnly || !companyId}
+                    disabled={!canEditCompanySettings || !companyId}
                   />
                 </div>
               </div>

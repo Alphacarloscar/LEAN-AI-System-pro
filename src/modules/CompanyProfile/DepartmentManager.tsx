@@ -4,7 +4,7 @@
 // CRUD visual de company_departments para CompanyProfileView.
 // - Chips Amber con botón de eliminar (hover reveal)
 // - Input de texto limpio (sin sugerencias)
-// - isReadOnly: oculta controles de escritura para Viewers
+// - canEditCompanySettings: oculta controles de escritura para client_editor y client_viewer
 // - Optimistic delete con rollback automático en error
 // ============================================================
 
@@ -22,7 +22,7 @@ interface Props {
 // ── Componente ────────────────────────────────────────────────
 
 export function DepartmentManager({ companyId }: Props) {
-  const { isReadOnly } = usePermissions()
+  const { canEditCompanySettings } = usePermissions()
   const { departments, isLoading, error, addDepartment, deleteDepartment } =
     useDepartmentStore()
 
@@ -102,7 +102,7 @@ export function DepartmentManager({ companyId }: Props) {
               className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 border border-[#C8860A]/30 bg-[#C8860A]/8 text-[#C8860A] dark:border-[#C8860A]/40 dark:bg-[#C8860A]/10 dark:text-[#E8A020]"
             >
               {dept.name}
-              {!isReadOnly && (
+              {canEditCompanySettings && (
                 <button
                   type="button"
                   onClick={() => deleteDepartment(dept.id)}
@@ -124,8 +124,8 @@ export function DepartmentManager({ companyId }: Props) {
         </p>
       )}
 
-      {/* ── Input de alta — solo visible si no es ReadOnly ── */}
-      {!isReadOnly && (
+      {/* ── Input de alta — solo visible para superadmin y consultant ── */}
+      {canEditCompanySettings && (
         <div className="flex gap-2">
           <input
             type="text"

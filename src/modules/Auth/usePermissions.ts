@@ -14,11 +14,18 @@ import { useAuthStore } from './store'
 interface Permissions {
   /** true únicamente para client_viewer — no puede modificar datos */
   isReadOnly: boolean
+  /**
+   * true solo para superadmin y consultant.
+   * Controla el Tab Empresa (sector, tamaño, departamentos).
+   * client_editor y client_viewer no pueden modificar datos a nivel empresa.
+   */
+  canEditCompanySettings: boolean
 }
 
 export function usePermissions(): Permissions {
   const { user } = useAuthStore()
   return {
-    isReadOnly: user?.role === 'client_viewer',
+    isReadOnly:             user?.role === 'client_viewer',
+    canEditCompanySettings: user?.role === 'superadmin' || user?.role === 'consultant',
   }
 }
