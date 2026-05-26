@@ -2166,13 +2166,14 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
   const stakeholders    = useT2Store(s => s.stakeholders)
 
   // Cargar datos cuando cambia el engagement activo.
-  // Guard anti-double-load: si el Eager Loading ya hidrató este engagement
-  // (loadedId === engagementId && !loading), omitir el fetch para evitar
-  // el spinner de re-carga que aparece aunque los datos ya estén en el store.
+  // Guard anti-double-load: si el store ya "conoce" este engagement
+  // (loadedId === engagementId), está en vuelo (Eager Loading) o ya cargado.
+  // En ambos casos omitir el fetch — el spinner de isLoading ya está activo
+  // desde Eager Loading; no hay que relanzar ni reiniciar el ciclo.
   useEffect(() => {
     if (!engagementId) return
-    const { engagementId: loadedId, isLoading: loading } = useT4Store.getState()
-    if (loadedId === engagementId && !loading) return
+    const { engagementId: loadedId } = useT4Store.getState()
+    if (loadedId === engagementId) return
     loadEngagement(engagementId)
   }, [engagementId])
 
