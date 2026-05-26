@@ -38,12 +38,6 @@ export interface PolicyGenerationContext {
     sinClasificar: number
     highRiskCases: Array<{ name: string; department: string }>
   }
-  iso42001: {
-    completionPercent: number
-    implemented:       number
-    notStarted:        number
-    criticalGaps:      Array<{ code: string; title: string }>
-  }
   useCases: {
     total:  number
     go:     number

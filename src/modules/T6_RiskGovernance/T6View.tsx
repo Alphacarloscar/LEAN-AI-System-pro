@@ -1,10 +1,11 @@
 // ============================================================
 // T6 — Risk & Governance View
 //
-// 3 tabs:
+// 2 tabs:
 //   1. Política IA — documento corporativo dinámico + descarga PDF
 //   2. Dashboard AI Act — distribución de riesgos + tabla por caso
-//   3. ISO 42001 — checklist de 14 controles con progreso
+//
+// ISO 42001 (controles) vive en T12.
 // ============================================================
 
 import { useState, useMemo, useEffect } from 'react'
@@ -14,10 +15,7 @@ import { useT2Store }        from '@/modules/T2_StakeholderMatrix'
 import { useT6Store }        from './store'
 import {
   AIACT_RISK_CONFIG,
-  ISO42001_CLAUSE_CONFIG,
-  ISO42001_STATUS_CONFIG,
 } from './constants'
-import type { ISO42001Status } from './types'
 import type { AIActRiskLevel } from '@/modules/T4_UseCasePriorityBoard/types'
 import { useCompanyProfileStore } from '@/modules/CompanyProfile/store'
 import { useEngagementStore }     from '@/modules/Engagement/store'
@@ -31,7 +29,7 @@ import { usePermissions }        from '@/modules/Auth'
 
 // ── Types ─────────────────────────────────────────────────────
 
-type T6Tab = 'politica' | 'riesgos' | 'iso42001'
+type T6Tab = 'politica' | 'riesgos'
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -73,7 +71,7 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
   const { isReadOnly } = usePermissions()
   const { useCases }   = useT4Store()
   const { canvas }     = useT5Store()
-  const { controls, generatedPolicy, clearGeneratedPolicy } = useT6Store()
+  const { generatedPolicy, clearGeneratedPolicy } = useT6Store()
   const profile        = useCompanyProfileStore((s) => s.profile)
   const { generate, isGenerating, error: genError, clearError } = usePolicyGeneration()
   const now            = new Date()
@@ -83,17 +81,6 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
 
   const approvedCases  = useCases.filter((uc) => uc.status === 'go' || uc.status === 'en_piloto')
   const highRiskCases  = useCases.filter((uc) => uc.aiActClassification?.riskLevel === 'alto' || uc.aiActClassification?.riskLevel === 'prohibido')
-
-  // ISO 42001 stats for policy document
-  const isoImplemented  = controls.filter(c => c.status === 'implementado').length
-  const isoInProgress   = controls.filter(c => c.status === 'en_progreso').length
-  const isoNotStarted   = controls.filter(c => c.status === 'no_iniciado').length
-  const isoPercent      = controls.length > 0
-    ? Math.round(((isoImplemented + isoInProgress * 0.5) / controls.length) * 100)
-    : 0
-  const isoCriticalGaps = controls
-    .filter(c => c.status === 'no_iniciado' && ['leadership', 'planning', 'operation'].includes(c.clause))
-    .slice(0, 3)
 
   // Company context
   const sector        = profile?.sector || null
@@ -126,12 +113,6 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
       highRiskCases: highRiskCases.slice(0, 5).map(uc => ({
         name: uc.name, department: uc.department ?? 'Sin departamento',
       })),
-    },
-    iso42001: {
-      completionPercent: isoPercent,
-      implemented:       isoImplemented,
-      notStarted:        isoNotStarted,
-      criticalGaps:      isoCriticalGaps.map(c => ({ code: c.code, title: c.title })),
     },
     useCases: {
       total:  useCases.length,
@@ -423,44 +404,10 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
             </section>
           )}
 
-          {/* ISO 42001 — Estado de implementación */}
-          <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
-              {highRiskCases.length > 0 ? '6.' : '5.'} Estado de Implementación ISO 42001
-            </h2>
-            <p className="text-sm text-text-muted leading-relaxed mb-4">
-              {companyName} está implementando el estándar ISO 42001 como marco de gestión del sistema
-              de IA. A la fecha de esta política, el nivel de implementación es del{' '}
-              <strong className="text-lean-black dark:text-gray-200">{isoPercent}%</strong>{' '}
-              ({isoImplemented} controles implementados, {isoInProgress} en progreso,{' '}
-              {isoNotStarted} no iniciados sobre un total de {controls.length} controles).
-            </p>
-            {isoCriticalGaps.length > 0 && (
-              <div className="rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/10 px-4 py-3 mb-3">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-amber-700 dark:text-amber-400 mb-2">
-                  Controles críticos pendientes (liderazgo · planificación · operación)
-                </p>
-                <ul className="flex flex-col gap-1">
-                  {isoCriticalGaps.map(c => (
-                    <li key={c.id} className="text-xs text-amber-700 dark:text-amber-300 flex items-start gap-1.5">
-                      <span className="shrink-0">▶</span>
-                      <span><strong>[{c.code}]</strong> {c.title}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {isoPercent === 100 && (
-              <p className="text-xs text-success-dark font-semibold">
-                ✓ Todos los controles ISO 42001 están implementados a la fecha de esta política.
-              </p>
-            )}
-          </section>
-
           {/* Roles y responsabilidades */}
           <section>
             <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
-              {highRiskCases.length > 0 ? '7.' : '6.'} Roles y Responsabilidades
+              {highRiskCases.length > 0 ? '6.' : '5.'} Roles y Responsabilidades
             </h2>
             <div className="flex flex-col gap-2">
               {Object.values(canvas.domains).slice(0, 4).map((d) => (
@@ -480,7 +427,7 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
           {/* Revisión */}
           <section>
             <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
-              {highRiskCases.length > 0 ? '8.' : '7.'} Revisión y Vigencia
+              {highRiskCases.length > 0 ? '7.' : '6.'} Revisión y Vigencia
             </h2>
             <p className="text-sm text-text-muted leading-relaxed">
               Esta política será revisada anualmente o ante cambios regulatorios significativos
@@ -716,153 +663,6 @@ function RiskDashboardTab() {
   )
 }
 
-// ── ── ── Tab 3: ISO 42001 ── ── ───────────────────────────────
-
-function ISO42001Tab() {
-  const { isReadOnly }              = usePermissions()
-  const { controls, updateControl } = useT6Store()
-  const { useCases }                = useT4Store()
-
-  // Auto-inferir estado de algunos controles desde datos reales
-  const enrichedControls = useMemo(() => {
-    const classifiedCount = useCases.filter((uc) => uc.aiActClassification).length
-    const approvedCount   = useCases.filter((uc) => uc.status === 'go' || uc.status === 'en_piloto').length
-
-    return controls.map((c) => {
-      // Si ya fue editado manualmente, no sobreescribir
-      if (!c.autoInferred && c.status !== 'no_iniciado') return c
-
-      let inferred: typeof c.status = c.status
-      if (c.id === '5.2')   inferred = 'en_progreso'   // política existe (este documento)
-      if (c.id === '6.1.2') inferred = classifiedCount > 0 ? 'en_progreso' : 'no_iniciado'
-      if (c.id === '6.1')   inferred = useCases.length > 0 ? 'en_progreso' : 'no_iniciado'
-      if (c.id === '8.1')   inferred = approvedCount > 0 ? 'en_progreso' : 'no_iniciado'
-      if (c.id === '7.5')   inferred = useCases.length > 0 ? 'en_progreso' : 'no_iniciado'
-
-      return { ...c, status: inferred, autoInferred: inferred !== c.status }
-    })
-  }, [controls, useCases])
-
-  const implemented = enrichedControls.filter((c) => c.status === 'implementado').length
-  const inProgress  = enrichedControls.filter((c) => c.status === 'en_progreso').length
-  const total       = enrichedControls.length
-  const progress    = Math.round(((implemented + inProgress * 0.5) / total) * 100)
-
-  // Agrupar por cláusula
-  const byClause = useMemo(() => {
-    const groups: Record<string, typeof enrichedControls> = {}
-    enrichedControls.forEach((c) => {
-      if (!groups[c.clause]) groups[c.clause] = []
-      groups[c.clause].push(c)
-    })
-    return groups
-  }, [enrichedControls])
-
-  return (
-    <div className="flex flex-col gap-5">
-
-      {/* Progress header */}
-      <div className="rounded-2xl border border-border bg-white dark:bg-gray-900 px-6 py-5">
-        <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
-          <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
-              Progreso hacia ISO 42001
-            </p>
-            <p className="text-3xl font-bold tabular-nums text-lean-black dark:text-gray-100">
-              {progress}%
-            </p>
-            <p className="text-xs text-text-muted mt-0.5">
-              {implemented} implementados · {inProgress} en progreso · {total - implemented - inProgress} no iniciados
-            </p>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {Object.entries(ISO42001_STATUS_CONFIG).map(([key, cfg]) => (
-              <div key={key} className="flex items-center gap-1.5">
-                <span className="text-sm" style={{ color: cfg.hex }}>{cfg.dot}</span>
-                <span className="text-[10px] text-text-muted">{cfg.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        {/* Progress bar segmentada */}
-        <div className="w-full h-3 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden flex">
-          <div
-            className="h-full bg-success-dark transition-all duration-500"
-            style={{ width: `${(implemented / total) * 100}%` }}
-          />
-          <div
-            className="h-full bg-warning-dark transition-all duration-500"
-            style={{ width: `${(inProgress / total) * 100}%` }}
-          />
-        </div>
-        <p className="text-[9px] text-text-subtle mt-2">
-          14 controles clave seleccionados de las cláusulas 4–10 del estándar ISO/IEC 42001:2023.
-          Haz clic en cualquier control para actualizar su estado.
-        </p>
-      </div>
-
-      {/* Controles agrupados por cláusula */}
-      {Object.entries(byClause).map(([clause, clauseControls]) => {
-        const clauseCfg = ISO42001_CLAUSE_CONFIG[clause as keyof typeof ISO42001_CLAUSE_CONFIG]
-        return (
-          <div key={clause} className="rounded-2xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
-            <div
-              className="px-5 py-3 border-b border-border dark:border-white/6"
-              style={{ borderLeftWidth: 3, borderLeftColor: clauseCfg.hex }}
-            >
-              <p className="text-xs font-semibold" style={{ color: clauseCfg.hex }}>
-                {clauseCfg.label}
-              </p>
-            </div>
-            <div className="divide-y divide-border/40 dark:divide-white/4">
-              {clauseControls.map((control) => {
-                const statusCfg = ISO42001_STATUS_CONFIG[control.status]
-                const STATUS_CYCLE: ISO42001Status[] = ['no_iniciado', 'en_progreso', 'implementado']
-                const nextStatus = STATUS_CYCLE[(STATUS_CYCLE.indexOf(control.status) + 1) % STATUS_CYCLE.length]
-
-                return (
-                  <div key={control.id} className="px-5 py-3 flex items-start gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
-                    {/* Status toggle */}
-                    {!isReadOnly && (
-                      <button
-                        onClick={() => updateControl(control.id, nextStatus)}
-                        title={`Cambiar a: ${ISO42001_STATUS_CONFIG[nextStatus].label}`}
-                        className="shrink-0 mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-sm transition-all hover:scale-110"
-                        style={{ color: statusCfg.hex }}
-                      >
-                        {statusCfg.dot}
-                      </button>
-                    )}
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                        <span className="text-[9px] font-mono text-text-subtle">{control.code}</span>
-                        <p className="text-xs font-semibold text-lean-black dark:text-gray-200">{control.title}</p>
-                        {control.autoInferred && (
-                          <span className="px-1.5 py-0.5 rounded-full text-[8px] font-semibold bg-navy/10 text-navy dark:text-warm-100">
-                            auto
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-text-subtle leading-relaxed">{control.description}</p>
-                    </div>
-
-                    {/* Badge */}
-                    <span className={`shrink-0 inline-flex px-2 py-0.5 rounded-full text-[9px] font-semibold ${statusCfg.badgeBg} ${statusCfg.badgeText}`}>
-                      {statusCfg.label}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 // ── ── ── Main View ── ── ────────────────────────────────────────
 
 export function T6View({
@@ -875,7 +675,7 @@ export function T6View({
   const [tab, setTab]    = useState<T6Tab>('politica')
   const { useCases }     = useT4Store()
   const { canvas }       = useT5Store()
-  const { controls, syncEngagement: syncT6 } = useT6Store()
+  const { syncEngagement: syncT6 } = useT6Store()
   const companyProfile   = useCompanyProfileStore((s) => s.profile)
   const engagementId     = useEngagementStore((s) => s.activeEngagementId)
 
@@ -883,9 +683,9 @@ export function T6View({
 
   const t6LLMContext = useMemo(() =>
     companyProfile
-      ? buildT6RecommendationContext(useCases, canvas, controls, companyProfile)
+      ? buildT6RecommendationContext(useCases, canvas, companyProfile)
       : null,
-    [useCases, canvas, controls, companyProfile]
+    [useCases, canvas, companyProfile]
   )
 
   const unclassified = useCases.filter((uc) => !uc.aiActClassification).length
@@ -941,20 +741,18 @@ export function T6View({
       <div className="flex gap-2 flex-wrap print:hidden">
         <TabButton active={tab === 'politica'}  label="📄 Política IA Corporativa"   onClick={() => setTab('politica')} />
         <TabButton active={tab === 'riesgos'}   label="⚖️ Dashboard AI Act"          badge={highRisk > 0 ? `${highRisk} alto` : undefined} onClick={() => setTab('riesgos')} />
-        <TabButton active={tab === 'iso42001'}  label="✅ Controles ISO 42001"        onClick={() => setTab('iso42001')} />
       </div>
 
       {/* Tab content */}
       {tab === 'politica'  && <PolicyTab companyName={companyName} engagementId={engagementId} />}
       {tab === 'riesgos'   && <RiskDashboardTab />}
-      {tab === 'iso42001'  && <ISO42001Tab />}
 
       {/* LLM Recommendations */}
       {t6LLMContext && (
         <RecommendationPanel
           tool="t6"
           title="Análisis de Riesgo y Cumplimiento"
-          subtitle="Recomendaciones de gobernanza basadas en tu exposición AI Act e implementación ISO 42001"
+          subtitle="Recomendaciones de gobernanza basadas en tu exposición AI Act"
           context={t6LLMContext}
           engagementId={engagementId}
         />

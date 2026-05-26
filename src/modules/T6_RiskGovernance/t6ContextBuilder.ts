@@ -2,14 +2,15 @@
 // T6 — Context Builder para LLM Recommendations
 //
 // Construye el contexto para la Edge Function ai-recommend
-// a partir de los datos de T4 (AI Act), T5 (dominios), T6 (ISO 42001)
+// a partir de los datos de T4 (AI Act), T5 (dominios)
 // y el perfil de empresa.
+//
+// ISO 42001 (controles) vive en T12 — eliminado de este builder.
 // ============================================================
 
-import type { UseCase }            from '@/modules/T4_UseCasePriorityBoard/types'
-import type { T5Canvas }           from '@/modules/T5_AITaxonomyCanvas/types'
-import type { ISO42001Control }    from './types'
-import type { CompanyProfile }     from '@/modules/CompanyProfile/types'
+import type { UseCase }        from '@/modules/T4_UseCasePriorityBoard/types'
+import type { T5Canvas }       from '@/modules/T5_AITaxonomyCanvas/types'
+import type { CompanyProfile } from '@/modules/CompanyProfile/types'
 
 // ── Tipos de salida ───────────────────────────────────────────
 
@@ -28,14 +29,6 @@ export interface T6RecommendationContext {
     sinClasificar: number
     highRiskCases: Array<{ name: string; department: string }>
   }
-  iso42001: {
-    totalControls:      number
-    implemented:        number
-    inProgress:         number
-    notStarted:         number
-    completionPercent:  number
-    criticalGaps:       Array<{ code: string; title: string; clause: string }>
-  }
   t5Domains: {
     activationSequence: string[]
     totalDomains:       number
@@ -53,10 +46,9 @@ export interface T6RecommendationContext {
 // ── Builder ───────────────────────────────────────────────────
 
 export function buildT6RecommendationContext(
-  useCases:  UseCase[],
-  canvas:    T5Canvas,
-  controls:  ISO42001Control[],
-  profile:   CompanyProfile,
+  useCases: UseCase[],
+  canvas:   T5Canvas,
+  profile:  CompanyProfile,
 ): T6RecommendationContext {
 
   // AI Act risk breakdown
@@ -78,20 +70,6 @@ export function buildT6RecommendationContext(
       name:       uc.name,
       department: uc.department ?? 'Sin departamento',
     }))
-
-  // ISO 42001 breakdown
-  const implemented = controls.filter(c => c.status === 'implementado').length
-  const inProgress  = controls.filter(c => c.status === 'en_progreso').length
-  const notStarted  = controls.filter(c => c.status === 'no_iniciado').length
-  const completionPercent = controls.length > 0
-    ? Math.round(((implemented * 1 + inProgress * 0.5) / controls.length) * 100)
-    : 0
-
-  // Critical gaps: controls not started in key clauses
-  const criticalGaps = controls
-    .filter(c => c.status === 'no_iniciado' && ['leadership', 'planning', 'operation'].includes(c.clause))
-    .slice(0, 4)
-    .map(c => ({ code: c.code, title: c.title, clause: c.clause }))
 
   // T5 domains summary
   const domainEntries = Object.entries(canvas.domains)
@@ -119,14 +97,6 @@ export function buildT6RecommendationContext(
       total: useCases.length,
       ...byRisk,
       highRiskCases,
-    },
-    iso42001: {
-      totalControls: controls.length,
-      implemented,
-      inProgress,
-      notStarted,
-      completionPercent,
-      criticalGaps,
     },
     t5Domains: {
       activationSequence: canvas.activationSequence.slice(0, 4),

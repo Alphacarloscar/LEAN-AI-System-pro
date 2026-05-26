@@ -126,9 +126,10 @@ function computeDefaultOverride(uc: UseCase): T9ItemOverride {
 
   // Prioridad: fechas explícitas (startDate/endDate) > quarter + duración estimada
   if (uc.roadmap?.startDate) {
-    const startMonth = new Date(uc.roadmap.startDate).getMonth()
+    // Append T12:00:00 to avoid UTC-midnight timezone boundary issue (UTC+1/+2 shifts month)
+    const startMonth = new Date(uc.roadmap.startDate + 'T12:00:00').getMonth()
     const endMonth   = uc.roadmap?.endDate
-      ? new Date(uc.roadmap.endDate).getMonth()
+      ? new Date(uc.roadmap.endDate + 'T12:00:00').getMonth()
       : Math.min(startMonth + durationToSpan(uc.roadmap?.estimatedDuration) - 1, 11)
     return {
       useCaseId:   uc.id,
@@ -532,8 +533,12 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
     if (engagementId && t4EngagementId !== engagementId) loadT4(engagementId)
   }, [engagementId, t4EngagementId])
 
-  // Solo casos con decisión Go confirmada
-  const goCases = useCases.filter((uc) => uc.goNoGo?.decision === 'go')
+  // Casos de uso aprobados para la hoja de ruta: go, en_piloto o completado.
+  // Se filtra por status (campo T4 canónico), no por goNoGo.decision —
+  // goNoGo es un campo documental opcional que T4 no sincroniza automáticamente con status.
+  const goCases = useCases.filter((uc) =>
+    (uc.status === 'go' || uc.status === 'en_piloto' || uc.status === 'completado')
+  )
 
   const t9LLMContext = useMemo(
     () => companyProfile

@@ -207,7 +207,7 @@ export default function App() {
         <Route
           element={
             <ProtectedRoute>
-              <AppLayout phases={scenario.phases} />
+              <AppLayout phases={scenario.phases.filter((p) => p.id !== 'handover')} />
             </ProtectedRoute>
           }
         >
