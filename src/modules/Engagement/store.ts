@@ -16,7 +16,7 @@ import { create }                         from 'zustand'
 import { persist }                        from 'zustand/middleware'
 import { listMyProjects, createProject }  from '@/services/projects.service'
 import { supabase }                       from '@/lib/supabase'
-import { resetAllEngagementStores }       from '@/lib/resetEngagementStores'
+import { resetAllEngagementStores, loadAllCriticalStores } from '@/lib/resetEngagementStores'
 import type { ProjectRow }                from '@/types/database.types'
 
 interface EngagementStore {
@@ -82,6 +82,16 @@ export const useEngagementStore = create<EngagementStore>()(
         // Garantiza cero stale data entre proyectos — Sprint 9 Bloque 2
         resetAllEngagementStores()
         set({ activeEngagementId: id })
+
+        // Eager Loading: disparar carga paralela de stores críticos (T1–T4)
+        // Fire-and-forget — los stale guards de cada store descartan resultados
+        // en vuelo si el usuario vuelve a cambiar de proyecto antes de que terminen.
+        // Sprint 9 Bloque 3: navegación instantánea sin spinners por pantalla.
+        if (id) {
+          loadAllCriticalStores(id).catch(() => {
+            // Errores individuales ya se loguean dentro de cada store (console.error)
+          })
+        }
       },
 
       createAndSelect: async (name, companyId) => {

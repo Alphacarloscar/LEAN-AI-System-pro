@@ -547,10 +547,22 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
     [goCases, freeItems, overrides, companyProfile]
   )
 
-  // Construir filas ai_import: merge T4 data + override persistido (o default calculado)
+  // Construir filas ai_import: merge T4 data + override persistido
+  //
+  // Regla de precedencia:
+  //   — Si el caso tiene startDate explícito en T4, la POSICIÓN siempre se
+  //     recalcula desde T4 (evita que overrides persistidos antes de que
+  //     existiera startDate/endDate sombreen los datos reales).
+  //   — El campo `responsible` sí se conserva del override si el usuario
+  //     lo editó manualmente.
+  //   — Si no hay startDate, se usa el override persistido completo o el
+  //     default calculado por quarter/duración.
   const aiRows: AIGanttRow[] = goCases.map((uc) => {
     const persisted = overrides.find((o) => o.useCaseId === uc.id)
-    const override  = persisted ?? computeDefaultOverride(uc)
+    const computed  = computeDefaultOverride(uc)
+    const override: T9ItemOverride = uc.roadmap?.startDate
+      ? { ...computed, responsible: persisted?.responsible ?? computed.responsible }
+      : (persisted ?? computed)
     return { kind: 'ai' as const, uc, override }
   })
 
@@ -587,9 +599,10 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
   function handleEditSave(rowId: string) {
     const aiRow = aiRows.find((r) => r.uc.id === rowId)
     if (aiRow) {
-      const existing = overrides.find((o) => o.useCaseId === rowId)
-        ?? computeDefaultOverride(aiRow.uc)
-      setOverride({ ...existing, responsible: editValue })
+      // Siempre recomputar posición desde T4 al persistir responsible,
+      // para no congelar posiciones stale en el override guardado.
+      const base = computeDefaultOverride(aiRow.uc)
+      setOverride({ ...base, responsible: editValue })
     } else {
       updateFreeItem(rowId, { responsible: editValue })
     }

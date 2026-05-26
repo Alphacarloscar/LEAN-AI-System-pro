@@ -1,19 +1,30 @@
 // ============================================================
-// resetEngagementStores — Hard Reset al cambiar de proyecto
+// resetEngagementStores — Hard Reset + Eager Loading al cambiar de proyecto
 //
-// Limpia sincrónicamente TODOS los stores con datos scoped
-// al engagement activo. Se llama desde selectEngagement en
-// el Engagement store, ANTES de actualizar activeEngagementId.
+// resetAllEngagementStores():
+//   Limpia sincrónicamente TODOS los stores con datos scoped
+//   al engagement activo. Se llama desde selectEngagement en
+//   el Engagement store, ANTES de actualizar activeEngagementId.
+//   Efecto: cero stale data cuando React re-renderiza con el
+//   nuevo engagementId.
 //
-// Efecto: cuando React re-renderiza las vistas con el nuevo
-// engagementId, los stores ya están vacíos — cero stale data.
+// loadAllCriticalStores(engagementId):
+//   Dispara en paralelo (Promise.allSettled) el load de los
+//   stores que actúan como fuente de datos para otros módulos:
+//     T1 ← base de diagnóstico (T2, T10)
+//     T2 ← stakeholders (T7, T8)
+//     T3 ← procesos (T4)
+//     T4 ← casos de uso (T9, T7, T8, T6)
+//   Fire-and-forget desde selectEngagement: si el usuario vuelve
+//   a cambiar de proyecto antes de que terminen, el stale guard
+//   de cada store descarta los resultados en vuelo.
 //
-// Cada store usa el mecanismo más adecuado:
-//   reset()           — T1, T2, T3, T4 (limpia datos + isLoading)
-//   syncEngagement(null) — T5, T6, T7, T8, T9 (limpia canvas/plan/policy)
-//   resetAll()        — T12 (limpia controles ISO)
+// Cada store usa el mecanismo de reset más adecuado:
+//   reset()              — T1, T2, T3, T4
+//   syncEngagement(null) — T5, T6, T7, T8, T9
+//   resetAll()           — T12
 //
-// Sprint 9 — Bloque 2: Estabilización arquitectónica Zustand
+// Sprint 9 — Bloque 2 (estabilización) + Bloque 3 (eager loading)
 // ============================================================
 
 import { useT1Store }   from '@/modules/T1_MaturityRadar/store'
@@ -51,4 +62,19 @@ export function resetAllEngagementStores(): void {
 
   // T12: assessment ISO 42001
   useT12Store.getState().resetAll()
+}
+
+/**
+ * Carga en paralelo los stores de datos críticos (T1–T4).
+ * Fire-and-forget: se llama desde selectEngagement sin await.
+ * Los stale guards de cada store protegen contra cargas en vuelo
+ * si el usuario cambia de proyecto antes de que terminen.
+ */
+export async function loadAllCriticalStores(engagementId: string): Promise<void> {
+  await Promise.allSettled([
+    useT1Store.getState().load(engagementId),
+    useT2Store.getState().load(engagementId),
+    useT3Store.getState().load(engagementId),
+    useT4Store.getState().loadEngagement(engagementId),
+  ])
 }
