@@ -127,15 +127,22 @@ function computeDefaultOverride(uc: UseCase): T9ItemOverride {
   // Prioridad: fechas explícitas (startDate/endDate) > quarter + duración estimada
   if (uc.roadmap?.startDate) {
     // Append T12:00:00 to avoid UTC-midnight timezone boundary issue (UTC+1/+2 shifts month)
-    const startMonth = new Date(uc.roadmap.startDate + 'T12:00:00').getMonth()
-    const endMonth   = uc.roadmap?.endDate
-      ? new Date(uc.roadmap.endDate + 'T12:00:00').getMonth()
-      : Math.min(startMonth + durationToSpan(uc.roadmap?.estimatedDuration) - 1, 11)
-    return {
-      useCaseId:   uc.id,
-      startMonth,
-      endMonth:    Math.min(Math.max(endMonth, startMonth), 11),
-      responsible,
+    const startD = new Date(uc.roadmap.startDate + 'T12:00:00')
+    // NaN guard: si la fecha es malformada, caer al branch quarter/duración
+    if (!isNaN(startD.getTime())) {
+      const startMonth = startD.getMonth()
+      const endD       = uc.roadmap?.endDate
+        ? new Date(uc.roadmap.endDate + 'T12:00:00')
+        : null
+      const endMonth   = (endD && !isNaN(endD.getTime()))
+        ? endD.getMonth()
+        : Math.min(startMonth + durationToSpan(uc.roadmap?.estimatedDuration) - 1, 11)
+      return {
+        useCaseId:   uc.id,
+        startMonth,
+        endMonth:    Math.min(Math.max(endMonth, startMonth), 11),
+        responsible,
+      }
     }
   }
 

@@ -102,7 +102,7 @@ export const useT9Store = create<T9Store>()(
     }),
     {
       name:    'lean-t9-roadmap',
-      version: 2,
+      version: 3,  // invalida overrides stale (pre-startDate era) en localStorage
     }
   )
 )

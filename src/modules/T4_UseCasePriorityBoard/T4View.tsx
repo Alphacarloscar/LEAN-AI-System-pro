@@ -2165,10 +2165,16 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
   const dimensionStates = useT1Store(s => s.dimensionStates)
   const stakeholders    = useT2Store(s => s.stakeholders)
 
-  // Recargar datos cuando cambia el engagement activo
+  // Cargar datos cuando cambia el engagement activo.
+  // Guard anti-double-load: si el Eager Loading ya hidrató este engagement
+  // (loadedId === engagementId && !loading), omitir el fetch para evitar
+  // el spinner de re-carga que aparece aunque los datos ya estén en el store.
   useEffect(() => {
-    if (engagementId) loadEngagement(engagementId)
-  }, [engagementId, loadEngagement])
+    if (!engagementId) return
+    const { engagementId: loadedId, isLoading: loading } = useT4Store.getState()
+    if (loadedId === engagementId && !loading) return
+    loadEngagement(engagementId)
+  }, [engagementId])
 
   const [activeId, setActiveId]     = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)
