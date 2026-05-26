@@ -35,6 +35,8 @@ interface T1Store {
   isLoading:              boolean
   /** RC-1: engagement en vuelo — evita que F-06 bloquee cargas de otro engagement */
   loadingForEngagementId: string | null
+  /** Error de carga — visible en RetryBanner si != null */
+  loadError:              string | null
 
   // ── Carga desde Supabase ────────────────────────────────────
   load: (engagementId: string) => Promise<void>
@@ -132,13 +134,14 @@ export const useT1Store = create<T1Store>()((set, get) => ({
   activeId:               '',
   isLoading:              false,
   loadingForEngagementId: null,
+  loadError:              null,
 
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
     const s = get()
     // F-06 engagement-aware: solo bloquear si estamos cargando ESTE mismo engagement
     if (s.isLoading && s.loadingForEngagementId === engagementId) return
-    set({ isLoading: true, loadingForEngagementId: engagementId })
+    set({ isLoading: true, loadingForEngagementId: engagementId, loadError: null })
 
     const LOAD_TIMEOUT_MS = 15_000
 
@@ -156,12 +159,17 @@ export const useT1Store = create<T1Store>()((set, get) => ({
         dimensionStates,
         activeId: interviewees[0]?.id ?? '',
         isLoading: false,
+        loadError: null,
       })
     } catch (err) {
       if (get().loadingForEngagementId !== engagementId) return  // stale load post-reset, ignorar
       const isTimeout = (err as Error)?.message === 'T1_LOAD_TIMEOUT'
-      console.error('[T1Store] load:', isTimeout ? 'timeout (>15s) — check Supabase connection' : err)
-      set({ isLoading: false })
+      const message = isTimeout
+        ? 'Timeout de carga (>15s) — comprueba la conexión con Supabase'
+        : `Error al cargar T1: ${(err as Error)?.message ?? String(err)}`
+      // Log completo para depuración — incluye el objeto de error original
+      console.error('[T1Store] load FAILED for engagement', engagementId, '—', message, err)
+      set({ isLoading: false, loadError: message })
     }
   },
 
@@ -349,5 +357,5 @@ export const useT1Store = create<T1Store>()((set, get) => ({
   },
 
   // ── reset ──────────────────────────────────────────────────
-  reset: () => set({ interviewees: [], dimensionStates: {}, activeId: '', isLoading: false, loadingForEngagementId: null }),
+  reset: () => set({ interviewees: [], dimensionStates: {}, activeId: '', isLoading: false, loadingForEngagementId: null, loadError: null }),
 }))

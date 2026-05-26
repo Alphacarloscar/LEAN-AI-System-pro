@@ -14,6 +14,7 @@
 // ============================================================
 
 import { useState, useMemo, useRef, useEffect } from 'react'
+import { RetryBanner }                          from '@/shared/components/RetryBanner'
 import type { DemoScenario }                    from '@/data/demo/types'
 import { DIMENSION_DEFINITIONS, TOTAL_SUBDIMENSIONS } from './constants'
 import type { T1DimensionState, T1SubdimensionState } from './types'
@@ -336,6 +337,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
   const intervieweeStates = store.dimensionStates
   const activeId          = store.activeId
   const isLoadingT1       = store.isLoading
+  const loadErrorT1       = store.loadError
 
   // Carga: real (Supabase) o demo (datos del scenario)
   useEffect(() => {
@@ -563,8 +565,16 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
         </div>
       )}
 
-      {/* ── Contenido principal (oculto durante carga) ── */}
-      <div className={isLoadingT1 ? 'hidden' : ''}>
+      {/* ── Error de carga — visible si loadErrorT1 != null ── */}
+      {!isLoadingT1 && loadErrorT1 && (
+        <RetryBanner
+          message={loadErrorT1}
+          onRetry={() => { if (engagementId) store.load(engagementId) }}
+        />
+      )}
+
+      {/* ── Contenido principal (oculto durante carga o error) ── */}
+      <div className={isLoadingT1 || loadErrorT1 ? 'hidden' : ''}>
 
       {/* ── Selector de entrevistados — collapsible ── */}
       <div className="max-w-6xl mx-auto px-8 py-3">
