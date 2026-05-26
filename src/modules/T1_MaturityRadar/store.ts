@@ -31,8 +31,10 @@ import type {
 interface T1Store {
   interviewees:    T1IntervieweeContext[]
   dimensionStates: Record<string, T1DimensionState[]>   // clave = interviewee.id
-  activeId:        string
-  isLoading:       boolean
+  activeId:               string
+  isLoading:              boolean
+  /** RC-1: engagement en vuelo — evita que F-06 bloquee cargas de otro engagement */
+  loadingForEngagementId: string | null
 
   // ── Carga desde Supabase ────────────────────────────────────
   load: (engagementId: string) => Promise<void>
@@ -125,15 +127,18 @@ function updateSubdimension(
 // ── Store ─────────────────────────────────────────────────────
 
 export const useT1Store = create<T1Store>()((set, get) => ({
-  interviewees:    [],
-  dimensionStates: {},
-  activeId:        '',
-  isLoading:       false,
+  interviewees:           [],
+  dimensionStates:        {},
+  activeId:               '',
+  isLoading:              false,
+  loadingForEngagementId: null,
 
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
-    if (get().isLoading) return  // F-06: guard contra doble-load por re-render
-    set({ isLoading: true })
+    const s = get()
+    // F-06 engagement-aware: solo bloquear si estamos cargando ESTE mismo engagement
+    if (s.isLoading && s.loadingForEngagementId === engagementId) return
+    set({ isLoading: true, loadingForEngagementId: engagementId })
 
     const LOAD_TIMEOUT_MS = 15_000
 

@@ -181,8 +181,10 @@ const DEMO_PROCESSES: ValueStream[] = [
 // ── Store ─────────────────────────────────────────────────────
 
 interface T3Store {
-  processes:  ValueStream[]
-  isLoading:  boolean
+  processes:              ValueStream[]
+  isLoading:              boolean
+  /** RC-1: engagement en vuelo — evita que F-06 bloquee cargas de otro engagement */
+  loadingForEngagementId: string | null
 
   /** Carga value streams desde Supabase para el engagement activo */
   load: (engagementId: string) => Promise<void>
@@ -203,13 +205,16 @@ interface T3Store {
 }
 
 export const useT3Store = create<T3Store>()((set, get) => ({
-  processes: [],
-  isLoading: false,
+  processes:              [],
+  isLoading:              false,
+  loadingForEngagementId: null,
 
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
-    if (get().isLoading) return  // F-06: guard contra doble-load por re-render
-    set({ isLoading: true })
+    const s = get()
+    // F-06 engagement-aware: solo bloquear si estamos cargando ESTE mismo engagement
+    if (s.isLoading && s.loadingForEngagementId === engagementId) return
+    set({ isLoading: true, loadingForEngagementId: engagementId })
 
     // F-07: timeout de seguridad — evita spinner infinito si Supabase no responde
     const LOAD_TIMEOUT_MS = 10_000

@@ -186,9 +186,11 @@ const DEMO_STAKEHOLDERS: Stakeholder[] = [
 // ── Store ─────────────────────────────────────────────────────
 
 interface T2Store {
-  stakeholders: Stakeholder[]
-  isLoading:    boolean
-  lastError:    string | null
+  stakeholders:           Stakeholder[]
+  isLoading:              boolean
+  /** RC-1: engagement en vuelo — evita que F-06 bloquee cargas de otro engagement */
+  loadingForEngagementId: string | null
+  lastError:              string | null
 
   /** Carga stakeholders desde Supabase para el engagement activo */
   load: (engagementId: string) => Promise<void>
@@ -204,14 +206,17 @@ interface T2Store {
 }
 
 export const useT2Store = create<T2Store>()((set, get) => ({
-  stakeholders: [],
-  isLoading:    false,
-  lastError:    null,
+  stakeholders:           [],
+  isLoading:              false,
+  loadingForEngagementId: null,
+  lastError:              null,
 
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
-    if (get().isLoading) return  // F-06: guard contra doble-load por re-render
-    set({ isLoading: true, lastError: null })
+    const s = get()
+    // F-06 engagement-aware: solo bloquear si estamos cargando ESTE mismo engagement
+    if (s.isLoading && s.loadingForEngagementId === engagementId) return
+    set({ isLoading: true, loadingForEngagementId: engagementId, lastError: null })
     try {
       const stakeholders = await fetchStakeholders(engagementId)
       set({ stakeholders, isLoading: false, lastError: null })

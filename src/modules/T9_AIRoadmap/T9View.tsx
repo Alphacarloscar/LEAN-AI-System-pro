@@ -518,7 +518,7 @@ function AddFreeItemForm({ form, onChange, onSave, onCancel }: AddFormProps) {
 
 export function T9View({ companyName, onBack }: T9ViewProps) {
   const { isReadOnly } = usePermissions()
-  const { useCases, loadEngagement: loadT4 }            = useT4Store()
+  const { useCases, engagementId: t4EngagementId, loadEngagement: loadT4 } = useT4Store()
   const { overrides, freeItems, setOverride, addFreeItem, updateFreeItem, syncEngagement: syncT9 } = useT9Store()
   const { profile: companyProfile }                     = useCompanyProfileStore()
   const engagementId                                    = useEngagementStore((s) => s.activeEngagementId)
@@ -526,10 +526,11 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
   // Scoping: si cambia el engagement, limpia overrides y freeItems del cliente anterior
   useEffect(() => { syncT9(engagementId) }, [engagementId])
 
-  // Cargar T4 al montar T9 (por si el usuario llega directamente sin pasar por T4)
+  // Cargar T4 al montar T9 si el engagement del store T4 no coincide con el activo
+  // RC-3: condición engagement-aware — evita usar datos stale de un proyecto anterior
   useEffect(() => {
-    if (engagementId && useCases.length === 0) loadT4(engagementId)
-  }, [engagementId])
+    if (engagementId && t4EngagementId !== engagementId) loadT4(engagementId)
+  }, [engagementId, t4EngagementId])
 
   // Solo casos con decisión Go confirmada
   const goCases = useCases.filter((uc) => uc.goNoGo?.decision === 'go')
