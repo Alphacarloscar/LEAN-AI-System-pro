@@ -114,13 +114,15 @@ export interface QuickWinPreview {
  * Sus scores muestran la brecha IT / Negocio típica del patrón.
  */
 export interface T1DemoInterviewee {
-  id:        string
-  name:      string
+  id:          string
+  name:        string
   /** Cargo: 'CIO', 'CEO', 'Head of Digital', etc. */
-  role:      string
+  role:        string
   /** Descripción del perfil para la UI */
-  archetype: string
-  type:      'it' | 'business'
+  archetype:   string
+  type:        'it' | 'business'
+  /** Departamento del entrevistado (opcional en datos demo) */
+  department?: string
   /**
    * Scores pre-cargados por código de subdimensión.
    * Clave: código de subdimensión (e.g. 'data-availability')

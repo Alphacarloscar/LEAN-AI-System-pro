@@ -71,7 +71,8 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
     // No bloqueamos el modal esperando cada insert individual.
     toImport.forEach((person) => {
       const archetype: ArchetypeCode = person.type === 'it' ? 'reticente' : 'decisor'
-      const department  = person.type === 'it' ? 'IT / Tecnología' : 'Sin asignar'
+      // Usa el departamento capturado en T1; fallback sólo si está vacío (entrevistados legacy)
+      const department = person.department || (person.type === 'it' ? 'IT / Tecnología' : 'Sin asignar')
 
       addStakeholder(
         {
@@ -116,7 +117,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
               Importar entrevistados desde T1
             </h2>
             <p className="text-xs text-text-muted mt-0.5">
-              Las personas del Madurez Radar pasan como stakeholders. IT → arquetipo Reticente · Negocio → arquetipo Decisor, departamento "Sin asignar" (edítalo tras importar).
+              Las personas del Madurez Radar pasan como stakeholders. IT → arquetipo Reticente · Negocio → arquetipo Decisor. El departamento capturado en T1 se transfiere automáticamente.
             </p>
           </div>
           <button
@@ -175,7 +176,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
                 .map((person) => {
                   const isSelected  = selected.has(person.id)
                   const archetype   = person.type === 'it' ? 'Reticente' : 'Decisor'
-                  const department  = person.type === 'it' ? 'IT / Tecnología' : 'Sin asignar'
+                  const department  = person.department || (person.type === 'it' ? 'IT / Tecnología' : 'Sin asignar')
                   const typeLabel   = person.type === 'it' ? 'IT' : 'Negocio'
                   const typeBg      = person.type === 'it'
                     ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'

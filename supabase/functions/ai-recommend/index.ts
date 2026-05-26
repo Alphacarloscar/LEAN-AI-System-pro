@@ -1291,9 +1291,10 @@ function buildPrompt(tool: string, context: unknown): { system: string; user: st
     case 't8':
       return { system: T8_SYSTEM_PROMPT, user: buildT8UserMessage(ctx), maxTokens: 1500 }
     case 't8_comms':
-      // t8_comms genera hasta 5 mensajes por arquetipo con múltiples campos —
-      // 1500 tokens puede truncar el JSON. 2500 da margen suficiente.
-      return { system: T8_COMMS_SYSTEM_PROMPT, user: buildT8CommsUserMessage(ctx), maxTokens: 2500 }
+      // t8_comms genera hasta 5 mensajes por arquetipo con múltiples campos.
+      // Error confirmado en position 6528 con 2500 tokens → aumentado a 4000.
+      // parseJSONRepaired como segundo nivel de defensa si Claude para antes.
+      return { system: T8_COMMS_SYSTEM_PROMPT, user: buildT8CommsUserMessage(ctx), maxTokens: 4000 }
     case 't3_opportunities':
       return { system: T3_OPPORTUNITIES_SYSTEM_PROMPT, user: buildT3OpportunitiesUserMessage(ctx), maxTokens: 1200 }
     case 't9':
@@ -1351,14 +1352,59 @@ async function callClaude(system: string, user: string, maxTokens = MAX_TOKENS):
     throw new Error(`Claude API error ${response.status}: ${err}`)
   }
 
-  const data = await response.json()
-  const text = (data?.content?.[0]?.text ?? '') as string
+  const data       = await response.json()
+  const text       = (data?.content?.[0]?.text ?? '') as string
+  const stopReason = (data?.stop_reason ?? '') as string
 
   // Extraer JSON de la respuesta (por si Claude añade texto extra)
   const jsonMatch = text.match(/\{[\s\S]*\}/)
   if (!jsonMatch) throw new Error(`Claude no devolvió JSON válido. Respuesta: ${text.slice(0, 200)}`)
 
-  return JSON.parse(jsonMatch[0])
+  // Intento 1: parse normal
+  try {
+    return JSON.parse(jsonMatch[0])
+  } catch (_parseErr) {
+    // Intento 2: si Claude paró por tokens, intenta reparar el JSON truncado
+    if (stopReason === 'max_tokens') {
+      try {
+        return parseJSONRepaired(jsonMatch[0])
+      } catch {
+        throw new Error('La respuesta fue truncada por límite de tokens. Inténtalo de nuevo (el contenido generado era demasiado largo).')
+      }
+    }
+    throw new Error(`JSON de Claude inválido en position del error. Respuesta parcial: ${text.slice(0, 300)}`)
+  }
+}
+
+/**
+ * Intenta reparar un JSON truncado cerrando arrays y objetos abiertos.
+ * Útil cuando el LLM para a mitad del output por límite de tokens.
+ */
+function parseJSONRepaired(text: string): unknown {
+  let openBraces   = 0
+  let openBrackets = 0
+  let inString     = false
+  let escaped      = false
+
+  for (const ch of text) {
+    if (escaped)        { escaped = false; continue }
+    if (ch === '\\')    { escaped = true;  continue }
+    if (ch === '"')     { inString = !inString; continue }
+    if (inString)       continue
+    if (ch === '{')     openBraces++
+    else if (ch === '}') openBraces--
+    else if (ch === '[') openBrackets++
+    else if (ch === ']') openBrackets--
+  }
+
+  // Quitar trailing comma o valor incompleto antes de cerrar
+  let repaired = text.trimEnd().replace(/,\s*$/, '')
+
+  // Cerrar arrays y objetos abiertos (siempre arrays primero)
+  repaired += ']'.repeat(Math.max(0, openBrackets))
+  repaired += '}'.repeat(Math.max(0, openBraces))
+
+  return JSON.parse(repaired)
 }
 
 // ═══════════════════════════════════════════════════════════════

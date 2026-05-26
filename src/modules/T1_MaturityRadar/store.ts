@@ -187,11 +187,12 @@ export const useT1Store = create<T1Store>()((set, get) => ({
     if (engagementId) {
       upsertAllScoresForInterviewee({
         engagementId,
-        intervieweeId:   id,
-        intervieweeName: person.name,
-        intervieweeRole: person.role,
-        intervieweeType: person.type,
-        dimensions:      blankDims,
+        intervieweeId:         id,
+        intervieweeName:       person.name,
+        intervieweeRole:       person.role,
+        intervieweeType:       person.type,
+        intervieweeDepartment: person.department,
+        dimensions:            blankDims,
       }).catch((err) => {
         console.error('[T1Store] addInterviewee sync:', err)
       })
@@ -248,13 +249,14 @@ export const useT1Store = create<T1Store>()((set, get) => ({
           await upsertT1Score({
             engagementId,
             intervieweeId,
-            intervieweeName:  person.name,
-            intervieweeRole:  person.role,
-            intervieweeType:  person.type,
+            intervieweeName:       person.name,
+            intervieweeRole:       person.role,
+            intervieweeType:       person.type,
+            intervieweeDepartment: person.department,
             dimensionCode,
             subdimensionCode,
-            score:            sub.score,
-            evidence:         sub.evidence,
+            score:                 sub.score,
+            evidence:              sub.evidence,
           })
         } catch (err) {
           console.error('[T1Store] setScore sync:', err)
@@ -287,13 +289,14 @@ export const useT1Store = create<T1Store>()((set, get) => ({
           await upsertT1Score({
             engagementId,
             intervieweeId,
-            intervieweeName:  person.name,
-            intervieweeRole:  person.role,
-            intervieweeType:  person.type,
+            intervieweeName:       person.name,
+            intervieweeRole:       person.role,
+            intervieweeType:       person.type,
+            intervieweeDepartment: person.department,
             dimensionCode,
             subdimensionCode,
-            score:            sub.score,
-            evidence:         sub.evidence,
+            score:                 sub.score,
+            evidence:              sub.evidence,
           })
         } catch (err) {
           console.error('[T1Store] setEvidence sync:', err)

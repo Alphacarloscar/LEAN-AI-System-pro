@@ -45,11 +45,12 @@ export interface T1DimensionState {
  * Se carga desde el DemoScenario y se puede cambiar en la UI.
  */
 export interface T1IntervieweeContext {
-  id:        string
-  name:      string
-  role:      string      // 'CIO', 'CEO', 'Head of Digital', etc.
-  archetype: string      // 'Ejecutivo TI', 'Líder de Negocio', etc.
-  type:      'it' | 'business'
+  id:         string
+  name:       string
+  role:       string      // 'CIO', 'CEO', 'Head of Digital', etc.
+  archetype:  string      // 'Ejecutivo TI', 'Líder de Negocio', etc.
+  type:       'it' | 'business'
+  department: string      // Departamento al que pertenece el entrevistado
 }
 
 /**

@@ -86,7 +86,7 @@ function buildDimensionsFromRows(
 export async function fetchT1Data(engagementId: string): Promise<T1LoadResult> {
   const { data, error } = await supabase
     .from('t1_dimension_scores')
-    .select('dimension_code,subdimension_code,score,evidence,interviewee_id,interviewee_name,interviewee_role,interviewee_type')
+    .select('dimension_code,subdimension_code,score,evidence,interviewee_id,interviewee_name,interviewee_role,interviewee_type,interviewee_department')
     .eq('project_id', engagementId)
 
   if (error) throw new Error(`[T1] fetchT1Data: ${error.message}`)
@@ -109,11 +109,12 @@ export async function fetchT1Data(engagementId: string): Promise<T1LoadResult> {
   for (const [intervieweeId, rows] of byInterviewee.entries()) {
     const firstRow = rows[0]
     const ctx: T1IntervieweeContext = {
-      id:        intervieweeId === '__shared__' ? 'shared' : intervieweeId,
-      name:      firstRow.interviewee_name ?? 'Sin nombre',
-      role:      firstRow.interviewee_role ?? '',
-      archetype: firstRow.interviewee_type === 'it' ? 'Ejecutivo TI' : 'Líder de Negocio',
-      type:      (firstRow.interviewee_type as 'it' | 'business') ?? 'business',
+      id:         intervieweeId === '__shared__' ? 'shared' : intervieweeId,
+      name:       firstRow.interviewee_name ?? 'Sin nombre',
+      role:       firstRow.interviewee_role ?? '',
+      archetype:  firstRow.interviewee_type === 'it' ? 'Ejecutivo TI' : 'Líder de Negocio',
+      type:       (firstRow.interviewee_type as 'it' | 'business') ?? 'business',
+      department: firstRow.interviewee_department ?? '',
     }
     interviewees.push(ctx)
     dimensionStates[ctx.id] = buildDimensionsFromRows(rows)
@@ -130,26 +131,28 @@ export async function fetchT1Data(engagementId: string): Promise<T1LoadResult> {
  * Usa UPSERT con onConflict en la constraint 003.
  */
 export async function upsertT1Score(params: {
-  engagementId:     string
-  intervieweeId:    string
-  intervieweeName:  string
-  intervieweeRole:  string
-  intervieweeType:  'it' | 'business'
-  dimensionCode:    string
-  subdimensionCode: string
-  score:            number | null
-  evidence:         string
+  engagementId:          string
+  intervieweeId:         string
+  intervieweeName:       string
+  intervieweeRole:       string
+  intervieweeType:       'it' | 'business'
+  intervieweeDepartment: string
+  dimensionCode:         string
+  subdimensionCode:      string
+  score:                 number | null
+  evidence:              string
 }): Promise<void> {
   const row: T1DimensionScoreInsert = {
-    project_id:     params.engagementId,
-    dimension_code:    params.dimensionCode,
-    subdimension_code: params.subdimensionCode,
-    score:             params.score,
-    evidence:          params.evidence,
-    interviewee_id:    params.intervieweeId,
-    interviewee_name:  params.intervieweeName,
-    interviewee_role:  params.intervieweeRole,
-    interviewee_type:  params.intervieweeType,
+    project_id:             params.engagementId,
+    dimension_code:         params.dimensionCode,
+    subdimension_code:      params.subdimensionCode,
+    score:                  params.score,
+    evidence:               params.evidence,
+    interviewee_id:         params.intervieweeId,
+    interviewee_name:       params.intervieweeName,
+    interviewee_role:       params.intervieweeRole,
+    interviewee_type:       params.intervieweeType,
+    interviewee_department: params.intervieweeDepartment || null,
   }
 
   const { error } = await supabase
@@ -167,27 +170,29 @@ export async function upsertT1Score(params: {
  * Útil al añadir un nuevo entrevistado con dimensiones iniciales.
  */
 export async function upsertAllScoresForInterviewee(params: {
-  engagementId:    string
-  intervieweeId:   string
-  intervieweeName: string
-  intervieweeRole: string
-  intervieweeType: 'it' | 'business'
-  dimensions:      T1DimensionState[]
+  engagementId:          string
+  intervieweeId:         string
+  intervieweeName:       string
+  intervieweeRole:       string
+  intervieweeType:       'it' | 'business'
+  intervieweeDepartment: string
+  dimensions:            T1DimensionState[]
 }): Promise<void> {
   const rows: T1DimensionScoreInsert[] = []
 
   for (const dim of params.dimensions) {
     for (const sub of dim.subdimensions) {
       rows.push({
-        project_id:     params.engagementId,
-        dimension_code:    dim.code,
-        subdimension_code: sub.code,
-        score:             sub.score,
-        evidence:          sub.evidence,
-        interviewee_id:    params.intervieweeId,
-        interviewee_name:  params.intervieweeName,
-        interviewee_role:  params.intervieweeRole,
-        interviewee_type:  params.intervieweeType,
+        project_id:             params.engagementId,
+        dimension_code:         dim.code,
+        subdimension_code:      sub.code,
+        score:                  sub.score,
+        evidence:               sub.evidence,
+        interviewee_id:         params.intervieweeId,
+        interviewee_name:       params.intervieweeName,
+        interviewee_role:       params.intervieweeRole,
+        interviewee_type:       params.intervieweeType,
+        interviewee_department: params.intervieweeDepartment || null,
       })
     }
   }

@@ -106,17 +106,18 @@ export interface FrictionRow {
 }
 
 export interface T1DimensionScoreRow {
-  id:                string
-  project_id:        string
-  dimension_code:    string
-  subdimension_code: string
-  score:             number | null
-  evidence:          string
-  interviewee_id:    string | null
-  interviewee_name:  string | null
-  interviewee_role:  string | null
-  interviewee_type:  'it' | 'business'
-  updated_at:        string
+  id:                     string
+  project_id:             string
+  dimension_code:         string
+  subdimension_code:      string
+  score:                  number | null
+  evidence:               string
+  interviewee_id:         string | null
+  interviewee_name:       string | null
+  interviewee_role:       string | null
+  interviewee_type:       'it' | 'business'
+  interviewee_department: string | null
+  updated_at:             string
 }
 
 export interface StakeholderRow {

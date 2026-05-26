@@ -78,6 +78,10 @@ export interface UseCaseRoadmap {
   owner?:             string   // Responsable de la implementación
   nextSteps?:         string   // Texto libre: próximos pasos concretos
   dependencies?:      string   // Dependencias con otros casos o sistemas
+  /** Fecha de inicio explícita (ISO 8601: 'YYYY-MM-DD'). Tiene prioridad sobre quarter en T9. */
+  startDate?:         string
+  /** Fecha de fin explícita (ISO 8601: 'YYYY-MM-DD'). Tiene prioridad sobre quarter+duración en T9. */
+  endDate?:           string
 }
 
 // ── Economía y ROI del caso de uso ───────────────────────────

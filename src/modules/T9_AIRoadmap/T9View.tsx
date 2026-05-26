@@ -122,13 +122,29 @@ function durationToSpan(duration?: string): number {
 }
 
 function computeDefaultOverride(uc: UseCase): T9ItemOverride {
+  const responsible = uc.roadmap?.owner ?? uc.sponsorName ?? '—'
+
+  // Prioridad: fechas explícitas (startDate/endDate) > quarter + duración estimada
+  if (uc.roadmap?.startDate) {
+    const startMonth = new Date(uc.roadmap.startDate).getMonth()
+    const endMonth   = uc.roadmap?.endDate
+      ? new Date(uc.roadmap.endDate).getMonth()
+      : Math.min(startMonth + durationToSpan(uc.roadmap?.estimatedDuration) - 1, 11)
+    return {
+      useCaseId:   uc.id,
+      startMonth,
+      endMonth:    Math.min(Math.max(endMonth, startMonth), 11),
+      responsible,
+    }
+  }
+
   const start = quarterToStartMonth(uc.roadmap?.quarter)
   const span  = durationToSpan(uc.roadmap?.estimatedDuration)
   return {
     useCaseId:   uc.id,
     startMonth:  start,
     endMonth:    Math.min(start + span - 1, 11),
-    responsible: uc.roadmap?.owner ?? uc.sponsorName ?? '—',
+    responsible,
   }
 }
 

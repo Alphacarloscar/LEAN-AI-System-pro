@@ -1891,6 +1891,38 @@ function UseCaseDetailPanel({
                   />
                 </div>
 
+                {/* ── Fechas de inicio y fin ────────────────── */}
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+                    Fecha de inicio
+                  </label>
+                  <input
+                    type="date"
+                    value={rm.startDate ?? ''}
+                    onChange={(e) => saveRoadmap({ startDate: e.target.value || undefined })}
+                    className="w-full rounded-xl border border-border dark:border-white/10 bg-white dark:bg-warm-800/50
+                      px-3 py-2 text-xs text-lean-black dark:text-gray-200
+                      focus:outline-none focus:ring-1 focus:ring-navy/30 focus:border-navy/40 transition-colors"
+                  />
+                  <p className="mt-1.5 text-[10px] text-text-subtle">
+                    Si se especifica, tiene prioridad sobre el quarter en el Roadmap T9.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+                    Fecha de fin
+                  </label>
+                  <input
+                    type="date"
+                    value={rm.endDate ?? ''}
+                    onChange={(e) => saveRoadmap({ endDate: e.target.value || undefined })}
+                    className="w-full rounded-xl border border-border dark:border-white/10 bg-white dark:bg-warm-800/50
+                      px-3 py-2 text-xs text-lean-black dark:text-gray-200
+                      focus:outline-none focus:ring-1 focus:ring-navy/30 focus:border-navy/40 transition-colors"
+                  />
+                </div>
+
                 {/* ── Responsable ───────────────────────────── */}
                 <div>
                   <label className="block text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">

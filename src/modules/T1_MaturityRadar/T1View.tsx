@@ -26,10 +26,12 @@ import type { IntervieweeAggregate }            from './components/T1ExecutiveOu
 import { useT1Store }                           from './store'
 import { useEngagementStore }                   from '@/modules/Engagement/store'
 import { useCompanyProfileStore }              from '@/modules/CompanyProfile/store'
+import { useDepartmentStore }                  from '@/modules/CompanyProfile/useDepartmentStore'
 import { RecommendationPanel }                 from '@/components/RecommendationPanel'
 import { buildT1RecommendationContext }        from './t1ContextBuilder'
 import { isDemoEnabled }                       from '@/lib/config'
 import { usePermissions }                      from '@/modules/Auth'
+import { supabase }                            from '@/lib/supabase'
 
 interface T1ViewProps {
   scenario: DemoScenario
@@ -61,28 +63,34 @@ function buildDimensionsForInterviewee(
 // ── Modal: nueva entrevista ───────────────────────────────────
 
 interface NewIntervieweeForm {
-  name: string
-  role: string
-  type: 'it' | 'business'
+  name:       string
+  role:       string
+  type:       'it' | 'business'
+  department: string
 }
 
 interface NewInterviewModalProps {
-  onClose:  () => void
-  onSubmit: (form: NewIntervieweeForm) => Promise<void>
+  onClose:     () => void
+  onSubmit:    (form: NewIntervieweeForm) => Promise<void>
+  departments: { name: string }[]
 }
 
-function NewInterviewModal({ onClose, onSubmit }: NewInterviewModalProps) {
+function NewInterviewModal({ onClose, onSubmit, departments }: NewInterviewModalProps) {
   const [form, setForm]         = useState<NewIntervieweeForm>({
-    name: '',
-    role: '',
-    type: 'business',
+    name:       '',
+    role:       '',
+    type:       'business',
+    department: '',
   })
   const [submitting, setSubmitting] = useState(false)
   const nameRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { nameRef.current?.focus() }, [])
 
-  const canSubmit = form.name.trim().length > 0 && form.role.trim().length > 0
+  const canSubmit =
+    form.name.trim().length > 0 &&
+    form.role.trim().length > 0 &&
+    form.department.trim().length > 0
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -208,6 +216,44 @@ function NewInterviewModal({ onClose, onSubmit }: NewInterviewModalProps) {
             </div>
           </div>
 
+          {/* Departamento */}
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
+              Departamento <span className="text-danger-dark">*</span>
+            </label>
+            {departments.length > 0 ? (
+              <select
+                value={form.department}
+                onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+                className={[
+                  'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-gray-100',
+                  'bg-gray-50 dark:bg-gray-800 border border-border',
+                  'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
+                  'transition-all duration-150',
+                ].join(' ')}
+              >
+                <option value="">Selecciona un departamento…</option>
+                {departments.map((d) => (
+                  <option key={d.name} value={d.name}>{d.name}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={form.department}
+                onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+                placeholder="Ej. Finanzas, Tecnología, RRHH…"
+                className={[
+                  'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-gray-100',
+                  'bg-gray-50 dark:bg-gray-800 border border-border',
+                  'placeholder:text-text-subtle',
+                  'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
+                  'transition-all duration-150',
+                ].join(' ')}
+              />
+            )}
+          </div>
+
           {/* Nota informativa */}
           <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border/60">
             Se crearán <span className="font-medium text-text-muted">{TOTAL_SUBDIMENSIONS} subdimensiones</span> en blanco para este entrevistado. Puntúalas en la sesión.
@@ -262,6 +308,30 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
   const store          = useT1Store()
   const engagementId   = useEngagementStore((s) => s.activeEngagementId)
 
+  // ── Departamentos centralizados (para el modal de alta) ──────
+  const { departments, fetchDepartments, reset: resetDepartments } = useDepartmentStore()
+
+  useEffect(() => {
+    if (!engagementId) return
+    let cancelled = false
+
+    supabase
+      .from('projects')
+      .select('company_id')
+      .eq('id', engagementId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled || !data?.company_id) return
+        fetchDepartments(data.company_id)
+      })
+
+    return () => {
+      cancelled = true
+      resetDepartments()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId])
+
   const liveInterviewees  = store.interviewees
   const intervieweeStates = store.dimensionStates
   const activeId          = store.activeId
@@ -273,7 +343,15 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
       store.load(engagementId)
     } else if (isDemoEnabled) {
       store.initFromScenario(
-        scenario.interviewees,
+        // Normalizar datos demo a T1IntervieweeContext: añadir department fallback
+        scenario.interviewees.map((i) => ({
+          id:         i.id,
+          name:       i.name,
+          role:       i.role,
+          archetype:  i.archetype,
+          type:       i.type,
+          department: i.department ?? (i.type === 'it' ? 'IT / Tecnología' : 'Sin asignar'),
+        })),
         Object.fromEntries(
           scenario.interviewees.map((i) => [
             i.id,
@@ -290,10 +368,11 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
     try {
       await store.addInterviewee(
         {
-          name:      form.name.trim(),
-          role:      form.role.trim(),
-          archetype: form.type === 'it' ? 'Ejecutivo TI' : 'Líder de Negocio',
-          type:      form.type,
+          name:       form.name.trim(),
+          role:       form.role.trim(),
+          archetype:  form.type === 'it' ? 'Ejecutivo TI' : 'Líder de Negocio',
+          type:       form.type,
+          department: form.department,
         },
         engagementId,
       )
@@ -661,6 +740,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
         <NewInterviewModal
           onClose={() => setShowNewModal(false)}
           onSubmit={addInterviewee}
+          departments={departments}
         />
       )}
     </div>
