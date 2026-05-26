@@ -2155,7 +2155,7 @@ interface T4ViewProps {
 
 export function T4View({ companyName, onBack }: T4ViewProps) {
   const navigate                               = useNavigate()
-  const { useCases, isLoading, isLoaded, loadEngagement } = useT4Store()
+  const { useCases, isLoading, loadEngagement } = useT4Store()
   const { profile: companyProfile }            = useCompanyProfileStore()
   const engagementId                           = useEngagementStore((s) => s.activeEngagementId)
   const user                                   = useAuthStore((s) => s.user)
