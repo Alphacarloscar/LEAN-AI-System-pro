@@ -16,6 +16,7 @@ import { create }                         from 'zustand'
 import { persist }                        from 'zustand/middleware'
 import { listMyProjects, createProject }  from '@/services/projects.service'
 import { supabase }                       from '@/lib/supabase'
+import { resetAllEngagementStores }       from '@/lib/resetEngagementStores'
 import type { ProjectRow }                from '@/types/database.types'
 
 interface EngagementStore {
@@ -77,6 +78,9 @@ export const useEngagementStore = create<EngagementStore>()(
       },
 
       selectEngagement: (id) => {
+        // Hard Reset: limpiar todos los stores T1-T12 antes de cambiar el engagement
+        // Garantiza cero stale data entre proyectos — Sprint 9 Bloque 2
+        resetAllEngagementStores()
         set({ activeEngagementId: id })
       },
 

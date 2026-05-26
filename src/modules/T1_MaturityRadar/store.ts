@@ -149,6 +149,8 @@ export const useT1Store = create<T1Store>()((set, get) => ({
 
     try {
       const { interviewees, dimensionStates } = await Promise.race([fetchPromise, timeoutPromise])
+      // Stale guard: si el Hard Reset ocurrió mientras este fetch estaba en vuelo, descartar resultado
+      if (get().loadingForEngagementId !== engagementId) return
       set({
         interviewees,
         dimensionStates,
@@ -156,6 +158,7 @@ export const useT1Store = create<T1Store>()((set, get) => ({
         isLoading: false,
       })
     } catch (err) {
+      if (get().loadingForEngagementId !== engagementId) return  // stale load post-reset, ignorar
       const isTimeout = (err as Error)?.message === 'T1_LOAD_TIMEOUT'
       console.error('[T1Store] load:', isTimeout ? 'timeout (>15s) — check Supabase connection' : err)
       set({ isLoading: false })
@@ -346,5 +349,5 @@ export const useT1Store = create<T1Store>()((set, get) => ({
   },
 
   // ── reset ──────────────────────────────────────────────────
-  reset: () => set({ interviewees: [], dimensionStates: {}, activeId: '', isLoading: false }),
+  reset: () => set({ interviewees: [], dimensionStates: {}, activeId: '', isLoading: false, loadingForEngagementId: null }),
 }))

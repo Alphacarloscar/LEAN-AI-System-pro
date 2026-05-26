@@ -219,8 +219,11 @@ export const useT2Store = create<T2Store>()((set, get) => ({
     set({ isLoading: true, loadingForEngagementId: engagementId, lastError: null })
     try {
       const stakeholders = await fetchStakeholders(engagementId)
+      // Stale guard: si el Hard Reset ocurrió mientras este fetch estaba en vuelo, descartar resultado
+      if (get().loadingForEngagementId !== engagementId) return
       set({ stakeholders, isLoading: false, lastError: null })
     } catch (err) {
+      if (get().loadingForEngagementId !== engagementId) return  // stale load post-reset, ignorar
       console.error('[T2Store] load:', err)
       set({
         isLoading: false,
@@ -306,5 +309,5 @@ export const useT2Store = create<T2Store>()((set, get) => ({
   },
 
   // ── reset ──────────────────────────────────────────────────
-  reset: () => set({ stakeholders: [], isLoading: false }),
+  reset: () => set({ stakeholders: [], isLoading: false, loadingForEngagementId: null, lastError: null }),
 }))

@@ -51,6 +51,9 @@ interface T4Store {
 
   /** Guarda la clasificación AI Act */
   updateAIActClassification: (id: string, classification: AIActClassification) => void
+
+  /** Limpia todos los datos del engagement activo — llamado por Hard Reset al cambiar de proyecto */
+  reset: () => void
 }
 
 export const useT4Store = create<T4Store>()(
@@ -68,6 +71,8 @@ export const useT4Store = create<T4Store>()(
         set({ isLoading: true, engagementId })
         try {
           const useCases = await fetchUseCases(engagementId)
+          // Stale guard: si el Hard Reset ocurrió mientras este fetch estaba en vuelo, descartar resultado
+          if (get().engagementId !== engagementId) return
           if (useCases.length > 0) {
             // Hay datos reales en Supabase → usarlos
             set({ useCases, isLoading: false })
@@ -76,6 +81,7 @@ export const useT4Store = create<T4Store>()(
             set({ useCases: [], isLoading: false })
           }
         } catch (err) {
+          if (get().engagementId !== engagementId) return  // stale load post-reset, ignorar
           console.error('[T4] loadEngagement:', err)
           set({ isLoading: false })
         }
@@ -162,6 +168,9 @@ export const useT4Store = create<T4Store>()(
           )
         }
       },
+
+      // ── reset ──────────────────────────────────────────────────
+      reset: () => set({ useCases: [], engagementId: null, isLoading: false }),
     }),
     {
       name:       'lean-t4-usecases',

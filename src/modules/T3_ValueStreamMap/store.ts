@@ -225,8 +225,11 @@ export const useT3Store = create<T3Store>()((set, get) => ({
 
     try {
       const processes = await Promise.race([fetchPromise, timeoutPromise])
+      // Stale guard: si el Hard Reset ocurrió mientras este fetch estaba en vuelo, descartar resultado
+      if (get().loadingForEngagementId !== engagementId) return
       set({ processes, isLoading: false })
     } catch (err) {
+      if (get().loadingForEngagementId !== engagementId) return  // stale load post-reset, ignorar
       const isTimeout = (err as Error)?.message === 'T3_LOAD_TIMEOUT'
       console.error('[T3Store] load:', isTimeout ? 'timeout (>10s) — check Supabase connection' : err)
       set({ isLoading: false })
@@ -359,5 +362,5 @@ export const useT3Store = create<T3Store>()((set, get) => ({
   },
 
   // ── reset ──────────────────────────────────────────────────
-  reset: () => set({ processes: [], isLoading: false }),
+  reset: () => set({ processes: [], isLoading: false, loadingForEngagementId: null }),
 }))
