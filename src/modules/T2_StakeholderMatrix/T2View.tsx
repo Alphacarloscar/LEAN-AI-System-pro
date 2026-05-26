@@ -777,10 +777,19 @@ export function T2View({ companyName, onBack }: T2ViewProps) {
   const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
 
   // Carga: real (Supabase) o demo (datos predefinidos del store)
-  // También obtiene company_id para inicializar el store de departamentos
+  // Guard anti-double-load: loadingForEngagementId en T2 store actúa como "ya cargando o cargado".
+  // Se setea al inicio de load() y se limpia solo con reset(). Por tanto:
+  //   SKIP si: loadingFor === engagementId (en vuelo o completado para este engagement)
+  //   FIRE si: loadingFor es null (reset) o diferente (otro engagement)
+  // Cubre F5 (T2 no persiste nada → loadingFor=null → carga siempre) y
+  // doble-mount post-EagerLoading (loadingFor=id → skip).
   useEffect(() => {
     if (engagementId) {
-      load(engagementId)
+      const { loadingForEngagementId: loadingFor } = useT2Store.getState()
+      const skip = loadingFor === engagementId
+      console.log(`[T2 View] useEffect — eng: ${engagementId}, store.loadingFor: ${loadingFor} → ${skip ? 'SKIP' : 'FIRE'}`)
+      if (!skip) load(engagementId)
+
       // Obtener company_id del proyecto para cargar departamentos centralizados
       supabase
         .from('projects')

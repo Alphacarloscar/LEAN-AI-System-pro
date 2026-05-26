@@ -33,6 +33,10 @@ interface T4Store {
   useCases:     UseCase[]
   engagementId: string | null
   isLoading:    boolean
+  /** true tras una carga exitosa; false tras reset o error. Permite a T4View
+   *  distinguir "datos ya cargados" de "store recién limpiado" sin depender
+   *  solo de useCases.length (que sería 0 para proyectos nuevos). */
+  isLoaded:     boolean
 
   /** Carga casos de uso desde Supabase para el engagement dado */
   loadEngagement: (engagementId: string) => Promise<void>
@@ -62,28 +66,34 @@ export const useT4Store = create<T4Store>()(
       useCases:     [],
       engagementId: null,
       isLoading:    false,
+      isLoaded:     false,
 
       // ── loadEngagement ──────────────────────────────────────
       loadEngagement: async (engagementId) => {
         const s = get()
         // F-06 engagement-aware: solo bloquear si estamos cargando ESTE mismo engagement
-        if (s.isLoading && s.engagementId === engagementId) return
-        set({ isLoading: true, engagementId })
+        if (s.isLoading && s.engagementId === engagementId) {
+          console.log(`[T4 Store] BLOCKED (F-06) — ya cargando engagement: ${engagementId}`)
+          return
+        }
+        console.log(`[T4 Store] START — engagement: ${engagementId}`)
+        set({ isLoading: true, isLoaded: false, engagementId })
         try {
           const useCases = await fetchUseCases(engagementId)
           // Stale guard: si el Hard Reset ocurrió mientras este fetch estaba en vuelo, descartar resultado
-          if (get().engagementId !== engagementId) return
-          if (useCases.length > 0) {
-            // Hay datos reales en Supabase → usarlos
-            set({ useCases, isLoading: false })
-          } else {
-            // Engagement nuevo → arrancar vacío (sin demo data en producción)
-            set({ useCases: [], isLoading: false })
+          if (get().engagementId !== engagementId) {
+            console.log(`[T4 Store] STALE — resultado descartado (engagement actual: ${get().engagementId})`)
+            return
           }
+          console.log(`[T4 Store] OK — ${useCases.length} casos de uso`)
+          set({ useCases, isLoading: false, isLoaded: true })
         } catch (err) {
-          if (get().engagementId !== engagementId) return  // stale load post-reset, ignorar
-          console.error('[T4] loadEngagement:', err)
-          set({ isLoading: false })
+          if (get().engagementId !== engagementId) {
+            console.log(`[T4 Store] STALE+ERROR — resultado descartado`)
+            return
+          }
+          console.error('[T4 Store] ERROR:', err)
+          set({ isLoading: false, isLoaded: false })
         }
       },
 
@@ -170,12 +180,12 @@ export const useT4Store = create<T4Store>()(
       },
 
       // ── reset ──────────────────────────────────────────────────
-      reset: () => set({ useCases: [], engagementId: null, isLoading: false }),
+      reset: () => set({ useCases: [], engagementId: null, isLoading: false, isLoaded: false }),
     }),
     {
       name:       'lean-t4-usecases',
-      version:    4,  // bumped: partialize — useCases nunca en localStorage
-      partialize: (s) => ({ engagementId: s.engagementId }),
+      version:    5,  // v5: eliminado engagementId de localStorage (causaba F5 bug)
+      partialize: () => ({}),  // nada persiste — isLoaded gestiona el guard en runtime
     }
   )
 )

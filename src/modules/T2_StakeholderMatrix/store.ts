@@ -215,16 +215,27 @@ export const useT2Store = create<T2Store>()((set, get) => ({
   load: async (engagementId) => {
     const s = get()
     // F-06 engagement-aware: solo bloquear si estamos cargando ESTE mismo engagement
-    if (s.isLoading && s.loadingForEngagementId === engagementId) return
+    if (s.isLoading && s.loadingForEngagementId === engagementId) {
+      console.log(`[T2 Store] BLOCKED (F-06) — ya cargando engagement: ${engagementId}`)
+      return
+    }
+    console.log(`[T2 Store] START — engagement: ${engagementId}`)
     set({ isLoading: true, loadingForEngagementId: engagementId, lastError: null })
     try {
       const stakeholders = await fetchStakeholders(engagementId)
       // Stale guard: si el Hard Reset ocurrió mientras este fetch estaba en vuelo, descartar resultado
-      if (get().loadingForEngagementId !== engagementId) return
+      if (get().loadingForEngagementId !== engagementId) {
+        console.log(`[T2 Store] STALE — resultado descartado (actual: ${get().loadingForEngagementId})`)
+        return
+      }
+      console.log(`[T2 Store] OK — ${stakeholders.length} stakeholders`)
       set({ stakeholders, isLoading: false, lastError: null })
     } catch (err) {
-      if (get().loadingForEngagementId !== engagementId) return  // stale load post-reset, ignorar
-      console.error('[T2Store] load:', err)
+      if (get().loadingForEngagementId !== engagementId) {
+        console.log(`[T2 Store] STALE+ERROR — resultado descartado`)
+        return
+      }
+      console.error('[T2 Store] ERROR:', err)
       set({
         isLoading: false,
         lastError: err instanceof Error ? err.message : 'Error al cargar stakeholders',

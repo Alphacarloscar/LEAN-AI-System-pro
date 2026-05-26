@@ -2155,7 +2155,7 @@ interface T4ViewProps {
 
 export function T4View({ companyName, onBack }: T4ViewProps) {
   const navigate                               = useNavigate()
-  const { useCases, isLoading, loadEngagement } = useT4Store()
+  const { useCases, isLoading, isLoaded, loadEngagement } = useT4Store()
   const { profile: companyProfile }            = useCompanyProfileStore()
   const engagementId                           = useEngagementStore((s) => s.activeEngagementId)
   const user                                   = useAuthStore((s) => s.user)
@@ -2165,15 +2165,16 @@ export function T4View({ companyName, onBack }: T4ViewProps) {
   const dimensionStates = useT1Store(s => s.dimensionStates)
   const stakeholders    = useT2Store(s => s.stakeholders)
 
-  // Cargar datos cuando cambia el engagement activo.
-  // Guard anti-double-load: si el store ya "conoce" este engagement
-  // (loadedId === engagementId), está en vuelo (Eager Loading) o ya cargado.
-  // En ambos casos omitir el fetch — el spinner de isLoading ya está activo
-  // desde Eager Loading; no hay que relanzar ni reiniciar el ciclo.
+  // Guard robusto anti-double-load y anti-F5-vacío:
+  //   SKIP si: mismo engagement Y (está cargando O ya cargó exitosamente)
+  //   FIRE si: engagement diferente, o mismo engagement pero sin datos cargados
+  //            (cubre F5 donde isLoaded=false aunque engagementId coincida en store)
   useEffect(() => {
     if (!engagementId) return
-    const { engagementId: loadedId } = useT4Store.getState()
-    if (loadedId === engagementId) return
+    const { engagementId: loadedId, isLoading: loading, isLoaded: loaded } = useT4Store.getState()
+    const skip = loadedId === engagementId && (loading || loaded)
+    console.log(`[T4 View] useEffect — eng: ${engagementId}, store: {eng: ${loadedId}, loading: ${loading}, loaded: ${loaded}} → ${skip ? 'SKIP' : 'FIRE'}`)
+    if (skip) return
     loadEngagement(engagementId)
   }, [engagementId])
 
