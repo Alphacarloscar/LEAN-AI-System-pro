@@ -540,12 +540,25 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
     if (engagementId && t4EngagementId !== engagementId) loadT4(engagementId)
   }, [engagementId, t4EngagementId])
 
+  // ── Selector de año — declarado aquí para filtrar goCases ───
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+
   // Casos de uso aprobados para la hoja de ruta: go, en_piloto o completado.
-  // Se filtra por status (campo T4 canónico), no por goNoGo.decision —
+  // Se filtra por status (campo T4 canónico) y por selectedYear:
+  //   — Si el caso tiene fechas explícitas, se incluye solo si su rango cubre selectedYear.
+  //   — Si no tiene fechas, siempre se incluye (posicionado por quarter/duración).
   // goNoGo es un campo documental opcional que T4 no sincroniza automáticamente con status.
-  const goCases = useCases.filter((uc) =>
-    (uc.status === 'go' || uc.status === 'en_piloto' || uc.status === 'completado')
-  )
+  const goCases = useCases.filter((uc) => {
+    if (!(uc.status === 'go' || uc.status === 'en_piloto' || uc.status === 'completado')) return false
+    if (uc.roadmap?.startDate) {
+      const startYear = new Date(uc.roadmap.startDate + 'T12:00:00').getFullYear()
+      const endYear   = uc.roadmap?.endDate
+        ? new Date(uc.roadmap.endDate + 'T12:00:00').getFullYear()
+        : startYear
+      return startYear <= selectedYear && endYear >= selectedYear
+    }
+    return true
+  })
 
   const t9LLMContext = useMemo(
     () => companyProfile
@@ -639,9 +652,6 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
   }
 
   const MONTHS = MONTH_NAMES
-
-  // ── Selector de año ─────────────────────────────────────────
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">

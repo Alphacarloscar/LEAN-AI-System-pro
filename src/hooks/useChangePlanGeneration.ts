@@ -46,14 +46,29 @@ export function useChangePlanGeneration(): UseChangePlanGenerationReturn {
     setIsGenerating(true)
     setError(null)
 
-    try {
-      const { data: result, error: fnError } = await supabase.functions.invoke(
-        'ai-recommend',
-        { body: { tool: 't7_plan', context, engagementId } },
+    // Timeout cliente (62s): protege contra hangs de red si la conexión TCP
+    // se cierra sin respuesta (Edge Function tiene 55s internos de AbortController).
+    const INVOKE_TIMEOUT_MS = 62_000
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error('La generación tardó demasiado. Inténtalo de nuevo en unos segundos.')),
+        INVOKE_TIMEOUT_MS,
       )
+    )
+
+    try {
+      const { data: result, error: fnError } = await Promise.race([
+        supabase.functions.invoke('ai-recommend', { body: { tool: 't7_plan', context, engagementId } }),
+        timeoutPromise,
+      ])
 
       if (fnError) {
-        throw new Error(fnError.message ?? 'Error al llamar a la Edge Function')
+        // fnError.message suele ser genérico ("Edge Function returned a non-2xx status code").
+        // Si es genérico, mostramos un mensaje más orientado a la acción.
+        const isGeneric = fnError.message?.includes('non-2xx')
+        throw new Error(isGeneric
+          ? 'El servidor tardó demasiado o encontró un error. Inténtalo de nuevo.'
+          : (fnError.message ?? 'Error al llamar a la Edge Function'))
       }
 
       if (result?.error) {

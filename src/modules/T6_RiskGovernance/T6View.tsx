@@ -119,7 +119,7 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
       go:     useCases.filter(uc => uc.status === 'go').length,
       piloto: useCases.filter(uc => uc.status === 'en_piloto').length,
     },
-    activeDomains: canvas.activationSequence.slice(0, 4),
+    activeDomains: canvas.activationSequence?.slice(0, 4) ?? [],
   }
 
   // Principios a renderizar: LLM o plantilla por defecto
@@ -131,7 +131,7 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
     { title: 'Seguridad y robustez', desc: 'Los sistemas IA son seguros frente a manipulaciones y se monitorizan continuamente para detectar degradación del rendimiento.' },
     { title: 'Rendición de cuentas', desc: 'Cada sistema IA tiene un responsable designado (AI Owner) que garantiza su uso conforme a esta política.' },
   ]
-  const activeDomains = canvas.activationSequence.slice(0, 3)
+  const activeDomains = canvas.activationSequence?.slice(0, 3) ?? []
 
   const pdfData = {
     companyName,
