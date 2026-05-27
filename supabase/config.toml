@@ -1,4 +1,12 @@
 
+[functions.ai-recommend]
+enabled = true
+verify_jwt = false
+# JWT validado manualmente en el handler (Paso 1 del flujo de 10 pasos).
+# verify_jwt = false permite que la función gestione 401/403 con mensajes
+# de error estructurados en lugar de respuestas vacías de la plataforma.
+entrypoint = "./functions/ai-recommend/index.ts"
+
 [functions.invite-user]
 enabled = true
 verify_jwt = true
