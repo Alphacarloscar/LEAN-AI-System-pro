@@ -541,12 +541,14 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
   }, [engagementId, t4EngagementId])
 
   // ── Selector de año — declarado aquí para filtrar goCases ───
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const currentYear = new Date().getFullYear()
+  const [selectedYear, setSelectedYear] = useState(currentYear)
 
   // Casos de uso aprobados para la hoja de ruta: go, en_piloto o completado.
   // Se filtra por status (campo T4 canónico) y por selectedYear:
-  //   — Si el caso tiene fechas explícitas, se incluye solo si su rango cubre selectedYear.
-  //   — Si no tiene fechas, siempre se incluye (posicionado por quarter/duración).
+  //   — Si el caso tiene fechas explícitas, se incluye si su rango cubre selectedYear.
+  //   — Si NO tiene fechas, solo se muestra en el año en curso (sin datos temporales
+  //     no tiene sentido arrastrarlos a vistas históricas).
   // goNoGo es un campo documental opcional que T4 no sincroniza automáticamente con status.
   const goCases = useCases.filter((uc) => {
     if (!(uc.status === 'go' || uc.status === 'en_piloto' || uc.status === 'completado')) return false
@@ -557,7 +559,8 @@ export function T9View({ companyName, onBack }: T9ViewProps) {
         : startYear
       return startYear <= selectedYear && endYear >= selectedYear
     }
-    return true
+    // Sin fechas explícitas: solo visible en el año en curso
+    return selectedYear === currentYear
   })
 
   const t9LLMContext = useMemo(
