@@ -197,7 +197,7 @@ export function AppLayout() {
         </header>
 
         {/* ── Sidebar — siempre montado, toggle visible en todas las rutas ── */}
-        <AppSidebar phases={[]} />
+        <AppSidebar />
 
         {/* ── Contenido de la ruta activa ── */}
         <main>
