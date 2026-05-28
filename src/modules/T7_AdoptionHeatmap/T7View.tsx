@@ -32,7 +32,6 @@ import type {
 }                            from '@/modules/T2_StakeholderMatrix/types'
 import type { RogersSegment, DotPosition, GeneratedChangePlanPhase } from './types'
 import { usePermissions }      from '@/modules/Auth'
-import { ToolLoadingScreen }  from '@/shared/components/ToolLoadingScreen'
 import { ToolErrorState }     from '@/shared/components/ToolErrorState'
 
 // ── Constantes ────────────────────────────────────────────────
@@ -1009,7 +1008,7 @@ export function T7View({ onBack }: T7ViewProps) {
   const loadT2                      = useT2Store(s => s.load)
   const isLoadingT2                 = useT2Store(s => s.isLoading)
   const t2Error                     = useT2Store(s => s.lastError)
-  const companyName                 = useCompanyProfileStore(s => s.profile.nombre)
+  const companyName                 = useCompanyProfileStore(s => s.profile.engagementName)
   const { dark }                    = useDarkMode()
   const { profile: companyProfile } = useCompanyProfileStore()
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)

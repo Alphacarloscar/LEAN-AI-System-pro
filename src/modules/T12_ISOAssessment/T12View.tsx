@@ -294,7 +294,7 @@ export function T12View({ onBack }: T12ViewProps) {
   const { controls, updateControl, importFromT6, syncEngagement: syncT12 } = useT12Store()
   const t6Controls                  = useT6Store((s) => s.controls)
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
-  const companyName                 = useCompanyProfileStore((s) => s.profile.nombre)
+  const companyName                 = useCompanyProfileStore((s) => s.profile.engagementName)
 
   // F-03: sincronizar controles con el engagement activo — limpia si cambia de proyecto
   useEffect(() => { syncT12(engagementId) }, [engagementId])

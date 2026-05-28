@@ -109,7 +109,7 @@ function ContextBreadcrumb({ dark }: { dark: boolean }) {
 
   const activeProject = projects.find((p) => p.id === activeEngagementId)
   const projectName   = activeProject?.name ?? null
-  const companyName   = profile.nombre || null
+  const companyName   = profile.engagementName || null
 
   const dimText = dark ? 'rgba(255,255,255,0.25)' : 'rgba(28,26,22,0.25)'
   const sepText = dark ? 'rgba(255,255,255,0.15)' : 'rgba(28,26,22,0.15)'

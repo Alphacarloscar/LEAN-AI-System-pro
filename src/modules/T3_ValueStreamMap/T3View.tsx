@@ -926,7 +926,7 @@ export function T3View({ onBack }: T3ViewProps) {
   const { processes, addProcess, load, initDemo, isLoading: isLoadingT3 } = useT3Store()
   const engagementId                      = useEngagementStore((s) => s.activeEngagementId)
   const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
-  const companyName                       = useCompanyProfileStore((s) => s.profile.nombre)
+  const companyName                       = useCompanyProfileStore((s) => s.profile.engagementName)
 
   const { isReadOnly } = usePermissions()
 

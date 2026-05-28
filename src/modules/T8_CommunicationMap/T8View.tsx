@@ -28,7 +28,6 @@ import { PersistenceBanner }           from '@/shared/components/PersistenceBann
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from '@/modules/T2_StakeholderMatrix/types'
 import type { CommAction, CommPhase, CommType, CommChannel, DeptKit, MaterialTemplate } from './types'
 import { usePermissions }      from '@/modules/Auth'
-import { ToolLoadingScreen }  from '@/shared/components/ToolLoadingScreen'
 
 // ── Rogers helpers (mismo que T7) ─────────────────────────────
 

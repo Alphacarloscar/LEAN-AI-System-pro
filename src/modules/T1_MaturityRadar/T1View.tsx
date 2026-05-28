@@ -36,28 +36,6 @@ interface T1ViewProps {
   onBack: () => void
 }
 
-// ── Builder: T1DimensionState[] desde un entrevistado demo ────
-
-function buildDimensionsForInterviewee(
-  intervieweeScores: Record<string, number>,
-  intervieweeEvidence: Record<string, string> = {}
-): T1DimensionState[] {
-  return DIMENSION_DEFINITIONS.map((def) => ({
-    code:      def.code,
-    label:     def.label,
-    dimNumber: def.dimNumber,
-    subdimensions: def.subdimensions.map((sub): T1SubdimensionState => ({
-      code:          sub.code,
-      label:         sub.label,
-      dimensionCode: def.code,
-      score:         intervieweeScores[sub.code] ?? null,
-      evidence:      intervieweeEvidence[sub.code] ?? '',
-      showCriteria:  false,
-      showEvidence:  !!(intervieweeEvidence[sub.code]),
-    })),
-  }))
-}
-
 // ── Modal: nueva entrevista ───────────────────────────────────
 
 interface NewIntervieweeForm {
@@ -513,9 +491,9 @@ export function T1View({ onBack }: T1ViewProps) {
       {/* ── Empresa + contexto ── */}
       <div className="max-w-6xl mx-auto px-8 pt-6 pb-2">
         <div className="flex items-center gap-3 flex-wrap">
-          {profile.nombre && (
+          {profile.engagementName && (
             <p className="text-sm font-semibold text-lean-black dark:text-gray-100">
-              {profile.nombre}
+              {profile.engagementName}
             </p>
           )}
           {profile.sector && (
@@ -712,7 +690,7 @@ export function T1View({ onBack }: T1ViewProps) {
         <div className="mt-8">
           <T1ExecutiveOutput
             dimensions={aggregateDimensions}
-            companyName={profile.nombre}
+            companyName={profile.engagementName}
             allInterviewees={allIntervieweeAggregates}
           />
         </div>

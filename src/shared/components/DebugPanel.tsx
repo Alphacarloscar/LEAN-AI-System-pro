@@ -49,8 +49,8 @@ export function DebugPanel() {
   const { isLoading: loadingT3 }                    = useT3Store()
   const { isLoading: loadingT4 }                    = useT4Store()
 
-  const companyName   = profile.nombre || '—'
-  const nameSource    = loadingProfile ? 'cargando…' : profile.nombre ? 'Supabase' : 'vacío'
+  const companyName   = profile.engagementName || '—'
+  const nameSource    = loadingProfile ? 'cargando…' : profile.engagementName ? 'Supabase' : 'vacío'
 
   if (minimized) {
     return (

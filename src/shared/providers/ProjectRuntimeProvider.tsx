@@ -45,7 +45,7 @@ const ProjectRuntimeContext = createContext<ProjectRuntime>(DEFAULT_RUNTIME)
 
 export function ProjectRuntimeProvider({ children }: { children: React.ReactNode }) {
   const projectId          = useEngagementStore((s) => s.activeEngagementId)
-  const { canEdit, isReadOnly } = usePermissions()
+  const { canEditCompanySettings: canEdit, isReadOnly } = usePermissions()
   const canRead            = !isReadOnly || canEdit
 
   // Disparar carga en background al cambiar de proyecto.
