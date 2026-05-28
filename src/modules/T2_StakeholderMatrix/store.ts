@@ -221,8 +221,16 @@ export const useT2Store = create<T2Store>()((set, get) => ({
     }
     console.log(`[T2 Store] START — engagement: ${engagementId}`)
     set({ isLoading: true, loadingForEngagementId: engagementId, lastError: null })
+
+    // F-07: timeout de seguridad — evita spinner infinito si Supabase no responde
+    const LOAD_TIMEOUT_MS = 10_000
+    const fetchPromise   = fetchStakeholders(engagementId)
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('T2_LOAD_TIMEOUT')), LOAD_TIMEOUT_MS)
+    )
+
     try {
-      const stakeholders = await fetchStakeholders(engagementId)
+      const stakeholders = await Promise.race([fetchPromise, timeoutPromise])
       // Stale guard: si el Hard Reset ocurrió mientras este fetch estaba en vuelo, descartar resultado
       if (get().loadingForEngagementId !== engagementId) {
         console.log(`[T2 Store] STALE — resultado descartado (actual: ${get().loadingForEngagementId})`)
@@ -235,10 +243,13 @@ export const useT2Store = create<T2Store>()((set, get) => ({
         console.log(`[T2 Store] STALE+ERROR — resultado descartado`)
         return
       }
-      console.error('[T2 Store] ERROR:', err)
+      const isTimeout = (err as Error)?.message === 'T2_LOAD_TIMEOUT'
+      console.error('[T2 Store] ERROR:', isTimeout ? 'timeout (>10s) — check Supabase connection' : err)
       set({
         isLoading: false,
-        lastError: err instanceof Error ? err.message : 'Error al cargar stakeholders',
+        lastError: isTimeout
+          ? 'Timeout al cargar stakeholders (>10s). Comprueba la conexión.'
+          : (err instanceof Error ? err.message : 'Error al cargar stakeholders'),
       })
     }
   },
