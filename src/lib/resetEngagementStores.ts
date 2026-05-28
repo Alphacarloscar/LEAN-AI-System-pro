@@ -27,16 +27,17 @@
 // Sprint 9 — Bloque 2 (estabilización) + Bloque 3 (eager loading)
 // ============================================================
 
-import { useT1Store }   from '@/modules/T1_MaturityRadar/store'
-import { useT2Store }   from '@/modules/T2_StakeholderMatrix/store'
-import { useT3Store }   from '@/modules/T3_ValueStreamMap/store'
-import { useT4Store }   from '@/modules/T4_UseCasePriorityBoard/store'
-import { useT5Store }   from '@/modules/T5_AITaxonomyCanvas/store'
-import { useT6Store }   from '@/modules/T6_RiskGovernance/store'
-import { useT7Store }   from '@/modules/T7_AdoptionHeatmap/store'
-import { useT8Store }   from '@/modules/T8_CommunicationMap/store'
-import { useT9Store }   from '@/modules/T9_AIRoadmap/store'
-import { useT12Store }  from '@/modules/T12_ISOAssessment/store'
+import { useT1Store }              from '@/modules/T1_MaturityRadar/store'
+import { useT2Store }              from '@/modules/T2_StakeholderMatrix/store'
+import { useT3Store }              from '@/modules/T3_ValueStreamMap/store'
+import { useT4Store }              from '@/modules/T4_UseCasePriorityBoard/store'
+import { useT5Store }              from '@/modules/T5_AITaxonomyCanvas/store'
+import { useT6Store }              from '@/modules/T6_RiskGovernance/store'
+import { useT7Store }              from '@/modules/T7_AdoptionHeatmap/store'
+import { useT8Store }              from '@/modules/T8_CommunicationMap/store'
+import { useT9Store }              from '@/modules/T9_AIRoadmap/store'
+import { useT12Store }             from '@/modules/T12_ISOAssessment/store'
+import { useCompanyProfileStore }  from '@/modules/CompanyProfile/store'
 
 /**
  * Limpia todos los stores con datos scoped al engagement.
@@ -62,6 +63,9 @@ export function resetAllEngagementStores(): void {
 
   // T12: assessment ISO 42001
   useT12Store.getState().resetAll()
+
+  // CompanyProfile: perfil de empresa scoped al engagement
+  useCompanyProfileStore.getState().resetProfile()
 }
 
 /**
@@ -76,5 +80,6 @@ export async function loadAllCriticalStores(engagementId: string): Promise<void>
     useT2Store.getState().load(engagementId),
     useT3Store.getState().load(engagementId),
     useT4Store.getState().loadEngagement(engagementId),
+    useCompanyProfileStore.getState().loadProfile(engagementId),
   ])
 }

@@ -1001,15 +1001,15 @@ function ChangeManagementPlanTab({
 // ── T7View — Componente principal ─────────────────────────────
 
 interface T7ViewProps {
-  companyName: string
-  onBack:      () => void
+  onBack: () => void
 }
 
-export function T7View({ companyName, onBack }: T7ViewProps) {
+export function T7View({ onBack }: T7ViewProps) {
   const stakeholders                = useT2Store(s => s.stakeholders)
   const loadT2                      = useT2Store(s => s.load)
   const isLoadingT2                 = useT2Store(s => s.isLoading)
   const t2Error                     = useT2Store(s => s.lastError)
+  const companyName                 = useCompanyProfileStore(s => s.profile.nombre)
   const { dark }                    = useDarkMode()
   const { profile: companyProfile } = useCompanyProfileStore()
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
@@ -1080,10 +1080,6 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
     [stakeholders, companyProfile],
   )
 
-  if (isLoadingT2) {
-    return <ToolLoadingScreen toolCode="T7" label="Cargando stakeholders…" />
-  }
-
   if (t2Error) {
     return (
       <ToolErrorState
@@ -1095,6 +1091,34 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 px-8 py-8">
+
+      {/* Banner no bloqueante — stakeholders pendientes */}
+      {(isLoadingT2 || (!isLoadingT2 && stakeholders.length === 0)) && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-600/40 px-4 py-3">
+          <svg className="mt-0.5 shrink-0 text-amber-500" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2L14 13H2L8 2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+            <path d="M8 6v3.5M8 11.5v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+          </svg>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
+              {isLoadingT2 ? 'Cargando stakeholders…' : 'Stakeholders no cargados.'}
+            </p>
+            <p className="text-xs text-amber-700/80 dark:text-amber-300/70 mt-0.5">
+              {isLoadingT2
+                ? 'La vista se actualizará automáticamente cuando terminen de cargar.'
+                : 'Puedes ir a T2 para añadir stakeholders, reintentar la carga o continuar con datos vacíos.'}
+            </p>
+          </div>
+          {!isLoadingT2 && engagementId && (
+            <button
+              onClick={() => loadT2(engagementId)}
+              className="shrink-0 text-[11px] font-medium text-amber-700 dark:text-amber-300 hover:underline"
+            >
+              Reintentar
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">

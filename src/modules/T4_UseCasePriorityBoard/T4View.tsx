@@ -2149,14 +2149,14 @@ function UseCaseDetailPanel({
 // ── T4View principal ──────────────────────────────────────────
 
 interface T4ViewProps {
-  companyName: string
-  onBack?:     () => void
+  onBack?: () => void
 }
 
-export function T4View({ companyName, onBack }: T4ViewProps) {
+export function T4View({ onBack }: T4ViewProps) {
   const navigate                               = useNavigate()
   const { useCases, isLoading, loadEngagement } = useT4Store()
   const { profile: companyProfile }            = useCompanyProfileStore()
+  const companyName                            = companyProfile.nombre
   const engagementId                           = useEngagementStore((s) => s.activeEngagementId)
   const user                                   = useAuthStore((s) => s.user)
   const isAuth                                 = !!user

@@ -1,17 +1,18 @@
 // ============================================================
-// LEAN AI System — App root (Sprint 3)
+// LEAN AI System — App root (Sprint 10)
 //
-// Sprint 3: Supabase Auth real + persistencia en BD.
-// initialize() restaura sesión al recargar página.
-// isInitializing evita flash de /login mientras se comprueba.
+// Sprint 10: Erradicación nuclear de DemoContext.
+//   — DemoContext eliminado. VITE_DEMO_ENABLED=false en staging.
+//   — Cada View lee companyName directamente de CompanyProfileStore.
+//   — T10RouteView pasa solo onNavigate; T10View se autoabastece.
+//   — ProjectRuntimeProvider orquesta el contexto base de proyecto.
 // ============================================================
 
-import { useState, createContext, useContext, useEffect }  from 'react'
+import { useEffect }                            from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AppLayout }                            from '@/shared/layouts/AppLayout'
 import { LoginView, ResetPasswordView, UpdatePasswordView, useAuthStore } from '@/modules/Auth'
 import { AdminView }                              from '@/modules/Admin'
-import { isDemoEnabled }                          from '@/lib/config'
 import { T1View }                               from '@/modules/T1_MaturityRadar'
 import { T2View }                               from '@/modules/T2_StakeholderMatrix'
 import { T3View }                               from '@/modules/T3_ValueStreamMap'
@@ -25,57 +26,11 @@ import { T10View }                              from '@/modules/T10_AIValueDashb
 import { T11View }                              from '@/modules/T11_OperatingRhythm'
 import { T12View }                              from '@/modules/T12_ISOAssessment'
 import { CompanyProfileView }                   from '@/modules/CompanyProfile'
-import {
-  DEMO_SCENARIOS,
-  DEFAULT_DEMO_SCENARIO,
-  getDemoScenario,
-  type DemoPattern,
-  type DemoScenario,
-} from '@/data/demo'
-
-// ── Contexto de demo — accesible desde rutas hijas ────────────
-
-interface DemoCtx {
-  scenario:   DemoScenario
-  setPattern: (p: DemoPattern) => void
-}
-
-const DemoContext = createContext<DemoCtx>({
-  scenario:   DEFAULT_DEMO_SCENARIO,
-  setPattern: () => undefined,
-})
-
-export function useDemoContext() {
-  return useContext(DemoContext)
-}
-
-// ── T10 route view — AI Value Dashboard (home screen) ────────
-
-function T10RouteView() {
-  const { scenario, setPattern } = useDemoContext()
-  const navigate                 = useNavigate()
-
-  // En producción (isDemoEnabled=false) no pasamos datos de escenario demo.
-  // T10View tiene su propio guard que muestra un placeholder si no hay proyecto.
-  return (
-    <T10View
-      companyName={isDemoEnabled ? scenario.company.name    : ''}
-      sector={isDemoEnabled      ? scenario.company.industry : ''}
-      employees={isDemoEnabled   ? scenario.company.employees : 0}
-      t1Radar={isDemoEnabled     ? scenario.t1Radar           : []}
-      onNavigate={(path) => navigate(path)}
-      demoPattern={isDemoEnabled  ? scenario.id : undefined}
-      demoScenarios={isDemoEnabled ? DEMO_SCENARIOS.map(s => ({ id: s.id, label: s.label })) : undefined}
-      onPatternChange={isDemoEnabled ? (p) => setPattern(p as DemoPattern) : undefined}
-    />
-  )
-}
 
 // ── ProtectedRoute — redirige a /login si no autenticado ──────
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isInitializing, needsPasswordUpdate } = useAuthStore()
-  // Mientras se comprueba la sesión de Supabase no redirigimos
   if (isInitializing) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <svg className="animate-spin h-6 w-6 text-navy" viewBox="0 0 24 24" fill="none">
@@ -85,151 +40,112 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     </div>
   )
   if (!isAuthenticated) return <Navigate to="/login" replace />
-  // Usuario autenticado pero pendiente de establecer contraseña (invitación o PASSWORD_RECOVERY)
   if (needsPasswordUpdate) return <Navigate to="/update-password" replace />
   return <>{children}</>
 }
 
-// ── T1 route wrapper ──────────────────────────────────────────
+// ── Route wrappers — sin DemoContext, sin companyName prop ────
+// Cada View lee companyName directamente de CompanyProfileStore.
 
 function T1RouteView() {
-  const { scenario } = useDemoContext()
-  const navigate     = useNavigate()
-  return <T1View scenario={scenario} onBack={() => navigate('/')} />
+  const navigate = useNavigate()
+  return <T1View onBack={() => navigate('/')} />
 }
-
-// ── T2 route wrapper ──────────────────────────────────────────
 
 function T2RouteView() {
-  const { scenario } = useDemoContext()
-  const navigate     = useNavigate()
-  return <T2View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
+  const navigate = useNavigate()
+  return <T2View onBack={() => navigate('/')} />
 }
-
-// ── T3 route wrapper ──────────────────────────────────────────
 
 function T3RouteView() {
-  const { scenario } = useDemoContext()
-  const navigate     = useNavigate()
-  return <T3View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
+  const navigate = useNavigate()
+  return <T3View onBack={() => navigate('/')} />
 }
-
-// ── T4 route wrapper ──────────────────────────────────────────
 
 function T4RouteView() {
-  const { scenario } = useDemoContext()
-  const navigate     = useNavigate()
-  return <T4View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
+  const navigate = useNavigate()
+  return <T4View onBack={() => navigate('/')} />
 }
-
-// ── T5 route wrapper ──────────────────────────────────────────
 
 function T5RouteView() {
-  const { scenario } = useDemoContext()
-  const navigate     = useNavigate()
-  return <T5View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
+  const navigate = useNavigate()
+  return <T5View onBack={() => navigate('/')} />
 }
-
-// ── T6 route wrapper ──────────────────────────────────────────
 
 function T6RouteView() {
-  const { scenario } = useDemoContext()
-  const navigate     = useNavigate()
-  return <T6View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
+  const navigate = useNavigate()
+  return <T6View onBack={() => navigate('/')} />
 }
-
-// ── T7 route wrapper ──────────────────────────────────────────
 
 function T7RouteView() {
-  const { scenario } = useDemoContext()
-  const navigate     = useNavigate()
-  return <T7View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
+  const navigate = useNavigate()
+  return <T7View onBack={() => navigate('/')} />
 }
-
-// ── T8 route wrapper ──────────────────────────────────────────
 
 function T8RouteView() {
-  const { scenario } = useDemoContext()
-  const navigate     = useNavigate()
-  return <T8View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
+  const navigate = useNavigate()
+  return <T8View onBack={() => navigate('/')} />
 }
-
-// ── T9 route wrapper ──────────────────────────────────────────
 
 function T9RouteView() {
-  const { scenario } = useDemoContext()
-  const navigate     = useNavigate()
-  return <T9View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
+  const navigate = useNavigate()
+  return <T9View onBack={() => navigate('/')} />
 }
 
-// ── T11 route wrapper ─────────────────────────────────────────
+function T10RouteView() {
+  const navigate = useNavigate()
+  return <T10View onNavigate={(path) => navigate(path)} />
+}
 
 function T11RouteView() {
-  const { scenario } = useDemoContext()
-  const navigate     = useNavigate()
-  return (
-    <T11View
-      companyName={isDemoEnabled ? scenario.company.name : ''}
-      t1Radar={isDemoEnabled ? scenario.t1Radar : []}
-      employees={isDemoEnabled ? scenario.company.employees : 0}
-      onBack={() => navigate('/')}
-    />
-  )
+  const navigate = useNavigate()
+  return <T11View onBack={() => navigate('/')} />
 }
 
-// ── T12 route wrapper ─────────────────────────────────────────
-
 function T12RouteView() {
-  const { scenario } = useDemoContext()
-  const navigate     = useNavigate()
-  return <T12View companyName={isDemoEnabled ? scenario.company.name : ''} onBack={() => navigate('/')} />
+  const navigate = useNavigate()
+  return <T12View onBack={() => navigate('/')} />
 }
 
 // ── App root ──────────────────────────────────────────────────
 
 export default function App() {
-  const [activePattern, setActivePattern] = useState<DemoPattern>(DEFAULT_DEMO_SCENARIO.id)
-  const scenario = getDemoScenario(activePattern)
-
-  // Sprint 3: restaurar sesión Supabase al montar la app
   const { initialize } = useAuthStore()
   useEffect(() => { initialize() }, [initialize])
 
   return (
-    <DemoContext.Provider value={{ scenario, setPattern: setActivePattern }}>
-      <Routes>
-        {/* Rutas públicas — sin AppLayout */}
-        <Route path="login"            element={<LoginView />} />
-        <Route path="reset-password"   element={<ResetPasswordView />} />
-        <Route path="update-password"  element={<UpdatePasswordView />} />
+    <Routes>
+      {/* Rutas públicas — sin AppLayout */}
+      <Route path="login"            element={<LoginView />} />
+      <Route path="reset-password"   element={<ResetPasswordView />} />
+      <Route path="update-password"  element={<UpdatePasswordView />} />
 
-        {/* Rutas protegidas — AppLayout persistente (header + sidebar) */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <AppLayout phases={scenario.phases.filter((p) => p.id !== 'handover')} />
-            </ProtectedRoute>
-          }
-        >
-          <Route index                 element={<T10RouteView />} />
-          <Route path="company-profile" element={<CompanyProfileView />} />
-          <Route path="t1"             element={<T1RouteView />} />
-          <Route path="t2"             element={<T2RouteView />} />
-          <Route path="t3"             element={<T3RouteView />} />
-          <Route path="t4"             element={<T4RouteView />} />
-          <Route path="t5"             element={<T5RouteView />} />
-          <Route path="t6"             element={<T6RouteView />} />
-          <Route path="t7"             element={<T7RouteView />} />
-          <Route path="t8"             element={<T8RouteView />} />
-          <Route path="t9"             element={<T9RouteView />} />
-          <Route path="t11"            element={<T11RouteView />} />
-          <Route path="t12"            element={<T12RouteView />} />
-          <Route path="admin"          element={<AdminView />} />
-        </Route>
+      {/* Rutas protegidas — AppLayout persistente (header + sidebar) */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index                  element={<T10RouteView />} />
+        <Route path="company-profile" element={<CompanyProfileView />} />
+        <Route path="t1"              element={<T1RouteView />} />
+        <Route path="t2"              element={<T2RouteView />} />
+        <Route path="t3"              element={<T3RouteView />} />
+        <Route path="t4"              element={<T4RouteView />} />
+        <Route path="t5"              element={<T5RouteView />} />
+        <Route path="t6"              element={<T6RouteView />} />
+        <Route path="t7"              element={<T7RouteView />} />
+        <Route path="t8"              element={<T8RouteView />} />
+        <Route path="t9"              element={<T9RouteView />} />
+        <Route path="t11"             element={<T11RouteView />} />
+        <Route path="t12"             element={<T12RouteView />} />
+        <Route path="admin"           element={<AdminView />} />
+      </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </DemoContext.Provider>
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }

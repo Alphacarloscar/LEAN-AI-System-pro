@@ -8,14 +8,12 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import type { RadarDimension }          from '@/shared/components/charts/LeanRadarChart'
-import { T10_DEMO }                     from './demo-data'
 import { useT4Store }                    from '@/modules/T4_UseCasePriorityBoard/store'
 import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
 import { useCompanyProfileStore }        from '@/modules/CompanyProfile/store'
 import { useEngagementStore }            from '@/modules/Engagement/store'
 import { RecommendationPanel }           from '@/components/RecommendationPanel'
 import { buildT10RecommendationContext } from './t10ContextBuilder'
-import { isDemoEnabled }                 from '@/lib/config'
 import { useT1Store }                    from '@/modules/T1_MaturityRadar/store'
 import { computeDimensionScore, computeOverallScore } from '@/modules/T1_MaturityRadar/types'
 import { useT3Store }                    from '@/modules/T3_ValueStreamMap/store'
@@ -28,14 +26,7 @@ import { usePermissions }                from '@/modules/Auth'
 type PanelId = 'p1' | 'p2' | 'p3' | 'p4' | 'p5' | 'p6'
 
 export interface T10ViewProps {
-  companyName:      string
-  sector:           string
-  employees:        number
-  t1Radar:          RadarDimension[]
-  onNavigate:       (path: string) => void
-  demoPattern?:     string
-  demoScenarios?:   Array<{ id: string; label: string }>
-  onPatternChange?: (p: string) => void
+  onNavigate: (path: string) => void
 }
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -306,10 +297,7 @@ function PanelCard({
 
 // ── T10View ──────────────────────────────────────────────────
 
-export function T10View({
-  companyName, sector, employees, t1Radar, onNavigate,
-  demoPattern, demoScenarios, onPatternChange,
-}: T10ViewProps) {
+export function T10View({ onNavigate }: T10ViewProps) {
 
   const [expanded,  setExpanded]  = useState<PanelId | null>(null)
   const [aiDisplay, setAiDisplay] = useState(0)
@@ -328,7 +316,7 @@ export function T10View({
 
   // ── Carga de todos los stores cuando cambia el proyecto activo ──
   useEffect(() => {
-    if (!engagementId || isDemoEnabled) return
+    if (!engagementId) return
     loadT1(engagementId)
     loadT2(engagementId)
     loadT3(engagementId)
@@ -338,9 +326,8 @@ export function T10View({
     syncT9(engagementId)
   }, [engagementId])
 
-  // ── T1: radar desde store real (producción) o prop demo ──────
+  // ── T1: radar desde store real ────────────────────────────────
   const liveT1Radar = useMemo((): RadarDimension[] => {
-    if (isDemoEnabled) return t1Radar
     const allDimStates = Object.values(dimensionStates)
     if (allDimStates.length === 0) return []
     const template = allDimStates[0]
@@ -353,17 +340,17 @@ export function T10View({
       const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0
       return { dimension: dim.label, current: Math.round(avg * 10) / 10, target: 4 }
     })
-  }, [isDemoEnabled, t1Radar, dimensionStates])
+  }, [dimensionStates])
 
   const avg     = calcAvg(liveT1Radar)
   const weakest = weakestDimension(liveT1Radar)
   const tier    = maturityLabel(avg)
 
-  // ── Datos de cabecera: demo → props, producción → stores ─────
-  const activeProject    = projects.find(p => p.id === engagementId)
-  const displayName      = isDemoEnabled ? companyName  : (activeProject?.name ?? '')
-  const displaySector    = isDemoEnabled ? sector       : (companyProfile?.sector ?? '')
-  const displayTamano    = isDemoEnabled ? `${employees.toLocaleString('es-ES')} empleados` : (companyProfile?.tamanoEmpresa ?? '')
+  // ── Datos de cabecera desde stores ───────────────────────────
+  const activeProject = projects.find(p => p.id === engagementId)
+  const displayName   = activeProject?.name ?? ''
+  const displaySector = companyProfile?.sector ?? ''
+  const displayTamano = companyProfile?.tamanoEmpresa ?? ''
 
   // ── Permisos de usuario — client_viewer = solo lectura ──────────
   const { isReadOnly: isReadOnlyProject } = usePermissions()
@@ -463,8 +450,8 @@ export function T10View({
 
   // ── T1: desglose IT vs Negocio para panel expandido ──────────
   const liveT1Breakdown = useMemo(() => {
-    if (isDemoEnabled || interviewees.length === 0) {
-      return { itAvg: 0, bizAvg: 0, gapPts: 0, interviewsCount: interviewees.length }
+    if (interviewees.length === 0) {
+      return { itAvg: 0, bizAvg: 0, gapPts: 0, interviewsCount: 0 }
     }
     function avgForType(type: 'it' | 'business'): number {
       const group = interviewees.filter(i => i.type === type)
@@ -484,7 +471,7 @@ export function T10View({
       gapSign:         bizAvg >= itAvg ? 'Negocio' : 'IT',
       interviewsCount: interviewees.length,
     }
-  }, [isDemoEnabled, interviewees, dimensionStates])
+  }, [interviewees, dimensionStates])
 
   // ── T3: ecosistema de procesos para P4 ───────────────────────
   const AI_CAT_META: Record<string, { label: string; color: string }> = {
@@ -569,7 +556,7 @@ export function T10View({
   function toggle(id: PanelId) { setExpanded(prev => prev === id ? null : id) }
 
   // ── Guard 1: sin proyecto seleccionado ────────────────────────
-  if (!isDemoEnabled && !engagementId) {
+  if (!engagementId) {
     return (
       <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center px-6">
         <div className="text-center max-w-sm space-y-4">
@@ -597,7 +584,7 @@ export function T10View({
   }
 
   // ── Guard 2: proyecto seleccionado pero T1 todavía sin datos ──
-  if (!isDemoEnabled && engagementId && !isT1Loading && liveT1Radar.length === 0) {
+  if (engagementId && !isT1Loading && liveT1Radar.length === 0) {
     return (
       <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center px-6">
         <div className="text-center max-w-md space-y-5">
@@ -668,12 +655,11 @@ export function T10View({
     )
   }
 
-  const d      = T10_DEMO
-  const t4data = isDemoEnabled ? d.t4     : liveT4
-  const t2data = isDemoEnabled ? d.t2t7   : liveT2
-  const t3data = isDemoEnabled ? d.t3t5   : liveT3   // null = sin datos aún
-  const p5data = isDemoEnabled ? d.t6t12  : liveP5
-  const p6data = isDemoEnabled ? d.t8t9t11 : liveP6
+  const t4data = liveT4
+  const t2data = liveT2
+  const t3data = liveT3   // null = sin datos aún
+  const p5data = liveP5
+  const p6data = liveP6
   const t4n    = t4data.totalInitiatives
   const t4s    = t4data.statuses
   const t4Segments = t4n > 0 ? [
@@ -735,25 +721,6 @@ export function T10View({
           </div>
         )}
 
-        {/* Demo scenario selector — solo visible en entorno demo */}
-        {isDemoEnabled && demoScenarios && onPatternChange && (
-          <div className="border-t border-warm-700 dark:border-warm-800">
-            <div className="max-w-6xl mx-auto px-8 py-2 flex items-center gap-3">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-warm-400 flex-shrink-0">Escenario demo</span>
-              <div className="flex gap-1.5 flex-wrap">
-                {demoScenarios.map(s => (
-                  <button key={s.id} onClick={() => onPatternChange(s.id)}
-                    className={[
-                      'px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all',
-                      s.id === demoPattern ? 'bg-gold text-lean-black' : 'bg-warm-700 text-warm-200 hover:bg-warm-600',
-                    ].join(' ')}>
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── Panel grid ──────────────────────────────────────── */}
@@ -779,35 +746,35 @@ export function T10View({
 
             {expanded === 'p1' && (
               <ExpandedSection>
-                {/* IT vs Negocio — datos reales o demo */}
-                {(isDemoEnabled || liveT1Breakdown.interviewsCount > 0) ? (
+                {/* IT vs Negocio */}
+                {liveT1Breakdown.interviewsCount > 0 ? (
                   <>
                     <div className="flex items-center gap-3 mb-2">
                       <div className="text-center">
                         <p className="text-[10px] text-text-muted dark:text-warm-300">IT (avg)</p>
                         <p className="text-xl font-semibold text-gold tabular-nums">
-                          {isDemoEnabled ? d.t1.itAvg : liveT1Breakdown.itAvg}
+                          {liveT1Breakdown.itAvg}
                         </p>
                       </div>
                       <div className="flex-1 relative mx-1">
                         <div className="h-1.5 bg-border dark:bg-warm-500 rounded-full overflow-hidden">
                           <div className="absolute left-0 top-0 h-full rounded-full bg-gold"
-                            style={{ width: `${((isDemoEnabled ? d.t1.itAvg : liveT1Breakdown.itAvg) / 4) * 100}%` }} />
+                            style={{ width: `${(liveT1Breakdown.itAvg / 4) * 100}%` }} />
                         </div>
                         <div className="h-1.5 bg-border dark:bg-warm-500 rounded-full overflow-hidden mt-1">
                           <div className="absolute left-0 top-0 h-full rounded-full bg-info"
-                            style={{ width: `${((isDemoEnabled ? d.t1.bizAvg : liveT1Breakdown.bizAvg) / 4) * 100}%` }} />
+                            style={{ width: `${(liveT1Breakdown.bizAvg / 4) * 100}%` }} />
                         </div>
                       </div>
                       <div className="text-center">
                         <p className="text-[10px] text-text-muted dark:text-warm-300">Negocio (avg)</p>
                         <p className="text-xl font-semibold text-info-dark dark:text-info tabular-nums">
-                          {isDemoEnabled ? d.t1.bizAvg : liveT1Breakdown.bizAvg}
+                          {liveT1Breakdown.bizAvg}
                         </p>
                       </div>
                     </div>
                     <p className="text-[10px] text-text-muted dark:text-warm-300 mb-2">
-                      → {isDemoEnabled ? `Negocio +${d.t1.gapPts} pts sobre IT` : `${liveT1Breakdown.gapSign} +${liveT1Breakdown.gapPts} pts`}
+                      → {liveT1Breakdown.gapSign} +{liveT1Breakdown.gapPts} pts
                     </p>
                   </>
                 ) : (
@@ -819,7 +786,7 @@ export function T10View({
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${avg < 2 ? 'bg-warning-light text-warning-dark' : 'bg-info-light text-info-dark'}`}>{tier}</span>
                   <span className="text-[10px] text-text-muted dark:text-warm-300">
                     Nº entrevistas: <span className="font-semibold text-lean-black dark:text-warm-50">
-                      {isDemoEnabled ? d.t1.interviewsCount : liveT1Breakdown.interviewsCount}
+                      {liveT1Breakdown.interviewsCount}
                     </span>
                   </span>
                 </div>
@@ -1029,7 +996,7 @@ export function T10View({
               colorScore={p5data.isoCompliance > 0 ? p5data.isoCompliance : undefined}
             />}
           >
-            {(isDemoEnabled || liveP5.hasData) ? (
+            {liveP5.hasData ? (
               <>
                 <div className="flex items-center gap-3">
                   <DonutChart
@@ -1100,18 +1067,6 @@ export function T10View({
 
             {expanded === 'p5' && (
               <ExpandedSection>
-                {isDemoEnabled && (
-                  <>
-                    <div className="mb-2">
-                      <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Riesgo crítico identificado</p>
-                      <p className="text-[11px] font-medium text-danger-dark dark:text-danger">{d.t6t12.topRisk}</p>
-                    </div>
-                    <div className="mb-3">
-                      <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Próximo objetivo ISO</p>
-                      <p className="text-[11px] font-medium text-text-primary dark:text-warm-100">{d.t6t12.nextClause}</p>
-                    </div>
-                  </>
-                )}
                 <div className="flex items-center gap-3">
                   <NavButton label="Abrir T6 Riesgos" onClick={() => onNavigate('/t6')} />
                   <NavButton label="Abrir T12 ISO" onClick={() => onNavigate('/t12')} secondary />
@@ -1125,11 +1080,9 @@ export function T10View({
             id="p6" expanded={expanded === 'p6'} onClick={() => toggle('p6')}
             tag="T8 · T9 · T11 · Gobierno" tagColor="amber"
             title="Gobierno activo"
-            subtitle={isDemoEnabled
-              ? 'Próximos eventos · Hitos · Vendors'
-              : liveP6.hasData
-                ? `${liveP6.casosEnGO} en GO · ${liveP6.upcomingEvents.length} hitos próximos`
-                : 'Pendiente de configurar'}
+            subtitle={liveP6.hasData
+              ? `${liveP6.casosEnGO} en GO · ${liveP6.upcomingEvents.length} hitos próximos`
+              : 'Pendiente de configurar'}
             animDelay={400}
             heroSlot={<HeroMetric
               label="Gobierno activo"
@@ -1137,7 +1090,7 @@ export function T10View({
               colorScore={p6data.gobiernoActivoPct > 0 ? p6data.gobiernoActivoPct : undefined}
             />}
           >
-            {(isDemoEnabled || liveP6.hasData) ? (
+            {liveP6.hasData ? (
               <>
                 <div className="space-y-1.5">
                   {p6data.upcomingEvents.map((ev, i) => (
@@ -1149,29 +1102,11 @@ export function T10View({
                     </div>
                   ))}
                 </div>
-                {isDemoEnabled && (
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse flex-shrink-0" />
-                    <span className="text-[10px] text-danger-dark dark:text-danger truncate">
-                      {d.t8t9t11.criticalVendor} · renovación {d.t8t9t11.vendorRenewal}
-                    </span>
-                  </div>
-                )}
                 <div className="flex gap-1.5 mt-3">
-                  <MetricChip label="Casos en GO"   value={String(p6data.casosEnGO)}   valueColor="#C8860A" />
-                  {isDemoEnabled ? (
-                    <>
-                      <MetricChip label="Inic. libres"  value={String(d.t8t9t11.iniciativasLibres)} />
-                      <MetricChip label="Completadas"   value={String(d.t8t9t11.archivosCompletados)} />
-                      <MetricChip label="Riesgos altos" value={String(d.t8t9t11.riesgosAltos)} valueColor="#C06060" />
-                    </>
-                  ) : (
-                    <>
-                      <MetricChip label="Candidatos"  value={String(liveP6.libres)} />
-                      <MetricChip label="Completados" value={String(liveP6.completados)} />
-                      <MetricChip label="Riesgo alto" value={String(liveP5.risks.high)} valueColor="#C06060" />
-                    </>
-                  )}
+                  <MetricChip label="Casos en GO"  value={String(p6data.casosEnGO)}   valueColor="#C8860A" />
+                  <MetricChip label="Candidatos"   value={String(liveP6.libres)} />
+                  <MetricChip label="Completados"  value={String(liveP6.completados)} />
+                  <MetricChip label="Riesgo alto"  value={String(liveP5.risks.high)} valueColor="#C06060" />
                 </div>
               </>
             ) : (
@@ -1182,16 +1117,6 @@ export function T10View({
 
             {expanded === 'p6' && (
               <ExpandedSection>
-                {isDemoEnabled && d.t8t9t11.nextMilestone && (
-                  <div className="mb-3">
-                    <p className="text-[10px] text-text-muted dark:text-warm-300 mb-0.5">Próximo hito</p>
-                    <div className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-success flex-shrink-0" />
-                      <p className="text-[11px] font-medium text-text-primary dark:text-warm-100">{d.t8t9t11.nextMilestone}</p>
-                      <span className="text-[10px] text-text-muted dark:text-warm-300 flex-shrink-0">{d.t8t9t11.nextMilestoneDate}</span>
-                    </div>
-                  </div>
-                )}
                 <div className="flex items-center gap-3 flex-wrap">
                   <NavButton label="Abrir T11 Gobierno" onClick={() => onNavigate('/t11')} />
                   <NavButton label="Abrir T9 Roadmap"   onClick={() => onNavigate('/t9')} secondary />
@@ -1202,12 +1127,6 @@ export function T10View({
           </PanelCard>
 
         </div>
-
-        {isDemoEnabled && (
-          <p className="text-center text-[10px] text-text-subtle dark:text-warm-400 mt-6">
-            Datos demo · GOBY · Alpha Consulting Solutions
-          </p>
-        )}
 
         {/* ── RECOMENDACIONES IA ────────────────────────────── */}
         {t10LLMContext && (

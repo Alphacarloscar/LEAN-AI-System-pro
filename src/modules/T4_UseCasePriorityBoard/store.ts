@@ -30,13 +30,15 @@ function genId(): string {
 // ── Store ─────────────────────────────────────────────────────
 
 interface T4Store {
-  useCases:     UseCase[]
-  engagementId: string | null
-  isLoading:    boolean
+  useCases:        UseCase[]
+  engagementId:    string | null
+  isLoading:       boolean
   /** true tras una carga exitosa; false tras reset o error. Permite a T4View
    *  distinguir "datos ya cargados" de "store recién limpiado" sin depender
    *  solo de useCases.length (que sería 0 para proyectos nuevos). */
-  isLoaded:     boolean
+  isLoaded:        boolean
+  /** UUID generado por cada llamada a loadEngagement() — descarta respuestas de cargas obsoletas */
+  currentRequestId: string | null
 
   /** Carga casos de uso desde Supabase para el engagement dado */
   loadEngagement: (engagementId: string) => Promise<void>
@@ -63,36 +65,31 @@ interface T4Store {
 export const useT4Store = create<T4Store>()(
   persist(
     (set, get) => ({
-      useCases:     [],
-      engagementId: null,
-      isLoading:    false,
-      isLoaded:     false,
+      useCases:        [],
+      engagementId:    null,
+      isLoading:       false,
+      isLoaded:        false,
+      currentRequestId: null,
 
       // ── loadEngagement ──────────────────────────────────────
       loadEngagement: async (engagementId) => {
-        const s = get()
-        // F-06 engagement-aware: solo bloquear si estamos cargando ESTE mismo engagement
-        if (s.isLoading && s.engagementId === engagementId) {
-          console.log(`[T4 Store] BLOCKED (F-06) — ya cargando engagement: ${engagementId}`)
-          return
-        }
-        console.log(`[T4 Store] START — engagement: ${engagementId}`)
-        set({ isLoading: true, isLoaded: false, engagementId })
+        const requestId = crypto.randomUUID()
+        set({ isLoading: true, isLoaded: false, engagementId, currentRequestId: requestId })
+
+        const LOAD_TIMEOUT_MS = 10_000
+        const fetchPromise   = fetchUseCases(engagementId)
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('T4_LOAD_TIMEOUT')), LOAD_TIMEOUT_MS)
+        )
+
         try {
-          const useCases = await fetchUseCases(engagementId)
-          // Stale guard: si el Hard Reset ocurrió mientras este fetch estaba en vuelo, descartar resultado
-          if (get().engagementId !== engagementId) {
-            console.log(`[T4 Store] STALE — resultado descartado (engagement actual: ${get().engagementId})`)
-            return
-          }
-          console.log(`[T4 Store] OK — ${useCases.length} casos de uso`)
+          const useCases = await Promise.race([fetchPromise, timeoutPromise])
+          if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
           set({ useCases, isLoading: false, isLoaded: true })
         } catch (err) {
-          if (get().engagementId !== engagementId) {
-            console.log(`[T4 Store] STALE+ERROR — resultado descartado`)
-            return
-          }
-          console.error('[T4 Store] ERROR:', err)
+          if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
+          const isTimeout = (err as Error)?.message === 'T4_LOAD_TIMEOUT'
+          console.error('[T4 Store] ERROR:', isTimeout ? 'timeout (>10s) — check Supabase connection' : err)
           set({ isLoading: false, isLoaded: false })
         }
       },
@@ -180,7 +177,7 @@ export const useT4Store = create<T4Store>()(
       },
 
       // ── reset ──────────────────────────────────────────────────
-      reset: () => set({ useCases: [], engagementId: null, isLoading: false, isLoaded: false }),
+      reset: () => set({ useCases: [], engagementId: null, isLoading: false, isLoaded: false, currentRequestId: null }),
     }),
     {
       name:       'lean-t4-usecases',

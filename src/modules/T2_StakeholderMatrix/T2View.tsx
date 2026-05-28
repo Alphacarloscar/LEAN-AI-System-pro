@@ -763,32 +763,24 @@ function DepartmentOverviewChart({ stakeholders }: { stakeholders: Stakeholder[]
 // ── Vista principal ───────────────────────────────────────────
 
 interface T2ViewProps {
-  companyName: string
-  onBack:      () => void
+  onBack: () => void
 }
 
-export function T2View({ companyName, onBack }: T2ViewProps) {
+export function T2View({ onBack }: T2ViewProps) {
   const { stakeholders, addStakeholder, updateStakeholder, load, initDemo, lastError, isLoading: isLoadingT2 } = useT2Store()
   const engagementId   = useEngagementStore((s) => s.activeEngagementId)
   const companyProfile = useCompanyProfileStore((s) => s.profile)
+  const companyName    = companyProfile.nombre
   const navigate       = useNavigate()
 
   const { isReadOnly } = usePermissions()
   const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
 
-  // Carga: real (Supabase) o demo (datos predefinidos del store)
-  // Guard anti-double-load: loadingForEngagementId en T2 store actúa como "ya cargando o cargado".
-  // Se setea al inicio de load() y se limpia solo con reset(). Por tanto:
-  //   SKIP si: loadingFor === engagementId (en vuelo o completado para este engagement)
-  //   FIRE si: loadingFor es null (reset) o diferente (otro engagement)
-  // Cubre F5 (T2 no persiste nada → loadingFor=null → carga siempre) y
-  // doble-mount post-EagerLoading (loadingFor=id → skip).
+  // Carga desde Supabase cuando cambia el engagement y no hay datos.
+  // El patrón requestId en el store descarta respuestas stale si hay cargas concurrentes.
   useEffect(() => {
     if (engagementId) {
-      const { loadingForEngagementId: loadingFor } = useT2Store.getState()
-      const skip = loadingFor === engagementId
-      console.log(`[T2 View] useEffect — eng: ${engagementId}, store.loadingFor: ${loadingFor} → ${skip ? 'SKIP' : 'FIRE'}`)
-      if (!skip) load(engagementId)
+      if (useT2Store.getState().stakeholders.length === 0) load(engagementId)
 
       // Obtener company_id del proyecto para cargar departamentos centralizados
       supabase

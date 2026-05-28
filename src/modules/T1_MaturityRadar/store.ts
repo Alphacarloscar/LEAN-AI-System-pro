@@ -32,11 +32,11 @@ interface T1Store {
   interviewees:    T1IntervieweeContext[]
   dimensionStates: Record<string, T1DimensionState[]>   // clave = interviewee.id
   activeId:               string
-  isLoading:              boolean
-  /** RC-1: engagement en vuelo — evita que F-06 bloquee cargas de otro engagement */
-  loadingForEngagementId: string | null
+  isLoading:        boolean
+  /** UUID generado por cada llamada a load() — descarta respuestas de cargas obsoletas */
+  currentRequestId: string | null
   /** Error de carga — visible en RetryBanner si != null */
-  loadError:              string | null
+  loadError:        string | null
 
   // ── Carga desde Supabase ────────────────────────────────────
   load: (engagementId: string) => Promise<void>
@@ -129,19 +129,17 @@ function updateSubdimension(
 // ── Store ─────────────────────────────────────────────────────
 
 export const useT1Store = create<T1Store>()((set, get) => ({
-  interviewees:           [],
-  dimensionStates:        {},
-  activeId:               '',
-  isLoading:              false,
-  loadingForEngagementId: null,
-  loadError:              null,
+  interviewees:    [],
+  dimensionStates: {},
+  activeId:        '',
+  isLoading:       false,
+  currentRequestId: null,
+  loadError:       null,
 
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
-    const s = get()
-    // F-06 engagement-aware: solo bloquear si estamos cargando ESTE mismo engagement
-    if (s.isLoading && s.loadingForEngagementId === engagementId) return
-    set({ isLoading: true, loadingForEngagementId: engagementId, loadError: null })
+    const requestId = crypto.randomUUID()
+    set({ isLoading: true, currentRequestId: requestId, loadError: null })
 
     const LOAD_TIMEOUT_MS = 15_000
 
@@ -152,8 +150,7 @@ export const useT1Store = create<T1Store>()((set, get) => ({
 
     try {
       const { interviewees, dimensionStates } = await Promise.race([fetchPromise, timeoutPromise])
-      // Stale guard: si el Hard Reset ocurrió mientras este fetch estaba en vuelo, descartar resultado
-      if (get().loadingForEngagementId !== engagementId) return
+      if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
       set({
         interviewees,
         dimensionStates,
@@ -162,12 +159,11 @@ export const useT1Store = create<T1Store>()((set, get) => ({
         loadError: null,
       })
     } catch (err) {
-      if (get().loadingForEngagementId !== engagementId) return  // stale load post-reset, ignorar
+      if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
       const isTimeout = (err as Error)?.message === 'T1_LOAD_TIMEOUT'
       const message = isTimeout
         ? 'Timeout de carga (>15s) — comprueba la conexión con Supabase'
         : `Error al cargar T1: ${(err as Error)?.message ?? String(err)}`
-      // Log completo para depuración — incluye el objeto de error original
       console.error('[T1Store] load FAILED for engagement', engagementId, '—', message, err)
       set({ isLoading: false, loadError: message })
     }
@@ -357,5 +353,5 @@ export const useT1Store = create<T1Store>()((set, get) => ({
   },
 
   // ── reset ──────────────────────────────────────────────────
-  reset: () => set({ interviewees: [], dimensionStates: {}, activeId: '', isLoading: false, loadingForEngagementId: null, loadError: null }),
+  reset: () => set({ interviewees: [], dimensionStates: {}, activeId: '', isLoading: false, currentRequestId: null, loadError: null }),
 }))

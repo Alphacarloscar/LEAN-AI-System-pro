@@ -17,6 +17,9 @@ import { PhaseMiniMap }                   from '@/shared/components/PhaseMiniMap
 import { buildOperatingModel }            from './engine'
 import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
+import { useT1Store }                     from '@/modules/T1_MaturityRadar/store'
+import { DIMENSION_DEFINITIONS }          from '@/modules/T1_MaturityRadar/constants'
+import type { RadarDimension }            from '@/shared/components/charts/LeanRadarChart'
 import { RecommendationPanel }            from '@/components/RecommendationPanel'
 import { buildT11RecommendationContext }  from './t11ContextBuilder'
 import {
@@ -29,15 +32,10 @@ import type {
   T11Event, T11Level, T11MaturityTier, T11AdaptiveMode,
   T11DecisionNode, T11PhaseObjective, T11KpiGroup,
 } from './types'
-import type { RadarDimension } from '@/shared/components/charts/LeanRadarChart'
-
 // ── Props ─────────────────────────────────────────────────────
 
 interface T11ViewProps {
-  companyName: string
-  t1Radar:     RadarDimension[]
-  employees?:  number
-  onBack:      () => void
+  onBack: () => void
 }
 
 // ── Tabs ──────────────────────────────────────────────────────
@@ -917,15 +915,39 @@ function generateOperatingModelHTML(
 
 // ── Vista principal ───────────────────────────────────────────
 
-export function T11View({ companyName, t1Radar, employees = 500, onBack }: T11ViewProps) {
+export function T11View({ onBack }: T11ViewProps) {
   const [activeTab, setActiveTab]         = useState<T11Tab>('bigpicture')
   const [selectedEvent, setSelectedEvent] = useState<T11Event | null>(null)
   const { profile: companyProfile }       = useCompanyProfileStore()
+  const companyName                       = companyProfile.nombre
   const engagementId                      = useEngagementStore((s) => s.activeEngagementId)
 
+  // Compute RadarDimension[] from T1Store — agrega todos los entrevistados
+  const dimensionStates = useT1Store((s) => s.dimensionStates)
+  const t1Radar = useMemo((): RadarDimension[] => {
+    const allStates = Object.values(dimensionStates)
+    if (allStates.length === 0) {
+      return DIMENSION_DEFINITIONS.map((def) => ({ dimension: def.label, current: 2 }))
+    }
+    return DIMENSION_DEFINITIONS.map((def) => {
+      const scores: number[] = []
+      for (const state of allStates) {
+        const dim = state.find((d) => d.code === def.code)
+        if (!dim) continue
+        for (const sub of dim.subdimensions) {
+          if (sub.score !== null) scores.push(sub.score)
+        }
+      }
+      const avg = scores.length > 0
+        ? scores.reduce((a, b) => a + b, 0) / scores.length
+        : 2
+      return { dimension: def.label, current: Math.round(avg * 100) / 100 }
+    })
+  }, [dimensionStates])
+
   const model = useMemo(
-    () => buildOperatingModel({ radar: t1Radar, employees }),
-    [t1Radar, employees],
+    () => buildOperatingModel({ radar: t1Radar, employees: 500 }),
+    [t1Radar],
   )
 
   const t11LLMContext = useMemo(

@@ -674,17 +674,16 @@ function RiskDashboardTab() {
 // ── ── ── Main View ── ── ────────────────────────────────────────
 
 export function T6View({
-  companyName,
   onBack,
 }: {
-  companyName: string
-  onBack:      () => void
+  onBack: () => void
 }) {
   const [tab, setTab]    = useState<T6Tab>('politica')
   const { useCases }     = useT4Store()
   const { canvas }       = useT5Store()
   const { syncEngagement: syncT6 } = useT6Store()
   const companyProfile   = useCompanyProfileStore((s) => s.profile)
+  const companyName      = companyProfile.nombre
   const engagementId     = useEngagementStore((s) => s.activeEngagementId)
 
   useEffect(() => { syncT6(engagementId) }, [engagementId])

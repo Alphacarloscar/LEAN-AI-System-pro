@@ -18,6 +18,7 @@ import { useNavigate }                  from 'react-router-dom'
 import { useT12Store }                  from './store'
 import { useT6Store }                   from '@/modules/T6_RiskGovernance/store'
 import { useEngagementStore }           from '@/modules/Engagement/store'
+import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
 import {
   T12_CLAUSE_CONFIG,
   T12_CLAUSE_ORDER,
@@ -284,16 +285,16 @@ function generateAuditReport(controls: T12Control[], companyName: string): strin
 // ── Vista principal ───────────────────────────────────────────
 
 interface T12ViewProps {
-  companyName: string
-  onBack?:     () => void
+  onBack?: () => void
 }
 
-export function T12View({ companyName, onBack }: T12ViewProps) {
+export function T12View({ onBack }: T12ViewProps) {
   const navigate                    = useNavigate()
   const { isReadOnly } = usePermissions()
   const { controls, updateControl, importFromT6, syncEngagement: syncT12 } = useT12Store()
   const t6Controls                  = useT6Store((s) => s.controls)
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
+  const companyName                 = useCompanyProfileStore((s) => s.profile.nombre)
 
   // F-03: sincronizar controles con el engagement activo — limpia si cambia de proyecto
   useEffect(() => { syncT12(engagementId) }, [engagementId])

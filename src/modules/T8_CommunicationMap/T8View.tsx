@@ -29,7 +29,6 @@ import type { Stakeholder, ArchetypeCode, ResistanceLevel } from '@/modules/T2_S
 import type { CommAction, CommPhase, CommType, CommChannel, DeptKit, MaterialTemplate } from './types'
 import { usePermissions }      from '@/modules/Auth'
 import { ToolLoadingScreen }  from '@/shared/components/ToolLoadingScreen'
-import { ToolErrorState }     from '@/shared/components/ToolErrorState'
 
 // ── Rogers helpers (mismo que T7) ─────────────────────────────
 
@@ -1030,11 +1029,10 @@ function DeptKitTab({ kits }: { kits: DeptKit[] }) {
 // ── T8View — Componente principal ─────────────────────────────
 
 interface T8ViewProps {
-  companyName: string
-  onBack:      () => void
+  onBack: () => void
 }
 
-export function T8View({ companyName, onBack }: T8ViewProps) {
+export function T8View({ onBack }: T8ViewProps) {
   const { isReadOnly } = usePermissions()
   const stakeholders                = useT2Store(s => s.stakeholders)
   const loadT2                      = useT2Store(s => s.load)
@@ -1042,6 +1040,7 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
   const t2Error                     = useT2Store(s => s.lastError)
   const useCases                    = useT4Store(s => s.useCases)
   const { profile: companyProfile } = useCompanyProfileStore()
+  const companyName                 = companyProfile.nombre
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
   const [activeTab, setActiveTab]  = useState<'timeline' | 'messages' | 'materials' | 'dept'>('timeline')
 
@@ -1101,21 +1100,38 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
   const deptCount     = new Set(stakeholders.map(s => s.department)).size
   const isLLM         = !!generatedContent
 
-  if (isLoadingT2) {
-    return <ToolLoadingScreen toolCode="T8" label="Cargando stakeholders…" />
-  }
-
-  if (t2Error) {
-    return (
-      <ToolErrorState
-        message="No se pudieron cargar los stakeholders. Comprueba tu conexión e inténtalo de nuevo."
-        onRetry={() => engagementId && loadT2(engagementId)}
-      />
-    )
-  }
-
   return (
     <div className="max-w-5xl mx-auto space-y-6 px-8 py-8">
+
+      {/* Banner no bloqueante — stakeholders pendientes o error */}
+      {(isLoadingT2 || t2Error || (!isLoadingT2 && stakeholders.length === 0)) && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-600/40 px-4 py-3">
+          <svg className="mt-0.5 shrink-0 text-amber-500" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2L14 13H2L8 2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+            <path d="M8 6v3.5M8 11.5v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+          </svg>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
+              {isLoadingT2 ? 'Cargando stakeholders…' : t2Error ? 'Error al cargar stakeholders.' : 'Stakeholders no cargados.'}
+            </p>
+            <p className="text-xs text-amber-700/80 dark:text-amber-300/70 mt-0.5">
+              {isLoadingT2
+                ? 'La vista se actualizará automáticamente cuando terminen de cargar.'
+                : t2Error
+                  ? 'No se pudieron cargar los stakeholders. Comprueba tu conexión e inténtalo de nuevo.'
+                  : 'Puedes ir a T2 para añadir stakeholders, reintentar la carga o continuar con datos vacíos.'}
+            </p>
+          </div>
+          {!isLoadingT2 && engagementId && (
+            <button
+              onClick={() => loadT2(engagementId)}
+              className="shrink-0 text-[11px] font-medium text-amber-700 dark:text-amber-300 hover:underline"
+            >
+              Reintentar
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">

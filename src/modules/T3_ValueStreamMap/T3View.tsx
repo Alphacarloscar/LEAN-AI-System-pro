@@ -918,15 +918,15 @@ function ProcessDetailPanel({ process }: { process: ValueStream }) {
 // ── T3View principal ──────────────────────────────────────────
 
 interface T3ViewProps {
-  companyName: string
-  onBack?:     () => void
+  onBack?: () => void
 }
 
-export function T3View({ companyName, onBack }: T3ViewProps) {
+export function T3View({ onBack }: T3ViewProps) {
   const navigate                          = useNavigate()
   const { processes, addProcess, load, initDemo, isLoading: isLoadingT3 } = useT3Store()
   const engagementId                      = useEngagementStore((s) => s.activeEngagementId)
   const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
+  const companyName                       = useCompanyProfileStore((s) => s.profile.nombre)
 
   const { isReadOnly } = usePermissions()
 

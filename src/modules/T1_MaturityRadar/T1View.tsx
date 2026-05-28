@@ -15,7 +15,6 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { RetryBanner }                          from '@/shared/components/RetryBanner'
-import type { DemoScenario }                    from '@/data/demo/types'
 import { DIMENSION_DEFINITIONS, TOTAL_SUBDIMENSIONS } from './constants'
 import type { T1DimensionState, T1SubdimensionState } from './types'
 import { countScoredSubdimensions, computeOverallScore } from './types'
@@ -30,13 +29,11 @@ import { useCompanyProfileStore }              from '@/modules/CompanyProfile/st
 import { useDepartmentStore }                  from '@/modules/CompanyProfile/useDepartmentStore'
 import { RecommendationPanel }                 from '@/components/RecommendationPanel'
 import { buildT1RecommendationContext }        from './t1ContextBuilder'
-import { isDemoEnabled }                       from '@/lib/config'
 import { usePermissions }                      from '@/modules/Auth'
 import { supabase }                            from '@/lib/supabase'
 
 interface T1ViewProps {
-  scenario: DemoScenario
-  onBack:   () => void
+  onBack: () => void
 }
 
 // ── Builder: T1DimensionState[] desde un entrevistado demo ────
@@ -298,7 +295,7 @@ function NewInterviewModal({ onClose, onSubmit, departments }: NewInterviewModal
 
 // ── Componente principal ──────────────────────────────────────
 
-export function T1View({ scenario, onBack }: T1ViewProps) {
+export function T1View({ onBack }: T1ViewProps) {
 
   const [showNewModal,      setShowNewModal]      = useState(false)
   const [showInterviewees,  setShowInterviewees]  = useState(false)
@@ -308,6 +305,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
   // ── Store T1 + engagement ────────────────────────────────────
   const store          = useT1Store()
   const engagementId   = useEngagementStore((s) => s.activeEngagementId)
+  const profile        = useCompanyProfileStore((s) => s.profile)
 
   // ── Departamentos centralizados (para el modal de alta) ──────
   const { departments, fetchDepartments, reset: resetDepartments } = useDepartmentStore()
@@ -339,29 +337,9 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
   const isLoadingT1       = store.isLoading
   const loadErrorT1       = store.loadError
 
-  // Carga: real (Supabase) o demo (datos del scenario)
+  // Carga desde Supabase cuando cambia el engagement
   useEffect(() => {
-    if (engagementId) {
-      store.load(engagementId)
-    } else if (isDemoEnabled) {
-      store.initFromScenario(
-        // Normalizar datos demo a T1IntervieweeContext: añadir department fallback
-        scenario.interviewees.map((i) => ({
-          id:         i.id,
-          name:       i.name,
-          role:       i.role,
-          archetype:  i.archetype,
-          type:       i.type,
-          department: i.department ?? (i.type === 'it' ? 'IT / Tecnología' : 'Sin asignar'),
-        })),
-        Object.fromEntries(
-          scenario.interviewees.map((i) => [
-            i.id,
-            buildDimensionsForInterviewee(i.scores, i.evidence ?? {}),
-          ])
-        )
-      )
-    }
+    if (engagementId) store.load(engagementId)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])
 
@@ -535,15 +513,23 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
       {/* ── Empresa + contexto ── */}
       <div className="max-w-6xl mx-auto px-8 pt-6 pb-2">
         <div className="flex items-center gap-3 flex-wrap">
-          <p className="text-sm font-semibold text-lean-black dark:text-gray-100">
-            {scenario.company.name}
-          </p>
-          <span className="text-text-subtle">·</span>
-          <p className="text-xs text-text-muted">{scenario.company.industry}</p>
-          <span className="text-text-subtle">·</span>
-          <p className="text-xs text-text-muted">
-            {scenario.company.employees.toLocaleString('es-ES')} empleados
-          </p>
+          {profile.nombre && (
+            <p className="text-sm font-semibold text-lean-black dark:text-gray-100">
+              {profile.nombre}
+            </p>
+          )}
+          {profile.sector && (
+            <>
+              <span className="text-text-subtle">·</span>
+              <p className="text-xs text-text-muted">{profile.sector}</p>
+            </>
+          )}
+          {profile.tamanoEmpresa && (
+            <>
+              <span className="text-text-subtle">·</span>
+              <p className="text-xs text-text-muted">{profile.tamanoEmpresa}</p>
+            </>
+          )}
         </div>
         <p className="text-xs text-text-subtle mt-1 max-w-xl">
           Selecciona el entrevistado y ajusta los scores en tiempo real. El informe ejecutivo se genera automáticamente.
@@ -726,7 +712,7 @@ export function T1View({ scenario, onBack }: T1ViewProps) {
         <div className="mt-8">
           <T1ExecutiveOutput
             dimensions={aggregateDimensions}
-            companyName={scenario.company.name}
+            companyName={profile.nombre}
             allInterviewees={allIntervieweeAggregates}
           />
         </div>

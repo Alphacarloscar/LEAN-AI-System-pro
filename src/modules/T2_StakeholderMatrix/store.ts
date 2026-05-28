@@ -187,10 +187,10 @@ const DEMO_STAKEHOLDERS: Stakeholder[] = [
 
 interface T2Store {
   stakeholders:           Stakeholder[]
-  isLoading:              boolean
-  /** RC-1: engagement en vuelo — evita que F-06 bloquee cargas de otro engagement */
-  loadingForEngagementId: string | null
-  lastError:              string | null
+  isLoading:        boolean
+  /** UUID generado por cada llamada a load() — descarta respuestas de cargas obsoletas */
+  currentRequestId: string | null
+  lastError:        string | null
 
   /** Carga stakeholders desde Supabase para el engagement activo */
   load: (engagementId: string) => Promise<void>
@@ -206,23 +206,16 @@ interface T2Store {
 }
 
 export const useT2Store = create<T2Store>()((set, get) => ({
-  stakeholders:           [],
-  isLoading:              false,
-  loadingForEngagementId: null,
-  lastError:              null,
+  stakeholders:    [],
+  isLoading:       false,
+  currentRequestId: null,
+  lastError:       null,
 
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
-    const s = get()
-    // F-06 engagement-aware: solo bloquear si estamos cargando ESTE mismo engagement
-    if (s.isLoading && s.loadingForEngagementId === engagementId) {
-      console.log(`[T2 Store] BLOCKED (F-06) — ya cargando engagement: ${engagementId}`)
-      return
-    }
-    console.log(`[T2 Store] START — engagement: ${engagementId}`)
-    set({ isLoading: true, loadingForEngagementId: engagementId, lastError: null })
+    const requestId = crypto.randomUUID()
+    set({ isLoading: true, currentRequestId: requestId, lastError: null })
 
-    // F-07: timeout de seguridad — evita spinner infinito si Supabase no responde
     const LOAD_TIMEOUT_MS = 10_000
     const fetchPromise   = fetchStakeholders(engagementId)
     const timeoutPromise = new Promise<never>((_, reject) =>
@@ -231,18 +224,10 @@ export const useT2Store = create<T2Store>()((set, get) => ({
 
     try {
       const stakeholders = await Promise.race([fetchPromise, timeoutPromise])
-      // Stale guard: si el Hard Reset ocurrió mientras este fetch estaba en vuelo, descartar resultado
-      if (get().loadingForEngagementId !== engagementId) {
-        console.log(`[T2 Store] STALE — resultado descartado (actual: ${get().loadingForEngagementId})`)
-        return
-      }
-      console.log(`[T2 Store] OK — ${stakeholders.length} stakeholders`)
+      if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
       set({ stakeholders, isLoading: false, lastError: null })
     } catch (err) {
-      if (get().loadingForEngagementId !== engagementId) {
-        console.log(`[T2 Store] STALE+ERROR — resultado descartado`)
-        return
-      }
+      if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
       const isTimeout = (err as Error)?.message === 'T2_LOAD_TIMEOUT'
       console.error('[T2 Store] ERROR:', isTimeout ? 'timeout (>10s) — check Supabase connection' : err)
       set({
@@ -331,5 +316,5 @@ export const useT2Store = create<T2Store>()((set, get) => ({
   },
 
   // ── reset ──────────────────────────────────────────────────
-  reset: () => set({ stakeholders: [], isLoading: false, loadingForEngagementId: null, lastError: null }),
+  reset: () => set({ stakeholders: [], isLoading: false, currentRequestId: null, lastError: null }),
 }))

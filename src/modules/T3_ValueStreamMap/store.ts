@@ -182,9 +182,9 @@ const DEMO_PROCESSES: ValueStream[] = [
 
 interface T3Store {
   processes:              ValueStream[]
-  isLoading:              boolean
-  /** RC-1: engagement en vuelo — evita que F-06 bloquee cargas de otro engagement */
-  loadingForEngagementId: string | null
+  isLoading:        boolean
+  /** UUID generado por cada llamada a load() — descarta respuestas de cargas obsoletas */
+  currentRequestId: string | null
 
   /** Carga value streams desde Supabase para el engagement activo */
   load: (engagementId: string) => Promise<void>
@@ -205,18 +205,15 @@ interface T3Store {
 }
 
 export const useT3Store = create<T3Store>()((set, get) => ({
-  processes:              [],
-  isLoading:              false,
-  loadingForEngagementId: null,
+  processes:       [],
+  isLoading:       false,
+  currentRequestId: null,
 
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
-    const s = get()
-    // F-06 engagement-aware: solo bloquear si estamos cargando ESTE mismo engagement
-    if (s.isLoading && s.loadingForEngagementId === engagementId) return
-    set({ isLoading: true, loadingForEngagementId: engagementId })
+    const requestId = crypto.randomUUID()
+    set({ isLoading: true, currentRequestId: requestId })
 
-    // F-07: timeout de seguridad — evita spinner infinito si Supabase no responde
     const LOAD_TIMEOUT_MS = 10_000
     const fetchPromise   = fetchValueStreams(engagementId)
     const timeoutPromise = new Promise<never>((_, reject) =>
@@ -225,11 +222,10 @@ export const useT3Store = create<T3Store>()((set, get) => ({
 
     try {
       const processes = await Promise.race([fetchPromise, timeoutPromise])
-      // Stale guard: si el Hard Reset ocurrió mientras este fetch estaba en vuelo, descartar resultado
-      if (get().loadingForEngagementId !== engagementId) return
+      if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
       set({ processes, isLoading: false })
     } catch (err) {
-      if (get().loadingForEngagementId !== engagementId) return  // stale load post-reset, ignorar
+      if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
       const isTimeout = (err as Error)?.message === 'T3_LOAD_TIMEOUT'
       console.error('[T3Store] load:', isTimeout ? 'timeout (>10s) — check Supabase connection' : err)
       set({ isLoading: false })
@@ -362,5 +358,5 @@ export const useT3Store = create<T3Store>()((set, get) => ({
   },
 
   // ── reset ──────────────────────────────────────────────────
-  reset: () => set({ processes: [], isLoading: false, loadingForEngagementId: null }),
+  reset: () => set({ processes: [], isLoading: false, currentRequestId: null }),
 }))
