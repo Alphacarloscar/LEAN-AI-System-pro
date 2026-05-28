@@ -16,7 +16,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { RetryBanner }                          from '@/shared/components/RetryBanner'
 import { DIMENSION_DEFINITIONS, TOTAL_SUBDIMENSIONS } from './constants'
-import type { T1DimensionState, T1SubdimensionState } from './types'
+import type { T1DimensionState } from './types'
 import { countScoredSubdimensions, computeOverallScore } from './types'
 import { DimensionCard }                        from './components/DimensionCard'
 import { T1RadarPanel }                         from './components/T1RadarPanel'

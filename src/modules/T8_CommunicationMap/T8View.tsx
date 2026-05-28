@@ -1039,7 +1039,7 @@ export function T8View({ onBack }: T8ViewProps) {
   const t2Error                     = useT2Store(s => s.lastError)
   const useCases                    = useT4Store(s => s.useCases)
   const { profile: companyProfile } = useCompanyProfileStore()
-  const companyName                 = companyProfile.nombre
+  const companyName                 = companyProfile.engagementName
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
   const [activeTab, setActiveTab]  = useState<'timeline' | 'messages' | 'materials' | 'dept'>('timeline')
 

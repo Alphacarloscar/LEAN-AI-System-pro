@@ -683,7 +683,7 @@ export function T6View({
   const { canvas }       = useT5Store()
   const { syncEngagement: syncT6 } = useT6Store()
   const companyProfile   = useCompanyProfileStore((s) => s.profile)
-  const companyName      = companyProfile.nombre
+  const companyName      = companyProfile.engagementName
   const engagementId     = useEngagementStore((s) => s.activeEngagementId)
 
   useEffect(() => { syncT6(engagementId) }, [engagementId])

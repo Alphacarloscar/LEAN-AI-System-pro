@@ -770,7 +770,7 @@ export function T2View({ onBack }: T2ViewProps) {
   const { stakeholders, addStakeholder, updateStakeholder, load, initDemo, lastError, isLoading: isLoadingT2 } = useT2Store()
   const engagementId   = useEngagementStore((s) => s.activeEngagementId)
   const companyProfile = useCompanyProfileStore((s) => s.profile)
-  const companyName    = companyProfile.nombre
+  const companyName    = companyProfile.engagementName
   const navigate       = useNavigate()
 
   const { isReadOnly } = usePermissions()

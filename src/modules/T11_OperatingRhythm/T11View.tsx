@@ -919,7 +919,7 @@ export function T11View({ onBack }: T11ViewProps) {
   const [activeTab, setActiveTab]         = useState<T11Tab>('bigpicture')
   const [selectedEvent, setSelectedEvent] = useState<T11Event | null>(null)
   const { profile: companyProfile }       = useCompanyProfileStore()
-  const companyName                       = companyProfile.nombre
+  const companyName                       = companyProfile.engagementName
   const engagementId                      = useEngagementStore((s) => s.activeEngagementId)
 
   // Compute RadarDimension[] from T1Store — agrega todos los entrevistados

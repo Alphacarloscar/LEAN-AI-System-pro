@@ -1022,7 +1022,7 @@ export function T5View({
   const loadT3                          = useT3Store(s => s.load)
   const initT3Demo                      = useT3Store(s => s.initDemo)
   const { profile: companyProfile }     = useCompanyProfileStore()
-  const companyName                     = companyProfile.nombre
+  const companyName                     = companyProfile.engagementName
   const engagementId                    = useEngagementStore((s) => s.activeEngagementId)
 
   // F-02: sincronizar canvas con el engagement activo — limpia si cambia de proyecto
