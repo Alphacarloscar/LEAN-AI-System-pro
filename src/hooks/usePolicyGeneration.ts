@@ -16,6 +16,11 @@ import { supabase }                    from '@/lib/supabase'
 import { useT6Store }                  from '@/modules/T6_RiskGovernance/store'
 import type { GeneratedPolicyContent } from '@/modules/T6_RiskGovernance/types'
 
+interface EdgeFunctionPersistence {
+  saved: boolean
+  error?: string
+}
+
 // ── Tipos de contexto que necesita la generación ──────────────
 
 export interface PolicyGenerationContext {
@@ -61,7 +66,7 @@ export function usePolicyGeneration(): UsePolicyGenerationReturn {
   const [isGenerating, setIsGenerating] = useState(false)
   const [error,        setError]        = useState<string | null>(null)
 
-  const { saveGeneratedPolicy } = useT6Store()
+  const { saveGeneratedPolicy, setPersistence } = useT6Store()
 
   const generate = useCallback(async (
     context:      PolicyGenerationContext,
@@ -92,13 +97,21 @@ export function usePolicyGeneration(): UsePolicyGenerationReturn {
       const policy = result?.data as GeneratedPolicyContent | null
       if (!policy) throw new Error('La Edge Function no devolvió contenido de política.')
 
-      // Añadir metadatos de generación
+      // Hidratar contenido en store (visible aunque falle el guardado)
       saveGeneratedPolicy({
         ...policy,
         generatedAt: new Date().toISOString(),
         sector:      context.company.sector,
         tamano:      context.company.tamano,
       })
+
+      // Actualizar estado de persistencia según lo que reporta la Edge Function
+      const persistence = result?.persistence as EdgeFunctionPersistence | undefined
+      if (persistence?.saved === false) {
+        setPersistence('error', persistence.error ?? 'Error desconocido al guardar en la nube.')
+      } else {
+        setPersistence('saved')
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error desconocido'
       setError(msg)

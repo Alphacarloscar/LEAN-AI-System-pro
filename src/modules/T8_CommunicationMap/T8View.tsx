@@ -24,6 +24,7 @@ import { RecommendationPanel }          from '@/components/RecommendationPanel'
 import { buildT8RecommendationContext, buildT8CommContext } from './t8ContextBuilder'
 import { useT8Store }                   from './store'
 import { useT8Generation }              from '@/hooks/useT8Generation'
+import { PersistenceBanner }           from '@/shared/components/PersistenceBanner'
 import type { Stakeholder, ArchetypeCode, ResistanceLevel } from '@/modules/T2_StakeholderMatrix/types'
 import type { CommAction, CommPhase, CommType, CommChannel, DeptKit, MaterialTemplate } from './types'
 import { usePermissions }      from '@/modules/Auth'
@@ -1052,7 +1053,7 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
   }, [engagementId])
 
   // T8 store — contenido generado por LLM (scoped al engagement)
-  const { generatedContent, clearGeneratedContent, syncEngagement: syncT8 } = useT8Store()
+  const { generatedContent, clearGeneratedContent, syncEngagement: syncT8, persistenceStatus, persistenceError, retrySave } = useT8Store()
   useEffect(() => { syncT8(engagementId) }, [engagementId])
 
   // Hook de generación
@@ -1187,6 +1188,13 @@ export function T8View({ companyName, onBack }: T8ViewProps) {
             )}
             {error && (
               <span className="text-xs text-danger-dark">{error}</span>
+            )}
+            {(persistenceStatus === 'error' || persistenceStatus === 'saving') && (
+              <PersistenceBanner
+                error={persistenceError}
+                isRetrying={persistenceStatus === 'saving'}
+                onRetry={() => engagementId && retrySave(engagementId)}
+              />
             )}
             {!isReadOnly && (
               <button

@@ -16,6 +16,11 @@ import { supabase }                  from '@/lib/supabase'
 import { useT8Store }                from '@/modules/T8_CommunicationMap/store'
 import type { GeneratedT8Content }   from '@/modules/T8_CommunicationMap/types'
 
+interface EdgeFunctionPersistence {
+  saved: boolean
+  error?: string
+}
+
 // ── Return type ───────────────────────────────────────────────
 
 interface UseT8GenerationReturn {
@@ -31,7 +36,7 @@ export function useT8Generation(): UseT8GenerationReturn {
   const [isGenerating, setIsGenerating] = useState(false)
   const [error,        setError]        = useState<string | null>(null)
 
-  const { saveGeneratedContent } = useT8Store()
+  const { saveGeneratedContent, setPersistence } = useT8Store()
 
   const generate = useCallback(async (
     context:      Record<string, unknown>,
@@ -73,10 +78,19 @@ export function useT8Generation(): UseT8GenerationReturn {
         throw new Error('La Edge Function no devolvió mensajes por arquetipo válidos.')
       }
 
+      // Hidratar contenido en store (visible aunque falle el guardado)
       saveGeneratedContent({
         ...content,
         generatedAt: new Date().toISOString(),
       }, engagementId)
+
+      // Actualizar estado de persistencia según lo que reporta la Edge Function
+      const persistence = result?.persistence as EdgeFunctionPersistence | undefined
+      if (persistence?.saved === false) {
+        setPersistence('error', persistence.error ?? 'Error desconocido al guardar en la nube.')
+      } else {
+        setPersistence('saved')
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error desconocido'
       setError(msg)

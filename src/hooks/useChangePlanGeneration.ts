@@ -17,6 +17,11 @@ import { useT7Store }                from '@/modules/T7_AdoptionHeatmap/store'
 import type { GeneratedChangePlan }  from '@/modules/T7_AdoptionHeatmap/types'
 import type { T7PlanContext }        from '@/modules/T7_AdoptionHeatmap/t7ContextBuilder'
 
+interface EdgeFunctionPersistence {
+  saved: boolean
+  error?: string
+}
+
 // ── Return type ───────────────────────────────────────────────
 
 interface UseChangePlanGenerationReturn {
@@ -32,7 +37,7 @@ export function useChangePlanGeneration(): UseChangePlanGenerationReturn {
   const [isGenerating, setIsGenerating] = useState(false)
   const [error,        setError]        = useState<string | null>(null)
 
-  const { saveGeneratedPlan } = useT7Store()
+  const { saveGeneratedPlan, setPersistence } = useT7Store()
 
   const generate = useCallback(async (
     context:      T7PlanContext,
@@ -80,10 +85,19 @@ export function useChangePlanGeneration(): UseChangePlanGenerationReturn {
         throw new Error('La Edge Function no devolvió un plan de cambio válido.')
       }
 
+      // Hidratar contenido en store (visible aunque falle el guardado)
       saveGeneratedPlan({
         ...plan,
         generatedAt: new Date().toISOString(),
       }, engagementId)
+
+      // Actualizar estado de persistencia según lo que reporta la Edge Function
+      const persistence = result?.persistence as EdgeFunctionPersistence | undefined
+      if (persistence?.saved === false) {
+        setPersistence('error', persistence.error ?? 'Error desconocido al guardar en la nube.')
+      } else {
+        setPersistence('saved')
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error desconocido'
       setError(msg)

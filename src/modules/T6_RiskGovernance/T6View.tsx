@@ -23,6 +23,7 @@ import { RecommendationPanel }    from '@/components/RecommendationPanel'
 import { buildT6RecommendationContext } from './t6ContextBuilder'
 import { usePolicyGeneration }    from '@/hooks/usePolicyGeneration'
 import type { PolicyGenerationContext } from '@/hooks/usePolicyGeneration'
+import { PersistenceBanner }     from '@/shared/components/PersistenceBanner'
 import { PhaseMiniMap }          from '@/shared/components/PhaseMiniMap'
 import { PolicyDownloadButton }  from './PolicyPDF'
 import { usePermissions }        from '@/modules/Auth'
@@ -71,7 +72,7 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
   const { isReadOnly } = usePermissions()
   const { useCases }   = useT4Store()
   const { canvas }     = useT5Store()
-  const { generatedPolicy, clearGeneratedPolicy } = useT6Store()
+  const { generatedPolicy, clearGeneratedPolicy, persistenceStatus, persistenceError, retrySave } = useT6Store()
   const profile        = useCompanyProfileStore((s) => s.profile)
   const { generate, isGenerating, error: genError, clearError } = usePolicyGeneration()
   const now            = new Date()
@@ -172,6 +173,13 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
               ⚠ {genError}
               <button onClick={clearError} className="underline hover:no-underline ml-1">Cerrar</button>
             </p>
+          )}
+          {(persistenceStatus === 'error' || persistenceStatus === 'saving') && (
+            <PersistenceBanner
+              error={persistenceError}
+              isRetrying={persistenceStatus === 'saving'}
+              onRetry={() => engagementId && retrySave(engagementId)}
+            />
           )}
         </div>
         <div className="flex items-center gap-2">

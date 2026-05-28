@@ -24,6 +24,7 @@ import { RecommendationPanel }          from '@/components/RecommendationPanel'
 import { buildT7RecommendationContext, buildT7PlanContext } from './t7ContextBuilder'
 import { useT7Store }                   from './store'
 import { useChangePlanGeneration }      from '@/hooks/useChangePlanGeneration'
+import { PersistenceBanner }           from '@/shared/components/PersistenceBanner'
 import { computeOverallScore }          from '@/modules/T1_MaturityRadar/types'
 import type {
   ResistanceLevel,
@@ -1049,7 +1050,7 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
   }, [dimensionStates])
 
   // T7 store — plan generado por LLM (scoped al engagement)
-  const { generatedPlan, clearGeneratedPlan, syncEngagement: syncT7 } = useT7Store()
+  const { generatedPlan, clearGeneratedPlan, syncEngagement: syncT7, persistenceStatus, persistenceError, retrySave } = useT7Store()
   useEffect(() => { syncT7(engagementId) }, [engagementId])
 
   // Hook de generación del plan de cambio
@@ -1160,14 +1161,23 @@ export function T7View({ companyName, onBack }: T7ViewProps) {
           {activeTab === 'curve' && <BellCurveTab stakeholders={stakeholders} dark={dark} />}
           {activeTab === 'dept'  && <DeptRecommendationsTab stakeholders={stakeholders} dark={dark} />}
           {activeTab === 'plan'  && (
-            <ChangeManagementPlanTab
-              generatedPlan={generatedPlan}
-              isGenerating={isGenerating}
-              error={error}
-              canGenerate={!!planContext && !!engagementId}
-              onGenerate={() => planContext && generate(planContext, engagementId)}
-              onClear={clearGeneratedPlan}
-            />
+            <>
+              <ChangeManagementPlanTab
+                generatedPlan={generatedPlan}
+                isGenerating={isGenerating}
+                error={error}
+                canGenerate={!!planContext && !!engagementId}
+                onGenerate={() => planContext && generate(planContext, engagementId)}
+                onClear={clearGeneratedPlan}
+              />
+              {(persistenceStatus === 'error' || persistenceStatus === 'saving') && (
+                <PersistenceBanner
+                  error={persistenceError}
+                  isRetrying={persistenceStatus === 'saving'}
+                  onRetry={() => engagementId && retrySave(engagementId)}
+                />
+              )}
+            </>
           )}
         </>
       )}

@@ -4,7 +4,7 @@
 //
 // Flujo de 10 pasos (security-first):
 //   1.  Validar JWT → extraer user
-//   2.  Validar payload (engagementId/projectId, tool)
+//   2.  Validar payload (engagementId/projectId, tool, context size)
 //   3.  Crear cliente user-scoped (ANON_KEY + JWT)
 //   4.  Verificar permiso de edición: user_can_edit_project()
 //   5.  403 si false o error
@@ -15,15 +15,45 @@
 //   10. Guardar output en Supabase (save_tool_output) + responder al frontend
 //
 // Tools soportados: t6_policy · t7_plan · t8_comms
-// Response shape: { data: <GeneratedContent> }
+// Response shape: { data: <GeneratedContent>, persistence: { saved: boolean, error?: string } }
 // ================================================================
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// ── Constantes ────────────────────────────────────────────────
+// ── CORS — Allowlist exacta de orígenes permitidos ───────────
+// Lista cerrada: cualquier origen fuera de esta lista no recibirá
+// el header Access-Control-Allow-Origin y el navegador bloqueará
+// la respuesta. No se usan wildcards ni regex.
 
-const CORS_HEADERS: Record<string, string> = {
-  'Access-Control-Allow-Origin':  '*',
+const ALLOWED_ORIGINS = new Set([
+  'http://localhost:5173',               // desarrollo Vite
+  'http://localhost:3000',               // alternativa dev
+  'http://localhost:4173',               // vite preview
+  'https://lean-ai-system.vercel.app',   // producción principal
+  'https://v0-lean-ai-system.vercel.app', // rama preview Vercel
+])
+
+function resolveOrigin(origin: string | null): string | null {
+  if (!origin) return null
+  return ALLOWED_ORIGINS.has(origin) ? origin : null
+}
+
+function buildCorsHeaders(origin: string | null): Record<string, string> {
+  const allowedOrigin = resolveOrigin(origin)
+  const headers: Record<string, string> = {
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary':                         'Origin',
+  }
+  if (allowedOrigin) {
+    headers['Access-Control-Allow-Origin'] = allowedOrigin
+  }
+  return headers
+}
+
+// Headers CORS neutros para respuestas pre-handler (env check, method check)
+// donde aún no tenemos el Origin de la request.
+const CORS_FALLBACK: Record<string, string> = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
@@ -42,18 +72,22 @@ const STALE_AFTER_DAYS = 90
 // Versión del schema del payload (bump cuando cambie la estructura del JSON)
 const PAYLOAD_VERSION = 1
 
+// Tamaño máximo del objeto context serializado (50 KB).
+// Evita payloads maliciosos o accidentalmente grandes que agoten la memoria.
+const CONTEXT_MAX_BYTES = 50_000
+
 
 // ── Helpers ───────────────────────────────────────────────────
 
-function jsonResponse(body: unknown, status = 200): Response {
+function jsonResponse(body: unknown, status = 200, corsH: Record<string, string> = CORS_FALLBACK): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+    headers: { ...corsH, 'Content-Type': 'application/json' },
   })
 }
 
-function errorResponse(message: string, status: number): Response {
-  return jsonResponse({ error: message }, status)
+function errorResponse(message: string, status: number, corsH: Record<string, string> = CORS_FALLBACK): Response {
+  return jsonResponse({ error: message }, status, corsH)
 }
 
 /**
@@ -268,13 +302,17 @@ async function callClaude(
 
 Deno.serve(async (req: Request): Promise<Response> => {
 
+  // Capturar Origin al inicio para construir CORS headers dinámicos
+  const origin = req.headers.get('Origin')
+  const corsH  = buildCorsHeaders(origin)
+
   // Preflight CORS
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: CORS_HEADERS })
+    return new Response('ok', { headers: corsH })
   }
 
   if (req.method !== 'POST') {
-    return errorResponse('Method not allowed', 405)
+    return errorResponse('Method not allowed', 405, corsH)
   }
 
   // ── Variables de entorno ──────────────────────────────────────
@@ -285,7 +323,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SERVICE_ROLE_KEY || !ANTHROPIC_API_KEY) {
     console.error('[ai-recommend] Missing required environment variables')
-    return errorResponse('Server misconfiguration', 500)
+    return errorResponse('Server misconfiguration', 500, corsH)
   }
 
 
@@ -294,7 +332,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
-    return errorResponse('Missing or invalid Authorization header', 401)
+    return errorResponse('Missing or invalid Authorization header', 401, corsH)
   }
   const jwt = authHeader.slice(7)
 
@@ -305,7 +343,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(jwt)
   if (authError || !user) {
     console.warn('[ai-recommend] JWT inválido:', authError?.message)
-    return errorResponse('Unauthorized: token inválido o expirado', 401)
+    return errorResponse('Unauthorized: token inválido o expirado', 401, corsH)
   }
 
   console.log(`[ai-recommend] User: ${user.id}`)
@@ -317,7 +355,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     body = await req.json()
   } catch {
-    return errorResponse('Request body inválido: se esperaba JSON', 400)
+    return errorResponse('Request body inválido: se esperaba JSON', 400, corsH)
   }
 
   // Acepta engagementId (nombre legacy en hooks) o projectId (nombre canónico)
@@ -326,20 +364,32 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const context   = body.context                          as Record<string, unknown> | undefined
 
   if (!projectId || typeof projectId !== 'string' || projectId.trim() === '') {
-    return errorResponse('Payload inválido: falta engagementId (o projectId)', 400)
+    return errorResponse('Payload inválido: falta engagementId (o projectId)', 400, corsH)
   }
   if (!tool || !LLM_TOOLS.has(tool)) {
     return errorResponse(
       `Payload inválido: tool "${tool}" no soportado. Válidos: ${[...LLM_TOOLS].join(', ')}`,
       400,
+      corsH,
     )
   }
   if (!context || typeof context !== 'object') {
-    return errorResponse('Payload inválido: falta context', 400)
+    return errorResponse('Payload inválido: falta context', 400, corsH)
+  }
+
+  // Validar tamaño del context (max 50 KB serializado)
+  const contextBytes = JSON.stringify(context).length
+  if (contextBytes > CONTEXT_MAX_BYTES) {
+    console.warn(`[ai-recommend] context demasiado grande: ${contextBytes} bytes (max ${CONTEXT_MAX_BYTES})`)
+    return errorResponse(
+      `Payload inválido: el contexto supera el tamaño máximo permitido (${CONTEXT_MAX_BYTES / 1000} KB).`,
+      400,
+      corsH,
+    )
   }
 
   const toolConfig = TOOL_CONFIG[tool]!
-  console.log(`[ai-recommend] tool=${tool} project=${projectId}`)
+  console.log(`[ai-recommend] tool=${tool} project=${projectId} context_bytes=${contextBytes}`)
 
 
   // ── PASO 3 — Cliente user-scoped ─────────────────────────────
@@ -364,7 +414,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (permError) {
     console.error('[ai-recommend] Error en user_can_edit_project:', permError.message)
-    return errorResponse('Error al verificar permisos de proyecto', 500)
+    return errorResponse('Error al verificar permisos de proyecto', 500, corsH)
   }
 
   if (!canEdit) {
@@ -372,6 +422,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return errorResponse(
       'Forbidden: no tienes permiso de escritura en este proyecto (se requiere rol editor o superior).',
       403,
+      corsH,
     )
   }
 
@@ -394,7 +445,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (rateError) {
     console.error('[ai-recommend] Error en check_and_log_ai_call:', rateError.message)
-    return errorResponse('Error al verificar límite de llamadas', 500)
+    return errorResponse('Error al verificar límite de llamadas', 500, corsH)
   }
 
   if (!rateCheck?.allowed) {
@@ -409,7 +460,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       {
         status:  429,
         headers: {
-          ...CORS_HEADERS,
+          ...corsH,
           'Content-Type': 'application/json',
           'Retry-After':  String(rateCheck?.retry_after_seconds ?? 60),
         },
@@ -436,13 +487,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Error desconocido'
     console.error('[ai-recommend] Error Anthropic:', msg)
-    return errorResponse(`Error al generar contenido con IA: ${msg}`, 502)
+    return errorResponse(`Error al generar contenido con IA: ${msg}`, 502, corsH)
   }
 
   console.log(`[ai-recommend] Anthropic OK (${rawLLMText.length} chars)`)
 
 
   // ── Parsear y validar JSON ────────────────────────────────────
+  // Validación obligatoria ANTES de guardar. Si el JSON es basura, se devuelve
+  // 502 controlado — no se persiste nada y el frontend recibe un error claro.
 
   let generatedData: Record<string, unknown>
   try {
@@ -452,18 +505,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return errorResponse(
       'La IA devolvió una respuesta que no pudo procesarse. Inténtalo de nuevo.',
       502,
+      corsH,
     )
   }
 
   // Validación mínima de estructura por tool
   if (tool === 't6_policy' && (!generatedData.declaracion_opening || !Array.isArray(generatedData.principios))) {
-    return errorResponse('La IA no devolvió una política válida. Inténtalo de nuevo.', 502)
+    return errorResponse('La IA no devolvió una política válida. Inténtalo de nuevo.', 502, corsH)
   }
   if (tool === 't7_plan' && (!Array.isArray(generatedData.phases) || (generatedData.phases as unknown[]).length === 0)) {
-    return errorResponse('La IA no devolvió un plan de cambio válido. Inténtalo de nuevo.', 502)
+    return errorResponse('La IA no devolvió un plan de cambio válido. Inténtalo de nuevo.', 502, corsH)
   }
   if (tool === 't8_comms' && (!Array.isArray(generatedData.archetypeMessages) || (generatedData.archetypeMessages as unknown[]).length === 0)) {
-    return errorResponse('La IA no devolvió mensajes por arquetipo válidos. Inténtalo de nuevo.', 502)
+    return errorResponse('La IA no devolvió mensajes por arquetipo válidos. Inténtalo de nuevo.', 502, corsH)
   }
 
 
@@ -473,9 +527,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // sea el del usuario real (no service_role). La función archiva el output
   // anterior (LLM tools) e inserta la nueva versión activa.
   //
-  // Error de guardado: no bloquea la respuesta.
-  // El frontend recibirá el output aunque falle la persistencia en DB.
-  // El localStorage del cliente actúa como fallback (mientras se migran los stores).
+  // Error de guardado: no bloquea la respuesta al frontend, pero SÍ se comunica
+  // explícitamente vía persistence.saved = false. La UI debe mostrar un aviso
+  // al usuario — no hay fallback silencioso a localStorage.
 
   const { error: saveError } = await supabaseUser.rpc('save_tool_output', {
     p_project_id:      projectId,
@@ -485,6 +539,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     p_payload_version: PAYLOAD_VERSION,
   })
 
+  const persistence = saveError
+    ? { saved: false, error: saveError.message }
+    : { saved: true }
+
   if (saveError) {
     console.error('[ai-recommend] save_tool_output error (non-blocking):', saveError.message)
   } else {
@@ -493,8 +551,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
 
   // ── Respuesta al frontend ─────────────────────────────────────
-  // Shape: { data: <GeneratedContent> }
+  // Shape: { data: <GeneratedContent>, persistence: { saved: boolean, error?: string } }
   // Los hooks añaden generatedAt (y sector/tamano para T6) en el cliente.
+  // La UI debe usar persistence.saved para mostrar aviso si el guardado falló.
 
-  return jsonResponse({ data: generatedData })
+  return jsonResponse({ data: generatedData, persistence }, 200, corsH)
 })
