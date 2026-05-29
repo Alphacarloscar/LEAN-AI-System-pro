@@ -313,13 +313,10 @@ export function T1View({ onBack }: T1ViewProps) {
   const intervieweeStates = store.dimensionStates
   const activeId          = store.activeId
   const isLoadingT1       = store.isLoading
+  const hasDataT1         = store.hasData
   const loadErrorT1       = store.loadError
-
-  // Carga desde Supabase cuando cambia el engagement
-  useEffect(() => {
-    if (engagementId) store.load(engagementId)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [engagementId])
+  // Nota: la carga inicial la dispara ProjectRuntimeProvider → loadAllCriticalStores.
+  // No hay useEffect de load aquí para evitar la doble carga.
 
   // Añadir nuevo entrevistado en vivo
   async function addInterviewee(form: NewIntervieweeForm) {
@@ -514,8 +511,8 @@ export function T1View({ onBack }: T1ViewProps) {
         </p>
       </div>
 
-      {/* ── Loading guard — mientras carga desde Supabase ── */}
-      {isLoadingT1 && (
+      {/* ── Primer carga: sin datos → spinner bloqueante ── */}
+      {isLoadingT1 && !hasDataT1 && (
         <div className="flex items-center justify-center py-20">
           <div className="flex flex-col items-center gap-3">
             <div className="flex gap-1.5">
@@ -529,16 +526,35 @@ export function T1View({ onBack }: T1ViewProps) {
         </div>
       )}
 
-      {/* ── Error de carga — visible si loadErrorT1 != null ── */}
-      {!isLoadingT1 && loadErrorT1 && (
+      {/* ── Error sin datos previos ── */}
+      {!hasDataT1 && !isLoadingT1 && loadErrorT1 && (
         <RetryBanner
           message={loadErrorT1}
           onRetry={() => { if (engagementId) store.load(engagementId) }}
         />
       )}
 
-      {/* ── Contenido principal (oculto durante carga o error) ── */}
-      <div className={isLoadingT1 || loadErrorT1 ? 'hidden' : ''}>
+      {/* ── Contenido principal: visible en cuanto hay datos.
+              Si hay refetch en vuelo → datos permanecen visibles. ── */}
+      <div className={!hasDataT1 ? 'hidden' : ''}>
+
+      {/* ── Indicador de actualización en background ── */}
+      {isLoadingT1 && (
+        <div className="max-w-6xl mx-auto px-8 pt-2">
+          <div className="flex items-center gap-1.5 text-[11px] text-text-subtle">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            Actualizando datos…
+          </div>
+        </div>
+      )}
+
+      {/* ── Error durante refetch: datos visibles + banner ── */}
+      {hasDataT1 && !isLoadingT1 && loadErrorT1 && (
+        <RetryBanner
+          message={loadErrorT1}
+          onRetry={() => { if (engagementId) store.load(engagementId) }}
+        />
+      )}
 
       {/* ── Selector de entrevistados — collapsible ── */}
       <div className="max-w-6xl mx-auto px-8 py-3">

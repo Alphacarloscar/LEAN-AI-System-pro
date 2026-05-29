@@ -24,6 +24,7 @@ import { AlphaLogo }                              from '@/shared/components/Alph
 import { EngagementSelector }                     from '@/shared/components/EngagementSelector'
 import { useDarkMode }                            from '@/shared/hooks/useDarkMode'
 import { useAuthStore }                           from '@/modules/Auth'
+import type { SessionRecoveryState }              from '@/modules/Auth/store'
 import { useEngagementStore }                     from '@/modules/Engagement/store'
 import { useCompanyProfileStore }                 from '@/modules/CompanyProfile/store'
 import { ErrorBoundary }                          from '@/shared/components/ErrorBoundary'
@@ -153,16 +154,83 @@ function ContextBreadcrumb({ dark }: { dark: boolean }) {
   )
 }
 
+// ── SessionRecoveryBanner — overlay de estado de sesión ───────
+// 'reconnecting' → banner sutil "Reconectando…" mientras se recargan stores.
+// 'expired'      → overlay bloqueante "Sesión expirada" con botón de re-login.
+function SessionRecoveryBanner({ state, onReLogin }: {
+  state:     SessionRecoveryState
+  onReLogin: () => void
+}) {
+  if (state === 'idle') return null
+
+  if (state === 'reconnecting') {
+    return (
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50
+        flex items-center gap-2 px-4 py-2.5 rounded-full
+        bg-warm-900/90 dark:bg-warm-700/90 text-white text-[12px] font-medium
+        shadow-lg backdrop-blur-sm border border-white/10"
+      >
+        <svg className="animate-spin h-3.5 w-3.5 text-amber-400" viewBox="0 0 24 24" fill="none">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        Reconectando y actualizando datos…
+      </div>
+    )
+  }
+
+  // state === 'expired'
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="w-full max-w-sm mx-4 bg-white dark:bg-warm-800 rounded-2xl
+        border border-border shadow-2xl p-6 text-center space-y-4"
+      >
+        <div className="h-12 w-12 rounded-full bg-amber-50 dark:bg-amber-900/30
+          flex items-center justify-center mx-auto"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C8860A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v4M12 16h.01" />
+          </svg>
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-1">
+            La sesión ha expirado
+          </h3>
+          <p className="text-[12px] text-text-subtle leading-relaxed">
+            Tu sesión se cerró por inactividad. Vuelve a iniciar sesión para continuar.
+            Los datos no guardados en este momento pueden haberse perdido.
+          </p>
+        </div>
+        <button
+          onClick={onReLogin}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold
+            bg-navy-metallic text-white hover:bg-navy-metallic-hover
+            transition-colors shadow-sm"
+        >
+          Volver a iniciar sesión
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ── Layout principal ──────────────────────────────────────────
 export function AppLayout() {
-  const { dark, toggle }   = useDarkMode()
-  const { user }           = useAuthStore()
-  const { loadMyProjects } = useEngagementStore()
+  const { dark, toggle }                        = useDarkMode()
+  const { user, sessionRecoveryState, clearSessionExpired } = useAuthStore()
+  const { loadMyProjects }                      = useEngagementStore()
+  const navigate                                = useNavigate()
 
   // Cargar engagements del usuario en cuanto esté autenticado
   useEffect(() => {
     if (user) loadMyProjects()
   }, [user?.id])
+
+  function handleReLogin() {
+    clearSessionExpired()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <ProjectRuntimeProvider>
@@ -208,6 +276,12 @@ export function AppLayout() {
 
         {/* ── Debug Panel — solo en desarrollo ── */}
         {import.meta.env.DEV && <DebugPanel />}
+
+        {/* ── Session Recovery Banner — overlay de sesión expirada o reconectando ── */}
+        <SessionRecoveryBanner
+          state={sessionRecoveryState}
+          onReLogin={handleReLogin}
+        />
 
       </div>
     </ProjectRuntimeProvider>

@@ -188,6 +188,8 @@ const DEMO_STAKEHOLDERS: Stakeholder[] = [
 interface T2Store {
   stakeholders:           Stakeholder[]
   isLoading:        boolean
+  /** true tras una primera carga exitosa; false solo tras reset(). Nunca se resetea a false durante un refetch. */
+  hasData:          boolean
   /** UUID generado por cada llamada a load() — descarta respuestas de cargas obsoletas */
   currentRequestId: string | null
   lastError:        string | null
@@ -208,6 +210,7 @@ interface T2Store {
 export const useT2Store = create<T2Store>()((set, get) => ({
   stakeholders:    [],
   isLoading:       false,
+  hasData:         false,
   currentRequestId: null,
   lastError:       null,
 
@@ -225,7 +228,7 @@ export const useT2Store = create<T2Store>()((set, get) => ({
     try {
       const stakeholders = await Promise.race([fetchPromise, timeoutPromise])
       if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
-      set({ stakeholders, isLoading: false, lastError: null })
+      set({ stakeholders, isLoading: false, hasData: true, lastError: null })
     } catch (err) {
       if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
       const isTimeout = (err as Error)?.message === 'T2_LOAD_TIMEOUT'
@@ -316,5 +319,5 @@ export const useT2Store = create<T2Store>()((set, get) => ({
   },
 
   // ── reset ──────────────────────────────────────────────────
-  reset: () => set({ stakeholders: [], isLoading: false, currentRequestId: null, lastError: null }),
+  reset: () => set({ stakeholders: [], isLoading: false, hasData: false, currentRequestId: null, lastError: null }),
 }))

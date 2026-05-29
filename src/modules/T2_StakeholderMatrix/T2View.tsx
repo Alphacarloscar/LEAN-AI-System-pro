@@ -767,7 +767,7 @@ interface T2ViewProps {
 }
 
 export function T2View({ onBack }: T2ViewProps) {
-  const { stakeholders, addStakeholder, updateStakeholder, load, initDemo, lastError, isLoading: isLoadingT2 } = useT2Store()
+  const { stakeholders, addStakeholder, updateStakeholder, initDemo, lastError, isLoading: isLoadingT2, hasData: hasDataT2 } = useT2Store()
   const engagementId   = useEngagementStore((s) => s.activeEngagementId)
   const companyProfile = useCompanyProfileStore((s) => s.profile)
   const companyName    = companyProfile.engagementName
@@ -776,12 +776,11 @@ export function T2View({ onBack }: T2ViewProps) {
   const { isReadOnly } = usePermissions()
   const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
 
-  // Carga desde Supabase cuando cambia el engagement y no hay datos.
-  // El patrón requestId en el store descarta respuestas stale si hay cargas concurrentes.
+  // Nota: la carga de stakeholders la dispara ProjectRuntimeProvider → loadAllCriticalStores.
+  // Aquí solo gestionamos los departamentos (no son parte de loadAllCriticalStores)
+  // y el modo demo si aplica.
   useEffect(() => {
     if (engagementId) {
-      if (useT2Store.getState().stakeholders.length === 0) load(engagementId)
-
       // Obtener company_id del proyecto para cargar departamentos centralizados
       supabase
         .from('projects')
@@ -893,8 +892,8 @@ export function T2View({ onBack }: T2ViewProps) {
         )}
       </div>
 
-      {/* ── Loading guard ── */}
-      {isLoadingT2 && (
+      {/* ── Primer carga: sin datos → spinner bloqueante ── */}
+      {isLoadingT2 && !hasDataT2 && (
         <div className="flex items-center justify-center py-20">
           <div className="flex flex-col items-center gap-3">
             <div className="flex gap-1.5">
@@ -908,8 +907,19 @@ export function T2View({ onBack }: T2ViewProps) {
         </div>
       )}
 
-      {/* ── Contenido principal (oculto durante carga) ── */}
-      <div className={isLoadingT2 ? 'hidden' : ''}>
+      {/* ── Contenido principal: visible en cuanto hay datos.
+              Refetch en vuelo → datos permanecen visibles. ── */}
+      <div className={!hasDataT2 ? 'hidden' : ''}>
+
+      {/* ── Indicador de actualización en background ── */}
+      {isLoadingT2 && (
+        <div className="max-w-6xl mx-auto px-8 pt-2">
+          <div className="flex items-center gap-1.5 text-[11px] text-text-subtle">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            Actualizando datos…
+          </div>
+        </div>
+      )}
 
       {/* ── Two-column layout ── */}
       <div className="max-w-6xl mx-auto px-8 py-5">

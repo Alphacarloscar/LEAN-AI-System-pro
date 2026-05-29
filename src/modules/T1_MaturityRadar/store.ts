@@ -33,6 +33,8 @@ interface T1Store {
   dimensionStates: Record<string, T1DimensionState[]>   // clave = interviewee.id
   activeId:               string
   isLoading:        boolean
+  /** true tras una primera carga exitosa; false solo tras reset(). Nunca se resetea a false durante un refetch. */
+  hasData:          boolean
   /** UUID generado por cada llamada a load() — descarta respuestas de cargas obsoletas */
   currentRequestId: string | null
   /** Error de carga — visible en RetryBanner si != null */
@@ -133,6 +135,7 @@ export const useT1Store = create<T1Store>()((set, get) => ({
   dimensionStates: {},
   activeId:        '',
   isLoading:       false,
+  hasData:         false,
   currentRequestId: null,
   loadError:       null,
 
@@ -156,6 +159,7 @@ export const useT1Store = create<T1Store>()((set, get) => ({
         dimensionStates,
         activeId: interviewees[0]?.id ?? '',
         isLoading: false,
+        hasData:   true,
         loadError: null,
       })
     } catch (err) {
@@ -353,5 +357,5 @@ export const useT1Store = create<T1Store>()((set, get) => ({
   },
 
   // ── reset ──────────────────────────────────────────────────
-  reset: () => set({ interviewees: [], dimensionStates: {}, activeId: '', isLoading: false, currentRequestId: null, loadError: null }),
+  reset: () => set({ interviewees: [], dimensionStates: {}, activeId: '', isLoading: false, hasData: false, currentRequestId: null, loadError: null }),
 }))

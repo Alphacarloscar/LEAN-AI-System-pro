@@ -14,7 +14,7 @@
 // Sprint 3+: Supabase tabla `use_cases`.
 // ============================================================
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate }       from 'react-router-dom'
 import { useT4Store }                   from './store'
 import { useT1Store }                   from '@/modules/T1_MaturityRadar/store'
@@ -2154,7 +2154,7 @@ interface T4ViewProps {
 
 export function T4View({ onBack }: T4ViewProps) {
   const navigate                               = useNavigate()
-  const { useCases, isLoading, loadEngagement } = useT4Store()
+  const { useCases, isLoading, isLoaded } = useT4Store()
   const { profile: companyProfile }            = useCompanyProfileStore()
   const companyName                            = companyProfile.engagementName
   const engagementId                           = useEngagementStore((s) => s.activeEngagementId)
@@ -2165,18 +2165,8 @@ export function T4View({ onBack }: T4ViewProps) {
   const dimensionStates = useT1Store(s => s.dimensionStates)
   const stakeholders    = useT2Store(s => s.stakeholders)
 
-  // Guard robusto anti-double-load y anti-F5-vacío:
-  //   SKIP si: mismo engagement Y (está cargando O ya cargó exitosamente)
-  //   FIRE si: engagement diferente, o mismo engagement pero sin datos cargados
-  //            (cubre F5 donde isLoaded=false aunque engagementId coincida en store)
-  useEffect(() => {
-    if (!engagementId) return
-    const { engagementId: loadedId, isLoading: loading, isLoaded: loaded } = useT4Store.getState()
-    const skip = loadedId === engagementId && (loading || loaded)
-    console.log(`[T4 View] useEffect — eng: ${engagementId}, store: {eng: ${loadedId}, loading: ${loading}, loaded: ${loaded}} → ${skip ? 'SKIP' : 'FIRE'}`)
-    if (skip) return
-    loadEngagement(engagementId)
-  }, [engagementId])
+  // Nota: la carga la dispara ProjectRuntimeProvider → loadAllCriticalStores.
+  // No hay useEffect de loadEngagement aquí para evitar doble carga.
 
   const [activeId, setActiveId]     = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)
@@ -2227,8 +2217,10 @@ export function T4View({ onBack }: T4ViewProps) {
     setActiveId((prev) => prev === id ? null : id)
   }
 
-  // ── Guard 1: cargando desde Supabase ─────────────────────────
-  if (isLoading) {
+  // ── Guard 1: primera carga sin datos previos → spinner bloqueante ──────────
+  // Si ya hay datos cargados (isLoaded=true), el refetch es no bloqueante:
+  // la vista permanece visible con un indicador sutil en el header.
+  if (isLoading && !isLoaded) {
     return (
       <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
@@ -2294,7 +2286,16 @@ export function T4View({ onBack }: T4ViewProps) {
               <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100">Use Case Priority Board</h1>
               <PhaseMiniMap phaseId="evaluate" toolCode="T4" />
             </div>
+            <div className="flex items-center gap-3">
             <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">{companyName}</p>
+            {/* Indicador de refetch no bloqueante */}
+            {isLoading && isLoaded && (
+              <span className="flex items-center gap-1 text-[10px] text-text-subtle">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse inline-block" />
+                Actualizando…
+              </span>
+            )}
+          </div>
           </div>
           <button
             onClick={() => setShowImport(true)}

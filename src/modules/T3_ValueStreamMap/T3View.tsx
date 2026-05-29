@@ -923,18 +923,17 @@ interface T3ViewProps {
 
 export function T3View({ onBack }: T3ViewProps) {
   const navigate                          = useNavigate()
-  const { processes, addProcess, load, initDemo, isLoading: isLoadingT3 } = useT3Store()
+  const { processes, addProcess, initDemo, isLoading: isLoadingT3, hasData: hasDataT3 } = useT3Store()
   const engagementId                      = useEngagementStore((s) => s.activeEngagementId)
   const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
   const companyName                       = useCompanyProfileStore((s) => s.profile.engagementName)
 
   const { isReadOnly } = usePermissions()
 
-  // Carga: real (Supabase) o demo
+  // Nota: la carga real desde Supabase la dispara ProjectRuntimeProvider → loadAllCriticalStores.
+  // Aquí solo gestionamos el modo demo si aplica.
   useEffect(() => {
-    if (engagementId) {
-      load(engagementId)
-    } else if (isDemoEnabled) {
+    if (!engagementId && isDemoEnabled) {
       initDemo()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1050,8 +1049,8 @@ export function T3View({ onBack }: T3ViewProps) {
         </div>
       </div>
 
-      {/* ── Loading guard ── */}
-      {isLoadingT3 && (
+      {/* ── Primer carga: sin datos → spinner bloqueante ── */}
+      {isLoadingT3 && !hasDataT3 && (
         <div className="flex items-center justify-center py-20">
           <div className="flex flex-col items-center gap-3">
             <div className="flex gap-1.5">
@@ -1065,8 +1064,19 @@ export function T3View({ onBack }: T3ViewProps) {
         </div>
       )}
 
-      {/* ── Contenido principal (oculto durante carga) ── */}
-      <div className={isLoadingT3 ? 'hidden' : ''}>
+      {/* ── Contenido principal: visible en cuanto hay datos.
+              Refetch en vuelo → datos permanecen visibles. ── */}
+      <div className={!hasDataT3 ? 'hidden' : ''}>
+
+      {/* ── Indicador de actualización en background ── */}
+      {isLoadingT3 && (
+        <div className="max-w-7xl mx-auto px-8 pt-2">
+          <div className="flex items-center gap-1.5 text-[11px] text-text-subtle">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            Actualizando datos…
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 max-w-7xl mx-auto w-full px-8">
 

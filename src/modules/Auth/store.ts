@@ -25,24 +25,41 @@ import { useT7Store }    from '@/modules/T7_AdoptionHeatmap/store'
 import { useT8Store }    from '@/modules/T8_CommunicationMap/store'
 import { useT9Store }    from '@/modules/T9_AIRoadmap/store'
 import { useT12Store }   from '@/modules/T12_ISOAssessment/store'
-import { useCompanyProfileStore } from '@/modules/CompanyProfile/store'
-import { useEngagementStore }     from '@/modules/Engagement/store'
+import { useCompanyProfileStore }  from '@/modules/CompanyProfile/store'
+import { useEngagementStore }      from '@/modules/Engagement/store'
+import { loadAllCriticalStores }   from '@/lib/resetEngagementStores'
+
+// ── Módulo-nivel: subscription de auth y flag de logout intencional ──────────
+// Una sola subscription activa por ciclo de vida de la app.
+// _intentionalSignOut evita mostrar el overlay de sesión expirada en logouts normales.
+let _authSubscription: { unsubscribe: () => void } | null = null
+let _intentionalSignOut = false
+
+// ── Estado de recuperación de sesión ─────────────────────────────────────────
+// 'idle'         — estado normal, sesión activa o no autenticado
+// 'reconnecting' — sesión se recuperó tras expiración, recargando stores en BG
+// 'expired'      — sesión expiró inesperadamente; mostrar overlay al usuario
+export type SessionRecoveryState = 'idle' | 'reconnecting' | 'expired'
 
 interface AuthStore {
-  isAuthenticated:     boolean
-  isInitializing:      boolean    // true mientras se comprueba la sesión al arrancar
-  needsPasswordUpdate: boolean    // true cuando el usuario debe establecer contraseña
-  user:                AuthUser | null
-  error:               string | null
+  isAuthenticated:      boolean
+  isInitializing:       boolean    // true mientras se comprueba la sesión al arrancar
+  needsPasswordUpdate:  boolean    // true cuando el usuario debe establecer contraseña
+  user:                 AuthUser | null
+  error:                string | null
+  /** Estado de recuperación de sesión — leído por SessionRecoveryBanner en AppLayout */
+  sessionRecoveryState: SessionRecoveryState
 
   // Llamar una vez al montar App — restaura sesión existente
-  initialize:          () => Promise<void>
+  initialize:           () => Promise<void>
   // Devuelve true si login correcto, false si credenciales incorrectas
-  login:               (email: string, password: string) => Promise<boolean>
-  logout:              () => Promise<void>
-  clearError:          () => void
+  login:                (email: string, password: string) => Promise<boolean>
+  logout:               () => Promise<void>
+  clearError:           () => void
   // Llamar desde ResetPasswordView tras actualizar contraseña con éxito
-  clearPasswordUpdate: () => void
+  clearPasswordUpdate:  () => void
+  // Limpia el overlay de sesión expirada (tras re-login exitoso)
+  clearSessionExpired:  () => void
 }
 
 // ── Helper: carga el perfil extendido desde la tabla profiles ──
@@ -67,52 +84,83 @@ async function loadProfile(userId: string): Promise<AuthUser | null> {
 // ── Store ──────────────────────────────────────────────────────
 
 export const useAuthStore = create<AuthStore>()((set) => ({
-  isAuthenticated:     false,
-  isInitializing:      true,
-  needsPasswordUpdate: false,
-  user:                null,
-  error:               null,
+  isAuthenticated:      false,
+  isInitializing:       true,
+  needsPasswordUpdate:  false,
+  user:                 null,
+  error:                null,
+  sessionRecoveryState: 'idle' as SessionRecoveryState,
 
   // ── initialize ───────────────────────────────────────────────
   // Comprueba si hay sesión activa en Supabase (cookie/localStorage).
   // App.tsx la llama en useEffect al montar — sin ella, el refresh
   // de página siempre redirige a /login aunque el token sea válido.
+  //
+  // Garantías de esta implementación:
+  //   — Una sola subscription activa (unsubscribe antes de registrar de nuevo).
+  //   — SIGNED_OUT inesperado → sessionRecoveryState: 'expired' (overlay al usuario).
+  //   — SIGNED_OUT por logout() → no muestra overlay (_intentionalSignOut = true).
+  //   — SIGNED_IN tras 'expired' → recarga silenciosa de stores + banner "Reconectando…"
   initialize: async () => {
     set({ isInitializing: true })
 
     const { data: { session } } = await supabase.auth.getSession()
 
     if (session?.user) {
-      const profile      = await loadProfile(session.user.id)
-      // Si el metadato needs_password_reset=true, el usuario fue invitado y aún
-      // no ha fijado su contraseña → forzar a /reset-password via ProtectedRoute.
-      const needsReset   = session.user.user_metadata?.needs_password_reset === true
+      const profile    = await loadProfile(session.user.id)
+      const needsReset = session.user.user_metadata?.needs_password_reset === true
       set({
-        isAuthenticated:     !!profile,
-        user:                profile,
-        needsPasswordUpdate: needsReset,
-        isInitializing:      false,
+        isAuthenticated:      !!profile,
+        user:                 profile,
+        needsPasswordUpdate:  needsReset,
+        isInitializing:       false,
+        sessionRecoveryState: 'idle',
       })
     } else {
       set({ isAuthenticated: false, user: null, isInitializing: false })
     }
 
+    // Limpiar subscription previa si existe (protección contra dobles registros)
+    if (_authSubscription) {
+      _authSubscription.unsubscribe()
+      _authSubscription = null
+    }
+
     // Listener de cambios de sesión (token refresh, sign out en otra pestaña, etc.)
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+
       if (event === 'PASSWORD_RECOVERY') {
         // Flujo "olvidé contraseña" — forzar a /reset-password.
         set({ needsPasswordUpdate: true })
       }
+
       if (event === 'SIGNED_IN' && session?.user) {
         const profile    = await loadProfile(session.user.id)
-        // Invitation sign-in: el metadato needs_password_reset marca primer acceso.
         const needsReset = session.user.user_metadata?.needs_password_reset === true
+        const wasExpired = useAuthStore.getState().sessionRecoveryState === 'expired'
+
         set({ isAuthenticated: !!profile, user: profile, needsPasswordUpdate: needsReset })
+
+        // Recuperación silenciosa: sesión volvió tras expiración inesperada.
+        // Recargar stores en background y mostrar banner "Reconectando…"
+        if (wasExpired && profile) {
+          set({ sessionRecoveryState: 'reconnecting' })
+          const engagementId = useEngagementStore.getState().activeEngagementId
+          if (engagementId) {
+            try {
+              await loadAllCriticalStores(engagementId)
+            } catch {
+              // Errores individuales ya se loguean dentro de cada store
+            }
+          }
+          set({ sessionRecoveryState: 'idle' })
+        }
       }
+
       if (event === 'SIGNED_OUT') {
-        set({ isAuthenticated: false, user: null })
+        const wasAuthenticated = useAuthStore.getState().isAuthenticated
+
         // Limpiar TODOS los stores con datos de cliente al cerrar sesión
-        // F-01: completado — antes solo limpiaba T1, T2, T4
         useT1Store.getState().reset()
         useT2Store.getState().reset()
         useT3Store.getState().reset()
@@ -125,11 +173,20 @@ export const useAuthStore = create<AuthStore>()((set) => ({
         useT12Store.getState().resetAll()
         useCompanyProfileStore.getState().resetProfile()
         useEngagementStore.getState().reset()
+
+        // Si fue logout intencional → estado normal.
+        // Si fue expiración inesperada (tab-switch, timeout) → mostrar overlay.
+        const nextRecoveryState: SessionRecoveryState =
+          (!_intentionalSignOut && wasAuthenticated) ? 'expired' : 'idle'
+
+        set({ isAuthenticated: false, user: null, sessionRecoveryState: nextRecoveryState })
+        _intentionalSignOut = false
       }
-      if (event === 'TOKEN_REFRESHED' && session?.user) {
-        // Sesión renovada automáticamente — no necesitamos hacer nada
-      }
+
+      // TOKEN_REFRESHED: Supabase renovó el token automáticamente — no es necesario hacer nada.
     })
+
+    _authSubscription = subscription
   },
 
   // ── login ────────────────────────────────────────────────────
@@ -162,10 +219,16 @@ export const useAuthStore = create<AuthStore>()((set) => ({
 
   // ── logout ───────────────────────────────────────────────────
   logout: async () => {
+    // Marcar que es un sign-out intencional para que el handler de SIGNED_OUT
+    // no active el overlay de sesión expirada.
+    _intentionalSignOut = true
     await supabase.auth.signOut()
-    set({ isAuthenticated: false, user: null, error: null })
+    // La limpieza de stores la hace el handler SIGNED_OUT en onAuthStateChange.
+    // Solo reseteamos el error y auth state aquí como fallback.
+    set({ isAuthenticated: false, user: null, error: null, sessionRecoveryState: 'idle' })
   },
 
   clearError:          () => set({ error: null }),
   clearPasswordUpdate: () => set({ needsPasswordUpdate: false }),
+  clearSessionExpired: () => set({ sessionRecoveryState: 'idle' }),
 }))
