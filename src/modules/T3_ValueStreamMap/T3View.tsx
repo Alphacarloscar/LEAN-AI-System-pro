@@ -923,17 +923,20 @@ interface T3ViewProps {
 
 export function T3View({ onBack }: T3ViewProps) {
   const navigate                          = useNavigate()
-  const { processes, addProcess, initDemo, isLoading: isLoadingT3, hasData: hasDataT3 } = useT3Store()
+  const { processes, addProcess, initDemo, ensureLoaded, isLoading: isLoadingT3, hasData: hasDataT3, loadError: loadErrorT3 } = useT3Store()
   const engagementId                      = useEngagementStore((s) => s.activeEngagementId)
   const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
   const companyName                       = useCompanyProfileStore((s) => s.profile.engagementName)
 
   const { isReadOnly } = usePermissions()
 
-  // Nota: la carga real desde Supabase la dispara ProjectRuntimeProvider → loadAllCriticalStores.
-  // Aquí solo gestionamos el modo demo si aplica.
+  // Garantizar datos al montar la ruta.
+  // ensureLoaded es idempotente: si PRP ya cargó y los datos son frescos, no relanza fetch.
+  // Si PRP aún no terminó (o T3View montó después de que la carga falló), esta llamada lo resuelve.
   useEffect(() => {
-    if (!engagementId && isDemoEnabled) {
+    if (engagementId) {
+      ensureLoaded(engagementId, { reason: 'route_mount' })
+    } else if (isDemoEnabled) {
       initDemo()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1023,15 +1026,17 @@ export function T3View({ onBack }: T3ViewProps) {
             <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">{companyName}</p>
           </div>
 
-          {/* KPI strip */}
+          {/* KPI strip — muestra "-" durante la carga inicial */}
           <div className="hidden md:flex items-center gap-5">
             {[
-              { label: 'Opp crítica', value: totalCritica, color: 'text-navy dark:text-warm-100' },
-              { label: 'Opp alta',    value: totalAlta,    color: 'text-info-dark' },
-              { label: 'Total',       value: processes.length, color: 'text-lean-black dark:text-gray-100' },
+              { label: 'Opp crítica', value: hasDataT3 ? totalCritica : null, color: 'text-navy dark:text-warm-100' },
+              { label: 'Opp alta',    value: hasDataT3 ? totalAlta    : null, color: 'text-info-dark' },
+              { label: 'Total',       value: hasDataT3 ? processes.length : null, color: 'text-lean-black dark:text-gray-100' },
             ].map(({ label, value, color }) => (
               <div key={label} className="text-center">
-                <p className={`text-xl font-bold tabular-nums leading-none ${color}`}>{value}</p>
+                <p className={`text-xl font-bold tabular-nums leading-none ${color}`}>
+                  {value === null ? <span className="text-text-subtle text-base">—</span> : value}
+                </p>
                 <p className="text-[9px] text-text-subtle mt-0.5 whitespace-nowrap">{label}</p>
               </div>
             ))}
@@ -1049,7 +1054,7 @@ export function T3View({ onBack }: T3ViewProps) {
         </div>
       </div>
 
-      {/* ── Primer carga: sin datos → spinner bloqueante ── */}
+      {/* ── Estado: carga inicial (skeleton) ── */}
       {isLoadingT3 && !hasDataT3 && (
         <div className="flex items-center justify-center py-20">
           <div className="flex flex-col items-center gap-3">
@@ -1059,8 +1064,51 @@ export function T3View({ onBack }: T3ViewProps) {
                   style={{ animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>
-            <p className="text-xs text-text-muted">Cargando procesos del Value Stream…</p>
+            <p className="text-xs text-text-muted">Cargando Value Stream Map…</p>
           </div>
+        </div>
+      )}
+
+      {/* ── Estado: error sin datos (carga falló y no hay nada que mostrar) ── */}
+      {!isLoadingT3 && !hasDataT3 && loadErrorT3 && (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4M12 16h.01" />
+            </svg>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-1">Error al cargar los datos</p>
+            <p className="text-xs text-text-subtle max-w-xs leading-relaxed mb-4">
+              {loadErrorT3 === 'timeout' ? 'La conexión tardó demasiado. Revisa tu conexión a Supabase.' : 'No se pudieron cargar los procesos. Inténtalo de nuevo.'}
+            </p>
+            {engagementId && (
+              <button
+                onClick={() => ensureLoaded(engagementId, { force: true, reason: 'retry' })}
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors"
+              >
+                Reintentar
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Estado: carga exitosa con 0 procesos (proyecto nuevo) ── */}
+      {!isLoadingT3 && hasDataT3 && processes.length === 0 && !isReadOnly && (
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center text-2xl">◎</div>
+          <p className="text-sm font-bold text-text-muted">No hay procesos todavía</p>
+          <p className="text-xs text-text-subtle max-w-xs leading-relaxed text-center">
+            Añade el primer proceso para comenzar el análisis de oportunidades IA.
+          </p>
+          <button
+            onClick={() => setShowModal(true)}
+            className="mt-2 px-4 py-2 rounded-xl text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors"
+          >
+            + Añadir primer proceso
+          </button>
         </div>
       )}
 

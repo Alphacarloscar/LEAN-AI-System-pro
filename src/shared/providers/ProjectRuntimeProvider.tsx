@@ -49,13 +49,29 @@ export function ProjectRuntimeProvider({ children }: { children: React.ReactNode
   const canRead            = !isReadOnly || canEdit
 
   // Disparar carga en background al cambiar de proyecto.
-  // Fire-and-forget: las tools montan su shell inmediatamente.
-  // Los stale guards de cada store protegen contra cargas en vuelo.
+  // ensureLoaded en cada store garantiza deduplication y stale guard.
   useEffect(() => {
     if (!projectId) return
-    loadAllCriticalStores(projectId).catch(() => {
+    loadAllCriticalStores(projectId, { reason: 'project_change' }).catch(() => {
       // Errores individuales ya se loguean dentro de cada store
     })
+  }, [projectId])
+
+  // Recargar al volver de otra pestaña del navegador.
+  // staleMs=0 fuerza recarga solo si han pasado más de 5min (el default de STALE_MS).
+  // Esto evita recargas innecesarias si el usuario vuelve al tab en segundos.
+  useEffect(() => {
+    if (!projectId) return
+
+    function handleVisibilityChange() {
+      if (document.visibilityState !== 'visible') return
+      loadAllCriticalStores(projectId!, { reason: 'visibility_change' }).catch(() => {
+        // Errores individuales ya se loguean dentro de cada store
+      })
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [projectId])
 
   const value: ProjectRuntime = { projectId, canRead, canEdit }

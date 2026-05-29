@@ -14,7 +14,7 @@
 // Sprint 3+: Supabase tabla `use_cases`.
 // ============================================================
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate }       from 'react-router-dom'
 import { useT4Store }                   from './store'
 import { useT1Store }                   from '@/modules/T1_MaturityRadar/store'
@@ -2154,7 +2154,7 @@ interface T4ViewProps {
 
 export function T4View({ onBack }: T4ViewProps) {
   const navigate                               = useNavigate()
-  const { useCases, isLoading, isLoaded } = useT4Store()
+  const { useCases, isLoading, isLoaded, ensureLoaded } = useT4Store()
   const { profile: companyProfile }            = useCompanyProfileStore()
   const companyName                            = companyProfile.engagementName
   const engagementId                           = useEngagementStore((s) => s.activeEngagementId)
@@ -2165,8 +2165,13 @@ export function T4View({ onBack }: T4ViewProps) {
   const dimensionStates = useT1Store(s => s.dimensionStates)
   const stakeholders    = useT2Store(s => s.stakeholders)
 
-  // Nota: la carga la dispara ProjectRuntimeProvider → loadAllCriticalStores.
-  // No hay useEffect de loadEngagement aquí para evitar doble carga.
+  // Garantizar datos al montar la ruta (idempotente vía ensureLoaded).
+  useEffect(() => {
+    if (engagementId) {
+      ensureLoaded(engagementId, { reason: 'route_mount' })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId])
 
   const [activeId, setActiveId]     = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)

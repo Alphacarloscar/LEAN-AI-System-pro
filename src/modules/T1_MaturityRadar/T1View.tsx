@@ -315,8 +315,15 @@ export function T1View({ onBack }: T1ViewProps) {
   const isLoadingT1       = store.isLoading
   const hasDataT1         = store.hasData
   const loadErrorT1       = store.loadError
-  // Nota: la carga inicial la dispara ProjectRuntimeProvider → loadAllCriticalStores.
-  // No hay useEffect de load aquí para evitar la doble carga.
+
+  // Garantizar datos al montar la ruta (idempotente vía ensureLoaded).
+  // Si PRP ya cargó y los datos son frescos, esta llamada es no-op.
+  useEffect(() => {
+    if (engagementId) {
+      store.ensureLoaded(engagementId, { reason: 'route_mount' })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId])
 
   // Añadir nuevo entrevistado en vivo
   async function addInterviewee(form: NewIntervieweeForm) {

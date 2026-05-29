@@ -68,18 +68,39 @@ export function resetAllEngagementStores(): void {
   useCompanyProfileStore.getState().resetProfile()
 }
 
+export interface LoadSummary {
+  loaded:  string[]
+  skipped: string[]
+  errors:  string[]
+}
+
 /**
  * Carga en paralelo los stores de datos críticos (T1–T4).
- * Fire-and-forget: se llama desde selectEngagement sin await.
- * Los stale guards de cada store protegen contra cargas en vuelo
- * si el usuario cambia de proyecto antes de que terminen.
+ * Usa ensureLoaded — incluye stale guard y deduplication.
+ * staleMs override permite forzar recarga (ej. visibilitychange).
  */
-export async function loadAllCriticalStores(engagementId: string): Promise<void> {
-  await Promise.allSettled([
-    useT1Store.getState().load(engagementId),
-    useT2Store.getState().load(engagementId),
-    useT3Store.getState().load(engagementId),
-    useT4Store.getState().loadEngagement(engagementId),
+export async function loadAllCriticalStores(
+  engagementId: string,
+  options?: { staleMs?: number; reason?: string },
+): Promise<LoadSummary> {
+  const reason  = options?.reason  ?? 'loadAllCriticalStores'
+  const staleMs = options?.staleMs
+
+  const results = await Promise.allSettled([
+    useT1Store.getState().ensureLoaded(engagementId, { reason, ...(staleMs != null ? { staleMs } : {}) }),
+    useT2Store.getState().ensureLoaded(engagementId, { reason, ...(staleMs != null ? { staleMs } : {}) }),
+    useT3Store.getState().ensureLoaded(engagementId, { reason, ...(staleMs != null ? { staleMs } : {}) }),
+    useT4Store.getState().ensureLoaded(engagementId, { reason, ...(staleMs != null ? { staleMs } : {}) }),
     useCompanyProfileStore.getState().loadProfile(engagementId),
   ])
+
+  const names   = ['T1', 'T2', 'T3', 'T4', 'CompanyProfile']
+  const summary: LoadSummary = { loaded: [], skipped: [], errors: [] }
+
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') summary.errors.push(names[i])
+    else                          summary.loaded.push(names[i])
+  })
+
+  return summary
 }

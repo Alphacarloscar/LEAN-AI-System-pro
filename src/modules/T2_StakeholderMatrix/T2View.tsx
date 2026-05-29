@@ -767,7 +767,7 @@ interface T2ViewProps {
 }
 
 export function T2View({ onBack }: T2ViewProps) {
-  const { stakeholders, addStakeholder, updateStakeholder, initDemo, lastError, isLoading: isLoadingT2, hasData: hasDataT2 } = useT2Store()
+  const { stakeholders, addStakeholder, updateStakeholder, initDemo, ensureLoaded, lastError, isLoading: isLoadingT2, hasData: hasDataT2 } = useT2Store()
   const engagementId   = useEngagementStore((s) => s.activeEngagementId)
   const companyProfile = useCompanyProfileStore((s) => s.profile)
   const companyName    = companyProfile.engagementName
@@ -776,12 +776,19 @@ export function T2View({ onBack }: T2ViewProps) {
   const { isReadOnly } = usePermissions()
   const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
 
-  // Nota: la carga de stakeholders la dispara ProjectRuntimeProvider → loadAllCriticalStores.
-  // Aquí solo gestionamos los departamentos (no son parte de loadAllCriticalStores)
-  // y el modo demo si aplica.
+  // Garantizar datos al montar la ruta (idempotente).
   useEffect(() => {
     if (engagementId) {
-      // Obtener company_id del proyecto para cargar departamentos centralizados
+      ensureLoaded(engagementId, { reason: 'route_mount' })
+    } else if (isDemoEnabled) {
+      initDemo()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId])
+
+  // Departamentos — gestión independiente de T2 store
+  useEffect(() => {
+    if (engagementId) {
       supabase
         .from('projects')
         .select('company_id')
@@ -791,8 +798,6 @@ export function T2View({ onBack }: T2ViewProps) {
           const cid = data?.company_id as string | null
           if (cid) fetchDepartments(cid)
         })
-    } else if (isDemoEnabled) {
-      initDemo()
     } else {
       resetDepartments()
     }

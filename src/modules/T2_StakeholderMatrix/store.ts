@@ -17,6 +17,9 @@ import {
   updateStakeholderInDb,
   deleteStakeholderFromDb,
 } from '@/services/t2.service'
+import { logTrace } from '@/lib/loadTrace'
+
+const STALE_MS = 5 * 60_000
 
 // ── Demo data — 8 stakeholders en 4 departamentos ─────────────
 // Usada solo cuando no hay engagement activo (demo / presentación).
@@ -190,9 +193,13 @@ interface T2Store {
   isLoading:        boolean
   /** true tras una primera carga exitosa; false solo tras reset(). Nunca se resetea a false durante un refetch. */
   hasData:          boolean
+  loadedProjectId:  string | null
+  lastLoadedAt:     number | null
   /** UUID generado por cada llamada a load() — descarta respuestas de cargas obsoletas */
   currentRequestId: string | null
   lastError:        string | null
+
+  ensureLoaded: (projectId: string, options?: { force?: boolean; reason?: string; staleMs?: number }) => Promise<void>
 
   /** Carga stakeholders desde Supabase para el engagement activo */
   load: (engagementId: string) => Promise<void>
@@ -211,13 +218,36 @@ export const useT2Store = create<T2Store>()((set, get) => ({
   stakeholders:    [],
   isLoading:       false,
   hasData:         false,
+  loadedProjectId: null,
+  lastLoadedAt:    null,
   currentRequestId: null,
   lastError:       null,
+
+  // ── ensureLoaded ───────────────────────────────────────────
+  ensureLoaded: async (projectId, options = {}) => {
+    const { force = false, reason = 'unknown', staleMs = STALE_MS } = options
+    const state = get()
+    if (state.isLoading && state.loadedProjectId === projectId && !force) {
+      logTrace({ resourceName: 'T2', projectId, requestId: state.currentRequestId ?? 'n/a', reason, status: 'skipped', skippedReason: 'in_flight' })
+      return
+    }
+    if (!force && state.hasData && state.loadedProjectId === projectId && state.lastLoadedAt) {
+      const age = Date.now() - state.lastLoadedAt
+      if (age < staleMs) {
+        logTrace({ resourceName: 'T2', projectId, requestId: 'n/a', reason, status: 'skipped', skippedReason: `fresh_${Math.round(age / 1000)}s` })
+        return
+      }
+    }
+    if (state.hasData && state.loadedProjectId !== projectId) {
+      set({ stakeholders: [], hasData: false, lastError: null })
+    }
+    await get().load(projectId)
+  },
 
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
     const requestId = crypto.randomUUID()
-    set({ isLoading: true, currentRequestId: requestId, lastError: null })
+    set({ isLoading: true, currentRequestId: requestId, lastError: null, loadedProjectId: engagementId })
 
     const LOAD_TIMEOUT_MS = 10_000
     const fetchPromise   = fetchStakeholders(engagementId)
@@ -228,7 +258,7 @@ export const useT2Store = create<T2Store>()((set, get) => ({
     try {
       const stakeholders = await Promise.race([fetchPromise, timeoutPromise])
       if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
-      set({ stakeholders, isLoading: false, hasData: true, lastError: null })
+      set({ stakeholders, isLoading: false, hasData: true, lastLoadedAt: Date.now(), lastError: null })
     } catch (err) {
       if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
       const isTimeout = (err as Error)?.message === 'T2_LOAD_TIMEOUT'
@@ -319,5 +349,5 @@ export const useT2Store = create<T2Store>()((set, get) => ({
   },
 
   // ── reset ──────────────────────────────────────────────────
-  reset: () => set({ stakeholders: [], isLoading: false, hasData: false, currentRequestId: null, lastError: null }),
+  reset: () => set({ stakeholders: [], isLoading: false, hasData: false, loadedProjectId: null, lastLoadedAt: null, currentRequestId: null, lastError: null }),
 }))

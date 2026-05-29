@@ -21,6 +21,9 @@ import {
   updateUseCaseInDb,
   deleteUseCaseFromDb,
 } from '@/services/t4.service'
+import { logTrace } from '@/lib/loadTrace'
+
+const STALE_MS = 5 * 60_000
 
 // ── Generador de ID local ────────────────────────────────────
 function genId(): string {
@@ -37,8 +40,12 @@ interface T4Store {
    *  distinguir "datos ya cargados" de "store recién limpiado" sin depender
    *  solo de useCases.length (que sería 0 para proyectos nuevos). */
   isLoaded:        boolean
+  loadedProjectId: string | null
+  lastLoadedAt:    number | null
   /** UUID generado por cada llamada a loadEngagement() — descarta respuestas de cargas obsoletas */
   currentRequestId: string | null
+
+  ensureLoaded: (projectId: string, options?: { force?: boolean; reason?: string; staleMs?: number }) => Promise<void>
 
   /** Carga casos de uso desde Supabase para el engagement dado */
   loadEngagement: (engagementId: string) => Promise<void>
@@ -69,12 +76,35 @@ export const useT4Store = create<T4Store>()(
       engagementId:    null,
       isLoading:       false,
       isLoaded:        false,
+      loadedProjectId: null,
+      lastLoadedAt:    null,
       currentRequestId: null,
+
+      // ── ensureLoaded ────────────────────────────────────────
+      ensureLoaded: async (projectId, options = {}) => {
+        const { force = false, reason = 'unknown', staleMs = STALE_MS } = options
+        const state = get()
+        if (state.isLoading && state.loadedProjectId === projectId && !force) {
+          logTrace({ resourceName: 'T4', projectId, requestId: state.currentRequestId ?? 'n/a', reason, status: 'skipped', skippedReason: 'in_flight' })
+          return
+        }
+        if (!force && state.isLoaded && state.loadedProjectId === projectId && state.lastLoadedAt) {
+          const age = Date.now() - state.lastLoadedAt
+          if (age < staleMs) {
+            logTrace({ resourceName: 'T4', projectId, requestId: 'n/a', reason, status: 'skipped', skippedReason: `fresh_${Math.round(age / 1000)}s` })
+            return
+          }
+        }
+        if (state.isLoaded && state.loadedProjectId !== projectId) {
+          set({ useCases: [], isLoaded: false, engagementId: null })
+        }
+        await get().loadEngagement(projectId)
+      },
 
       // ── loadEngagement ──────────────────────────────────────
       loadEngagement: async (engagementId) => {
         const requestId = crypto.randomUUID()
-        set({ isLoading: true, isLoaded: false, engagementId, currentRequestId: requestId })
+        set({ isLoading: true, isLoaded: false, engagementId, loadedProjectId: engagementId, currentRequestId: requestId })
 
         const LOAD_TIMEOUT_MS = 10_000
         const fetchPromise   = fetchUseCases(engagementId)
@@ -85,7 +115,7 @@ export const useT4Store = create<T4Store>()(
         try {
           const useCases = await Promise.race([fetchPromise, timeoutPromise])
           if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
-          set({ useCases, isLoading: false, isLoaded: true })
+          set({ useCases, isLoading: false, isLoaded: true, lastLoadedAt: Date.now() })
         } catch (err) {
           if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
           const isTimeout = (err as Error)?.message === 'T4_LOAD_TIMEOUT'
@@ -177,7 +207,7 @@ export const useT4Store = create<T4Store>()(
       },
 
       // ── reset ──────────────────────────────────────────────────
-      reset: () => set({ useCases: [], engagementId: null, isLoading: false, isLoaded: false, currentRequestId: null }),
+      reset: () => set({ useCases: [], engagementId: null, isLoading: false, isLoaded: false, loadedProjectId: null, lastLoadedAt: null, currentRequestId: null }),
     }),
     {
       name:       'lean-t4-usecases',

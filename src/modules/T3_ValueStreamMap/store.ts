@@ -21,6 +21,10 @@ import {
   updateValueStreamInDb,
   deleteValueStreamFromDb,
 } from '@/services/t3.service'
+import { logTrace }                       from '@/lib/loadTrace'
+
+// ── Constantes de frescura ─────────────────────────────────────
+const STALE_MS = 5 * 60_000  // 5 minutos
 
 // ── Demo data — 7 procesos en 5 departamentos ─────────────────
 
@@ -185,10 +189,25 @@ interface T3Store {
   isLoading:        boolean
   /** true tras una primera carga exitosa; false solo tras reset(). Nunca se resetea a false durante un refetch. */
   hasData:          boolean
+  /** ID del proyecto cuyos datos están en el store — null si no ha cargado */
+  loadedProjectId:  string | null
+  /** Timestamp (Date.now()) del último load exitoso — para stale detection */
+  lastLoadedAt:     number | null
+  /** Error de carga — visible en RetryBanner si != null y !hasData */
+  loadError:        string | null
   /** UUID generado por cada llamada a load() — descarta respuestas de cargas obsoletas */
   currentRequestId: string | null
 
-  /** Carga value streams desde Supabase para el engagement activo */
+  /**
+   * Carga value streams desde Supabase de forma segura:
+   * — Deduplication: si ya hay una carga en vuelo para el mismo projectId, no lanza otra.
+   * — Stale guard: si los datos son recientes (< staleMs) y son del mismo proyecto, no recarga.
+   * — Background refresh: si hay datos (hasData), nunca los borra antes de recibir la respuesta.
+   * — Si los datos son de otro proyecto, limpia antes de cargar (wrong-project stale).
+   */
+  ensureLoaded: (projectId: string, options?: { force?: boolean; reason?: string; staleMs?: number }) => Promise<void>
+
+  /** Carga directa — úsalo solo desde loadAllCriticalStores; prefiere ensureLoaded en Views */
   load: (engagementId: string) => Promise<void>
 
   /** Inicializa con datos demo (sin engagement activo) */
@@ -207,15 +226,49 @@ interface T3Store {
 }
 
 export const useT3Store = create<T3Store>()((set, get) => ({
-  processes:       [],
-  isLoading:       false,
-  hasData:         false,
+  processes:        [],
+  isLoading:        false,
+  hasData:          false,
+  loadedProjectId:  null,
+  lastLoadedAt:     null,
+  loadError:        null,
   currentRequestId: null,
+
+  // ── ensureLoaded ───────────────────────────────────────────
+  ensureLoaded: async (projectId, options = {}) => {
+    const { force = false, reason = 'unknown', staleMs = STALE_MS } = options
+    const state = get()
+
+    // Deduplication: carga en vuelo para el mismo proyecto → no lanzar otra
+    if (state.isLoading && state.loadedProjectId === projectId && !force) {
+      logTrace({ resourceName: 'T3', projectId, requestId: state.currentRequestId ?? 'n/a', reason, status: 'skipped', skippedReason: 'in_flight' })
+      return
+    }
+
+    // Stale guard: datos frescos del mismo proyecto → no recargar
+    if (!force && state.hasData && state.loadedProjectId === projectId && state.lastLoadedAt) {
+      const age = Date.now() - state.lastLoadedAt
+      if (age < staleMs) {
+        logTrace({ resourceName: 'T3', projectId, requestId: 'n/a', reason, status: 'skipped', skippedReason: `fresh_${Math.round(age / 1000)}s` })
+        return
+      }
+    }
+
+    // Wrong-project data: limpiar antes de cargar para evitar stale visual
+    if (state.hasData && state.loadedProjectId !== projectId) {
+      set({ processes: [], hasData: false, loadError: null })
+    }
+
+    await get().load(projectId)
+    logTrace({ resourceName: 'T3', projectId, requestId: get().currentRequestId ?? 'n/a', reason, status: get().loadError ? 'error' : 'completed', rowsCount: get().processes.length, error: get().loadError ?? undefined })
+  },
 
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
     const requestId = crypto.randomUUID()
-    set({ isLoading: true, currentRequestId: requestId })
+    const t0 = Date.now()
+    set({ isLoading: true, currentRequestId: requestId, loadedProjectId: engagementId, loadError: null })
+    logTrace({ resourceName: 'T3', projectId: engagementId, requestId, status: 'started' })
 
     const LOAD_TIMEOUT_MS = 10_000
     const fetchPromise   = fetchValueStreams(engagementId)
@@ -226,12 +279,15 @@ export const useT3Store = create<T3Store>()((set, get) => ({
     try {
       const processes = await Promise.race([fetchPromise, timeoutPromise])
       if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
-      set({ processes, isLoading: false, hasData: true })
+      set({ processes, isLoading: false, hasData: true, lastLoadedAt: Date.now(), loadError: null })
+      logTrace({ resourceName: 'T3', projectId: engagementId, requestId, status: 'completed', durationMs: Date.now() - t0, rowsCount: processes.length })
     } catch (err) {
       if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
       const isTimeout = (err as Error)?.message === 'T3_LOAD_TIMEOUT'
+      const errMsg    = isTimeout ? 'timeout' : String(err)
       console.error('[T3Store] load:', isTimeout ? 'timeout (>10s) — check Supabase connection' : err)
-      set({ isLoading: false })
+      set({ isLoading: false, loadError: errMsg })
+      logTrace({ resourceName: 'T3', projectId: engagementId, requestId, status: 'error', durationMs: Date.now() - t0, error: errMsg })
     }
   },
 
@@ -361,5 +417,5 @@ export const useT3Store = create<T3Store>()((set, get) => ({
   },
 
   // ── reset ──────────────────────────────────────────────────
-  reset: () => set({ processes: [], isLoading: false, hasData: false, currentRequestId: null }),
+  reset: () => set({ processes: [], isLoading: false, hasData: false, loadedProjectId: null, lastLoadedAt: null, loadError: null, currentRequestId: null }),
 }))

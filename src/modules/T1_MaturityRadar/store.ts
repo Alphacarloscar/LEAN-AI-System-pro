@@ -20,6 +20,9 @@ import {
   deleteIntervieweeScores,
   buildBlankDimensions,
 } from '@/services/t1.service'
+import { logTrace } from '@/lib/loadTrace'
+
+const STALE_MS = 5 * 60_000
 import type {
   T1IntervieweeContext,
   T1DimensionState,
@@ -35,10 +38,16 @@ interface T1Store {
   isLoading:        boolean
   /** true tras una primera carga exitosa; false solo tras reset(). Nunca se resetea a false durante un refetch. */
   hasData:          boolean
+  /** ID del proyecto cuyos datos están en el store */
+  loadedProjectId:  string | null
+  /** Timestamp del último load exitoso */
+  lastLoadedAt:     number | null
   /** UUID generado por cada llamada a load() — descarta respuestas de cargas obsoletas */
   currentRequestId: string | null
   /** Error de carga — visible en RetryBanner si != null */
   loadError:        string | null
+
+  ensureLoaded: (projectId: string, options?: { force?: boolean; reason?: string; staleMs?: number }) => Promise<void>
 
   // ── Carga desde Supabase ────────────────────────────────────
   load: (engagementId: string) => Promise<void>
@@ -136,13 +145,37 @@ export const useT1Store = create<T1Store>()((set, get) => ({
   activeId:        '',
   isLoading:       false,
   hasData:         false,
+  loadedProjectId: null,
+  lastLoadedAt:    null,
   currentRequestId: null,
   loadError:       null,
+
+  // ── ensureLoaded ───────────────────────────────────────────
+  ensureLoaded: async (projectId, options = {}) => {
+    const { force = false, reason = 'unknown', staleMs = STALE_MS } = options
+    const state = get()
+    if (state.isLoading && state.loadedProjectId === projectId && !force) {
+      logTrace({ resourceName: 'T1', projectId, requestId: state.currentRequestId ?? 'n/a', reason, status: 'skipped', skippedReason: 'in_flight' })
+      return
+    }
+    if (!force && state.hasData && state.loadedProjectId === projectId && state.lastLoadedAt) {
+      const age = Date.now() - state.lastLoadedAt
+      if (age < staleMs) {
+        logTrace({ resourceName: 'T1', projectId, requestId: 'n/a', reason, status: 'skipped', skippedReason: `fresh_${Math.round(age / 1000)}s` })
+        return
+      }
+    }
+    if (state.hasData && state.loadedProjectId !== projectId) {
+      set({ interviewees: [], dimensionStates: {}, activeId: '', hasData: false, loadError: null })
+    }
+    await get().load(projectId)
+  },
 
   // ── load ───────────────────────────────────────────────────
   load: async (engagementId) => {
     const requestId = crypto.randomUUID()
-    set({ isLoading: true, currentRequestId: requestId, loadError: null })
+    set({ isLoading: true, currentRequestId: requestId, loadError: null, loadedProjectId: engagementId })
+    logTrace({ resourceName: 'T1', projectId: engagementId, requestId, status: 'started' })
 
     const LOAD_TIMEOUT_MS = 15_000
 
@@ -157,10 +190,11 @@ export const useT1Store = create<T1Store>()((set, get) => ({
       set({
         interviewees,
         dimensionStates,
-        activeId: interviewees[0]?.id ?? '',
-        isLoading: false,
-        hasData:   true,
-        loadError: null,
+        activeId:    interviewees[0]?.id ?? '',
+        isLoading:   false,
+        hasData:     true,
+        lastLoadedAt: Date.now(),
+        loadError:   null,
       })
     } catch (err) {
       if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
@@ -357,5 +391,5 @@ export const useT1Store = create<T1Store>()((set, get) => ({
   },
 
   // ── reset ──────────────────────────────────────────────────
-  reset: () => set({ interviewees: [], dimensionStates: {}, activeId: '', isLoading: false, hasData: false, currentRequestId: null, loadError: null }),
+  reset: () => set({ interviewees: [], dimensionStates: {}, activeId: '', isLoading: false, hasData: false, loadedProjectId: null, lastLoadedAt: null, currentRequestId: null, loadError: null }),
 }))
