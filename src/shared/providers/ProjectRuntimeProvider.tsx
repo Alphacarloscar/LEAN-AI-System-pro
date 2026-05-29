@@ -48,6 +48,12 @@ export function ProjectRuntimeProvider({ children }: { children: React.ReactNode
   const { canEditCompanySettings: canEdit, isReadOnly } = usePermissions()
   const canRead            = !isReadOnly || canEdit
 
+  // Log activeProjectId en consola cuando se hidrata o cambia — útil para verificar deploys.
+  useEffect(() => {
+    if (!projectId) return
+    console.debug('%c[GOBY] activeProjectId →', 'color:#C8860A;font-weight:bold', projectId)
+  }, [projectId])
+
   // Disparar carga en background al cambiar de proyecto.
   // ensureLoaded en cada store garantiza deduplication y stale guard.
   useEffect(() => {

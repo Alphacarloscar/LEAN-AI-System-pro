@@ -35,6 +35,10 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
+import { logBuildInfo } from '@/lib/buildInfo'
+
+// Verifica versión desplegada, commit SHA, env y config en consola del navegador
+logBuildInfo()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

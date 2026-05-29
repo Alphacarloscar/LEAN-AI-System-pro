@@ -1,9 +1,26 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { execSync } from 'child_process'
+
+// Inyección de metadatos de build — disponibles en runtime como constantes globales
+function getGitCommit(): string {
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['pipe', 'pipe', 'ignore'] })
+      .toString()
+      .trim()
+  } catch {
+    return 'unknown'
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    __APP_VERSION__:  JSON.stringify(process.env.npm_package_version ?? '0.0.0'),
+    __GIT_COMMIT__:   JSON.stringify(getGitCommit()),
+    __BUILD_TIME__:   JSON.stringify(new Date().toISOString()),
+  },
   plugins: [react()],
   resolve: {
     alias: {
