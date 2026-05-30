@@ -86,6 +86,10 @@ export async function loadAllCriticalStores(
   const reason  = options?.reason  ?? 'loadAllCriticalStores'
   const staleMs = options?.staleMs
 
+  // Stack trace para identificar el caller exacto en producción
+  console.debug('[RUNTIME] loadAllCriticalStores called', { reason, project: engagementId.slice(0, 8) + '…' })
+  console.trace('[RUNTIME] loadAllCriticalStores stack')
+
   const results = await Promise.allSettled([
     useT1Store.getState().ensureLoaded(engagementId, { reason, ...(staleMs != null ? { staleMs } : {}) }),
     useT2Store.getState().ensureLoaded(engagementId, { reason, ...(staleMs != null ? { staleMs } : {}) }),

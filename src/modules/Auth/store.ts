@@ -37,6 +37,22 @@ let _authSubscription:  { unsubscribe: () => void } | null = null
 let _intentionalSignOut = false
 let _isInitializing     = false
 
+// ── Flag de aislamiento: recarga de datos de negocio desde eventos de auth ───
+//
+// ENABLE_AUTH_RECOVERY_DATA_RELOAD = false → cualquier evento de auth
+// (SIGNED_IN, TOKEN_REFRESHED, SIGNED_OUT inesperado) NO dispara recargas
+// de T1/T2/T3/T4/CompanyProfile ni resetAllEngagementStores.
+//
+// AuthStore se limita a actualizar sesión, usuario e isAuthenticated.
+// Los datos de negocio son responsabilidad de ProjectRuntimeProvider y
+// cada View vía ensureLoaded.
+//
+// Motivo: los logs de producción muestran timeouts en T1–T4 al volver de
+// otra pestaña, presumiblemente disparados por un ciclo SIGNED_OUT→SIGNED_IN
+// del refresh de token de Supabase. Con false confirmamos si AuthStore es
+// la fuente. Con console.trace() en loadAllCriticalStores veremos el stack.
+const ENABLE_AUTH_RECOVERY_DATA_RELOAD = false
+
 // ── Estado de recuperación de sesión ─────────────────────────────────────────
 // 'idle'         — estado normal, sesión activa o no autenticado
 // 'reconnecting' — sesión se recuperó tras expiración, recargando stores en BG
@@ -161,7 +177,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     // Listener de cambios de sesión (token refresh, sign out en otra pestaña, etc.)
     console.debug('[AUTH] listener:registered')
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.debug('[AUTH] event:', event)
+      console.debug('[AUTH] event:', event, '| intentionalSignOut:', _intentionalSignOut, '| ENABLE_AUTH_RECOVERY_DATA_RELOAD:', ENABLE_AUTH_RECOVERY_DATA_RELOAD)
 
       if (event === 'PASSWORD_RECOVERY') {
         set({ needsPasswordUpdate: true })
@@ -172,27 +188,47 @@ export const useAuthStore = create<AuthStore>()((set) => ({
         const needsReset = session.user.user_metadata?.needs_password_reset === true
         const wasExpired = useAuthStore.getState().sessionRecoveryState === 'expired'
 
+        console.debug('[AUTH] event=SIGNED_IN | wasExpired:', wasExpired, '| profile:', !!profile)
         set({ isAuthenticated: !!profile, user: profile, needsPasswordUpdate: needsReset })
-        console.debug('[AUTH] state:isInitializing false (SIGNED_IN)')
 
         // Recuperación silenciosa tras expiración inesperada
         if (wasExpired && profile) {
           set({ sessionRecoveryState: 'reconnecting' })
-          const engagementId = useEngagementStore.getState().activeEngagementId
-          if (engagementId) {
-            try {
-              await loadAllCriticalStores(engagementId)
-            } catch {
-              // Errores individuales ya se loguean dentro de cada store
+          if (!ENABLE_AUTH_RECOVERY_DATA_RELOAD) {
+            console.debug('[AUTH] data reload skipped because ENABLE_AUTH_RECOVERY_DATA_RELOAD=false (wasExpired path)')
+            set({ sessionRecoveryState: 'idle' })
+          } else {
+            const engagementId = useEngagementStore.getState().activeEngagementId
+            if (engagementId) {
+              try {
+                await loadAllCriticalStores(engagementId)
+              } catch {
+                // Errores individuales ya se loguean dentro de cada store
+              }
             }
+            set({ sessionRecoveryState: 'idle' })
           }
-          set({ sessionRecoveryState: 'idle' })
         }
+      }
+
+      if (event === 'TOKEN_REFRESHED') {
+        console.debug('[AUTH] event=TOKEN_REFRESHED — no action on data stores')
       }
 
       if (event === 'SIGNED_OUT') {
         const wasAuthenticated = useAuthStore.getState().isAuthenticated
+        console.debug('[AUTH] event=SIGNED_OUT | intentional:', _intentionalSignOut, '| wasAuthenticated:', wasAuthenticated)
 
+        if (!ENABLE_AUTH_RECOVERY_DATA_RELOAD && !_intentionalSignOut) {
+          // SIGNED_OUT inesperado: solo actualizar sesión, NO resetear stores de negocio.
+          // Los datos de T1–T4 se conservan. El AuthStore solo gestiona sesión.
+          console.debug('[AUTH] data reload skipped because ENABLE_AUTH_RECOVERY_DATA_RELOAD=false (SIGNED_OUT unexpected)')
+          const nextRecoveryState: SessionRecoveryState = wasAuthenticated ? 'expired' : 'idle'
+          set({ isAuthenticated: false, user: null, sessionRecoveryState: nextRecoveryState })
+          return
+        }
+
+        // Logout intencional (o flag habilitado): limpiar todos los stores
         useT1Store.getState().reset()
         useT2Store.getState().reset()
         useT3Store.getState().reset()
@@ -212,8 +248,6 @@ export const useAuthStore = create<AuthStore>()((set) => ({
         set({ isAuthenticated: false, user: null, sessionRecoveryState: nextRecoveryState })
         _intentionalSignOut = false
       }
-
-      // TOKEN_REFRESHED: renovación automática — no requiere acción
     })
 
     _authSubscription = subscription
