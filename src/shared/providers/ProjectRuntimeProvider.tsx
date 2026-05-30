@@ -41,6 +41,19 @@ const DEFAULT_RUNTIME: ProjectRuntime = {
 
 const ProjectRuntimeContext = createContext<ProjectRuntime>(DEFAULT_RUNTIME)
 
+// ── Flag de control: refresh automático al volver de otra pestaña ────────────
+//
+// ENABLE_TAB_FOCUS_REFRESH = false → desactiva completamente cualquier recarga
+// automática al volver de otra pestaña (visibilitychange, focus).
+//
+// Motivo: los logs de producción muestran que el refresh automático dispara
+// T1+T2+T3+T4+CompanyProfile en paralelo y provoca timeouts en cadena.
+// Con false, cada herramienta gestiona su propio ciclo de carga.
+//
+// Para reactivar cuando se implemente la arquitectura de refresh selectivo
+// (solo el recurso activo, solo si stale, nunca si hay request en vuelo).
+const ENABLE_TAB_FOCUS_REFRESH = false
+
 // ── Provider ──────────────────────────────────────────────────
 
 export function ProjectRuntimeProvider({ children }: { children: React.ReactNode }) {
@@ -58,26 +71,52 @@ export function ProjectRuntimeProvider({ children }: { children: React.ReactNode
   // ensureLoaded en cada store garantiza deduplication y stale guard.
   useEffect(() => {
     if (!projectId) return
+    console.debug('[RUNTIME] loadAllCriticalStores called reason=project_change')
     loadAllCriticalStores(projectId, { reason: 'project_change' }).catch(() => {
       // Errores individuales ya se loguean dentro de cada store
     })
   }, [projectId])
 
-  // Recargar al volver de otra pestaña del navegador.
-  // staleMs=0 fuerza recarga solo si han pasado más de 5min (el default de STALE_MS).
-  // Esto evita recargas innecesarias si el usuario vuelve al tab en segundos.
+  // Refresh al volver de otra pestaña — DESACTIVADO temporalmente.
+  // Ver ENABLE_TAB_FOCUS_REFRESH arriba para el motivo.
   useEffect(() => {
     if (!projectId) return
+    if (!ENABLE_TAB_FOCUS_REFRESH) return
 
     function handleVisibilityChange() {
       if (document.visibilityState !== 'visible') return
+      console.debug('[RUNTIME] loadAllCriticalStores called reason=visibility_change')
       loadAllCriticalStores(projectId!, { reason: 'visibility_change' }).catch(() => {
         // Errores individuales ya se loguean dentro de cada store
       })
     }
 
+    function handleFocus() {
+      console.debug('[FOCUS] window focus')
+    }
+
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [projectId])
+
+  // Log de visibilidad siempre activo — para diagnóstico independiente del flag.
+  useEffect(() => {
+    if (!projectId) return
+
+    function handleVisibilityLog() {
+      const state = document.visibilityState
+      console.debug('[VISIBILITY]', state)
+      if (state === 'visible' && !ENABLE_TAB_FOCUS_REFRESH) {
+        console.debug('[RUNTIME] tab focus refresh skipped because ENABLE_TAB_FOCUS_REFRESH=false')
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityLog)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityLog)
   }, [projectId])
 
   const value: ProjectRuntime = { projectId, canRead, canEdit }
