@@ -27,8 +27,6 @@ import { useT9Store }    from '@/modules/T9_AIRoadmap/store'
 import { useT12Store }   from '@/modules/T12_ISOAssessment/store'
 import { useCompanyProfileStore }  from '@/modules/CompanyProfile/store'
 import { useEngagementStore }      from '@/modules/Engagement/store'
-import { loadAllCriticalStores }   from '@/lib/resetEngagementStores'
-
 // ── Módulo-nivel: subscription de auth y flags de control ────────────────────
 // Una sola subscription activa por ciclo de vida de la app.
 // _intentionalSignOut evita mostrar el overlay de sesión expirada en logouts normales.
@@ -36,22 +34,6 @@ import { loadAllCriticalStores }   from '@/lib/resetEngagementStores'
 let _authSubscription:  { unsubscribe: () => void } | null = null
 let _intentionalSignOut = false
 let _isInitializing     = false
-
-// ── Flag de aislamiento: recarga de datos de negocio desde eventos de auth ───
-//
-// ENABLE_AUTH_RECOVERY_DATA_RELOAD = false → cualquier evento de auth
-// (SIGNED_IN, TOKEN_REFRESHED, SIGNED_OUT inesperado) NO dispara recargas
-// de T1/T2/T3/T4/CompanyProfile ni resetAllEngagementStores.
-//
-// AuthStore se limita a actualizar sesión, usuario e isAuthenticated.
-// Los datos de negocio son responsabilidad de ProjectRuntimeProvider y
-// cada View vía ensureLoaded.
-//
-// Motivo: los logs de producción muestran timeouts en T1–T4 al volver de
-// otra pestaña, presumiblemente disparados por un ciclo SIGNED_OUT→SIGNED_IN
-// del refresh de token de Supabase. Con false confirmamos si AuthStore es
-// la fuente. Con console.trace() en loadAllCriticalStores veremos el stack.
-const ENABLE_AUTH_RECOVERY_DATA_RELOAD = false
 
 // ── Estado de recuperación de sesión ─────────────────────────────────────────
 // 'idle'         — estado normal, sesión activa o no autenticado
@@ -175,60 +157,88 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     }
 
     // Listener de cambios de sesión (token refresh, sign out en otra pestaña, etc.)
+    //
+    // ── REGLA CRÍTICA ─────────────────────────────────────────────────────────
+    // Este callback es síncrono — NO puede contener async/await ni llamar
+    // ninguna función que haga queries a Supabase.
+    //
+    // Motivo: gotrue-js mantiene el Web Lock "sb-...-auth-token" mientras ejecuta
+    // el callback. Cualquier query Supabase desde aquí intenta adquirir el mismo
+    // lock → DEADLOCK → el warning "Lock was not released within 5000ms" aparece
+    // en consola y TODAS las queries de negocio (T1–T12) quedan bloqueadas.
+    //
+    // Si se necesita cargar datos de perfil, se programa con setTimeout(..., 0)
+    // para que se ejecute DESPUÉS de que gotrue-js libere el lock.
+    // ──────────────────────────────────────────────────────────────────────────
     console.debug('[AUTH] listener:registered')
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.debug('[AUTH] event:', event, '| intentionalSignOut:', _intentionalSignOut, '| ENABLE_AUTH_RECOVERY_DATA_RELOAD:', ENABLE_AUTH_RECOVERY_DATA_RELOAD)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.debug('[AUTH] onAuthStateChange event:', event, '| intentionalSignOut:', _intentionalSignOut)
 
       if (event === 'PASSWORD_RECOVERY') {
         set({ needsPasswordUpdate: true })
+        console.debug('[AUTH] callback sync complete — event=PASSWORD_RECOVERY')
+        return
       }
 
       if (event === 'SIGNED_IN' && session?.user) {
-        const profile    = await loadProfile(session.user.id)
         const needsReset = session.user.user_metadata?.needs_password_reset === true
         const wasExpired = useAuthStore.getState().sessionRecoveryState === 'expired'
 
-        console.debug('[AUTH] event=SIGNED_IN | wasExpired:', wasExpired, '| profile:', !!profile)
-        set({ isAuthenticated: !!profile, user: profile, needsPasswordUpdate: needsReset })
-
-        // Recuperación silenciosa tras expiración inesperada
-        if (wasExpired && profile) {
+        // Actualizar estado de sesión síncronamente — sin query Supabase.
+        // isAuthenticated=true provisional; user se actualiza en el deferred.
+        set({ isAuthenticated: true, needsPasswordUpdate: needsReset })
+        if (wasExpired) {
           set({ sessionRecoveryState: 'reconnecting' })
-          if (!ENABLE_AUTH_RECOVERY_DATA_RELOAD) {
-            console.debug('[AUTH] data reload skipped because ENABLE_AUTH_RECOVERY_DATA_RELOAD=false (wasExpired path)')
-            set({ sessionRecoveryState: 'idle' })
-          } else {
-            const engagementId = useEngagementStore.getState().activeEngagementId
-            if (engagementId) {
-              try {
-                await loadAllCriticalStores(engagementId)
-              } catch {
-                // Errores individuales ya se loguean dentro de cada store
-              }
-            }
-            set({ sessionRecoveryState: 'idle' })
-          }
         }
+
+        // Cargar perfil FUERA del callback (fuera del lock de gotrue-js).
+        // setTimeout 0 garantiza que gotrue-js libere el lock antes de que
+        // loadProfile intente una query al mismo cliente Supabase.
+        const userId = session.user.id
+        setTimeout(() => {
+          console.debug('[AUTH] deferred profile load — userId:', userId.slice(0, 8))
+          loadProfile(userId).then((profile) => {
+            console.debug('[AUTH] deferred profile load resolved — profile:', !!profile)
+            if (!profile) {
+              // Perfil no encontrado: sesión técnicamente válida pero sin datos.
+              set({ isAuthenticated: false, user: null, sessionRecoveryState: 'idle' })
+              return
+            }
+            set({ user: profile })
+            if (wasExpired) {
+              set({ sessionRecoveryState: 'idle' })
+            }
+          }).catch((err) => {
+            // Error de red: no desautenticar — el token sigue siendo válido.
+            console.error('[AUTH] deferred profile load error:', err)
+          })
+        }, 0)
+
+        console.debug('[AUTH] callback sync complete — event=SIGNED_IN | wasExpired:', wasExpired)
+        return
       }
 
       if (event === 'TOKEN_REFRESHED') {
-        console.debug('[AUTH] event=TOKEN_REFRESHED — no action on data stores')
+        // Token refreshed automáticamente — no acción sobre stores de negocio.
+        console.debug('[AUTH] callback sync complete — event=TOKEN_REFRESHED, no action')
+        return
       }
 
       if (event === 'SIGNED_OUT') {
         const wasAuthenticated = useAuthStore.getState().isAuthenticated
         console.debug('[AUTH] event=SIGNED_OUT | intentional:', _intentionalSignOut, '| wasAuthenticated:', wasAuthenticated)
 
-        if (!ENABLE_AUTH_RECOVERY_DATA_RELOAD && !_intentionalSignOut) {
-          // SIGNED_OUT inesperado: solo actualizar sesión, NO resetear stores de negocio.
-          // Los datos de T1–T4 se conservan. El AuthStore solo gestiona sesión.
-          console.debug('[AUTH] data reload skipped because ENABLE_AUTH_RECOVERY_DATA_RELOAD=false (SIGNED_OUT unexpected)')
+        if (!_intentionalSignOut) {
+          // SIGNED_OUT inesperado (token expirado sin refresh posible):
+          // solo actualizar sesión, NO resetear stores de negocio.
           const nextRecoveryState: SessionRecoveryState = wasAuthenticated ? 'expired' : 'idle'
           set({ isAuthenticated: false, user: null, sessionRecoveryState: nextRecoveryState })
+          console.debug('[AUTH] callback sync complete — event=SIGNED_OUT unexpected | recoveryState:', nextRecoveryState)
           return
         }
 
-        // Logout intencional (o flag habilitado): limpiar todos los stores
+        // Logout intencional: limpiar todos los stores de negocio.
+        // Síncrono — no hay queries Supabase.
         useT1Store.getState().reset()
         useT2Store.getState().reset()
         useT3Store.getState().reset()
@@ -242,11 +252,9 @@ export const useAuthStore = create<AuthStore>()((set) => ({
         useCompanyProfileStore.getState().resetProfile()
         useEngagementStore.getState().reset()
 
-        const nextRecoveryState: SessionRecoveryState =
-          (!_intentionalSignOut && wasAuthenticated) ? 'expired' : 'idle'
-
-        set({ isAuthenticated: false, user: null, sessionRecoveryState: nextRecoveryState })
+        set({ isAuthenticated: false, user: null, sessionRecoveryState: 'idle' })
         _intentionalSignOut = false
+        console.debug('[AUTH] callback sync complete — event=SIGNED_OUT intentional')
       }
     })
 
