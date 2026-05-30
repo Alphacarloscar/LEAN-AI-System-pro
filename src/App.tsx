@@ -31,6 +31,7 @@ import { CompanyProfileView }                   from '@/modules/CompanyProfile'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isInitializing, needsPasswordUpdate } = useAuthStore()
+  console.debug('[ROUTE] ProtectedRoute render — isInitializing:', isInitializing, 'isAuthenticated:', isAuthenticated)
   if (isInitializing) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <svg className="animate-spin h-6 w-6 text-navy" viewBox="0 0 24 24" fill="none">

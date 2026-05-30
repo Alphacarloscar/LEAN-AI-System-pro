@@ -104,47 +104,66 @@ export const useAuthStore = create<AuthStore>()((set) => ({
   //   — SIGNED_OUT por logout() → no muestra overlay (_intentionalSignOut = true).
   //   — SIGNED_IN tras 'expired' → recarga silenciosa de stores + banner "Reconectando…"
   initialize: async () => {
-    // Protección contra llamadas concurrentes (React StrictMode, hot-reload).
-    // Si ya hay una inicialización en curso, ignorar la segunda llamada.
-    if (_isInitializing) return
+    // Idempotencia: si ya hay una inicialización en curso, ignorar la segunda llamada.
+    // Protege contra React StrictMode (doble mount en dev) y hot-reload.
+    if (_isInitializing) {
+      console.debug('[AUTH] initialize:skip — already in progress')
+      return
+    }
     _isInitializing = true
+    console.debug('[AUTH] initialize:start')
 
     set({ isInitializing: true })
 
-    // Limpiar subscription previa antes de registrar una nueva.
-    // Previene dobles listeners que compiten por el Web Lock de gotrue-js.
+    // Timeout de seguridad: garantiza que la app NUNCA queda en spinner infinito.
+    // Si getSession() o loadProfile() no resuelven en 5s, forzamos isInitializing:false.
+    // El usuario verá /login — puede volver a intentarlo. Mucho mejor que pantalla en blanco.
+    const bootTimeout = setTimeout(() => {
+      if (useAuthStore.getState().isInitializing) {
+        console.warn('[AUTH] initialize:timeout — forzando isInitializing:false')
+        set({ isAuthenticated: false, user: null, isInitializing: false })
+        _isInitializing = false
+      }
+    }, 5_000)
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      console.debug('[AUTH] initialize:session', session ? 'found' : 'none')
+
+      if (session?.user) {
+        const profile    = await loadProfile(session.user.id)
+        const needsReset = session.user.user_metadata?.needs_password_reset === true
+        set({
+          isAuthenticated:      !!profile,
+          user:                 profile,
+          needsPasswordUpdate:  needsReset,
+          isInitializing:       false,
+          sessionRecoveryState: 'idle',
+        })
+      } else {
+        set({ isAuthenticated: false, user: null, isInitializing: false })
+      }
+    } catch (err) {
+      console.error('[AUTH] initialize:error', err)
+      set({ isAuthenticated: false, user: null, isInitializing: false })
+    } finally {
+      clearTimeout(bootTimeout)
+      _isInitializing = false
+      console.debug('[AUTH] initialize:resolved')
+    }
+
+    // Limpiar subscription previa si existe (protección contra dobles registros)
     if (_authSubscription) {
       _authSubscription.unsubscribe()
       _authSubscription = null
     }
 
-    // Usamos onAuthStateChange como única fuente de verdad para la sesión inicial.
-    // gotrue-js garantiza que INITIAL_SESSION se dispara sincrónicamente al registrar
-    // el listener con la sesión actual — no necesitamos llamar getSession() por separado,
-    // lo que elimina la contención del Web Lock que produce el warning de gotrue-js.
+    // Listener de cambios de sesión (token refresh, sign out en otra pestaña, etc.)
+    console.debug('[AUTH] listener:registered')
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-
-      if (event === 'INITIAL_SESSION') {
-        // Primera hidratación: sesión existente o null (no autenticado)
-        if (session?.user) {
-          const profile    = await loadProfile(session.user.id)
-          const needsReset = session.user.user_metadata?.needs_password_reset === true
-          set({
-            isAuthenticated:      !!profile,
-            user:                 profile,
-            needsPasswordUpdate:  needsReset,
-            isInitializing:       false,
-            sessionRecoveryState: 'idle',
-          })
-        } else {
-          set({ isAuthenticated: false, user: null, isInitializing: false })
-        }
-        _isInitializing = false
-        return
-      }
+      console.debug('[AUTH] event:', event)
 
       if (event === 'PASSWORD_RECOVERY') {
-        // Flujo "olvidé contraseña" — forzar a /reset-password.
         set({ needsPasswordUpdate: true })
       }
 
@@ -154,9 +173,9 @@ export const useAuthStore = create<AuthStore>()((set) => ({
         const wasExpired = useAuthStore.getState().sessionRecoveryState === 'expired'
 
         set({ isAuthenticated: !!profile, user: profile, needsPasswordUpdate: needsReset })
+        console.debug('[AUTH] state:isInitializing false (SIGNED_IN)')
 
-        // Recuperación silenciosa: sesión volvió tras expiración inesperada.
-        // Recargar stores en background y mostrar banner "Reconectando…"
+        // Recuperación silenciosa tras expiración inesperada
         if (wasExpired && profile) {
           set({ sessionRecoveryState: 'reconnecting' })
           const engagementId = useEngagementStore.getState().activeEngagementId
@@ -174,7 +193,6 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       if (event === 'SIGNED_OUT') {
         const wasAuthenticated = useAuthStore.getState().isAuthenticated
 
-        // Limpiar TODOS los stores con datos de cliente al cerrar sesión
         useT1Store.getState().reset()
         useT2Store.getState().reset()
         useT3Store.getState().reset()
@@ -188,8 +206,6 @@ export const useAuthStore = create<AuthStore>()((set) => ({
         useCompanyProfileStore.getState().resetProfile()
         useEngagementStore.getState().reset()
 
-        // Si fue logout intencional → estado normal.
-        // Si fue expiración inesperada (tab-switch, timeout) → mostrar overlay.
         const nextRecoveryState: SessionRecoveryState =
           (!_intentionalSignOut && wasAuthenticated) ? 'expired' : 'idle'
 
@@ -197,7 +213,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
         _intentionalSignOut = false
       }
 
-      // TOKEN_REFRESHED: Supabase renovó el token automáticamente — no es necesario hacer nada.
+      // TOKEN_REFRESHED: renovación automática — no requiere acción
     })
 
     _authSubscription = subscription

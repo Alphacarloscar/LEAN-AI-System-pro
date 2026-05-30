@@ -40,6 +40,7 @@ import { logBuildInfo } from '@/lib/buildInfo'
 // Verifica versión desplegada, commit SHA, env y config en consola del navegador
 logBuildInfo()
 
+console.debug('[BOOT] before root.render')
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
@@ -47,3 +48,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </React.StrictMode>
 )
+console.debug('[BOOT] after root.render')
