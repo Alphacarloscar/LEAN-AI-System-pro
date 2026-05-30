@@ -16,7 +16,7 @@ import { create }                         from 'zustand'
 import { persist }                        from 'zustand/middleware'
 import { listMyProjects, createProject }  from '@/services/projects.service'
 import { supabase }                       from '@/lib/supabase'
-import { resetAllEngagementStores, loadAllCriticalStores } from '@/lib/resetEngagementStores'
+import { resetAllEngagementStores } from '@/lib/resetEngagementStores'
 import type { ProjectRow }                from '@/types/database.types'
 
 interface EngagementStore {
@@ -78,20 +78,29 @@ export const useEngagementStore = create<EngagementStore>()(
       },
 
       selectEngagement: (id) => {
-        // Hard Reset: limpiar todos los stores T1-T12 antes de cambiar el engagement
-        // Garantiza cero stale data entre proyectos — Sprint 9 Bloque 2
+        const { activeEngagementId } = get()
+
+        // NO-OP: si el proyecto seleccionado es el mismo que ya está activo,
+        // no resetear ni disparar carga. Evita recargas innecesarias al
+        // re-abrir el selector o al hacer click en el proyecto ya activo.
+        if (id === activeEngagementId) {
+          console.debug('[ENGAGEMENT] selectEngagement — sameProject=true, action=noop', { projectId: id?.slice(0, 8) })
+          return
+        }
+
+        console.debug('[ENGAGEMENT] selectEngagement', {
+          previousProjectId: activeEngagementId?.slice(0, 8) ?? null,
+          nextProjectId:     id?.slice(0, 8) ?? null,
+          sameProject:       false,
+          action:            'update',
+        })
+
+        // Hard Reset: limpiar stores T1-T12 ANTES de cambiar activeEngagementId.
+        // Garantiza cero stale data entre proyectos.
+        // La CARGA de los nuevos datos la gestiona exclusivamente ProjectRuntimeProvider,
+        // que observa el cambio de activeEngagementId vía useEffect([projectId]).
         resetAllEngagementStores()
         set({ activeEngagementId: id })
-
-        // Eager Loading: disparar carga paralela de stores críticos (T1–T4)
-        // Fire-and-forget — los stale guards de cada store descartan resultados
-        // en vuelo si el usuario vuelve a cambiar de proyecto antes de que terminen.
-        // Sprint 9 Bloque 3: navegación instantánea sin spinners por pantalla.
-        if (id) {
-          loadAllCriticalStores(id).catch(() => {
-            // Errores individuales ya se loguean dentro de cada store (console.error)
-          })
-        }
       },
 
       createAndSelect: async (name, companyId) => {

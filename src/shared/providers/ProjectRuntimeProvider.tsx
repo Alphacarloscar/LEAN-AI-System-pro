@@ -17,10 +17,10 @@
 // en cada herramienta.
 // ============================================================
 
-import { createContext, useContext, useEffect } from 'react'
-import { useEngagementStore }                  from '@/modules/Engagement/store'
-import { usePermissions }                      from '@/modules/Auth'
-import { loadAllCriticalStores }               from '@/lib/resetEngagementStores'
+import { createContext, useContext, useEffect, useRef } from 'react'
+import { useEngagementStore }                           from '@/modules/Engagement/store'
+import { usePermissions }                               from '@/modules/Auth'
+import { loadAllCriticalStores }                        from '@/lib/resetEngagementStores'
 
 // ── Tipo del contexto ─────────────────────────────────────────
 
@@ -61,20 +61,54 @@ export function ProjectRuntimeProvider({ children }: { children: React.ReactNode
   const { canEditCompanySettings: canEdit, isReadOnly } = usePermissions()
   const canRead            = !isReadOnly || canEdit
 
-  // Log activeProjectId en consola cuando se hidrata o cambia — útil para verificar deploys.
+  // Refs de deduplicación — previenen cargas dobles por remounts o StrictMode.
+  // inFlightRef:       el projectId para el que hay una carga en vuelo ahora mismo.
+  // lastLoadedRef:     el projectId para el que se completó la última carga.
+  const inFlightRef    = useRef<string | null>(null)
+  const lastLoadedRef  = useRef<string | null>(null)
+
+  // Log activeProjectId en consola cuando se hidrata o cambia.
   useEffect(() => {
     if (!projectId) return
     console.debug('%c[GOBY] activeProjectId →', 'color:#C8860A;font-weight:bold', projectId)
   }, [projectId])
 
-  // Disparar carga en background al cambiar de proyecto.
-  // ensureLoaded en cada store garantiza deduplication y stale guard.
+  // Único orquestador de carga global — ProjectRuntimeProvider.
+  // EngagementStore.selectEngagement ya NO llama loadAllCriticalStores.
+  // Reglas:
+  //   1. Si !projectId → no cargar.
+  //   2. Si inFlight para el mismo proyecto → skip (carga en curso).
+  //   3. Si ya cargado para el mismo proyecto → ensureLoaded aplicará stale guard.
+  //   4. Si cambió el proyecto → cargar (inFlight previo era de otro proyecto).
   useEffect(() => {
     if (!projectId) return
-    console.debug('[RUNTIME] loadAllCriticalStores called reason=project_change')
-    loadAllCriticalStores(projectId, { reason: 'project_change' }).catch(() => {
-      // Errores individuales ya se loguean dentro de cada store
+
+    if (inFlightRef.current === projectId) {
+      console.debug('[PROJECT_RUNTIME] skipped — reason=in_flight', { projectId: projectId.slice(0, 8) })
+      return
+    }
+
+    const previousProjectId = lastLoadedRef.current
+    const willLoad = true
+    console.debug('[PROJECT_RUNTIME] project change detected', {
+      previousProjectId: previousProjectId?.slice(0, 8) ?? null,
+      nextProjectId:     projectId.slice(0, 8),
+      willLoad,
     })
+
+    inFlightRef.current = projectId
+    loadAllCriticalStores(projectId, { reason: 'project_change' })
+      .then(() => {
+        lastLoadedRef.current = projectId
+      })
+      .catch(() => {
+        // Errores individuales ya se loguean dentro de cada store
+      })
+      .finally(() => {
+        if (inFlightRef.current === projectId) {
+          inFlightRef.current = null
+        }
+      })
   }, [projectId])
 
   // Refresh al volver de otra pestaña — DESACTIVADO temporalmente.
