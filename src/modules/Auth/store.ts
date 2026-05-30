@@ -29,11 +29,13 @@ import { useCompanyProfileStore }  from '@/modules/CompanyProfile/store'
 import { useEngagementStore }      from '@/modules/Engagement/store'
 import { loadAllCriticalStores }   from '@/lib/resetEngagementStores'
 
-// ── Módulo-nivel: subscription de auth y flag de logout intencional ──────────
+// ── Módulo-nivel: subscription de auth y flags de control ────────────────────
 // Una sola subscription activa por ciclo de vida de la app.
 // _intentionalSignOut evita mostrar el overlay de sesión expirada en logouts normales.
-let _authSubscription: { unsubscribe: () => void } | null = null
+// _isInitializing evita llamadas concurrentes a initialize() (StrictMode, hot-reload).
+let _authSubscription:  { unsubscribe: () => void } | null = null
 let _intentionalSignOut = false
+let _isInitializing     = false
 
 // ── Estado de recuperación de sesión ─────────────────────────────────────────
 // 'idle'         — estado normal, sesión activa o no autenticado
@@ -102,32 +104,44 @@ export const useAuthStore = create<AuthStore>()((set) => ({
   //   — SIGNED_OUT por logout() → no muestra overlay (_intentionalSignOut = true).
   //   — SIGNED_IN tras 'expired' → recarga silenciosa de stores + banner "Reconectando…"
   initialize: async () => {
+    // Protección contra llamadas concurrentes (React StrictMode, hot-reload).
+    // Si ya hay una inicialización en curso, ignorar la segunda llamada.
+    if (_isInitializing) return
+    _isInitializing = true
+
     set({ isInitializing: true })
 
-    const { data: { session } } = await supabase.auth.getSession()
-
-    if (session?.user) {
-      const profile    = await loadProfile(session.user.id)
-      const needsReset = session.user.user_metadata?.needs_password_reset === true
-      set({
-        isAuthenticated:      !!profile,
-        user:                 profile,
-        needsPasswordUpdate:  needsReset,
-        isInitializing:       false,
-        sessionRecoveryState: 'idle',
-      })
-    } else {
-      set({ isAuthenticated: false, user: null, isInitializing: false })
-    }
-
-    // Limpiar subscription previa si existe (protección contra dobles registros)
+    // Limpiar subscription previa antes de registrar una nueva.
+    // Previene dobles listeners que compiten por el Web Lock de gotrue-js.
     if (_authSubscription) {
       _authSubscription.unsubscribe()
       _authSubscription = null
     }
 
-    // Listener de cambios de sesión (token refresh, sign out en otra pestaña, etc.)
+    // Usamos onAuthStateChange como única fuente de verdad para la sesión inicial.
+    // gotrue-js garantiza que INITIAL_SESSION se dispara sincrónicamente al registrar
+    // el listener con la sesión actual — no necesitamos llamar getSession() por separado,
+    // lo que elimina la contención del Web Lock que produce el warning de gotrue-js.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+
+      if (event === 'INITIAL_SESSION') {
+        // Primera hidratación: sesión existente o null (no autenticado)
+        if (session?.user) {
+          const profile    = await loadProfile(session.user.id)
+          const needsReset = session.user.user_metadata?.needs_password_reset === true
+          set({
+            isAuthenticated:      !!profile,
+            user:                 profile,
+            needsPasswordUpdate:  needsReset,
+            isInitializing:       false,
+            sessionRecoveryState: 'idle',
+          })
+        } else {
+          set({ isAuthenticated: false, user: null, isInitializing: false })
+        }
+        _isInitializing = false
+        return
+      }
 
       if (event === 'PASSWORD_RECOVERY') {
         // Flujo "olvidé contraseña" — forzar a /reset-password.

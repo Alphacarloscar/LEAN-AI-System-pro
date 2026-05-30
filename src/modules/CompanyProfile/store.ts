@@ -71,13 +71,17 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
       // ── Carga desde Supabase ──────────────────────────────────
 
       loadProfile: async (engagementId: string) => {
-        // F-04: limpiar perfil anterior antes del fetch — evita stale data visible en T10 home
-        set({ profile: { ...EMPTY_PROFILE }, isLoadingData: true, isLoading: true, saveError: null, isDirty: false })
+        // NO limpiar el perfil antes del fetch.
+        // Mantener los datos anteriores visibles durante el refetch evita que el
+        // header quede en blanco si hay timeout o error de red.
+        // El perfil solo se sobreescribe cuando llega la respuesta correcta.
+        set({ isLoadingData: true, isLoading: true, saveError: null })
 
-        // Timeout de seguridad: evita spinner infinito si Supabase no responde
+        // Timeout de seguridad: evita spinner infinito si Supabase no responde.
+        // Al expirar, conservamos los datos que ya había en el store.
         const timeout = setTimeout(() => {
           if (get().isLoadingData) {
-            console.warn('[CompanyProfileStore] loadProfile timeout — resetting isLoadingData')
+            console.warn('[CompanyProfileStore] loadProfile timeout — datos anteriores conservados')
             set({ isLoadingData: false, isLoading: get().isSaving })
           }
         }, 10_000)
@@ -93,7 +97,7 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
               isLoading:     get().isSaving,
             })
           } else {
-            // Engagement nuevo — perfil vacío
+            // Engagement nuevo — no hay perfil en Supabase, limpiar solo en este caso
             set({
               profile:       { ...EMPTY_PROFILE },
               isDirty:       false,
@@ -103,9 +107,9 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
           }
         } catch (err) {
           clearTimeout(timeout)
-          console.error('[CompanyProfileStore] loadProfile:', err)
+          console.error('[CompanyProfileStore] loadProfile error — datos anteriores conservados:', err)
+          // No limpiar el perfil en caso de error: mejor mostrar datos stale que pantalla vacía
           set({ isLoadingData: false, isLoading: get().isSaving })
-          // Si falla la carga, se usa el estado local como fallback silencioso
         }
       },
 
