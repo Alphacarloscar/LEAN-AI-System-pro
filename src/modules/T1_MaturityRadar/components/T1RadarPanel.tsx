@@ -74,7 +74,7 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
           Radar de madurez IA
         </p>
         <p className="text-xs text-text-muted mb-3">Estado actual · Objetivo sprint</p>
-        <div className="w-full aspect-square max-h-[280px] mx-auto">
+        <div className="w-full aspect-square max-h-[320px] mx-auto">
           <T1SpiderChart dimensions={dimensions} />
         </div>
       </div>

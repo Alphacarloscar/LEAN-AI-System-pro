@@ -19,10 +19,10 @@ import { computeDimensionScore } from '../types'
 
 // ── Constantes de layout ──────────────────────────────────────
 
-const VIEWBOX  = 300               // SVG viewBox cuadrado
+const VIEWBOX  = 380               // SVG viewBox cuadrado — ampliado para dar margen a los labels laterales
 const CX       = VIEWBOX / 2       // centro X
 const CY       = VIEWBOX / 2       // centro Y
-const R        = 108               // radio exterior (al vértice del anillo 4)
+const R        = 115               // radio exterior (al vértice del anillo 4)
 const N        = 6                 // número de dimensiones
 const TARGET   = 3.5               // objetivo estándar del sprint
 const MAX      = 4                 // escala máxima
@@ -237,7 +237,7 @@ export function T1SpiderChart({ dimensions }: T1SpiderChartProps) {
 
       {/* ── Labels de dimensión ── */}
       {dimensions.map((dim, i) => {
-        const labelR = R + 26
+        const labelR = R + 28
         const [x, y] = polarXY(AXES[i], labelR)
 
         // Alineación horizontal según posición en el círculo
