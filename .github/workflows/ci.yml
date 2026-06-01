@@ -1,0 +1,62 @@
+name: CI — TypeScript + Build
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  ci:
+    name: TypeScript Check + Production Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npm run typecheck
+
+      - name: Lint check
+        run: npm run lint
+        continue-on-error: false
+
+      - name: Production build
+        env:
+          # Variables mínimas para que Vite no falle en build
+          # Las variables VITE_ son reemplazadas en build-time
+          # En CI usamos valores de prueba para verificar que el build compila
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
+          VITE_DEMO_ENABLED: 'true'
+        run: npm run build
+
+      - name: Build size check
+        run: |
+          echo "Build output:"
+          ls -lh dist/assets/ | sort -k5 -rh | head -20
+          total=$(du -sh dist/ | cut -f1)
+          echo "Total dist size: $total"
+
+      - name: Summary
+        if: success()
+        run: |
+          echo ""
+          echo "═══════════════════════════════════════════════════"
+          echo "  ✅ CI passed"
+          echo "  L.E.A.N. AI System Enterprise — Alpha Consulting"
+          echo "═══════════════════════════════════════════════════"
+          echo "  TypeScript:  ✓ (0 errors)"
+          echo "  Lint:        ✓ (0 warnings)"
+          echo "  Build:       ✓ (production bundle OK)"
+          echo "═══════════════════════════════════════════════════"

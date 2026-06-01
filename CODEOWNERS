@@ -1,0 +1,25 @@
+# CODEOWNERS — L.E.A.N. AI System Enterprise
+# Propietarios de código por área. Los propietarios reciben solicitud de review automática.
+# Formato: [patrón de ruta]    [usuario de GitHub]
+# Actualizar @carlos-alpha con el username real de Carlos en GitHub.
+
+# Todo el repositorio — Carlos como owner global
+*                               @carlos-alpha
+
+# Decisiones técnicas y documentación — revisión obligatoria de Carlos
+/docs/decisions/                @carlos-alpha
+/CLAUDE.md                      @carlos-alpha
+/.ai-config.yml                 @carlos-alpha
+/ARQUITECTURA.md                @carlos-alpha
+
+# Infraestructura crítica — revisión obligatoria
+/supabase/migrations/           @carlos-alpha
+/supabase/policies/             @carlos-alpha
+/supabase/functions/            @carlos-alpha
+/.github/workflows/             @carlos-alpha
+/vercel.json                    @carlos-alpha
+
+# Core del sistema — revisión obligatoria
+/src/lib/                       @carlos-alpha
+/src/stores/                    @carlos-alpha
+/src/types/                     @carlos-alpha
