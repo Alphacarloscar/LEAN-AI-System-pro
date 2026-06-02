@@ -1,4 +1,4 @@
-# CLAUDE.md — L.E.A.N. AI System Enterprise
+﻿# CLAUDE.md — GOBY
 # AI-Ready Repository System v2.1.0
 # Human docs language: Spanish | AI files language: English
 # Last updated: 2026-06-01 | Owner: Carlos Sánchez (COO, co-fundador)
@@ -12,7 +12,7 @@
 
 ## 1. PROJECT CONTEXT
 
-**Product:** L.E.A.N. AI System Enterprise — Proprietary AI adoption methodology for B2B medium-to-large companies. 13 specialized tools (T1-T13), 5 stakeholder archetypes, 6-month sprint structure. Phases: L (Listen) → E (Explore) → A (Act) → N (Navigate).
+**Product:** GOBY — Proprietary AI adoption methodology for B2B medium-to-large companies. 13 specialized tools (T1-T13), 5 stakeholder archetypes, 6-month sprint structure. Phases: L (Listen) → E (Explore) → A (Act) → N (Navigate).
 
 **Company:** Alpha Consulting Solutions S.L. (Spain)
 
@@ -286,7 +286,7 @@ At the start of every session, before doing anything else:
 
 Then confirm to Carlos:
 ```
-CLAUDE.md read. Project: L.E.A.N. AI System Enterprise (development, Sprint 10+).
+CLAUDE.md read. Project: GOBY (development, Sprint 10+).
 Stack: React 18 + Vite + TypeScript + Supabase + Vercel.
 9 closed ADRs. 2 active debt items (no tests, CI pipeline pending activation).
 Last change: [last CHANGELOG entry].

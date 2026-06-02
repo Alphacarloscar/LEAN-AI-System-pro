@@ -1,7 +1,7 @@
-import type { Config } from 'tailwindcss'
+﻿import type { Config } from 'tailwindcss'
 
 /**
- * LEAN AI System — Design System Tokens (D9 · Sprint 4 Rev2)
+ * GOBY — Design System Tokens (D9 · Sprint 4 Rev2)
  * ARQUITECTURA.md sección 7 — Source of truth.
  *
  * Paleta: Obsidian Amber + Grises Metálicos

@@ -1,5 +1,5 @@
--- ============================================================
--- LEAN AI System Enterprise — Migración 002: Snapshots longitudinales
+﻿-- ============================================================
+-- GOBY — Migración 002: Snapshots longitudinales
 --
 -- INSTRUCCIONES PARA EJECUTAR:
 --   1. Abre Supabase Dashboard → SQL Editor

@@ -1,4 +1,4 @@
-# Decision Log — L.E.A.N. AI System Enterprise
+﻿# Decision Log — GOBY
 
 AI-Ready Repository System v2.1.0 | Última actualización: 2026-06-01
 

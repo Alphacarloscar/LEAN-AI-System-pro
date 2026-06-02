@@ -1,4 +1,4 @@
-# Auditoría de Accesibilidad — L.E.A.N. AI System Enterprise
+﻿# Auditoría de Accesibilidad — GOBY
 **Estándar:** WCAG 2.1 AA | **Fecha:** 2026-05-21 | **Scope:** Codebase completo (src/)
 
 ---
@@ -56,7 +56,7 @@ La aplicación tiene una base semántica correcta (elementos `<main>`, `<header>
 | 11 | **Modal T1 sin `role="dialog"` ni focus trap.** El modal de "Nueva entrevista" cierra con Escape y hace autofocus correctamente, pero carece de `role="dialog"`, `aria-modal="true"` y `aria-labelledby`. Sin focus trap, Tab puede salir del modal y llegar al contenido de fondo. Lectores de pantalla no anuncian que se ha abierto un diálogo. | 🔴 Crítico | 2.1.2, 4.1.2 |
 | 12 | **Sliders T1 sin labels ni valuetext accesibles.** Los `<input type="range">` del módulo T1 (que son el corazón del assessment) no tienen `aria-label`, `aria-valuetext` ni `aria-describedby`. Un lector de pantalla solo anuncia el valor numérico (0-100) sin contexto de qué dimensión se está evaluando ni qué significa ese número. | 🔴 Crítico | 2.1.1, 4.1.2 |
 | 13 | **Botones con solo iconos sin aria-label en RecommendationPanel y Admin.** `RecommendationPanel.tsx` líneas 63, 113, 199 y varios botones en `AdminView.tsx` sin texto visible ni `aria-label`. El lector de pantalla anuncia "button" sin nombre. | 🟡 Mayor | 4.1.2 |
-| 14 | **Título de página estático.** `<title>` nunca cambia al navegar entre T1-T12. Un lector de pantalla no anuncia el cambio de contexto al navegar entre herramientas. Cada módulo debería actualizar `document.title` (ej: "T1 — AI Readiness · L.E.A.N. AI System"). | 🟢 Menor | 2.4.2 |
+| 14 | **Título de página estático.** `<title>` nunca cambia al navegar entre T1-T12. Un lector de pantalla no anuncia el cambio de contexto al navegar entre herramientas. Cada módulo debería actualizar `document.title` (ej: "T1 — AI Readiness · GOBY"). | 🟢 Menor | 2.4.2 |
 
 ---
 
@@ -66,7 +66,7 @@ La aplicación tiene una base semántica correcta (elementos `<main>`, `<header>
 |---|----------|-----------|---------|
 | 15 | **26 inputs sin asociación programática con su label.** Análisis: 26 inputs de texto/email/password, 0 con atributo `id=`, 0 con `aria-label`, 0 con `aria-labelledby`. Los `<label>` visuales existen en algunos casos pero sin el atributo `for="input-id"` que los conecta. Afecta: todos los formularios de Auth, Admin, CompanyProfile, T1, T4. | 🔴 Crítico | 3.3.2 |
 | 16 | **Jerarquía de encabezados invertida en AdminView.** El `<h1>` "Panel de administración" aparece en la línea 521 del DOM, después de varios `<h2>` y `<h3>` (líneas 113, 134, 255, 337, 433, 465). Los lectores de pantalla navegan por encabezados esperando encontrar h1 primero. | 🟡 Mayor | 1.3.1 |
-| 17 | **Texto "GOBY" en AlphaLogo.tsx.** El componente `AlphaLogo` en modo `lg` (usado en la pantalla de login) muestra el texto "GOBY" en lugar de "L.E.A.N. AI System". Artefacto del proyecto anterior. Confusión de contexto para todos los usuarios, y especialmente para lectores de pantalla que leerán "GOBY" como nombre del producto. | 🟡 Mayor | 3.2.4 |
+| 17 | ~~**Texto "GOBY" en AlphaLogo.tsx.**~~ **✅ Resuelto — GOBY es el nombre correcto del producto.** El componente `AlphaLogo` muestra "GOBY" correctamente. Hallazgo original basado en un nombre de producto anterior; ya no aplica. | ~~🟡 Mayor~~ N/A | 3.2.4 |
 | 18 | **Sin mensajes de error accesibles en formularios.** Los campos de formulario no usan `aria-invalid="true"` ni `aria-describedby` apuntando al mensaje de error cuando la validación falla. El error puede ser visible visualmente pero el lector de pantalla no lo asocia al campo que lo causó. | 🟡 Mayor | 3.3.1 |
 
 ---
@@ -117,7 +117,7 @@ Para corregir los fallos de contraste manteniendo el sistema de diseño:
 | Modal T1 al abrir | (silencio — no es dialog) | "Nueva entrevista, diálogo" |
 | Slider T1 | "0" (número sin contexto) | "Gestión del Cambio, slider, 60 de 100" |
 | Gráfico radar T1 | (silencio) | "Radar de madurez: Gobernanza 65, Datos 72…" |
-| Logo en login | "Alpha Consulting Solutions" + "GOBY" | "Alpha Consulting Solutions — L.E.A.N. AI System" |
+| Logo en login | "Alpha Consulting Solutions" + "GOBY" | "Alpha Consulting Solutions — GOBY" |
 | Input email login | "edit" (sin nombre) | "Correo electrónico, editar texto" |
 | Botón "Reintentar" | "button" | "Reintentar, button" (texto ya existe, ok) |
 
@@ -149,14 +149,8 @@ Afecta a: Auth/LoginView, Auth/ResetPasswordView, Admin/AdminView, T1/T1View, T4
 <main id="main-content">
 ```
 
-**P1.3 — Corregir branding "GOBY" en AlphaLogo (3.2.4)**
-```tsx
-// Antes
-<p style={{ fontSize: 20, fontWeight: 600 }}>GOBY</p>
-
-// Después
-<p style={{ fontSize: 20, fontWeight: 600 }}>L.E.A.N. AI System</p>
-```
+**P1.3 — ✅ Resuelto — Branding en AlphaLogo (3.2.4)**
+GOBY es el nombre correcto del producto. `AlphaLogo.tsx` ya muestra "GOBY" correctamente. No requiere cambio.
 
 **P1.4 — Modal T1 con role="dialog" (4.1.2)**
 ```tsx
@@ -210,7 +204,7 @@ Cambiar `.placeholder-warm-200` a `.placeholder-warm-300` en todos los inputs. w
 
 ### Prioridad 4 — Mejoras progresivas
 
-- Actualizar `document.title` en cada módulo: `useEffect(() => { document.title = "T1 — AI Readiness · L.E.A.N. AI System" }, [])`
+- Actualizar `document.title` en cada módulo: `useEffect(() => { document.title = "T1 — AI Readiness · GOBY" }, [])`
 - Añadir `role="status"` y `aria-live="polite"` al spinner de carga
 - Añadir `role="img"` + `aria-label` descriptivo a los charts de Recharts
 - Corregir jerarquía h1→h2→h3 en AdminView (mover el h1 al inicio del componente)

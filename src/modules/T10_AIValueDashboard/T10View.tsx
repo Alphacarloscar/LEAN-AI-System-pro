@@ -1,7 +1,7 @@
-// ============================================================
+﻿// ============================================================
 // T10 — AI Value Dashboard · "Wow Moment" Screen
 //
-// Home screen del L.E.A.N. AI System.
+// Home screen del GOBY.
 // Modo demo siempre activo. 6 paneles con hero metric.
 // Paleta Obsidian Amber · click-to-expand por panel.
 // ============================================================
@@ -604,7 +604,7 @@ export function T10View({ onNavigate }: T10ViewProps) {
               No hay datos suficientes para calcular el valor
             </h2>
             <p className="text-xs text-text-muted dark:text-gray-500 leading-relaxed">
-              El dashboard se construye a partir de las herramientas del programa L.E.A.N.
+              El dashboard se construye a partir de las herramientas del programa GOBY.
               Comienza completando el <span className="font-semibold text-lean-black dark:text-gray-300">Radar de Madurez (T1)</span> para que el sistema pueda calcular los indicadores de adopción IA de tu empresa.
             </p>
           </div>

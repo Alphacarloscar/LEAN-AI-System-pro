@@ -1,6 +1,6 @@
-{
+﻿{
   "eval_id": "2026-05-21_13-30",
-  "repos": ["C:/Users/Alpha Consulting/Documents/LEAN AI System/LEAN AI System"],
+  "repos": ["C:/Users/Alpha Consulting/Documents/GOBY/GOBY"],
   "stack": {
     "frontend": "React 18 + Vite 6 + TypeScript 5.7",
     "styling": "Tailwind CSS 3.4",

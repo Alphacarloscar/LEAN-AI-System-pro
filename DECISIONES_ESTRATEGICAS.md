@@ -1,4 +1,4 @@
-# DECISIONES ESTRATÉGICAS — L.E.A.N. AI System
+﻿# DECISIONES ESTRATÉGICAS — GOBY
 
 Documento vivo. Cada decisión fechada. Futuros chats leen de aquí antes de actuar.
 Última actualización: 2026-04-18

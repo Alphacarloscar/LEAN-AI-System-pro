@@ -1,5 +1,5 @@
-# AUDIT CHANGELOG — Sprint 4
-## L.E.A.N. AI System — Alpha Consulting Solutions
+﻿# AUDIT CHANGELOG — Sprint 4
+## GOBY — Alpha Consulting Solutions
 
 > **Protocolo:** Cada entrada registra: ID de ítem del audit, archivo modificado, líneas afectadas, motivo del cambio, resultado de compilación (`tsc --noEmit`), y estado.
 > **Referencia de severidad:** 🔴 Bloqueante · 🟠 Importante · 🟡 Cosmético
@@ -39,7 +39,7 @@
 **Archivos modificados:**
 | Archivo | Cambio |
 |---------|--------|
-| `src/shared/components/AlphaLogo.tsx` | Añadido modo `size="lg"`: cuadrado 48px, SVG α 26px, wordmark centrado con "Alpha Consulting Solutions", "L.E.A.N. AI System", "Enterprise Edition". Single source of truth para todo el ecosistema. |
+| `src/shared/components/AlphaLogo.tsx` | Añadido modo `size="lg"`: cuadrado 48px, SVG α 26px, wordmark centrado con "Alpha Consulting Solutions", "GOBY", "Enterprise Edition". Single source of truth para todo el ecosistema. |
 | `src/modules/Auth/LoginView.tsx` | Eliminado `LeanLogo()` local. Añadido `import { AlphaLogo }`. Reemplazadas 2 instancias de `<LeanLogo />` por `<AlphaLogo size="lg" />` (login normal + recovery flow). |
 | `src/App.tsx` | Spinner de `ProtectedRoute`: `text-[#0D1B2A]` → `text-navy` (design system token). |
 
@@ -73,7 +73,7 @@
 | Pantalla | Tamaño | Color | Notas |
 |----------|--------|-------|-------|
 | Header (AppLayout) | 48×34px | `dark` prop recibida del hook `useDarkMode` | Se adapta automáticamente |
-| Login | 176×124px | `dark=false` (pantalla light only) | + "L.E.A.N. AI System / Enterprise Edition" debajo |
+| Login | 176×124px | `dark=false` (pantalla light only) | + "GOBY / Enterprise Edition" debajo |
 
 **Resultado compilación:** ✅ 0 errores TypeScript
 

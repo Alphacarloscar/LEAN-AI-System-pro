@@ -1,4 +1,4 @@
-# BACKLOG DE DESARROLLO — L.E.A.N. AI System
+﻿# BACKLOG DE DESARROLLO — GOBY
 
 Documento vivo. Sprints se actualizan al cierre de cada uno.
 Última actualización: 2026-05-03
@@ -83,7 +83,7 @@ Cada sprint produce: (a) código que se merge a `develop`, (b) documentación de
 
 ## Sprint 2 — Fase Listen MVP Completa (ACTIVO 2026-04-21)
 
-**Objetivo:** completar la Fase Listen del L.E.A.N. AI System en modo MVP funcional. Al cierre, un consultor Alpha puede ejecutar un engagement real de Fase Listen end-to-end sin workarounds técnicos.
+**Objetivo:** completar la Fase Listen del GOBY en modo MVP funcional. Al cierre, un consultor Alpha puede ejecutar un engagement real de Fase Listen end-to-end sin workarounds técnicos.
 
 **Foco:** MVP completo de las 3 herramientas + módulos de soporte. No demo-first — producto funcional primero.
 

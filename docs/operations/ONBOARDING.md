@@ -1,4 +1,4 @@
-# Onboarding — L.E.A.N. AI System Enterprise
+﻿# Onboarding — GOBY
 
 Last updated: 2026-06-01
 AI-Ready Repository System v2.1.0
@@ -13,7 +13,7 @@ AI-Ready Repository System v2.1.0
 
 ## Contexto del proyecto
 
-**L.E.A.N. AI System Enterprise** es una plataforma web multi-tenant de Alpha Consulting Solutions S.L.
+**GOBY** es una plataforma web multi-tenant de Alpha Consulting Solutions S.L.
 que implementa una metodología propietaria de adopción de IA para empresas B2B.
 
 - **13 herramientas** especializadas (T1-T13) cubren el ciclo completo L→E→A→N

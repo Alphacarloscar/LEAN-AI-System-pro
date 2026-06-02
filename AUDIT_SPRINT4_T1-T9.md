@@ -1,4 +1,4 @@
-# Audit Sprint 4 — L.E.A.N. AI System T1–T9
+﻿# Audit Sprint 4 — GOBY T1–T9
 **Fecha:** 2026-05-01 | **Objetivo:** demo-ready en ~1.5 semanas
 
 Severidades: 🔴 **BLOQUEANTE** (no salir a demo con esto) · 🟡 **IMPORTANTE** (visible y perjudica percepción) · ⚪ **COSMÉTICO** (pulir si queda tiempo)

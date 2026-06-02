@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+﻿import { test, expect } from '@playwright/test'
 
 const DEV_EMAIL    = process.env.E2E_EMAIL    ?? 'david.baquero@consultoriaalpha.com'
 const DEV_PASSWORD = process.env.E2E_PASSWORD ?? ''
@@ -13,7 +13,7 @@ test.describe('Autenticación', () => {
   test('página de login carga y muestra el formulario', async ({ page }) => {
     await page.goto('/login')
 
-    // El título real es "L.E.A.N. AI System"
+    // El título real es "GOBY"
     await expect(page).toHaveTitle(/L\.E\.A\.N\.|AI System/i)
 
     // Los inputs deben estar visibles

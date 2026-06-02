@@ -1,5 +1,5 @@
-// ============================================================
-// LoginView — Pantalla de acceso al L.E.A.N. AI System
+﻿// ============================================================
+// LoginView — Pantalla de acceso al GOBY
 //
 // Sprint 3: login async con Supabase Auth.
 // La UI es idéntica al Sprint 2 — solo cambia el submit handler.

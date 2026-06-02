@@ -1,5 +1,5 @@
-// ============================================================
-// LEAN AI System — useDarkMode hook
+﻿// ============================================================
+// GOBY — useDarkMode hook
 // Persistido en localStorage para sobrevivir recargas.
 // Modo por defecto: LIGHT (Sprint 4 Rev2 — paleta Obsidian Amber)
 //

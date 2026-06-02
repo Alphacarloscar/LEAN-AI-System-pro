@@ -1,4 +1,4 @@
-# SPRINT 2 — FASE LISTEN MVP COMPLETA
+﻿# SPRINT 2 — FASE LISTEN MVP COMPLETA
 
 **Documento generado:** 2026-04-21  
 **Estado:** Activo  
@@ -8,7 +8,7 @@
 
 ## Objetivo del Sprint
 
-Completar la Fase Listen del L.E.A.N. AI System en modo MVP funcional: CompanyProfile como módulo standalone, T1 finalizado con todos sus refinamientos, T2 construido desde cero, y T3 migrado y terminado. Al cierre del sprint, un consultor Alpha debe poder ejecutar un engagement real de Fase Listen end-to-end sin workarounds técnicos.
+Completar la Fase Listen del GOBY en modo MVP funcional: CompanyProfile como módulo standalone, T1 finalizado con todos sus refinamientos, T2 construido desde cero, y T3 migrado y terminado. Al cierre del sprint, un consultor Alpha debe poder ejecutar un engagement real de Fase Listen end-to-end sin workarounds técnicos.
 
 **Sprint goal en una frase:**
 > Un consultor Alpha puede completar la Fase Listen completa —desde el contexto inicial hasta el VSM del primer caso de uso— con datos reales en Supabase, sin intervención técnica.

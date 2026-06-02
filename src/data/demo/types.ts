@@ -1,5 +1,5 @@
-// ============================================================
-// LEAN AI System — Tipos del sistema de datos demo
+﻿// ============================================================
+// GOBY — Tipos del sistema de datos demo
 //
 // Arquitectura: fixtures estáticos tipados contra los mismos
 // tipos que usan los componentes UI. Cuando VITE_DEMO_MODE=true,

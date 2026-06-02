@@ -1,4 +1,4 @@
-# Metrics Review — L.E.A.N. AI System Enterprise
+﻿# Metrics Review — GOBY
 **[ÁREA: PRODUCTO]**  
 **Período:** Baseline — Mayo 2026 | **Audiencia:** Carlos Sánchez
 
@@ -6,7 +6,7 @@
 
 ## Situación actual
 
-El L.E.A.N. AI System no tiene analytics de producto instalados. No existe ninguna métrica de uso real. Todas las métricas de este documento son de **estado del producto/negocio**, no de uso de usuarios — porque esos datos no existen todavía.
+El GOBY no tiene analytics de producto instalados. No existe ninguna métrica de uso real. Todas las métricas de este documento son de **estado del producto/negocio**, no de uso de usuarios — porque esos datos no existen todavía.
 
 Este documento cumple dos funciones:
 1. **Inventario del estado actual** — qué sabemos hoy
@@ -57,7 +57,7 @@ Este documento cumple dos funciones:
 
 **Crítico — Sin datos de uso real.** El producto lleva sprints de desarrollo pero no hay ninguna métrica que responda: ¿cuántos consultores lo usan? ¿qué módulos usan más? ¿dónde se atoran? Esto es acceptable en MVP puro, pero en cuanto entre el primer cliente, la ausencia de analytics impide iterar con datos.
 
-**Crítico — Sin North Star Metric definida.** Para un producto de consultoría B2B como el L.E.A.N. AI System, la North Star no es obvia. Propuestas a evaluar (ver sección siguiente).
+**Crítico — Sin North Star Metric definida.** Para un producto de consultoría B2B como el GOBY, la North Star no es obvia. Propuestas a evaluar (ver sección siguiente).
 
 **Preocupante — Sin métricas de negocio.** Alpha no tiene datos del funnel comercial estructurados: leads, propuestas enviadas, propuestas ganadas, valor medio de contrato, tiempo de ciclo de venta.
 
@@ -67,7 +67,7 @@ Este documento cumple dos funciones:
 
 ### North Star Metric
 
-Para el L.E.A.N. AI System, la North Star candidata es:
+Para el GOBY, la North Star candidata es:
 
 **"Engagements con ≥6 módulos activos y datos completados en las últimas 4 semanas"**
 

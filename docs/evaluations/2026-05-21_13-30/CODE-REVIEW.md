@@ -1,4 +1,4 @@
-# Code Review — L.E.A.N. AI System Enterprise
+﻿# Code Review — GOBY
 **Scope:** Ficheros críticos del codebase | **Fecha:** 2026-05-21  
 **Ficheros revisados:** supabase.ts, .env.example, domain.types.ts, T4View.tsx (primeras 80L), AppSidebar.tsx
 

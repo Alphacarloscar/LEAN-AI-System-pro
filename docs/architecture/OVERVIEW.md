@@ -1,4 +1,4 @@
-# Architecture Overview — L.E.A.N. AI System Enterprise
+﻿# Architecture Overview — GOBY
 
 Last updated: 2026-06-01
 AI-Ready Repository System v2.1.0
@@ -10,7 +10,7 @@ AI-Ready Repository System v2.1.0
 
 ## What this system does
 
-**L.E.A.N. AI System Enterprise** es una plataforma web multi-tenant que guía a empresas B2B medianas y grandes a través de una metodología propietaria de adopción de IA. Estructura: 4 fases (L→E→A→N) y 13 herramientas especializadas (T1-T13).
+**GOBY** es una plataforma web multi-tenant que guía a empresas B2B medianas y grandes a través de una metodología propietaria de adopción de IA. Estructura: 4 fases (L→E→A→N) y 13 herramientas especializadas (T1-T13).
 
 **Usuarios:** Consultores de Alpha Consulting + equipos del cliente (PMs, C-suite). Sistema de 4 roles: `superadmin` / `consultant` / `client_editor` / `client_viewer`.
 

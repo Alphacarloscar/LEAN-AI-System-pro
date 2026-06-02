@@ -1,4 +1,4 @@
-# Evaluación de Riesgos — L.E.A.N. AI System Enterprise
+﻿# Evaluación de Riesgos — GOBY
 **Fecha:** 2026-05-21 | **Alcance:** Producto + operación + mercado  
 **Propietario:** Carlos Sánchez (COO)
 

@@ -1,4 +1,4 @@
-# System Design Review — L.E.A.N. AI System Enterprise
+﻿# System Design Review — GOBY
 **Modo:** Evaluación de arquitectura existente + diseño de componentes faltantes  
 **Fecha:** 2026-05-21 | **Stack:** React 18 + Vite 6 + TypeScript 5.7 + Supabase + Vercel
 

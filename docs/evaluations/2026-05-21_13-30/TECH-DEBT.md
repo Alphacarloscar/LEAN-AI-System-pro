@@ -1,4 +1,4 @@
-# Registro de Deuda Técnica — L.E.A.N. AI System Enterprise
+﻿# Registro de Deuda Técnica — GOBY
 **Fecha:** 2026-05-21 | **Método de priorización:** (Impacto + Riesgo) × (6 - Esfuerzo)  
 **Escala:** 1-5 por dimensión | **Prioridad máxima posible:** 50
 

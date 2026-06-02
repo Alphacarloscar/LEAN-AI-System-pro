@@ -1,4 +1,4 @@
-# ADR-009: Claude API (Anthropic) vía Supabase Edge Functions para recomendaciones IA
+﻿# ADR-009: Claude API (Anthropic) vía Supabase Edge Functions para recomendaciones IA
 
 **Status:** ACCEPTED
 **Date:** 2026-05-15
@@ -10,7 +10,7 @@
 
 ## Context
 
-El L.E.A.N. AI System incluye un motor de recomendaciones IA que genera:
+El GOBY incluye un motor de recomendaciones IA que genera:
 - Política de IA corporativa contextualizada por sector (T6)
 - Recomendaciones dinámicas basadas en scores de madurez (T1→T4→T6)
 - ISO 42001 guidance contextualizada al perfil de riesgo del cliente

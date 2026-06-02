@@ -1,4 +1,4 @@
-# Crítica de Diseño — L.E.A.N. AI System Enterprise
+﻿# Crítica de Diseño — GOBY
 **Scope:** Todo el producto | **Etapa:** Refinamiento | **Foco:** Sistema de diseño  
 **Fecha:** 2026-05-21 | **Estándar:** Usabilidad, consistencia, accesibilidad, escalabilidad del DS
 
@@ -172,10 +172,10 @@ Visible permanentemente en la barra lateral de todos los usuarios autenticados.
 **Corrección (5 minutos, dos líneas):**
 ```tsx
 // AlphaLogo.tsx
-<p style={{ fontSize: 20, fontWeight: 600 }}>L.E.A.N. AI System</p>
+<p style={{ fontSize: 20, fontWeight: 600 }}>GOBY</p>
 
 // AppSidebar.tsx
-<span>L.E.A.N. AI System · Alpha Consulting</span>
+<span>GOBY · Alpha Consulting</span>
 ```
 
 No hay ninguna justificación técnica para que este bug lleve en producción más tiempo.

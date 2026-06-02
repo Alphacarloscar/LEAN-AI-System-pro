@@ -1,4 +1,4 @@
-# ADR-003: Modelo de datos híbrido — Foreign Keys estructurales + JSONB flexible
+﻿# ADR-003: Modelo de datos híbrido — Foreign Keys estructurales + JSONB flexible
 
 **Status:** ACCEPTED
 **Date:** 2026-04-19
@@ -10,7 +10,7 @@
 
 ## Context
 
-El L.E.A.N. AI System tiene 13 herramientas (T1-T13) con estructuras de datos muy distintas entre sí. Algunas son comparables entre clientes (T1: scores de dimensiones, T2: stakeholders con cuadrantes), otras tienen payloads altamente variables por sector/empresa (T5: canvas de taxonomía IA, T9: roadmap). 
+El GOBY tiene 13 herramientas (T1-T13) con estructuras de datos muy distintas entre sí. Algunas son comparables entre clientes (T1: scores de dimensiones, T2: stakeholders con cuadrantes), otras tienen payloads altamente variables por sector/empresa (T5: canvas de taxonomía IA, T9: roadmap). 
 
 Requisitos en tensión:
 - **Comparabilidad entre engagements**: necesaria para benchmarking agregado y analytics del sistema (T10)

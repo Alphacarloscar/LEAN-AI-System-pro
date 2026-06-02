@@ -1,4 +1,4 @@
-name: CI — TypeScript + Tests + Build
+﻿name: CI — TypeScript + Tests + Build
 
 on:
   pull_request:
@@ -59,7 +59,7 @@ jobs:
           echo ""
           echo "═══════════════════════════════════════════════════"
           echo "  ✅ CI passed"
-          echo "  L.E.A.N. AI System Enterprise — Alpha Consulting"
+          echo "  GOBY — Alpha Consulting"
           echo "═══════════════════════════════════════════════════"
           echo "  TypeScript:  ✓ (0 errors)"
           echo "  Lint:        ✓ (0 warnings)"

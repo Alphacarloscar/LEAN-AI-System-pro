@@ -1,4 +1,4 @@
-# ARQUITECTURA — L.E.A.N. AI System
+﻿# ARQUITECTURA — GOBY
 
 Documento de cierre del Sprint 0. Esta es la base técnica sobre la que se construyen todos los sprints posteriores.
 Última actualización: 2026-04-19
@@ -25,7 +25,7 @@ Propietarios: Carlos Sánchez (COO, co-arquitecto) + Claude (co-arquitecto técn
 
 ## 1. Resumen ejecutivo
 
-El L.E.A.N. AI System se construye como una aplicación web moderna (React + Vite + TypeScript + Tailwind) con Supabase como backend único (PostgreSQL + Auth + Storage + Realtime) y Vercel como hosting con deploy automático desde GitHub.
+El GOBY se construye como una aplicación web moderna (React + Vite + TypeScript + Tailwind) con Supabase como backend único (PostgreSQL + Auth + Storage + Realtime) y Vercel como hosting con deploy automático desde GitHub.
 
 La arquitectura es modular: cada una de las 13 herramientas (T1-T13) vive como módulo independiente con su propia carpeta, consumiendo y produciendo entidades de datos a través de una capa de servicios compartida. Los contratos de datos entre herramientas están explícitamente definidos (ver sección 8) y las dependencias entre fases (L → E → A → N) están formalizadas como foreign keys estructurales + JSONB para payloads flexibles.
 

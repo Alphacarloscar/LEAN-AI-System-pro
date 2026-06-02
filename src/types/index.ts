@@ -1,5 +1,5 @@
-// ============================================================
-// LEAN AI System — Barrel de tipos
+﻿// ============================================================
+// GOBY — Barrel de tipos
 // Re-exporta todo para imports limpios: import type { UserRole } from '@/types'
 // ============================================================
 

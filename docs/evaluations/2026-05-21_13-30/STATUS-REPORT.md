@@ -1,4 +1,4 @@
-# Status Report — L.E.A.N. AI System Enterprise
+﻿# Status Report — GOBY
 **Período:** Mayo 2026 — Baseline post Sprint 0-6  
 **Autor:** Carlos Sánchez (COO) | **Fecha:** 2026-05-21  
 **Audiencia:** Alpha Consulting Solutions — dirección
@@ -7,7 +7,7 @@
 
 ## Resumen ejecutivo
 
-El L.E.A.N. AI System Enterprise tiene los 12 módulos de herramienta (T1-T12) implementados y funcionales. La arquitectura base (Supabase, RLS, autenticación, estructura modular) está sólida. La deuda técnica acumulada durante los sprints de desarrollo rápido es significativa pero controlable: los tres riesgos críticos (API key expuesta, cero tests, cero error tracking) son corregibles en 2-3 semanas. El producto está en condiciones de demostrarse a clientes potenciales, pero no de entrar en producción con un cliente enterprise hasta resolver los bloqueantes de seguridad y observabilidad.
+El GOBY tiene los 12 módulos de herramienta (T1-T12) implementados y funcionales. La arquitectura base (Supabase, RLS, autenticación, estructura modular) está sólida. La deuda técnica acumulada durante los sprints de desarrollo rápido es significativa pero controlable: los tres riesgos críticos (API key expuesta, cero tests, cero error tracking) son corregibles en 2-3 semanas. El producto está en condiciones de demostrarse a clientes potenciales, pero no de entrar en producción con un cliente enterprise hasta resolver los bloqueantes de seguridad y observabilidad.
 
 ---
 

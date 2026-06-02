@@ -1,5 +1,5 @@
-// ============================================================
-// LEAN AI System — App root (Sprint 10)
+﻿// ============================================================
+// GOBY — App root (Sprint 10)
 //
 // Sprint 10: Erradicación nuclear de DemoContext.
 //   — DemoContext eliminado. VITE_DEMO_ENABLED=false en staging.

@@ -1,5 +1,5 @@
-// ============================================================
-// LEAN AI System — Tipos del dominio de negocio
+﻿// ============================================================
+// GOBY — Tipos del dominio de negocio
 //
 // Estos tipos son independientes del esquema de Supabase.
 // Representan las entidades tal como las entiende la aplicación.

@@ -1,8 +1,8 @@
-{
+﻿{
   "name": "lean-ai-system",
   "private": true,
   "version": "0.1.0",
-  "description": "L.E.A.N. AI System Enterprise — Alpha Consulting Solutions S.L.",
+  "description": "GOBY — Alpha Consulting Solutions S.L.",
   "type": "module",
   "scripts": {
     "dev": "vite",

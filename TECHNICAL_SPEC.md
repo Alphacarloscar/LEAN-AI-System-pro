@@ -1,4 +1,4 @@
-# TECHNICAL SPEC — GOBY / L.E.A.N. AI System Enterprise
+﻿# TECHNICAL SPEC — GOBY
 
 **Versión:** 1.0 | **Fecha:** 2026-05-22 | **Propietario:** Alpha Consulting Solutions S.L.
 **Audiencias:** equipo técnico · dirección de cliente · auditoría técnica
@@ -7,7 +7,7 @@
 
 ## 1. VISIÓN GENERAL DEL PRODUCTO
 
-**GOBY** (nombre de plataforma) implementa la metodología propietaria **L.E.A.N. AI System Enterprise** de Alpha Consulting Solutions S.L. Es una aplicación web SPA (Single Page Application) que actúa como plataforma de diagnóstico, priorización y gobierno de la adopción de inteligencia artificial en empresas B2B medianas y grandes.
+**GOBY** es la plataforma propietaria de Alpha Consulting Solutions S.L. Es una aplicación web SPA (Single Page Application) que actúa como plataforma de diagnóstico, priorización y gobierno de la adopción de inteligencia artificial en empresas B2B medianas y grandes.
 
 La plataforma estructura un sprint de 6 meses en cuatro fases (Listen → Evaluate → Activate → Normalize) mediante 12 herramientas propietarias (T1–T12). Cada herramienta produce un output estructurado que alimenta a las siguientes, creando un flujo de datos encadenado sin duplicaciones manuales.
 

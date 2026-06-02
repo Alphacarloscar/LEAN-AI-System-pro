@@ -1,4 +1,4 @@
-# Glosario — L.E.A.N. AI System Enterprise
+﻿# Glosario — GOBY
 
 Última actualización: 2026-06-01
 AI-Ready Repository System v2.1.0

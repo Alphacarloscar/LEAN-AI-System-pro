@@ -1,4 +1,4 @@
-# Historial de Evaluaciones Técnicas — L.E.A.N. AI System
+﻿# Historial de Evaluaciones Técnicas — GOBY
 
 | Fecha | Global | Código | Tests | Seguridad | CI/CD | Docs | Obs. |
 |-------|--------|--------|-------|-----------|-------|------|------|

@@ -1,5 +1,5 @@
-// ─────────────────────────────────────────────────────────────
-// LEAN AI System — Design System Components
+﻿// ─────────────────────────────────────────────────────────────
+// GOBY — Design System Components
 // Barrel de exportación — importa desde aquí, no de archivos individuales
 //
 // Uso: import { Button, Card, Badge } from '@shared/design-system/components'

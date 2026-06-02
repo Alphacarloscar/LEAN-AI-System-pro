@@ -1,6 +1,6 @@
-```
+﻿```
 ═══════════════════════════════════════════════════════════════════════
-  EVALUACIÓN TÉCNICA — L.E.A.N. AI System Enterprise
+  EVALUACIÓN TÉCNICA — GOBY
   Fecha: 2026-05-21_13-30    Repos analizados: 1
   Stack: React 18 + Vite + TypeScript + Tailwind + Supabase + Vercel
   Tamaño: 28.453 líneas · 113 archivos · 12 módulos T1-T12

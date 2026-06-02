@@ -1,4 +1,4 @@
-# IMPACTOS CRUZADOS — L.E.A.N. AI System
+﻿# IMPACTOS CRUZADOS — GOBY
 
 Documento vivo de gestión transversal. Cada decisión del proyecto genera ondas en múltiples áreas simultáneas. Este documento las captura y prioriza para que ninguna se pierda.
 

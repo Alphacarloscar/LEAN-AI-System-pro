@@ -1,6 +1,6 @@
-# Competitive Brief — Mercado de adopción de IA para empresas B2B
+﻿# Competitive Brief — Mercado de adopción de IA para empresas B2B
 **[ÁREA: MERCADO / POSICIONAMIENTO]**  
-**Fecha:** 2026-05-21 | **Foco:** Competidores directos e indirectos del L.E.A.N. AI System en España y Europa
+**Fecha:** 2026-05-21 | **Foco:** Competidores directos e indirectos del GOBY en España y Europa
 
 ---
 
@@ -8,7 +8,7 @@
 
 ---
 
-## El set competitivo del L.E.A.N. AI System
+## El set competitivo del GOBY
 
 ### Competidores directos
 Firmas que ofrecen servicios específicos de adopción de IA para empresas medianas-grandes en España/Europa.
@@ -31,7 +31,7 @@ Firmas que ofrecen servicios específicos de adopción de IA para empresas media
 
 ## Comparativa de capacidades
 
-| Capacidad | L.E.A.N. AI System | Big 4 | Mid-market consultoras | Freelances IA |
+| Capacidad | GOBY | Big 4 | Mid-market consultoras | Freelances IA |
 |-----------|-------------------|-------|----------------------|---------------|
 | Metodología propietaria documentada | ✅ 12 herramientas | ✅ Frameworks internos | 🟡 Parcial | ❌ Ad-hoc |
 | Herramienta digital de seguimiento | ✅ App web completa | ❌ Excel/PPT | ❌ Excel | ❌ No |
@@ -79,7 +79,7 @@ Firmas que ofrecen servicios específicos de adopción de IA para empresas media
 **Debilidades:**
 - La oferta de IA está frecuentemente generalista (no metodología propietaria específica)
 - La relación calidad-precio del senior consulting es cuestionable: los proyectos los ejecutan equipos de implementation
-- No tienen una herramienta digital de seguimiento del proceso de adopción equivalente al L.E.A.N. AI System
+- No tienen una herramienta digital de seguimiento del proceso de adopción equivalente al GOBY
 
 **Vulnerabilidad:** Ofrecen consultoría de IA como extensión de servicios de implementación tecnológica. El foco es el despliegue de herramientas, no la adopción organizacional. Alpha puede diferenciarse en el "lado humano" de la IA.
 
@@ -104,7 +104,7 @@ Firmas que ofrecen servicios específicos de adopción de IA para empresas media
 
 ---
 
-## Posición competitiva actual del L.E.A.N. AI System
+## Posición competitiva actual del GOBY
 
 ### Dónde Alpha gana hoy
 
@@ -112,7 +112,7 @@ Firmas que ofrecen servicios específicos de adopción de IA para empresas media
 
 - **Velocidad y proximidad:** Alpha puede arrancar un proyecto en semanas y entregarlo en 6 meses. Los Big4 no pueden (o no quieren a ese precio).
 
-- **La herramienta como diferenciador de venta:** El L.E.A.N. AI System como software (no solo metodología) es un argumento visual que ningún competidor puede replicar en una demo. Un CIO que ve el radar de madurez de T1, el board de casos de uso de T4, y el dashboard de valor de T10 en tiempo real, entiende que esto es diferente.
+- **La herramienta como diferenciador de venta:** El GOBY como software (no solo metodología) es un argumento visual que ningún competidor puede replicar en una demo. Un CIO que ve el radar de madurez de T1, el board de casos de uso de T4, y el dashboard de valor de T10 en tiempo real, entiende que esto es diferente.
 
 ### Dónde Alpha es vulnerable hoy
 
@@ -130,9 +130,9 @@ Firmas que ofrecen servicios específicos de adopción de IA para empresas media
 
 2. **Vacío en el mid-market español:** El segmento de 200-2000 empleados está desatendido: demasiado caro para Big4, demasiado complejo para freelances. Es el espacio natural de Alpha.
 
-3. **Replicabilidad sectorial:** Una vez ejecutado el primer proyecto en un sector (banca, retail, industria), el playbook es exportable con ajustes menores. El L.E.A.N. AI System permite escalar sin reinventar la metodología.
+3. **Replicabilidad sectorial:** Una vez ejecutado el primer proyecto en un sector (banca, retail, industria), el playbook es exportable con ajustes menores. El GOBY permite escalar sin reinventar la metodología.
 
-4. **CIO Office-as-a-Service:** El servicio ancla (IT Governance / CIO Office) puede ser la puerta de entrada que lleva al L.E.A.N. AI System, no al revés. El CIO que ya confía en Alpha para governance es el candidato natural para el proyecto de adopción IA.
+4. **CIO Office-as-a-Service:** El servicio ancla (IT Governance / CIO Office) puede ser la puerta de entrada que lleva al GOBY, no al revés. El CIO que ya confía en Alpha para governance es el candidato natural para el proyecto de adopción IA.
 
 ---
 
@@ -146,7 +146,7 @@ Firmas que ofrecen servicios específicos de adopción de IA para empresas media
 
 ## Implicaciones estratégicas
 
-**Hipótesis a validar:** ¿El diferenciador de la herramienta digital (L.E.A.N. AI System como software) es suficientemente único para acelerar el ciclo de venta o es irrelevante para el CIO que compra?
+**Hipótesis a validar:** ¿El diferenciador de la herramienta digital (GOBY como software) es suficientemente único para acelerar el ciclo de venta o es irrelevante para el CIO que compra?
 
 **Recomendación basada en datos (con incertidumbre):** La herramienta reduce el tiempo de credibilidad en la demo, pero la compra seguirá siendo relacional. El software es el elemento que permite a Óscar abrir puertas y a Carlos cerrarlas con autoridad técnica. La inversión en el software está justificada, pero el motor de crecimiento en los primeros 12 meses sigue siendo el outreach relacional.
 

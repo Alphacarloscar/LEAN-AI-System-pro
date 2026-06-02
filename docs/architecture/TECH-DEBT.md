@@ -1,4 +1,4 @@
-# Technical Debt Register — L.E.A.N. AI System Enterprise
+﻿# Technical Debt Register — GOBY
 
 Last updated: 2026-06-01
 AI-Ready Repository System v2.1.0

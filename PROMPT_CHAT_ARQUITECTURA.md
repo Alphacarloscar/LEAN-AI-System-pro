@@ -1,7 +1,7 @@
-# PROMPT DE ARRANQUE — Chat [ARQUITECTURA]
+﻿# PROMPT DE ARRANQUE — Chat [ARQUITECTURA]
 
 Copia y pega el bloque siguiente como primer mensaje del chat.
-Si arrancas el chat en Cowork: con la carpeta `LEAN AI System` ya seleccionada, el chat puede leer todos los archivos directamente.
+Si arrancas el chat en Cowork: con la carpeta `GOBY` ya seleccionada, el chat puede leer todos los archivos directamente.
 Si arrancas el chat en Claude.ai: súbele como adjuntos los archivos listados en "Archivos de referencia" al final de este documento.
 
 ---
@@ -11,7 +11,7 @@ Si arrancas el chat en Claude.ai: súbele como adjuntos los archivos listados en
 ```
 Área activa del chat: [ARQUITECTURA]
 
-Este chat es la sesión de arquitectura técnica del L.E.A.N. AI System.
+Este chat es la sesión de arquitectura técnica del GOBY.
 Objetivo: producir un diseño de arquitectura completo que desbloquee todo
 el desarrollo posterior del software. No se toca código todavía en esta sesión.
 
@@ -102,7 +102,7 @@ arquitectura aún.
 
 ## Archivos de referencia a adjuntar (si usas Claude.ai)
 
-Si usas Cowork, estos archivos ya están en la carpeta `LEAN AI System` y el chat puede leerlos directamente. Si usas Claude.ai, sube estos adjuntos al chat:
+Si usas Cowork, estos archivos ya están en la carpeta `GOBY` y el chat puede leerlos directamente. Si usas Claude.ai, sube estos adjuntos al chat:
 
 - `SYSTEM_PROMPT_v2.md`
 - `DECISIONES_ESTRATEGICAS.md`

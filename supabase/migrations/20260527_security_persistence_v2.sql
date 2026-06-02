@@ -1,5 +1,5 @@
--- ================================================================
--- LEAN AI SYSTEM — Script SQL Maestro v2
+﻿-- ================================================================
+-- GOBY — Script SQL Maestro v2
 -- Migración: Seguridad + Persistencia
 -- Fecha: 2026-05-27
 --

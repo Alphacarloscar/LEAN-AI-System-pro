@@ -1,5 +1,5 @@
-// ─────────────────────────────────────────────────────────────
-// L.E.A.N. AI System — Charts
+﻿// ─────────────────────────────────────────────────────────────
+// GOBY — Charts
 // Importa desde aquí: import { ChartWrapper, LeanRadarChart } from '@/shared/components/charts'
 // ─────────────────────────────────────────────────────────────
 

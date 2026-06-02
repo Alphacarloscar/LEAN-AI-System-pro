@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T5 — AI Domain Architecture Canvas — Tipos
 //
 // Herramienta estratégica que, dado el contexto de T1/T3/T4,
@@ -6,7 +6,7 @@
 // condiciones de governance y secuencia de implementación.
 // ============================================================
 
-// ── Códigos de dominio IA (los 6 dominios del LEAN AI System) ─
+// ── Códigos de dominio IA (los 6 dominios del GOBY) ─
 
 export type T5DomainCode =
   | 'automatizacion_rpa'

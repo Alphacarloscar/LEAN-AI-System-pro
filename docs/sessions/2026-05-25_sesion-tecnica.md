@@ -1,4 +1,4 @@
-# Sesión técnica — L.E.A.N. AI System
+﻿# Sesión técnica — GOBY
 **Fecha:** 2026-05-25 | **Duración:** Sesión completa  
 **Tipo:** Arquitectura + Seguridad + Auditoría de producto  
 **Participante:** Carlos Sánchez (COO)

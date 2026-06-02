@@ -1,4 +1,4 @@
-# Análisis de datos del proyecto — L.E.A.N. AI System Enterprise
+﻿# Análisis de datos del proyecto — GOBY
 **Pregunta de análisis:** ¿Cuál es el estado cuantificable del codebase y dónde están los mayores riesgos medibles?  
 **Fecha:** 2026-05-21 | **Fuente:** Análisis estático del repositorio
 

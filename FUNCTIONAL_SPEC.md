@@ -1,4 +1,4 @@
-# FUNCTIONAL SPEC — GOBY / L.E.A.N. AI System Enterprise
+﻿# FUNCTIONAL SPEC — GOBY
 
 **Versión:** 1.0 | **Fecha:** 2026-05-22 | **Propietario:** Alpha Consulting Solutions S.L.
 **Complementa:** `TECHNICAL_SPEC.md` (arquitectura y código)
@@ -8,7 +8,7 @@
 
 ## 1. QUÉ ES GOBY Y PARA QUÉ SIRVE
 
-GOBY es la plataforma digital que soporta la metodología **L.E.A.N. AI System Enterprise**. Su función es guiar a una empresa cliente a través de un diagnóstico estructurado de 6 meses para adoptar inteligencia artificial de forma ordenada, priorizando los casos de uso con mayor impacto, gestionando los riesgos regulatorios y estableciendo un gobierno IA sostenible.
+GOBY es la plataforma digital de Alpha Consulting Solutions S.L. Su función es guiar a una empresa cliente a través de un diagnóstico estructurado de 6 meses para adoptar inteligencia artificial de forma ordenada, priorizando los casos de uso con mayor impacto, gestionando los riesgos regulatorios y estableciendo un gobierno IA sostenible.
 
 **Sin GOBY:** El consultor gestiona la información en Excel, PowerPoint y notas de entrevista dispersas. Los datos no se acumulan, no se conectan entre sí y no se pueden mostrar al cliente en tiempo real.
 

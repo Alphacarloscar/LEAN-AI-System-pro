@@ -1,4 +1,4 @@
-# Design System Audit — L.E.A.N. AI System Enterprise
+﻿# Design System Audit — GOBY
 **Modo:** Audit | **Fecha:** 2026-05-21 | **Scope:** `src/` completo  
 **Referencia:** ARQUITECTURA.md secciones D9 + §5 (Estructura del repositorio) + §7 (Sistema de diseño)
 

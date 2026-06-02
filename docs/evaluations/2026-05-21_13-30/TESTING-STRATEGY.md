@@ -1,4 +1,4 @@
-# Testing Strategy — L.E.A.N. AI System Enterprise
+﻿# Testing Strategy — GOBY
 **Fecha:** 2026-05-21 | **Estado actual:** 0 tests, sin test runner instalado  
 **Stack de testing propuesto:** Vitest + Testing Library + Playwright
 
@@ -223,7 +223,7 @@ test('login exitoso redirige al dashboard', async ({ page }) => {
   await page.fill('[id="password-input"]', process.env.TEST_PASSWORD!)
   await page.click('button[type="submit"]')
   await expect(page).toHaveURL(/\/dashboard/)
-  await expect(page.locator('h1')).toContainText('L.E.A.N.')
+  await expect(page.locator('h1')).toContainText('GOBY')
 })
 ```
 
