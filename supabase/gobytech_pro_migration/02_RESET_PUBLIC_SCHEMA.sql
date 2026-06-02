@@ -13,29 +13,44 @@
 
 
 -- ── 1. Eliminar triggers dependientes (orden importa) ─────────
-DROP TRIGGER IF EXISTS trg_t9_free_items_audit    ON public.t9_free_items;
-DROP TRIGGER IF EXISTS trg_t9_overrides_audit     ON public.t9_overrides;
-DROP TRIGGER IF EXISTS trg_tool_outputs_updated_at ON public.tool_outputs;
+-- SAFE PATCH: comentado porque la tabla puede no existir en legacy y DROP TRIGGER ON tabla inexistente puede fallar.
+-- DROP TRIGGER IF EXISTS trg_t9_free_items_audit    ON public.t9_free_items;
+-- SAFE PATCH: comentado porque la tabla puede no existir en legacy y DROP TRIGGER ON tabla inexistente puede fallar.
+-- DROP TRIGGER IF EXISTS trg_t9_overrides_audit     ON public.t9_overrides;
+-- SAFE PATCH: comentado porque la tabla puede no existir en legacy y DROP TRIGGER ON tabla inexistente puede fallar.
+-- DROP TRIGGER IF EXISTS trg_tool_outputs_updated_at ON public.tool_outputs;
 
 
 -- ── 2. Eliminar policies (evitar errores al eliminar funciones) ─
 -- tool_outputs
-DROP POLICY IF EXISTS "tool_outputs_select"     ON public.tool_outputs;
-DROP POLICY IF EXISTS "tool_outputs_insert"     ON public.tool_outputs;
-DROP POLICY IF EXISTS "tool_outputs_update"     ON public.tool_outputs;
-DROP POLICY IF EXISTS "tool_outputs_no_delete"  ON public.tool_outputs;
+-- SAFE PATCH: policy explícita comentada; el loop dinámico elimina policies existentes.
+-- DROP POLICY IF EXISTS "tool_outputs_select" ON public.tool_outputs;
+-- SAFE PATCH: policy explícita comentada; el loop dinámico elimina policies existentes.
+-- DROP POLICY IF EXISTS "tool_outputs_insert" ON public.tool_outputs;
+-- SAFE PATCH: policy explícita comentada; el loop dinámico elimina policies existentes.
+-- DROP POLICY IF EXISTS "tool_outputs_update" ON public.tool_outputs;
+-- SAFE PATCH: policy explícita comentada; el loop dinámico elimina policies existentes.
+-- DROP POLICY IF EXISTS "tool_outputs_no_delete" ON public.tool_outputs;
 
 -- t9_overrides
-DROP POLICY IF EXISTS "t9_overrides_select"     ON public.t9_overrides;
-DROP POLICY IF EXISTS "t9_overrides_insert"     ON public.t9_overrides;
-DROP POLICY IF EXISTS "t9_overrides_update"     ON public.t9_overrides;
-DROP POLICY IF EXISTS "t9_overrides_delete"     ON public.t9_overrides;
+-- SAFE PATCH: policy explícita comentada; el loop dinámico elimina policies existentes.
+-- DROP POLICY IF EXISTS "t9_overrides_select" ON public.t9_overrides;
+-- SAFE PATCH: policy explícita comentada; el loop dinámico elimina policies existentes.
+-- DROP POLICY IF EXISTS "t9_overrides_insert" ON public.t9_overrides;
+-- SAFE PATCH: policy explícita comentada; el loop dinámico elimina policies existentes.
+-- DROP POLICY IF EXISTS "t9_overrides_update" ON public.t9_overrides;
+-- SAFE PATCH: policy explícita comentada; el loop dinámico elimina policies existentes.
+-- DROP POLICY IF EXISTS "t9_overrides_delete" ON public.t9_overrides;
 
 -- t9_free_items
-DROP POLICY IF EXISTS "t9_free_items_select"    ON public.t9_free_items;
-DROP POLICY IF EXISTS "t9_free_items_insert"    ON public.t9_free_items;
-DROP POLICY IF EXISTS "t9_free_items_update"    ON public.t9_free_items;
-DROP POLICY IF EXISTS "t9_free_items_delete"    ON public.t9_free_items;
+-- SAFE PATCH: policy explícita comentada; el loop dinámico elimina policies existentes.
+-- DROP POLICY IF EXISTS "t9_free_items_select" ON public.t9_free_items;
+-- SAFE PATCH: policy explícita comentada; el loop dinámico elimina policies existentes.
+-- DROP POLICY IF EXISTS "t9_free_items_insert" ON public.t9_free_items;
+-- SAFE PATCH: policy explícita comentada; el loop dinámico elimina policies existentes.
+-- DROP POLICY IF EXISTS "t9_free_items_update" ON public.t9_free_items;
+-- SAFE PATCH: policy explícita comentada; el loop dinámico elimina policies existentes.
+-- DROP POLICY IF EXISTS "t9_free_items_delete" ON public.t9_free_items;
 
 -- Resto de tablas
 DO $$
@@ -111,7 +126,9 @@ DROP FUNCTION IF EXISTS public.can_write_engagement(uuid);
 -- Trigger helpers
 DROP FUNCTION IF EXISTS public.set_audit_columns();
 DROP FUNCTION IF EXISTS public.set_updated_at();
-DROP FUNCTION IF EXISTS public.handle_new_user();
+-- SAFE PATCH: no eliminar public.handle_new_user porque auth.users.on_auth_user_created depende de esta función.
+-- Se actualizará en 03_SCHEMA_CREATE mediante CREATE OR REPLACE FUNCTION.
+-- DROP FUNCTION IF EXISTS public.handle_new_user();
 
 -- Función de snapshots legacy
 DROP FUNCTION IF EXISTS public.create_snapshot(uuid, text, text, uuid, text);
