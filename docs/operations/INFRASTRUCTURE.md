@@ -41,7 +41,7 @@ AI-Ready Repository System v2.1.0
 | Propiedad | Valor |
 |-----------|-------|
 | Propósito | Backend completo: PostgreSQL + Auth + Storage + Realtime + Edge Functions |
-| Entornos | 2 proyectos separados: PRO y DEV (ver ADR-006) |
+| Entornos | 3 entornos: PRO (`vbpgsgxsslccctjhuegt`), PRE (`mkypmakmkxpecuezofkk`), DEV (local CLI) |
 | Config | `supabase/config.toml` (si existe) |
 | Migrations | `supabase/migrations/` — ejecutar en SQL Editor de cada proyecto |
 | Dashboard | https://supabase.com/dashboard (acceso: Carlos como project owner) |
@@ -139,7 +139,8 @@ npm run dev
 | VS Code | Editor (recomendado) | https://code.visualstudio.com |
 | VS Code + GitHub Copilot / Claude | AI assistance | Extensiones de VS Code |
 
-> **No se requiere Supabase CLI ni Vercel CLI** para el flujo de trabajo de Carlos (ADR-005). Las migraciones se ejecutan en Supabase SQL Editor y los deploys ocurren automáticamente en Vercel.
+> **Supabase CLI** se usa únicamente en DEV local (`supabase start`) para levantar la BD local. Carlos no ejecuta CLI — es Claude quien lo gestiona en las sesiones de desarrollo local.
+> **Vercel CLI** no se requiere — los deploys ocurren automáticamente en Vercel al hacer merge.
 
 ### Variables de entorno locales
 

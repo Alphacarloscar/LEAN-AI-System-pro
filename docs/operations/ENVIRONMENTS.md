@@ -7,13 +7,15 @@ AI-Ready Repository System v2.1.0
 
 ## Environment Map
 
-| Environment | Label | Branch | Supabase Project | Vercel URL | Who uses it |
-|-------------|-------|--------|-----------------|------------|-------------|
-| Production | **PRO** | `main` | [COMPLETAR: nombre proyecto Supabase PRO] | lean-ai.consultoriaalpha.com | Clientes reales |
-| Pre-production | **PRE** | `develop` | [COMPLETAR: nombre proyecto Supabase DEV] | Preview Vercel automático por PR | Carlos (QA) |
-| Local dev | **DEV** | any | [COMPLETAR: nombre proyecto Supabase DEV] | localhost:5173 | Carlos (dev) |
+| Environment | Label | Branch | Supabase | Vercel URL | Who uses it |
+|-------------|-------|--------|----------|------------|-------------|
+| Production | **PRO** | `main` | `vbpgsgxsslccctjhuegt` (remote) | https://gobytech-prod.vercel.app/ | Clientes reales |
+| Pre-production | **PRE** | `develop` | `mkypmakmkxpecuezofkk` (remote) | https://v0-lean-ai-system.vercel.app/ | Carlos (QA, demos) |
+| Local dev | **DEV** | any | Supabase CLI local (127.0.0.1:54321) | localhost:5173 | Carlos (dev) |
 
-> DEV y PRE comparten el mismo proyecto Supabase de desarrollo. Si en el futuro se necesita separación completa, se creará un tercer proyecto (PRE dedicado) y se documentará en ADR-006 actualización.
+> DEV usa Supabase CLI local (`supabase start`) — base de datos propia en la máquina, desechable y sin datos reales.
+> PRE usa el proyecto remoto `mkypmakmkxpecuezofkk` con datos demo (`VITE_DEMO_ENABLED=true`).
+> PRO usa el proyecto remoto `vbpgsgxsslccctjhuegt` con datos reales de clientes.
 
 ---
 
@@ -87,7 +89,7 @@ feature-*, refactor-*, fix-*
          │
          ▼
     main → PRO (Vercel deploy automático)
-    lean-ai.consultoriaalpha.com actualizado
+    https://gobytech-prod.vercel.app/ actualizado
 ```
 
 ---

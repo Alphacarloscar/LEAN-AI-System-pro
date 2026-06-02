@@ -20,14 +20,14 @@ AI-Ready Repository System v2.1.0
 
 ## Proyectos por Entorno
 
-| Entorno | Label | Proyecto Supabase | Variables requeridas |
-|---------|-------|-------------------|---------------------|
-| Production | PRO | [COMPLETAR: nombre proyecto Supabase PRO] | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` |
-| Pre-production | PRE | [COMPLETAR: nombre proyecto Supabase DEV] | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` |
-| Development | DEV | [COMPLETAR: nombre proyecto Supabase DEV] (mismo que PRE) | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` |
+| Entorno | Label | Proyecto Supabase | URL | Variables requeridas |
+|---------|-------|-------------------|-----|---------------------|
+| Production | PRO | `vbpgsgxsslccctjhuegt` | https://vbpgsgxsslccctjhuegt.supabase.co | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` |
+| Pre-production | PRE | `mkypmakmkxpecuezofkk` | https://mkypmakmkxpecuezofkk.supabase.co | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` |
+| Development | DEV | local (Supabase CLI) | http://127.0.0.1:54321 | `VITE_SUPABASE_URL=http://127.0.0.1:54321`, `VITE_SUPABASE_ANON_KEY` (ver output de `supabase start`) |
 
-> Obtener credenciales de: **Carlos** via canal seguro (Supabase Dashboard → Project → Settings → API → Project URL + anon key).
-> DEV y PRE usan el mismo proyecto Supabase. Solo PRO tiene un proyecto separado (ADR-006).
+> DEV usa Supabase CLI local — proyecto propio en máquina, desechable. PRE y PRO son proyectos remotos separados (ADR-006).
+> Las credenciales (anon keys) se obtienen de: Supabase Dashboard → proyecto → Settings → API.
 
 ---
 
@@ -101,9 +101,9 @@ AI-Ready Repository System v2.1.0
 - Para QA y demos a potenciales clientes.
 
 ### DEV — Local development (datos desechables)
-- Mismo proyecto Supabase que PRE.
-- Reset libre: ejecutar migration files desde el principio si es necesario.
-- Seed de prueba: `supabase/seed/` (si existe) → ejecutar en SQL Editor proyecto DEV.
+- Supabase CLI local (`supabase start`) — BD propia en la máquina de desarrollo.
+- Reset libre: `supabase db reset` o ejecutar migration files desde el principio.
+- Seed de prueba: `supabase/seed/` (si existe) o ejecutar manualmente en el SQL Editor local (http://127.0.0.1:54323).
 
 ---
 

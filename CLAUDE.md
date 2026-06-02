@@ -209,9 +209,9 @@ Code and documentation are updated in the SAME PR. No exceptions.
 
 | Environment | Label | Database | Branch | URL | Who uses it |
 |-------------|-------|----------|--------|-----|-------------|
-| Production | PRO | Supabase PRO project | `main` | lean-ai.consultoriaalpha.com | Real clients |
-| Pre-production | PRE | Supabase DEV project | `develop` | Vercel preview (automatic) | Carlos, QA |
-| Local | DEV | Supabase DEV project | any | localhost:5173 | Carlos (dev) |
+| Production | PRO | Supabase `vbpgsgxsslccctjhuegt` | `main` | https://gobytech-prod.vercel.app/ | Real clients |
+| Pre-production | PRE | Supabase `mkypmakmkxpecuezofkk` | `develop` | https://v0-lean-ai-system.vercel.app/ | Carlos, QA |
+| Local | DEV | Supabase CLI local (127.0.0.1:54321) | any | localhost:5173 | Carlos (dev) |
 
 **Data rules:**
 - PRO data is sacred. Never copy to PRE or local without anonymization.

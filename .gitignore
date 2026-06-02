@@ -6,3 +6,9 @@ dist/
 .DS_Store
 .vscode/
 *.log
+
+# Logs de conversaciones (no son documentación)
+conversacion-completa-*.md
+
+# Configuración local de Claude Code (IDE)
+.claude/

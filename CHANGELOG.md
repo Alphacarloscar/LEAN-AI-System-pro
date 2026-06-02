@@ -7,7 +7,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-*(El próximo cambio irá aquí)*
+### Changed
+- [Infra] Entornos documentados con URLs y project refs reales: PRO (`gobytech-prod.vercel.app` + Supabase `vbpgsgxsslccctjhuegt`), PRE (`v0-lean-ai-system.vercel.app` + Supabase `mkypmakmkxpecuezofkk`), DEV (Supabase CLI local)
+- [Docs] Actualizado `.ai-config.yml`, `CLAUDE.md`, `ENVIRONMENTS.md`, `DATABASES.md`, `INFRASTRUCTURE.md` con valores reales — eliminados todos los `[COMPLETAR]` de infraestructura
 
 ---
 

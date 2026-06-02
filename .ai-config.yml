@@ -33,11 +33,11 @@ branches:
   environments:
     - branch: "main"
       label: "PRO"
-      url: "lean-ai.consultoriaalpha.com"
+      url: "https://gobytech-prod.vercel.app/"
       auto_deploy: true
     - branch: "develop"
       label: "PRE"
-      url: "[COMPLETAR: URL Vercel preview de develop]"
+      url: "https://v0-lean-ai-system.vercel.app/"
       auto_deploy: true
     - branch: "local"
       label: "DEV"
@@ -63,13 +63,16 @@ branches:
 environments:
   - name: "production"
     branch: "main"
-    supabase_project: "[COMPLETAR: nombre del proyecto Supabase PRO]"
+    supabase_project: "vbpgsgxsslccctjhuegt"
+    supabase_url: "https://vbpgsgxsslccctjhuegt.supabase.co"
   - name: "staging"
     branch: "develop"
-    supabase_project: "[COMPLETAR: nombre del proyecto Supabase DEV/PRE]"
+    supabase_project: "mkypmakmkxpecuezofkk"
+    supabase_url: "https://mkypmakmkxpecuezofkk.supabase.co"
   - name: "local"
     branch: "any"
-    supabase_project: "local (Supabase CLI)"
+    supabase_project: "local"
+    supabase_url: "http://127.0.0.1:54321"
 
 critical_areas:
   - path: "supabase/migrations/"
@@ -111,13 +114,16 @@ databases:
   environments:
     - label: "PRO"
       vars_prefix: "VITE_SUPABASE"
-      project_name: "[COMPLETAR: nombre proyecto Supabase producción]"
+      project_name: "vbpgsgxsslccctjhuegt"
+      url: "https://vbpgsgxsslccctjhuegt.supabase.co"
     - label: "PRE"
       vars_prefix: "VITE_SUPABASE"
-      project_name: "[COMPLETAR: nombre proyecto Supabase desarrollo/staging]"
+      project_name: "mkypmakmkxpecuezofkk"
+      url: "https://mkypmakmkxpecuezofkk.supabase.co"
     - label: "DEV"
       local: true
       vars_prefix: "VITE_SUPABASE"
+      url: "http://127.0.0.1:54321"
 
 claude_md:
   extra_rules:
