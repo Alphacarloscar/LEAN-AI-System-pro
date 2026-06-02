@@ -1,4 +1,4 @@
-name: CI — TypeScript + Build
+name: CI — TypeScript + Tests + Build
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   ci:
-    name: TypeScript Check + Production Build
+    name: TypeScript + Unit Tests + Production Build
     runs-on: ubuntu-latest
 
     steps:
@@ -31,11 +31,16 @@ jobs:
         run: npm run lint
         continue-on-error: false
 
+      - name: Unit + Service tests
+        run: npm run test
+        env:
+          # Vitest usa import.meta.env → en tests está mockeado, pero Vite
+          # necesita estas vars para no lanzar error en módulos no mockeados
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder
+
       - name: Production build
         env:
-          # Variables mínimas para que Vite no falle en build
-          # Las variables VITE_ son reemplazadas en build-time
-          # En CI usamos valores de prueba para verificar que el build compila
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
           VITE_DEMO_ENABLED: 'true'
@@ -58,5 +63,6 @@ jobs:
           echo "═══════════════════════════════════════════════════"
           echo "  TypeScript:  ✓ (0 errors)"
           echo "  Lint:        ✓ (0 warnings)"
+          echo "  Tests:       ✓ (unit + service)"
           echo "  Build:       ✓ (production bundle OK)"
           echo "═══════════════════════════════════════════════════"
