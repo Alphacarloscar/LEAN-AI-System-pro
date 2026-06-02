@@ -20,7 +20,6 @@ function cast<T>(v: unknown): T        { return v as T }
 function castOpt<T>(v: unknown): T | undefined {
   return v == null ? undefined : v as T
 }
-
 export function rowToUseCase(row: UseCaseRow): UseCase {
   return {
     id:                   row.id,
@@ -110,7 +109,7 @@ export async function updateUseCaseInDb(
   engagementId: string,
   updates: Partial<Omit<UseCase, 'id' | 'createdAt'>>,
 ): Promise<void> {
-  const patch: Record<string, unknown> = {}
+  const patch: Partial<Omit<UseCaseRow, 'id' | 'project_id' | 'created_at'>> = {}
 
   if (updates.name             !== undefined) patch.name = updates.name
   if (updates.description      !== undefined) patch.description = updates.description ?? null
@@ -120,15 +119,15 @@ export async function updateUseCaseInDb(
   if (updates.sponsorName      !== undefined) patch.sponsor_name = updates.sponsorName ?? null
   if (updates.responsibleItData !== undefined) patch.responsible_it_data = updates.responsibleItData ?? null
   if (updates.businessObjective !== undefined) patch.business_objective = updates.businessObjective ?? null
-  if (updates.stakeholderScores !== undefined) patch.stakeholder_scores = updates.stakeholderScores
-  if (updates.scores           !== undefined) patch.scores = updates.scores
+  if (updates.stakeholderScores !== undefined) patch.stakeholder_scores = toJson(updates.stakeholderScores)
+  if (updates.scores           !== undefined) patch.scores = toJson(updates.scores)
   if (updates.priorityScore    !== undefined) patch.priority_score = updates.priorityScore
-  if (updates.economics        !== undefined) patch.economics = updates.economics ?? null
-  if (updates.goNoGo           !== undefined) patch.go_no_go = updates.goNoGo ?? null
-  if (updates.roadmap          !== undefined) patch.roadmap = updates.roadmap ?? null
-  if (updates.t1Context        !== undefined) patch.t1_context = updates.t1Context ?? null
-  if (updates.t2Context        !== undefined) patch.t2_context = updates.t2Context ?? null
-  if (updates.aiActClassification !== undefined) patch.ai_act_classification = updates.aiActClassification ?? null
+  if (updates.economics        !== undefined) patch.economics = updates.economics ? toJson(updates.economics) : null
+  if (updates.goNoGo           !== undefined) patch.go_no_go = updates.goNoGo ? toJson(updates.goNoGo) : null
+  if (updates.roadmap          !== undefined) patch.roadmap = updates.roadmap ? toJson(updates.roadmap) : null
+  if (updates.t1Context        !== undefined) patch.t1_context = updates.t1Context ? toJson(updates.t1Context) : null
+  if (updates.t2Context        !== undefined) patch.t2_context = updates.t2Context ? toJson(updates.t2Context) : null
+  if (updates.aiActClassification !== undefined) patch.ai_act_classification = updates.aiActClassification ? toJson(updates.aiActClassification) : null
   if (updates.notes            !== undefined) patch.notes = updates.notes ?? null
 
   // NOTA: la tabla use_cases no tiene columna updated_at — no añadir al patch.

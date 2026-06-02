@@ -49,7 +49,7 @@ function makeStakeholder(overrides: Partial<Stakeholder> = {}): Stakeholder {
     department: 'Operaciones',
     archetype:  'decisor',
     resistance: 'media',
-    interview:  { adoptionScore: 70, influenceScore: 85, opennessScore: 60 },
+    interview:  { answers: {}, adoptionScore: 70, influenceScore: 85, opennessScore: 60, archetype: 'decisor', resistance: 'media', computedAt: '2026-01-01T00:00:00.000Z' },
     notes:      'Muy orientado a ROI',
     createdAt:  '2026-01-01T00:00:00.000Z',
     ...overrides,

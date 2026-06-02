@@ -27,6 +27,7 @@ function makeProject(overrides: Partial<ProjectRow> = {}): ProjectRow {
     status:        'active',
     current_phase: 'listen',
     start_date:    '2026-01-01',
+    end_date:      null,
     created_at:    '2026-01-01T09:00:00.000Z',
     updated_at:    '2026-01-01T09:00:00.000Z',
     ...overrides,

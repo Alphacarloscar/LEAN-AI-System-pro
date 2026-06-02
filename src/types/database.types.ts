@@ -5,6 +5,11 @@
 //
 // ⚠ Este archivo es FUENTE DE VERDAD para los tipos de BD.
 //   No editar manualmente — cambiar el schema SQL primero.
+//
+// IMPORTANT: All Row types MUST be `type`, not `interface`.
+// TypeScript interfaces do not satisfy Record<string, unknown>
+// in conditional type checks (Supabase GenericSchema constraint),
+// causing Schema=never and all .data types to collapse to never.
 // ============================================================
 
 export type Json =
@@ -28,11 +33,15 @@ export type LeanPhase     = 'listen' | 'evaluate' | 'activate' | 'normalize' | '
 export type ISO42001Status = 'no_iniciado' | 'en_progreso' | 'implementado'
 export type UseCaseStatus = 'candidato' | 'priorizado' | 'go' | 'no_go' | 'en_piloto' | 'completado'
 
+// ── Friction enums ────────────────────────────────────────────
+export type FrictionFrequency = 'Baja' | 'Media' | 'Alta'
+export type FrictionImpact    = 'Bajo' | 'Medio' | 'Alto'
+
 // ============================================================
 // Filas (SELECT results)
 // ============================================================
 
-export interface CompanyRow {
+export type CompanyRow = {
   id:           string
   name:         string
   slug:         string | null
@@ -41,7 +50,7 @@ export interface CompanyRow {
   created_at:   string
 }
 
-export interface CompanyDepartmentRow {
+export type CompanyDepartmentRow = {
   id:         string
   company_id: string
   name:       string
@@ -49,7 +58,7 @@ export interface CompanyDepartmentRow {
   created_at: string
 }
 
-export interface ProfileRow {
+export type ProfileRow = {
   id:         string
   email:      string
   name:       string
@@ -58,7 +67,7 @@ export interface ProfileRow {
   created_at: string
 }
 
-export interface ProjectRow {
+export type ProjectRow = {
   id:            string
   name:          string
   owner_id:      string
@@ -71,14 +80,14 @@ export interface ProjectRow {
   updated_at:    string
 }
 
-export interface ProjectMemberRow {
+export type ProjectMemberRow = {
   project_id: string
   user_id:    string
   role:       MemberRole
   added_at:   string
 }
 
-export interface CompanyProfileRow {
+export type CompanyProfileRow = {
   id:                     string
   project_id:             string
   project_name:           string
@@ -94,18 +103,18 @@ export interface CompanyProfileRow {
   updated_at:             string
 }
 
-export interface FrictionRow {
+export type FrictionRow = {
   id:             string
   project_id:     string
   tipo:           string
   area_funcional: string
-  frecuencia:     'Baja' | 'Media' | 'Alta' | null
-  impacto:        'Bajo' | 'Medio' | 'Alto' | null
+  frecuencia:     FrictionFrequency | null
+  impacto:        FrictionImpact | null
   notas:          string
   created_at:     string
 }
 
-export interface T1DimensionScoreRow {
+export type T1DimensionScoreRow = {
   id:                     string
   project_id:             string
   dimension_code:         string
@@ -120,7 +129,7 @@ export interface T1DimensionScoreRow {
   updated_at:             string
 }
 
-export interface StakeholderRow {
+export type StakeholderRow = {
   id:               string
   project_id:       string
   name:             string
@@ -135,7 +144,7 @@ export interface StakeholderRow {
   created_at:       string
 }
 
-export interface ValueStreamRow {
+export type ValueStreamRow = {
   id:                string
   project_id:        string
   name:              string
@@ -155,7 +164,7 @@ export interface ValueStreamRow {
   created_at:        string
 }
 
-export interface UseCaseRow {
+export type UseCaseRow = {
   id:                    string
   project_id:            string
   name:                  string
@@ -181,7 +190,7 @@ export interface UseCaseRow {
   updated_at:            string
 }
 
-export interface T5CanvasRow {
+export type T5CanvasRow = {
   id:                  string
   project_id:          string
   company_name:        string
@@ -193,7 +202,7 @@ export interface T5CanvasRow {
   updated_at:          string
 }
 
-export interface ISO42001ControlRow {
+export type ISO42001ControlRow = {
   id:            string
   project_id:    string
   code:          string
@@ -208,18 +217,36 @@ export interface ISO42001ControlRow {
 
 // ============================================================
 // Inserts (campos requeridos al insertar)
+// id excluded from base Omit + added back as optional so Postgres
+// auto-generates the UUID when the caller doesn't provide one.
 // ============================================================
 
-export type CompanyInsert          = Omit<CompanyRow, 'created_at'> & { id?: string }
-export type ProjectInsert          = Omit<ProjectRow, 'created_at' | 'updated_at'> & { id?: string }
-export type CompanyProfileInsert   = Omit<CompanyProfileRow, 'created_at' | 'updated_at'> & { id?: string }
-export type FrictionInsert         = Omit<FrictionRow, 'created_at'> & { id?: string }
-export type T1DimensionScoreInsert = Omit<T1DimensionScoreRow, 'id' | 'updated_at'> & { id?: string }
-export type StakeholderInsert      = Omit<StakeholderRow, 'created_at'> & { id?: string }
-export type ValueStreamInsert      = Omit<ValueStreamRow, 'created_at'> & { id?: string }
-export type UseCaseInsert          = Omit<UseCaseRow, 'created_at' | 'updated_at'> & { id?: string }
-export type T5CanvasInsert         = Omit<T5CanvasRow, 'created_at' | 'updated_at'> & { id?: string }
-export type ISO42001ControlInsert  = Omit<ISO42001ControlRow, never>
+// Sprint 10: sector + company_size were added to companies. createCompany service
+// only provides name + slug, so these fields are optional at insert time.
+export type CompanyInsert = Omit<CompanyRow, 'created_at' | 'id' | 'sector' | 'company_size'> & {
+  id?:           string
+  sector?:       string
+  company_size?: string
+}
+
+// Sprint 10: sector + tamano_empresa live in `companies`. company_profiles still
+// has these columns for backward compat but profileToUpsert() doesn't write them.
+// updated_at is explicitly set by the service on each upsert.
+export type CompanyProfileInsert = Omit<CompanyProfileRow, 'created_at' | 'id' | 'sector' | 'tamano_empresa'> & {
+  id?:             string
+  sector?:         string
+  tamano_empresa?: string
+}
+
+export type CompanyDepartmentInsert = Omit<CompanyDepartmentRow, 'created_at' | 'id'> & { id?: string }
+export type ProjectInsert           = Omit<ProjectRow, 'created_at' | 'updated_at' | 'id'> & { id?: string }
+export type FrictionInsert          = Omit<FrictionRow, 'created_at' | 'id'> & { id?: string }
+export type T1DimensionScoreInsert  = Omit<T1DimensionScoreRow, 'id' | 'updated_at'> & { id?: string }
+export type StakeholderInsert       = Omit<StakeholderRow, 'created_at' | 'id'> & { id?: string }
+export type ValueStreamInsert       = Omit<ValueStreamRow, 'created_at' | 'id'> & { id?: string }
+export type UseCaseInsert           = Omit<UseCaseRow, 'created_at' | 'updated_at' | 'id'> & { id?: string }
+export type T5CanvasInsert          = Omit<T5CanvasRow, 'created_at' | 'updated_at' | 'id'> & { id?: string }
+export type ISO42001ControlInsert   = Omit<ISO42001ControlRow, 'id'> & { id?: string }
 
 // ── Alias de compatibilidad (deprecados — usar nombres nuevos)
 /** @deprecated Usar ProjectRow */
@@ -230,76 +257,95 @@ export type EngagementMemberRow = ProjectMemberRow
 export type EngagementStatus = ProjectStatus
 
 // ============================================================
-// Database interface
+// Database type
+// MUST be `type`, not `interface` — same reason as Row types.
 // ============================================================
 
-type NoRelationships = { Relationships: [] }
-
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       companies: {
-        Row:    CompanyRow
-        Insert: CompanyInsert
-        Update: Partial<Omit<CompanyRow, 'id' | 'created_at'>>
-      } & NoRelationships
+        Row:           CompanyRow
+        Insert:        CompanyInsert
+        Update:        Partial<Omit<CompanyRow, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      company_departments: {
+        Row:           CompanyDepartmentRow
+        Insert:        CompanyDepartmentInsert
+        Update:        Partial<Omit<CompanyDepartmentRow, 'id' | 'created_at'>>
+        Relationships: []
+      }
       profiles: {
-        Row:    ProfileRow
-        Insert: Omit<ProfileRow, 'created_at'>
-        Update: Partial<Omit<ProfileRow, 'id'>>
-      } & NoRelationships
+        Row:           ProfileRow
+        Insert:        Omit<ProfileRow, 'created_at'>
+        Update:        Partial<Omit<ProfileRow, 'id'>>
+        Relationships: []
+      }
       projects: {
-        Row:    ProjectRow
-        Insert: ProjectInsert
-        Update: Partial<Omit<ProjectRow, 'id' | 'created_at'>>
-      } & NoRelationships
+        Row:           ProjectRow
+        Insert:        ProjectInsert
+        Update:        Partial<Omit<ProjectRow, 'id' | 'created_at'>>
+        Relationships: []
+      }
       project_members: {
-        Row:    ProjectMemberRow
-        Insert: Omit<ProjectMemberRow, 'added_at'>
-        Update: Partial<Pick<ProjectMemberRow, 'role'>>
-      } & NoRelationships
+        Row:           ProjectMemberRow
+        Insert:        Omit<ProjectMemberRow, 'added_at'>
+        Update:        Partial<Pick<ProjectMemberRow, 'role'>>
+        Relationships: []
+      }
       company_profiles: {
-        Row:    CompanyProfileRow
-        Insert: CompanyProfileInsert
-        Update: Partial<Omit<CompanyProfileRow, 'id' | 'project_id' | 'created_at'>>
-      } & NoRelationships
+        Row:           CompanyProfileRow
+        Insert:        CompanyProfileInsert
+        Update:        Partial<Omit<CompanyProfileRow, 'id' | 'project_id' | 'created_at'>>
+        Relationships: []
+      }
       frictions: {
-        Row:    FrictionRow
-        Insert: FrictionInsert
-        Update: Partial<Omit<FrictionRow, 'id' | 'project_id' | 'created_at'>>
-      } & NoRelationships
+        Row:           FrictionRow
+        Insert:        FrictionInsert
+        Update:        Partial<Omit<FrictionRow, 'id' | 'project_id' | 'created_at'>>
+        Relationships: []
+      }
       t1_dimension_scores: {
-        Row:    T1DimensionScoreRow
-        Insert: T1DimensionScoreInsert
-        Update: Partial<Omit<T1DimensionScoreRow, 'id' | 'project_id'>>
-      } & NoRelationships
+        Row:           T1DimensionScoreRow
+        Insert:        T1DimensionScoreInsert
+        Update:        Partial<Omit<T1DimensionScoreRow, 'id' | 'project_id'>>
+        Relationships: []
+      }
       stakeholders: {
-        Row:    StakeholderRow
-        Insert: StakeholderInsert
-        Update: Partial<Omit<StakeholderRow, 'id' | 'project_id' | 'created_at'>>
-      } & NoRelationships
+        Row:           StakeholderRow
+        Insert:        StakeholderInsert
+        Update:        Partial<Omit<StakeholderRow, 'id' | 'project_id' | 'created_at'>>
+        Relationships: []
+      }
       value_streams: {
-        Row:    ValueStreamRow
-        Insert: ValueStreamInsert
-        Update: Partial<Omit<ValueStreamRow, 'id' | 'project_id' | 'created_at'>>
-      } & NoRelationships
+        Row:           ValueStreamRow
+        Insert:        ValueStreamInsert
+        Update:        Partial<Omit<ValueStreamRow, 'id' | 'project_id' | 'created_at'>>
+        Relationships: []
+      }
       use_cases: {
-        Row:    UseCaseRow
-        Insert: UseCaseInsert
-        Update: Partial<Omit<UseCaseRow, 'id' | 'project_id' | 'created_at'>>
-      } & NoRelationships
+        Row:           UseCaseRow
+        Insert:        UseCaseInsert
+        Update:        Partial<Omit<UseCaseRow, 'id' | 'project_id' | 'created_at'>>
+        Relationships: []
+      }
       t5_canvas: {
-        Row:    T5CanvasRow
-        Insert: T5CanvasInsert
-        Update: Partial<Omit<T5CanvasRow, 'id' | 'project_id' | 'created_at'>>
-      } & NoRelationships
+        Row:           T5CanvasRow
+        Insert:        T5CanvasInsert
+        Update:        Partial<Omit<T5CanvasRow, 'id' | 'project_id' | 'created_at'>>
+        Relationships: []
+      }
       iso42001_controls: {
-        Row:    ISO42001ControlRow
-        Insert: ISO42001ControlInsert
-        Update: Partial<Omit<ISO42001ControlRow, 'id' | 'project_id'>>
-      } & NoRelationships
+        Row:           ISO42001ControlRow
+        Insert:        ISO42001ControlInsert
+        Update:        Partial<Omit<ISO42001ControlRow, 'id' | 'project_id'>>
+        Relationships: []
+      }
     }
-    Views: Record<string, never>
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
       is_project_member: {
         Args:    { pid: string }
@@ -313,8 +359,32 @@ export interface Database {
         Args:    Record<string, never>
         Returns: boolean
       }
+      // Persists tool output — SECURITY DEFINER, handles RLS internally
+      save_tool_output: {
+        Args: {
+          p_project_id:       string
+          p_tool_code:        string
+          p_payload:          Record<string, unknown>
+          p_stale_after?:     string
+          p_payload_version?: number
+        }
+        Returns: string  // uuid of the saved record
+      }
+      // Creates project + initial project_member row — SECURITY DEFINER
+      create_project: {
+        Args: {
+          p_name:       string
+          p_company_id: string | null
+          p_phase:      LeanPhase
+        }
+        Returns: ProjectRow[]
+      }
     }
-    Enums: Record<string, never>
-    CompositeTypes: Record<string, never>
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
 }

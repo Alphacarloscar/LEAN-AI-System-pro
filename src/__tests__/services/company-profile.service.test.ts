@@ -45,8 +45,8 @@ function makeFrictionRow(overrides: Partial<FrictionRow> = {}): FrictionRow {
     project_id:     ENG_ID,
     tipo:           'proceso manual repetitivo',
     area_funcional: 'Finanzas',
-    frecuencia:     'diaria',
-    impacto:        'alto',
+    frecuencia:     'Baja',
+    impacto:        'Alto',
     notas:          'Conciliación bancaria manual cada mañana',
     created_at:     '2026-01-01T00:00:00.000Z',
     ...overrides,
@@ -93,7 +93,7 @@ describe('rowToCompanyProfile', () => {
   })
 
   it('maneja campos nullables con string vacío por defecto', () => {
-    const row    = makeProfileRow({ sector: null, tamano_empresa: null })
+    const row    = makeProfileRow({ sector: '', tamano_empresa: '' })
     const result = rowToCompanyProfile(row)
 
     expect(result.sector).toBe('')
@@ -111,8 +111,8 @@ describe('rowToFriction', () => {
     expect(result.id).toBe('fr-001')
     expect(result.tipo).toBe('proceso manual repetitivo')
     expect(result.areaFuncional).toBe('Finanzas')
-    expect(result.frecuencia).toBe('diaria')
-    expect(result.impacto).toBe('alto')
+    expect(result.frecuencia).toBe('Baja')
+    expect(result.impacto).toBe('Alto')
     expect(result.notas).toBe('Conciliación bancaria manual cada mañana')
   })
 })
@@ -254,7 +254,7 @@ describe('upsertCompanyProfile', () => {
 
     const friction: Friction = {
       id: 'fr-1', tipo: 'proceso manual', areaFuncional: 'RRHH',
-      frecuencia: 'semanal', impacto: 'medio', notas: undefined,
+      frecuencia: 'Media', impacto: 'Medio', notas: '',
     }
     const profile = makeProfile({ fricciones: [friction] })
     await upsertCompanyProfile(profile, ENG_ID)

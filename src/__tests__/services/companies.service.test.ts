@@ -23,13 +23,12 @@ import type { CompanyRow } from '@/types/database.types'
 
 function makeCompany(overrides: Partial<CompanyRow> = {}): CompanyRow {
   return {
-    id:         'comp-001',
-    name:       'Acme Corp',
-    slug:       'acme-corp',
-    sector:     'tecnologia',
+    id:           'comp-001',
+    name:         'Acme Corp',
+    slug:         'acme-corp',
+    sector:       'tecnologia',
     company_size: 'mediana',
-    created_at: '2026-01-01T00:00:00.000Z',
-    updated_at: '2026-01-01T00:00:00.000Z',
+    created_at:   '2026-01-01T00:00:00.000Z',
     ...overrides,
   }
 }

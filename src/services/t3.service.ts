@@ -100,7 +100,7 @@ export async function updateValueStreamInDb(
   engagementId: string,
   updates: Partial<Omit<ValueStream, 'id' | 'createdAt'>>,
 ): Promise<void> {
-  const patch: Record<string, unknown> = {}
+  const patch: Partial<Omit<ValueStreamRow, 'id' | 'project_id' | 'created_at'>> = {}
 
   if (updates.name             !== undefined) patch.name = updates.name
   if (updates.department       !== undefined) patch.department = updates.department

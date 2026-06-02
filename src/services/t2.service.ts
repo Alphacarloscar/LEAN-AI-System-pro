@@ -88,7 +88,7 @@ export async function updateStakeholderInDb(
   engagementId: string,
   updates: Partial<Omit<Stakeholder, 'id' | 'createdAt'>>,
 ): Promise<void> {
-  const patch: Record<string, unknown> = {}
+  const patch: Partial<Omit<StakeholderRow, 'id' | 'project_id' | 'created_at'>> = {}
 
   if (updates.name           !== undefined) patch.name = updates.name
   if (updates.role           !== undefined) patch.role = updates.role
