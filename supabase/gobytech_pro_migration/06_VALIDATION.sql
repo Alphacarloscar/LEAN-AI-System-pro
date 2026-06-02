@@ -155,7 +155,8 @@ DECLARE
     'check_and_log_ai_call',
     'save_tool_output',
     'set_updated_at',
-    'set_audit_columns'
+    'set_audit_columns',
+    'create_project'
   ];
 BEGIN
   FOREACH v_fn IN ARRAY v_fns LOOP
@@ -171,7 +172,7 @@ BEGIN
   IF v_missing <> '' THEN
     RAISE EXCEPTION '[CHECK 05 FAIL] Funciones faltantes: %', v_missing;
   ELSE
-    RAISE NOTICE '[CHECK 05 OK] Las 12 funciones críticas existen';
+    RAISE NOTICE '[CHECK 05 OK] Las 13 funciones críticas existen';
   END IF;
 END $$;
 
