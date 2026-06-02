@@ -9,7 +9,10 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
 
   use: {
-    baseURL: 'http://localhost:5173',
+    // Soporte multi-puerto: E2E_BASE_URL sobreescribe si la app usa puerto distinto
+    // Por defecto 5173, pero Vite puede usar 5174 si 5173 está ocupado.
+    // Ejemplo: E2E_BASE_URL=http://localhost:5174 npm run test:e2e
+    baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:5173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -21,10 +24,11 @@ export default defineConfig({
     },
   ],
 
-  // Arranca el servidor de desarrollo antes de los E2E si no está ya corriendo
+  // Arranca el servidor de desarrollo antes de los E2E si no está ya corriendo.
+  // reuseExistingServer: true → si ya corre en el puerto, lo reutiliza.
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:5173',
+    url: process.env.E2E_BASE_URL ?? 'http://localhost:5173',
     reuseExistingServer: true,
     timeout: 30_000,
   },
