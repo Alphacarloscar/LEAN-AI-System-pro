@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "description": "GOBY — Alpha Consulting Solutions S.L.",
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0 <23.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

@@ -16,7 +16,7 @@
 // Entrevistados ya presentes en T2 (por nombre) → deshabilitados.
 // ============================================================
 
-import { useState }             from 'react'
+import { useState, useEffect }  from 'react'
 import { useT1Store }           from '@/modules/T1_MaturityRadar/store'
 import { useT2Store }           from '../store'
 import { useEngagementStore }   from '@/modules/Engagement/store'
@@ -28,8 +28,16 @@ interface ImportFromT1ModalProps {
 
 export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
   const interviewees              = useT1Store((s) => s.interviewees)
+  const isT1Loading               = useT1Store((s) => s.isLoading)
   const { stakeholders, addStakeholder } = useT2Store()
   const engagementId              = useEngagementStore((s) => s.activeEngagementId)
+
+  // Si T1 no fue visitado en esta sesión, el store puede estar vacío.
+  // Disparamos ensureLoaded al montar el modal para garantizar datos frescos.
+  useEffect(() => {
+    if (!engagementId) return
+    useT1Store.getState().ensureLoaded(engagementId, { reason: 'ImportFromT1Modal mount' })
+  }, [engagementId])
 
   const [selected, setSelected]   = useState<Set<string>>(new Set())
   const [importing, setImporting] = useState(false)
@@ -159,7 +167,21 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
             {/* Lista */}
             <div className="flex-1 overflow-y-auto px-7 py-4 flex flex-col gap-2.5">
 
-              {interviewees.length === 0 && (
+              {isT1Loading && interviewees.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
+                  <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
+                    flex items-center justify-center">
+                    <svg className="animate-spin h-5 w-5 text-text-subtle" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                  </div>
+                  <p className="text-xs text-text-subtle">Cargando entrevistados desde T1…</p>
+                </div>
+              )}
+
+              {!isT1Loading && interviewees.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
                   <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
                     flex items-center justify-center text-2xl">◎</div>
