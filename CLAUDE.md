@@ -1,7 +1,7 @@
 ﻿# CLAUDE.md — GOBY
 # AI-Ready Repository System v2.1.0
 # Human docs language: Spanish | AI files language: English
-# Last updated: 2026-06-01 | Owner: Carlos Sánchez (COO, co-fundador)
+# Last updated: 2026-06-02 | Owner: Carlos Sánchez (COO, co-fundador)
 
 > THIS FILE IS THE OPERATING CONTRACT BETWEEN ANY AI AND THIS REPOSITORY.
 > Read this completely at the start of EVERY work session.
@@ -52,6 +52,12 @@ These decisions are final. Do not question them unless Carlos explicitly says "I
 | ADR-007 | Zustand for global state management (over Redux/Context) | ACCEPTED | docs/decisions/technical/ADR-007-zustand-state-management.md |
 | ADR-008 | Four-role system: superadmin / consultant / client_editor / client_viewer | ACCEPTED | docs/decisions/technical/ADR-008-four-role-system.md |
 | ADR-009 | Claude API via Supabase Edge Functions for AI recommendations | ACCEPTED | docs/decisions/technical/ADR-009-claude-api-via-edge-functions.md |
+| ADR-010 | Sentry for error monitoring across DEV/PRE/PRO | ACCEPTED | docs/decisions/technical/ADR-010-sentry-error-monitoring.md |
+| ADR-011 | Service layer — Supabase calls isolated in src/services/ | ACCEPTED | docs/decisions/technical/ADR-011-service-layer-supabase-isolation.md |
+| ADR-012 | xlsx package removed (CVE-2023-30533) | ACCEPTED | docs/decisions/technical/ADR-012-xlsx-removal.md |
+| ADR-013 | View component decomposition — 400-line limit per file | ACCEPTED | docs/decisions/technical/ADR-013-component-decomposition-rule.md |
+| ADR-014 | Generic useEdgeFunctionInvoke hook for LLM generation flows | ACCEPTED | docs/decisions/technical/ADR-014-edge-function-hook-pattern.md |
+| ADR-015 | Zod runtime validation for Supabase JSONB fields | ACCEPTED | docs/decisions/technical/ADR-015-zod-jsonb-validation.md |
 
 **Strategic decisions** (product/market, not technical): → DECISIONES_ESTRATEGICAS.md
 
@@ -141,13 +147,38 @@ Run grep over `/src` to get the exhaustive list. Document the list at the start 
 ✓ TypeScript: tsc --noEmit → 0 errors
 ```
 
-### Module architecture rules (from ARQUITECTURA.md)
-- Each tool T1-T13 is an independent module in `src/modules/T[N]_[Name]/`
-- Data access only through `src/services/` — never import Supabase directly in components
+### Module architecture rules (from ARQUITECTURA.md + ADR-011/013/014/015)
+
+**File size limits (ADR-013):**
+- `*View.tsx` and component files: max 400 lines. Extract to `components/` subfolder when approaching limit.
+- Service files, store files, type files, tests: no hard limit.
+
+**Supabase isolation (ADR-011):**
 - NEVER import `@supabase/supabase-js` outside of `src/lib/supabase.ts`
-- State in `src/stores/` using Zustand — no prop drilling for cross-module state
-- Types in `src/types/` — explicit typing, avoid `any` in DB interfaces
-- Path aliases: `@/` = src/, `@shared/` = src/shared/, `@services/` = src/services/, `@modules/` = src/modules/
+- NEVER import `{ supabase }` from `@/lib/supabase` in Zustand stores or React components
+- ALL Supabase DB calls go through `src/services/t[n].service.ts`
+- Exception: `supabase.functions.invoke` may appear in components for Edge Function calls (T3 ProcessDetailPanel)
+
+**LLM generation hooks (ADR-014):**
+- ALL hooks that call `ai-recommend` Edge Function MUST use `useEdgeFunctionInvoke` from `src/hooks/useEdgeFunctionInvoke.ts`
+- NEVER inline `supabase.functions.invoke` for generation flows
+
+**Error reporting (ADR-010):**
+- Use `reportError(context, err)` from `src/lib/reportError.ts` in catch blocks of stores and services
+- Do NOT use `console.error` directly in stores — routes to Sentry + console
+
+**JSONB validation (ADR-015):**
+- Zod schemas for JSONB fields in `src/lib/schemas/t4.schemas.ts`
+- Use `safeParseJsonField()` when reading JSONB from Supabase (non-breaking, Sentry-reported)
+- Add schemas when adding new JSONB columns
+
+**Sentry (ADR-010):**
+- `VITE_SENTRY_ENABLED=false` locally always
+- `SENTRY_AUTH_TOKEN` is NOT a VITE_ variable — build-time only, never in client bundle
+- `ANTHROPIC_API_KEY` is ONLY in Supabase Edge Function Secrets — never in .env or Vercel client vars
+
+**Path aliases:**
+- `@/` = src/, `@shared/` = src/shared/, `@services/` = src/services/, `@modules/` = src/modules/
 
 ---
 

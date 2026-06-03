@@ -7,7 +7,40 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Changed
+### Added (P1 — Refactor Sprint)
+- [Monitoring] Sentry `@sentry/react@10` integrado — error monitoring en DEV/PRE/PRO (ADR-010)
+  - `src/lib/sentry.ts` con `initSentry()` — desactivado localmente (`VITE_SENTRY_ENABLED=false`)
+  - `src/lib/reportError.ts` — wrapper `reportError(context, err)` → console.error + Sentry
+  - `.env.example` actualizado con todas las variables Sentry documentadas
+  - `vite.config.ts` — `sentryVitePlugin` condicional (solo PRO cuando `SENTRY_AUTH_TOKEN` presente)
+- [Services] Service layer T6/T7/T8 extraído de stores (ADR-011)
+  - `src/services/t6.service.ts` — `savePolicyOutput()`
+  - `src/services/t7.service.ts` — `saveChangePlanOutput()`
+  - `src/services/t8.service.ts` — `saveCommunicationOutput()`
+- [Tests] 12 nuevos tests — T6/T7/T8 services (4 cada uno, patrón `vi.mock + rpc`)
+
+### Changed (P1 — Refactor Sprint)
+- [T4] T4View.tsx descompuesto (2386 → ~220 líneas): 9 sub-componentes extraídos a `components/` (ADR-013)
+- [Deps] `xlsx@0.18.5` eliminado — CVE-2023-30533, zero imports en codebase (ADR-012)
+- [Stores] T6/T7/T8 stores: imports directos de Supabase reemplazados por llamadas a services
+
+### Added (P2 — Refactor Sprint)
+- [Hooks] `src/hooks/useEdgeFunctionInvoke.ts` — hook genérico para flujos LLM (ADR-014)
+  - `usePolicyGeneration`, `useT8Generation`, `useChangePlanGeneration` refactorizados (~50 líneas c/u)
+  - T6 gana timeout 90s que le faltaba (bug fix)
+- [Schemas] `src/lib/schemas/t4.schemas.ts` — Zod schemas para JSONB fields (ADR-015)
+  - `UseCaseScoresSchema`, `StakeholderScoresSchema`, `GoNoGoDecisionSchema`, `UseCaseEconomicsSchema`, `AIActClassificationSchema`
+  - `safeParseJsonField()` integrado en `t4.service.ts`  `rowToUseCase()`
+- [T3] T3View.tsx descompuesto (1202 → ~220 líneas): 5 sub-componentes extraídos (ADR-013)
+  - `T3Badges.tsx`, `HeroOpportunityMatrix.tsx`, `HeroCategoryDonut.tsx`, `DetailPositionMap.tsx`, `ProcessDetailPanel.tsx`
+
+### Changed (P2 — Refactor Sprint)
+- [Types] `PolicyPDF.tsx`: tipos locales `UseCase` y `Domain` reemplazados con imports de T4/T5 (ADR-011)
+- [Stores] T1/T4 stores: todos los `console.error` reemplazados con `reportError()` (ADR-010)
+- [ADRs] Documentadas 6 decisiones técnicas nuevas: ADR-010 a ADR-015
+- [CLAUDE.md] Reglas de diseño actualizadas con patrones P1+P2
+
+### Changed (P0 — Infrastructure)
 - [Infra] Entornos documentados con URLs y project refs reales: PRO (`gobytech-prod.vercel.app` + Supabase `vbpgsgxsslccctjhuegt`), PRE (`v0-lean-ai-system.vercel.app` + Supabase `mkypmakmkxpecuezofkk`), DEV (Supabase CLI local)
 - [Docs] Actualizado `.ai-config.yml`, `CLAUDE.md`, `ENVIRONMENTS.md`, `DATABASES.md`, `INFRASTRUCTURE.md` con valores reales — eliminados todos los `[COMPLETAR]` de infraestructura
 

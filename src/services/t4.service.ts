@@ -12,14 +12,21 @@
 import { supabase }       from '@/lib/supabase'
 import type { Json, UseCaseRow, UseCaseInsert } from '@/types/database.types'
 import type { UseCase }   from '@/modules/T4_UseCasePriorityBoard/types'
+import {
+  safeParseJsonField,
+  UseCaseScoresSchema,
+  StakeholderScoresSchema,
+  GoNoGoDecisionSchema,
+  UseCaseEconomicsSchema,
+  AIActClassificationSchema,
+} from '@/lib/schemas/t4.schemas'
 
 // ── Mapeo BD → dominio ───────────────────────────────────────
 
-// Alias para aplanar el cast Json → tipo de dominio (via unknown)
-function cast<T>(v: unknown): T        { return v as T }
 function castOpt<T>(v: unknown): T | undefined {
   return v == null ? undefined : v as T
 }
+
 export function rowToUseCase(row: UseCaseRow): UseCase {
   return {
     id:                   row.id,
@@ -32,15 +39,15 @@ export function rowToUseCase(row: UseCaseRow): UseCase {
     responsibleItData:    row.responsible_it_data ?? undefined,
     businessObjective:    row.business_objective ?? undefined,
     importedFromT3:       castOpt<UseCase['importedFromT3']>(row.imported_from_t3),
-    stakeholderScores:    cast<UseCase['stakeholderScores']>(row.stakeholder_scores) ?? [],
-    scores:               cast<UseCase['scores']>(row.scores),
+    stakeholderScores:    safeParseJsonField(StakeholderScoresSchema, row.stakeholder_scores, 'stakeholder_scores') ?? [],
+    scores:               safeParseJsonField(UseCaseScoresSchema, row.scores, 'scores') as UseCase['scores'],
     priorityScore:        Number(row.priority_score),
-    economics:            castOpt<UseCase['economics']>(row.economics),
-    goNoGo:               castOpt<UseCase['goNoGo']>(row.go_no_go),
+    economics:            safeParseJsonField(UseCaseEconomicsSchema, row.economics, 'economics'),
+    goNoGo:               safeParseJsonField(GoNoGoDecisionSchema, row.go_no_go, 'go_no_go'),
     roadmap:              castOpt<UseCase['roadmap']>(row.roadmap),
     t1Context:            castOpt<UseCase['t1Context']>(row.t1_context),
     t2Context:            castOpt<UseCase['t2Context']>(row.t2_context),
-    aiActClassification:  castOpt<UseCase['aiActClassification']>(row.ai_act_classification),
+    aiActClassification:  safeParseJsonField(AIActClassificationSchema, row.ai_act_classification, 'ai_act_classification'),
     notes:                row.notes ?? undefined,
     createdAt:            row.created_at,
   }

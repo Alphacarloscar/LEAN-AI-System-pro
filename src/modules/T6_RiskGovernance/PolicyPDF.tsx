@@ -18,22 +18,8 @@ import {
   StyleSheet,
   BlobProvider,
 } from '@react-pdf/renderer'
-
-// ── Types de los datos que necesita el PDF ──────────────────────
-
-interface UseCase {
-  id:     string
-  name:   string
-  department: string
-  status: string
-  aiActClassification?: { riskLevel: string } | null
-}
-
-interface Domain {
-  domainCode:     string
-  priorityScore:  number
-  suggestedOwner: string
-}
+import type { UseCase }            from '@/modules/T4_UseCasePriorityBoard/types'
+import type { T5DomainAssessment } from '@/modules/T5_AITaxonomyCanvas/types'
 
 export interface PolicyPDFData {
   companyName:      string
@@ -41,8 +27,8 @@ export interface PolicyPDFData {
   nextReviewStr:    string
   approvedCases:    UseCase[]
   highRiskCases:    UseCase[]
-  activeDomains:    Array<{ code: string; domain: Domain }>
-  ownerDomains:     Domain[]
+  activeDomains:    Array<{ code: string; domain: T5DomainAssessment }>
+  ownerDomains:     T5DomainAssessment[]
   /** Contenido narrativo generado por LLM (opcional — si no existe, se usa plantilla) */
   generatedPolicy?: {
     declaracion_opening:  string

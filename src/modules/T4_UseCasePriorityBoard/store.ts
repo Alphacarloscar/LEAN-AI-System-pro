@@ -21,7 +21,8 @@ import {
   updateUseCaseInDb,
   deleteUseCaseFromDb,
 } from '@/services/t4.service'
-import { logTrace } from '@/lib/loadTrace'
+import { logTrace }    from '@/lib/loadTrace'
+import { reportError } from '@/lib/reportError'
 
 const STALE_MS = 5 * 60_000
 
@@ -118,8 +119,7 @@ export const useT4Store = create<T4Store>()(
           set({ useCases, isLoading: false, isLoaded: true, lastLoadedAt: Date.now() })
         } catch (err) {
           if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
-          const isTimeout = (err as Error)?.message === 'T4_LOAD_TIMEOUT'
-          console.error('[T4 Store] ERROR:', isTimeout ? 'timeout (>10s) — check Supabase connection' : err)
+          reportError('[T4Store] load', err)
           set({ isLoading: false, isLoaded: false })
         }
       },
@@ -135,7 +135,7 @@ export const useT4Store = create<T4Store>()(
         const { engagementId } = get()
         if (engagementId) {
           insertUseCase(full, engagementId).catch((err) =>
-            console.error('[T4] addUseCase sync:', err)
+            reportError('[T4Store] addUseCase sync', err)
           )
         }
         return id
@@ -152,7 +152,7 @@ export const useT4Store = create<T4Store>()(
         const { engagementId } = get()
         if (engagementId) {
           updateUseCaseInDb(id, engagementId, updates).catch((err) =>
-            console.error('[T4] updateUseCase sync:', err)
+            reportError('[T4Store] updateUseCase sync', err)
           )
         }
       },
@@ -166,7 +166,7 @@ export const useT4Store = create<T4Store>()(
         const { engagementId } = get()
         if (engagementId) {
           deleteUseCaseFromDb(id, engagementId).catch((err) =>
-            console.error('[T4] removeUseCase sync:', err)
+            reportError('[T4Store] removeUseCase sync', err)
           )
         }
       },
@@ -185,7 +185,7 @@ export const useT4Store = create<T4Store>()(
         const { engagementId } = get()
         if (engagementId) {
           updateUseCaseInDb(id, engagementId, { priorityScore: newScore }).catch((err) =>
-            console.error('[T4] recalcScore sync:', err)
+            reportError('[T4Store] recalcScore sync', err)
           )
         }
       },
@@ -201,7 +201,7 @@ export const useT4Store = create<T4Store>()(
         const { engagementId } = get()
         if (engagementId) {
           updateUseCaseInDb(id, engagementId, { aiActClassification: classification }).catch((err) =>
-            console.error('[T4] updateAIAct sync:', err)
+            reportError('[T4Store] updateAIAct sync', err)
           )
         }
       },
