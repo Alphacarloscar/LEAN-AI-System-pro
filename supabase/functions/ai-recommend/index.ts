@@ -29,8 +29,11 @@ const ALLOWED_ORIGINS = new Set([
   'http://localhost:5173',               // desarrollo Vite
   'http://localhost:3000',               // alternativa dev
   'http://localhost:4173',               // vite preview
-  'https://lean-ai-system.vercel.app',   // producción principal
-  'https://v0-lean-ai-system.vercel.app', // rama preview Vercel
+  'https://lean-ai-system.vercel.app',   // legacy (pre-Sprint 8)
+  'https://v0-lean-ai-system.vercel.app', // legacy preview
+  'https://gobytech-prod.vercel.app',    // producción GOBY (main)
+  'https://gobytech-prod-git-develop-carlos-projects-52e64d02.vercel.app', // preview develop
+  'https://lean-ai-system-pro-git-develop-carlos-projects-52e64d02.vercel.app', // lean preview
 ])
 
 function resolveOrigin(origin: string | null): string | null {
@@ -58,7 +61,7 @@ const CORS_FALLBACK: Record<string, string> = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-const LLM_TOOLS = new Set(['t6_policy', 't7_plan', 't8_comms'])
+const LLM_TOOLS = new Set(['t6_policy', 't7_plan', 't8_comms', 't3_opportunities'])
 
 // Timeout de llamada a Anthropic: 55 segundos.
 // Inferior al timeout de Supabase Edge (150s) para que la función pueda
@@ -222,6 +225,48 @@ SCHEMA JSON OBLIGATORIO:
 }
 
 
+/**
+ * T3 — Oportunidades IA por proceso (Value Stream)
+ * Modelo: claude-haiku-4-5-20251001 (1500 tokens)
+ * Output: { opportunities: [{ title, description, effort, impact }] }
+ *
+ * effort: "bajo" | "medio" | "alto"
+ * impact: "bajo" | "medio" | "alto" | "critico"
+ */
+function buildT3Prompt(context: Record<string, unknown>): { system: string; user: string } {
+  const system = `Eres un experto en transformación digital y automatización de procesos empresariales con IA. Tu tarea es identificar oportunidades concretas de aplicación de IA en un proceso de negocio específico.
+
+INSTRUCCIONES DE RESPUESTA:
+- Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código markdown.
+- Todos los campos son obligatorios.
+- Redacta en español. Las oportunidades deben ser concretas y aplicables, no genéricas.
+- Adapta las oportunidades al sector, tamaño de empresa, ecosistema tecnológico y nivel de madurez indicados.
+- El campo effort debe ser exactamente uno de: bajo · medio · alto
+- El campo impact debe ser exactamente uno de: bajo · medio · alto · critico
+
+SCHEMA JSON OBLIGATORIO:
+{
+  "opportunities": [
+    {
+      "title": "Nombre de la oportunidad IA (5-8 palabras, accionable)",
+      "description": "Descripción de cómo aplicar IA en este proceso concreto (2-3 frases). Menciona qué herramienta o técnica de IA aplica y qué resultado de negocio genera.",
+      "effort": "bajo|medio|alto",
+      "impact": "bajo|medio|alto|critico"
+    }
+  ]
+}
+
+REGLAS:
+- Genera entre 3 y 5 oportunidades ordenadas de mayor a menor impacto.
+- Prioriza oportunidades que aprovechen los sistemas tecnológicos ya en uso (stages[].system).
+- Si la madurez IA es baja (<2.0), sugiere oportunidades de bajo esfuerzo primero.
+- Si la categoría IA es "Agentes autónomos", incluye al menos una oportunidad agéntica.`
+
+  const user = `Identifica oportunidades de IA para este proceso:\n\n${JSON.stringify(context, null, 2)}`
+  return { system, user }
+}
+
+
 // ── Configuración por tool ────────────────────────────────────
 
 interface ToolConfig {
@@ -231,9 +276,10 @@ interface ToolConfig {
 }
 
 const TOOL_CONFIG: Record<string, ToolConfig> = {
-  t6_policy: { model: 'claude-sonnet-4-6',          maxTokens: 2000, buildPrompt: buildT6Prompt },
-  t7_plan:   { model: 'claude-sonnet-4-6',          maxTokens: 2500, buildPrompt: buildT7Prompt },
-  t8_comms:  { model: 'claude-haiku-4-5-20251001',  maxTokens: 3000, buildPrompt: buildT8Prompt },
+  t6_policy:        { model: 'claude-sonnet-4-6',         maxTokens: 2000, buildPrompt: buildT6Prompt },
+  t7_plan:          { model: 'claude-sonnet-4-6',         maxTokens: 2500, buildPrompt: buildT7Prompt },
+  t8_comms:         { model: 'claude-haiku-4-5-20251001', maxTokens: 3000, buildPrompt: buildT8Prompt },
+  t3_opportunities: { model: 'claude-haiku-4-5-20251001', maxTokens: 1500, buildPrompt: buildT3Prompt },
 }
 
 
