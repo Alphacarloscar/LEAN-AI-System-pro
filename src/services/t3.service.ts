@@ -43,7 +43,7 @@ export function rowToValueStream(row: ValueStreamRow): ValueStream {
     opportunities:    cast<ValueStream['opportunities']>(row.opportunities) ?? [],
     stages:           castOpt<ValueStream['stages']>(row.stages),
     notes:            row.notes ?? undefined,
-    createdAt:        row.created_at,
+    createdAt:        row.created_at ?? '',
     manualOverride:   row.manual_override || undefined,
   }
 }

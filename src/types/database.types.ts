@@ -1,12 +1,3 @@
-// ============================================================
-// GOBY — Tipos de base de datos (Supabase)
-//
-// Sprint 8: renombrado engagement→project, añadida entidad Company.
-//
-// ⚠ Este archivo es FUENTE DE VERDAD para los tipos de BD.
-//   No editar manualmente — cambiar el schema SQL primero.
-// ============================================================
-
 export type Json =
   | string
   | number
@@ -15,306 +6,1113 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-// ── Roles ───────────────────────────────────────────────────────
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
+  public: {
+    Tables: {
+      ai_rate_limit_log: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          tool_code: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          tool_code: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          tool_code?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_rate_limit_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          company_size: string
+          created_at: string | null
+          id: string
+          name: string
+          sector: string
+          slug: string | null
+        }
+        Insert: {
+          company_size?: string
+          created_at?: string | null
+          id?: string
+          name: string
+          sector?: string
+          slug?: string | null
+        }
+        Update: {
+          company_size?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          sector?: string
+          slug?: string | null
+        }
+        Relationships: []
+      }
+      company_departments: {
+        Row: {
+          color: string
+          company_id: string
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string
+          company_id: string
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_departments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_profiles: {
+        Row: {
+          areas_prioritarias: Json
+          created_at: string | null
+          ecosistema_tecnologico: string
+          horizonte_valor: string
+          id: string
+          objetivo_principal_ia: string
+          project_id: string
+          project_name: string
+          restricciones: string
+          saved_at: string | null
+          sector: string
+          tamano_empresa: string
+          updated_at: string | null
+        }
+        Insert: {
+          areas_prioritarias?: Json
+          created_at?: string | null
+          ecosistema_tecnologico?: string
+          horizonte_valor?: string
+          id?: string
+          objetivo_principal_ia?: string
+          project_id: string
+          project_name?: string
+          restricciones?: string
+          saved_at?: string | null
+          sector?: string
+          tamano_empresa?: string
+          updated_at?: string | null
+        }
+        Update: {
+          areas_prioritarias?: Json
+          created_at?: string | null
+          ecosistema_tecnologico?: string
+          horizonte_valor?: string
+          id?: string
+          objetivo_principal_ia?: string
+          project_id?: string
+          project_name?: string
+          restricciones?: string
+          saved_at?: string | null
+          sector?: string
+          tamano_empresa?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_profiles_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      frictions: {
+        Row: {
+          area_funcional: string
+          created_at: string | null
+          frecuencia: string | null
+          id: string
+          impacto: string | null
+          notas: string
+          project_id: string
+          tipo: string
+        }
+        Insert: {
+          area_funcional?: string
+          created_at?: string | null
+          frecuencia?: string | null
+          id?: string
+          impacto?: string | null
+          notas?: string
+          project_id: string
+          tipo?: string
+        }
+        Update: {
+          area_funcional?: string
+          created_at?: string | null
+          frecuencia?: string | null
+          id?: string
+          impacto?: string | null
+          notas?: string
+          project_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "frictions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      iso42001_controls: {
+        Row: {
+          auto_inferred: boolean
+          clause: string
+          code: string
+          description: string
+          id: string
+          notes: string | null
+          project_id: string
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          auto_inferred?: boolean
+          clause: string
+          code: string
+          description?: string
+          id?: string
+          notes?: string | null
+          project_id: string
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          auto_inferred?: boolean
+          clause?: string
+          code?: string
+          description?: string
+          id?: string
+          notes?: string | null
+          project_id?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iso42001_controls_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          role: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          email: string
+          id: string
+          name?: string
+          role?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_members: {
+        Row: {
+          added_at: string | null
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          project_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string | null
+          project_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          current_phase: string
+          end_date: string | null
+          id: string
+          name: string
+          owner_id: string
+          start_date: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          current_phase?: string
+          end_date?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          current_phase?: string
+          end_date?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snapshots: {
+        Row: {
+          created_at: string | null
+          data: Json
+          id: string
+          label: string
+          project_id: string | null
+          tool: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json
+          id?: string
+          label?: string
+          project_id?: string | null
+          tool: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json
+          id?: string
+          label?: string
+          project_id?: string | null
+          tool?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stakeholders: {
+        Row: {
+          archetype: string
+          created_at: string | null
+          department: string
+          id: string
+          interview: Json | null
+          manual_override: boolean
+          name: string
+          notes: string | null
+          project_id: string
+          resistance: string
+          role: string
+          unofficial_tools: string | null
+        }
+        Insert: {
+          archetype: string
+          created_at?: string | null
+          department: string
+          id?: string
+          interview?: Json | null
+          manual_override?: boolean
+          name: string
+          notes?: string | null
+          project_id: string
+          resistance: string
+          role: string
+          unofficial_tools?: string | null
+        }
+        Update: {
+          archetype?: string
+          created_at?: string | null
+          department?: string
+          id?: string
+          interview?: Json | null
+          manual_override?: boolean
+          name?: string
+          notes?: string | null
+          project_id?: string
+          resistance?: string
+          role?: string
+          unofficial_tools?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stakeholders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      t1_dimension_scores: {
+        Row: {
+          dimension_code: string
+          evidence: string
+          id: string
+          interviewee_department: string | null
+          interviewee_id: string | null
+          interviewee_name: string | null
+          interviewee_role: string | null
+          interviewee_type: string
+          project_id: string
+          score: number | null
+          subdimension_code: string
+          updated_at: string | null
+        }
+        Insert: {
+          dimension_code: string
+          evidence?: string
+          id?: string
+          interviewee_department?: string | null
+          interviewee_id?: string | null
+          interviewee_name?: string | null
+          interviewee_role?: string | null
+          interviewee_type?: string
+          project_id: string
+          score?: number | null
+          subdimension_code: string
+          updated_at?: string | null
+        }
+        Update: {
+          dimension_code?: string
+          evidence?: string
+          id?: string
+          interviewee_department?: string | null
+          interviewee_id?: string | null
+          interviewee_name?: string | null
+          interviewee_role?: string | null
+          interviewee_type?: string
+          project_id?: string
+          score?: number | null
+          subdimension_code?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "t1_dimension_scores_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      t5_canvas: {
+        Row: {
+          activation_sequence: Json
+          company_name: string
+          created_at: string | null
+          domains: Json
+          id: string
+          maturity_level: string
+          notes: string | null
+          project_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          activation_sequence?: Json
+          company_name?: string
+          created_at?: string | null
+          domains?: Json
+          id?: string
+          maturity_level?: string
+          notes?: string | null
+          project_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          activation_sequence?: Json
+          company_name?: string
+          created_at?: string | null
+          domains?: Json
+          id?: string
+          maturity_level?: string
+          notes?: string | null
+          project_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "t5_canvas_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      t9_free_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          department: string
+          end_month: number
+          id: string
+          name: string
+          project_id: string
+          responsible: string
+          risk_level: string
+          roadmap_year: number
+          start_month: number
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          department?: string
+          end_month: number
+          id?: string
+          name: string
+          project_id: string
+          responsible?: string
+          risk_level?: string
+          roadmap_year?: number
+          start_month: number
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          department?: string
+          end_month?: number
+          id?: string
+          name?: string
+          project_id?: string
+          responsible?: string
+          risk_level?: string
+          roadmap_year?: number
+          start_month?: number
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "t9_free_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      t9_overrides: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          end_month: number
+          id: string
+          project_id: string
+          responsible: string
+          roadmap_year: number
+          start_month: number
+          updated_at: string
+          updated_by: string | null
+          use_case_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          end_month: number
+          id?: string
+          project_id: string
+          responsible?: string
+          roadmap_year?: number
+          start_month: number
+          updated_at?: string
+          updated_by?: string | null
+          use_case_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          end_month?: number
+          id?: string
+          project_id?: string
+          responsible?: string
+          roadmap_year?: number
+          start_month?: number
+          updated_at?: string
+          updated_by?: string | null
+          use_case_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "t9_overrides_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tool_outputs: {
+        Row: {
+          archived: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          payload: Json
+          payload_version: number
+          project_id: string
+          stale_after: string | null
+          status: string
+          tool_code: string
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          archived?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          payload?: Json
+          payload_version?: number
+          project_id: string
+          stale_after?: string | null
+          status?: string
+          tool_code: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          archived?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          payload?: Json
+          payload_version?: number
+          project_id?: string
+          stale_after?: string | null
+          status?: string
+          tool_code?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_outputs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      use_cases: {
+        Row: {
+          ai_act_classification: Json | null
+          ai_category: string
+          business_objective: string | null
+          created_at: string | null
+          department: string
+          description: string | null
+          economics: Json | null
+          go_no_go: Json | null
+          id: string
+          imported_from_t3: Json | null
+          name: string
+          notes: string | null
+          priority_score: number
+          project_id: string
+          responsible_it_data: string | null
+          roadmap: Json | null
+          scores: Json
+          sponsor_name: string | null
+          stakeholder_scores: Json
+          status: string
+          t1_context: Json | null
+          t2_context: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_act_classification?: Json | null
+          ai_category: string
+          business_objective?: string | null
+          created_at?: string | null
+          department: string
+          description?: string | null
+          economics?: Json | null
+          go_no_go?: Json | null
+          id?: string
+          imported_from_t3?: Json | null
+          name: string
+          notes?: string | null
+          priority_score?: number
+          project_id: string
+          responsible_it_data?: string | null
+          roadmap?: Json | null
+          scores?: Json
+          sponsor_name?: string | null
+          stakeholder_scores?: Json
+          status?: string
+          t1_context?: Json | null
+          t2_context?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_act_classification?: Json | null
+          ai_category?: string
+          business_objective?: string | null
+          created_at?: string | null
+          department?: string
+          description?: string | null
+          economics?: Json | null
+          go_no_go?: Json | null
+          id?: string
+          imported_from_t3?: Json | null
+          name?: string
+          notes?: string | null
+          priority_score?: number
+          project_id?: string
+          responsible_it_data?: string | null
+          roadmap?: Json | null
+          scores?: Json
+          sponsor_name?: string | null
+          stakeholder_scores?: Json
+          status?: string
+          t1_context?: Json | null
+          t2_context?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "use_cases_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      value_streams: {
+        Row: {
+          ai_category: string
+          created_at: string | null
+          department: string
+          description: string | null
+          id: string
+          interview: Json | null
+          manual_override: boolean
+          name: string
+          notes: string | null
+          opportunities: Json
+          opportunity_level: string
+          org_readiness: string
+          owner: string | null
+          owner_role: string | null
+          phase: string
+          project_id: string
+          stages: Json
+        }
+        Insert: {
+          ai_category: string
+          created_at?: string | null
+          department: string
+          description?: string | null
+          id?: string
+          interview?: Json | null
+          manual_override?: boolean
+          name: string
+          notes?: string | null
+          opportunities?: Json
+          opportunity_level: string
+          org_readiness: string
+          owner?: string | null
+          owner_role?: string | null
+          phase: string
+          project_id: string
+          stages?: Json
+        }
+        Update: {
+          ai_category?: string
+          created_at?: string | null
+          department?: string
+          description?: string | null
+          id?: string
+          interview?: Json | null
+          manual_override?: boolean
+          name?: string
+          notes?: string | null
+          opportunities?: Json
+          opportunity_level?: string
+          org_readiness?: string
+          owner?: string | null
+          owner_role?: string | null
+          phase?: string
+          project_id?: string
+          stages?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "value_streams_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      can_write_project: { Args: { pid: string }; Returns: boolean }
+      check_and_log_ai_call: {
+        Args: { p_project_id: string; p_tool_code: string; p_user_id: string }
+        Returns: Json
+      }
+      create_project: {
+        Args: { p_company_id?: string; p_name?: string; p_phase?: string }
+        Returns: {
+          company_id: string | null
+          created_at: string | null
+          current_phase: string
+          end_date: string | null
+          id: string
+          name: string
+          owner_id: string
+          start_date: string | null
+          status: string
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "projects"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      is_company_project: { Args: { pid: string }; Returns: boolean }
+      is_platform_admin: { Args: never; Returns: boolean }
+      is_project_member: { Args: { pid: string }; Returns: boolean }
+      is_superadmin: { Args: never; Returns: boolean }
+      save_tool_output: {
+        Args: {
+          p_payload: Json
+          p_payload_version?: number
+          p_project_id: string
+          p_stale_after?: string
+          p_tool_code: string
+        }
+        Returns: string
+      }
+      user_can_edit_project: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
+      user_can_read_project: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
 
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
+
+// ============================================================
+// TYPE ALIASES — Codebase convenience types
+//
+// Derivados de la interfaz Database auto-generada por Supabase CLI.
+// NO editar manualmente — regenerar con:
+//   npx supabase gen types typescript --project-id vbpgsgxsslccctjhuegt
+//   > src/types/database.types.ts
+// Luego mantener esta sección intacta (no la sobreescribe el CLI).
+// ============================================================
+
+// ── Union types de dominio ──────────────────────────────────────
 export type UserRole      = 'superadmin' | 'consultant' | 'client_editor' | 'client_viewer'
-// 'superadmin'    = Alpha platform admin (Carlos) — acceso global a todo
-// 'consultant'    = consultor Alpha — acceso por project_members
-// 'client_editor' = cliente operativo — edita proyectos de su empresa
-// 'client_viewer' = cliente directivo — solo lectura de su empresa
 export type MemberRole    = 'consultant' | 'viewer'
 export type ProjectStatus = 'active' | 'archived'
 export type LeanPhase     = 'listen' | 'evaluate' | 'activate' | 'normalize' | 'closed'
 export type ISO42001Status = 'no_iniciado' | 'en_progreso' | 'implementado'
 export type UseCaseStatus = 'candidato' | 'priorizado' | 'go' | 'no_go' | 'en_piloto' | 'completado'
 
-// ============================================================
-// Filas (SELECT results)
-// ============================================================
+// ── Row types ───────────────────────────────────────────────────
+export type CompanyRow           = Database['public']['Tables']['companies']['Row']
+export type CompanyDepartmentRow = Database['public']['Tables']['company_departments']['Row']
+export type ProfileRow           = Database['public']['Tables']['profiles']['Row']
+export type ProjectRow           = Database['public']['Tables']['projects']['Row']
+export type ProjectMemberRow     = Database['public']['Tables']['project_members']['Row']
+export type CompanyProfileRow    = Database['public']['Tables']['company_profiles']['Row']
+export type FrictionRow          = Database['public']['Tables']['frictions']['Row']
+export type T1DimensionScoreRow  = Database['public']['Tables']['t1_dimension_scores']['Row']
+export type StakeholderRow       = Database['public']['Tables']['stakeholders']['Row']
+export type ValueStreamRow       = Database['public']['Tables']['value_streams']['Row']
+export type UseCaseRow           = Database['public']['Tables']['use_cases']['Row']
+export type T5CanvasRow          = Database['public']['Tables']['t5_canvas']['Row']
+export type ISO42001ControlRow   = Database['public']['Tables']['iso42001_controls']['Row']
 
-export interface CompanyRow {
-  id:           string
-  name:         string
-  slug:         string | null
-  sector:       string          // Sprint 10: movido desde company_profiles
-  company_size: string          // Sprint 10: movido desde company_profiles
-  created_at:   string
-}
+// ── Insert types ────────────────────────────────────────────────
+export type CompanyInsert          = Database['public']['Tables']['companies']['Insert']
+export type ProjectInsert          = Database['public']['Tables']['projects']['Insert']
+export type CompanyProfileInsert   = Database['public']['Tables']['company_profiles']['Insert']
+export type FrictionInsert         = Database['public']['Tables']['frictions']['Insert']
+export type T1DimensionScoreInsert = Database['public']['Tables']['t1_dimension_scores']['Insert']
+export type StakeholderInsert      = Database['public']['Tables']['stakeholders']['Insert']
+export type ValueStreamInsert      = Database['public']['Tables']['value_streams']['Insert']
+export type UseCaseInsert          = Database['public']['Tables']['use_cases']['Insert']
+export type T5CanvasInsert         = Database['public']['Tables']['t5_canvas']['Insert']
+export type ISO42001ControlInsert  = Database['public']['Tables']['iso42001_controls']['Insert']
 
-export interface CompanyDepartmentRow {
-  id:         string
-  company_id: string
-  name:       string
-  color:      string
-  created_at: string
-}
-
-export interface ProfileRow {
-  id:         string
-  email:      string
-  name:       string
-  role:       UserRole
-  company_id: string | null
-  created_at: string
-}
-
-export interface ProjectRow {
-  id:            string
-  name:          string
-  owner_id:      string
-  company_id:    string | null
-  status:        ProjectStatus
-  current_phase: LeanPhase
-  start_date:    string | null
-  end_date:      string | null
-  created_at:    string
-  updated_at:    string
-}
-
-export interface ProjectMemberRow {
-  project_id: string
-  user_id:    string
-  role:       MemberRole
-  added_at:   string
-}
-
-export interface CompanyProfileRow {
-  id:                     string
-  project_id:             string
-  project_name:           string
-  sector:                 string
-  tamano_empresa:         string
-  objetivo_principal_ia:  string
-  horizonte_valor:        string
-  ecosistema_tecnologico: string
-  restricciones:          string
-  areas_prioritarias:     Json   // string[]
-  saved_at:               string | null
-  created_at:             string
-  updated_at:             string
-}
-
-export interface FrictionRow {
-  id:             string
-  project_id:     string
-  tipo:           string
-  area_funcional: string
-  frecuencia:     'Baja' | 'Media' | 'Alta' | null
-  impacto:        'Bajo' | 'Medio' | 'Alto' | null
-  notas:          string
-  created_at:     string
-}
-
-export interface T1DimensionScoreRow {
-  id:                     string
-  project_id:             string
-  dimension_code:         string
-  subdimension_code:      string
-  score:                  number | null
-  evidence:               string
-  interviewee_id:         string | null
-  interviewee_name:       string | null
-  interviewee_role:       string | null
-  interviewee_type:       'it' | 'business'
-  interviewee_department: string | null
-  updated_at:             string
-}
-
-export interface StakeholderRow {
-  id:               string
-  project_id:       string
-  name:             string
-  role:             string
-  department:       string
-  archetype:        string
-  resistance:       'baja' | 'media' | 'alta'
-  interview:        Json | null
-  notes:            string | null
-  manual_override:  boolean
-  unofficial_tools: string | null   // Shadow AI: herramientas no oficiales declaradas
-  created_at:       string
-}
-
-export interface ValueStreamRow {
-  id:                string
-  project_id:        string
-  name:              string
-  department:        string
-  owner:             string | null
-  owner_role:        string | null
-  description:       string | null
-  phase:             string
-  ai_category:       string
-  org_readiness:     'baja' | 'media' | 'alta'
-  opportunity_level: 'baja' | 'media' | 'alta' | 'critica'
-  interview:         Json | null
-  opportunities:     Json        // AIOpportunity[]
-  stages:            Json        // ProcessStage[]
-  notes:             string | null
-  manual_override:   boolean
-  created_at:        string
-}
-
-export interface UseCaseRow {
-  id:                    string
-  project_id:            string
-  name:                  string
-  description:           string | null
-  department:            string
-  ai_category:           string
-  status:                UseCaseStatus
-  sponsor_name:          string | null
-  responsible_it_data:   string | null
-  business_objective:    string | null
-  imported_from_t3:      Json | null
-  stakeholder_scores:    Json
-  scores:                Json
-  priority_score:        number
-  economics:             Json | null
-  go_no_go:              Json | null
-  roadmap:               Json | null
-  t1_context:            Json | null
-  t2_context:            Json | null
-  ai_act_classification: Json | null
-  notes:                 string | null
-  created_at:            string
-  updated_at:            string
-}
-
-export interface T5CanvasRow {
-  id:                  string
-  project_id:          string
-  company_name:        string
-  domains:             Json
-  maturity_level:      string
-  activation_sequence: Json
-  notes:               string | null
-  created_at:          string
-  updated_at:          string
-}
-
-export interface ISO42001ControlRow {
-  id:            string
-  project_id:    string
-  code:          string
-  clause:        string
-  title:         string
-  description:   string
-  auto_inferred: boolean
-  status:        ISO42001Status
-  notes:         string | null
-  updated_at:    string
-}
-
-// ============================================================
-// Inserts (campos requeridos al insertar)
-// ============================================================
-
-export type CompanyInsert          = Omit<CompanyRow, 'created_at'> & { id?: string }
-export type ProjectInsert          = Omit<ProjectRow, 'created_at' | 'updated_at'> & { id?: string }
-export type CompanyProfileInsert   = Omit<CompanyProfileRow, 'created_at' | 'updated_at'> & { id?: string }
-export type FrictionInsert         = Omit<FrictionRow, 'created_at'> & { id?: string }
-export type T1DimensionScoreInsert = Omit<T1DimensionScoreRow, 'id' | 'updated_at'> & { id?: string }
-export type StakeholderInsert      = Omit<StakeholderRow, 'created_at'> & { id?: string }
-export type ValueStreamInsert      = Omit<ValueStreamRow, 'created_at'> & { id?: string }
-export type UseCaseInsert          = Omit<UseCaseRow, 'created_at' | 'updated_at'> & { id?: string }
-export type T5CanvasInsert         = Omit<T5CanvasRow, 'created_at' | 'updated_at'> & { id?: string }
-export type ISO42001ControlInsert  = Omit<ISO42001ControlRow, never>
-
-// ── Alias de compatibilidad (deprecados — usar nombres nuevos)
+// ── Deprecated aliases (compatibilidad) ─────────────────────────
 /** @deprecated Usar ProjectRow */
 export type EngagementRow = ProjectRow
 /** @deprecated Usar ProjectMemberRow */
 export type EngagementMemberRow = ProjectMemberRow
 /** @deprecated Usar ProjectStatus */
 export type EngagementStatus = ProjectStatus
-
-// ============================================================
-// Database interface
-// ============================================================
-
-type NoRelationships = { Relationships: [] }
-
-export interface Database {
-  public: {
-    Tables: {
-      companies: {
-        Row:    CompanyRow
-        Insert: CompanyInsert
-        Update: Partial<Omit<CompanyRow, 'id' | 'created_at'>>
-      } & NoRelationships
-      profiles: {
-        Row:    ProfileRow
-        Insert: Omit<ProfileRow, 'created_at'>
-        Update: Partial<Omit<ProfileRow, 'id'>>
-      } & NoRelationships
-      projects: {
-        Row:    ProjectRow
-        Insert: ProjectInsert
-        Update: Partial<Omit<ProjectRow, 'id' | 'created_at'>>
-      } & NoRelationships
-      project_members: {
-        Row:    ProjectMemberRow
-        Insert: Omit<ProjectMemberRow, 'added_at'>
-        Update: Partial<Pick<ProjectMemberRow, 'role'>>
-      } & NoRelationships
-      company_profiles: {
-        Row:    CompanyProfileRow
-        Insert: CompanyProfileInsert
-        Update: Partial<Omit<CompanyProfileRow, 'id' | 'project_id' | 'created_at'>>
-      } & NoRelationships
-      frictions: {
-        Row:    FrictionRow
-        Insert: FrictionInsert
-        Update: Partial<Omit<FrictionRow, 'id' | 'project_id' | 'created_at'>>
-      } & NoRelationships
-      t1_dimension_scores: {
-        Row:    T1DimensionScoreRow
-        Insert: T1DimensionScoreInsert
-        Update: Partial<Omit<T1DimensionScoreRow, 'id' | 'project_id'>>
-      } & NoRelationships
-      stakeholders: {
-        Row:    StakeholderRow
-        Insert: StakeholderInsert
-        Update: Partial<Omit<StakeholderRow, 'id' | 'project_id' | 'created_at'>>
-      } & NoRelationships
-      value_streams: {
-        Row:    ValueStreamRow
-        Insert: ValueStreamInsert
-        Update: Partial<Omit<ValueStreamRow, 'id' | 'project_id' | 'created_at'>>
-      } & NoRelationships
-      use_cases: {
-        Row:    UseCaseRow
-        Insert: UseCaseInsert
-        Update: Partial<Omit<UseCaseRow, 'id' | 'project_id' | 'created_at'>>
-      } & NoRelationships
-      t5_canvas: {
-        Row:    T5CanvasRow
-        Insert: T5CanvasInsert
-        Update: Partial<Omit<T5CanvasRow, 'id' | 'project_id' | 'created_at'>>
-      } & NoRelationships
-      iso42001_controls: {
-        Row:    ISO42001ControlRow
-        Insert: ISO42001ControlInsert
-        Update: Partial<Omit<ISO42001ControlRow, 'id' | 'project_id'>>
-      } & NoRelationships
-    }
-    Views: Record<string, never>
-    Functions: {
-      is_project_member: {
-        Args:    { pid: string }
-        Returns: boolean
-      }
-      can_write_project: {
-        Args:    { pid: string }
-        Returns: boolean
-      }
-      is_platform_admin: {
-        Args:    Record<string, never>
-        Returns: boolean
-      }
-    }
-    Enums: Record<string, never>
-    CompositeTypes: Record<string, never>
-  }
-}

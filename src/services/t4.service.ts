@@ -10,7 +10,7 @@
 // ============================================================
 
 import { supabase }       from '@/lib/supabase'
-import type { Json, UseCaseRow, UseCaseInsert } from '@/types/database.types'
+import type { Json, UseCaseRow, UseCaseInsert, UseCaseStatus } from '@/types/database.types'
 import type { UseCase }   from '@/modules/T4_UseCasePriorityBoard/types'
 
 // ── Mapeo BD → dominio ───────────────────────────────────────
@@ -28,7 +28,7 @@ export function rowToUseCase(row: UseCaseRow): UseCase {
     description:          row.description ?? undefined,
     department:           row.department,
     aiCategory:           row.ai_category,
-    status:               row.status,
+    status:               row.status as UseCaseStatus,
     sponsorName:          row.sponsor_name ?? undefined,
     responsibleItData:    row.responsible_it_data ?? undefined,
     businessObjective:    row.business_objective ?? undefined,
@@ -43,7 +43,7 @@ export function rowToUseCase(row: UseCaseRow): UseCase {
     t2Context:            castOpt<UseCase['t2Context']>(row.t2_context),
     aiActClassification:  castOpt<UseCase['aiActClassification']>(row.ai_act_classification),
     notes:                row.notes ?? undefined,
-    createdAt:            row.created_at,
+    createdAt:            row.created_at ?? '',
   }
 }
 

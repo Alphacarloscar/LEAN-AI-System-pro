@@ -35,7 +35,7 @@ export function rowToStakeholder(row: StakeholderRow): Stakeholder {
     resistance:      cast<Stakeholder['resistance']>(row.resistance),
     interview:       castOpt<Stakeholder['interview']>(row.interview),
     notes:           row.notes ?? undefined,
-    createdAt:       row.created_at,
+    createdAt:       row.created_at ?? '',
     manualOverride:  row.manual_override || undefined,
     unofficialTools: row.unofficial_tools ?? undefined,
   }
