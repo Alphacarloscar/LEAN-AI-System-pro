@@ -98,7 +98,7 @@ function jsonResponse(body: unknown, status = 200, corsH: Record<string, string>
 }
 
 function errorResponse(message: string, status: number, corsH: Record<string, string> = CORS_FALLBACK): Response {
-  return jsonResponse({ error: message }, status, corsH)
+  return jsonResponse({ error: message, version: FUNCTION_VERSION }, status, corsH)
 }
 
 /**
@@ -760,8 +760,25 @@ Deno.serve(async (req: Request): Promise<Response> => {
   )
 
   if (rateError) {
-    console.error('[ai-recommend] Error en check_and_log_ai_call:', rateError.message)
-    return errorResponse('Error al verificar límite de llamadas', 500, corsH)
+    console.error('[ai-recommend][rate_limit_check_failed]', {
+      message: rateError.message,
+      code:    (rateError as Record<string, unknown>).code,
+      details: (rateError as Record<string, unknown>).details,
+      hint:    (rateError as Record<string, unknown>).hint,
+      tool,
+      projectId,
+    })
+    return jsonResponse(
+      {
+        error:      'Error al verificar límite de llamadas',
+        error_code: 'rate_limit_check_failed',
+        stage:      'rate_limit',
+        tool,
+        version:    FUNCTION_VERSION,
+      },
+      500,
+      corsH,
+    )
   }
 
   if (!rateCheck?.allowed) {
@@ -871,5 +888,5 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // Los hooks añaden generatedAt (y sector/tamano para T6) en el cliente.
   // La UI debe usar persistence.saved para mostrar aviso si el guardado falló.
 
-  return jsonResponse({ data: generatedData, persistence, function_version: FUNCTION_VERSION }, 200, corsH)
+  return jsonResponse({ data: generatedData, persistence, version: FUNCTION_VERSION }, 200, corsH)
 })
