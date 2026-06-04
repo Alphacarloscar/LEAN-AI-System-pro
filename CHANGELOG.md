@@ -8,6 +8,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- [DB] ai_rate_limit_log: constraint tool_code_check ampliada a 14 tool codes (t1-t11 + t3_opportunities + t6_policy + t7_plan + t8_comms) — constraint anterior solo tenía 7 tool codes del Sprint 6, bloqueaba todas las llamadas nuevas
 - [Edge] ai-recommend: añadidos tool codes t1, t2, t4, t5, t6, t7, t8, t9, t10, t11 a LLM_TOOLS + TOOL_CONFIG — las recomendaciones IA fallaban en todas las herramientas con error 400 "tool no soportado"
 - [Edge] ai-recommend: error 400 por tool no soportado ahora incluye `error_code: unsupported_tool_code` y `valid_tools` para depuración
 - [Edge] ai-recommend: diagnóstico mejorado en rate_limit_check_failed — console.error expone code/details/hint del error Supabase; respuesta 500 incluye error_code, stage, tool, version
