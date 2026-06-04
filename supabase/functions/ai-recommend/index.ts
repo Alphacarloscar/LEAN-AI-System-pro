@@ -61,7 +61,12 @@ const CORS_FALLBACK: Record<string, string> = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-const LLM_TOOLS = new Set(['t6_policy', 't7_plan', 't8_comms', 't3_opportunities'])
+const LLM_TOOLS = new Set([
+  // Generic RecommendationPanel tools (T1-T11)
+  't1', 't2', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11',
+  // Dedicated generation tools
+  't3_opportunities', 't6_policy', 't7_plan', 't8_comms',
+])
 
 // Timeout de llamada a Anthropic: 55 segundos.
 // Inferior al timeout de Supabase Edge (150s) para que la función pueda
@@ -74,6 +79,9 @@ const STALE_AFTER_DAYS = 90
 
 // Versión del schema del payload (bump cuando cambie la estructura del JSON)
 const PAYLOAD_VERSION = 1
+
+// Versión de la Edge Function — visible en la respuesta para diagnóstico
+const FUNCTION_VERSION = 'ai-recommend-2026-06-04-v2'
 
 // Tamaño máximo del objeto context serializado (50 KB).
 // Evita payloads maliciosos o accidentalmente grandes que agoten la memoria.
@@ -267,6 +275,250 @@ REGLAS:
 }
 
 
+// ── Prompts genéricos (RecommendationPanel) ───────────────────
+//
+// Todos comparten el mismo output schema:
+//   { recommendations: T1Recommendation[], contextualNote: string }
+//
+// T1Recommendation: { title, dimension, rationale, effort, horizon }
+//   effort:  "bajo" | "medio" | "alto"
+//   horizon: texto libre (ej. "Semana 1–2", "Mes 3", "Largo plazo")
+
+const GENERIC_REC_SCHEMA = `SCHEMA JSON OBLIGATORIO:
+{
+  "recommendations": [
+    {
+      "title": "Título de la recomendación (5-8 palabras, imperativo)",
+      "dimension": "Área o categoría de la recomendación (3-4 palabras)",
+      "rationale": "Por qué esta recomendación es prioritaria en este contexto específico (2-3 frases concretas)",
+      "effort": "bajo|medio|alto",
+      "horizon": "Corto plazo (mes 1-2)|Medio plazo (mes 3-4)|Largo plazo (mes 5-6)"
+    }
+  ],
+  "contextualNote": "Observación diagnóstica sobre el estado actual del cliente y el patrón más relevante detectado (2-3 frases directas)"
+}
+
+REGLAS:
+- Genera entre 3 y 5 recomendaciones ordenadas por prioridad descendente.
+- Las recomendaciones deben ser específicas al contexto recibido, no genéricas.
+- No repitas información que ya está en el contexto — aporta valor interpretativo.
+- Redacta en español. Tono ejecutivo y accionable.`
+
+/**
+ * T1 — Diagnóstico de Madurez IA
+ * Recibe: T1RecommendationContext (scores por dimensión, gaps, fortalezas, perfil empresa)
+ */
+function buildT1Prompt(context: Record<string, unknown>): { system: string; user: string } {
+  const system = `Eres un experto en transformación digital y madurez IA empresarial. Analizas diagnósticos de madurez IA (escala 0-4) e identificas las palancas de mejora más impactantes para el perfil específico de cada empresa.
+
+INSTRUCCIONES:
+- Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código markdown.
+
+${GENERIC_REC_SCHEMA}
+
+INSTRUCCIONES ADICIONALES:
+- Usa assessment.gaps para priorizar las dimensiones con mayor brecha.
+- Cruza los gaps con el sector y objetivo principal de IA de la empresa.
+- Si hay brecha IT/Negocio significativa (delta > 0.5), incluye una recomendación de alineación.
+- Si maturityTier es "Fundacional" (score < 1.5), prioriza quick wins de bajo esfuerzo.`
+
+  return { system, user: `Analiza este diagnóstico de madurez IA y genera recomendaciones:\n\n${JSON.stringify(context, null, 2)}` }
+}
+
+/**
+ * T2 — Mapa de Stakeholders
+ * Recibe: T2RecommendationContext (distribución por arquetipo/resistencia, críticos, cobertura)
+ */
+function buildT2Prompt(context: Record<string, unknown>): { system: string; user: string } {
+  const system = `Eres un experto en gestión de stakeholders y change management para proyectos de adopción IA. Identificas riesgos de resistencia y tácticas de engagement específicas para cada perfil de organización.
+
+INSTRUCCIONES:
+- Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código markdown.
+
+${GENERIC_REC_SCHEMA}
+
+INSTRUCCIONES ADICIONALES:
+- Si hay stakeholders críticos (resistencia alta o arquetipo "critico"), prioriza acciones sobre ellos.
+- Si faltan arquetipos clave (coverage.missingArchetypes), recomienda ampliar el mapa.
+- Si coverage.hasSponsor es false, incluye siempre una recomendación para identificar o designar sponsor.
+- Adapta las tácticas al sector y tamaño de empresa.`
+
+  return { system, user: `Analiza este mapa de stakeholders y genera recomendaciones:\n\n${JSON.stringify(context, null, 2)}` }
+}
+
+/**
+ * T4 — Portfolio de Casos de Uso IA
+ * Recibe: T4RecommendationContext (distribución por estado/categoría, top cases, economics, riesgo AI Act)
+ */
+function buildT4Prompt(context: Record<string, unknown>): { system: string; user: string } {
+  const system = `Eres un experto en priorización de inversiones IA y gestión de portfolios tecnológicos. Evalúas la composición y equilibrio de portfolios de casos de uso IA y recomiendas acciones para maximizar el retorno y minimizar el riesgo regulatorio.
+
+INSTRUCCIONES:
+- Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código markdown.
+
+${GENERIC_REC_SCHEMA}
+
+INSTRUCCIONES ADICIONALES:
+- Si risk.highRiskCount > 0, incluye recomendación sobre gestión de riesgo AI Act.
+- Si economics.avgPaybackMonths > 18, recomienda revisar la selección del portfolio.
+- Si coverage.casesWithoutGoNoGo > 0, recomienda cerrar las decisiones pendientes.
+- Usa portfolio.topCases para ser específico en las recomendaciones (cita nombres si es relevante).`
+
+  return { system, user: `Analiza este portfolio de casos de uso IA y genera recomendaciones:\n\n${JSON.stringify(context, null, 2)}` }
+}
+
+/**
+ * T5 — AI Taxonomy Canvas (Dominios IA)
+ * Recibe: T5RecommendationContext (dominios con scores, secuencia de activación, nivel de madurez)
+ */
+function buildT5Prompt(context: Record<string, unknown>): { system: string; user: string } {
+  const system = `Eres un experto en arquitectura IA empresarial y estrategia de dominios tecnológicos. Evalúas la distribución de capacidades IA por dominio y recomiendas la secuencia óptima de activación y desarrollo.
+
+INSTRUCCIONES:
+- Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código markdown.
+
+${GENERIC_REC_SCHEMA}
+
+INSTRUCCIONES ADICIONALES:
+- Usa canvas.activationSequence para contextualizar las recomendaciones de orden.
+- Prioriza dominios con alto businessValue pero baja technicalReady (oportunidad + brecha).
+- Si algún dominio tiene riskLevel alto, recomienda acciones de mitigación previas a su activación.
+- Adapta la secuencia al objetivo principal de IA de la empresa.`
+
+  return { system, user: `Analiza este canvas de dominios IA y genera recomendaciones:\n\n${JSON.stringify(context, null, 2)}` }
+}
+
+/**
+ * T6 — Gobernanza y Riesgo IA (Recomendaciones generales)
+ * Recibe: T6RecommendationContext (perfil AI Act, dominios T5, estado portfolio)
+ * Nota: t6_policy genera la política completa. t6 genera recomendaciones de governance.
+ */
+function buildT6RecPrompt(context: Record<string, unknown>): { system: string; user: string } {
+  const system = `Eres un experto en gobernanza de IA, EU AI Act y compliance tecnológico. Identificas brechas de governance y acciones prioritarias para que las empresas cumplan con la regulación vigente y establezcan una estructura de supervisión robusta.
+
+INSTRUCCIONES:
+- Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código markdown.
+
+${GENERIC_REC_SCHEMA}
+
+INSTRUCCIONES ADICIONALES:
+- Si aiActRisk.prohibido > 0, genera una recomendación urgente (esfuerzo alto, corto plazo).
+- Si aiActRisk.sinClasificar > total/3, recomienda completar la clasificación como prioridad.
+- Si aiActRisk.alto > 0, incluye recomendaciones sobre evaluación de conformidad.
+- Considera el sector para identificar regulaciones sectoriales adicionales.`
+
+  return { system, user: `Analiza el perfil de riesgo IA y genera recomendaciones de gobernanza:\n\n${JSON.stringify(context, null, 2)}` }
+}
+
+/**
+ * T7 — Mapa de Adopción (Heatmap Rogers)
+ * Recibe: T7RecommendationContext (distribución por segmento Rogers, ratios early/laggard)
+ * Nota: t7_plan genera el plan de cambio completo. t7 genera recomendaciones de adopción.
+ */
+function buildT7RecPrompt(context: Record<string, unknown>): { system: string; user: string } {
+  const system = `Eres un experto en gestión del cambio y adopción tecnológica. Analizas perfiles de adopción usando el modelo de Rogers e identificas estrategias diferenciadas para acelerar la difusión de la IA en organizaciones.
+
+INSTRUCCIONES:
+- Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código markdown.
+
+${GENERIC_REC_SCHEMA}
+
+INSTRUCCIONES ADICIONALES:
+- Si heatmap.laggardRatio > 40, prioriza estrategias para reducir la resistencia del segmento tardío.
+- Si heatmap.earlyAdopterRatio > 30, sugiere activar una red de embajadores formales.
+- Genera recomendaciones diferenciadas por segmento Rogers cuando el contexto lo justifique.
+- Sé específico sobre departamentos o perfiles si los datos del contexto lo permiten.`
+
+  return { system, user: `Analiza este mapa de adopción y genera recomendaciones:\n\n${JSON.stringify(context, null, 2)}` }
+}
+
+/**
+ * T8 — Plan de Comunicación IA
+ * Recibe: T8RecommendationContext (acciones por fase, canales, mensajes por arquetipo)
+ * Nota: t8_comms genera los mensajes por arquetipo. t8 genera recomendaciones del plan.
+ */
+function buildT8RecPrompt(context: Record<string, unknown>): { system: string; user: string } {
+  const system = `Eres un experto en comunicación corporativa y gestión del cambio para proyectos de transformación IA. Evalúas planes de comunicación y recomiendas mejoras para aumentar la efectividad y cobertura.
+
+INSTRUCCIONES:
+- Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código markdown.
+
+${GENERIC_REC_SCHEMA}
+
+INSTRUCCIONES ADICIONALES:
+- Si commMap.highPriorityCount es bajo (< 20% del total), recomienda revisar la priorización.
+- Si hay fases sin acciones (byPhase con count 0), recomienda completar esas fases.
+- Si commMap.totalActions es 0, las recomendaciones deben ser fundacionales (cómo empezar).
+- Sugiere canales adicionales si el mix de canales es pobre o desequilibrado.`
+
+  return { system, user: `Analiza este plan de comunicación IA y genera recomendaciones:\n\n${JSON.stringify(context, null, 2)}` }
+}
+
+/**
+ * T9 — Roadmap IA
+ * Recibe: T9RecommendationContext (items del roadmap, distribución por mes/riesgo/dept)
+ */
+function buildT9Prompt(context: Record<string, unknown>): { system: string; user: string } {
+  const system = `Eres un experto en planificación y ejecución de programas de transformación IA. Analizas roadmaps de implementación e identificas riesgos de ejecución, solapamientos de capacidad y oportunidades de aceleración.
+
+INSTRUCCIONES:
+- Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código markdown.
+
+${GENERIC_REC_SCHEMA}
+
+INSTRUCCIONES ADICIONALES:
+- Si roadmap.withoutOwner > 0, incluye recomendación sobre asignación de responsables.
+- Detecta concentraciones de riesgo (byRisk con alto count) y recomienda mitigaciones.
+- Si hay concentración de items en pocos meses (byMonth), recomienda redistribuir carga.
+- Si roadmap.freeItemCount > roadmap.t4ImportedCount, verifica alineación con el portfolio validado.`
+
+  return { system, user: `Analiza este roadmap IA y genera recomendaciones de ejecución:\n\n${JSON.stringify(context, null, 2)}` }
+}
+
+/**
+ * T10 — Dashboard Ejecutivo IA (Visión global del programa)
+ * Recibe: T10RecommendationContext (madurez, portfolio, adopción, gobernanza agregados)
+ */
+function buildT10Prompt(context: Record<string, unknown>): { system: string; user: string } {
+  const system = `Eres un asesor estratégico de transformación IA. Analizas el estado global de un programa de adopción IA desde una perspectiva ejecutiva y generas recomendaciones transversales de alto impacto para la dirección.
+
+INSTRUCCIONES:
+- Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código markdown.
+
+${GENERIC_REC_SCHEMA}
+
+INSTRUCCIONES ADICIONALES:
+- Prioriza recomendaciones que tengan impacto cruzado en múltiples dimensiones del programa.
+- Usa dashboard.maturity.criticalGap para identificar la dimensión que más frena el programa.
+- Si dashboard.adoption.earlyAdopterRatio < 25, incluye recomendación sobre masa crítica de adopción.
+- Si dashboard.portfolio.highRiskCases > 0, incluye recomendación de compliance.
+- El tono debe ser directivo y ejecutivo: para CIO/COO, no para técnicos.`
+
+  return { system, user: `Analiza el estado global de este programa IA y genera recomendaciones ejecutivas:\n\n${JSON.stringify(context, null, 2)}` }
+}
+
+/**
+ * T11 — Modelo Operativo IA (Governance Rhythm)
+ * Recibe: T11RecommendationContext (eventos cadencia, decisiones, KPIs, tier de madurez)
+ */
+function buildT11Prompt(context: Record<string, unknown>): { system: string; user: string } {
+  const system = `Eres un experto en diseño de modelos operativos para programas de IA empresarial. Evalúas la cadencia de governance, la estructura de decisión y los KPIs de seguimiento para garantizar la sostenibilidad del programa.
+
+INSTRUCCIONES:
+- Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código markdown.
+
+${GENERIC_REC_SCHEMA}
+
+INSTRUCCIONES ADICIONALES:
+- Si model.adaptiveMode es "basic", recomienda acciones para evolucionar hacia "standard".
+- Si model.decisions tiene entradas sin owner, recomienda clarificar la RACI.
+- Si model.activeEventCount < 3, recomienda activar más puntos de cadencia críticos.
+- Adapta las recomendaciones al maturityTier: las empresas en tier bajo necesitan estructura básica primero.`
+
+  return { system, user: `Analiza este modelo operativo IA y genera recomendaciones:\n\n${JSON.stringify(context, null, 2)}` }
+}
+
+
 // ── Configuración por tool ────────────────────────────────────
 
 interface ToolConfig {
@@ -276,10 +528,22 @@ interface ToolConfig {
 }
 
 const TOOL_CONFIG: Record<string, ToolConfig> = {
+  // ── Generic RecommendationPanel tools ──────────────────────
+  t1:  { model: 'claude-haiku-4-5-20251001', maxTokens: 1500, buildPrompt: buildT1Prompt },
+  t2:  { model: 'claude-haiku-4-5-20251001', maxTokens: 1200, buildPrompt: buildT2Prompt },
+  t4:  { model: 'claude-haiku-4-5-20251001', maxTokens: 1500, buildPrompt: buildT4Prompt },
+  t5:  { model: 'claude-haiku-4-5-20251001', maxTokens: 1200, buildPrompt: buildT5Prompt },
+  t6:  { model: 'claude-haiku-4-5-20251001', maxTokens: 1200, buildPrompt: buildT6RecPrompt },
+  t7:  { model: 'claude-haiku-4-5-20251001', maxTokens: 1200, buildPrompt: buildT7RecPrompt },
+  t8:  { model: 'claude-haiku-4-5-20251001', maxTokens: 1200, buildPrompt: buildT8RecPrompt },
+  t9:  { model: 'claude-haiku-4-5-20251001', maxTokens: 1200, buildPrompt: buildT9Prompt },
+  t10: { model: 'claude-sonnet-4-6',         maxTokens: 1500, buildPrompt: buildT10Prompt },
+  t11: { model: 'claude-haiku-4-5-20251001', maxTokens: 1200, buildPrompt: buildT11Prompt },
+  // ── Dedicated generation tools ──────────────────────────────
+  t3_opportunities: { model: 'claude-haiku-4-5-20251001', maxTokens: 1500, buildPrompt: buildT3Prompt },
   t6_policy:        { model: 'claude-sonnet-4-6',         maxTokens: 2000, buildPrompt: buildT6Prompt },
   t7_plan:          { model: 'claude-sonnet-4-6',         maxTokens: 2500, buildPrompt: buildT7Prompt },
   t8_comms:         { model: 'claude-haiku-4-5-20251001', maxTokens: 3000, buildPrompt: buildT8Prompt },
-  t3_opportunities: { model: 'claude-haiku-4-5-20251001', maxTokens: 1500, buildPrompt: buildT3Prompt },
 }
 
 
@@ -413,8 +677,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return errorResponse('Payload inválido: falta engagementId (o projectId)', 400, corsH)
   }
   if (!tool || !LLM_TOOLS.has(tool)) {
-    return errorResponse(
-      `Payload inválido: tool "${tool}" no soportado. Válidos: ${[...LLM_TOOLS].join(', ')}`,
+    return jsonResponse(
+      {
+        error:      `Payload inválido: tool "${tool ?? '(vacío)'}" no soportado.`,
+        error_code: 'unsupported_tool_code',
+        tool:        tool ?? null,
+        valid_tools: [...LLM_TOOLS],
+        version:     FUNCTION_VERSION,
+      },
       400,
       corsH,
     )
@@ -601,5 +871,5 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // Los hooks añaden generatedAt (y sector/tamano para T6) en el cliente.
   // La UI debe usar persistence.saved para mostrar aviso si el guardado falló.
 
-  return jsonResponse({ data: generatedData, persistence }, 200, corsH)
+  return jsonResponse({ data: generatedData, persistence, function_version: FUNCTION_VERSION }, 200, corsH)
 })

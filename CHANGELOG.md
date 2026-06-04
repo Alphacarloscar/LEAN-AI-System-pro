@@ -7,6 +7,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- [Edge] ai-recommend: añadidos tool codes t1, t2, t4, t5, t6, t7, t8, t9, t10, t11 a LLM_TOOLS + TOOL_CONFIG — las recomendaciones IA fallaban en todas las herramientas con error 400 "tool no soportado"
+- [Edge] ai-recommend: añadido FUNCTION_VERSION en todas las respuestas para diagnóstico desde Network tab
+- [Edge] ai-recommend: error 400 por tool no soportado ahora incluye `error_code: unsupported_tool_code` y `valid_tools` para depuración
+
 ### Changed
 - [Infra] Entornos documentados con URLs y project refs reales: PRO (`gobytech-prod.vercel.app` + Supabase `vbpgsgxsslccctjhuegt`), PRE (`v0-lean-ai-system.vercel.app` + Supabase `mkypmakmkxpecuezofkk`), DEV (Supabase CLI local)
 - [Docs] Actualizado `.ai-config.yml`, `CLAUDE.md`, `ENVIRONMENTS.md`, `DATABASES.md`, `INFRASTRUCTURE.md` con valores reales — eliminados todos los `[COMPLETAR]` de infraestructura
