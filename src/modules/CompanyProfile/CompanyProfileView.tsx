@@ -14,7 +14,7 @@
 // ============================================================
 
 import { useState, useEffect }    from 'react'
-import { useNavigate }            from 'react-router-dom'
+import { BackToDashboard }        from '@/shared/components/BackToDashboard'
 import { useCompanyProfileStore } from './store'
 import { useDepartmentStore }     from './useDepartmentStore'
 import { DepartmentManager }      from './DepartmentManager'
@@ -267,7 +267,6 @@ function FrictionCard({
 // ── Vista principal ───────────────────────────────────────────
 
 export function CompanyProfileView() {
-  const navigate     = useNavigate()
   const { isReadOnly, canEditCompanySettings } = usePermissions()
 
   // ── Stores ────────────────────────────────────────────────────
@@ -394,9 +393,7 @@ export function CompanyProfileView() {
             El perfil de empresa está vinculado al proyecto activo.
             Usa el selector <span className="font-semibold text-lean-black dark:text-gray-300">▾ Proyecto</span> en la barra superior.
           </p>
-          <button onClick={() => navigate('/')} className="mt-2 text-xs font-medium text-navy dark:text-warm-200 hover:underline">
-            Volver al Dashboard
-          </button>
+          <BackToDashboard className="mt-2" />
         </div>
       </div>
     )
@@ -412,15 +409,7 @@ export function CompanyProfileView() {
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center gap-1.5 text-xs font-medium text-text-muted dark:text-gray-400 hover:text-lean-black dark:hover:text-gray-200 transition-colors"
-            >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10 12L6 8l4-4" />
-              </svg>
-              Volver al dashboard
-            </button>
+            <BackToDashboard />
 
             <span className="text-text-subtle dark:text-gray-600">·</span>
 

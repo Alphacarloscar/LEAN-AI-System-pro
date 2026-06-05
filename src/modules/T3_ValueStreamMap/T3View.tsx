@@ -13,7 +13,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { useNavigate }                 from 'react-router-dom'
+import { BackToDashboard }             from '@/shared/components/BackToDashboard'
 import { useT3Store }                  from './store'
 import { useEngagementStore }          from '@/modules/Engagement/store'
 import { useCompanyProfileStore }      from '@/modules/CompanyProfile/store'
@@ -922,7 +922,6 @@ interface T3ViewProps {
 }
 
 export function T3View({ onBack }: T3ViewProps) {
-  const navigate                          = useNavigate()
   const { processes, addProcess, initDemo, ensureLoaded, isLoading: isLoadingT3, hasData: hasDataT3, loadError: loadErrorT3 } = useT3Store()
   const engagementId                      = useEngagementStore((s) => s.activeEngagementId)
   const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
@@ -1008,15 +1007,7 @@ export function T3View({ onBack }: T3ViewProps) {
       <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm
         border-b border-border dark:border-white/6 px-8 py-3">
         <div className="flex items-center gap-4 max-w-7xl mx-auto">
-          <button
-            onClick={() => onBack ? onBack() : navigate('/')}
-            className="h-8 w-8 rounded-full flex items-center justify-center
-              text-text-subtle hover:bg-warm-100 dark:hover:bg-warm-700 transition-colors shrink-0"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 2L4 7l5 5" />
-            </svg>
-          </button>
+          <BackToDashboard onClick={onBack} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">T3</span>

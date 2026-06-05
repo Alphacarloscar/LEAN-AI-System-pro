@@ -14,7 +14,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect } from 'react'
-import { useNavigate }                  from 'react-router-dom'
+import { BackToDashboard }            from '@/shared/components/BackToDashboard'
 import { useT12Store }                  from './store'
 import { useT6Store }                   from '@/modules/T6_RiskGovernance/store'
 import { useEngagementStore }           from '@/modules/Engagement/store'
@@ -289,7 +289,6 @@ interface T12ViewProps {
 }
 
 export function T12View({ onBack }: T12ViewProps) {
-  const navigate                    = useNavigate()
   const { isReadOnly } = usePermissions()
   const { controls, updateControl, importFromT6, syncEngagement: syncT12 } = useT12Store()
   const t6Controls                  = useT6Store((s) => s.controls)
@@ -343,15 +342,7 @@ export function T12View({ onBack }: T12ViewProps) {
       <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm border-b border-border px-8 py-3">
         <div className="max-w-7xl mx-auto flex items-center gap-4">
 
-          <button
-            onClick={() => { onBack?.(); navigate('/') }}
-            className="flex items-center gap-1.5 text-xs font-medium text-text-muted hover:text-lean-black dark:hover:text-gray-200 transition-colors"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 12L6 8l4-4" />
-            </svg>
-            Volver al dashboard
-          </button>
+          <BackToDashboard onClick={onBack} />
 
           <span className="text-text-subtle">·</span>
 

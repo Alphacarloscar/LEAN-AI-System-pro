@@ -17,6 +17,7 @@ import { useT4Store }                    from '@/modules/T4_UseCasePriorityBoard
 import { useT1Store }                    from '@/modules/T1_MaturityRadar/store'
 import { ARCHETYPE_CONFIG }             from '@/modules/T2_StakeholderMatrix/constants'
 import { PhaseMiniMap }                 from '@/shared/components/PhaseMiniMap'
+import { BackToDashboard }              from '@/shared/components/BackToDashboard'
 import { useDarkMode }                  from '@/shared/hooks/useDarkMode'
 import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
 import { useEngagementStore }           from '@/modules/Engagement/store'
@@ -1122,15 +1123,7 @@ export function T7View({ onBack }: T7ViewProps) {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-base transition-colors mb-3"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Volver al dashboard
-          </button>
+          <BackToDashboard onClick={onBack} className="mb-3" />
           <div className="flex items-center gap-2.5">
             <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider bg-navy text-white">
               T7

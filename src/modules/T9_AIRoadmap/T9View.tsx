@@ -20,6 +20,7 @@ import { useT9Store }                     from './store'
 import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
 import { PhaseMiniMap }                   from '@/shared/components/PhaseMiniMap'
+import { BackToDashboard }                from '@/shared/components/BackToDashboard'
 import { RecommendationPanel }            from '@/components/RecommendationPanel'
 import { buildT9RecommendationContext }   from './t9ContextBuilder'
 import type { AIActRiskLevel, UseCase } from '@/modules/T4_UseCasePriorityBoard/types'
@@ -662,15 +663,7 @@ export function T9View({ onBack }: T9ViewProps) {
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-lean-black dark:hover:text-gray-100 mb-1.5 transition-colors"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 2L4 7l5 5" />
-            </svg>
-            Volver al dashboard
-          </button>
+          <BackToDashboard onClick={onBack} className="mb-1.5" />
           <div className="flex items-center gap-2 mb-0.5">
             <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">T9</span>
             <h1 className="text-base font-semibold text-lean-black dark:text-gray-100">Roadmap IA — 6 meses</h1>

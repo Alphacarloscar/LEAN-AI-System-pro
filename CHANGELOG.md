@@ -15,7 +15,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - [Edge] ai-recommend: diagnóstico mejorado en rate_limit_check_failed — console.error expone code/details/hint del error Supabase; respuesta 500 incluye error_code, stage, tool, version
 - [Edge] ai-recommend: todas las respuestas de error ahora incluyen `version` para confirmar qué build está desplegado
 
+### Added
+- [UX] Componente canónico `BackToDashboard` (`src/shared/components/`) — control único "Volver al dashboard" inline icono+texto. Sustituye 13 variantes hand-rolled dispersas en T1–T9, T11, T12 y CompanyProfile (P1 Sprint 11)
+
 ### Changed
+- [UX] Normalizado el botón de vuelta al dashboard en 12 vistas: T3 y T4 pasan de botón redondo icon-only (área de click diminuta, AUDIT Sprint 4) a inline texto+icono; T5 y T6 "Volver" → "Volver al dashboard"; corregido casing "Dashboard" → "dashboard" en empty-states de T4 y CompanyProfile; unificados icono (16×16), tipografía (text-xs) y tokens de color
 - [Infra] Entornos documentados con URLs y project refs reales: PRO (`gobytech-prod.vercel.app` + Supabase `vbpgsgxsslccctjhuegt`), PRE (`v0-lean-ai-system.vercel.app` + Supabase `mkypmakmkxpecuezofkk`), DEV (Supabase CLI local)
 - [Docs] Actualizado `.ai-config.yml`, `CLAUDE.md`, `ENVIRONMENTS.md`, `DATABASES.md`, `INFRASTRUCTURE.md` con valores reales — eliminados todos los `[COMPLETAR]` de infraestructura
 

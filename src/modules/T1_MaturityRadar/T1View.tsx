@@ -22,6 +22,7 @@ import { DimensionCard }                        from './components/DimensionCard
 import { T1RadarPanel }                         from './components/T1RadarPanel'
 import { T1ExecutiveOutput }                    from './components/T1ExecutiveOutput'
 import { PhaseMiniMap }                         from '@/shared/components/PhaseMiniMap'
+import { BackToDashboard }                      from '@/shared/components/BackToDashboard'
 import type { IntervieweeAggregate }            from './components/T1ExecutiveOutput'
 import { useT1Store }                           from './store'
 import { useEngagementStore }                   from '@/modules/Engagement/store'
@@ -440,15 +441,7 @@ export function T1View({ onBack }: T1ViewProps) {
         <div className="max-w-6xl mx-auto flex items-center gap-4">
 
           {/* Back button */}
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-xs font-medium text-text-muted hover:text-lean-black dark:hover:text-gray-200 transition-colors"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 12L6 8l4-4" />
-            </svg>
-            Volver al dashboard
-          </button>
+          <BackToDashboard onClick={onBack} />
 
           <span className="text-text-subtle">·</span>
 

@@ -19,6 +19,7 @@ import { useT5Store }    from './store'
 import { useT3Store }    from '@/modules/T3_ValueStreamMap'
 import { useT4Store }    from '@/modules/T4_UseCasePriorityBoard'
 import { PhaseMiniMap }  from '@/shared/components/PhaseMiniMap'
+import { BackToDashboard } from '@/shared/components/BackToDashboard'
 import { isDemoEnabled } from '@/lib/config'
 import { usePermissions }  from '@/modules/Auth'
 
@@ -1052,15 +1053,7 @@ export function T5View({
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-sm text-text-muted hover:text-lean-black dark:hover:text-gray-200 transition-colors"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 2L4 7l5 5" />
-            </svg>
-            Volver
-          </button>
+          <BackToDashboard onClick={onBack} />
           <div className="w-px h-5 bg-border" />
           <div>
             <div className="flex items-center gap-2 mb-0.5">

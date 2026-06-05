@@ -15,7 +15,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect } from 'react'
-import { useNavigate }       from 'react-router-dom'
+import { BackToDashboard } from '@/shared/components/BackToDashboard'
 import { useT4Store }                   from './store'
 import { useT1Store }                   from '@/modules/T1_MaturityRadar/store'
 import { useT2Store }                   from '@/modules/T2_StakeholderMatrix/store'
@@ -2153,7 +2153,6 @@ interface T4ViewProps {
 }
 
 export function T4View({ onBack }: T4ViewProps) {
-  const navigate                               = useNavigate()
   const { useCases, isLoading, isLoaded, ensureLoaded } = useT4Store()
   const { profile: companyProfile }            = useCompanyProfileStore()
   const companyName                            = companyProfile.engagementName
@@ -2258,12 +2257,7 @@ export function T4View({ onBack }: T4ViewProps) {
             Los casos de uso están vinculados al proyecto activo.
             Usa el selector <span className="font-semibold text-lean-black dark:text-gray-300">▾ Proyecto</span> en la barra superior para seleccionar uno existente o crear uno nuevo.
           </p>
-          <button
-            onClick={() => navigate('/')}
-            className="mt-2 text-xs font-medium text-navy dark:text-warm-200 hover:underline"
-          >
-            Volver al Dashboard
-          </button>
+          <BackToDashboard className="mt-2" />
         </div>
       </div>
     )
@@ -2276,15 +2270,7 @@ export function T4View({ onBack }: T4ViewProps) {
       <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm
         border-b border-border dark:border-white/6 px-8 py-3">
         <div className="flex items-center gap-4 max-w-7xl mx-auto">
-          <button
-            onClick={() => onBack ? onBack() : navigate('/')}
-            className="h-8 w-8 rounded-full flex items-center justify-center
-              text-text-subtle hover:bg-warm-100 dark:hover:bg-warm-700 transition-colors shrink-0"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 2L4 7l5 5" />
-            </svg>
-          </button>
+          <BackToDashboard onClick={onBack} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">T4</span>

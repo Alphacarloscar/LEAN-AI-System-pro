@@ -15,7 +15,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect }  from 'react'
-import { useNavigate }                   from 'react-router-dom'
+import { BackToDashboard }               from '@/shared/components/BackToDashboard'
 import { useT2Store }                    from './store'
 import { useEngagementStore }            from '@/modules/Engagement/store'
 import { useCompanyProfileStore }        from '@/modules/CompanyProfile/store'
@@ -771,7 +771,6 @@ export function T2View({ onBack }: T2ViewProps) {
   const engagementId   = useEngagementStore((s) => s.activeEngagementId)
   const companyProfile = useCompanyProfileStore((s) => s.profile)
   const companyName    = companyProfile.engagementName
-  const navigate       = useNavigate()
 
   const { isReadOnly } = usePermissions()
   const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
@@ -836,15 +835,7 @@ export function T2View({ onBack }: T2ViewProps) {
       <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm border-b border-border px-8 py-4">
         <div className="max-w-6xl mx-auto flex items-center gap-4">
 
-          <button
-            onClick={() => { onBack(); navigate('/') }}
-            className="flex items-center gap-1.5 text-xs font-medium text-text-muted hover:text-lean-black dark:hover:text-gray-200 transition-colors"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 12L6 8l4-4" />
-            </svg>
-            Volver al dashboard
-          </button>
+          <BackToDashboard onClick={onBack} />
 
           <span className="text-text-subtle">·</span>
 

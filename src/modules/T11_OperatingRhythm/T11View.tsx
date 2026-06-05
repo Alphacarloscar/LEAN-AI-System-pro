@@ -14,6 +14,7 @@
 
 import { useState, useMemo }              from 'react'
 import { PhaseMiniMap }                   from '@/shared/components/PhaseMiniMap'
+import { BackToDashboard }                from '@/shared/components/BackToDashboard'
 import { buildOperatingModel }            from './engine'
 import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
@@ -977,15 +978,7 @@ export function T11View({ onBack }: T11ViewProps) {
       {/* ── Header ── */}
       <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm border-b border-border dark:border-white/6">
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center gap-4 flex-wrap">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-xs text-text-subtle dark:text-warm-300 hover:text-text-muted dark:hover:text-warm-100 transition-colors"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M8 2L4 6l4 4" />
-            </svg>
-            Volver al dashboard
-          </button>
+          <BackToDashboard onClick={onBack} />
 
           <div className="h-4 w-px bg-border dark:bg-warm-600" />
 
