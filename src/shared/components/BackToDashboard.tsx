@@ -10,6 +10,10 @@
 // onClick para preservar el contrato `onBack` que App.tsx inyecta
 // en cada vista (que ya equivale a navigate('/')).
 //
+// El texto es FIJO ("Volver al dashboard") y NO es parametrizable
+// por diseño (FDR-001): así ninguna herramienta puede reintroducir
+// variantes como "Volver", "Dashboard" o "Ir al dashboard".
+//
 // Uso:
 //   <BackToDashboard onClick={onBack} />
 //   <BackToDashboard />                 // auto-navega a '/'
@@ -19,18 +23,17 @@
 import { useNavigate } from 'react-router-dom'
 
 interface BackToDashboardProps {
-  /** Sobrescribe la acción de click. Si se omite, navega a '/'. */
+  /** Sobrescribe la acción de click. Si se omite, navega a '/'.
+   *  Solo debe usarse para respetar la navegación canónica (delegar
+   *  en el `onBack` del parent, que ya equivale a navigate('/')). */
   onClick?: () => void
   /** Clases extra para layout contextual (márgenes, etc.). */
   className?: string
-  /** Etiqueta visible. Por defecto 'Volver al dashboard'. */
-  label?: string
 }
 
 export function BackToDashboard({
   onClick,
   className = '',
-  label = 'Volver al dashboard',
 }: BackToDashboardProps) {
   const navigate = useNavigate()
 
@@ -52,7 +55,7 @@ export function BackToDashboard({
       >
         <path d="M10 12L6 8l4-4" />
       </svg>
-      {label}
+      Volver al dashboard
     </button>
   )
 }

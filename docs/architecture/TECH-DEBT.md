@@ -63,6 +63,31 @@ No existían GitHub Actions workflows. Cualquier PR podía mergearse sin validac
 
 ---
 
+### DEBT-003 — Cabeceras de herramienta (ToolHeader) duplicadas en T1–T12
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-05 (Sprint 11, durante P1 — normalización de "Volver al dashboard")
+**Área:** src/modules/T*/T*View.tsx (cabeceras), src/modules/CompanyProfile/CompanyProfileView.tsx
+**Estado:** Pendiente — POST-DEMO (no abrir antes de las demos semana 9-jun-2026)
+
+**Descripción:**
+Cada herramienta T1–T12 reescribe a mano su cabecera: badge `T[N]`, título, `PhaseMiniMap`, breadcrumb y el botón de vuelta. La normalización del back button (P1, FDR-001, `BackToDashboard`) resolvió la variante más visible, pero el resto del patrón de cabecera sigue duplicado 12 veces con divergencias menores de spacing/markup. Es la causa raíz de la fragmentación que P1 atacó en su síntoma.
+
+**Impacto:**
+- Cualquier ajuste de cabecera (estilo, accesibilidad, breadcrumb) hay que replicarlo en 12 ficheros.
+- Riesgo de reintroducir inconsistencias visuales herramienta a herramienta.
+- Mayor superficie de regresión en cada cambio de UX transversal.
+
+**Plan de acción:**
+1. Extraer `<ToolHeader toolCode phase onBack? actions? />` en `src/shared/components/`, encapsulando badge + título + `PhaseMiniMap` + `BackToDashboard` + breadcrumb.
+2. Migrar T1–T12 + CompanyProfile a `ToolHeader` en un PR dedicado.
+3. Hacerlo **después** de DEBT-001 (tests) o, como mínimo, con smoke test visual por herramienta — sin red de seguridad automatizada, tocar 12 headers a la vez es alto riesgo de regresión (motivo de diferirlo respecto a las demos).
+
+**Requiere ADR:** No (componente de presentación compartido, no decisión arquitectónica nueva). Sí requiere FDR si cambia el contenido/comportamiento visible de la cabecera.
+
+**Relacionado:** FDR-001 (BackToDashboard), DEBT-001 (sin tests).
+
+---
+
 ## Items Resueltos
 
 *(ninguno todavía — este registro se inicializa hoy)*
