@@ -1,5 +1,6 @@
 import { computeROIFromEconomics } from '../constants'
 import { fmtEur } from './T4Badges'
+import { Card } from '@shared/design-system/components'
 import type { UseCase } from '../types'
 
 interface ExecDashboardProps {
@@ -56,10 +57,11 @@ export function ExecDashboard({ useCases }: ExecDashboardProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {kpis.map((kpi) => (
-        <div
+        <Card
           key={kpi.label}
-          className="rounded-2xl bg-white dark:bg-warm-800 border border-border dark:border-white/6
-            px-5 py-4 flex flex-col gap-1.5"
+          variant="outlined"
+          padding="none"
+          className="rounded-2xl px-5 py-4 flex flex-col gap-1.5"
         >
           <div className="flex items-center gap-2">
             <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${kpi.dotColor}`} />
@@ -71,7 +73,7 @@ export function ExecDashboard({ useCases }: ExecDashboardProps) {
             {kpi.value}
           </p>
           <p className="text-[10px] text-text-subtle">{kpi.subtext}</p>
-        </div>
+        </Card>
       ))}
     </div>
   )

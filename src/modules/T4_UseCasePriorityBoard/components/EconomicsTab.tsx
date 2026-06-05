@@ -9,6 +9,7 @@ import {
   AI_CATEGORY_LABELS,
 } from '../constants'
 import { fmtEur } from './T4Badges'
+import { Button, Card } from '@shared/design-system/components'
 import type { UseCase, UseCaseEconomics } from '../types'
 
 export function EconomicsTab({ useCase }: { useCase: UseCase }) {
@@ -77,8 +78,10 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
             color: ROI_PILL_COLOR.split(' ')[0],
           },
         ].map((kpi) => (
-          <div
+          <Card
             key={kpi.label}
+            variant="flat"
+            padding="none"
             className="rounded-2xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3"
           >
             <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
@@ -86,7 +89,7 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
             </p>
             <p className={`text-xl font-bold tabular-nums ${kpi.color}`}>{kpi.value}</p>
             <p className="text-[10px] text-text-subtle mt-0.5 leading-snug">{kpi.sub}</p>
-          </div>
+          </Card>
         ))}
       </div>
 
@@ -117,37 +120,29 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
           Datos del caso de uso
         </p>
         {!editing ? (
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => { setLocal(useCase.economics ?? defaultEcon); setEditing(true) }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold
-              bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm"
           >
             ✎ Editar
-          </button>
+          </Button>
         ) : (
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setEditing(false)}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-border
-                dark:border-white/10 text-text-muted hover:text-text-default transition-colors"
-            >
+            <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
               Cancelar
-            </button>
+            </Button>
             {!isReadOnly && (
-              <button
-                onClick={handleSave}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-navy-metallic text-white
-                  hover:bg-navy-metallic-hover transition-colors shadow-sm"
-              >
+              <Button variant="primary" size="sm" onClick={handleSave}>
                 Guardar
-              </button>
+              </Button>
             )}
           </div>
         )}
       </div>
 
       {/* Fields grid */}
-      <div className="rounded-2xl border border-border dark:border-white/8 bg-warm-50 dark:bg-warm-900/50 px-5 py-4 flex flex-col gap-5">
+      <Card variant="flat" padding="none" className="rounded-2xl border border-border dark:border-white/8 bg-warm-50 dark:bg-warm-900/50 px-5 py-4 flex flex-col gap-5">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
           {/* KPI principal */}
@@ -405,7 +400,7 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
             )}
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

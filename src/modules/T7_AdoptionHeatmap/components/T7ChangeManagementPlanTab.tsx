@@ -4,6 +4,7 @@
 import { usePermissions } from '@/modules/Auth'
 import type { GeneratedChangePlan, GeneratedChangePlanPhase } from '../types'
 import { PlanPhaseCard } from './T7PlanPhaseCard'
+import { Button } from '@shared/design-system/components'
 
 const CHANGE_PLAN = [
   {
@@ -94,40 +95,21 @@ export function ChangeManagementPlanTab({
 
         <div className="flex items-center gap-2 flex-shrink-0">
           {!isReadOnly && isLLM && (
-            <button
-              onClick={onClear}
-              className="px-3 py-1.5 rounded-lg text-xs text-text-subtle border border-border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
+            <Button variant="ghost" size="sm" onClick={onClear}>
               Restaurar plantilla
-            </button>
+            </Button>
           )}
           {!isReadOnly && (
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={onGenerate}
               disabled={!canGenerate || isGenerating}
-              className={[
-                'flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150',
-                canGenerate && !isGenerating
-                  ? 'bg-navy text-white hover:opacity-90 shadow-sm'
-                  : 'bg-gray-100 dark:bg-gray-800 text-text-subtle cursor-not-allowed',
-              ].join(' ')}
+              loading={isGenerating}
+              icon={<svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M6 1v2M6 9v2M1 6h2M9 6h2M2.5 2.5l1.4 1.4M8.1 8.1l1.4 1.4M2.5 9.5l1.4-1.4M8.1 3.9l1.4-1.4"/></svg>}
             >
-              {isGenerating ? (
-                <>
-                  <svg className="animate-spin h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M6 1a5 5 0 11-5 5" strokeLinecap="round" />
-                  </svg>
-                  Generando plan…
-                </>
-              ) : (
-                <>
-                  <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                    <path d="M6 1v2M6 9v2M1 6h2M9 6h2M2.5 2.5l1.4 1.4M8.1 8.1l1.4 1.4M2.5 9.5l1.4-1.4M8.1 3.9l1.4-1.4"/>
-                  </svg>
-                  {isLLM ? 'Regenerar plan con IA' : 'Generar plan con IA'}
-                </>
-              )}
-            </button>
+              {isGenerating ? 'Generando plan…' : isLLM ? 'Regenerar plan con IA' : 'Generar plan con IA'}
+            </Button>
           )}
         </div>
       </div>

@@ -27,6 +27,7 @@ import {
 import { PhaseMiniMap }      from '@/shared/components/PhaseMiniMap'
 import type { T12Clause, T12Control, T12Status } from './types'
 import { usePermissions } from '@/modules/Auth'
+import { Button, Card, ToolHeader } from '@shared/design-system/components'
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -75,12 +76,12 @@ function ClauseSidebar({
     <aside className="w-56 shrink-0 flex flex-col gap-1">
 
       {/* Progreso global */}
-      <div className="rounded-xl border border-border bg-white dark:bg-gray-900 px-4 py-3 mb-2">
+      <Card variant="outlined" padding="none" className="rounded-xl px-4 py-3 mb-2">
         <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
           Progreso global
         </p>
         <div className="flex items-end gap-2 mb-2">
-          <span className="text-2xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
+          <span className="text-2xl font-bold text-lean-black dark:text-warm-50 tabular-nums leading-none">
             {globalPct}%
           </span>
           <span className="text-[10px] text-text-subtle mb-0.5">aprobado</span>
@@ -106,7 +107,7 @@ function ClauseSidebar({
             {controls.filter((c) => c.status === 'pendiente_revision').length} en revisión
           </span>
         </div>
-      </div>
+      </Card>
 
       {/* Lista de cláusulas */}
       {T12_CLAUSE_ORDER.map((clause) => {
@@ -137,7 +138,7 @@ function ClauseSidebar({
                 >
                   {cfg.number}
                 </span>
-                <span className={`text-[11px] font-semibold ${isActive ? 'text-lean-black dark:text-gray-100' : 'text-text-muted'}`}>
+                <span className={`text-[11px] font-semibold ${isActive ? 'text-lean-black dark:text-warm-50' : 'text-text-muted'}`}>
                   {cfg.shortLabel}
                 </span>
               </div>
@@ -340,78 +341,56 @@ export function T12View({ onBack }: T12ViewProps) {
     <div className="min-h-screen bg-surface dark:bg-warm-900">
 
       {/* ── Header sticky ── */}
-      <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm border-b border-border px-8 py-3">
-        <div className="max-w-7xl mx-auto flex items-center gap-4">
-
-          <button
-            onClick={() => { onBack?.(); navigate('/') }}
-            className="flex items-center gap-1.5 text-xs font-medium text-text-muted hover:text-lean-black dark:hover:text-gray-200 transition-colors"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 12L6 8l4-4" />
-            </svg>
-            Volver al dashboard
-          </button>
-
-          <span className="text-text-subtle">·</span>
-
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">
-              T12
-            </span>
-            <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100 truncate">
-              AI System Impact Assessment — ISO 42001
-            </h1>
-            <PhaseMiniMap phaseId="normalize" toolCode="T12" />
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Import desde T6 */}
+      <ToolHeader
+        sticky
+        onBack={() => { onBack?.(); navigate('/') }}
+        backLabel="Volver al dashboard"
+        toolCode="T12"
+        title="AI System Impact Assessment — ISO 42001"
+        phaseMiniMap={<PhaseMiniMap phaseId="normalize" toolCode="T12" />}
+        cta={
+          <>
             {!isReadOnly && (
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleImportFromT6}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs font-medium text-text-muted hover:text-lean-black dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-150"
+                icon={<svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v10M4 8l4 4 4-4M2 14h12" /></svg>}
               >
-                <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M8 2v10M4 8l4 4 4-4M2 14h12" />
-                </svg>
                 Importar desde T6
-              </button>
+              </Button>
             )}
-
-            {/* Exportar para auditor */}
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={handleExport}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-navy-metallic text-white text-xs font-semibold hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98] transition-all duration-150"
+              icon={<svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v8M4 6l4 4 4-4M2 14h12" /></svg>}
             >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M8 2v8M4 6l4 4 4-4M2 14h12" />
-              </svg>
               Exportar para auditor
-            </button>
+            </Button>
+          </>
+        }
+        below={
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex">
+              {(['aprobado', 'pendiente_revision', 'en_progreso'] as T12Status[]).map((s) => {
+                const pct = (controls.filter((c) => c.status === s).length / total) * 100
+                if (pct === 0) return null
+                return (
+                  <div
+                    key={s}
+                    style={{ width: `${pct}%`, backgroundColor: T12_STATUS_CONFIG[s].hex }}
+                    className="h-full transition-all duration-700"
+                  />
+                )
+              })}
+            </div>
+            <span className="text-[10px] font-mono text-text-subtle shrink-0">
+              {globalPct}% · {approved}/{total} aprobados · {pending} en revisión
+            </span>
           </div>
-        </div>
-
-        {/* Barra de progreso global — debajo del header */}
-        <div className="max-w-7xl mx-auto mt-2.5 flex items-center gap-3">
-          <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex">
-            {(['aprobado', 'pendiente_revision', 'en_progreso'] as T12Status[]).map((s) => {
-              const pct = (controls.filter((c) => c.status === s).length / total) * 100
-              if (pct === 0) return null
-              return (
-                <div
-                  key={s}
-                  style={{ width: `${pct}%`, backgroundColor: T12_STATUS_CONFIG[s].hex }}
-                  className="h-full transition-all duration-700"
-                />
-              )
-            })}
-          </div>
-          <span className="text-[10px] font-mono text-text-subtle shrink-0">
-            {globalPct}% · {approved}/{total} aprobados · {pending} en revisión
-          </span>
-        </div>
-      </div>
+        }
+      />
 
       {/* ── Toast de confirmación de import ── */}
       {importMsg && (
@@ -422,7 +401,7 @@ export function T12View({ onBack }: T12ViewProps) {
 
       {/* ── Subheader: empresa ── */}
       <div className="max-w-7xl mx-auto px-8 pt-4 pb-1">
-        <p className="text-sm font-semibold text-lean-black dark:text-gray-100">{companyName}</p>
+        <p className="text-sm font-semibold text-lean-black dark:text-warm-50">{companyName}</p>
         <p className="text-xs text-text-subtle mt-0.5">
           Evaluación de cumplimiento ISO 42001:2023 · Selecciona una cláusula y gestiona el avance control por control.
         </p>
@@ -451,7 +430,7 @@ export function T12View({ onBack }: T12ViewProps) {
                 >
                   Cláusula {T12_CLAUSE_CONFIG[activeClause].number}
                 </span>
-                <h2 className="text-sm font-semibold text-lean-black dark:text-gray-100">
+                <h2 className="text-sm font-semibold text-lean-black dark:text-warm-50">
                   {T12_CLAUSE_CONFIG[activeClause].label}
                 </h2>
               </div>
@@ -459,12 +438,9 @@ export function T12View({ onBack }: T12ViewProps) {
                 {activeControls.filter((c) => c.status === 'aprobado').length} de {activeControls.length} controles aprobados
               </p>
             </div>
-            <button
-              onClick={() => setExpandAll((v) => !v)}
-              className="text-[11px] text-text-muted hover:text-lean-black dark:hover:text-gray-200 transition-colors"
-            >
+            <Button variant="link" size="sm" onClick={() => setExpandAll((v) => !v)}>
               {expandAll ? 'Colapsar todos' : 'Expandir todos'}
-            </button>
+            </Button>
           </div>
 
           {/* Cards de controles */}
@@ -516,12 +492,12 @@ function ControlCardWrapper({
   const nextCfg   = control.status !== 'aprobado' ? T12_STATUS_CONFIG[cfg.next!] : null
 
   return (
-    <div
+    <Card
+      variant="outlined"
+      padding="none"
       className={[
-        'rounded-xl border transition-all duration-200',
-        expanded
-          ? 'border-border shadow-sm bg-white dark:bg-gray-900'
-          : 'border-border bg-white dark:bg-gray-900 hover:border-border-hover',
+        'rounded-xl transition-all duration-200',
+        expanded ? 'shadow-sm' : 'hover:border-border-hover',
       ].join(' ')}
     >
       <button
@@ -537,7 +513,7 @@ function ControlCardWrapper({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <p className="text-xs font-semibold text-lean-black dark:text-gray-100 leading-snug">
+            <p className="text-xs font-semibold text-lean-black dark:text-warm-50 leading-snug">
               {control.title}
             </p>
             <div className="flex items-center gap-1.5 shrink-0">
@@ -635,6 +611,6 @@ function ControlCardWrapper({
           </div>
         </div>
       )}
-    </div>
+    </Card>
   )
 }

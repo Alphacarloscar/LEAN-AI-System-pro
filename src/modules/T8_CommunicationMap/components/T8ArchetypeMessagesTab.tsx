@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ARCHETYPE_CONFIG, CHANNEL_CFG } from '../T8Generators'
 import type { ArchetypeCode } from '@/modules/T2_StakeholderMatrix/types'
 import type { ArchetypeMessage } from '../types'
+import { Card } from '@shared/design-system/components'
 
 export function ArchetypeMessagesTab({ messages }: { messages: ArchetypeMessage[] }) {
   const [selected, setSelected] = useState(messages[0]?.archetypeCode ?? null)
@@ -51,16 +52,16 @@ export function ArchetypeMessagesTab({ messages }: { messages: ArchetypeMessage[
       {msg && (
         <div className="flex-1 min-w-0 space-y-4">
           {/* Headline */}
-          <div className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-5">
+          <Card variant="outlined" padding="none" className="rounded-xl p-5">
             <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">Mensaje headline</p>
             <p className="text-base font-semibold text-lean-black dark:text-gray-100 leading-snug">
               "{msg.headline}"
             </p>
-          </div>
+          </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Key points */}
-            <div className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-5">
+            <Card variant="outlined" padding="none" className="rounded-xl p-5">
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">Puntos clave a comunicar</p>
               <div className="space-y-2.5">
                 {msg.keyPoints.map((pt, i) => (
@@ -72,23 +73,23 @@ export function ArchetypeMessagesTab({ messages }: { messages: ArchetypeMessage[
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
 
             {/* Do not say + Opening */}
             <div className="space-y-4">
-              <div className="rounded-xl border border-danger-light bg-danger-light/20 p-4">
+              <Card variant="flat" padding="none" className="rounded-xl border border-danger-light bg-danger-light/20 p-4">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-danger-dark mb-2">⚠ No decir</p>
                 <p className="text-xs text-danger-dark leading-relaxed">{msg.doNotSay}</p>
-              </div>
-              <div className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-4">
+              </Card>
+              <Card variant="outlined" padding="none" className="rounded-xl p-4">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">Apertura sugerida para 1:1</p>
                 <p className="text-xs text-text-muted leading-relaxed italic">{msg.openingLine}</p>
-              </div>
+              </Card>
             </div>
           </div>
 
           {/* Resistance note + Channel */}
-          <div className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/50 p-4 flex items-start gap-3">
+          <Card variant="flat" padding="none" className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/50 p-4 flex items-start gap-3">
             <span className="text-base flex-shrink-0">💡</span>
             <div>
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Nota de resistencia</p>
@@ -97,7 +98,7 @@ export function ArchetypeMessagesTab({ messages }: { messages: ArchetypeMessage[
                 Canal recomendado: <span className="font-medium text-text-muted">{CHANNEL_CFG[msg.channel]?.icon} {CHANNEL_CFG[msg.channel]?.label ?? msg.channel}</span>
               </p>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

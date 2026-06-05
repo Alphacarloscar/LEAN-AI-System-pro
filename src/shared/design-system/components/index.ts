@@ -9,6 +9,9 @@
 export { Button }              from './Button'
 export type { ButtonProps, ButtonVariant, ButtonSize } from './Button'
 
+export { FormField }           from './FormField'
+export type { FormFieldProps } from './FormField'
+
 export { Input }               from './Input'
 export type { InputProps }     from './Input'
 
@@ -72,3 +75,16 @@ export type { BreadcrumbProps, BreadcrumbItem } from './Breadcrumb'
 
 export { Stepper }             from './Stepper'
 export type { StepperProps, StepItem, StepStatus } from './Stepper'
+
+export { SegmentedControl }    from './SegmentedControl'
+export type { SegmentedControlProps, SegmentedControlOption } from './SegmentedControl'
+
+// ── Grupo C — Layout / feedback ──
+export { Spinner }             from './Spinner'
+export type { SpinnerProps, SpinnerSize } from './Spinner'
+
+export { ToolHeader }          from './ToolHeader'
+export type { ToolHeaderProps } from './ToolHeader'
+
+export { EmptyState }          from './EmptyState'
+export type { EmptyStateProps } from './EmptyState'

@@ -14,6 +14,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect }  from 'react'
+import { useNavigate }                   from 'react-router-dom'
 import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
 import { useT4Store }                   from '@/modules/T4_UseCasePriorityBoard/store'
 import { PhaseMiniMap }                 from '@/shared/components/PhaseMiniMap'
@@ -26,7 +27,7 @@ import { useT8Generation }              from '@/hooks/useT8Generation'
 import { PersistenceBanner }           from '@/shared/components/PersistenceBanner'
 import { usePermissions }              from '@/modules/Auth'
 import { generateCommPlan, generateArchetypeMessages, generateMaterials, generateDeptKits } from './T8Generators'
-import { TabButton }                   from './components/T8Tabs'
+import { Tabs, Button, Card, ToolHeader, EmptyState } from '@shared/design-system/components'
 import { TimelineTab }                 from './components/T8TimelineTab'
 import { ArchetypeMessagesTab }        from './components/T8ArchetypeMessagesTab'
 import { MaterialsTab }                from './components/T8MaterialsTab'
@@ -40,6 +41,7 @@ interface T8ViewProps {
 }
 
 export function T8View({ onBack }: T8ViewProps) {
+  const navigate                    = useNavigate()
   const { isReadOnly } = usePermissions()
   const stakeholders                = useT2Store(s => s.stakeholders)
   const loadT2                      = useT2Store(s => s.load)
@@ -53,7 +55,7 @@ export function T8View({ onBack }: T8ViewProps) {
 
   // Cargar T2 al montar T8 (por si el usuario llega directamente sin pasar por T2).
   // Intencional: solo re-ejecutar cuando cambia el engagement, no cuando llegan los datos.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   useEffect(() => {
     if (engagementId && stakeholders.length === 0) loadT2(engagementId)
   }, [engagementId])
@@ -108,7 +110,81 @@ export function T8View({ onBack }: T8ViewProps) {
   const isLLM         = !!generatedContent
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 px-8 py-8">
+    <div className="min-h-screen bg-surface dark:bg-warm-900">
+
+      {/* ── Header ── */}
+      <ToolHeader
+        onBack={onBack}
+        backLabel="Volver al dashboard"
+        toolCode="T8"
+        title="Communication Map"
+        subtitle={<p className="text-xs text-text-muted">{companyName} · Plan de comunicación</p>}
+        phaseMiniMap={<PhaseMiniMap phaseId="activate" toolCode="T8" />}
+        maxWidth="max-w-5xl"
+        chips={
+          <div className="flex items-center gap-3 flex-wrap">
+            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-warm-700 border border-border dark:border-white/6">
+              <p className="text-lg font-bold text-lean-black dark:text-warm-50 tabular-nums">{totalActions}</p>
+              <p className="text-[10px] text-text-subtle uppercase tracking-wide">Acciones</p>
+            </Card>
+            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-danger-light border border-danger-light">
+              <p className="text-lg font-bold text-danger-dark tabular-nums">{highPriority}</p>
+              <p className="text-[10px] text-danger-dark uppercase tracking-wide">Prioridad alta</p>
+            </Card>
+            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-indigo-50 border border-indigo-100">
+              <p className="text-lg font-bold text-indigo-700 tabular-nums">{goUseCases.length}</p>
+              <p className="text-[10px] text-indigo-600 uppercase tracking-wide">Casos go</p>
+            </Card>
+            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-warm-700 border border-border dark:border-white/6">
+              <p className="text-lg font-bold text-lean-black dark:text-warm-50 tabular-nums">{deptCount}</p>
+              <p className="text-[10px] text-text-subtle uppercase tracking-wide">Dptos.</p>
+            </Card>
+          </div>
+        }
+        cta={
+          <div className="flex items-center gap-2">
+            {isLLM && (
+              <>
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-navy/8 dark:bg-navy/20 border border-navy/20 text-[10px] font-semibold text-navy dark:text-warm-100">
+                  <span className="h-1.5 w-1.5 rounded-full bg-navy animate-pulse" />
+                  Personalizado con IA · {generatedContent?.generatedAt
+                    ? new Date(generatedContent.generatedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                    : ''}
+                </span>
+                {!isReadOnly && (
+                  <Button variant="ghost" size="sm" onClick={clearGeneratedContent}>
+                    Restaurar plantilla
+                  </Button>
+                )}
+              </>
+            )}
+            {error && (
+              <span className="text-xs text-danger-dark">{error}</span>
+            )}
+            {(persistenceStatus === 'error' || persistenceStatus === 'saving') && (
+              <PersistenceBanner
+                error={persistenceError}
+                isRetrying={persistenceStatus === 'saving'}
+                onRetry={() => engagementId && retrySave(engagementId)}
+              />
+            )}
+            {!isReadOnly && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => t8CommContext && generate(t8CommContext as unknown as Record<string, unknown>, engagementId)}
+                disabled={!t8CommContext || !engagementId || isGenerating}
+                loading={isGenerating}
+                icon={<svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M6 1v2M6 9v2M1 6h2M9 6h2M2.5 2.5l1.4 1.4M8.1 8.1l1.4 1.4M2.5 9.5l1.4-1.4M8.1 3.9l1.4-1.4"/></svg>}
+              >
+                {isGenerating ? 'Generando…' : isLLM ? 'Regenerar con IA' : 'Personalizar con IA'}
+              </Button>
+            )}
+          </div>
+        }
+      />
+
+      <div className="max-w-5xl mx-auto space-y-6 px-8 py-8">
 
       {/* Banner no bloqueante — stakeholders pendientes o error */}
       {(isLoadingT2 || t2Error || (!isLoadingT2 && stakeholders.length === 0)) && (
@@ -140,132 +216,35 @@ export function T8View({ onBack }: T8ViewProps) {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-base transition-colors mb-3"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Volver al dashboard
-          </button>
-          <div className="flex items-center gap-2.5">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider bg-navy text-white">
-              T8
-            </span>
-            <div>
-              <h1 className="text-lg font-semibold text-lean-black dark:text-gray-100 leading-tight">
-                Communication Map
-              </h1>
-              <div className="flex items-center gap-2 mt-0.5">
-                <p className="text-xs text-text-muted">{companyName} · Plan de comunicación</p>
-                <PhaseMiniMap phaseId="activate" toolCode="T8" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats + botón IA */}
-        <div className="flex flex-col items-end gap-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-border dark:border-white/6">
-              <p className="text-lg font-bold text-lean-black dark:text-gray-100 tabular-nums">{totalActions}</p>
-              <p className="text-[10px] text-text-subtle uppercase tracking-wide">Acciones</p>
-            </div>
-            <div className="text-center px-3 py-2 rounded-lg bg-danger-light border border-danger-light">
-              <p className="text-lg font-bold text-danger-dark tabular-nums">{highPriority}</p>
-              <p className="text-[10px] text-danger-dark uppercase tracking-wide">Prioridad alta</p>
-            </div>
-            <div className="text-center px-3 py-2 rounded-lg bg-indigo-50 border border-indigo-100">
-              <p className="text-lg font-bold text-indigo-700 tabular-nums">{goUseCases.length}</p>
-              <p className="text-[10px] text-indigo-600 uppercase tracking-wide">Casos go</p>
-            </div>
-            <div className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-border dark:border-white/6">
-              <p className="text-lg font-bold text-lean-black dark:text-gray-100 tabular-nums">{deptCount}</p>
-              <p className="text-[10px] text-text-subtle uppercase tracking-wide">Dptos.</p>
-            </div>
-          </div>
-
-          {/* Botón generación IA */}
-          <div className="flex items-center gap-2">
-            {isLLM && (
-              <>
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-navy/8 dark:bg-navy/20 border border-navy/20 text-[10px] font-semibold text-navy dark:text-warm-100">
-                  <span className="h-1.5 w-1.5 rounded-full bg-navy animate-pulse" />
-                  Personalizado con IA · {generatedContent?.generatedAt
-                    ? new Date(generatedContent.generatedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-                    : ''}
-                </span>
-                {!isReadOnly && (
-                  <button
-                    onClick={clearGeneratedContent}
-                    className="px-3 py-1.5 rounded-lg text-xs text-text-subtle border border-border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    Restaurar plantilla
-                  </button>
-                )}
-              </>
-            )}
-            {error && (
-              <span className="text-xs text-danger-dark">{error}</span>
-            )}
-            {(persistenceStatus === 'error' || persistenceStatus === 'saving') && (
-              <PersistenceBanner
-                error={persistenceError}
-                isRetrying={persistenceStatus === 'saving'}
-                onRetry={() => engagementId && retrySave(engagementId)}
-              />
-            )}
-            {!isReadOnly && (
-              <button
-                onClick={() => t8CommContext && generate(t8CommContext as unknown as Record<string, unknown>, engagementId)}
-                disabled={!t8CommContext || !engagementId || isGenerating}
-                className={[
-                  'flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150',
-                  t8CommContext && engagementId && !isGenerating
-                    ? 'bg-navy text-white hover:opacity-90 shadow-sm'
-                    : 'bg-gray-100 dark:bg-gray-800 text-text-subtle cursor-not-allowed',
-                ].join(' ')}
-              >
-                {isGenerating ? (
-                  <>
-                    <svg className="animate-spin h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M6 1a5 5 0 11-5 5" strokeLinecap="round" />
-                    </svg>
-                    Generando…
-                  </>
-                ) : (
-                  <>
-                    <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                      <path d="M6 1v2M6 9v2M1 6h2M9 6h2M2.5 2.5l1.4 1.4M8.1 8.1l1.4 1.4M2.5 9.5l1.4-1.4M8.1 3.9l1.4-1.4"/>
-                    </svg>
-                    {isLLM ? 'Regenerar con IA' : 'Personalizar con IA'}
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Tabs */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <TabButton active={activeTab === 'timeline'}  label="Timeline 6M"         badge={String(totalActions)} onClick={() => setActiveTab('timeline')} />
-        <TabButton active={activeTab === 'messages'}  label="Mensajes por arquetipo" badge={String(archetypeMessages.length)} onClick={() => setActiveTab('messages')} />
-        <TabButton active={activeTab === 'materials'} label="Materiales"           badge={String(materials.length)} onClick={() => setActiveTab('materials')} />
-        <TabButton active={activeTab === 'dept'}      label="Kit por departamento" badge={String(deptKits.length)} onClick={() => setActiveTab('dept')} />
-      </div>
+      <Tabs
+        aria-label="Communication map"
+        value={activeTab}
+        onChange={(v) => setActiveTab(v as typeof activeTab)}
+        tabs={[
+          { value: 'timeline',  label: 'Timeline 6M',          badge: String(totalActions) },
+          { value: 'messages',  label: 'Mensajes por arquetipo',badge: String(archetypeMessages.length) },
+          { value: 'materials', label: 'Materiales',            badge: String(materials.length) },
+          { value: 'dept',      label: 'Kit por departamento',  badge: String(deptKits.length) },
+        ]}
+      />
 
       {/* Contenido */}
       {stakeholders.length === 0 ? (
-        <div className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-12 text-center">
-          <p className="text-sm text-text-muted">
-            No hay stakeholders registrados. Completa T2 — AI Stakeholder Matrix primero.
-          </p>
-        </div>
+        <EmptyState
+          icon={
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="8" cy="7" r="3"/>
+              <path d="M2 18v-1a5 5 0 0110 0v1"/>
+              <circle cx="15" cy="7" r="2"/>
+              <path d="M18 18v-1a3 3 0 00-4-2.8"/>
+            </svg>
+          }
+          title="Sin stakeholders registrados"
+          description="Completa T2 — AI Stakeholder Matrix para mapear al equipo antes de construir el plan de comunicación."
+          action={<Button variant="ghost" size="sm" onClick={() => navigate('/t2')}>Ir a T2</Button>}
+          className="py-12"
+        />
       ) : (
         <>
           {activeTab === 'timeline'  && <TimelineTab actions={commActions} />}
@@ -285,6 +264,7 @@ export function T8View({ onBack }: T8ViewProps) {
           engagementId={engagementId}
         />
       )}
+      </div>
     </div>
   )
 }

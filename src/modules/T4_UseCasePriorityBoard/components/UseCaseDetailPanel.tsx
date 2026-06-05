@@ -12,6 +12,7 @@ import {
 } from '../constants'
 import type { UseCase, UseCaseStatus, UseCaseScores, AIActClassification } from '../types'
 import type { Stakeholder } from '@/modules/T2_StakeholderMatrix/types'
+import { Button, Badge, Card, FormField, Tabs } from '@shared/design-system/components'
 import { StatusBadge, CategoryBadge, priorityScoreColor } from './T4Badges'
 import { PriorityMatrix } from './PriorityMatrix'
 import { T4ScoreBars, ScoreInput } from './T4ScoreEditors'
@@ -97,9 +98,9 @@ export function UseCaseDetailPanel({
             <StatusBadge status={useCase.status} />
             <CategoryBadge category={useCase.aiCategory} />
             {useCase.roadmap?.quarter && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-navy/8 dark:bg-navy/20 text-navy dark:text-warm-100">
+              <Badge shape="pill" size="xs" style={{ backgroundColor: 'rgba(42,40,34,0.08)', color: '#2A2822' }}>
                 {useCase.roadmap.quarter}
-              </span>
+              </Badge>
             )}
             {(() => {
               const risk = useCase.aiActClassification?.riskLevel ?? 'sin_clasificar'
@@ -107,11 +108,12 @@ export function UseCaseDetailPanel({
               return (
                 <button
                   onClick={() => setTab('regulatorio')}
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1
-                    ${cfg.badgeBg} ${cfg.badgeText} hover:opacity-80 transition-opacity`}
                   title="Ver clasificación AI Act"
+                  className="hover:opacity-80 transition-opacity"
                 >
-                  {cfg.icon} {cfg.label}
+                  <Badge shape="pill" size="xs" style={{ backgroundColor: `${cfg.hex}22`, color: cfg.hex }}>
+                    {cfg.icon} {cfg.label}
+                  </Badge>
                 </button>
               )
             })()}
@@ -170,32 +172,24 @@ export function UseCaseDetailPanel({
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 px-8 py-3 border-b border-border dark:border-white/6 flex-wrap">
-        {([
-          { key: 'scoring',     label: 'Scoring' },
-          { key: 'economia',    label: 'Economía' },
-          { key: 'roadmap',     label: 'Hoja de ruta' },
-          { key: 'contexto',    label: 'Contexto T1/T2' },
-          {
-            key: 'regulatorio',
-            label: `⚖️ AI Act${useCase.aiActClassification
-              ? ` · ${AIACT_RISK_CONFIG[useCase.aiActClassification.riskLevel].label}`
-              : ''}`,
-          },
-        ] as { key: DetailTab; label: string }[]).map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={[
-              'px-4 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150',
-              tab === key
-                ? 'border-navy/50 bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 shadow-sm'
-                : 'border-border dark:border-white/10 text-text-muted hover:border-navy/30 hover:text-navy/70 dark:hover:text-info-soft/70',
-            ].join(' ')}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="px-8 py-3 border-b border-border dark:border-white/6">
+        <Tabs
+          aria-label="Secciones del caso de uso"
+          value={tab}
+          onChange={(v) => setTab(v as DetailTab)}
+          tabs={[
+            { value: 'scoring',     label: 'Scoring' },
+            { value: 'economia',    label: 'Economía' },
+            { value: 'roadmap',     label: 'Hoja de ruta' },
+            { value: 'contexto',    label: 'Contexto T1/T2' },
+            {
+              value: 'regulatorio',
+              label: `⚖️ AI Act${useCase.aiActClassification
+                ? ` · ${AIACT_RISK_CONFIG[useCase.aiActClassification.riskLevel].label}`
+                : ''}`,
+            },
+          ]}
+        />
       </div>
 
       {/* Tab content */}
@@ -225,30 +219,22 @@ export function UseCaseDetailPanel({
                   Dimensiones de scoring
                 </p>
                 {!editingScore ? (
-                  <button
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={() => { setEditingScore(true); setLocalScores(useCase.scores) }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold
-                      bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm"
                   >
                     ✎ Editar scores
-                  </button>
+                  </Button>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setEditingScore(false)}
-                      className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-border
-                        dark:border-white/10 text-text-muted hover:text-text-default transition-colors"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => setEditingScore(false)}>
                       Cancelar
-                    </button>
+                    </Button>
                     {!isReadOnly && (
-                      <button
-                        onClick={handleSaveScores}
-                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-navy-metallic text-white
-                          hover:bg-navy-metallic-hover transition-colors shadow-sm"
-                      >
+                      <Button variant="primary" size="sm" onClick={handleSaveScores}>
                         Guardar
-                      </button>
+                      </Button>
                     )}
                   </div>
                 )}
@@ -257,7 +243,7 @@ export function UseCaseDetailPanel({
               {!editingScore ? (
                 <>
                   <T4ScoreBars scores={useCase.scores} />
-                  <div className="mt-5 rounded-2xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
+                  <Card variant="flat" padding="none" className="mt-5 rounded-2xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
                     <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
                       Score compuesto · ponderado
                     </p>
@@ -268,7 +254,7 @@ export function UseCaseDetailPanel({
                     <p className="text-[10px] text-text-subtle mt-0.5">
                       KPI 35% · facilidad 30% · riesgo IA 20% · dep. datos 15%
                     </p>
-                  </div>
+                  </Card>
                   <LowScoreRecommendations useCase={useCase} />
                 </>
               ) : (
@@ -307,12 +293,12 @@ export function UseCaseDetailPanel({
                     isNegative
                     hex={DIMENSION_CONFIG.dataDependency.hex}
                   />
-                  <div className="rounded-xl bg-navy/5 dark:bg-navy/10 px-4 py-2.5 border border-navy/10">
+                  <Card variant="flat" padding="none" className="rounded-xl bg-navy/5 dark:bg-navy/10 px-4 py-2.5 border border-navy/10">
                     <p className="text-[10px] text-text-subtle">Preview score</p>
                     <p className={`text-xl font-bold tabular-nums ${priorityScoreColor(previewScore)}`}>
                       {previewScore.toFixed(1)}/100
                     </p>
-                  </div>
+                  </Card>
                 </div>
               )}
 
@@ -323,9 +309,11 @@ export function UseCaseDetailPanel({
                   </p>
                   <div className="flex flex-col gap-2">
                     {useCase.stakeholderScores.map((ss) => (
-                      <div
+                      <Card
                         key={ss.id}
-                        className="rounded-xl border border-border dark:border-white/8 bg-white dark:bg-warm-800/50 px-4 py-2.5"
+                        variant="outlined"
+                        padding="none"
+                        className="rounded-xl px-4 py-2.5"
                       >
                         <div className="flex items-center gap-2 mb-1.5">
                           <div className="h-5 w-5 rounded-full bg-navy/10 dark:bg-navy/20 flex items-center justify-center text-[9px] font-bold text-navy dark:text-warm-100 shrink-0">
@@ -356,7 +344,7 @@ export function UseCaseDetailPanel({
                             "{ss.notes}"
                           </p>
                         )}
-                      </div>
+                      </Card>
                     ))}
                   </div>
                 </div>
@@ -415,12 +403,9 @@ export function UseCaseDetailPanel({
                     Clasifica este caso de uso para evaluar su nivel de riesgo regulatorio según el EU AI Act y el RGPD.
                   </p>
                 </div>
-                <button
-                  onClick={() => setShowAIActModal(true)}
-                  className="px-5 py-2.5 rounded-xl bg-navy-metallic text-white text-sm font-semibold hover:bg-navy-metallic-hover transition-colors shadow-sm"
-                >
+                <Button variant="primary" onClick={() => setShowAIActModal(true)}>
                   Clasificar ahora
-                </button>
+                </Button>
               </div>
             )
           }
@@ -447,16 +432,13 @@ export function UseCaseDetailPanel({
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setShowAIActModal(true)}
-                    className="shrink-0 px-3 py-1.5 rounded-xl bg-navy-metallic text-white text-xs font-medium hover:bg-navy-metallic-hover transition-colors shadow-sm"
-                  >
+                  <Button variant="secondary" size="sm" onClick={() => setShowAIActModal(true)}>
                     Reclasificar
-                  </button>
+                  </Button>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-border bg-warm-50 dark:bg-warm-800/40 px-5 py-4 flex flex-col gap-3">
+              <Card variant="outlined" padding="none" className="rounded-2xl px-5 py-4 flex flex-col gap-3">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
                   Respuestas del cuestionario
                 </p>
@@ -486,9 +468,9 @@ export function UseCaseDetailPanel({
                     </p>
                   </div>
                 </div>
-              </div>
+              </Card>
 
-              <div className="rounded-2xl border border-border bg-white dark:bg-warm-800 px-5 py-4">
+              <Card variant="outlined" padding="none" className="rounded-2xl px-5 py-4">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
                   Obligaciones regulatorias aplicables
                 </p>
@@ -538,7 +520,7 @@ export function UseCaseDetailPanel({
                     ✓ Sin obligaciones regulatorias específicas del AI Act. Se recomienda documentar el uso en el catálogo corporativo de IA como buena práctica de gobernanza.
                   </p>
                 )}
-              </div>
+              </Card>
             </div>
           )
         })()}
@@ -586,106 +568,68 @@ export function UseCaseDetailPanel({
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
-                    Duración estimada
-                  </label>
-                  <input
-                    type="text"
-                    value={rm.estimatedDuration ?? ''}
-                    onChange={(e) => saveRoadmap({ estimatedDuration: e.target.value || undefined })}
-                    placeholder="ej. 6 semanas, 3 meses…"
-                    className="w-full rounded-xl border border-border dark:border-white/10 bg-white dark:bg-warm-800/50
-                      px-3 py-2 text-xs text-lean-black dark:text-gray-200 placeholder:text-text-subtle
-                      focus:outline-none focus:ring-1 focus:ring-navy/30 focus:border-navy/40 transition-colors"
-                  />
-                </div>
+                <FormField
+                  id="rm-duration"
+                  label="Duración estimada"
+                  value={rm.estimatedDuration ?? ''}
+                  onChange={(e) => saveRoadmap({ estimatedDuration: e.target.value || undefined })}
+                  placeholder="ej. 6 semanas, 3 meses…"
+                />
 
-                <div>
-                  <label className="block text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
-                    Fecha de inicio
-                  </label>
-                  <input
-                    type="date"
-                    value={rm.startDate ?? ''}
-                    onChange={(e) => saveRoadmap({ startDate: e.target.value || undefined })}
-                    className="w-full rounded-xl border border-border dark:border-white/10 bg-white dark:bg-warm-800/50
-                      px-3 py-2 text-xs text-lean-black dark:text-gray-200
-                      focus:outline-none focus:ring-1 focus:ring-navy/30 focus:border-navy/40 transition-colors"
-                  />
-                  <p className="mt-1.5 text-[10px] text-text-subtle">
-                    Si se especifica, tiene prioridad sobre el quarter en el Roadmap T9.
-                  </p>
-                </div>
+                <FormField
+                  id="rm-start-date"
+                  label="Fecha de inicio"
+                  type="date"
+                  value={rm.startDate ?? ''}
+                  onChange={(e) => saveRoadmap({ startDate: e.target.value || undefined })}
+                  hint="Si se especifica, tiene prioridad sobre el quarter en el Roadmap T9."
+                />
 
-                <div>
-                  <label className="block text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
-                    Fecha de fin
-                  </label>
-                  <input
-                    type="date"
-                    value={rm.endDate ?? ''}
-                    onChange={(e) => saveRoadmap({ endDate: e.target.value || undefined })}
-                    className="w-full rounded-xl border border-border dark:border-white/10 bg-white dark:bg-warm-800/50
-                      px-3 py-2 text-xs text-lean-black dark:text-gray-200
-                      focus:outline-none focus:ring-1 focus:ring-navy/30 focus:border-navy/40 transition-colors"
-                  />
-                </div>
+                <FormField
+                  id="rm-end-date"
+                  label="Fecha de fin"
+                  type="date"
+                  value={rm.endDate ?? ''}
+                  onChange={(e) => saveRoadmap({ endDate: e.target.value || undefined })}
+                />
 
-                <div>
-                  <label className="block text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
-                    Responsable de implementación
-                  </label>
-                  <input
-                    type="text"
-                    value={rm.owner ?? ''}
-                    onChange={(e) => saveRoadmap({ owner: e.target.value || undefined })}
-                    placeholder="Nombre o rol responsable…"
-                    className="w-full rounded-xl border border-border dark:border-white/10 bg-white dark:bg-warm-800/50
-                      px-3 py-2 text-xs text-lean-black dark:text-gray-200 placeholder:text-text-subtle
-                      focus:outline-none focus:ring-1 focus:ring-navy/30 focus:border-navy/40 transition-colors"
-                  />
-                </div>
+                <FormField
+                  id="rm-owner"
+                  label="Responsable de implementación"
+                  value={rm.owner ?? ''}
+                  onChange={(e) => saveRoadmap({ owner: e.target.value || undefined })}
+                  placeholder="Nombre o rol responsable…"
+                />
               </div>
 
               <div className="flex flex-col gap-6">
-                <div>
-                  <label className="block text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
-                    Próximos pasos
-                  </label>
-                  <textarea
-                    value={rm.nextSteps ?? ''}
-                    onChange={(e) => saveRoadmap({ nextSteps: e.target.value || undefined })}
-                    rows={4}
-                    placeholder="Acciones concretas para arrancar este caso de uso…"
-                    className="w-full rounded-xl border border-border dark:border-white/10 bg-white dark:bg-warm-800/50
-                      px-3 py-2 text-xs text-lean-black dark:text-gray-200 placeholder:text-text-subtle
-                      focus:outline-none focus:ring-1 focus:ring-navy/30 focus:border-navy/40 transition-colors resize-none"
-                  />
-                </div>
+                <FormField
+                  id="rm-next-steps"
+                  label="Próximos pasos"
+                  multiline
+                  rows={4}
+                  value={rm.nextSteps ?? ''}
+                  onChange={(e) => saveRoadmap({ nextSteps: e.target.value || undefined })}
+                  placeholder="Acciones concretas para arrancar este caso de uso…"
+                />
 
-                <div>
-                  <label className="block text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
-                    Dependencias
-                  </label>
-                  <textarea
-                    value={rm.dependencies ?? ''}
-                    onChange={(e) => saveRoadmap({ dependencies: e.target.value || undefined })}
-                    rows={3}
-                    placeholder="Dependencias con otros casos de uso, sistemas o equipos…"
-                    className="w-full rounded-xl border border-border dark:border-white/10 bg-white dark:bg-warm-800/50
-                      px-3 py-2 text-xs text-lean-black dark:text-gray-200 placeholder:text-text-subtle
-                      focus:outline-none focus:ring-1 focus:ring-navy/30 focus:border-navy/40 transition-colors resize-none"
-                  />
-                </div>
+                <FormField
+                  id="rm-dependencies"
+                  label="Dependencias"
+                  multiline
+                  rows={3}
+                  value={rm.dependencies ?? ''}
+                  onChange={(e) => saveRoadmap({ dependencies: e.target.value || undefined })}
+                  placeholder="Dependencias con otros casos de uso, sistemas o equipos…"
+                />
 
                 {useCase.notes && (
-                  <div className="rounded-2xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
+                  <Card variant="flat" padding="none" className="rounded-2xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
                     <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
                       Notas del consultor
                     </p>
                     <p className="text-xs text-text-muted leading-relaxed italic">{useCase.notes}</p>
-                  </div>
+                  </Card>
                 )}
               </div>
             </div>
@@ -695,7 +639,7 @@ export function UseCaseDetailPanel({
         {/* ── TAB: CONTEXTO T1/T2 ──────────────────────────────── */}
         {tab === 'contexto' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-border dark:border-white/8 bg-white dark:bg-warm-800/50 px-5 py-4">
+            <Card variant="outlined" padding="none" className="rounded-2xl px-5 py-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-6 w-6 rounded-lg bg-navy/10 dark:bg-navy/20 flex items-center justify-center text-xs font-bold text-navy dark:text-warm-100">
                   T1
@@ -711,9 +655,9 @@ export function UseCaseDetailPanel({
                       <p className="text-[10px] font-mono text-text-subtle mb-1.5">Dimensiones relevantes</p>
                       <div className="flex flex-wrap gap-1.5">
                         {useCase.t1Context.relevantDimensions.map((d) => (
-                          <span key={d} className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100">
+                          <Badge key={d} shape="pill" size="xs" style={{ backgroundColor: 'rgba(42,40,34,0.08)', color: '#2A2822' }}>
                             {d}
-                          </span>
+                          </Badge>
                         ))}
                       </div>
                     </div>
@@ -733,9 +677,9 @@ export function UseCaseDetailPanel({
                       <p className="text-[10px] font-mono text-warning-dark mb-1.5">Dimensiones con madurez baja (≤2)</p>
                       <div className="flex flex-wrap gap-1.5">
                         {autoT1Context.weakDimensions.map((d) => (
-                          <span key={d} className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-warning-light text-warning-dark">
+                          <Badge key={d} variant="warning" shape="pill" size="xs">
                             {d}
-                          </span>
+                          </Badge>
                         ))}
                       </div>
                     </div>
@@ -746,9 +690,9 @@ export function UseCaseDetailPanel({
               ) : (
                 <p className="text-xs text-text-subtle italic">Sin datos de T1. Completa el Madurez Radar primero.</p>
               )}
-            </div>
+            </Card>
 
-            <div className="rounded-2xl border border-border dark:border-white/8 bg-white dark:bg-warm-800/50 px-5 py-4">
+            <Card variant="outlined" padding="none" className="rounded-2xl px-5 py-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-6 w-6 rounded-lg bg-info-light flex items-center justify-center text-xs font-bold text-info-dark">
                   T2
@@ -806,9 +750,9 @@ export function UseCaseDetailPanel({
               ) : (
                 <p className="text-xs text-text-subtle italic">Sin datos de T2. Completa la Stakeholder Matrix primero.</p>
               )}
-            </div>
+            </Card>
 
-            <div className="rounded-2xl border border-border dark:border-white/8 bg-white dark:bg-warm-800/50 px-5 py-4">
+            <Card variant="outlined" padding="none" className="rounded-2xl px-5 py-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: catHex }} />
                 <p className="text-xs font-semibold text-lean-black dark:text-gray-200">Categoría IA</p>
@@ -825,7 +769,7 @@ export function UseCaseDetailPanel({
                   </p>
                 </div>
               )}
-            </div>
+            </Card>
           </div>
         )}
       </div>

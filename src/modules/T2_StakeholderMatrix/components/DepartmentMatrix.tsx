@@ -8,6 +8,7 @@
 
 import { useState, useMemo } from 'react'
 import { usePermissions }    from '@/modules/Auth'
+import { Card }              from '@shared/design-system/components'
 import { ARCHETYPE_CONFIG }  from '../constants'
 import type { Stakeholder, ArchetypeCode } from '../types'
 import { ArchetypeDot, ArchetypeBadge, ResistanceBadge } from './T2Badges'
@@ -79,7 +80,7 @@ export function DepartmentMatrix({
     <div className="space-y-6">
 
       {/* Resumen global */}
-      <div className="rounded-xl border border-border bg-white dark:bg-gray-900 px-5 py-4">
+      <Card variant="outlined" padding="none" className="rounded-xl px-5 py-4">
         <div className="flex items-center justify-between gap-4 mb-3">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
             Distribución de arquetipos
@@ -110,7 +111,7 @@ export function DepartmentMatrix({
             </p>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Departamentos — colapsables */}
       {Array.from(departments.entries()).map(([dept, members]) => {

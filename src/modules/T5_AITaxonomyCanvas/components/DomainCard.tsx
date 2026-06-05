@@ -7,6 +7,7 @@
 // ============================================================
 
 import { T5_DOMAIN_CONFIG, T5_RECOMMENDATION_CONFIG } from '../constants'
+import { Button, Badge, Card }                         from '@shared/design-system/components'
 import type { T5DomainAssessment }                     from '../types'
 import { T5DimBars }                                   from './T5DimBars'
 
@@ -20,7 +21,7 @@ export function DomainCard({ assessment, onEdit }: DomainCardProps) {
   const recCfg = T5_RECOMMENDATION_CONFIG[assessment.recommendation]
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border p-5 flex flex-col gap-4">
+    <Card variant="outlined" padding="none" className="rounded-2xl p-5 flex flex-col gap-4">
 
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
@@ -38,22 +39,22 @@ export function DomainCard({ assessment, onEdit }: DomainCardProps) {
             <p className="text-[10px] text-text-subtle mt-0.5 leading-tight">{domCfg.tagline}</p>
           </div>
         </div>
-        <button
-          onClick={onEdit}
-          className="shrink-0 px-3 py-1.5 rounded-xl bg-navy-metallic text-white text-xs font-medium
-            hover:bg-navy-metallic-hover transition-colors shadow-sm"
-        >
+        <Button variant="primary" size="sm" onClick={onEdit}>
           Editar
-        </button>
+        </Button>
       </div>
 
       {/* Recommendation + score */}
-      <div className="rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50 px-4 py-3">
+      <Card variant="flat" padding="none" className="rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50 px-4 py-3">
         <div className="flex items-center justify-between mb-2">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${recCfg.badgeBg} ${recCfg.badgeText}`}>
-            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: recCfg.hex }} />
+          <Badge
+            shape="pill"
+            size="sm"
+            style={{ backgroundColor: `${recCfg.hex}22`, color: recCfg.hex }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: recCfg.hex }} aria-hidden="true" />
             {recCfg.label}
-          </span>
+          </Badge>
           <div className="text-right">
             <span className="text-xl font-bold tabular-nums text-lean-black dark:text-gray-100">
               {assessment.priorityScore}
@@ -62,7 +63,7 @@ export function DomainCard({ assessment, onEdit }: DomainCardProps) {
           </div>
         </div>
         <p className="text-[10px] text-text-subtle leading-relaxed">{recCfg.description}</p>
-      </div>
+      </Card>
 
       {/* Dimension bars */}
       <div>
@@ -73,7 +74,7 @@ export function DomainCard({ assessment, onEdit }: DomainCardProps) {
       </div>
 
       {/* Governance */}
-      <div className="rounded-xl border border-border bg-gray-50/50 dark:bg-gray-800/30 px-4 py-4 flex flex-col gap-3">
+      <Card variant="flat" padding="none" className="rounded-xl border border-border bg-gray-50/50 dark:bg-gray-800/30 px-4 py-4 flex flex-col gap-3">
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">Governance</p>
 
         <div className="flex flex-col gap-2.5">
@@ -121,7 +122,7 @@ export function DomainCard({ assessment, onEdit }: DomainCardProps) {
             <p className="text-[10px] text-warning-dark leading-relaxed">⚠️ {assessment.governanceNotes}</p>
           </div>
         )}
-      </div>
-    </div>
+      </Card>
+    </Card>
   )
 }

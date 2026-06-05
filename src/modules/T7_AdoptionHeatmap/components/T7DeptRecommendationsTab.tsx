@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { ARCHETYPE_CONFIG } from '@/modules/T2_StakeholderMatrix/constants'
 import type { Stakeholder } from '@/modules/T2_StakeholderMatrix/types'
 import { getSegment, deptFill, SEG_LABELS } from '../T7Constants'
+import { Card, Badge } from '@shared/design-system/components'
 
 export function DeptRecommendationsTab({ stakeholders, dark }: { stakeholders: Stakeholder[]; dark: boolean }) {
   const byDept = useMemo(() => {
@@ -15,15 +16,15 @@ export function DeptRecommendationsTab({ stakeholders, dark }: { stakeholders: S
     return map
   }, [stakeholders])
 
-  function deptReadiness(deptShs: Stakeholder[]): { label: string; pct: number; color: string } {
+  function deptReadiness(deptShs: Stakeholder[]): { label: string; pct: number } {
     const positives = deptShs.filter(sh => {
       const seg = getSegment(sh.archetype, sh.resistance)
       return seg === 'innovators' || seg === 'early_adopters' || seg === 'early_majority'
     }).length
     const pct = Math.round((positives / deptShs.length) * 100)
-    if (pct >= 75) return { label: 'Alta preparación', pct, color: 'text-success-dark bg-success-light' }
-    if (pct >= 40) return { label: 'Preparación media', pct, color: 'text-warning-dark bg-warning-light' }
-    return { label: 'Preparación baja', pct, color: 'text-danger-dark bg-danger-light' }
+    if (pct >= 75) return { label: 'Alta preparación', pct }
+    if (pct >= 40) return { label: 'Preparación media', pct }
+    return { label: 'Preparación baja', pct }
   }
 
   return (
@@ -44,10 +45,14 @@ export function DeptRecommendationsTab({ stakeholders, dark }: { stakeholders: S
           return true
         }).slice(0, 3)
 
+        const readinessVariant = readiness.pct >= 75 ? 'success' : readiness.pct >= 40 ? 'warning' : 'danger'
+
         return (
-          <div
+          <Card
             key={dept}
-            className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-5"
+            variant="outlined"
+            padding="none"
+            className="rounded-xl p-5"
           >
             <div className="flex items-start justify-between gap-3 mb-4">
               <div className="flex items-center gap-2.5">
@@ -57,9 +62,9 @@ export function DeptRecommendationsTab({ stakeholders, dark }: { stakeholders: S
                   <p className="text-xs text-text-muted">{deptShs.length} stakeholders</p>
                 </div>
               </div>
-              <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${readiness.color}`}>
+              <Badge variant={readinessVariant} shape="pill" size="xs" className="whitespace-nowrap">
                 {readiness.label} · {readiness.pct}%
-              </span>
+              </Badge>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-4">
@@ -91,7 +96,7 @@ export function DeptRecommendationsTab({ stakeholders, dark }: { stakeholders: S
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         )
       })}
     </div>

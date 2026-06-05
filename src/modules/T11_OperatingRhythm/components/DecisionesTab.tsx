@@ -3,6 +3,7 @@
 
 import { T11_LEVEL_CONFIG } from '../constants'
 import type { T11DecisionNode, T11Level } from '../types'
+import { Card } from '@shared/design-system/components'
 
 // ── DecisionCard ──────────────────────────────────────────────
 
@@ -81,11 +82,11 @@ export function DecisionesTab({ decisions }: { decisions: T11DecisionNode[] }) {
         )
       })}
 
-      <div className="rounded-xl border border-border dark:border-warm-500 bg-surface dark:bg-warm-800 px-5 py-4">
+      <Card variant="flat" padding="none" className="rounded-xl border border-border dark:border-warm-500 bg-surface dark:bg-warm-800 px-5 py-4">
         <p className="text-[11px] text-text-subtle dark:text-warm-300 leading-relaxed">
           <span className="font-semibold text-text-muted dark:text-warm-200">Nota sobre escalada:</span> Si un decisor no está disponible en el plazo indicado, la decisión escala automáticamente al nivel superior. Ninguna decisión debe quedar bloqueada más de 2× el plazo base.
         </p>
-      </div>
+      </Card>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { usePermissions } from '@/modules/Auth'
+import { Modal, Button, Badge } from '@shared/design-system/components'
 import type { AIActScope, AIActClassification } from '../types'
 import { computeAIActRisk } from '../types'
 
@@ -63,36 +64,41 @@ export function AIActClassificationModal({
     })
   }
 
+  const footer = (
+    <div className="flex justify-end gap-3">
+      <Button variant="ghost" size="sm" onClick={onCancel}>Cancelar</Button>
+      {!isReadOnly && (
+        <Button
+          variant="primary"
+          size="sm"
+          disabled={!allAnswered}
+          onClick={handleSave}
+        >
+          Guardar clasificación
+        </Button>
+      )}
+    </div>
+  )
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white dark:bg-warm-800 rounded-2xl border border-border shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+    <Modal
+      open={true}
+      onClose={onCancel}
+      title={useCaseName}
+      size="md"
+      footer={footer}
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <Badge variant="navy" shape="pill" size="xs" className="font-bold">AI Act</Badge>
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
+          Clasificación regulatoria
+        </p>
+      </div>
+      <p className="text-[10px] text-text-subtle mb-5">
+        Responde 4 preguntas para clasificar el riesgo regulatorio de este caso de uso.
+      </p>
 
-        <div className="flex items-start justify-between px-6 py-5 border-b border-border shrink-0">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-navy text-white">
-                AI Act
-              </span>
-              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-                Clasificación regulatoria
-              </p>
-            </div>
-            <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100 leading-tight">
-              {useCaseName}
-            </h3>
-            <p className="text-[10px] text-text-subtle mt-1">
-              Responde 4 preguntas para clasificar el riesgo regulatorio de este caso de uso.
-            </p>
-          </div>
-          <button
-            onClick={onCancel}
-            className="text-text-subtle hover:text-lean-black dark:hover:text-gray-200 text-lg w-7 h-7 flex items-center justify-center shrink-0"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">
+      <div className="flex flex-col gap-6">
 
           {/* P1 — Ámbito */}
           <div>
@@ -232,27 +238,7 @@ export function AIActClassificationModal({
               )}
             </div>
           )}
-        </div>
-
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border shrink-0">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 rounded-xl border border-border text-sm text-text-muted hover:bg-warm-50 dark:hover:bg-warm-700 transition-colors"
-          >
-            Cancelar
-          </button>
-          {!isReadOnly && (
-            <button
-              onClick={handleSave}
-              disabled={!allAnswered}
-              className="px-4 py-2 rounded-xl bg-navy-metallic text-white text-sm font-medium
-                hover:bg-navy-metallic-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-            >
-              Guardar clasificación
-            </button>
-          )}
-        </div>
       </div>
-    </div>
+    </Modal>
   )
 }

@@ -6,6 +6,7 @@ import { NavButton }      from '../NavButton'
 import { ExpandedSection } from '../ExpandedSection'
 import { HeroMetric }     from '../HeroMetric'
 import { PanelCard }      from '../PanelCard'
+import { Badge }          from '@shared/design-system/components'
 
 interface P2Props {
   t4data: {
@@ -47,10 +48,13 @@ export function P2PortfolioPanel({ t4data, segments, expanded, onToggle, onNavig
               ? t4data.topInitiatives.map((ini, i) => (
                   <div key={i} className="flex items-center gap-2 text-[11px]">
                     <span className="text-text-primary dark:text-warm-100 flex-1 truncate">{ini.name}</span>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0 ${
-                      ini.status === 'active' ? 'bg-success-light text-success-dark' : 'bg-warning-light text-warning-dark'}`}>
+                    <Badge
+                      variant={ini.status === 'active' ? 'success' : 'warning'}
+                      size="xs"
+                      className="shrink-0"
+                    >
                       {ini.status === 'active' ? 'Activa' : 'Validando'}
-                    </span>
+                    </Badge>
                     <span className="text-text-muted dark:text-warm-300 tabular-nums flex-shrink-0">
                       €{(ini.value / 1000).toFixed(0)}K
                     </span>

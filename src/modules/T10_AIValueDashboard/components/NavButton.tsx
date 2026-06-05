@@ -10,7 +10,7 @@ export function NavButton({ label, onClick, secondary = false }: {
       onClick={(e) => { e.stopPropagation(); onClick() }}
       className={[
         'flex items-center gap-1 text-[11px] font-medium transition-colors',
-        secondary ? 'text-text-muted dark:text-warm-300 hover:text-gold' : 'text-gold hover:text-gold-hover',
+        secondary ? 'text-text-muted dark:text-warm-300 hover:text-gold' : 'text-gold-text hover:underline',
       ].join(' ')}
     >
       {label}

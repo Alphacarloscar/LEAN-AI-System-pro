@@ -41,7 +41,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-label font-medium text-lean-black mb-1.5 dark:text-gray-200"
+            className="block text-label font-medium text-lean-black mb-1.5 dark:text-warm-100"
           >
             {label}
           </label>
@@ -58,11 +58,11 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             'w-full px-3 py-2.5 text-sm text-lean-black bg-white',
             'border rounded transition-all duration-150 outline-none',
             'placeholder:text-text-subtle',
-            'dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-600',
+            'dark:bg-warm-800 dark:text-warm-50 dark:placeholder:text-warm-400',
             hasError
               ? 'border-danger focus:border-danger focus:ring-2 focus:ring-danger/20'
               : 'border-border focus:border-navy focus:ring-2 focus:ring-navy/15',
-            disabled ? 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800' : '',
+            disabled ? 'opacity-50 cursor-not-allowed bg-surface dark:bg-warm-700' : '',
             resizeClass,
             className,
           ].join(' ')}

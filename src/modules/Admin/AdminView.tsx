@@ -20,7 +20,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate }                  from 'react-router-dom'
 import { useAuthStore }                 from '@/modules/Auth'
-import { Spinner }                      from '@/shared/components/Spinner'
+import { Spinner }                      from '@shared/design-system/components'
 import {
   listCompanies,
   createCompany,

@@ -340,3 +340,14 @@ No-CLI mode:              active (ADR-005)
 Closed ADRs:              9
 Active tech debt items:   2
 ```
+
+
+Añade a CLAUDE.md una sección:
+
+## Convenciones de ejecución IA (optimización de tokens)
+- Modelo: Sonnet para refactors mecánicos. Opus solo si hay razonamiento arquitectónico no trivial.
+- Lectura: grep/ripgrep para localizar; lee solo rangos relevantes, nunca ficheros enteros si no hace falta. No re-leas ficheros ya conocidos en la sesión. Reads directos en paralelo para ficheros conocidos, sin agent spawn.
+- Verificación: `tsc --noEmit` por defecto (barato). `npm run build` solo en cierre de fase.
+- Scope: respeta el "solo X, no toques Y". No explores ni edites fuera de scope.
+- Reportes: concisos — tabla de cambios + verificaciones grep/tsc. No reexpliques contexto sin cambios ni reproduzcas código no tocado.
+- Sistema de componentes: consume los existentes (Button, FormField, Card, Badge, Modal, SegmentedControl, Tabs, ToolHeader, Spinner). No crees piezas nuevas salvo ≥2 consumidores reales. Reglas en docs/COMPONENT-INVENTORY.md.

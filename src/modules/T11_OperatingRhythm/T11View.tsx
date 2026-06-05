@@ -25,7 +25,7 @@ import { buildT11RecommendationContext }  from './t11ContextBuilder'
 import { T11_MATURITY_CONFIG, T11_LEVEL_CONFIG } from './constants'
 import type { T11Event }                  from './types'
 
-import { TabButton }          from './components/TabButton'
+import { Tabs, Button, Card, ToolHeader } from '@shared/design-system/components'
 import { AdaptiveModeBadge }  from './components/AdaptiveModeBadge'
 import { MaturityPill }       from './components/MaturityPill'
 import { EventDetailPanel }   from './components/EventDetailPanel'
@@ -108,50 +108,31 @@ export function T11View({ onBack }: T11ViewProps) {
     <div className="min-h-screen bg-surface dark:bg-warm-900">
 
       {/* ── Header ── */}
-      <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm border-b border-border dark:border-white/6">
-        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center gap-4 flex-wrap">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-xs text-text-subtle dark:text-warm-300 hover:text-text-muted dark:hover:text-warm-100 transition-colors"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M8 2L4 6l4 4" />
-            </svg>
-            Volver al dashboard
-          </button>
-
-          <div className="h-4 w-px bg-border dark:bg-warm-600" />
-
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold font-mono bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
-              T11
-            </span>
-            <span className="text-xs font-semibold text-lean-black dark:text-warm-50">
-              AI Operating Rhythm
-            </span>
-          </div>
-
-          <div className="flex-1 flex justify-center">
-            <PhaseMiniMap phaseId="normalize" toolCode="T11" />
-          </div>
-
-          <button
+      <ToolHeader
+        sticky
+        onBack={onBack}
+        backLabel="Volver al dashboard"
+        toolCode="T11"
+        title="AI Operating Rhythm"
+        phaseMiniMap={<PhaseMiniMap phaseId="normalize" toolCode="T11" />}
+        maxWidth="max-w-5xl"
+        cta={
+          <Button
+            variant="primary"
+            size="sm"
             onClick={handleExport}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-navy text-white hover:opacity-90 transition-opacity"
+            icon={<svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 1v7M3 5l3 3 3-3M1 9v1.5A1.5 1.5 0 002.5 12h7A1.5 1.5 0 0011 10.5V9" /></svg>}
           >
-            <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 1v7M3 5l3 3 3-3M1 9v1.5A1.5 1.5 0 002.5 12h7A1.5 1.5 0 0011 10.5V9" />
-            </svg>
             Exportar modelo operativo
-          </button>
-        </div>
-      </div>
+          </Button>
+        }
+      />
 
       {/* ── Contenido ── */}
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
 
         {/* Hero */}
-        <div className="rounded-2xl bg-white dark:bg-warm-700 border border-border dark:border-warm-500 px-6 py-5">
+        <Card variant="flat" padding="none" className="rounded-2xl bg-white dark:bg-warm-700 border border-border dark:border-warm-500 px-6 py-5">
           <div className="flex items-start justify-between gap-6 flex-wrap">
             <div>
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle dark:text-warm-300 mb-1">
@@ -168,7 +149,7 @@ export function T11View({ onBack }: T11ViewProps) {
               <AdaptiveModeBadge mode={adaptiveMode} />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* KPI Strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -178,16 +159,16 @@ export function T11View({ onBack }: T11ViewProps) {
             { value: decisions.length,         label: 'Nodos de decisión',     sub: 'mapeados con escalada', color: '#6A90C0' },
             { value: totalKpis,                label: 'KPIs definidos',        sub: 'en los 3 niveles de gobierno', color: '#5FAF8A' },
           ].map((kpi) => (
-            <div key={kpi.label} className="rounded-xl bg-white dark:bg-warm-700 border border-border dark:border-warm-500 px-5 py-4">
+            <Card key={kpi.label} variant="flat" padding="none" className="rounded-xl bg-white dark:bg-warm-700 border border-border dark:border-warm-500 px-5 py-4">
               <p className="text-2xl font-bold tabular-nums" style={{ color: kpi.color }}>{kpi.value}</p>
               <p className="text-xs font-semibold text-lean-black dark:text-warm-50 mt-0.5">{kpi.label}</p>
               <p className="text-[10px] text-text-subtle dark:text-warm-300 mt-0.5">{kpi.sub}</p>
-            </div>
+            </Card>
           ))}
         </div>
 
         {/* How it works */}
-        <div className="rounded-2xl border border-border dark:border-warm-500 bg-white dark:bg-warm-700 px-6 py-5">
+        <Card variant="flat" padding="none" className="rounded-2xl border border-border dark:border-warm-500 bg-white dark:bg-warm-700 px-6 py-5">
           <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle dark:text-warm-300 mb-3">
             ¿Cómo funciona este modelo?
           </p>
@@ -206,16 +187,23 @@ export function T11View({ onBack }: T11ViewProps) {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Tabs */}
         <div>
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-0.5">
-            <TabButton active={activeTab === 'bigpicture'}  label="Vista Interactiva"     badge={String(recommendedEvents.length)} onClick={() => setActiveTab('bigpicture')} />
-            <TabButton active={activeTab === 'cadencia'}    label="Cadencia Detallada"     badge={String(recommendedEvents.length)} onClick={() => setActiveTab('cadencia')} />
-            <TabButton active={activeTab === 'objetivos'}   label="Objetivos por Fase"     badge={String(phaseObjectives.length)}   onClick={() => setActiveTab('objetivos')} />
-            <TabButton active={activeTab === 'decisiones'}  label="Decisiones y Escalada"  badge={String(decisions.length)}         onClick={() => setActiveTab('decisiones')} />
-            <TabButton active={activeTab === 'kpis'}        label="Datos a Medir"          badge={String(totalKpis)}                onClick={() => setActiveTab('kpis')} />
+          <div className="mb-6 overflow-x-auto pb-0.5">
+            <Tabs
+              aria-label="Operating rhythm"
+              value={activeTab}
+              onChange={(v) => setActiveTab(v as typeof activeTab)}
+              tabs={[
+                { value: 'bigpicture',  label: 'Vista Interactiva',    badge: String(recommendedEvents.length) },
+                { value: 'cadencia',    label: 'Cadencia Detallada',    badge: String(recommendedEvents.length) },
+                { value: 'objetivos',   label: 'Objetivos por Fase',    badge: String(phaseObjectives.length) },
+                { value: 'decisiones',  label: 'Decisiones y Escalada', badge: String(decisions.length) },
+                { value: 'kpis',        label: 'Datos a Medir',         badge: String(totalKpis) },
+              ]}
+            />
           </div>
 
           {activeTab === 'bigpicture'  && (
@@ -233,11 +221,11 @@ export function T11View({ onBack }: T11ViewProps) {
         </div>
 
         {/* SAFe note */}
-        <div className="rounded-xl border border-border dark:border-warm-500 bg-surface dark:bg-warm-800 px-5 py-4">
+        <Card variant="flat" padding="none" className="rounded-xl border border-border dark:border-warm-500 bg-surface dark:bg-warm-800 px-5 py-4">
           <p className="text-[10px] text-text-subtle dark:text-warm-300 leading-relaxed">
             <span className="font-semibold text-text-muted dark:text-warm-200">Metodología:</span> Este modelo operativo adapta el framework SAFe® (Scaled Agile Framework) al gobierno de sistemas IA, integrando los requisitos del estándar ISO 42001:2023 (AI Management System) y el EU AI Act (Reglamento 2024/1689). La cadencia recomendada se ajusta automáticamente al nivel de madurez IA de la organización medido en T1.
           </p>
-        </div>
+        </Card>
       </div>
 
       {/* ── Event detail panel ── */}

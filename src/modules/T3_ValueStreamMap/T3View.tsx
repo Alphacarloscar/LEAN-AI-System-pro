@@ -9,6 +9,7 @@
 
 import { useState, useMemo, useEffect }    from 'react'
 import { useNavigate }                     from 'react-router-dom'
+import { Button, Badge, Card, ToolHeader } from '@shared/design-system/components'
 import { useT3Store }                      from './store'
 import { useEngagementStore }              from '@/modules/Engagement/store'
 import { useCompanyProfileStore }          from '@/modules/CompanyProfile/store'
@@ -19,7 +20,7 @@ import { HeroOpportunityMatrix }           from './components/HeroOpportunityMat
 import { HeroCategoryDonut }               from './components/HeroCategoryDonut'
 import { ProcessDetailPanel }              from './components/ProcessDetailPanel'
 import { ProcessInterviewModal }           from './components/ProcessInterviewModal'
-import { CAT_HEX, CAT_ORDER }             from './components/T3Badges'
+import { CAT_HEX, CAT_ORDER, PhaseBadge } from './components/T3Badges'
 import { PhaseMiniMap }                    from '@/shared/components/PhaseMiniMap'
 import { isDemoEnabled }                   from '@/lib/config'
 import { usePermissions }                  from '@/modules/Auth'
@@ -104,28 +105,19 @@ export function T3View({ onBack }: T3ViewProps) {
     <div className="flex flex-col bg-surface dark:bg-warm-950 min-h-screen">
 
       {/* ── HEADER ── */}
-      <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm
-        border-b border-border dark:border-white/6 px-8 py-3">
-        <div className="flex items-center gap-4 max-w-7xl mx-auto">
-          <button onClick={() => onBack ? onBack() : navigate('/')}
-            className="h-8 w-8 rounded-full flex items-center justify-center text-text-subtle hover:bg-warm-100 dark:hover:bg-warm-700 transition-colors shrink-0">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 2L4 7l5 5" />
-            </svg>
-          </button>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">T3</span>
-              <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100">Value Stream Map</h1>
-              <PhaseMiniMap phaseId="listen" toolCode="T3" />
-            </div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">{companyName}</p>
-          </div>
+      <ToolHeader
+        sticky
+        onBack={() => onBack ? onBack() : navigate('/')}
+        toolCode="T3"
+        title="Value Stream Map"
+        subtitle={companyName}
+        phaseMiniMap={<PhaseMiniMap phaseId="listen" toolCode="T3" />}
+        chips={
           <div className="hidden md:flex items-center gap-5">
             {[
               { label: 'Opp crítica', value: hasDataT3 ? totalCritica : null, color: 'text-navy dark:text-warm-100' },
               { label: 'Opp alta',    value: hasDataT3 ? totalAlta    : null, color: 'text-info-dark' },
-              { label: 'Total',       value: hasDataT3 ? processes.length : null, color: 'text-lean-black dark:text-gray-100' },
+              { label: 'Total',       value: hasDataT3 ? processes.length : null, color: 'text-lean-black dark:text-warm-50' },
             ].map(({ label, value, color }) => (
               <div key={label} className="text-center">
                 <p className={`text-xl font-bold tabular-nums leading-none ${color}`}>
@@ -135,14 +127,13 @@ export function T3View({ onBack }: T3ViewProps) {
               </div>
             ))}
           </div>
-          {!isReadOnly && (
-            <button onClick={() => setShowModal(true)}
-              className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm">
-              + Proceso
-            </button>
-          )}
-        </div>
-      </div>
+        }
+        cta={!isReadOnly ? (
+          <Button variant="primary" size="sm" onClick={() => setShowModal(true)}>
+            + Proceso
+          </Button>
+        ) : undefined}
+      />
 
       {/* ── Carga inicial ── */}
       {isLoadingT3 && !hasDataT3 && (
@@ -167,15 +158,14 @@ export function T3View({ onBack }: T3ViewProps) {
             </svg>
           </div>
           <div className="text-center">
-            <p className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-1">Error al cargar los datos</p>
+            <p className="text-sm font-semibold text-lean-black dark:text-warm-50 mb-1">Error al cargar los datos</p>
             <p className="text-xs text-text-subtle max-w-xs leading-relaxed mb-4">
               {loadErrorT3 === 'timeout' ? 'La conexión tardó demasiado. Revisa tu conexión a Supabase.' : 'No se pudieron cargar los procesos.'}
             </p>
             {engagementId && (
-              <button onClick={() => ensureLoaded(engagementId, { force: true, reason: 'retry' })}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors">
+              <Button variant="primary" size="sm" onClick={() => ensureLoaded(engagementId, { force: true, reason: 'retry' })}>
                 Reintentar
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -189,10 +179,9 @@ export function T3View({ onBack }: T3ViewProps) {
           <p className="text-xs text-text-subtle max-w-xs leading-relaxed text-center">
             Añade el primer proceso para comenzar el análisis de oportunidades IA.
           </p>
-          <button onClick={() => setShowModal(true)}
-            className="mt-2 px-4 py-2 rounded-xl text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors">
+          <Button variant="primary" size="sm" className="mt-2" onClick={() => setShowModal(true)}>
             + Añadir primer proceso
-          </button>
+          </Button>
         </div>
       )}
 
@@ -213,7 +202,7 @@ export function T3View({ onBack }: T3ViewProps) {
           {/* ZONA 1: HERO CHARTS */}
           <div className="py-8">
             <div className="grid grid-cols-2 gap-6 items-stretch">
-              <div className="rounded-3xl bg-white dark:bg-warm-800 border border-border dark:border-white/6 p-6 flex flex-col">
+              <Card variant="outlined" padding="none" className="rounded-3xl p-6 flex flex-col">
                 <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">Matriz de oportunidad</p>
                 <div className="flex-1 flex items-center justify-center">
                   <HeroOpportunityMatrix processes={filtered} activeId={activeId} onSelect={handleSelectProcess} />
@@ -229,9 +218,9 @@ export function T3View({ onBack }: T3ViewProps) {
                     )
                   })}
                 </div>
-              </div>
+              </Card>
 
-              <div className="rounded-3xl bg-white dark:bg-warm-800 border border-border dark:border-white/6 p-6 flex flex-col">
+              <Card variant="outlined" padding="none" className="rounded-3xl p-6 flex flex-col">
                 <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">Distribución por categoría IA</p>
                 <div className="flex-1 flex items-center justify-center">
                   <HeroCategoryDonut processes={processes} activeId={activeId} onSelect={handleSelectProcess} />
@@ -247,7 +236,7 @@ export function T3View({ onBack }: T3ViewProps) {
                     )
                   })}
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
 
@@ -275,10 +264,9 @@ export function T3View({ onBack }: T3ViewProps) {
                   )
                 })}
                 {filterPhase && (
-                  <button onClick={() => setFilterPhase(null)}
-                    className="text-[10px] text-text-subtle hover:text-text-muted transition-colors ml-1">
+                  <Button variant="link" className="text-[10px] ml-1" onClick={() => setFilterPhase(null)}>
                     Limpiar filtros ×
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -296,7 +284,6 @@ export function T3View({ onBack }: T3ViewProps) {
                   const isActive = p.id === activeId
                   const catCfg   = AI_CATEGORY_CONFIG[p.aiCategory]
                   const oppCfg   = OPPORTUNITY_CONFIG[p.opportunityLevel]
-                  const phaseCfg = PHASE_CONFIG[p.phase]
 
                   return (
                     <button key={p.id} onClick={() => handleSelectProcess(p.id)}
@@ -314,12 +301,14 @@ export function T3View({ onBack }: T3ViewProps) {
                       </div>
                       <p className="text-[10px] text-text-subtle truncate pl-3.5">{p.department}</p>
                       <div className="flex items-center gap-1 flex-wrap pl-3.5">
-                        <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${phaseCfg.badgeBg} ${phaseCfg.badgeText}`}>
-                          {phaseCfg.label}
-                        </span>
-                        <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${catCfg.badgeBg} ${catCfg.badgeText}`}>
+                        <PhaseBadge phase={p.phase} />
+                        <Badge
+                          shape="pill"
+                          size="xs"
+                          style={{ backgroundColor: `${CAT_HEX[p.aiCategory]}22`, color: CAT_HEX[p.aiCategory] }}
+                        >
                           {catCfg.label.split(' ')[0]}
-                        </span>
+                        </Badge>
                         {p.interview && (
                           <span className={`ml-auto text-xs font-bold tabular-nums ${oppCfg.badgeText}`}>
                             {p.interview.opportunityScore.toFixed(1)}

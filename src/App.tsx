@@ -9,6 +9,7 @@
 // ============================================================
 
 import { useEffect }                            from 'react'
+import { Spinner }                              from '@shared/design-system/components'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AppLayout }                            from '@/shared/layouts/AppLayout'
 import { LoginView, ResetPasswordView, UpdatePasswordView, useAuthStore } from '@/modules/Auth'
@@ -34,10 +35,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   console.debug('[ROUTE] ProtectedRoute render — isInitializing:', isInitializing, 'isAuthenticated:', isAuthenticated)
   if (isInitializing) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <svg className="animate-spin h-6 w-6 text-navy" viewBox="0 0 24 24" fill="none">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+      <Spinner size="lg" label="Inicializando aplicación…" className="text-navy" />
     </div>
   )
   if (!isAuthenticated) return <Navigate to="/login" replace />

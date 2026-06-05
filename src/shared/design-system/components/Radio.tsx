@@ -31,7 +31,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
             {label && (
               <label
                 htmlFor={inputId}
-                className={`block text-sm font-medium cursor-pointer ${disabled ? 'opacity-50' : 'text-lean-black dark:text-gray-200'}`}
+                className={`block text-sm font-medium cursor-pointer ${disabled ? 'opacity-50' : 'text-lean-black dark:text-warm-100'}`}
               >
                 {label}
               </label>
@@ -81,7 +81,7 @@ export function RadioGroup({
   return (
     <fieldset className={className}>
       {label && (
-        <legend className="text-label font-medium text-lean-black mb-2 dark:text-gray-200">
+        <legend className="text-label font-medium text-lean-black mb-2 dark:text-warm-100">
           {label}
         </legend>
       )}

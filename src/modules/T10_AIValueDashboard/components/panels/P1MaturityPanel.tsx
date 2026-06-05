@@ -6,6 +6,7 @@ import { NavButton }      from '../NavButton'
 import { ExpandedSection } from '../ExpandedSection'
 import { HeroMetric }     from '../HeroMetric'
 import { PanelCard }      from '../PanelCard'
+import { Badge }          from '@shared/design-system/components'
 
 interface P1Props {
   radar:         RadarDimension[]
@@ -78,7 +79,7 @@ export function P1MaturityPanel({
             </p>
           )}
           <div className="flex items-center justify-between mb-3">
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${avg < 2 ? 'bg-warning-light text-warning-dark' : 'bg-info-light text-info-dark'}`}>{tier}</span>
+            <Badge variant={avg < 2 ? 'warning' : 'info'} shape="pill" size="xs">{tier}</Badge>
             <span className="text-[10px] text-text-muted dark:text-warm-300">
               Nº entrevistas: <span className="font-semibold text-lean-black dark:text-warm-50">{breakdown.interviewsCount}</span>
             </span>

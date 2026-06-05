@@ -8,6 +8,7 @@ import { buildT3OpportunitiesContext }     from '../t3OpportunitiesContextBuilde
 import { supabase }                        from '@/lib/supabase'
 import { reportError }                     from '@/lib/reportError'
 import { AI_CATEGORY_CONFIG }              from '../constants'
+import { Button, Badge, Card, Tabs, type BadgeVariant } from '@shared/design-system/components'
 import { CategoryBadge, ReadinessBadge, PhaseBadge } from './T3Badges'
 import { DetailPositionMap }               from './DetailPositionMap'
 import { StagesTab }                       from './StagesTab'
@@ -15,16 +16,19 @@ import type { ValueStream, AIOpportunity } from '../types'
 
 type DetailTab = 'oportunidades' | 'etapas'
 
-const effortColors = {
-  bajo:  'bg-success-light text-success-dark',
-  medio: 'bg-warning-light text-warning-dark',
-  alto:  'bg-danger-light text-danger-dark',
+// ── Mapeo de dominio T3 → variant de Badge ────────────────────
+const EFFORT_VARIANT: Record<AIOpportunity['effort'], BadgeVariant> = {
+  bajo:  'success',
+  medio: 'warning',
+  alto:  'danger',
 }
-const impactColors = {
-  bajo:  'bg-warm-100 dark:bg-warm-700 text-gray-500',
-  medio: 'bg-info-light text-info-dark',
-  alto:  'bg-navy/10 dark:bg-navy/20 text-navy dark:text-warm-100',
+const IMPACT_VARIANT: Record<AIOpportunity['impact'], BadgeVariant> = {
+  bajo:  'default',
+  medio: 'info',
+  alto:  'default',  // inline style — navy/10 pattern (background-image conflict)
 }
+// impact alto: bg-navy/10 text-navy — data-driven pair para evitar conflicto gradient
+const IMPACT_ALTO_STYLE: React.CSSProperties = { backgroundColor: 'rgba(42,40,34,0.1)', color: '#2A2822' }
 
 export function ProcessDetailPanel({ process }: { process: ValueStream }) {
   const [tab,       setTab]       = useState<DetailTab>('oportunidades')
@@ -107,9 +111,7 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
             <CategoryBadge category={process.aiCategory} />
             <ReadinessBadge level={process.orgReadiness} />
             {process.manualOverride && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-warning-light text-warning-dark">
-                Override consultor
-              </span>
+              <Badge variant="warning" shape="pill" size="xs">Override consultor</Badge>
             )}
           </div>
           {process.description && (
@@ -129,21 +131,17 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-0 border-b border-border dark:border-white/6 px-8">
-        {([
-          { key: 'oportunidades', label: 'Oportunidades IA' },
-          { key: 'etapas',       label: 'Etapas del proceso' },
-        ] as { key: DetailTab; label: string }[]).map(({ key, label }) => (
-          <button key={key} onClick={() => setTab(key)}
-            className={[
-              'px-4 py-3 text-xs font-medium border-b-2 transition-colors',
-              tab === key
-                ? 'border-navy text-lean-black dark:text-gray-100'
-                : 'border-transparent text-text-muted hover:text-text-default',
-            ].join(' ')}>
-            {label}
-          </button>
-        ))}
+      <div className="border-b border-border dark:border-white/6 px-8">
+        <Tabs
+          aria-label="Detalle del proceso"
+          variant="underline"
+          value={tab}
+          onChange={(v) => setTab(v as DetailTab)}
+          tabs={[
+            { value: 'oportunidades', label: 'Oportunidades IA' },
+            { value: 'etapas',       label: 'Etapas del proceso' },
+          ]}
+        />
       </div>
 
       {/* Tab content */}
@@ -185,30 +183,19 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
                       Oportunidades IA identificadas · {process.opportunities.length}
                     </p>
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      <button
-                        onClick={handlePersonalizeWithAI}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        loading={aiLoading}
                         disabled={!canGenerate}
+                        onClick={handlePersonalizeWithAI}
                         title={!hasStages ? 'Documenta las etapas del proceso primero' : 'Genera recomendaciones específicas con IA'}
-                        className={[
-                          'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-semibold transition-all border',
-                          aiLoading
-                            ? 'border-navy/20 bg-navy/5 text-navy/50 cursor-not-allowed'
-                            : !hasStages
-                              ? 'border-border bg-gray-50 dark:bg-gray-800/50 text-text-subtle cursor-not-allowed'
-                              : 'border-navy/30 bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 hover:bg-navy/15 dark:hover:bg-navy/25',
-                        ].join(' ')}>
-                        {aiLoading ? (
-                          <>
-                            <svg className="animate-spin h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                            Generando…
-                          </>
-                        ) : (
-                          <><span className="text-[11px]">✦</span>{process.opportunities.length > 0 ? 'Regenerar con IA' : 'Personalizar con IA'}</>
-                        )}
-                      </button>
+                        icon={!aiLoading ? <span className="text-[11px]">✦</span> : undefined}
+                      >
+                        {aiLoading
+                          ? 'Generando…'
+                          : process.opportunities.length > 0 ? 'Regenerar con IA' : 'Personalizar con IA'}
+                      </Button>
                       {!hasStages && !aiLoading && (
                         <p className="text-[9px] text-text-subtle text-right max-w-[180px] leading-tight">
                           Documenta las etapas primero
@@ -243,13 +230,17 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
                   {process.opportunities.map((opp) => {
                     const isValidated = opp.status === 'validada'
                     return (
-                      <div key={opp.id}
+                      <Card
+                        key={opp.id}
+                        variant="flat"
+                        padding="none"
                         className={[
                           'rounded-2xl border px-4 py-3.5 flex flex-col gap-2',
                           isValidated
                             ? 'border-success-dark/20 bg-success-light/8 dark:bg-success-dark/5'
                             : 'border-border dark:border-white/8 bg-white dark:bg-warm-800/50',
-                        ].join(' ')}>
+                        ].join(' ')}
+                      >
                         <div className="flex items-start gap-2">
                           <span className={`h-1.5 w-1.5 rounded-full mt-1 shrink-0 ${isValidated ? 'bg-success-dark' : 'bg-info-dark'}`} />
                           <p className="text-xs font-semibold text-lean-black dark:text-gray-200 leading-snug">{opp.title}</p>
@@ -257,10 +248,18 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
                         </div>
                         <p className="text-[11px] text-text-muted leading-relaxed">{opp.description}</p>
                         <div className="flex gap-1.5 flex-wrap mt-auto">
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${effortColors[opp.effort]}`}>Esfuerzo {opp.effort}</span>
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${impactColors[opp.impact]}`}>Impacto {opp.impact}</span>
+                          <Badge variant={EFFORT_VARIANT[opp.effort]} size="xs">
+                            Esfuerzo {opp.effort}
+                          </Badge>
+                          <Badge
+                            variant={IMPACT_VARIANT[opp.impact]}
+                            size="xs"
+                            style={opp.impact === 'alto' ? IMPACT_ALTO_STYLE : undefined}
+                          >
+                            Impacto {opp.impact}
+                          </Badge>
                         </div>
-                      </div>
+                      </Card>
                     )
                   })}
                 </div>

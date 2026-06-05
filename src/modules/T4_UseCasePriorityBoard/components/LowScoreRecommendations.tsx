@@ -1,4 +1,5 @@
 import { GO_NOGO_THRESHOLDS } from '../constants'
+import { Card } from '@shared/design-system/components'
 import type { UseCase } from '../types'
 
 interface LowScoreRec {
@@ -63,9 +64,11 @@ export function LowScoreRecommendations({ useCase }: { useCase: UseCase }) {
 
       <div className="space-y-2">
         {recs.map((rec) => (
-          <div
+          <Card
             key={rec.dimension}
-            className="rounded-xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-3 py-2.5"
+            variant="outlined"
+            padding="none"
+            className="rounded-xl px-3 py-2.5"
           >
             <p className="text-[10px] font-semibold text-lean-black dark:text-gray-200 mb-0.5">
               {rec.dimension}
@@ -76,7 +79,7 @@ export function LowScoreRecommendations({ useCase }: { useCase: UseCase }) {
             <p className="text-[10px] text-text-default dark:text-gray-300 leading-relaxed">
               → {rec.action}
             </p>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

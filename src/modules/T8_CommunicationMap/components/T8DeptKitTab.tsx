@@ -2,6 +2,7 @@
 
 import { CHANNEL_CFG } from '../T8Generators'
 import type { DeptKit } from '../types'
+import { Card, Badge } from '@shared/design-system/components'
 
 export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
   const DEPT_COLORS: Record<string, string> = {
@@ -15,13 +16,11 @@ export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
       {kits.map(kit => {
         const color = DEPT_COLORS[kit.department] ?? '#94A3B8'
-        const readinessBg = kit.readiness >= 65 ? 'bg-success-light text-success-dark'
-          : kit.readiness >= 35 ? 'bg-warning-light text-warning-dark'
-          : 'bg-danger-light text-danger-dark'
+        const readinessVariant = kit.readiness >= 65 ? 'success' : kit.readiness >= 35 ? 'warning' : 'danger'
         const channelCfg = CHANNEL_CFG[kit.channel]
 
         return (
-          <div key={kit.department} className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-5 space-y-4">
+          <Card key={kit.department} variant="outlined" padding="none" className="rounded-xl p-5 space-y-4">
             {/* Header */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
@@ -29,9 +28,9 @@ export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
                 <p className="font-semibold text-sm text-lean-black dark:text-gray-100">{kit.department}</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${readinessBg}`}>
+                <Badge variant={readinessVariant} shape="pill" size="xs">
                   Readiness {kit.readiness}% — {kit.readinessLabel}
-                </span>
+                </Badge>
               </div>
             </div>
 
@@ -45,10 +44,10 @@ export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border dark:border-white/6">
+              <Card variant="flat" padding="none" className="p-3 rounded-lg border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/50">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Enfoque comunicativo</p>
                 <p className="text-xs text-text-muted leading-relaxed">{kit.approach}</p>
-              </div>
+              </Card>
             </div>
 
             {/* Ambassadors */}
@@ -88,7 +87,7 @@ export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
                 {channelCfg.icon} {channelCfg.label}
               </span>
             </div>
-          </div>
+          </Card>
         )
       })}
     </div>

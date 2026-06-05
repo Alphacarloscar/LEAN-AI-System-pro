@@ -10,7 +10,7 @@
 //   3. Resultado: categoría IA + scores + oportunidades generadas
 // ============================================================
 
-import { useState, useEffect, useRef }   from 'react'
+import { useState, useRef }   from 'react'
 import {
   INTERVIEW_QUESTIONS,
   AI_CATEGORY_CONFIG,
@@ -31,6 +31,8 @@ import type {
 import { useDepartmentStore }            from '@/modules/CompanyProfile/useDepartmentStore'
 import { Select }                        from '@/shared/design-system/components/Select'
 import type { SelectOption }             from '@/shared/design-system/components/Select'
+import { Modal, Button, FormField, Badge, SegmentedControl } from '@shared/design-system/components'
+import { CategoryBadge } from './T3Badges'
 
 // ── Props ─────────────────────────────────────────────────────
 
@@ -61,6 +63,15 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
   )
 }
 
+// ── Colores hex de fases para SegmentedControl activeColor ────
+const PHASE_ACTIVE_COLOR: Record<ProcessPhase, string> = {
+  idea:            '#F3F4F6',  // gray-100
+  validacion:      '#FAF0D7',  // warning-light
+  piloto:          '#DDE8F5',  // info-light
+  estandarizacion: '#D4EDE3',  // success-light
+  escalado:        'rgba(42,40,34,0.1)',  // navy/10
+}
+
 // ── Fase 1: formulario datos del proceso ─────────────────────
 
 const PHASE_ORDER: ProcessPhase[] = ['idea', 'validacion', 'piloto', 'estandarizacion', 'escalado']
@@ -79,8 +90,6 @@ function ProcessFormPhase({
   const { departments, isLoading: isLoadingDepts } = useDepartmentStore()
   const deptOptions: SelectOption[] = departments.map((d) => ({ value: d.name, label: d.name }))
   const hasDepts = deptOptions.length > 0
-
-  useEffect(() => { nameRef.current?.focus() }, [])
 
   const canContinue = form.name.trim() && form.department.trim()
 
@@ -104,117 +113,84 @@ function ProcessFormPhase({
         </p>
       </div>
 
-      {/* Nombre del proceso */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-text-muted">
-          Nombre del proceso <span className="text-danger-dark">*</span>
-        </label>
-        <input
-          ref={nameRef}
-          type="text"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          placeholder="Ej: Gestión de incidencias TI, Conciliación financiera..."
-          className="w-full px-3 py-2 text-sm rounded-xl border border-border dark:border-white/10
-            bg-white dark:bg-gray-900 text-lean-black dark:text-gray-100
-            placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-navy/20"
-        />
-      </div>
+      <FormField
+        id="process-name"
+        ref={nameRef}
+        label="Nombre del proceso"
+        required
+        type="text"
+        value={form.name}
+        onChange={(e) => setForm({ ...form, name: e.target.value })}
+        placeholder="Ej: Gestión de incidencias TI, Conciliación financiera..."
+      />
 
       {/* Departamento — Select centralizado desde company_departments */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-text-muted">
-          Departamento / Área <span className="text-danger-dark">*</span>
-        </label>
-        <Select
-          options={deptOptions}
-          value={form.department}
-          onChange={(e) => setForm({ ...form, department: e.target.value })}
-          disabled={!hasDepts || isLoadingDepts}
-          placeholder={
-            isLoadingDepts
-              ? 'Cargando departamentos...'
-              : hasDepts
-              ? 'Selecciona un departamento'
-              : 'Configura los departamentos en el Perfil de Empresa primero'
-          }
-          helperText={
-            !hasDepts && !isLoadingDepts
-              ? 'Ve a Perfil de Empresa → Departamentos para configurarlos.'
-              : undefined
-          }
-        />
-      </div>
+      <Select
+        label="Departamento / Área"
+        options={deptOptions}
+        value={form.department}
+        onChange={(e) => setForm({ ...form, department: e.target.value })}
+        disabled={!hasDepts || isLoadingDepts}
+        placeholder={
+          isLoadingDepts
+            ? 'Cargando departamentos...'
+            : hasDepts
+            ? 'Selecciona un departamento'
+            : 'Configura los departamentos en el Perfil de Empresa primero'
+        }
+        helperText={
+          !hasDepts && !isLoadingDepts
+            ? 'Ve a Perfil de Empresa → Departamentos para configurarlos.'
+            : undefined
+        }
+      />
 
       {/* Responsable + Rol */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-text-muted">Responsable del proceso</label>
-          <input
-            type="text"
-            value={form.owner ?? ''}
-            onChange={(e) => setForm({ ...form, owner: e.target.value })}
-            placeholder="Nombre"
-            className="w-full px-3 py-2 text-sm rounded-xl border border-border dark:border-white/10
-              bg-white dark:bg-gray-900 text-lean-black dark:text-gray-100
-              placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-navy/20"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-text-muted">Rol / Cargo</label>
-          <input
-            type="text"
-            value={form.ownerRole ?? ''}
-            onChange={(e) => setForm({ ...form, ownerRole: e.target.value })}
-            placeholder="Ej: COO, Head of..."
-            className="w-full px-3 py-2 text-sm rounded-xl border border-border dark:border-white/10
-              bg-white dark:bg-gray-900 text-lean-black dark:text-gray-100
-              placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-navy/20"
-          />
-        </div>
-      </div>
-
-      {/* Descripción */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-text-muted">Descripción breve</label>
-        <textarea
-          value={form.description ?? ''}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-          placeholder="¿Qué hace este proceso? ¿Cuál es su objetivo de negocio?"
-          rows={2}
-          className="w-full px-3 py-2 text-sm rounded-xl border border-border dark:border-white/10
-            bg-white dark:bg-gray-900 text-lean-black dark:text-gray-100
-            placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-navy/20
-            resize-none"
+        <FormField
+          id="process-owner"
+          label="Responsable del proceso"
+          type="text"
+          value={form.owner ?? ''}
+          onChange={(e) => setForm({ ...form, owner: e.target.value })}
+          placeholder="Nombre"
+        />
+        <FormField
+          id="process-owner-role"
+          label="Rol / Cargo"
+          type="text"
+          value={form.ownerRole ?? ''}
+          onChange={(e) => setForm({ ...form, ownerRole: e.target.value })}
+          placeholder="Ej: COO, Head of..."
         />
       </div>
 
+      <FormField
+        id="process-description"
+        label="Descripción breve"
+        multiline
+        rows={2}
+        value={form.description ?? ''}
+        onChange={(e) => setForm({ ...form, description: e.target.value })}
+        placeholder="¿Qué hace este proceso? ¿Cuál es su objetivo de negocio?"
+      />
+
       {/* Fase de madurez */}
       <div className="flex flex-col gap-2">
-        <label className="text-xs font-medium text-text-muted">
-          Fase de madurez de la iniciativa <span className="text-danger-dark">*</span>
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {PHASE_ORDER.map((p) => {
-            const cfg = PHASE_CONFIG[p]
-            const active = form.phase === p
-            return (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setForm({ ...form, phase: p })}
-                className={[
-                  'px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 border',
-                  active
-                    ? `${cfg.badgeBg} ${cfg.badgeText} border-transparent ring-2 ring-navy/30`
-                    : 'bg-gray-50 dark:bg-gray-800 text-text-muted border-border dark:border-white/10 hover:bg-gray-100 dark:hover:bg-gray-700',
-                ].join(' ')}
-              >
-                {cfg.label}
-              </button>
-            )
-          })}
-        </div>
+        <p className="text-label font-medium text-lean-black dark:text-warm-50">
+          Fase de madurez de la iniciativa <span className="ml-0.5 text-danger" aria-hidden="true">*</span>
+        </p>
+        <SegmentedControl
+          aria-label="Fase de madurez de la iniciativa"
+          value={form.phase}
+          onChange={(v) => setForm({ ...form, phase: v as ProcessPhase })}
+          columns={3}
+          options={PHASE_ORDER.map((p) => ({
+            value:       p,
+            label:       PHASE_CONFIG[p].label,
+            activeColor: PHASE_ACTIVE_COLOR[p],
+          }))}
+        />
         <p className="text-[11px] text-text-subtle">
           {form.phase === 'idea'            && 'Identificado, sin validación formal todavía.'}
           {form.phase === 'validacion'      && 'Análisis de viabilidad en curso.'}
@@ -224,16 +200,15 @@ function ProcessFormPhase({
         </p>
       </div>
 
-      <button
+      <Button
         type="submit"
+        variant="primary"
+        size="sm"
+        fullWidth
         disabled={!canContinue}
-        className="w-full py-2.5 rounded-xl text-sm font-semibold text-white
-          bg-navy-metallic hover:bg-navy-metallic-hover disabled:bg-gray-200 disabled:text-gray-400
-          dark:disabled:bg-gray-800 dark:disabled:text-gray-600
-          transition-colors shadow-sm"
       >
         Continuar con la entrevista →
-      </button>
+      </Button>
     </form>
   )
 }
@@ -413,16 +388,14 @@ function ResultPhase({
       {/* Categoría auto-asignada */}
       <div className="rounded-2xl border border-border dark:border-white/10 overflow-hidden">
         <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}>
-            {cfg.label}
-          </span>
+          <CategoryBadge category={result.aiCategory} />
           <span className="text-[11px] text-text-subtle">
             Score oportunidad: <strong className="text-lean-black dark:text-gray-200">{result.opportunityScore.toFixed(2)}</strong>/4.00
           </span>
           {manualOverride && (
-            <span className="ml-auto text-[10px] font-semibold text-warning-dark bg-warning-light px-2 py-0.5 rounded-full">
+            <Badge variant="warning" shape="pill" size="xs" className="ml-auto">
               Ajuste manual
-            </span>
+            </Badge>
           )}
         </div>
         <div className="px-4 py-3">
@@ -480,60 +453,40 @@ function ResultPhase({
         </svg>
       </div>
 
-      {/* Ajuste manual (consultor) */}
+      {/* Ajuste manual (consultor) — selects con label asociado vía DS Select */}
       <div className="rounded-2xl border border-border dark:border-white/10 px-4 py-3">
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
           Ajuste del consultor (opcional)
         </p>
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-text-muted">Categoría IA</label>
-            <select
-              value={aiCategory}
-              onChange={(e) => setAiCategory(e.target.value as AICategoryCode)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-border dark:border-white/10
-                bg-white dark:bg-gray-900 text-lean-black dark:text-gray-100
-                focus:outline-none focus:ring-2 focus:ring-navy/20"
-            >
-              {ALL_CATEGORIES.map((c) => (
-                <option key={c} value={c}>{AI_CATEGORY_CONFIG[c].label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-text-muted">Readiness del equipo</label>
-            <select
-              value={orgReadiness}
-              onChange={(e) => setOrgReadiness(e.target.value as OrgReadinessLevel)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-border dark:border-white/10
-                bg-white dark:bg-gray-900 text-lean-black dark:text-gray-100
-                focus:outline-none focus:ring-2 focus:ring-navy/20"
-            >
-              {ALL_READINESS.map((r) => (
-                <option key={r} value={r}>{READINESS_CONFIG[r].label}</option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Categoría IA"
+            options={ALL_CATEGORIES.map((c) => ({ value: c, label: AI_CATEGORY_CONFIG[c].label }))}
+            value={aiCategory}
+            onChange={(e) => setAiCategory(e.target.value as AICategoryCode)}
+          />
+          <Select
+            label="Readiness del equipo"
+            options={ALL_READINESS.map((r) => ({ value: r, label: READINESS_CONFIG[r].label }))}
+            value={orgReadiness}
+            onChange={(e) => setOrgReadiness(e.target.value as OrgReadinessLevel)}
+          />
         </div>
       </div>
 
       {/* Botones */}
       <div className="flex gap-3">
-        <button
-          onClick={onBack}
-          className="flex-1 py-2.5 rounded-xl text-sm font-semibold
-            border border-border dark:border-white/10 text-text-muted
-            hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-        >
+        <Button variant="secondary" size="sm" className="flex-1" onClick={onBack}>
           ← Volver
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
+          className="flex-[2]"
           onClick={() => onConfirm(aiCategory, orgReadiness, manualOverride)}
-          className="flex-[2] py-2.5 rounded-xl text-sm font-semibold text-white
-            bg-navy-metallic hover:bg-navy-metallic-hover transition-colors shadow-sm"
         >
           Añadir proceso al mapa ✓
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -549,15 +502,6 @@ export function ProcessInterviewModal({
     name: '', department: '', owner: '', ownerRole: '', description: '', phase: 'validacion',
   })
   const [answers, setAnswers]     = useState<Record<number, InterviewAnswerCode>>({})
-
-  // Cerrar con Escape
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
 
   function handleFormNext(f: NewValueStreamForm) {
     setFormData(f)
@@ -600,60 +544,32 @@ export function ProcessInterviewModal({
     onSubmit(process)
   }
 
+  const phaseTitle: Record<Phase, string> = {
+    form:      'Nuevo proceso',
+    interview: 'Diagnóstico del proceso',
+    result:    'Categoría IA asignada',
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
+    <Modal open={true} onClose={onClose} size="lg" title={phaseTitle[phase]}>
+      <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle -mt-2 mb-4">
+        T3 — Value Stream Map
+      </p>
 
-      {/* Panel */}
-      <div className="relative z-10 w-full max-w-lg bg-white dark:bg-gray-950
-        rounded-3xl border border-border dark:border-white/8 shadow-2xl
-        max-h-[90vh] overflow-y-auto">
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4
-          border-b border-border dark:border-white/6 sticky top-0
-          bg-white dark:bg-gray-950 z-10">
-          <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-              T3 — Value Stream Map
-            </p>
-            <p className="text-sm font-semibold text-lean-black dark:text-gray-100">
-              Nuevo proceso
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="h-8 w-8 rounded-full flex items-center justify-center
-              text-text-subtle hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Contenido */}
-        <div className="px-6 py-5">
-          {phase === 'form' && (
-            <ProcessFormPhase
-              onNext={handleFormNext}
-            />
-          )}
-          {phase === 'interview' && (
-            <InterviewPhase onComplete={handleInterviewComplete} />
-          )}
-          {phase === 'result' && (
-            <ResultPhase
-              formData={formData}
-              answers={answers}
-              onConfirm={handleConfirm}
-              onBack={() => setPhase('interview')}
-            />
-          )}
-        </div>
-      </div>
-    </div>
+      {phase === 'form' && (
+        <ProcessFormPhase onNext={handleFormNext} />
+      )}
+      {phase === 'interview' && (
+        <InterviewPhase onComplete={handleInterviewComplete} />
+      )}
+      {phase === 'result' && (
+        <ResultPhase
+          formData={formData}
+          answers={answers}
+          onConfirm={handleConfirm}
+          onBack={() => setPhase('interview')}
+        />
+      )}
+    </Modal>
   )
 }

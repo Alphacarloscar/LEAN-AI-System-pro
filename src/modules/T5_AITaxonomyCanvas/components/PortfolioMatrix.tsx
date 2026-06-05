@@ -11,6 +11,7 @@ import {
   T5_DOMAIN_CONFIG,
   T5_RECOMMENDATION_CONFIG,
 } from '../constants'
+import { Card } from '@shared/design-system/components'
 import type { T5Canvas, T5DomainCode } from '../types'
 import { DeptCategoryModal } from './DeptCategoryModal'
 
@@ -221,7 +222,7 @@ export function PortfolioMatrix({
   }, [canvas.domains])
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border p-5">
+    <Card variant="outlined" padding="none" className="rounded-2xl p-5">
       <p className="text-xs font-mono uppercase tracking-widest text-text-subtle mb-1">
         Portfolio map — 6 dominios IA
       </p>
@@ -358,6 +359,6 @@ export function PortfolioMatrix({
         canvas={canvas}
         onSelectDomain={onSelectDomain}
       />
-    </div>
+    </Card>
   )
 }

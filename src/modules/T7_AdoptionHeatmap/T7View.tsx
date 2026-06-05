@@ -12,6 +12,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect }  from 'react'
+import { useNavigate }                   from 'react-router-dom'
 import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
 import { useT4Store }                    from '@/modules/T4_UseCasePriorityBoard'
 import { useT1Store }                    from '@/modules/T1_MaturityRadar/store'
@@ -27,7 +28,7 @@ import { PersistenceBanner }           from '@/shared/components/PersistenceBann
 import { computeOverallScore }          from '@/modules/T1_MaturityRadar/types'
 import { ToolErrorState }              from '@/shared/components/ToolErrorState'
 import { getSegment }                  from './T7Constants'
-import { TabButton }                   from './components/T7Tabs'
+import { Tabs, Card, ToolHeader, EmptyState, Button } from '@shared/design-system/components'
 import { BellCurveTab }                from './components/T7BellCurveTab'
 import { DeptRecommendationsTab }      from './components/T7DeptRecommendationsTab'
 import { ChangeManagementPlanTab }     from './components/T7ChangeManagementPlanTab'
@@ -39,6 +40,7 @@ interface T7ViewProps {
 }
 
 export function T7View({ onBack }: T7ViewProps) {
+  const navigate                    = useNavigate()
   const stakeholders                = useT2Store(s => s.stakeholders)
   const loadT2                      = useT2Store(s => s.load)
   const isLoadingT2                 = useT2Store(s => s.isLoading)
@@ -51,7 +53,7 @@ export function T7View({ onBack }: T7ViewProps) {
 
   // Cargar T2 al montar T7 (por si el usuario llega directamente sin pasar por T2).
   // Intencional: solo re-ejecutar cuando cambia el engagement, no cuando llegan los datos.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   useEffect(() => {
     if (engagementId && stakeholders.length === 0) loadT2(engagementId)
   }, [engagementId])
@@ -124,7 +126,38 @@ export function T7View({ onBack }: T7ViewProps) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 px-8 py-8">
+    <div className="min-h-screen bg-surface dark:bg-warm-900">
+
+      {/* ── Header ── */}
+      <ToolHeader
+        onBack={onBack}
+        backLabel="Volver al dashboard"
+        toolCode="T7"
+        title="Adoption Heatmap"
+        subtitle={<p className="text-xs text-text-muted">{companyName} · Curva de difusión Rogers</p>}
+        phaseMiniMap={<PhaseMiniMap phaseId="activate" toolCode="T7" />}
+        maxWidth="max-w-5xl"
+        chips={
+          <div className="flex items-center gap-3 flex-wrap">
+            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-warm-700 border border-border dark:border-white/6">
+              <p className="text-lg font-bold text-lean-black dark:text-warm-50 tabular-nums">{stakeholders.length}</p>
+              <p className="text-[10px] text-text-subtle uppercase tracking-wide">Stakeholders</p>
+            </Card>
+            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-success-light border border-success-light">
+              <p className="text-lg font-bold text-success-dark tabular-nums">
+                {(segCounts['early_adopters'] ?? 0) + (segCounts['early_majority'] ?? 0)}
+              </p>
+              <p className="text-[10px] text-success-dark uppercase tracking-wide">Adoptantes</p>
+            </Card>
+            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-danger-light border border-danger-light">
+              <p className="text-lg font-bold text-danger-dark tabular-nums">{laggardCount}</p>
+              <p className="text-[10px] text-danger-dark uppercase tracking-wide">Resistentes</p>
+            </Card>
+          </div>
+        }
+      />
+
+      <div className="max-w-5xl mx-auto space-y-6 px-8 py-8">
 
       {/* Banner no bloqueante — stakeholders pendientes */}
       {(isLoadingT2 || (!isLoadingT2 && stakeholders.length === 0)) && (
@@ -154,66 +187,34 @@ export function T7View({ onBack }: T7ViewProps) {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-base transition-colors mb-3"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Volver al dashboard
-          </button>
-          <div className="flex items-center gap-2.5">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider bg-navy text-white">
-              T7
-            </span>
-            <div>
-              <h1 className="text-lg font-semibold text-lean-black dark:text-gray-100 leading-tight">
-                Adoption Heatmap
-              </h1>
-              <div className="flex items-center gap-2 mt-0.5">
-                <p className="text-xs text-text-muted">{companyName} · Curva de difusión Rogers</p>
-                <PhaseMiniMap phaseId="activate" toolCode="T7" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-border dark:border-white/6">
-            <p className="text-lg font-bold text-lean-black dark:text-gray-100 tabular-nums">{stakeholders.length}</p>
-            <p className="text-[10px] text-text-subtle uppercase tracking-wide">Stakeholders</p>
-          </div>
-          <div className="text-center px-3 py-2 rounded-lg bg-success-light border border-success-light">
-            <p className="text-lg font-bold text-success-dark tabular-nums">
-              {(segCounts['early_adopters'] ?? 0) + (segCounts['early_majority'] ?? 0)}
-            </p>
-            <p className="text-[10px] text-success-dark uppercase tracking-wide">Adoptantes</p>
-          </div>
-          <div className="text-center px-3 py-2 rounded-lg bg-danger-light border border-danger-light">
-            <p className="text-lg font-bold text-danger-dark tabular-nums">{laggardCount}</p>
-            <p className="text-[10px] text-danger-dark uppercase tracking-wide">Resistentes</p>
-          </div>
-        </div>
-      </div>
-
       {/* Tabs */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <TabButton active={activeTab === 'curve'} label="Curva de adopción" badge={String(stakeholders.length)} onClick={() => setActiveTab('curve')} />
-        <TabButton active={activeTab === 'dept'}  label="Por departamento"  badge={String(new Set(stakeholders.map(s => s.department)).size)} onClick={() => setActiveTab('dept')} />
-        <TabButton active={activeTab === 'plan'}  label="Plan de cambio"    badge="6M" onClick={() => setActiveTab('plan')} />
-      </div>
+      <Tabs
+        aria-label="Adopción heatmap"
+        value={activeTab}
+        onChange={(v) => setActiveTab(v as typeof activeTab)}
+        tabs={[
+          { value: 'curve', label: 'Curva de adopción', badge: String(stakeholders.length) },
+          { value: 'dept',  label: 'Por departamento',  badge: String(new Set(stakeholders.map(s => s.department)).size) },
+          { value: 'plan',  label: 'Plan de cambio',    badge: '6M' },
+        ]}
+      />
 
       {/* Tab content */}
       {stakeholders.length === 0 ? (
-        <div className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-12 text-center">
-          <p className="text-sm text-text-muted">
-            No hay stakeholders registrados. Completa la T2 — AI Stakeholder Matrix primero.
-          </p>
-        </div>
+        <EmptyState
+          icon={
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="8" cy="7" r="3"/>
+              <path d="M2 18v-1a5 5 0 0110 0v1"/>
+              <circle cx="15" cy="7" r="2"/>
+              <path d="M18 18v-1a3 3 0 00-4-2.8"/>
+            </svg>
+          }
+          title="Sin stakeholders registrados"
+          description="Completa T2 — AI Stakeholder Matrix para mapear al equipo antes de analizar la adopción."
+          action={<Button variant="ghost" size="sm" onClick={() => navigate('/t2')}>Ir a T2</Button>}
+          className="py-12"
+        />
       ) : (
         <>
           {activeTab === 'curve' && <BellCurveTab stakeholders={stakeholders} dark={dark} />}
@@ -250,6 +251,7 @@ export function T7View({ onBack }: T7ViewProps) {
           engagementId={engagementId}
         />
       )}
+      </div>
     </div>
   )
 }

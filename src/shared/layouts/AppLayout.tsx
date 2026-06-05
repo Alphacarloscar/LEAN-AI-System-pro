@@ -18,6 +18,7 @@
 // ============================================================
 
 import { useEffect }                              from 'react'
+import { Spinner }                                from '@shared/design-system/components'
 import { Outlet, useOutletContext }               from 'react-router-dom'
 import { AppSidebar }                             from '@/shared/components/AppSidebar'
 import { AlphaLogo }                              from '@/shared/components/AlphaLogo'
@@ -170,10 +171,7 @@ function SessionRecoveryBanner({ state, onReLogin }: {
         bg-warm-900/90 dark:bg-warm-700/90 text-white text-[12px] font-medium
         shadow-lg backdrop-blur-sm border border-white/10"
       >
-        <svg className="animate-spin h-3.5 w-3.5 text-amber-400" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
+        <Spinner size="sm" label="Reconectando…" className="text-amber-400" />
         Reconectando y actualizando datos…
       </div>
     )

@@ -16,6 +16,7 @@
 
 import { useState, useMemo, useEffect }  from 'react'
 import { useNavigate }                   from 'react-router-dom'
+import { Button, ToolHeader }            from '@shared/design-system/components'
 import { useT2Store }                    from './store'
 import { useEngagementStore }            from '@/modules/Engagement/store'
 import { useCompanyProfileStore }        from '@/modules/CompanyProfile/store'
@@ -103,60 +104,48 @@ export function T2View({ onBack }: T2ViewProps) {
     <div className="min-h-screen bg-surface dark:bg-warm-900">
 
       {/* ── Header ── */}
-      <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm border-b border-border px-8 py-4">
-        <div className="max-w-6xl mx-auto flex items-center gap-4">
-
-          <button
-            onClick={() => { onBack(); navigate('/') }}
-            className="flex items-center gap-1.5 text-xs font-medium text-text-muted hover:text-lean-black dark:hover:text-gray-200 transition-colors"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 12L6 8l4-4" />
-            </svg>
-            Volver al dashboard
-          </button>
-
-          <span className="text-text-subtle">·</span>
-
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">
-              T2
-            </span>
-            <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100 truncate">
-              AI Stakeholder Matrix
-            </h1>
-            <PhaseMiniMap phaseId="listen" toolCode="T2" />
-          </div>
-
-          {!isReadOnly && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowImportT1(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border dark:border-white/12 text-xs font-semibold text-text-muted hover:text-text-base hover:border-gray-300 dark:hover:border-white/20 transition-all duration-150 shrink-0"
-              >
+      <ToolHeader
+        sticky
+        onBack={() => { onBack(); navigate('/') }}
+        backLabel="Volver al dashboard"
+        toolCode="T2"
+        title="AI Stakeholder Matrix"
+        phaseMiniMap={<PhaseMiniMap phaseId="listen" toolCode="T2" />}
+        maxWidth="max-w-6xl"
+        cta={!isReadOnly ? (
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowImportT1(true)}
+              icon={
                 <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2 8h10M8 4l4 4-4 4" />
                   <path d="M14 3v10" strokeWidth="1.5" />
                 </svg>
-                Importar desde T1
-              </button>
-              <button
-                onClick={() => setShowModal(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-navy-metallic text-white text-xs font-semibold hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98] transition-all duration-150 shrink-0"
-              >
+              }
+            >
+              Importar desde T1
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowModal(true)}
+              icon={
                 <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M8 2v12M2 8h12" />
                 </svg>
-                Nueva entrevista
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+              }
+            >
+              Nueva entrevista
+            </Button>
+          </>
+        ) : undefined}
+      />
 
       {/* ── Subheader: empresa ── */}
       <div className="max-w-6xl mx-auto px-8 pt-5 pb-1">
-        <p className="text-sm font-semibold text-lean-black dark:text-gray-100">{companyName}</p>
+        <p className="text-sm font-semibold text-lean-black dark:text-warm-50">{companyName}</p>
         <p className="text-xs text-text-subtle mt-0.5">
           Haz clic en un stakeholder para ver su perfil y las intervenciones recomendadas.
         </p>

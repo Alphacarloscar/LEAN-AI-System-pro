@@ -27,6 +27,7 @@ import { PersistenceBanner }     from '@/shared/components/PersistenceBanner'
 import { PhaseMiniMap }          from '@/shared/components/PhaseMiniMap'
 import { PolicyDownloadButton }  from './PolicyPDF'
 import { usePermissions }        from '@/modules/Auth'
+import { Tabs, Button, Badge, Card, Spinner, ToolHeader } from '@shared/design-system/components'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -35,36 +36,6 @@ type T6Tab = 'politica' | 'riesgos'
 // ── Helpers ───────────────────────────────────────────────────
 
 const ALL_RISK_LEVELS: AIActRiskLevel[] = ['prohibido', 'alto', 'limitado', 'minimo', 'sin_clasificar']
-
-// ── Tab selector ──────────────────────────────────────────────
-
-function TabButton({
-  active, label, badge, onClick,
-}: {
-  active:   boolean
-  label:    string
-  badge?:   string
-  onClick:  () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={[
-        'px-4 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 flex items-center gap-1.5',
-        active
-          ? 'border-navy/50 bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 shadow-sm'
-          : 'border-border dark:border-white/10 text-text-muted hover:border-navy/30 hover:text-navy/70',
-      ].join(' ')}
-    >
-      {label}
-      {badge && (
-        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-navy/15 dark:bg-navy/30 text-navy dark:text-warm-100">
-          {badge}
-        </span>
-      )}
-    </button>
-  )
-}
 
 // ── ── ── Tab 1: POLÍTICA IA ── ── ──────────────────────────────
 
@@ -153,9 +124,9 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
         <div className="flex flex-col gap-1">
           {generatedPolicy ? (
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+              <Badge variant="warning" shape="pill" size="xs">
                 ✦ Generada con IA · {generatedPolicy.sector}
-              </span>
+              </Badge>
               <button
                 onClick={clearGeneratedPolicy}
                 className="text-[10px] text-text-subtle hover:text-red-500 transition-colors"
@@ -196,10 +167,7 @@ function PolicyTab({ companyName, engagementId }: { companyName: string; engagem
             >
               {isGenerating ? (
                 <>
-                  <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
+                  <Spinner size="sm" label="Generando…" />
                   Generando…
                 </>
               ) : (
@@ -592,7 +560,7 @@ function RiskDashboardTab() {
       </div>
 
       {/* Cobertura */}
-      <div className="rounded-2xl border border-border bg-white dark:bg-gray-900 px-5 py-4">
+      <Card variant="outlined" padding="none" className="rounded-2xl px-5 py-4">
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
             Cobertura de clasificación AI Act
@@ -615,19 +583,19 @@ function RiskDashboardTab() {
             {summary.unclassified} caso{summary.unclassified > 1 ? 's' : ''} pendiente{summary.unclassified > 1 ? 's' : ''} de clasificación. Accede a T4 → tab Regulatorio para clasificarlos.
           </p>
         )}
-      </div>
+      </Card>
 
       {/* Tabla de casos */}
-      <div className="rounded-2xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
+      <Card variant="outlined" padding="none" className="rounded-2xl overflow-hidden">
         <div className="px-5 py-3 border-b border-border dark:border-white/6 flex items-center justify-between">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
             {selectedLevel ? `Casos — ${AIACT_RISK_CONFIG[selectedLevel].label}` : 'Todos los casos de uso'}
             <span className="ml-2 font-bold text-lean-black dark:text-gray-200">({filteredCases.length})</span>
           </p>
           {selectedLevel && (
-            <button onClick={() => setSelectedLevel(null)} className="text-[10px] text-navy dark:text-warm-100 hover:underline">
+            <Button variant="link" size="xs" onClick={() => setSelectedLevel(null)}>
               Ver todos ×
-            </button>
+            </Button>
           )}
         </div>
         <div className="overflow-x-auto">
@@ -666,7 +634,7 @@ function RiskDashboardTab() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }
@@ -702,52 +670,49 @@ export function T6View({
   ).length
 
   return (
-    <div className="max-w-[1100px] mx-auto space-y-5 px-8 py-8">
+    <div className="min-h-screen bg-surface dark:bg-warm-900">
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap print:hidden">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-sm text-text-muted hover:text-lean-black dark:hover:text-gray-200 transition-colors"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 2L4 7l5 5" />
-            </svg>
-            Volver
-          </button>
-          <div className="w-px h-5 bg-border" />
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-navy text-white">T6</span>
-              <h1 className="text-lg font-semibold text-lean-black dark:text-gray-100">
-                Risk &amp; Governance
-              </h1>
+      {/* ── Header ── */}
+      <ToolHeader
+        onBack={onBack}
+        backLabel="Volver"
+        toolCode="T6"
+        title="Risk &amp; Governance"
+        subtitle={companyName}
+        phaseMiniMap={<PhaseMiniMap phaseId="evaluate" toolCode="T6" />}
+        maxWidth="max-w-[1100px]"
+        chips={
+          (highRisk > 0 || unclassified > 0) ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              {highRisk > 0 && (
+                <Badge variant="warning" shape="pill">
+                  🔴 {highRisk} caso{highRisk > 1 ? 's' : ''} alto riesgo
+                </Badge>
+              )}
+              {unclassified > 0 && (
+                <Badge variant="default" shape="pill">
+                  ⬜ {unclassified} sin clasificar
+                </Badge>
+              )}
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <p className="text-xs text-text-subtle">{companyName}</p>
-              <PhaseMiniMap phaseId="evaluate" toolCode="T6" />
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {highRisk > 0 && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300">
-              🔴 {highRisk} caso{highRisk > 1 ? 's' : ''} alto riesgo
-            </span>
-          )}
-          {unclassified > 0 && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-500">
-              ⬜ {unclassified} sin clasificar
-            </span>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+        className="print:hidden"
+      />
+
+      <div className="max-w-[1100px] mx-auto space-y-5 px-8 py-8">
 
       {/* Tabs */}
-      <div className="flex gap-2 flex-wrap print:hidden">
-        <TabButton active={tab === 'politica'}  label="📄 Política IA Corporativa"   onClick={() => setTab('politica')} />
-        <TabButton active={tab === 'riesgos'}   label="⚖️ Dashboard AI Act"          badge={highRisk > 0 ? `${highRisk} alto` : undefined} onClick={() => setTab('riesgos')} />
+      <div className="print:hidden">
+        <Tabs
+          aria-label="Riesgos y gobernanza"
+          value={tab}
+          onChange={(v) => setTab(v as T6Tab)}
+          tabs={[
+            { value: 'politica', label: '📄 Política IA Corporativa' },
+            { value: 'riesgos',  label: '⚖️ Dashboard AI Act', badge: highRisk > 0 ? `${highRisk} alto` : undefined },
+          ]}
+        />
       </div>
 
       {/* Tab content */}
@@ -764,6 +729,7 @@ export function T6View({
           engagementId={engagementId}
         />
       )}
+      </div>
     </div>
   )
 }

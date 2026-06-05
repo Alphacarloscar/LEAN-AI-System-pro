@@ -1,10 +1,11 @@
 // ── PlanPhaseCard — reutilizable para LLM y estático ─────────
 
 import type { GeneratedChangePlanPhase } from '../types'
+import { Card, Badge } from '@shared/design-system/components'
 
 export function PlanPhaseCard({ step }: { step: GeneratedChangePlanPhase }) {
   return (
-    <div className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-6">
+    <Card variant="outlined" padding="none" className="rounded-xl p-6">
       <div className="flex items-start gap-4 mb-4">
         <div className="flex-shrink-0 text-center">
           <div className="text-2xl">{step.icon}</div>
@@ -18,9 +19,9 @@ export function PlanPhaseCard({ step }: { step: GeneratedChangePlanPhase }) {
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
             <span className="text-[10px] font-mono text-text-subtle uppercase tracking-wide">Foco:</span>
             {step.segments.map(s => (
-              <span key={s} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-text-muted font-medium">
+              <Badge key={s} variant="default" shape="pill" size="xs">
                 {s}
-              </span>
+              </Badge>
             ))}
           </div>
         </div>
@@ -44,6 +45,6 @@ export function PlanPhaseCard({ step }: { step: GeneratedChangePlanPhase }) {
         </svg>
         <p className="text-xs text-danger-dark leading-relaxed">{step.risk}</p>
       </div>
-    </div>
+    </Card>
   )
 }

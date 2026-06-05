@@ -13,7 +13,8 @@
 //   — Gap IT/Negocio en T1ExecutiveOutput
 // ============================================================
 
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { Modal, Button, FormField, SegmentedControl, ToolHeader } from '@/shared/design-system/components'
 import { RetryBanner }                          from '@/shared/components/RetryBanner'
 import { DIMENSION_DEFINITIONS, TOTAL_SUBDIMENSIONS } from './constants'
 import type { T1DimensionState } from './types'
@@ -52,16 +53,13 @@ interface NewInterviewModalProps {
 }
 
 function NewInterviewModal({ onClose, onSubmit, departments }: NewInterviewModalProps) {
-  const [form, setForm]         = useState<NewIntervieweeForm>({
+  const [form, setForm]             = useState<NewIntervieweeForm>({
     name:       '',
     role:       '',
     type:       'business',
     department: '',
   })
   const [submitting, setSubmitting] = useState(false)
-  const nameRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => { nameRef.current?.focus() }, [])
 
   const canSubmit =
     form.name.trim().length > 0 &&
@@ -79,195 +77,113 @@ function NewInterviewModal({ onClose, onSubmit, departments }: NewInterviewModal
     }
   }
 
-  // Cerrar con Escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [onClose])
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
+    <Modal open={true} onClose={onClose} title="Nueva entrevista" size="sm">
+      <p className="text-[11px] text-text-subtle -mt-1 mb-3">
+        Añade un nuevo entrevistado al assessment en curso
+      </p>
+      <form onSubmit={handleSubmit} className="space-y-4">
 
-      {/* Card del modal */}
-      <div className="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl border border-border shadow-2xl shadow-black/20">
+        <FormField
+          id="new-interviewee-name"
+          label="Nombre"
+          type="text"
+          value={form.name}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          placeholder="Ej. Javier Morales"
+          required
+        />
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-border">
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="px-1.5 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase">
-                T1
-              </span>
-              <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100">
-                Nueva entrevista
-              </h3>
-            </div>
-            <p className="text-[11px] text-text-subtle">
-              Añade un nuevo entrevistado al assessment en curso
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="h-7 w-7 rounded-lg flex items-center justify-center text-text-subtle hover:text-lean-black dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M1 1l11 11M12 1L1 12" />
-            </svg>
-          </button>
+        <FormField
+          id="new-interviewee-role"
+          label="Cargo"
+          type="text"
+          value={form.role}
+          onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+          placeholder="Ej. CIO, Head of Digital, COO…"
+          required
+        />
+
+        {/* Tipo IT / Negocio */}
+        <div className="space-y-1.5">
+          <span className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
+            Perfil
+          </span>
+          <SegmentedControl
+            aria-label="Perfil del entrevistado"
+            value={form.type}
+            onChange={(v) => setForm((f) => ({ ...f, type: v as 'it' | 'business' }))}
+            options={[
+              { value: 'it',       label: 'IT / Tecnología', activeColor: '#2A2822' },
+              { value: 'business', label: 'Negocio / Ops',   activeColor: '#5FAF8A' },
+            ]}
+          />
         </div>
 
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-
-          {/* Nombre */}
+        {/* Departamento */}
+        {departments.length > 0 ? (
           <div className="space-y-1.5">
-            <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
-              Nombre
+            <label
+              htmlFor="new-interviewee-dept"
+              className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle"
+            >
+              Departamento <span className="text-danger-dark" aria-hidden="true">*</span>
             </label>
-            <input
-              ref={nameRef}
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="Ej. Javier Morales"
+            <select
+              id="new-interviewee-dept"
+              value={form.department}
+              onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
               className={[
                 'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-gray-100',
                 'bg-gray-50 dark:bg-gray-800 border border-border',
-                'placeholder:text-text-subtle',
                 'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
                 'transition-all duration-150',
               ].join(' ')}
-            />
-          </div>
-
-          {/* Cargo */}
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
-              Cargo
-            </label>
-            <input
-              type="text"
-              value={form.role}
-              onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-              placeholder="Ej. CIO, Head of Digital, COO…"
-              className={[
-                'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-gray-100',
-                'bg-gray-50 dark:bg-gray-800 border border-border',
-                'placeholder:text-text-subtle',
-                'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
-                'transition-all duration-150',
-              ].join(' ')}
-            />
-          </div>
-
-          {/* Tipo IT / Negocio */}
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
-              Perfil
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {(['it', 'business'] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setForm((f) => ({ ...f, type: t }))}
-                  className={[
-                    'py-2 rounded-lg text-xs font-semibold border transition-all duration-150',
-                    form.type === t
-                      ? t === 'it'
-                        ? 'bg-navy-metallic text-white border-navy shadow-sm'
-                        : 'bg-success-dark text-white border-success-dark shadow-sm'
-                      : 'bg-white dark:bg-gray-800 text-text-muted border-border hover:border-gray-300',
-                  ].join(' ')}
-                >
-                  {t === 'it' ? 'IT / Tecnología' : 'Negocio / Ops'}
-                </button>
+            >
+              <option value="">Selecciona un departamento…</option>
+              {departments.map((d) => (
+                <option key={d.name} value={d.name}>{d.name}</option>
               ))}
-            </div>
+            </select>
           </div>
+        ) : (
+          <FormField
+            id="new-interviewee-dept"
+            label="Departamento"
+            type="text"
+            value={form.department}
+            onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+            placeholder="Ej. Finanzas, Tecnología, RRHH…"
+            required
+          />
+        )}
 
-          {/* Departamento */}
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
-              Departamento <span className="text-danger-dark">*</span>
-            </label>
-            {departments.length > 0 ? (
-              <select
-                value={form.department}
-                onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
-                className={[
-                  'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-gray-100',
-                  'bg-gray-50 dark:bg-gray-800 border border-border',
-                  'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
-                  'transition-all duration-150',
-                ].join(' ')}
-              >
-                <option value="">Selecciona un departamento…</option>
-                {departments.map((d) => (
-                  <option key={d.name} value={d.name}>{d.name}</option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                value={form.department}
-                onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
-                placeholder="Ej. Finanzas, Tecnología, RRHH…"
-                className={[
-                  'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-gray-100',
-                  'bg-gray-50 dark:bg-gray-800 border border-border',
-                  'placeholder:text-text-subtle',
-                  'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
-                  'transition-all duration-150',
-                ].join(' ')}
-              />
-            )}
-          </div>
+        <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border/60">
+          Se crearán <span className="font-medium text-text-muted">{TOTAL_SUBDIMENSIONS} subdimensiones</span> en blanco para este entrevistado. Puntúalas en la sesión.
+        </p>
 
-          {/* Nota informativa */}
-          <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border/60">
-            Se crearán <span className="font-medium text-text-muted">{TOTAL_SUBDIMENSIONS} subdimensiones</span> en blanco para este entrevistado. Puntúalas en la sesión.
-          </p>
-
-          {/* Acciones */}
-          <div className="flex gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={submitting}
-              className="flex-1 py-2 rounded-lg text-xs font-medium text-text-muted border border-border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-40"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={!canSubmit || submitting}
-              className={[
-                'flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center justify-center gap-1.5',
-                canSubmit && !submitting
-                  ? 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98]'
-                  : 'bg-gray-100 text-gray-300 cursor-not-allowed',
-              ].join(' ')}
-            >
-              {submitting ? (
-                <>
-                  <svg className="animate-spin h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M6 1a5 5 0 11-5 5" strokeLinecap="round" />
-                  </svg>
-                  Guardando...
-                </>
-              ) : 'Crear entrevista'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex gap-2 pt-1">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onClose}
+            disabled={submitting}
+            className="flex-1"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={!canSubmit}
+            loading={submitting}
+            className="flex-1"
+          >
+            Crear entrevista
+          </Button>
+        </div>
+      </form>
+    </Modal>
   )
 }
 
@@ -436,48 +352,16 @@ export function T1View({ onBack }: T1ViewProps) {
     <div className="min-h-screen bg-surface dark-page-bg">
 
       {/* ── Header de herramienta ── */}
-      <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm border-b border-border px-8 py-4">
-        <div className="max-w-6xl mx-auto flex items-center gap-4">
-
-          {/* Back button */}
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-xs font-medium text-text-muted hover:text-lean-black dark:hover:text-gray-200 transition-colors"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 12L6 8l4-4" />
-            </svg>
-            Volver al dashboard
-          </button>
-
-          <span className="text-text-subtle">·</span>
-
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">
-              T1
-            </span>
-            <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100 truncate">
-              AI Readiness Assessment
-            </h1>
-            <PhaseMiniMap phaseId="listen" toolCode="T1" />
-          </div>
-
-          {/* Nueva entrevista — acceso directo desde header (U-04) */}
-          {!isReadOnly && (
-            <button
-              onClick={() => setShowNewModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm shrink-0"
-            >
-              <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                <path d="M8 2v12M2 8h12" />
-              </svg>
-              Nueva entrevista
-            </button>
-          )}
-
-          {/* Progreso + score */}
-          <div className="flex items-center gap-4 shrink-0">
+      <ToolHeader
+        sticky
+        onBack={onBack}
+        backLabel="Volver al dashboard"
+        toolCode="T1"
+        title="AI Readiness Assessment"
+        phaseMiniMap={<PhaseMiniMap phaseId="listen" toolCode="T1" />}
+        maxWidth="max-w-6xl"
+        chips={
+          <div className="flex items-center gap-4">
             <span className="text-xs text-text-subtle tabular-nums">
               <span className="font-semibold text-lean-black dark:text-gray-200">{scoredCount}</span>
               /{TOTAL_SUBDIMENSIONS} subdimensiones puntuadas
@@ -489,8 +373,21 @@ export function T1View({ onBack }: T1ViewProps) {
               <span className="text-sm font-light text-text-muted"> / 4</span>
             </div>
           </div>
-        </div>
-      </div>
+        }
+        cta={!isReadOnly ? (
+          <Button
+            size="sm"
+            onClick={() => setShowNewModal(true)}
+            icon={
+              <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <path d="M8 2v12M2 8h12" />
+              </svg>
+            }
+          >
+            Nueva entrevista
+          </Button>
+        ) : undefined}
+      />
 
       {/* ── Empresa + contexto ── */}
       <div className="max-w-6xl mx-auto px-8 pt-6 pb-2">

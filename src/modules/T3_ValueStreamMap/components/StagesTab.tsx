@@ -18,6 +18,7 @@ import { useState } from 'react'
 import { useT3Store } from '../store'
 import { useEngagementStore } from '@/modules/Engagement/store'
 import { useDepartmentStore } from '@/modules/CompanyProfile/useDepartmentStore'
+import { Modal, Button, Card, FormField, SegmentedControl } from '@shared/design-system/components'
 import { Select } from '@/shared/design-system/components/Select'
 import type { SelectOption } from '@/shared/design-system/components/Select'
 import type { ProcessStage } from '../types'
@@ -30,6 +31,14 @@ const VALUE_CONFIG = {
   baja:  { label: 'Valor bajo',  barColor: '#D4A85C', chipBg: 'bg-warning-light',  chipText: 'text-warning-dark'  },
   nula:  { label: 'Sin valor',   barColor: '#C06060', chipBg: 'bg-danger-light',   chipText: 'text-danger-dark'   },
 } as const
+
+// Hex equivalentes de los chipBg para SegmentedControl activeColor (colores de dominio)
+const VALUE_ACTIVE_COLOR: Record<ProcessStage['valueContribution'], string> = {
+  alta:  '#D4EDE3',  // success-light
+  media: '#DDE8F5',  // info-light
+  baja:  '#FAF0D7',  // warning-light
+  nula:  '#F5DEDE',  // danger-light
+}
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -113,198 +122,147 @@ function StageModal({ processId, stage, onClose }: StageModalProps) {
     onClose()
   }
 
-  const inputCls =
-    'w-full rounded-xl border border-border dark:border-white/10 bg-white dark:bg-gray-800 ' +
-    'px-3 py-2 text-sm text-lean-black dark:text-gray-100 ' +
-    'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/50 transition-colors'
-
-  const labelCls =
-    'block text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1'
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md mx-4
-        border border-border dark:border-white/10">
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4
-          border-b border-border dark:border-white/6">
-          <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100">
-            {isEdit ? 'Editar etapa' : 'Añadir etapa'}
-          </h3>
-          <button
-            onClick={onClose}
-            className="h-7 w-7 flex items-center justify-center rounded-lg text-text-subtle
-              hover:text-text-default hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
-
-          {/* Nombre */}
-          <div>
-            <label className={labelCls}>Nombre de la etapa *</label>
-            <input
-              value={form.name}
-              onChange={(e) => setF('name', e.target.value)}
-              placeholder="Ej: Clasificación y routing"
-              className={inputCls}
-            />
-          </div>
-
-          {/* Responsable + Departamento */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>Responsable</label>
-              <input
-                value={form.responsible}
-                onChange={(e) => setF('responsible', e.target.value)}
-                placeholder="Ej: Técnico L1"
-                className={inputCls}
-              />
-            </div>
-            <div>
-              {/* Departamento — Select centralizado desde company_departments (opcional) */}
-              <label className={labelCls}>Departamento</label>
-              <Select
-                options={deptOptions}
-                value={form.department}
-                onChange={(e) => setF('department', e.target.value)}
-                disabled={!hasDepts || isLoadingDepts}
-                placeholder={
-                  isLoadingDepts
-                    ? 'Cargando...'
-                    : hasDepts
-                    ? 'Selecciona (opcional)'
-                    : 'Sin departamentos'
-                }
-                helperText={
-                  !hasDepts && !isLoadingDepts
-                    ? 'Configura departamentos en Perfil de Empresa.'
-                    : undefined
-                }
-              />
-            </div>
-          </div>
-
-          {/* Sistema */}
-          <div>
-            <label className={labelCls}>Sistema / Herramienta</label>
-            <input
-              value={form.system}
-              onChange={(e) => setF('system', e.target.value)}
-              placeholder="Ej: ServiceDesk Pro, SAP, Excel"
-              className={inputCls}
-            />
-          </div>
-
-          {/* Tiempos + Handoffs */}
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className={labelCls}>Tiempo proceso (h)</label>
-              <input
-                type="number" min="0" step="0.25"
-                value={form.procTimeHours}
-                onChange={(e) => setF('procTimeHours', parseFloat(e.target.value) || 0)}
-                className={inputCls}
-              />
-            </div>
-            <div>
-              <label className={labelCls}>Tiempo espera (h)</label>
-              <input
-                type="number" min="0" step="0.25"
-                value={form.waitTimeHours}
-                onChange={(e) => setF('waitTimeHours', parseFloat(e.target.value) || 0)}
-                className={inputCls}
-              />
-            </div>
-            <div>
-              <label className={labelCls}>Handoffs</label>
-              <input
-                type="number" min="0" step="1"
-                value={form.handoffs}
-                onChange={(e) => setF('handoffs', parseInt(e.target.value) || 0)}
-                className={inputCls}
-              />
-            </div>
-          </div>
-
-          {/* Contribución de valor */}
-          <div>
-            <label className={labelCls}>Contribución de valor</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(['alta', 'media', 'baja', 'nula'] as const).map((v) => {
-                const cfg     = VALUE_CONFIG[v]
-                const selected = form.valueContribution === v
-                return (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => setF('valueContribution', v)}
-                    className={[
-                      'px-3 py-2 rounded-xl border text-xs font-medium transition-all',
-                      selected
-                        ? `${cfg.chipBg} ${cfg.chipText} border-transparent ring-2 ring-offset-1 ring-gray-300`
-                        : 'border-border dark:border-white/10 text-text-muted hover:border-gray-300',
-                    ].join(' ')}
-                  >
-                    {cfg.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Notas */}
-          <div>
-            <label className={labelCls}>Notas (opcional)</label>
-            <textarea
-              value={form.notes}
-              onChange={(e) => setF('notes', e.target.value)}
-              rows={2}
-              placeholder="Observaciones, mejoras potenciales..."
-              className={inputCls + ' resize-none'}
-            />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4
-          border-t border-border dark:border-white/6">
-          {isEdit ? (
-            <button
-              onClick={handleDelete}
-              className="text-xs text-danger-dark hover:underline font-medium"
-            >
-              Eliminar etapa
-            </button>
-          ) : <div />}
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-text-muted
-                hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={!form.name.trim()}
-              className="px-4 py-2 rounded-xl text-xs font-medium bg-navy-metallic text-white
-                hover:bg-navy-metallic-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
-            >
-              {isEdit ? 'Guardar cambios' : 'Añadir etapa'}
-            </button>
-          </div>
-        </div>
+  const footer = (
+    <div className="flex items-center justify-between">
+      {isEdit ? (
+        <Button variant="danger" size="sm" onClick={handleDelete}>
+          Eliminar etapa
+        </Button>
+      ) : <div />}
+      <div className="flex gap-2">
+        <Button variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
+        <Button
+          variant="primary"
+          size="sm"
+          disabled={!form.name.trim()}
+          onClick={handleSave}
+        >
+          {isEdit ? 'Guardar cambios' : 'Añadir etapa'}
+        </Button>
       </div>
     </div>
+  )
+
+  return (
+    <Modal
+      open={true}
+      onClose={onClose}
+      title={isEdit ? 'Editar etapa' : 'Añadir etapa'}
+      size="md"
+      footer={footer}
+    >
+      <div className="space-y-4">
+
+        <FormField
+          id="stage-name"
+          label="Nombre de la etapa"
+          required
+          value={form.name}
+          onChange={(e) => setF('name', e.target.value)}
+          placeholder="Ej: Clasificación y routing"
+        />
+
+        {/* Responsable + Departamento */}
+        <div className="grid grid-cols-2 gap-3">
+          <FormField
+            id="stage-responsible"
+            label="Responsable"
+            value={form.responsible}
+            onChange={(e) => setF('responsible', e.target.value)}
+            placeholder="Ej: Técnico L1"
+          />
+          <div>
+            {/* Departamento — Select centralizado (opcional) */}
+            <Select
+              label="Departamento"
+              options={deptOptions}
+              value={form.department}
+              onChange={(e) => setF('department', e.target.value)}
+              disabled={!hasDepts || isLoadingDepts}
+              placeholder={
+                isLoadingDepts
+                  ? 'Cargando...'
+                  : hasDepts
+                  ? 'Selecciona (opcional)'
+                  : 'Sin departamentos'
+              }
+              helperText={
+                !hasDepts && !isLoadingDepts
+                  ? 'Configura departamentos en Perfil de Empresa.'
+                  : undefined
+              }
+            />
+          </div>
+        </div>
+
+        <FormField
+          id="stage-system"
+          label="Sistema / Herramienta"
+          value={form.system}
+          onChange={(e) => setF('system', e.target.value)}
+          placeholder="Ej: ServiceDesk Pro, SAP, Excel"
+        />
+
+        {/* Tiempos + Handoffs */}
+        <div className="grid grid-cols-3 gap-3">
+          <FormField
+            id="stage-proc-time"
+            label="Tiempo proceso (h)"
+            type="number"
+            min="0"
+            step="0.25"
+            value={String(form.procTimeHours)}
+            onChange={(e) => setF('procTimeHours', parseFloat(e.target.value) || 0)}
+          />
+          <FormField
+            id="stage-wait-time"
+            label="Tiempo espera (h)"
+            type="number"
+            min="0"
+            step="0.25"
+            value={String(form.waitTimeHours)}
+            onChange={(e) => setF('waitTimeHours', parseFloat(e.target.value) || 0)}
+          />
+          <FormField
+            id="stage-handoffs"
+            label="Handoffs"
+            type="number"
+            min="0"
+            step="1"
+            value={String(form.handoffs)}
+            onChange={(e) => setF('handoffs', parseInt(e.target.value) || 0)}
+          />
+        </div>
+
+        {/* Contribución de valor */}
+        <div className="flex flex-col gap-1.5">
+          <p className="text-label font-medium text-lean-black dark:text-warm-50">
+            Contribución de valor
+          </p>
+          <SegmentedControl
+            aria-label="Contribución de valor de la etapa"
+            value={form.valueContribution}
+            onChange={(v) => setF('valueContribution', v as ProcessStage['valueContribution'])}
+            columns={2}
+            options={(['alta', 'media', 'baja', 'nula'] as const).map((v) => ({
+              value:       v,
+              label:       VALUE_CONFIG[v].label,
+              activeColor: VALUE_ACTIVE_COLOR[v],
+            }))}
+          />
+        </div>
+
+        <FormField
+          id="stage-notes"
+          label="Notas (opcional)"
+          multiline
+          rows={2}
+          value={form.notes}
+          onChange={(e) => setF('notes', e.target.value)}
+          placeholder="Observaciones, mejoras potenciales..."
+        />
+      </div>
+    </Modal>
   )
 }
 
@@ -357,13 +315,13 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
             de botella y calcular la eficiencia de flujo.
           </p>
         </div>
-        <button
+        <Button
+          variant="primary"
+          size="sm"
           onClick={() => setModalStage('new')}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-navy-metallic text-white
-            text-xs font-medium hover:bg-navy-metallic-hover transition-colors shadow-sm"
         >
           + Añadir primera etapa
-        </button>
+        </Button>
 
         {modalStage === 'new' && (
           <StageModal processId={processId} onClose={() => setModalStage(null)} />
@@ -385,8 +343,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
       {/* ── KPI strip ─────────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
 
-        <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50
-          border border-border dark:border-white/6 px-4 py-3">
+        <Card variant="outlined" padding="none" className="rounded-2xl px-4 py-3">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
             Eficiencia de flujo
           </p>
@@ -395,10 +352,9 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
             <span className="text-sm font-normal text-text-subtle">%</span>
           </p>
           <p className="text-[10px] text-text-subtle mt-1">Tiempo útil / ciclo total</p>
-        </div>
+        </Card>
 
-        <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50
-          border border-border dark:border-white/6 px-4 py-3">
+        <Card variant="outlined" padding="none" className="rounded-2xl px-4 py-3">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
             Ciclo total
           </p>
@@ -406,10 +362,9 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
             {fmtHours(totalCycle)}
           </p>
           <p className="text-[10px] text-text-subtle mt-1">Proceso + espera acumulados</p>
-        </div>
+        </Card>
 
-        <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50
-          border border-border dark:border-white/6 px-4 py-3">
+        <Card variant="outlined" padding="none" className="rounded-2xl px-4 py-3">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
             Tiempo valor añadido
           </p>
@@ -417,10 +372,9 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
             {fmtHours(valueAddedTime)}
           </p>
           <p className="text-[10px] text-text-subtle mt-1">Etapas de valor alto</p>
-        </div>
+        </Card>
 
-        <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50
-          border border-border dark:border-white/6 px-4 py-3">
+        <Card variant="outlined" padding="none" className="rounded-2xl px-4 py-3">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
             Handoffs totales
           </p>
@@ -428,7 +382,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
             {totalHandoffs}
           </p>
           <p className="text-[10px] text-text-subtle mt-1">Transferencias entre pasos</p>
-        </div>
+        </Card>
       </div>
 
       {/* ── Header swimlane ───────────────────────────────────── */}
@@ -445,13 +399,13 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
             <span className="inline-block w-3 h-1.5 rounded-sm bg-gray-200 dark:bg-gray-700" />
             Espera
           </span>
-          <button
+          <Button
+            variant="primary"
+            size="xs"
             onClick={() => setModalStage('new')}
-            className="ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-              bg-navy-metallic text-white text-[10px] font-medium hover:bg-navy-metallic-hover transition-colors shadow-sm"
           >
             + Etapa
-          </button>
+          </Button>
         </div>
       </div>
 

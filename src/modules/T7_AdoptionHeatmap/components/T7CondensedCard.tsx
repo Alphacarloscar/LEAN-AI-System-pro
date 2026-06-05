@@ -4,6 +4,7 @@ import { ARCHETYPE_CONFIG } from '@/modules/T2_StakeholderMatrix/constants'
 import type { Stakeholder } from '@/modules/T2_StakeholderMatrix/types'
 import type { DotPosition } from '../types'
 import { RES_CFG, SEG_LABELS, deptCfg, deptFill } from '../T7Constants'
+import { Card } from '@shared/design-system/components'
 
 export function CondensedCard({
   dot, stakeholders, onClose, dark,
@@ -24,7 +25,7 @@ export function CondensedCard({
   const initials = sh.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
 
   return (
-    <div className="relative rounded-xl border border-border dark:border-white/8 bg-white dark:bg-gray-900 p-5 shadow-sm">
+    <Card variant="outlined" padding="none" className="relative rounded-xl p-5 shadow-sm">
       <button
         onClick={onClose}
         aria-label="Cerrar"
@@ -74,6 +75,6 @@ export function CondensedCard({
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   )
 }

@@ -10,6 +10,7 @@ import {
   DOT_R,
   computeDotPositions, deptFill, getSegment, gradId,
 } from '../T7Constants'
+import { Card } from '@shared/design-system/components'
 import { CondensedCard } from './T7CondensedCard'
 import { MomentumCard } from './T7MomentumCard'
 
@@ -98,7 +99,7 @@ export function BellCurveTab({ stakeholders, dark }: { stakeholders: Stakeholder
       <div className="flex gap-4 items-start">
 
         {/* SVG Bell Curve */}
-        <div className="flex-1 min-w-0 rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 overflow-hidden">
+        <Card variant="outlined" padding="none" className="flex-1 min-w-0 rounded-xl overflow-hidden">
           <svg
             viewBox={`0 0 ${W} ${H_SVG}`}
             className="w-full"
@@ -275,7 +276,7 @@ export function BellCurveTab({ stakeholders, dark }: { stakeholders: Stakeholder
               )
             })}
           </svg>
-        </div>
+        </Card>
 
         {/* Tarjeta Momentum */}
         <MomentumCard stakeholders={stakeholders} />

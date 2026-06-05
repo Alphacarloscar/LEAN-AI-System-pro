@@ -6,6 +6,7 @@
 // ============================================================
 
 import { T5_DOMAIN_CONFIG, T5_RECOMMENDATION_CONFIG } from '../constants'
+import { Card }                                        from '@shared/design-system/components'
 import type { T5Canvas, T5DomainCode }                 from '../types'
 
 interface ActivationSequenceProps {
@@ -15,7 +16,7 @@ interface ActivationSequenceProps {
 
 export function ActivationSequence({ canvas, onCardClick }: ActivationSequenceProps) {
   return (
-    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border p-5">
+    <Card variant="outlined" padding="none" className="rounded-2xl p-5">
       <p className="text-xs font-mono uppercase tracking-widest text-text-subtle mb-1">
         Secuencia de activación recomendada
       </p>
@@ -64,6 +65,6 @@ export function ActivationSequence({ canvas, onCardClick }: ActivationSequencePr
           )
         })}
       </div>
-    </div>
+    </Card>
   )
 }

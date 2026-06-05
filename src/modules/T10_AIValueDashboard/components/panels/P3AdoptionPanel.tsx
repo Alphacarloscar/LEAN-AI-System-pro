@@ -78,7 +78,7 @@ export function P3AdoptionPanel({ t2data, shadowAIPct, expanded, onToggle, onNav
                   {shadowAIPct.pct}%
                 </span>
               </div>
-              <div className="w-full h-1 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+              <div className="w-full h-1 rounded-full bg-gray-100 dark:bg-warm-700 overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: `${shadowAIPct.pct}%`, backgroundColor: '#C8860A' }} />
               </div>
               <p className="text-[9px] text-text-subtle mt-1">

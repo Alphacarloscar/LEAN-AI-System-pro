@@ -2,6 +2,7 @@
 
 import { T11_LEVEL_CONFIG } from '../constants'
 import type { T11KpiGroup } from '../types'
+import { Badge } from '@shared/design-system/components'
 
 export function KpisTab({ kpiGroups }: { kpiGroups: T11KpiGroup[] }) {
   return (
@@ -39,9 +40,9 @@ export function KpisTab({ kpiGroups }: { kpiGroups: T11KpiGroup[] }) {
                         <p className="text-[11px] text-text-muted dark:text-warm-300 font-mono">{kpi.formula}</p>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-bold text-white" style={{ backgroundColor: lcfg.hex }}>
+                        <Badge size="xs" style={{ backgroundColor: lcfg.hex, color: '#ffffff' }}>
                           {kpi.source}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className="text-[10px] text-text-subtle dark:text-warm-300">{kpi.cadence}</span>

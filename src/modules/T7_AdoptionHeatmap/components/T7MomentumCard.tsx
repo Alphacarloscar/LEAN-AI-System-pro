@@ -3,6 +3,7 @@
 import type { Stakeholder } from '@/modules/T2_StakeholderMatrix/types'
 import type { RogersSegment } from '../types'
 import { getSegment, SEG_LABELS } from '../T7Constants'
+import { Card, Badge } from '@shared/design-system/components'
 
 export function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) {
   const total = stakeholders.length
@@ -45,8 +46,10 @@ export function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) 
     .sort((a, b) => b[1] - a[1])[0]
   const topSegLabel = topSeg ? SEG_LABELS[topSeg[0]].label : '—'
 
+  const momentumVariant = momentumPct >= 65 ? 'success' : momentumPct >= 40 ? 'warning' : 'danger'
+
   return (
-    <div className="w-52 flex-shrink-0 rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-4 space-y-4">
+    <Card variant="outlined" padding="none" className="w-52 flex-shrink-0 rounded-xl p-4 space-y-4">
       {/* Momentum score */}
       <div>
         <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">Momentum</p>
@@ -54,9 +57,9 @@ export function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) 
           <span className="text-2xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
             {momentumPct}%
           </span>
-          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full mb-0.5 ${momentumLevel.bg} ${momentumLevel.color}`}>
+          <Badge variant={momentumVariant} size="xs" className="mb-0.5">
             {momentumLevel.label}
-          </span>
+          </Badge>
         </div>
         {/* Barra de progreso */}
         <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
@@ -103,6 +106,6 @@ export function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) 
           <p className="text-[11px] text-text-muted leading-relaxed">{topOpp}</p>
         </div>
       </div>
-    </div>
+    </Card>
   )
 }

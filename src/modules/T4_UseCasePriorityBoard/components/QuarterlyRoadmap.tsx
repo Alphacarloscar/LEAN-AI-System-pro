@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { STATUS_CONFIG, ROADMAP_QUARTERS, computeROIFromEconomics } from '../constants'
 import { priorityScoreColor, fmtEur } from './T4Badges'
+import { Card } from '@shared/design-system/components'
 import type { UseCase } from '../types'
 
 export function QuarterlyRoadmap({
@@ -34,7 +35,7 @@ export function QuarterlyRoadmap({
   const unassigned = useCases.filter((uc) => !uc.roadmap?.quarter)
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-warm-800 border border-border dark:border-white/6 px-6 py-5">
+    <Card variant="outlined" padding="none" className="rounded-2xl px-6 py-5">
       <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-5">
         Roadmap trimestral — distribución planificada
       </p>
@@ -149,6 +150,6 @@ export function QuarterlyRoadmap({
           </div>
         )}
       </div>
-    </div>
+    </Card>
   )
 }

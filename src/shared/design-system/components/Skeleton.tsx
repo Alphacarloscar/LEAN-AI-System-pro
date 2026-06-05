@@ -21,7 +21,7 @@ const shimmerBase = [
   'bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100',
   'bg-[length:200%_100%]',
   'animate-shimmer',
-  'dark:from-gray-800 dark:via-gray-700 dark:to-gray-800',
+  'dark:from-warm-700 dark:via-warm-600 dark:to-warm-700',
 ].join(' ')
 
 function SkeletonBlock({

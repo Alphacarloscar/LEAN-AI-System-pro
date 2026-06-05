@@ -10,6 +10,7 @@ import type { Stakeholder }                     from '../types'
 import { ArchetypeBadge, ResistanceBadge }       from './T2Badges'
 import { MiniPositionMap }                       from './MiniPositionMap'
 import { MetallicScoreBars }                     from './MetallicScoreBars'
+import { Button }                                from '@shared/design-system/components'
 
 interface StakeholderPanelProps {
   stakeholder:      Stakeholder
@@ -125,15 +126,18 @@ export function StakeholderPanel({
                 </svg>
               </div>
               <p className="text-[9px] text-text-subtle text-center leading-snug opacity-50">Sin entrevista</p>
-              <button
+              <Button
+                variant="primary"
+                size="xs"
                 onClick={() => onStartInterview(stakeholder)}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-navy-metallic text-white text-[10px] font-semibold hover:bg-navy-metallic-hover transition-colors shadow-sm"
+                icon={
+                  <svg className="h-2.5 w-2.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                    <path d="M8 2v12M2 8h12" />
+                  </svg>
+                }
               >
-                <svg className="h-2.5 w-2.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                  <path d="M8 2v12M2 8h12" />
-                </svg>
                 Iniciar entrevista
-              </button>
+              </Button>
             </div>
           )}
         </div>

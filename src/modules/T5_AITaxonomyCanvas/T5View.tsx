@@ -13,6 +13,7 @@ import { useT3Store }    from '@/modules/T3_ValueStreamMap'
 import { PhaseMiniMap }  from '@/shared/components/PhaseMiniMap'
 import { isDemoEnabled } from '@/lib/config'
 
+import { ToolHeader }            from '@shared/design-system/components'
 import { MaturityBadge }        from './components/MaturityBadge'
 import { DomainCard }           from './components/DomainCard'
 import { EditModal }            from './components/EditModal'
@@ -57,38 +58,21 @@ export function T5View({
   )
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-5 px-8 py-8">
+    <div className="min-h-screen bg-surface dark:bg-warm-900">
 
       {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-sm text-text-muted hover:text-lean-black dark:hover:text-gray-200 transition-colors"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 2L4 7l5 5" />
-            </svg>
-            Volver
-          </button>
-          <div className="w-px h-5 bg-border" />
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-navy text-white">
-                T5
-              </span>
-              <h1 className="text-lg font-semibold text-lean-black dark:text-gray-100">
-                AI Domain Architecture Canvas
-              </h1>
-            </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <p className="text-xs text-text-subtle">{companyName}</p>
-              <PhaseMiniMap phaseId="evaluate" toolCode="T5" />
-            </div>
-          </div>
-        </div>
-        <MaturityBadge level={canvas.maturityLevel} />
-      </div>
+      <ToolHeader
+        onBack={onBack}
+        backLabel="Volver"
+        toolCode="T5"
+        title="AI Domain Architecture Canvas"
+        subtitle={companyName}
+        phaseMiniMap={<PhaseMiniMap phaseId="evaluate" toolCode="T5" />}
+        cta={<MaturityBadge level={canvas.maturityLevel} />}
+        maxWidth="max-w-[1200px]"
+      />
+
+      <div className="max-w-[1200px] mx-auto space-y-5 px-8 py-8">
 
       {/* ── Main grid ── */}
       <div className="grid grid-cols-12 gap-5 items-start">
@@ -144,6 +128,7 @@ export function T5View({
           engagementId={engagementId}
         />
       )}
+      </div>
     </div>
   )
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { CopyButton } from './T8CopyButton'
 import type { MaterialTemplate } from '../types'
+import { Card, Badge } from '@shared/design-system/components'
 
 export function MaterialsTab({ materials }: { materials: MaterialTemplate[] }) {
   const [selected, setSelected] = useState(materials[0]?.id ?? null)
@@ -36,7 +37,7 @@ export function MaterialsTab({ materials }: { materials: MaterialTemplate[] }) {
 
       {/* Contenido */}
       {mat && (
-        <div className="flex-1 min-w-0 rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 overflow-hidden">
+        <Card variant="outlined" padding="none" className="flex-1 min-w-0 rounded-xl overflow-hidden">
           {/* Header */}
           <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-border dark:border-white/6">
             <div className="flex items-center gap-2.5">
@@ -48,9 +49,9 @@ export function MaterialsTab({ materials }: { materials: MaterialTemplate[] }) {
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               {mat.tags.map(tag => (
-                <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-text-muted font-medium">
+                <Badge key={tag} variant="default" shape="pill" size="xs">
                   {tag}
-                </span>
+                </Badge>
               ))}
               <CopyButton text={mat.content} />
             </div>
@@ -60,7 +61,7 @@ export function MaterialsTab({ materials }: { materials: MaterialTemplate[] }) {
           <pre className="px-6 py-5 text-xs text-text-muted leading-relaxed font-mono whitespace-pre-wrap overflow-auto max-h-[520px]">
             {mat.content}
           </pre>
-        </div>
+        </Card>
       )}
     </div>
   )

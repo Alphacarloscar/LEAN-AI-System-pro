@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { PHASE_CFG, TYPE_CFG, CHANNEL_CFG, PRIORITY_CFG } from '../T8Generators'
 import type { CommAction, CommPhase } from '../types'
+import { Card, Badge } from '@shared/design-system/components'
 
 export function TimelineTab({ actions }: { actions: CommAction[] }) {
   const [activePhase, setActivePhase] = useState<CommPhase | 'all'>('all')
@@ -62,7 +63,7 @@ export function TimelineTab({ actions }: { actions: CommAction[] }) {
                 const priCfg     = PRIORITY_CFG[action.priority]
 
                 return (
-                  <div key={action.id} className="rounded-xl border border-border dark:border-white/6 bg-white dark:bg-gray-900 p-5">
+                  <Card key={action.id} variant="outlined" padding="none" className="rounded-xl p-5">
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-base">
                         {typeCfg.icon}
@@ -81,18 +82,10 @@ export function TimelineTab({ actions }: { actions: CommAction[] }) {
                         <p className="text-xs text-text-muted leading-relaxed mb-3">{action.message}</p>
 
                         <div className="flex flex-wrap gap-2">
-                          <span className="flex items-center gap-1 text-[10px] text-text-subtle bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-full border border-border dark:border-white/6">
-                            👥 {action.audience}
-                          </span>
-                          <span className="flex items-center gap-1 text-[10px] text-text-subtle bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-full border border-border dark:border-white/6">
-                            {channelCfg.icon} {channelCfg.label}
-                          </span>
-                          <span className="flex items-center gap-1 text-[10px] text-text-subtle bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-full border border-border dark:border-white/6">
-                            🎯 {typeCfg.label}
-                          </span>
-                          <span className="flex items-center gap-1 text-[10px] text-text-subtle bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-full border border-border dark:border-white/6">
-                            👤 {action.owner}
-                          </span>
+                          <Badge variant="default" shape="pill" size="xs">👥 {action.audience}</Badge>
+                          <Badge variant="default" shape="pill" size="xs">{channelCfg.icon} {channelCfg.label}</Badge>
+                          <Badge variant="default" shape="pill" size="xs">🎯 {typeCfg.label}</Badge>
+                          <Badge variant="default" shape="pill" size="xs">👤 {action.owner}</Badge>
                         </div>
 
                         {action.materials && action.materials.length > 0 && (
@@ -107,7 +100,7 @@ export function TimelineTab({ actions }: { actions: CommAction[] }) {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 )
               })}
             </div>

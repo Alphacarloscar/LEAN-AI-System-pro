@@ -1,14 +1,21 @@
 // PanelCard — tarjeta base del dashboard con tag, hero metric y contenido expandible
 
+import { Badge, Card, type BadgeVariant } from '@shared/design-system/components'
+
 export type TagColor = 'warning' | 'success' | 'info' | 'danger' | 'purple' | 'amber'
 
-const TAG_CLASSES: Record<TagColor, string> = {
-  warning: 'bg-warning-light text-warning-dark',
-  success: 'bg-success-light text-success-dark',
-  info:    'bg-info-light text-info-dark',
-  danger:  'bg-danger-light text-danger-dark',
-  purple:  'bg-[#EEEDFE] text-[#3C3489]',
-  amber:   'bg-warning-light text-warning-dark',
+// Variant semántico para colores que coinciden 1:1 con DS BadgeVariant
+const TAG_VARIANT: Partial<Record<TagColor, BadgeVariant>> = {
+  warning: 'warning',
+  success: 'success',
+  info:    'info',
+  danger:  'danger',
+  amber:   'warning',
+}
+
+// Inline style para el único caso sin DS variant (purple)
+const TAG_INLINE_STYLE: Partial<Record<TagColor, { backgroundColor: string; color: string }>> = {
+  purple: { backgroundColor: '#EEEDFE', color: '#3C3489' },
 }
 
 export function PanelCard({
@@ -28,8 +35,13 @@ export function PanelCard({
   heroSlot?:  React.ReactNode
   children:   React.ReactNode
 }) {
+  const tagVariant = TAG_VARIANT[tagColor]
+  const tagStyle   = TAG_INLINE_STYLE[tagColor]
+
   return (
-    <div
+    <Card
+      variant="flat"
+      padding="none"
       onClick={onClick}
       className={[
         'relative overflow-hidden rounded-xl p-4 cursor-pointer',
@@ -53,9 +65,15 @@ export function PanelCard({
       {/* Header row: tag + hero */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
-          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full inline-block mb-1.5 ${TAG_CLASSES[tagColor]}`}>
+          <Badge
+            variant={tagVariant ?? 'default'}
+            shape="pill"
+            size="xs"
+            style={tagStyle}
+            className="mb-1.5"
+          >
             {tag}
-          </span>
+          </Badge>
           <p className="text-sm font-medium text-lean-black dark:text-warm-50 leading-snug">{title}</p>
           <p className="text-[11px] text-text-muted dark:text-warm-300 mt-0.5">{subtitle}</p>
         </div>
@@ -63,6 +81,6 @@ export function PanelCard({
       </div>
 
       {children}
-    </div>
+    </Card>
   )
 }
