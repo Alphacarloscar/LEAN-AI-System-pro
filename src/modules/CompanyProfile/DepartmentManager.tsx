@@ -12,6 +12,7 @@ import { useState }          from 'react'
 import { useDepartmentStore } from './useDepartmentStore'
 import { usePermissions }     from '@/modules/Auth'
 import { Spinner }            from '@shared/design-system/components'
+import { reportError }        from '@/lib/reportError'
 
 // ── Props ─────────────────────────────────────────────────────
 
@@ -49,7 +50,7 @@ export function DepartmentManager({ companyId }: Props) {
     } catch (err) {
       // Captura errores inesperados que escapen del store
       const msg = err instanceof Error ? err.message : 'Error inesperado al añadir departamento'
-      console.error('[DepartmentManager] handleAdd:', err)
+      reportError('[DepartmentManager] handleAdd', err)
       setLocalError(msg)
     } finally {
       // Siempre apaga el spinner, pase lo que pase
