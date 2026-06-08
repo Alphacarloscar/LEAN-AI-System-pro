@@ -38,6 +38,15 @@ export interface T10ViewProps {
   onNavigate: (path: string) => void
 }
 
+// ── Constantes de módulo ─────────────────────────────────────
+
+const AI_CAT_META: Record<string, { label: string; color: string }> = {
+  automatizacion_inteligente: { label: 'Automatización Inteligente', color: '#86C7A8' },
+  analitica_predictiva:       { label: 'Analítica Predictiva',       color: '#9BB5D9' },
+  automatizacion_rpa:         { label: 'RPA',                        color: '#E8C281' },
+  asistente_ia:               { label: 'Asistente IA',               color: '#C8860A' },
+}
+
 // ── Helpers ──────────────────────────────────────────────────
 
 function calcAvg(radar: RadarDimension[]): number {
@@ -78,10 +87,13 @@ export function T10View({ onNavigate }: T10ViewProps) {
   const { freeItems: t9FreeItems, syncEngagement: syncT9  } = useT9Store()
   const { isReadOnly: isReadOnlyProject } = usePermissions()
 
+  // mount-only: carga inicial de todos los módulos cuando cambia el engagement
+  // stable Zustand actions — añadirlas es inofensivo pero convención del proyecto es omitirlas
   useEffect(() => {
     if (!engagementId) return
     loadT1(engagementId); loadT2(engagementId); loadT3(engagementId); loadT4(engagementId)
     loadProfile(engagementId); syncT12(engagementId); syncT9(engagementId)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])
 
   // ── T1: radar agregado ───────────────────────────────────────
@@ -178,8 +190,6 @@ export function T10View({ onNavigate }: T10ViewProps) {
   }, [interviewees, dimensionStates])
 
   // ── T3: ecosistema ───────────────────────────────────────────
-  const AI_CAT_META: Record<string, { label: string; color: string }> = { automatizacion_inteligente: { label: 'Automatización Inteligente', color: '#86C7A8' }, analitica_predictiva: { label: 'Analítica Predictiva', color: '#9BB5D9' }, automatizacion_rpa: { label: 'RPA', color: '#E8C281' }, asistente_ia: { label: 'Asistente IA', color: '#C8860A' } }
-
   const liveT3 = useMemo(() => {
     if (processes.length === 0) return null
     const catCounts: Record<string, number> = {}

@@ -51,12 +51,16 @@ export function T9View({ onBack }: T9ViewProps) {
   const engagementId                                    = useEngagementStore((s) => s.activeEngagementId)
 
   // Scoping: si cambia el engagement, limpia overrides y freeItems del cliente anterior
+  // stable Zustand action — mount-only: sincronizar al cambiar engagement
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { syncT9(engagementId) }, [engagementId])
 
   // Cargar T4 al montar T9 si el engagement del store T4 no coincide con el activo
   // RC-3: condición engagement-aware — evita usar datos stale de un proyecto anterior
+  // stable Zustand action (loadT4) — referencia estable, no debe re-disparar el efecto
   useEffect(() => {
     if (engagementId && t4EngagementId !== engagementId) loadT4(engagementId)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId, t4EngagementId])
 
   // ── Selector de año ───────────────────────────────────────────

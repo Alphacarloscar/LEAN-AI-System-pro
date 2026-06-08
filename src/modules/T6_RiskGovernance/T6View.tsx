@@ -40,6 +40,8 @@ export function T6View({
   const companyName      = companyProfile.engagementName
   const engagementId     = useEngagementStore((s) => s.activeEngagementId)
 
+  // stable Zustand action — mount-only: sincronizar al cambiar engagement
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { syncT6(engagementId) }, [engagementId])
 
   const t6LLMContext = useMemo(() =>

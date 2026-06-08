@@ -37,6 +37,8 @@ export function T5View({
   const engagementId                    = useEngagementStore((s) => s.activeEngagementId)
 
   // F-02: sincronizar canvas con el engagement activo
+  // stable Zustand action — mount-only: sincronizar al cambiar engagement
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { syncT5(engagementId) }, [engagementId])
 
   // Carga T3 si no hay procesos

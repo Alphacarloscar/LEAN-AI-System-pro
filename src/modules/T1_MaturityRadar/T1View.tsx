@@ -117,7 +117,11 @@ export function T1View({ onBack }: T1ViewProps) {
   }
 
   // Dimensiones activas del entrevistado seleccionado
-  const activeDimensions = intervieweeStates[activeId] ?? []
+  // useMemo: evita que `?? []` cree un nuevo array en cada render cuando la key no existe
+  const activeDimensions = useMemo(
+    () => intervieweeStates[activeId] ?? [],
+    [intervieweeStates, activeId],
+  )
 
   // Actualizar una dimensión del entrevistado activo.
   function updateDimension(updated: T1DimensionState) {

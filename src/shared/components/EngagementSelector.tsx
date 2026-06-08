@@ -102,6 +102,9 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
   }, [creating])
 
   // Para superadmin/consultant: cargar empresas al abrir el form de creación
+  // companies.length y needsCompanySelector omitidos intencionalmente: el efecto solo debe
+  // dispararse al abrir el formulario (creating → true). Los guards internos cubren idempotencia.
+  // Añadirlos crearía un re-fetch cada vez que llegan datos o cambia el rol.
   useEffect(() => {
     if (!creating || !needsCompanySelector) return
     if (companies.length > 0) return // ya cargadas
@@ -110,6 +113,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
       .then(setCompanies)
       .catch(() => setCreateError('No se pudieron cargar las empresas'))
       .finally(() => setLoadingCo(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [creating])
 
   function closeCreate() {

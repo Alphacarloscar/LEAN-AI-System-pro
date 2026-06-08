@@ -221,8 +221,12 @@ export function AppLayout() {
   const navigate                                = useNavigate()
 
   // Cargar engagements del usuario en cuanto esté autenticado
+  // [user?.id] intencional: solo re-cargar cuando cambia el usuario, no en cada re-render de auth
+  // loadMyProjects es stable Zustand action; user (objeto) se omite para evitar re-fetch por
+  // cambios de referencia que no implican cambio de identidad
   useEffect(() => {
     if (user) loadMyProjects()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   function handleReLogin() {

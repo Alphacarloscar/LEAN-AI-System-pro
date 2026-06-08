@@ -45,6 +45,8 @@ export function T12View({ onBack }: T12ViewProps) {
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
   const companyName                 = useCompanyProfileStore((s) => s.profile.engagementName)
 
+  // stable Zustand action — mount-only: sincronizar al cambiar engagement
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { syncT12(engagementId) }, [engagementId])
 
   const [activeClause, setActiveClause] = useState<T12Clause>('context')

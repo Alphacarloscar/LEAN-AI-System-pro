@@ -34,6 +34,8 @@ export function AdminView() {
 
   useEffect(() => {
     if (user && user.role !== 'superadmin') navigate('/', { replace: true })
+  // navigate is stable by spec (react-router)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   useEffect(() => {

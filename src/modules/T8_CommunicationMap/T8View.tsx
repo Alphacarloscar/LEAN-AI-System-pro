@@ -55,13 +55,17 @@ export function T8View({ onBack }: T8ViewProps) {
 
   // Cargar T2 al montar T8 (por si el usuario llega directamente sin pasar por T2).
   // Intencional: solo re-ejecutar cuando cambia el engagement, no cuando llegan los datos.
-   
+  // stable Zustand action (loadT2); stakeholders.length omitida intencionalmente para evitar
+  // re-fetch en cada actualización de la lista — el guard `=== 0` cubre la lógica necesaria
   useEffect(() => {
     if (engagementId && stakeholders.length === 0) loadT2(engagementId)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])
 
   // T8 store — contenido generado por LLM (scoped al engagement)
   const { generatedContent, clearGeneratedContent, syncEngagement: syncT8, persistenceStatus, persistenceError, retrySave } = useT8Store()
+  // stable Zustand action — mount-only: sincronizar al cambiar engagement
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { syncT8(engagementId) }, [engagementId])
 
   // Hook de generación
