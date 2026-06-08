@@ -17,6 +17,7 @@ import { persist }                        from 'zustand/middleware'
 import { listMyProjects, createProject }  from '@/services/projects.service'
 import { supabase }                       from '@/lib/supabase'
 import { resetAllEngagementStores } from '@/lib/resetEngagementStores'
+import { reportError }               from '@/lib/reportError'
 import type { ProjectRow }                from '@/types/database.types'
 
 interface EngagementStore {
@@ -72,7 +73,7 @@ export const useEngagementStore = create<EngagementStore>()(
           }
         } catch (err) {
           clearTimeout(timeout)
-          console.error('[EngagementStore] loadMyProjects:', err)
+          reportError('[EngagementStore] loadMyProjects', err)
           set({ isLoading: false })
         }
       },
