@@ -28,7 +28,7 @@ test.describe('T1 — AI Readiness Assessment', () => {
     await page.goto('/t1')
     await expect(page).not.toHaveURL(/login/)
     // Esperar que el contenido cargue
-    await page.waitForTimeout(2_000)
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
 
     const crashErrors = jsErrors.filter((e) =>
       e.includes('Cannot read') || e.includes('is not a function') || e.includes('is undefined'),

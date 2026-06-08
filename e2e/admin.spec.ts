@@ -32,7 +32,7 @@ test.describe('Admin Panel — acceso superadmin', () => {
 
     await page.goto('/admin')
     await expect(page).not.toHaveURL(/login/)
-    await page.waitForTimeout(2_000)
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
 
     const crashErrors = jsErrors.filter((e) =>
       e.includes('Cannot read') || e.includes('is not a function') || e.includes('is undefined'),
@@ -53,7 +53,7 @@ test.describe('Admin Panel — acceso superadmin', () => {
 
   test('tab Empresas muestra al menos una empresa', async ({ page }) => {
     await page.goto('/admin')
-    await page.waitForTimeout(2_000)
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
 
     // Hacer clic en el tab Empresas si no está activo
     const empresasTab = page.getByRole('tab', { name: /empresas/i })
@@ -61,37 +61,32 @@ test.describe('Admin Panel — acceso superadmin', () => {
     const tabExists = await empresasTab.isVisible({ timeout: 3_000 }).catch(() => false)
     if (tabExists) await empresasTab.click()
 
-    // Esperar a que la lista cargue
-    await page.waitForTimeout(2_000)
-
-    // Debe haber al menos una empresa (Disney o Dreamsworks están en DEV)
+    // Esperar a que la lista cargue (espera que aparezca el contenido)
     const companyNames = page.getByText(/Disney|Dreamsworks/i)
-    const hasCompany = await companyNames.first().isVisible({ timeout: 5_000 }).catch(() => false)
+    const hasCompany = await companyNames.first().isVisible({ timeout: 8_000 }).catch(() => false)
     expect(hasCompany, 'Debe haber al menos una empresa en la lista').toBe(true)
   })
 
   test('tab Usuarios muestra al menos un usuario', async ({ page }) => {
     await page.goto('/admin')
-    await page.waitForTimeout(2_000)
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
 
     const usuariosTab = page.getByRole('tab', { name: /usuarios/i })
       .or(page.locator('button').filter({ hasText: /usuarios/i }).first())
     const tabExists = await usuariosTab.isVisible({ timeout: 3_000 }).catch(() => false)
     if (tabExists) await usuariosTab.click()
 
-    await page.waitForTimeout(2_000)
-
-    // Debe haber al menos el usuario superadmin en la lista
+    // Esperar a que la fila de usuario aparezca
     const hasUser = await page.locator('table tbody tr, [class*="user-row"]')
       .first()
-      .isVisible({ timeout: 5_000 })
+      .isVisible({ timeout: 8_000 })
       .catch(() => false)
     expect(hasUser, 'Debe haber al menos un usuario en la lista').toBe(true)
   })
 
   test('el botón de crear empresa está visible', async ({ page }) => {
     await page.goto('/admin')
-    await page.waitForTimeout(2_000)
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
 
     const createBtn = page.getByRole('button', {
       name: /nueva empresa|crear empresa|add company|\+/i,
@@ -102,7 +97,7 @@ test.describe('Admin Panel — acceso superadmin', () => {
 
   test('el botón de invitar usuario está visible', async ({ page }) => {
     await page.goto('/admin')
-    await page.waitForTimeout(2_000)
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
 
     const inviteBtn = page.getByRole('button', {
       name: /invitar|nuevo usuario|invite user|\+/i,
@@ -130,7 +125,8 @@ test.describe('Admin Panel — acceso denegado a roles no-superadmin', () => {
 
   test('usuario no-superadmin no puede ver /admin (redirige o muestra 403)', async ({ page }) => {
     await page.goto('/admin')
-    await page.waitForTimeout(2_000)
+    // Esperar que la navegación se complete (redirige o carga vacío)
+    await expect(page.locator('body')).toBeVisible({ timeout: 5_000 })
 
     // Debe redirigir al home o mostrar un estado vacío/error
     const isOnAdmin = page.url().endsWith('/admin')

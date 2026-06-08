@@ -27,7 +27,7 @@ test.describe('T4 — Use Case Priority Board', () => {
 
     await page.goto('/t4')
     await expect(page).not.toHaveURL(/login/)
-    await page.waitForTimeout(2_000)
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
 
     const crashErrors = jsErrors.filter((e) =>
       e.includes('Cannot read') || e.includes('is not a function') || e.includes('is undefined'),
@@ -38,7 +38,7 @@ test.describe('T4 — Use Case Priority Board', () => {
   test('el executive dashboard muestra los 4 KPIs', async ({ page }) => {
     // T4 tiene un executive dashboard con 4 KPI boxes: GO, ahorro, payback, pendientes
     // Espera que el contenido principal cargue
-    await page.waitForTimeout(2_000)
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
 
     // Verifica que hay contenido visible (no pantalla en blanco)
     const bodyText = await page.locator('body').innerText()
