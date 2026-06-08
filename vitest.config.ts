@@ -23,6 +23,12 @@ export default defineConfig({
       reporter: ['text', 'html'],
       include: ['src/modules/**/constants.ts', 'src/modules/**/types.ts', 'src/services/**/*.ts'],
       exclude: ['src/__tests__/**'],
+      thresholds: {
+        statements: 61,  // baseline pre-branch
+        branches:   55,
+        functions:  55,
+        lines:      61,
+      },
     },
   },
   define: {
