@@ -21,8 +21,13 @@
 // ============================================================
 
 import { useState, useEffect } from 'react'
-import type { Stakeholder, ArchetypeCode, ResistanceLevel } from '../types'
-import { ARCHETYPE_CONFIG, RESISTANCE_CONFIG }               from '../constants'
+import type { Stakeholder, ResistanceLevel } from '../types'
+import { ARCHETYPE_CONFIG, RESISTANCE_CONFIG } from '../constants'
+import {
+  VB, CX, CY, CR, DOT_R,
+  ARCHETYPE_HEX, ARCHETYPE_BG_HEX, RESISTANCE_STROKE,
+  toSvgX, toSvgY, constrainToCircle, initials, applyJitter,
+} from './quadrantChartHelpers'
 
 // ── Props ─────────────────────────────────────────────────────
 
@@ -30,70 +35,6 @@ interface StakeholderQuadrantChartProps {
   stakeholders: Stakeholder[]
   activeId:     string | null
   onSelect:     (s: Stakeholder) => void
-}
-
-// ── Constantes del layout SVG ─────────────────────────────────
-
-const VB    = 520        // viewBox cuadrado (px)
-const CX    = 260        // centro X
-const CY    = 260        // centro Y
-const CR    = 200        // radio del círculo del gráfico
-const DOT_R = 14         // radio del punto de stakeholder
-// MAX_R: el clipPath garantiza que el anillo no sobresalga visualmente,
-// pero limitamos el centro para que el punto no quede pegado al borde.
-const MAX_R = CR - DOT_R - 8   // 178: centro del punto máximo a 178px del centro
-
-// ── Helpers de coordenadas ────────────────────────────────────
-
-/** Score (0–4) → coordenada X en el SVG */
-function toSvgX(score: number) {
-  return CX + ((score - 2) / 2) * CR
-}
-
-/** Score (0–4) → coordenada Y en el SVG (invertido: mayor score = arriba) */
-function toSvgY(score: number) {
-  return CY - ((score - 2) / 2) * CR
-}
-
-/** Limita el punto al área circular válida */
-function constrainToCircle(cx: number, cy: number): { cx: number; cy: number } {
-  const dx   = cx - CX
-  const dy   = cy - CY
-  const dist = Math.sqrt(dx * dx + dy * dy)
-  if (dist <= MAX_R) return { cx, cy }
-  const scale = MAX_R / dist
-  return { cx: CX + dx * scale, cy: CY + dy * scale }
-}
-
-/** Iniciales del nombre (máx 2 caracteres) */
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/)
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
-  return name.slice(0, 2).toUpperCase()
-}
-
-// ── Colores en hex (para SVG — no Tailwind) ───────────────────
-
-const ARCHETYPE_HEX: Record<ArchetypeCode, string> = {
-  adoptador:    '#5FAF8A',
-  ambassador:   '#6A90C0',
-  decisor:      '#2A2822',  // warm charcoal (era navy #1B2A4E)
-  critico:      '#C06060',
-  reticente: '#D4A85C',
-}
-
-const ARCHETYPE_BG_HEX: Record<ArchetypeCode, string> = {
-  adoptador:    '#D4EDE3',
-  ambassador:   '#DDE8F5',
-  decisor:      'rgba(42,40,34,0.10)',  // warm charcoal bg sutil
-  critico:      '#F5DEDE',
-  reticente: '#FAF0D7',
-}
-
-const RESISTANCE_STROKE: Record<ResistanceLevel, { color: string; width: number; dasharray?: string }> = {
-  baja:  { color: '#5FAF8A', width: 1.5 },
-  media: { color: '#D4A85C', width: 2.5, dasharray: '4 3' },
-  alta:  { color: '#C06060', width: 3 },
 }
 
 // ── Dark mode detection ───────────────────────────────────────
@@ -114,50 +55,6 @@ function useDarkMode(): boolean {
   return dark
 }
 
-// ── Jitter anti-solapamiento (constrained al círculo) ─────────
-
-function applyJitter(
-  items: { id: string; cx: number; cy: number }[]
-): Map<string, { cx: number; cy: number }> {
-  const result    = new Map<string, { cx: number; cy: number }>()
-  const positions = items.map((item) => ({ ...item }))
-
-  const ITERATIONS = 40
-  const MIN_DIST   = DOT_R * 2 + 8
-  const FORCE      = 0.4
-
-  for (let iter = 0; iter < ITERATIONS; iter++) {
-    for (let i = 0; i < positions.length; i++) {
-      for (let j = i + 1; j < positions.length; j++) {
-        const dx   = positions[j].cx - positions[i].cx
-        const dy   = positions[j].cy - positions[i].cy
-        const dist = Math.sqrt(dx * dx + dy * dy) || 0.01
-        if (dist < MIN_DIST) {
-          const overlap = (MIN_DIST - dist) / 2
-          const nx      = (dx / dist) * overlap * FORCE
-          const ny      = (dy / dist) * overlap * FORCE
-          positions[i].cx -= nx
-          positions[i].cy -= ny
-          positions[j].cx += nx
-          positions[j].cy += ny
-        }
-      }
-    }
-    // Re-constrain al círculo tras cada iteración
-    for (const p of positions) {
-      const c = constrainToCircle(p.cx, p.cy)
-      p.cx = c.cx
-      p.cy = c.cy
-    }
-  }
-
-  positions.forEach((p) => {
-    result.set(p.id, { cx: p.cx, cy: p.cy })
-  })
-
-  return result
-}
-
 // ── Componente principal ──────────────────────────────────────
 
 export function StakeholderQuadrantChart({
@@ -168,16 +65,13 @@ export function StakeholderQuadrantChart({
   const [hoverId, setHoverId] = useState<string | null>(null)
   const isDark = useDarkMode()
 
-  // Quadrant fills — dark-mode-aware
-  // decisor usa warm charcoal (era navy) — visible en ambos modos con opacidad correcta
   const QUADRANT_FILLS = {
-    critico:      isDark ? 'rgba(192,96,96,0.28)'    : ARCHETYPE_BG_HEX.critico,
-    decisor:      isDark ? 'rgba(196,192,184,0.18)'  : ARCHETYPE_BG_HEX.decisor,
-    reticente: isDark ? 'rgba(212,168,92,0.28)'   : ARCHETYPE_BG_HEX.reticente,
-    adoptador:    isDark ? 'rgba(95,175,138,0.28)'   : ARCHETYPE_BG_HEX.adoptador,
+    critico:   isDark ? 'rgba(192,96,96,0.28)'   : ARCHETYPE_BG_HEX.critico,
+    decisor:   isDark ? 'rgba(196,192,184,0.18)' : ARCHETYPE_BG_HEX.decisor,
+    reticente: isDark ? 'rgba(212,168,92,0.28)'  : ARCHETYPE_BG_HEX.reticente,
+    adoptador: isDark ? 'rgba(95,175,138,0.28)'  : ARCHETYPE_BG_HEX.adoptador,
   }
 
-  // Label colors — decisor es navy oscuro, en dark mode usar azul más claro
   const LABEL_HEX = {
     ...ARCHETYPE_HEX,
     decisor: isDark ? '#8BAED4' : ARCHETYPE_HEX.decisor,
@@ -186,7 +80,6 @@ export function StakeholderQuadrantChart({
   const withScores    = stakeholders.filter((s) =>  s.interview)
   const withoutScores = stakeholders.filter((s) => !s.interview)
 
-  // Posiciones base → jitter (solo stakeholders con entrevista completada)
   const basePositions = withScores.map((s) => ({
     id: s.id,
     cx: toSvgX(s.interview!.adoptionScore),
@@ -194,7 +87,6 @@ export function StakeholderQuadrantChart({
   }))
   const jittered = applyJitter(basePositions)
 
-  // Arquetipos presentes
   const archetypesPresent = [...new Set(stakeholders.map((s) => s.archetype))]
 
   return (
@@ -210,7 +102,6 @@ export function StakeholderQuadrantChart({
             Adopción IA × Influencia organizacional
           </p>
         </div>
-        {/* Leyenda de arquetipos */}
         <div className="flex flex-wrap gap-x-3 gap-y-1 justify-end">
           {archetypesPresent.map((code) => (
             <div key={code} className="flex items-center gap-1.5">
@@ -224,7 +115,7 @@ export function StakeholderQuadrantChart({
         </div>
       </div>
 
-      {/* SVG chart — circular */}
+      {/* SVG chart */}
       <div className="flex justify-center px-4 py-5">
         <svg
           viewBox={`0 0 ${VB} ${VB}`}
@@ -232,14 +123,10 @@ export function StakeholderQuadrantChart({
           style={{ maxWidth: 560, maxHeight: 560 }}
         >
           <defs>
-            {/* ClipPath: recorta TODO al círculo */}
             <clipPath id="circle-clip">
               <circle cx={CX} cy={CY} r={CR} />
             </clipPath>
 
-            {/* ── Gradientes radiales 3D por arquetipo ──────────────────────────
-                Simula una esfera con luz desde arriba-izquierda (cx=38% cy=28%).
-                Tres stops: highlight claro → color base → borde oscuro.         */}
             <radialGradient id="grad-adoptador"    cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
               <stop offset="0%"   stopColor="#AFD7C5" />
               <stop offset="52%"  stopColor="#5FAF8A" />
@@ -267,20 +154,12 @@ export function StakeholderQuadrantChart({
             </radialGradient>
           </defs>
 
-          {/* ── Todo el contenido visual dentro del círculo — clipped ── */}
           <g clipPath="url(#circle-clip)">
-
-            {/* Fondos de cuadrante — con hueco de 4px en los ejes (sin dibujar líneas) */}
-            {/* El espacio entre rects (GAP=4px cada lado) actúa como separador visual  */}
-            <rect x={0}      y={0}      width={CX - 4}      height={CY - 4}      fill={QUADRANT_FILLS.critico}      opacity={0.5} />
-            <rect x={CX + 4} y={0}      width={VB - CX - 4} height={CY - 4}      fill={QUADRANT_FILLS.decisor}      opacity={0.5} />
+            <rect x={0}      y={0}      width={CX - 4}      height={CY - 4}      fill={QUADRANT_FILLS.critico}   opacity={0.5} />
+            <rect x={CX + 4} y={0}      width={VB - CX - 4} height={CY - 4}      fill={QUADRANT_FILLS.decisor}   opacity={0.5} />
             <rect x={0}      y={CY + 4} width={CX - 4}      height={VB - CY - 4} fill={QUADRANT_FILLS.reticente} opacity={0.5} />
-            <rect x={CX + 4} y={CY + 4} width={VB - CX - 4} height={VB - CY - 4} fill={QUADRANT_FILLS.adoptador}   opacity={0.5} />
+            <rect x={CX + 4} y={CY + 4} width={VB - CX - 4} height={VB - CY - 4} fill={QUADRANT_FILLS.adoptador} opacity={0.5} />
 
-            {/* ── Puntos de stakeholders — dentro del clipPath ──
-                El clipPath garantiza que auras, anillos y círculos
-                nunca sobresalgan del borde del gráfico, sin importar
-                la posición calculada por el jitter.                    */}
             {withScores.map((s) => {
               const pos      = jittered.get(s.id) ?? constrainToCircle(
                 toSvgX(s.interview!.adoptionScore),
@@ -300,7 +179,6 @@ export function StakeholderQuadrantChart({
                   onMouseEnter={() => setHoverId(s.id)}
                   onMouseLeave={() => setHoverId(null)}
                 >
-                  {/* ── Capa 1: glow de selección / hover (soft, multicapa) ── */}
                   {(isActive || isHover) && (
                     <>
                       <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 14} fill={fill} opacity={0.06} />
@@ -309,7 +187,6 @@ export function StakeholderQuadrantChart({
                     </>
                   )}
 
-                  {/* ── Capa 2: halo de peligro para resistencia Alta ── */}
                   {s.resistance === 'alta' && (
                     <>
                       <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 12} fill="#C06060" opacity={0.06} />
@@ -318,7 +195,6 @@ export function StakeholderQuadrantChart({
                     </>
                   )}
 
-                  {/* ── Capa 3: anillo de resistencia ── */}
                   <circle
                     cx={pos.cx} cy={pos.cy}
                     r={DOT_R + stroke.width + 2}
@@ -329,7 +205,6 @@ export function StakeholderQuadrantChart({
                     opacity={s.resistance === 'baja' ? 0.65 : 0.92}
                   />
 
-                  {/* ── Capa 4: esfera 3D con gradiente radial ── */}
                   <circle
                     cx={pos.cx} cy={pos.cy}
                     r={DOT_R}
@@ -338,9 +213,6 @@ export function StakeholderQuadrantChart({
                     strokeWidth={isActive ? 1.5 : 0}
                   />
 
-                  {/* ── Capa 5: mancha de luz — simula esfera 3D ──
-                      Elipse semitransparente en la zona superior-izquierda.
-                      Crea el "punto de brillo" característico de las esferas. */}
                   <ellipse
                     cx={pos.cx - DOT_R * 0.27}
                     cy={pos.cy - DOT_R * 0.28}
@@ -350,7 +222,6 @@ export function StakeholderQuadrantChart({
                     style={{ pointerEvents: 'none' }}
                   />
 
-                  {/* ── Capa 6: iniciales ── */}
                   <text
                     x={pos.cx} y={pos.cy + 4}
                     textAnchor="middle" fontSize={9} fontWeight="700"
@@ -364,86 +235,26 @@ export function StakeholderQuadrantChart({
             })}
           </g>
 
-          {/* ── Borde del círculo — encima de todo el contenido interior ── */}
           <circle cx={CX} cy={CY} r={CR} fill="none" stroke="#D1D5DB" strokeWidth={1.5} />
 
-          {/* ── Labels de arquetipo — en las esquinas del VB, totalmente fuera del círculo ──
-              Distancia del centro: 235px a 45° → offset = 235*cos(45°) ≈ 166px
-              Borde del círculo a 45°: 200*cos(45°) = 141px → los labels están 25px fuera  */}
+          {/* Quadrant labels */}
+          <text x={94} y={91} textAnchor="middle" fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.critico} letterSpacing="0.06em">CRÍTICO</text>
+          <text x={94} y={103} textAnchor="middle" fontSize={7.5} fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.critico} opacity={0.65}>bloquea</text>
+          <text x={426} y={91} textAnchor="middle" fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace" fill={LABEL_HEX.decisor} letterSpacing="0.06em">DECISOR</text>
+          <text x={426} y={103} textAnchor="middle" fontSize={7.5} fontFamily="ui-monospace, monospace" fill={LABEL_HEX.decisor} opacity={0.65}>lidera</text>
+          <text x={94} y={424} textAnchor="middle" fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.reticente} letterSpacing="0.06em">RETICENTE</text>
+          <text x={94} y={436} textAnchor="middle" fontSize={7.5} fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.reticente} opacity={0.65}>dominio / miedo</text>
+          <text x={426} y={424} textAnchor="middle" fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.adoptador} letterSpacing="0.06em">ADOPTADOR</text>
+          <text x={426} y={436} textAnchor="middle" fontSize={7.5} fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.adoptador} opacity={0.65}>usa y adopta</text>
 
-          {/* TL: Crítico */}
-          <text x={94} y={91} textAnchor="middle"
-            fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace"
-            fill={ARCHETYPE_HEX.critico} letterSpacing="0.06em">
-            CRÍTICO
-          </text>
-          <text x={94} y={103} textAnchor="middle"
-            fontSize={7.5} fontFamily="ui-monospace, monospace"
-            fill={ARCHETYPE_HEX.critico} opacity={0.65}>
-            bloquea
-          </text>
+          {/* Axis labels */}
+          <text x={CX} y={CY - CR - 14} textAnchor="middle" fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">↑ Alta influencia</text>
+          <text x={CX} y={CY + CR + 22} textAnchor="middle" fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">Baja influencia ↓</text>
+          <text x={CX - CR - 6} y={CY + 4} textAnchor="end" fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">← Baja</text>
+          <text x={CX + CR + 6} y={CY + 4} textAnchor="start" fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">Alta →</text>
+          <text x={CX} y={VB - 6} textAnchor="middle" fontSize={9} fill="#6B7280" fontFamily="Inter, sans-serif">Adopción IA</text>
 
-          {/* TR: Decisor */}
-          <text x={426} y={91} textAnchor="middle"
-            fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace"
-            fill={LABEL_HEX.decisor} letterSpacing="0.06em">
-            DECISOR
-          </text>
-          <text x={426} y={103} textAnchor="middle"
-            fontSize={7.5} fontFamily="ui-monospace, monospace"
-            fill={LABEL_HEX.decisor} opacity={0.65}>
-            lidera
-          </text>
-
-          {/* BL: Reticente */}
-          <text x={94} y={424} textAnchor="middle"
-            fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace"
-            fill={ARCHETYPE_HEX.reticente} letterSpacing="0.06em">
-            RETICENTE
-          </text>
-          <text x={94} y={436} textAnchor="middle"
-            fontSize={7.5} fontFamily="ui-monospace, monospace"
-            fill={ARCHETYPE_HEX.reticente} opacity={0.65}>
-            dominio / miedo
-          </text>
-
-          {/* BR: Adoptador */}
-          <text x={426} y={424} textAnchor="middle"
-            fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace"
-            fill={ARCHETYPE_HEX.adoptador} letterSpacing="0.06em">
-            ADOPTADOR
-          </text>
-          <text x={426} y={436} textAnchor="middle"
-            fontSize={7.5} fontFamily="ui-monospace, monospace"
-            fill={ARCHETYPE_HEX.adoptador} opacity={0.65}>
-            usa y adopta
-          </text>
-
-          {/* ── Labels de eje (dimensiones del gráfico) ── */}
-          <text x={CX} y={CY - CR - 14} textAnchor="middle"
-            fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">
-            ↑ Alta influencia
-          </text>
-          <text x={CX} y={CY + CR + 22} textAnchor="middle"
-            fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">
-            Baja influencia ↓
-          </text>
-          <text x={CX - CR - 6} y={CY + 4} textAnchor="end"
-            fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">
-            ← Baja
-          </text>
-          <text x={CX + CR + 6} y={CY + 4} textAnchor="start"
-            fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">
-            Alta →
-          </text>
-          <text x={CX} y={VB - 6} textAnchor="middle"
-            fontSize={9} fill="#6B7280" fontFamily="Inter, sans-serif">
-            Adopción IA
-          </text>
-
-          {/* ── Tooltips — capa separada, encima del borde, sin clipPath ──
-              Se renderizan fuera del clipPath para que nunca queden cortados
-              aunque el punto esté cerca del borde.                           */}
+          {/* Tooltips */}
           {withScores.map((s) => {
             if (s.id !== hoverId) return null
             const pos  = jittered.get(s.id) ?? constrainToCircle(
@@ -459,16 +270,9 @@ export function StakeholderQuadrantChart({
 
             return (
               <g key={`tt-${s.id}`} style={{ pointerEvents: 'none' }}>
-                <rect x={ttX} y={ttY} width={ttW} height={ttH}
-                  rx={6} fill="#0A0A0A" opacity={0.88} />
-                <text x={ttX + ttW / 2} y={ttY + 14}
-                  textAnchor="middle" fontSize={10.5} fontWeight="600"
-                  fill="#FFFFFF" fontFamily="Inter, sans-serif">
-                  {s.name}
-                </text>
-                <text x={ttX + ttW / 2} y={ttY + 27}
-                  textAnchor="middle" fontSize={9.5}
-                  fill={fill} fontFamily="Inter, sans-serif">
+                <rect x={ttX} y={ttY} width={ttW} height={ttH} rx={6} fill="#0A0A0A" opacity={0.88} />
+                <text x={ttX + ttW / 2} y={ttY + 14} textAnchor="middle" fontSize={10.5} fontWeight="600" fill="#FFFFFF" fontFamily="Inter, sans-serif">{s.name}</text>
+                <text x={ttX + ttW / 2} y={ttY + 27} textAnchor="middle" fontSize={9.5} fill={fill} fontFamily="Inter, sans-serif">
                   {(ARCHETYPE_CONFIG[s.archetype] ?? ARCHETYPE_CONFIG.adoptador).label} · {RESISTANCE_CONFIG[s.resistance].label}
                 </text>
               </g>
@@ -477,34 +281,23 @@ export function StakeholderQuadrantChart({
         </svg>
       </div>
 
-      {/* ── Leyenda de resistencia ── */}
+      {/* Leyenda de resistencia */}
       <div className="px-5 pb-3 flex items-center gap-5 border-t border-border/50 pt-3">
-        <span className="text-[10px] text-text-subtle font-mono uppercase tracking-wide">
-          Resistencia:
-        </span>
-        {([
-          { level: 'baja'  as ResistanceLevel, label: 'Baja' },
-          { level: 'media' as ResistanceLevel, label: 'Media' },
-          { level: 'alta'  as ResistanceLevel, label: 'Alta' },
-        ]).map(({ level, label }) => {
-          const s = RESISTANCE_STROKE[level]
+        <span className="text-[10px] text-text-subtle font-mono uppercase tracking-wide">Resistencia:</span>
+        {(['baja', 'media', 'alta'] as ResistanceLevel[]).map((level) => {
+          const stroke = RESISTANCE_STROKE[level]
           return (
             <div key={level} className="flex items-center gap-1.5">
               <svg width="18" height="18" viewBox="0 0 18 18">
-                <circle cx="9" cy="9" r="5"
-                  fill="none"
-                  stroke={s.color}
-                  strokeWidth={s.width}
-                  strokeDasharray={s.dasharray}
-                />
+                <circle cx="9" cy="9" r="5" fill="none" stroke={stroke.color} strokeWidth={stroke.width} strokeDasharray={stroke.dasharray} />
               </svg>
-              <span className="text-[10px] text-text-subtle">{label}</span>
+              <span className="text-[10px] text-text-subtle capitalize">{level}</span>
             </div>
           )
         })}
       </div>
 
-      {/* ── Stakeholders sin entrevista ── */}
+      {/* Stakeholders sin entrevista */}
       {withoutScores.length > 0 && (
         <div className="px-5 pb-4 border-t border-border/50 pt-3">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
@@ -519,10 +312,7 @@ export function StakeholderQuadrantChart({
                   onClick={() => onSelect(s)}
                   className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${cfg.badgeBg} ${cfg.badgeText} hover:opacity-80`}
                 >
-                  <span
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ backgroundColor: ARCHETYPE_HEX[s.archetype] }}
-                  />
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: ARCHETYPE_HEX[s.archetype] }} />
                   {s.name}
                 </button>
               )
