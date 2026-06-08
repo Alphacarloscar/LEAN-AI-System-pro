@@ -12,6 +12,7 @@
 import { create }    from 'zustand'
 import { persist }   from 'zustand/middleware'
 import { savePolicyOutput } from '@/services/t6.service'
+import { reportError } from '@/lib/reportError'
 import type { ISO42001Control, ISO42001Status, GeneratedPolicyContent } from './types'
 import { ISO42001_BASE_CONTROLS } from './constants'
 
@@ -114,6 +115,7 @@ export const useT6Store = create<T6Store>()(
           await savePolicyOutput(projectId, generatedPolicy)
           set({ persistenceStatus: 'saved', persistenceError: null })
         } catch (err) {
+          reportError('[T6Store] retrySave', err)
           set({ persistenceStatus: 'error', persistenceError: (err as Error).message })
         }
       },
