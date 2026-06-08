@@ -58,7 +58,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          supabase: ['@supabase/supabase-js', '@supabase/auth-helpers-react'],
+          supabase: ['@supabase/supabase-js'],
           charts: ['recharts'],
           ui: ['lucide-react'],
           forms: ['react-hook-form', 'zod'],
