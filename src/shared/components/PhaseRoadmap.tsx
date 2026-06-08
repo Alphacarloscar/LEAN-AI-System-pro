@@ -24,7 +24,7 @@ export interface PhaseTool {
   output?:      string   // entregable principal de la herramienta
 }
 
-export interface LeanPhase {
+export interface PhaseRoadmapItem {
   id:           string
   label:        string
   shortLabel?:  string   // etiqueta corta para la estación en mobile
@@ -35,9 +35,9 @@ export interface LeanPhase {
 }
 
 export interface PhaseRoadmapProps {
-  phases:       LeanPhase[]
+  phases:       PhaseRoadmapItem[]
   className?:   string
-  onToolClick?: (phase: LeanPhase, tool: PhaseTool) => void
+  onToolClick?: (phase: PhaseRoadmapItem, tool: PhaseTool) => void
   readOnly?:    boolean
 }
 
@@ -116,7 +116,7 @@ function Station({
   selected,
   onClick,
 }: {
-  phase:    LeanPhase
+  phase:    PhaseRoadmapItem
   index:    number
   selected: boolean
   onClick:  () => void
@@ -213,7 +213,7 @@ function PhaseDetail({
   phase,
   onToolClick,
 }: {
-  phase:        LeanPhase
+  phase:        PhaseRoadmapItem
   onToolClick?: (tool: PhaseTool) => void
 }) {
   const total = phase.tools.length
@@ -322,7 +322,7 @@ export function PhaseRoadmap({
     () => phases.find((p) => p.status === 'active')?.id ?? null
   )
 
-  function handleStation(phase: LeanPhase) {
+  function handleStation(phase: PhaseRoadmapItem) {
     if (phase.status === 'locked') return
     setSelectedId((prev) => (prev === phase.id ? null : phase.id))
   }
