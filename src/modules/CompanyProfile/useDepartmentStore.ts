@@ -10,6 +10,7 @@
 
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { reportError } from '@/lib/reportError'
 
 // ── Tipo público ──────────────────────────────────────────────
 
@@ -58,7 +59,7 @@ export const useDepartmentStore = create<DepartmentStore>()((set, get) => ({
       set({ departments: data ?? [], isLoading: false })
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al cargar departamentos'
-      console.error('[DepartmentStore] fetchDepartments:', err)
+      reportError('[DepartmentStore] fetchDepartments', err)
       set({ isLoading: false, error: msg })
     }
   },
@@ -89,7 +90,7 @@ export const useDepartmentStore = create<DepartmentStore>()((set, get) => ({
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al añadir departamento'
-      console.error('[DepartmentStore] addDepartment:', err)
+      reportError('[DepartmentStore] addDepartment', err)
       set({ error: msg })
     }
   },
@@ -110,7 +111,7 @@ export const useDepartmentStore = create<DepartmentStore>()((set, get) => ({
       if (error) throw error
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al eliminar departamento'
-      console.error('[DepartmentStore] deleteDepartment:', err)
+      reportError('[DepartmentStore] deleteDepartment', err)
       set({ departments: snapshot, error: msg })
     }
   },
