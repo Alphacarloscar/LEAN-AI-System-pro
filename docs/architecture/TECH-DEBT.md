@@ -93,6 +93,23 @@ T5, T9, T10, T11, T12, Auth, Admin, CompanyProfile, Engagement no tienen tests. 
 
 ---
 
+### DEBT-011 — useDepartmentStore accede a Supabase directamente (viola ADR-011)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-08 (PR obs/reportError)
+**Área:** `src/modules/CompanyProfile/useDepartmentStore.ts`
+**Estado:** Pendiente
+
+`useDepartmentStore` importa `{ supabase }` desde `@/lib/supabase` y ejecuta queries directamente en el store, sin pasar por una service layer. Viola ADR-011.
+
+**Plan de acción:**
+1. Crear `src/services/department.service.ts` con `fetchDepartments`, `addDepartment`, `deleteDepartment`.
+2. Reemplazar las llamadas inline en `useDepartmentStore` por las funciones del servicio.
+3. Eliminar el import de `supabase` del store.
+
+**Requiere ADR:** No (es cumplimiento de ADR-011 existente).
+
+---
+
 ## Cómo añadir un item
 
 Cuando detectes deuda técnica en un PR:
