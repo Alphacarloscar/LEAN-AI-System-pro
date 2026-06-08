@@ -12,6 +12,7 @@
 import { create }  from 'zustand'
 import { persist } from 'zustand/middleware'
 import { saveChangePlanOutput } from '@/services/t7.service'
+import { reportError } from '@/lib/reportError'
 import type { GeneratedChangePlan } from './types'
 
 // ── Tipos ─────────────────────────────────────────────────────
@@ -70,6 +71,7 @@ export const useT7Store = create<T7Store>()(
           await saveChangePlanOutput(projectId, generatedPlan)
           set({ persistenceStatus: 'saved', persistenceError: null })
         } catch (err) {
+          reportError('[T7Store] retrySave', err)
           set({ persistenceStatus: 'error', persistenceError: (err as Error).message })
         }
       },
