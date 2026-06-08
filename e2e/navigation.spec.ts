@@ -41,7 +41,7 @@ test.describe('Navegación — todas las rutas', () => {
     await expect(page.locator('header').first()).toBeVisible({ timeout: 8_000 })
   })
 
-  for (const { path, label } of TOOL_ROUTES.filter((r) => r.path !== '/')) {
+  for (const { path } of TOOL_ROUTES.filter((r) => r.path !== '/')) {
     test(`${path} — carga sin error (sin consola de crash)`, async ({ page }) => {
       // Captura errores JavaScript en la página
       const jsErrors: string[] = []

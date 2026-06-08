@@ -105,6 +105,7 @@ export async function fetchUseCases(engagementId: string): Promise<UseCase[]> {
 export async function insertUseCase(uc: UseCase, engagementId: string): Promise<void> {
   const { error } = await supabase
     .from('use_cases')
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     .insert(useCaseToInsert(uc, engagementId))
 
   if (error) throw new Error(`[T4] insertUseCase: ${error.message}`)

@@ -86,6 +86,7 @@ export const WithTrigger: Story = {
     children: 'Abre y cierra con el botón de abajo. El foco vuelve al botón al cerrar.',
   },
   render: (args) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [open, setOpen] = useState(false)
     return (
       <div className="p-8">

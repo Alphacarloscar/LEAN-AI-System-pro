@@ -89,8 +89,7 @@ export function SegmentedControl({
       // Focus the newly selected option after React re-renders
       requestAnimationFrame(() => {
         groupRef.current
-          ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
-          [nextIdx]?.focus()
+          ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[nextIdx]?.focus()
       })
     },
     [currentIdx, options, onChange],

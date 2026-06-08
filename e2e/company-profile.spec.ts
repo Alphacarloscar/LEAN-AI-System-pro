@@ -36,7 +36,6 @@ test.describe('Company Profile', () => {
 
   test('muestra dos tabs: Empresa y Proyecto', async ({ page }) => {
     // Los tabs pueden estar implementados como botones o role=tab
-    const tabs = page.getByRole('tab')
     const tabButtons = page.locator('[role="tab"], button').filter({ hasText: /empresa|proyecto/i })
     const count = await tabButtons.count()
     expect(count).toBeGreaterThanOrEqual(2)
