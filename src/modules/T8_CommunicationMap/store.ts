@@ -11,6 +11,7 @@
 import { create }  from 'zustand'
 import { persist } from 'zustand/middleware'
 import { saveCommunicationOutput } from '@/services/t8.service'
+import { reportError } from '@/lib/reportError'
 import type { GeneratedT8Content } from './types'
 
 // ── Tipos ─────────────────────────────────────────────────────
@@ -69,6 +70,7 @@ export const useT8Store = create<T8Store>()(
           await saveCommunicationOutput(projectId, generatedContent)
           set({ persistenceStatus: 'saved', persistenceError: null })
         } catch (err) {
+          reportError('[T8Store] retrySave', err)
           set({ persistenceStatus: 'error', persistenceError: (err as Error).message })
         }
       },
