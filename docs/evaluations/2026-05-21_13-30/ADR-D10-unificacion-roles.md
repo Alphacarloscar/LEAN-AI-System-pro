@@ -1,7 +1,7 @@
 # ADR-D10: Unificación del modelo de roles de usuario
 
-**Estado:** Propuesto — requiere decisión de Carlos  
-**Fecha:** 2026-05-21  
+**Estado:** IMPLEMENTED — rama `fix/types-single-source` (2026-06-08)  
+**Fecha:** 2026-05-21 (propuesto) | 2026-06-08 (implementado)  
 **Decididores:** Carlos Sánchez (COO)  
 **Supersede a:** D7 (parcialmente) — identidad y roles en ARQUITECTURA.md  
 **Criticidad:** 🔴 Bloqueante para TypeScript correcto y escalabilidad del sistema de auth

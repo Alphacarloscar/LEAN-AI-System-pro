@@ -1,6 +1,6 @@
 ﻿# Technical Debt Register — GOBY
 
-Last updated: 2026-06-02
+Last updated: 2026-06-08
 AI-Ready Repository System v2.1.0
 
 > Registro activo de deuda técnica conocida. Cada item tiene severidad, impacto y plan de acción.
@@ -11,43 +11,14 @@ AI-Ready Repository System v2.1.0
 
 ## Items Activos
 
-### DEBT-001 — Sin tests automatizados
-**Severidad:** 🔴 Alta
+### DEBT-002 — Branch protection pendiente de activar en GitHub
+**Severidad:** 🟡 Media
 **Detectado:** 2026-06-01 (AI-Ready Setup)
-**Área:** tests/unit/, tests/integration/, tests/e2e/
-**Estado:** Pendiente — carpetas creadas, 0 ficheros de test
+**Área:** GitHub → Settings → Branches
+**Estado:** CI configurado (`ci.yml` + `validate-docs.yml` operativos). Pendiente: activar branch protection en GitHub (acción manual de Carlos).
 
 **Descripción:**
-Las carpetas `tests/unit/`, `tests/integration/` y `tests/e2e/` están creadas pero vacías. No hay configuración de framework de tests (Jest, Vitest, Playwright) en `package.json`. El sistema funciona en producción con clientes reales sin ninguna red de seguridad automatizada.
-
-**Impacto:**
-- Refactorizaciones de código sin validación — riesgo de regresiones silenciosas
-- Bugs en servicios compartidos afectan a múltiples herramientas T1-T13 sin detección temprana
-- La lógica del motor IA (recomendaciones, scores) no tiene tests de contrato
-- Confianza en el sistema baja a medida que crece la base de código
-
-**Plan de acción:**
-1. **Fase 1** (prioridad alta): Configurar Vitest + Testing Library. Tests unitarios para `src/services/` y `src/stores/`.
-2. **Fase 2**: Tests de integración para flujos críticos (auth, carga de engagement, RLS).
-3. **Fase 3**: Tests E2E con Playwright para los happy paths de T1-T4 (las herramientas más usadas).
-
-**Requiere ADR:** No (configuración de testing framework es una mejora, no una decisión arquitectónica nueva).
-
----
-
-### DEBT-002 — Sin pipeline CI automatizado hasta este setup
-**Severidad:** 🟡 Media (resuelto parcialmente por este setup)
-**Detectado:** 2026-06-01 (AI-Ready Setup)
-**Área:** .github/workflows/
-**Estado:** Parcialmente resuelto — workflows creados por este setup, pendientes de activar en GitHub
-
-**Descripción:**
-No existían GitHub Actions workflows. Cualquier PR podía mergearse sin validación automatizada de TypeScript, build, o documentación. El `.github/workflows/ci.yml` y `validate-docs.yml` creados por este setup resuelven el problema, pero requieren activar branch protection en GitHub para ser efectivos.
-
-**Impacto antes del fix:**
-- PRs podían mergearse con errores de TypeScript
-- Sin validación de que el build de producción funciona antes de llegar a main
-- Sin garantía de que la documentación se mantiene actualizada
+Los workflows `.github/workflows/ci.yml` y `validate-docs.yml` están creados y operativos. Sin branch protection activa, los workflows se ejecutan pero no bloquean merges. Riesgo: PRs con TypeScript errors o sin CHANGELOG pueden mergearse a `main`/`develop`.
 
 **Acción pendiente (manual — Carlos):**
 1. Ir a GitHub → Settings → Branches
@@ -66,15 +37,19 @@ No existían GitHub Actions workflows. Cualquier PR podía mergearse sin validac
 ## Items Resueltos
 
 ### ~~DEBT-001~~ — Tests automatizados ✅ (Resuelto parcialmente — 2026-06-02)
-- **Vitest** configurado y funcionando: 184 tests en 14 ficheros pasando
+- **Vitest** configurado y funcionando: **281 tests en 20 ficheros pasando** (medido 2026-06-08)
 - Servicios T1-T4, T6, T7, T8 cubiertos (7 service test files)
 - Lógica de dominio T1/T4 cubierta (scoring, ROI, AI Act)
-- **Pendiente**: T5, T9, T10, T11, T12 sin tests (75% cobertura de módulos)
+- **Pendiente (DEBT-009)**: algunos módulos sin cobertura — ver DEBT-009
 
-### ~~DEBT-003~~ — Vistas monolíticas >1000 LOC ✅ (Resuelto P1+P2 — 2026-06-02)
+### ~~DEBT-003~~ — Vistas monolíticas >1000 LOC ✅ (Resuelto P1+P2 — 2026-06-02; vistas restantes resueltas 2026-06-08)
 - T4View: 2386 → ~220 líneas (9 componentes extraídos)
 - T3View: 1202 → ~220 líneas (5 componentes extraídos)
-- Pendiente: T8View (1140), T7View (1097), T10View (1072), T5View (1049), T11View (1029)
+- T8View: 1140 → **270 líneas** ✅ (medido 2026-06-08, < 400 ADR-013)
+- T7View: 1097 → **257 líneas** ✅
+- T10View: 1072 → **302 líneas** ✅
+- T5View: 1049 → **134 líneas** ✅
+- T11View: 1029 → **248 líneas** ✅ (`src/modules/T11_OperatingRhythm/T11View.tsx`)
 
 ### ~~DEBT-004~~ — Tipos duplicados en PolicyPDF.tsx ✅ (Resuelto P2-2 — 2026-06-02)
 - `UseCase` y `Domain` locales reemplazados con imports de T4/T5 types
@@ -85,14 +60,15 @@ No existían GitHub Actions workflows. Cualquier PR podía mergearse sin validac
 ### ~~DEBT-006~~ — xlsx CVE-2023-30533 ✅ (Resuelto P1-3 — 2026-06-02)
 - Paquete eliminado (0 imports, dead dependency)
 
+### ~~DEBT-007~~ — Vistas T5/T7/T8/T10/T11 monolíticas ✅ (Resuelto — 2026-06-08)
+- T8View: 1140 → 270 líneas (`wc -l` 2026-06-08)
+- T7View: 1097 → 257 líneas
+- T10View: 1072 → 302 líneas
+- T5View: 1049 → 134 líneas
+- T11View: 1029 → 248 líneas (`src/modules/T11_OperatingRhythm/T11View.tsx`)
+- Todas < 400 líneas — cumple ADR-013
+
 ## Items Activos
-
-### DEBT-007 — Vistas T5/T7/T8/T10/T11 todavía monolíticas
-**Severidad:** 🟡 Media
-**Detectado:** 2026-06-02 (P2 audit)
-**Estado:** Pendiente
-
-T8View (1140), T7View (1097), T10View (1072), T5View (1049), T11View (1029) superan los 400 líneas establecidos en ADR-013. Se aplicará el mismo patrón de extracción que T3/T4.
 
 ### DEBT-008 — T3 ProcessDetailPanel usa supabase directamente
 **Severidad:** 🟢 Baja

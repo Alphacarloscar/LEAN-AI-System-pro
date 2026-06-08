@@ -319,7 +319,7 @@ Then confirm to Carlos:
 ```
 CLAUDE.md read. Project: GOBY (development, Sprint 10+).
 Stack: React 18 + Vite + TypeScript + Supabase + Vercel.
-9 closed ADRs. 2 active debt items (no tests, CI pipeline pending activation).
+15 closed ADRs. 4 active debt items (DEBT-002, DEBT-008, DEBT-009, DEBT-010 — ver TECH-DEBT.md).
 Last change: [last CHANGELOG entry].
 No-CLI workflow active — all DB ops via Supabase SQL Editor.
 Ready. What are we working on today?
@@ -337,8 +337,8 @@ Human docs language:      Spanish
 AI files language:        English
 Protected branches:       main, develop
 No-CLI mode:              active (ADR-005)
-Closed ADRs:              9
-Active tech debt items:   2
+Closed ADRs:              15
+Active tech debt items:   4
 ```
 
 
