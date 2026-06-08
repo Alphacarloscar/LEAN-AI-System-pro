@@ -30,7 +30,7 @@ const MODEL: T11OperatingModel = {
     { label: 'Valor',       kpis: [{ name: 'Ahorro anual estimado (€)' }] },
   ],
   phaseObjectives: ['Establecer governance básico', 'Medir adopción'],
-} as T11OperatingModel
+} as unknown as T11OperatingModel
 
 // ── buildT11RecommendationContext ─────────────────────────────
 

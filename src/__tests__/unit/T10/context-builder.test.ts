@@ -42,7 +42,7 @@ function makeStakeholder(overrides: Partial<Stakeholder> = {}): Stakeholder {
     department:  'IT',
     archetype:   'adoptador',
     resistance:  'baja',
-    interview:   true,
+    interview:   undefined,
     ...overrides,
   } as Stakeholder
 }
@@ -62,7 +62,7 @@ const T11_MODEL: T11OperatingModel = {
   ],
   kpiGroups:       [],
   phaseObjectives: [],
-} as T11OperatingModel
+} as unknown as T11OperatingModel
 
 // ── Empresa ───────────────────────────────────────────────────
 
@@ -118,7 +118,7 @@ describe('buildT10RecommendationContext — portfolio', () => {
     const useCases = [
       makeUseCase({ id: 'uc-go',    status: 'go' }),
       makeUseCase({ id: 'uc-pilot', status: 'en_piloto' }),
-      makeUseCase({ id: 'uc-idea',  status: 'idea' }),
+      makeUseCase({ id: 'uc-idea',  status: 'candidato' }),
     ]
     const ctx = buildT10RecommendationContext([], useCases, [], null, PROFILE)
     expect(ctx.dashboard.portfolio.activeCases).toBe(2)
@@ -150,14 +150,15 @@ describe('buildT10RecommendationContext — adoption', () => {
     expect(ctx.dashboard.adoption.totalStakeholders).toBe(2)
   })
 
-  it('uninterviewedCount cuenta stakeholders sin interview', () => {
+  it('uninterviewedCount cuenta stakeholders sin interview (interview === undefined)', () => {
+    // Los tres stakeholders no tienen entrevista — todos cuentan como no entrevistados
     const stakeholders = [
-      makeStakeholder({ id: 's1', interview: true }),
-      makeStakeholder({ id: 's2', interview: false }),
+      makeStakeholder({ id: 's1', interview: undefined }),
+      makeStakeholder({ id: 's2', interview: undefined }),
       makeStakeholder({ id: 's3', interview: undefined }),
     ]
     const ctx = buildT10RecommendationContext([], [], stakeholders, null, PROFILE)
-    expect(ctx.dashboard.adoption.uninterviewedCount).toBe(2)
+    expect(ctx.dashboard.adoption.uninterviewedCount).toBe(3)
   })
 
   it('earlyAdopterRatio es 0 con lista vacía', () => {
@@ -170,7 +171,7 @@ describe('buildT10RecommendationContext — adoption', () => {
       makeStakeholder({ id: 's1', archetype: 'adoptador',  resistance: 'baja' }),
       makeStakeholder({ id: 's2', archetype: 'ambassador', resistance: 'media' }),
       makeStakeholder({ id: 's3', archetype: 'adoptador',  resistance: 'alta' }), // excluido
-      makeStakeholder({ id: 's4', archetype: 'escéptico',  resistance: 'baja' }), // excluido
+      makeStakeholder({ id: 's4', archetype: 'reticente',  resistance: 'baja' }), // excluido (no es adoptador/ambassador)
     ]
     const ctx = buildT10RecommendationContext([], [], stakeholders, null, PROFILE)
     // 2 de 4 = 50%

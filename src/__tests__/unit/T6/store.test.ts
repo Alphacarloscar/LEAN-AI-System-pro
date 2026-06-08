@@ -11,13 +11,18 @@ vi.mock('@/lib/reportError', () => ({
 }))
 
 const MOCK_POLICY: GeneratedPolicyContent = {
-  executiveSummary: 'Política de IA corporativa',
-  principles:       ['Transparencia', 'Responsabilidad'],
-  riskFramework:    'Marco de riesgos ISO 42001',
-  governanceModel:  'Comité de IA',
-  implementationPlan: ['Fase 1', 'Fase 2'],
-  generatedAt:      '2026-01-01T00:00:00Z',
-} as GeneratedPolicyContent
+  declaracion_opening:  'Esta política establece el marco de uso responsable de la IA.',
+  declaracion_mandate:  'Todo sistema de IA debe ser evaluado y registrado.',
+  alcance_context:      'Aplica a todos los departamentos que implanten sistemas de IA.',
+  principios:           [
+    { title: 'Transparencia',    desc: 'Los sistemas IA deben ser explicables.' },
+    { title: 'Responsabilidad',  desc: 'Cada sistema IA tiene un propietario.' },
+  ],
+  contexto_sectorial:   'Sector Manufactura: riesgos regulatorios EU AI Act Annex III.',
+  generatedAt:          '2026-01-01T00:00:00Z',
+  sector:               'Manufactura',
+  tamano:               'grande',
+}
 
 // ── Estado inicial ────────────────────────────────────────────
 
