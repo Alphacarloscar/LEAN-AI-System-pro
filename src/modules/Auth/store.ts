@@ -14,6 +14,7 @@
 
 import { create }        from 'zustand'
 import { supabase }      from '@/lib/supabase'
+import { reportError }   from '@/lib/reportError'
 import type { AuthUser } from './types'
 import { useT1Store }    from '@/modules/T1_MaturityRadar/store'
 import { useT2Store }    from '@/modules/T2_StakeholderMatrix/store'
@@ -142,7 +143,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
         set({ isAuthenticated: false, user: null, isInitializing: false })
       }
     } catch (err) {
-      console.error('[AUTH] initialize:error', err)
+      reportError('[AuthStore] initialize', err)
       set({ isAuthenticated: false, user: null, isInitializing: false })
     } finally {
       clearTimeout(bootTimeout)
@@ -210,7 +211,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
             }
           }).catch((err) => {
             // Error de red: no desautenticar — el token sigue siendo válido.
-            console.error('[AUTH] deferred profile load error:', err)
+            reportError('[AuthStore] deferred profile load', err)
           })
         }, 0)
 
