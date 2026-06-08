@@ -22,6 +22,7 @@ import { useT2Store }                     from '../store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
 import type { ArchetypeCode }             from '../types'
 import { Modal, Button, Badge }           from '@shared/design-system/components'
+import { reportError }                    from '@/lib/reportError'
 
 // Colores de categoría IT/Negocio (data-driven — inline style, sin variante DS)
 const TYPE_BADGE_STYLE: Record<'it' | 'business', React.CSSProperties> = {
@@ -92,7 +93,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
           manualOverride: false,
         },
         engagementId,
-      ).catch((err) => console.error('[ImportFromT1] addStakeholder:', err))
+      ).catch((err) => reportError('[ImportFromT1] addStakeholder sync', err))
     })
 
     setImportCount(toImport.length)

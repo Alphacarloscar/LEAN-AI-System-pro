@@ -19,6 +19,7 @@ import { useEngagementStore }           from '@/modules/Engagement/store'
 import { useAuthStore }                 from '@/modules/Auth'
 import { listCompanies }                from '@/services/companies.service'
 import { isDemoEnabled }                from '@/lib/config'
+import { reportError }                  from '@/lib/reportError'
 import type { CompanyRow }              from '@/types/database.types'
 
 // ── Iconos ────────────────────────────────────────────────────
@@ -141,7 +142,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
       setOpen(false)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al crear proyecto'
-      console.error('[EngagementSelector] createAndSelect:', err)
+      reportError('[EngagementSelector] createAndSelect', err)
       setCreateError(msg)
     } finally {
       setCreateBusy(false)

@@ -24,6 +24,7 @@ import { useAuthStore }           from '@/modules/Auth'
 import { usePermissions }         from '@/modules/Auth'
 import { supabase }               from '@/lib/supabase'
 import { isDemoEnabled }          from '@/lib/config'
+import { reportError }            from '@/lib/reportError'
 import {
   SECTOR_OPTIONS,
   COMPANY_SIZE_OPTIONS,
@@ -341,7 +342,7 @@ export function CompanyProfileView() {
       setTimeout(() => setCompanySaveFlash(false), 2000)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al guardar datos de empresa'
-      console.error('[CompanyProfileView] handleCompanySave:', err)
+      reportError('[CompanyProfileView] handleCompanySave', err)
       setCompanySaveError(msg)
     } finally {
       setIsCompanySaving(false)
