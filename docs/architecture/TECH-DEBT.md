@@ -1,6 +1,6 @@
 ﻿# Technical Debt Register — GOBY
 
-Last updated: 2026-06-08
+Last updated: 2026-06-09
 AI-Ready Repository System v2.1.0
 
 > Registro activo de deuda técnica conocida. Cada item tiene severidad, impacto y plan de acción.
@@ -74,6 +74,17 @@ Los workflows `.github/workflows/ci.yml` y `validate-docs.yml` están creados y 
 **Estado:** Resuelto (2026-06-09)
 
 `ProcessDetailPanel.tsx` reemplazó `supabase.functions.invoke` inline por `useEdgeFunctionInvoke` (ADR-014). Eliminado import `@/lib/supabase` del componente.
+
+### ~~DEBT-012~~ — T1View, T2View, T3View, CompanyProfileView acceden a Supabase directamente (viola ADR-011) ✅ (Resuelto — 2026-06-09)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-09 (PR fix/adr011-finish)
+**Área:** `T1View.tsx`, `T2View.tsx`, `T3View.tsx`, `CompanyProfileView.tsx`
+**Estado:** Resuelto (2026-06-09)
+
+Cuatro vistas usaban `supabase.from('projects')` / `supabase.from('companies')` directamente.
+Extraídas dos funciones nuevas en `projects.service.ts` (`getProjectCompanyId`, `getProjectWithCompany`)
+y una en `companies.service.ts` (`updateCompanySettings`). Eliminados todos los imports de `@/lib/supabase`
+en los cuatro ficheros. Añadida regla ESLint `no-restricted-imports` para impedir nuevas fugas en CI.
 
 ### ~~DEBT-011~~ — useDepartmentStore accede a Supabase directamente (viola ADR-011) ✅ (Resuelto — 2026-06-09)
 **Severidad:** 🟡 Media
