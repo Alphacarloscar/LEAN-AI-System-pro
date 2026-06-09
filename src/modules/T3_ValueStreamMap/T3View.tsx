@@ -14,7 +14,7 @@ import { useT3Store }                      from './store'
 import { useEngagementStore }              from '@/modules/Engagement/store'
 import { useCompanyProfileStore }          from '@/modules/CompanyProfile/store'
 import { useDepartmentStore }              from '@/modules/CompanyProfile/useDepartmentStore'
-import { supabase }                        from '@/lib/supabase'
+import { getProjectCompanyId }             from '@/services/projects.service'
 import { PHASE_CONFIG, OPPORTUNITY_CONFIG, AI_CATEGORY_CONFIG } from './constants'
 import { HeroOpportunityMatrix }           from './components/HeroOpportunityMatrix'
 import { HeroCategoryDonut }               from './components/HeroCategoryDonut'
@@ -53,15 +53,10 @@ export function T3View({ onBack }: T3ViewProps) {
   useEffect(() => {
     if (!engagementId) return
     let cancelled = false
-    supabase
-      .from('projects')
-      .select('company_id')
-      .eq('id', engagementId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (cancelled || !data?.company_id) return
-        fetchDepartments(data.company_id)
-      })
+    getProjectCompanyId(engagementId).then((companyId) => {
+      if (cancelled || !companyId) return
+      fetchDepartments(companyId)
+    })
     return () => {
       cancelled = true
       resetDepartments()
