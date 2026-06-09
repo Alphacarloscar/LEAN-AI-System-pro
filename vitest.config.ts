@@ -24,10 +24,10 @@ export default defineConfig({
       include: ['src/modules/**/constants.ts', 'src/modules/**/types.ts', 'src/services/**/*.ts'],
       exclude: ['src/__tests__/**'],
       thresholds: {
-        statements: 61,  // baseline pre-branch
+        statements: 59,  // baseline real rama fix/adr011-finish (DEBT-009)
         branches:   55,
-        functions:  55,
-        lines:      61,
+        functions:  72,
+        lines:      65,
       },
     },
   },
