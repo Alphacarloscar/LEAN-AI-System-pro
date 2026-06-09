@@ -34,7 +34,7 @@ import { useDepartmentStore }                  from '@/modules/CompanyProfile/us
 import { RecommendationPanel }                 from '@/components/RecommendationPanel'
 import { buildT1RecommendationContext }        from './t1ContextBuilder'
 import { usePermissions }                      from '@/modules/Auth'
-import { supabase }                            from '@/lib/supabase'
+import { getProjectCompanyId }                 from '@/services/projects.service'
 
 interface T1ViewProps {
   onBack: () => void
@@ -60,15 +60,10 @@ export function T1View({ onBack }: T1ViewProps) {
     if (!engagementId) return
     let cancelled = false
 
-    supabase
-      .from('projects')
-      .select('company_id')
-      .eq('id', engagementId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (cancelled || !data?.company_id) return
-        fetchDepartments(data.company_id)
-      })
+    getProjectCompanyId(engagementId).then((companyId) => {
+      if (cancelled || !companyId) return
+      fetchDepartments(companyId)
+    })
 
     return () => {
       cancelled = true
