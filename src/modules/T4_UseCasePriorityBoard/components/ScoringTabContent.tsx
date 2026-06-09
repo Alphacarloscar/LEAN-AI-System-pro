@@ -8,7 +8,7 @@ import type { UseCase, UseCaseScores } from '../types'
 import { PriorityMatrix }            from './PriorityMatrix'
 import { T4ScoreBars, ScoreInput }   from './T4ScoreEditors'
 import { LowScoreRecommendations }   from './LowScoreRecommendations'
-import { priorityScoreColor }        from './T4Badges'
+import { priorityScoreColor }        from './T4Badges.constants'
 
 interface ScoringTabProps {
   useCase:        UseCase

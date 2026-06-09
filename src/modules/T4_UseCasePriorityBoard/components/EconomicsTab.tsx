@@ -8,7 +8,7 @@ import {
   computeROIFromEconomics,
   AI_CATEGORY_LABELS,
 } from '../constants'
-import { fmtEur } from './T4Badges'
+import { fmtEur } from './T4Badges.constants'
 import { Button, Card } from '@shared/design-system/components'
 import type { UseCase, UseCaseEconomics } from '../types'
 

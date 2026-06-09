@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AI_CATEGORY_CONFIG } from '../constants'
-import { CAT_HEX } from './T3Badges'
+import { CAT_HEX } from './T3Badges.constants'
 import type { ValueStream } from '../types'
 
 const QUAD_LABELS = [

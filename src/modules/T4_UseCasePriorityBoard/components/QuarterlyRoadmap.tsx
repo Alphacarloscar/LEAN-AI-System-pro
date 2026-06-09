@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { STATUS_CONFIG, ROADMAP_QUARTERS, computeROIFromEconomics } from '../constants'
-import { priorityScoreColor, fmtEur } from './T4Badges'
+import { priorityScoreColor, fmtEur } from './T4Badges.constants'
 import { Card } from '@shared/design-system/components'
 import type { UseCase } from '../types'
 

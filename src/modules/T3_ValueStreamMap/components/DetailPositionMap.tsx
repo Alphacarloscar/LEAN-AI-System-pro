@@ -1,4 +1,4 @@
-import { CAT_HEX } from './T3Badges'
+import { CAT_HEX } from './T3Badges.constants'
 import type { AICategoryCode } from '../types'
 
 const QUAD_LABELS = [

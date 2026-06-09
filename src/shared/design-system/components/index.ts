@@ -58,7 +58,8 @@ export type { ModalProps, ModalSize } from './Modal'
 export { Drawer }              from './Drawer'
 export type { DrawerProps, DrawerSide } from './Drawer'
 
-export { ToastContainer, useToast } from './Toast'
+export { ToastContainer } from './Toast'
+export { useToast } from './Toast.hooks'
 export type { ToastItem, ToastVariant } from './Toast'
 
 export { Table }               from './Table'

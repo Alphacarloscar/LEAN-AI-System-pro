@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { AI_CATEGORY_CONFIG } from '../constants'
-import { CAT_HEX, CAT_ORDER } from './T3Badges'
+import { CAT_HEX, CAT_ORDER } from './T3Badges.constants'
 import type { ValueStream } from '../types'
 
 type HoveredDot = {

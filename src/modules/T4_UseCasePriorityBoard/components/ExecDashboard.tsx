@@ -1,5 +1,5 @@
 import { computeROIFromEconomics } from '../constants'
-import { fmtEur } from './T4Badges'
+import { fmtEur } from './T4Badges.constants'
 import { Card } from '@shared/design-system/components'
 import type { UseCase } from '../types'
 

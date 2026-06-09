@@ -2,7 +2,8 @@
 // CompanyProfile — FrictionCard
 // ============================================================
 
-import { FieldLabel, LeanSelect, ToggleChip, FREQ_COLOR, IMPACT_COLOR } from './CompanyProfileHelpers'
+import { FieldLabel, LeanSelect, ToggleChip } from './CompanyProfileHelpers'
+import { FREQ_COLOR, IMPACT_COLOR } from './CompanyProfileHelpers.constants'
 import { FRICTION_TYPE_OPTIONS, ALL_BUSINESS_AREAS as AREA_OPTIONS } from '../types'
 import type { Friction, FrictionFrequency, FrictionImpact } from '../types'
 

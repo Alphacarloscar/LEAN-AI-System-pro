@@ -3,7 +3,6 @@
 // ============================================================
 
 import type { ReactNode } from 'react'
-import type { FrictionFrequency, FrictionImpact } from '../types'
 
 export function SectionLabel({ children }: { children: ReactNode }) {
   return (
@@ -112,14 +111,3 @@ export function ToggleChip<T extends string>({
   )
 }
 
-export const FREQ_COLOR: Record<FrictionFrequency, string> = {
-  Baja:  'bg-success-dark',
-  Media: 'bg-warning-dark',
-  Alta:  'bg-danger-dark',
-}
-
-export const IMPACT_COLOR: Record<FrictionImpact, string> = {
-  Bajo:  'bg-info-dark',
-  Medio: 'bg-warning-dark',
-  Alto:  'bg-danger-dark',
-}

@@ -8,13 +8,14 @@ import {
   STATUS_CONFIG,
   STATUS_ORDER,
 } from '../constants'
-import { priorityScoreColor } from './T4Badges'
+import { priorityScoreColor } from './T4Badges.constants'
 import type { UseCase, UseCaseStatus, UseCaseScores, AIActClassification } from '../types'
 import type { Stakeholder } from '@/modules/T2_StakeholderMatrix/types'
 import { Button, Badge, Card, Tabs } from '@shared/design-system/components'
 import { StatusBadge, CategoryBadge } from './T4Badges'
 import { EconomicsTab }              from './EconomicsTab'
-import { AIActClassificationModal, AIACT_RISK_CONFIG, AIACT_SCOPE_LABELS } from './AIActClassificationModal'
+import { AIActClassificationModal } from './AIActClassificationModal'
+import { AIACT_RISK_CONFIG, AIACT_SCOPE_LABELS } from './AIActClassificationModal.constants'
 import { ScoringTabContent }         from './ScoringTabContent'
 import { RoadmapTabContent }         from './RoadmapTabContent'
 import { ContextoTabContent }        from './ContextoTabContent'

@@ -29,7 +29,7 @@ import { ViewerEmptyState }               from '@/shared/components/ViewerEmptyS
 import { GanttRowItem }                   from './components/GanttRowItem'
 import { AddFreeItemForm }                from './components/AddFreeItemForm'
 import { computeDefaultOverride, MONTH_NAMES } from './t9GanttHelpers'
-import { DS }                             from './components/GanttRowItem'
+import { DS }                             from './components/GanttRowItem.constants'
 import type { AIGanttRow, FreeGanttRow, GanttRow } from './components/GanttRowItem'
 import type { AddFreeForm } from './types'
 

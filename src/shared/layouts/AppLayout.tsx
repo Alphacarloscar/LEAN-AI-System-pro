@@ -19,7 +19,8 @@
 
 import { useEffect }                              from 'react'
 import { Spinner }                                from '@shared/design-system/components'
-import { Outlet, useOutletContext }               from 'react-router-dom'
+import { Outlet }                                 from 'react-router-dom'
+import type { AppLayoutContext }                  from './AppLayout.hooks'
 import { AppSidebar }                             from '@/shared/components/AppSidebar'
 import { AlphaLogo }                              from '@/shared/components/AlphaLogo'
 import { EngagementSelector }                     from '@/shared/components/EngagementSelector'
@@ -32,15 +33,6 @@ import { ErrorBoundary }                          from '@/shared/components/Erro
 import { DebugPanel }                             from '@/shared/components/DebugPanel'
 import { ProjectRuntimeProvider }                 from '@/shared/providers/ProjectRuntimeProvider'
 import { useNavigate }                            from 'react-router-dom'
-
-// ── Contexto compartido hacia las rutas hijas ─────────────────
-export interface AppLayoutContext {
-  dark: boolean
-}
-
-export function useAppLayout() {
-  return useOutletContext<AppLayoutContext>()
-}
 
 // ── Dark mode toggle ──────────────────────────────────────────
 function DarkModeToggle({ dark, onToggle }: { dark: boolean; onToggle: () => void }) {
