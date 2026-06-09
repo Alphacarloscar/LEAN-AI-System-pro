@@ -19,6 +19,9 @@ import {
   GoNoGoDecisionSchema,
   UseCaseEconomicsSchema,
   AIActClassificationSchema,
+  RoadmapSchema,
+  T1ContextSchema,
+  T2ContextSchema,
 } from '@/lib/schemas/t4.schemas'
 
 // ── Mapeo BD → dominio ───────────────────────────────────────
@@ -44,9 +47,9 @@ export function rowToUseCase(row: UseCaseRow): UseCase {
     priorityScore:        Number(row.priority_score),
     economics:            safeParseJsonField(UseCaseEconomicsSchema, row.economics, 'economics'),
     goNoGo:               safeParseJsonField(GoNoGoDecisionSchema, row.go_no_go, 'go_no_go'),
-    roadmap:              castOpt<UseCase['roadmap']>(row.roadmap),
-    t1Context:            castOpt<UseCase['t1Context']>(row.t1_context),
-    t2Context:            castOpt<UseCase['t2Context']>(row.t2_context),
+    roadmap:              safeParseJsonField(RoadmapSchema,    row.roadmap,     'roadmap'),
+    t1Context:            safeParseJsonField(T1ContextSchema,  row.t1_context,  't1_context'),
+    t2Context:            safeParseJsonField(T2ContextSchema,  row.t2_context,  't2_context'),
     aiActClassification:  safeParseJsonField(AIActClassificationSchema, row.ai_act_classification, 'ai_act_classification'),
     notes:                row.notes ?? undefined,
     createdAt:            row.created_at,

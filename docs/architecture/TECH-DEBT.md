@@ -103,12 +103,12 @@ Creado `src/services/department.service.ts` con `fetchDepartments`, `addDepartme
 
 T5, T9, T10, T11, T12, Auth, Admin, CompanyProfile, Engagement no tienen tests. Prioridad: T6 hooks (usePolicyGeneration) y lógica del motor T11.
 
-### DEBT-010 — Zod schemas para JSONB de roadmap, t1_context, t2_context
+### ~~DEBT-010~~ — Zod schemas para JSONB de roadmap, t1_context, t2_context ✅ (Resuelto — 2026-06-09)
 **Severidad:** 🟢 Baja
 **Detectado:** 2026-06-02 (ADR-015)
-**Estado:** Pendiente
+**Estado:** Resuelto (2026-06-09)
 
-`rowToUseCase()` aún usa `castOpt` para `roadmap`, `t1_context`, `t2_context`. Añadir schemas cuando crezca su complejidad.
+`rowToUseCase()` ahora usa `safeParseJsonField` con `RoadmapSchema`, `T1ContextSchema` y `T2ContextSchema` — schemas definidos en `src/lib/schemas/t4.schemas.ts`. Eliminados los 3 `castOpt` correspondientes. Tests en `src/__tests__/schemas/jsonb-schemas.test.ts` (20 casos).
 
 ---
 

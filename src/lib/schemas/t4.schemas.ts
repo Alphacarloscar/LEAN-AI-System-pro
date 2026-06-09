@@ -74,8 +74,39 @@ export function safeParseJsonField<T>(
   return result.data
 }
 
+// ── Schemas para campos JSONB de contexto (roadmap, t1_context, t2_context) ──
+//
+// Estos schemas corresponden a las interfaces UseCaseRoadmap, T1Context y
+// T2Context definidas en T4_UseCasePriorityBoard/types.ts.
+// Todos los campos son opcionales — refleja la realidad: el consultor rellena
+// el roadmap de forma incremental y los contextos T1/T2 son read-only vía copia.
+
+export const RoadmapSchema = z.object({
+  quarter:           z.string().optional(),
+  estimatedDuration: z.string().optional(),
+  owner:             z.string().optional(),
+  nextSteps:         z.string().optional(),
+  dependencies:      z.string().optional(),
+  startDate:         z.string().optional(),
+  endDate:           z.string().optional(),
+})
+
+export const T1ContextSchema = z.object({
+  relevantDimensions: z.array(z.string()),
+  maturityNotes:      z.string().optional(),
+})
+
+export const T2ContextSchema = z.object({
+  championArchetype: z.string().optional(),
+  blockerArchetypes: z.array(z.string()).optional(),
+  stakeholderNotes:  z.string().optional(),
+})
+
 export type UseCaseScoresType        = z.infer<typeof UseCaseScoresSchema>
 export type StakeholderScoreType     = z.infer<typeof StakeholderScoreSchema>
 export type GoNoGoDecisionType       = z.infer<typeof GoNoGoDecisionSchema>
 export type UseCaseEconomicsType     = z.infer<typeof UseCaseEconomicsSchema>
 export type AIActClassificationType  = z.infer<typeof AIActClassificationSchema>
+export type RoadmapType              = z.infer<typeof RoadmapSchema>
+export type T1ContextType            = z.infer<typeof T1ContextSchema>
+export type T2ContextType            = z.infer<typeof T2ContextSchema>
