@@ -20,7 +20,8 @@ import { useDepartmentStore }     from './useDepartmentStore'
 import { useEngagementStore }     from '@/modules/Engagement/store'
 import { useAuthStore }           from '@/modules/Auth'
 import { usePermissions }         from '@/modules/Auth'
-import { supabase }               from '@/lib/supabase'
+import { getProjectWithCompany }  from '@/services/projects.service'
+import { updateCompanySettings }  from '@/services/companies.service'
 import { reportError }            from '@/lib/reportError'
 import { isDemoEnabled }          from '@/lib/config'
 import { EmpresaTab }             from './components/EmpresaTab'
@@ -65,22 +66,15 @@ export function CompanyProfileView() {
   useEffect(() => {
     if (engagementId) {
       loadProfile(engagementId)
-      supabase
-        .from('projects')
-        .select('company_id, companies(name, sector, company_size)')
-        .eq('id', engagementId)
-        .single()
-        .then(({ data }) => {
-          const company = data?.companies as { name?: string; sector?: string; company_size?: string } | null
-          const cid     = (data?.company_id as string | null) ?? null
-          setCompanyName(company?.name ?? '')
-          setCompanyId(cid)
-          setCompanySettings({
-            sector:       company?.sector       ?? '',
-            company_size: company?.company_size ?? '',
-          })
-          if (cid) fetchDepartments(cid)
+      getProjectWithCompany(engagementId).then((data) => {
+        setCompanyName(data.company_name)
+        setCompanyId(data.company_id)
+        setCompanySettings({
+          sector:       data.sector,
+          company_size: data.company_size,
         })
+        if (data.company_id) fetchDepartments(data.company_id)
+      })
     } else {
       setCompanyName('')
       setCompanyId(null)
@@ -97,14 +91,10 @@ export function CompanyProfileView() {
     setIsCompanySaving(true)
     setCompanySaveError(null)
     try {
-      const { error } = await supabase
-        .from('companies')
-        .update({
-          sector:       companySettings.sector,
-          company_size: companySettings.company_size,
-        })
-        .eq('id', companyId)
-      if (error) throw error
+      await updateCompanySettings(companyId, {
+        sector:       companySettings.sector,
+        company_size: companySettings.company_size,
+      })
       setCompanySaveFlash(true)
       setTimeout(() => setCompanySaveFlash(false), 2000)
     } catch (err) {
