@@ -21,7 +21,7 @@ import { useT2Store }                    from './store'
 import { useEngagementStore }            from '@/modules/Engagement/store'
 import { useCompanyProfileStore }        from '@/modules/CompanyProfile/store'
 import { useDepartmentStore }            from '@/modules/CompanyProfile/useDepartmentStore'
-import { supabase }                      from '@/lib/supabase'
+import { getProjectCompanyId }           from '@/services/projects.service'
 import { InterviewModal }                from './components/InterviewModal'
 import { ImportFromT1Modal }             from './components/ImportFromT1Modal'
 import { StakeholderQuadrantChart }      from './components/StakeholderQuadrantChart'
@@ -64,15 +64,9 @@ export function T2View({ onBack }: T2ViewProps) {
   // Departamentos — gestión independiente de T2 store
   useEffect(() => {
     if (engagementId) {
-      supabase
-        .from('projects')
-        .select('company_id')
-        .eq('id', engagementId)
-        .single()
-        .then(({ data }) => {
-          const cid = data?.company_id as string | null
-          if (cid) fetchDepartments(cid)
-        })
+      getProjectCompanyId(engagementId).then((cid) => {
+        if (cid) fetchDepartments(cid)
+      })
     } else {
       resetDepartments()
     }
