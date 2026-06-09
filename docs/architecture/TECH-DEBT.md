@@ -68,14 +68,22 @@ Los workflows `.github/workflows/ci.yml` y `validate-docs.yml` están creados y 
 - T11View: 1029 → 248 líneas (`src/modules/T11_OperatingRhythm/T11View.tsx`)
 - Todas < 400 líneas — cumple ADR-013
 
-## Items Activos
-
-### DEBT-008 — T3 ProcessDetailPanel usa supabase directamente
+### ~~DEBT-008~~ — T3 ProcessDetailPanel usa supabase directamente ✅ (Resuelto — 2026-06-09)
 **Severidad:** 🟢 Baja
 **Detectado:** 2026-06-02 (ADR-011)
-**Estado:** Pendiente
+**Estado:** Resuelto (2026-06-09)
 
-`ProcessDetailPanel.tsx` llama `supabase.functions.invoke` directamente para la generación de oportunidades IA de T3. Debería extraerse a `src/services/t3.service.ts` o usar `useEdgeFunctionInvoke`. Aceptable por ahora (ADR-011).
+`ProcessDetailPanel.tsx` reemplazó `supabase.functions.invoke` inline por `useEdgeFunctionInvoke` (ADR-014). Eliminado import `@/lib/supabase` del componente.
+
+### ~~DEBT-011~~ — useDepartmentStore accede a Supabase directamente (viola ADR-011) ✅ (Resuelto — 2026-06-09)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-08 (PR obs/reportError)
+**Área:** `src/modules/CompanyProfile/useDepartmentStore.ts`
+**Estado:** Resuelto (2026-06-09)
+
+Creado `src/services/department.service.ts` con `fetchDepartments`, `addDepartment`, `deleteDepartment`. Eliminado import `{ supabase }` de `useDepartmentStore`. Comportamiento observable idéntico.
+
+## Items Activos
 
 ### DEBT-009 — 12/16 módulos sin tests
 **Severidad:** 🟡 Media
@@ -90,23 +98,6 @@ T5, T9, T10, T11, T12, Auth, Admin, CompanyProfile, Engagement no tienen tests. 
 **Estado:** Pendiente
 
 `rowToUseCase()` aún usa `castOpt` para `roadmap`, `t1_context`, `t2_context`. Añadir schemas cuando crezca su complejidad.
-
----
-
-### DEBT-011 — useDepartmentStore accede a Supabase directamente (viola ADR-011)
-**Severidad:** 🟡 Media
-**Detectado:** 2026-06-08 (PR obs/reportError)
-**Área:** `src/modules/CompanyProfile/useDepartmentStore.ts`
-**Estado:** Pendiente
-
-`useDepartmentStore` importa `{ supabase }` desde `@/lib/supabase` y ejecuta queries directamente en el store, sin pasar por una service layer. Viola ADR-011.
-
-**Plan de acción:**
-1. Crear `src/services/department.service.ts` con `fetchDepartments`, `addDepartment`, `deleteDepartment`.
-2. Reemplazar las llamadas inline en `useDepartmentStore` por las funciones del servicio.
-3. Eliminar el import de `supabase` del store.
-
-**Requiere ADR:** No (es cumplimiento de ADR-011 existente).
 
 ---
 
