@@ -1,12 +1,11 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback }  from 'react'
 import { useT3Store }                      from '../store'
 import { useEngagementStore }              from '@/modules/Engagement/store'
 import { useCompanyProfileStore }          from '@/modules/CompanyProfile/store'
 import { useT1Store }                      from '@/modules/T1_MaturityRadar/store'
 import { computeOverallScore }             from '@/modules/T1_MaturityRadar/types'
 import { buildT3OpportunitiesContext }     from '../t3OpportunitiesContextBuilder'
-import { supabase }                        from '@/lib/supabase'
-import { reportError }                     from '@/lib/reportError'
+import { useEdgeFunctionInvoke }           from '@/hooks/useEdgeFunctionInvoke'
 import { AI_CATEGORY_CONFIG }              from '../constants'
 import { Button, Badge, Card, Tabs, type BadgeVariant } from '@shared/design-system/components'
 import { CategoryBadge, ReadinessBadge, PhaseBadge } from './T3Badges'
@@ -15,6 +14,11 @@ import { StagesTab }                       from './StagesTab'
 import type { ValueStream, AIOpportunity } from '../types'
 
 type DetailTab = 'oportunidades' | 'etapas'
+
+// ── Tipo de respuesta de la Edge Function ─────────────────────
+interface T3OpportunitiesRaw {
+  opportunities: Array<{ title: string; description: string; effort: string; impact: string }>
+}
 
 // ── Mapeo de dominio T3 → variant de Badge ────────────────────
 const EFFORT_VARIANT: Record<AIOpportunity['effort'], BadgeVariant> = {
@@ -31,9 +35,7 @@ const IMPACT_VARIANT: Record<AIOpportunity['impact'], BadgeVariant> = {
 const IMPACT_ALTO_STYLE: React.CSSProperties = { backgroundColor: 'rgba(42,40,34,0.1)', color: '#2A2822' }
 
 export function ProcessDetailPanel({ process }: { process: ValueStream }) {
-  const [tab,       setTab]       = useState<DetailTab>('oportunidades')
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiError,   setAiError]   = useState<string | null>(null)
+  const [tab, setTab] = useState<DetailTab>('oportunidades')
 
   const updateProcess   = useT3Store((s) => s.updateProcess)
   const engagementId    = useEngagementStore((s) => s.activeEngagementId)
@@ -47,47 +49,34 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
     catch { return undefined }
   }, [t1DimStates])
 
-  const handlePersonalizeWithAI = useCallback(async () => {
-    setAiLoading(true)
-    setAiError(null)
+  const { invoke: invokeAI, isGenerating: aiLoading, error: aiError } =
+    useEdgeFunctionInvoke<ReturnType<typeof buildT3OpportunitiesContext>, T3OpportunitiesRaw>({
+      tool:                't3_opportunities',
+      timeoutMs:           90_000,
+      noEngagementMessage: 'No hay engagement activo.',
+      logPrefix:           '[T3] personalizeWithAI',
+      validate: (data) => {
+        const raw = data as T3OpportunitiesRaw | null
+        if (!raw?.opportunities?.length) throw new Error('La IA no devolvió oportunidades. Inténtalo de nuevo.')
+        return raw
+      },
+      onSuccess: async (result, eid) => {
+        const newOpportunities: AIOpportunity[] = result.opportunities.map((o) => ({
+          id:          crypto.randomUUID(),
+          title:       o.title,
+          description: o.description,
+          effort:      (o.effort as AIOpportunity['effort'])  ?? 'medio',
+          impact:      (o.impact as AIOpportunity['impact'])  ?? 'medio',
+          status:      'sugerida' as const,
+        }))
+        await updateProcess(process.id, { opportunities: newOpportunities }, eid)
+      },
+    })
 
+  const handlePersonalizeWithAI = useCallback(() => {
     const context = buildT3OpportunitiesContext(process, companyProfile, t1MaturityScore)
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('La generación tardó demasiado. Inténtalo de nuevo.')), 90_000)
-    )
-
-    try {
-      const { data: result, error: fnError } = await Promise.race([
-        supabase.functions.invoke('ai-recommend', {
-          body: { tool: 't3_opportunities', context, engagementId },
-        }),
-        timeoutPromise,
-      ])
-
-      if (fnError) throw new Error(fnError.message ?? 'Error al llamar a la Edge Function')
-      if (result?.error) throw new Error(result.error)
-
-      const raw = result?.data as { opportunities?: Array<{ title: string; description: string; effort: string; impact: string }> } | null
-      if (!raw?.opportunities?.length) throw new Error('La IA no devolvió oportunidades. Inténtalo de nuevo.')
-
-      const newOpportunities: AIOpportunity[] = raw.opportunities.map((o) => ({
-        id:          crypto.randomUUID(),
-        title:       o.title,
-        description: o.description,
-        effort:      (o.effort as AIOpportunity['effort'])   ?? 'medio',
-        impact:      (o.impact as AIOpportunity['impact'])   ?? 'medio',
-        status:      'sugerida' as const,
-      }))
-
-      await updateProcess(process.id, { opportunities: newOpportunities }, engagementId)
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Error desconocido'
-      setAiError(msg)
-      reportError('[T3] personalizeWithAI', err)
-    } finally {
-      setAiLoading(false)
-    }
-  }, [process, companyProfile, t1MaturityScore, engagementId, updateProcess])
+    void invokeAI(context, engagementId)
+  }, [process, companyProfile, t1MaturityScore, engagementId, invokeAI])
 
   const catCfg       = AI_CATEGORY_CONFIG[process.aiCategory]
   const hasInterview = !!process.interview
