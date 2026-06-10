@@ -244,7 +244,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
         useT2Store.getState().reset()
         useT3Store.getState().reset()
         useT4Store.setState({ useCases: [], engagementId: null })
-        useT5Store.getState().syncEngagement(null)
+        useT5Store.getState().resetCanvas()
         useT6Store.getState().syncEngagement(null)
         useT7Store.getState().clearGeneratedPlan()
         useT8Store.getState().clearGeneratedContent()

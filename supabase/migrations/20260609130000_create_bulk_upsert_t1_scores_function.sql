@@ -7,6 +7,12 @@
 -- This replaces the client-side loop of upserts with a single
 -- database function call, significantly improving performance.
 --
+-- DEPENDENCY: This function requires the database schema to have been
+-- migrated at least up to '004_companies_and_rename.sql', which
+-- defines the 't1_scores_unique_per_interviewee' unique constraint
+-- on the 't1_dimension_scores' table. If an older schema is present,
+-- this function may fail with a unique constraint violation.
+--
 -- Function: public.bulk_upsert_t1_scores(p_scores JSONB)
 -- Parameters:
 --   - p_scores: A JSONB array of t1_dimension_scores objects.
@@ -47,7 +53,7 @@ BEGIN
     item->>'interviewee_type',
     item->>'interviewee_department'
   FROM jsonb_array_elements(p_scores) AS item
-  ON CONFLICT (project_id, dimension_code, subdimension_code, interviewee_id)
+  ON CONFLICT ON CONSTRAINT t1_scores_unique_per_interviewee
   DO UPDATE SET
     score = EXCLUDED.score,
     evidence = EXCLUDED.evidence,

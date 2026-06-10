@@ -43,11 +43,18 @@ export async function createProject(params: {
     p_phase:      params.currentPhase ?? 'listen',
   })
 
-  if (error || !data || (data as ProjectRow[]).length === 0) {
-    throw new Error(`[Projects] createProject: ${error?.message ?? 'No data returned'}`)
+  if (error) {
+    throw new Error(`[Projects] createProject RPC error: ${error.message}`)
   }
 
-  return (data as ProjectRow[])[0]
+  // RPC can return a single object or an array of one. Handle both.
+  const project = Array.isArray(data) ? data[0] : data
+
+  if (!project) {
+    throw new Error('[Projects] createProject: No data returned from RPC.')
+  }
+
+  return project as ProjectRow
 }
 
 // ── Añadir miembro a proyecto ────────────────────────────────

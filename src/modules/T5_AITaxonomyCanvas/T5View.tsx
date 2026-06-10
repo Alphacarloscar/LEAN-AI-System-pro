@@ -28,7 +28,7 @@ export function T5View({
 }: {
   onBack: () => void
 }) {
-  const { canvas, updateDomainScores, syncEngagement: syncT5 } = useT5Store()
+  const { canvas, updateDomainScores, load: loadT5 } = useT5Store()
   const processes                       = useT3Store(s => s.processes)
   const loadT3                          = useT3Store(s => s.load)
   const initT3Demo                      = useT3Store(s => s.initDemo)
@@ -36,10 +36,8 @@ export function T5View({
   const companyName                     = companyProfile.engagementName
   const engagementId                    = useEngagementStore((s) => s.activeEngagementId)
 
-  // F-02: sincronizar canvas con el engagement activo
-  // stable Zustand action — mount-only: sincronizar al cambiar engagement
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { syncT5(engagementId) }, [engagementId])
+  // Hidratar canvas desde Supabase al montar o cambiar de engagement
+  useEffect(() => { void loadT5(engagementId) }, [engagementId])
 
   // Carga T3 si no hay procesos
   useEffect(() => {

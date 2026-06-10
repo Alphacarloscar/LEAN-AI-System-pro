@@ -33,7 +33,12 @@ export function T6View({
   onBack: () => void
 }) {
   const [tab, setTab]    = useState<T6Tab>('politica')
-  const { useCases }     = useT4Store()
+  const {
+    useCases,
+    isLoading:   t4Loading,
+    isLoaded:    t4Loaded,
+    ensureLoaded: ensureT4,
+  }                      = useT4Store()
   const { canvas }       = useT5Store()
   const { syncEngagement: syncT6 } = useT6Store()
   const companyProfile   = useCompanyProfileStore((s) => s.profile)
@@ -43,6 +48,20 @@ export function T6View({
   // stable Zustand action — mount-only: sincronizar al cambiar engagement
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { syncT6(engagementId) }, [engagementId])
+
+  // Cache-first con fallback a BD: si T4 no está cargado al montar T6View,
+  // lo pedimos directamente — sin depender del Dashboard como precargador.
+  useEffect(() => {
+    if (engagementId && !t4Loaded) {
+      void ensureT4(engagementId, { reason: 'T6View-mount' })
+    }
+  // ensureT4 es estable (referencia de store) — no necesita dep
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId, t4Loaded])
+
+  // Solo bloqueamos la UI en el primer ciclo de carga (sin caché).
+  // Si hay datos previos (t4Loaded) hacemos refetch silencioso en bg.
+  const showLoadingShield = t4Loading && !t4Loaded && engagementId !== null
 
   const t6LLMContext = useMemo(() =>
     companyProfile
@@ -90,7 +109,7 @@ export function T6View({
 
       <div className="max-w-[1100px] mx-auto space-y-5 px-8 py-8">
 
-        {/* Tabs */}
+        {/* Tabs — siempre visibles, incluso durante carga */}
         <div className="print:hidden">
           <Tabs
             aria-label="Riesgos y gobernanza"
@@ -103,19 +122,28 @@ export function T6View({
           />
         </div>
 
-        {/* Tab content */}
-        {tab === 'politica'  && <PolicyTab companyName={companyName} engagementId={engagementId} />}
-        {tab === 'riesgos'   && <RiskDashboardTab />}
+        {/* Tab content — spinner solo en primer ciclo sin caché */}
+        {showLoadingShield ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <Spinner size="md" label="Cargando casos de uso…" />
+            <p className="text-xs text-text-muted">Cargando casos de uso desde la base de datos…</p>
+          </div>
+        ) : (
+          <>
+            {tab === 'politica'  && <PolicyTab companyName={companyName} engagementId={engagementId} />}
+            {tab === 'riesgos'   && <RiskDashboardTab />}
 
-        {/* LLM Recommendations */}
-        {t6LLMContext && (
-          <RecommendationPanel
-            tool="t6"
-            title="Análisis de Riesgo y Cumplimiento"
-            subtitle="Recomendaciones de gobernanza basadas en tu exposición AI Act"
-            context={t6LLMContext}
-            engagementId={engagementId}
-          />
+            {/* LLM Recommendations */}
+            {t6LLMContext && (
+              <RecommendationPanel
+                tool="t6"
+                title="Análisis de Riesgo y Cumplimiento"
+                subtitle="Recomendaciones de gobernanza basadas en tu exposición AI Act"
+                context={t6LLMContext}
+                engagementId={engagementId}
+              />
+            )}
+          </>
         )}
       </div>
     </div>
