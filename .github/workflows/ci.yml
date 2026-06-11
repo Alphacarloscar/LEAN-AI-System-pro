@@ -76,7 +76,20 @@ jobs:
       # 🔄 Entorno Local/PR: Si NO estamos en develop, levantamos el servidor dev local
       - name: Start Local Dev Server (Feature Branches / PRs only)
         if: github.ref != 'refs/heads/develop'
-        run: npm run dev &
+        run: |
+          npm run dev &
+          echo "Waiting for Vite to be ready on port 5173..."
+          timeout=30
+          elapsed=0
+          until curl -s http://localhost:5173 > /dev/null 2>&1; do
+            if [ "$elapsed" -ge "$timeout" ]; then
+              echo "ERROR: Dev server did not start within ${timeout}s" >&2
+              exit 1
+            fi
+            sleep 1
+            elapsed=$((elapsed + 1))
+          done
+          echo "Dev server ready after ${elapsed}s"
 
       - name: Run Playwright E2E Tests
         run: npx playwright test
