@@ -298,13 +298,15 @@ export function T10View({ onNavigate }: T10ViewProps) {
         </div>
 
         {t10LLMContext && (
-          <RecommendationPanel
-            tool="t10"
-            title="Recomendaciones IA — Programa de Adopción"
-            subtitle="Generadas por Claude · Visión ejecutiva del programa completo"
-            context={t10LLMContext}
-            engagementId={engagementId}
-          />
+          <div className="mt-8">
+            <RecommendationPanel
+              tool="t10"
+              title="Recomendaciones IA — Programa de Adopción"
+              subtitle="Generadas por Claude · Visión ejecutiva del programa completo"
+              context={t10LLMContext}
+              engagementId={engagementId}
+            />
+          </div>
         )}
       </div>
     </div>

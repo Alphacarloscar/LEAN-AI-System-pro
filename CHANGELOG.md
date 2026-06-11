@@ -7,6 +7,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- [DB] tool_outputs: constraint tool_code_check ampliada a 14 tool codes — fix P0 silencioso donde persistence.saved=false para t1-t11 y t3_opportunities, forzando regenerar recomendaciones al navegar
+- [DB] ai_rate_limit_log: constraint tool_code_check ampliada a 14 tool codes (t1-t11 + t3_opportunities + t6_policy + t7_plan + t8_comms) — constraint anterior solo tenía 7 tool codes del Sprint 6, bloqueaba todas las llamadas nuevas
+- [Edge] ai-recommend: añadidos tool codes t1, t2, t4, t5, t6, t7, t8, t9, t10, t11 a LLM_TOOLS + TOOL_CONFIG — las recomendaciones IA fallaban en todas las herramientas con error 400 "tool no soportado"
+- [Edge] ai-recommend: error 400 por tool no soportado ahora incluye `error_code: unsupported_tool_code` y `valid_tools` para depuración
+- [Edge] ai-recommend: diagnóstico mejorado en rate_limit_check_failed — console.error expone code/details/hint del error Supabase; respuesta 500 incluye error_code, stage, tool, version
+- [Edge] ai-recommend: todas las respuestas de error ahora incluyen `version` para confirmar qué build está desplegado
+
 ### Added (P1 — Refactor Sprint)
 - [Monitoring] Sentry `@sentry/react@10` integrado — error monitoring en DEV/PRE/PRO (ADR-010)
   - `src/lib/sentry.ts` con `initSentry()` — desactivado localmente (`VITE_SENTRY_ENABLED=false`)
@@ -18,11 +26,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - `src/services/t7.service.ts` — `saveChangePlanOutput()`
   - `src/services/t8.service.ts` — `saveCommunicationOutput()`
 - [Tests] 12 nuevos tests — T6/T7/T8 services (4 cada uno, patrón `vi.mock + rpc`)
+- [UX] Componente canónico `BackToDashboard` (`src/shared/components/`) — control único "Volver al dashboard" inline icono+texto. Sustituye 13 variantes hand-rolled dispersas en T1–T9, T11, T12 y CompanyProfile
 
 ### Changed (P1 — Refactor Sprint)
 - [T4] T4View.tsx descompuesto (2386 → ~220 líneas): 9 sub-componentes extraídos a `components/` (ADR-013)
 - [Deps] `xlsx@0.18.5` eliminado — CVE-2023-30533, zero imports en codebase (ADR-012)
 - [Stores] T6/T7/T8 stores: imports directos de Supabase reemplazados por llamadas a services
+- [UX] Normalizado el botón de vuelta al dashboard en 12 vistas: T3 y T4 pasan de botón redondo icon-only a inline texto+icono; T5 y T6 "Volver" → "Volver al dashboard"; unificados icono (16×16), tipografía (text-xs) y tokens de color
 
 ### Added (P2 — Refactor Sprint)
 - [Hooks] `src/hooks/useEdgeFunctionInvoke.ts` — hook genérico para flujos LLM (ADR-014)
