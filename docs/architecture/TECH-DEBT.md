@@ -37,8 +37,9 @@ Los workflows `.github/workflows/ci.yml` y `validate-docs.yml` están creados y 
 ## Items Resueltos
 
 ### ~~DEBT-001~~ — Tests automatizados ✅ (Resuelto parcialmente — 2026-06-02)
-- **Vitest** configurado y funcionando: **281 tests en 20 ficheros pasando** (medido 2026-06-08)
-- Servicios T1-T4, T6, T7, T8 cubiertos (7 service test files)
+- **Vitest** configurado y funcionando: **507+ tests en 33 ficheros pasando** (medido 2026-06-11)
+- **Playwright e2e**: **16 specs** en `e2e/` (architecture-guard + T1-T8 + fixtures)
+- Servicios T1-T4, T6, T7, T8 cubiertos (service test files)
 - Lógica de dominio T1/T4 cubierta (scoring, ROI, AI Act)
 - **Pendiente (DEBT-009)**: algunos módulos sin cobertura — ver DEBT-009
 
@@ -95,6 +96,36 @@ en los cuatro ficheros. Añadida regla ESLint `no-restricted-imports` para imped
 Creado `src/services/department.service.ts` con `fetchDepartments`, `addDepartment`, `deleteDepartment`. Eliminado import `{ supabase }` de `useDepartmentStore`. Comportamiento observable idéntico.
 
 ## Items Activos
+
+### ~~DEBT-013~~ — Auth y Engagement stores importaban supabase directamente (ADR-011) ✅ (Resuelto — 2026-06-11)
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-11 (auditoría forense docs vs. código)
+**Área:** `src/modules/Auth/store.ts`, `src/modules/Engagement/store.ts`
+**Estado:** Resuelto (2026-06-11)
+
+Creado `src/services/auth.service.ts` con `fetchProfile`, `getAuthUserCompanyId`, `getAuthSession`, `subscribeToAuthChanges`, `signInWithPassword`, `signOut`. Los dos stores eliminaron su import de `{ supabase }` y delegan en el servicio. Eliminados también `console.warn`/`console.debug` operativos en Engagement y CompanyProfile stores — sustituidos por `reportError`.
+
+---
+
+### DEBT-014 — Auth views (Login/Reset/UpdatePassword) importan supabase directamente (ADR-011)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-11 (auditoría forense + PR DEBT-013)
+**Área:** `src/modules/Auth/LoginView.tsx`, `src/modules/Auth/ResetPasswordView.tsx`, `src/modules/Auth/UpdatePasswordView.tsx`
+**Estado:** Pendiente
+
+Los tres componentes de Auth views importan `{ supabase }` desde `@/lib/supabase` para llamadas a `supabase.auth.*`. ADR-011 exige que toda llamada pase por servicios. Resolución: extraer las llamadas al `auth.service.ts` creado en DEBT-013.
+
+---
+
+### DEBT-015 — e2e/auth.spec.ts falla: título del app desactualizado
+**Severidad:** 🟢 Baja
+**Detectado:** 2026-06-11 (ejecución Playwright)
+**Área:** `e2e/auth.spec.ts:17`
+**Estado:** Pendiente
+
+La aserción `toHaveTitle(/L\.E\.A\.N\.|AI System/i)` usa el nombre antiguo del producto. El comentario en la misma línea dice "El título real es GOBY". Corrección trivial: cambiar el regex a `/GOBY/i`.
+
+---
 
 ### DEBT-009 — 12/16 módulos sin tests
 **Severidad:** 🟡 Media

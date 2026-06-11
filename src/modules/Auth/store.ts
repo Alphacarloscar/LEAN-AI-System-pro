@@ -13,8 +13,14 @@
 // ============================================================
 
 import { create }        from 'zustand'
-import { supabase }      from '@/lib/supabase'
 import { reportError }   from '@/lib/reportError'
+import {
+  fetchProfile,
+  getAuthSession,
+  subscribeToAuthChanges,
+  signInWithPassword,
+  signOut as authSignOut,
+} from '@/services/auth.service'
 import type { AuthUser } from './types'
 import { useT1Store }    from '@/modules/T1_MaturityRadar/store'
 import { useT2Store }    from '@/modules/T2_StakeholderMatrix/store'
@@ -63,24 +69,8 @@ interface AuthStore {
   clearSessionExpired:  () => void
 }
 
-// ── Helper: carga el perfil extendido desde la tabla profiles ──
-
-async function loadProfile(userId: string): Promise<AuthUser | null> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, email, name, role')
-    .eq('id', userId)
-    .single()
-
-  if (error || !data) return null
-
-  return {
-    id:    data.id,
-    email: data.email,
-    name:  data.name,
-    role:  data.role as AuthUser['role'],
-  }
-}
+// ── Helper local: alias del servicio para mantener el flujo interno ──
+const loadProfile = fetchProfile
 
 // ── Store ──────────────────────────────────────────────────────
 
@@ -126,7 +116,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     }, 5_000)
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await getAuthSession()
       console.debug('[AUTH] initialize:session', session ? 'found' : 'none')
 
       if (session?.user) {
@@ -172,7 +162,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     // para que se ejecute DESPUÉS de que gotrue-js libere el lock.
     // ──────────────────────────────────────────────────────────────────────────
     console.debug('[AUTH] listener:registered')
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = subscribeToAuthChanges((event, session) => {
       console.debug('[AUTH] onAuthStateChange event:', event, '| intentionalSignOut:', _intentionalSignOut)
 
       if (event === 'PASSWORD_RECOVERY') {
@@ -266,10 +256,10 @@ export const useAuthStore = create<AuthStore>()((set) => ({
   login: async (email, password) => {
     set({ error: null })
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email:    email.toLowerCase().trim(),
+    const { data, error } = await signInWithPassword(
+      email.toLowerCase().trim(),
       password,
-    })
+    )
 
     if (error || !data.user) {
       set({ error: 'Credenciales incorrectas. Verifica tu email y contraseña.' })
@@ -282,7 +272,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       // Usuario existe en auth pero no tiene perfil en profiles
       // Puede ocurrir si el trigger handle_new_user falló
       set({ error: 'Perfil de usuario no encontrado. Contacta con el administrador.' })
-      await supabase.auth.signOut()
+      await authSignOut()
       return false
     }
 
@@ -295,7 +285,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     // Marcar que es un sign-out intencional para que el handler de SIGNED_OUT
     // no active el overlay de sesión expirada.
     _intentionalSignOut = true
-    await supabase.auth.signOut()
+    await authSignOut()
     // La limpieza de stores la hace el handler SIGNED_OUT en onAuthStateChange.
     // Solo reseteamos el error y auth state aquí como fallback.
     set({ isAuthenticated: false, user: null, error: null, sessionRecoveryState: 'idle' })

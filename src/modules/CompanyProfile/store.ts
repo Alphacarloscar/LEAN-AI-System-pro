@@ -82,7 +82,7 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
         // Al expirar, conservamos los datos que ya había en el store.
         const timeout = setTimeout(() => {
           if (get().isLoadingData) {
-            console.warn('[CompanyProfileStore] loadProfile timeout — datos anteriores conservados')
+            reportError('[CompanyProfileStore] loadProfile timeout', new Error('isLoadingData safety timeout exceeded'))
             set({ isLoadingData: false, isLoading: get().isSaving })
           }
         }, 10_000)
