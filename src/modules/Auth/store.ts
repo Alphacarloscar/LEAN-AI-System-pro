@@ -256,28 +256,34 @@ export const useAuthStore = create<AuthStore>()((set) => ({
   login: async (email, password) => {
     set({ error: null })
 
-    const { data, error } = await signInWithPassword(
-      email.toLowerCase().trim(),
-      password,
-    )
+    try {
+      const { data, error } = await signInWithPassword(
+        email.toLowerCase().trim(),
+        password,
+      )
 
-    if (error || !data.user) {
-      set({ error: 'Credenciales incorrectas. Verifica tu email y contraseña.' })
+      if (error || !data.user) {
+        set({ error: 'Credenciales incorrectas. Verifica tu email y contraseña.' })
+        return false
+      }
+
+      const profile = await loadProfile(data.user.id)
+
+      if (!profile) {
+        // Usuario existe en auth pero no tiene perfil en profiles
+        // Puede ocurrir si el trigger handle_new_user falló
+        set({ error: 'Perfil de usuario no encontrado. Contacta con el administrador.' })
+        await authSignOut()
+        return false
+      }
+
+      set({ isAuthenticated: true, user: profile, error: null })
+      return true
+    } catch (err) {
+      reportError('[AuthStore] login', err)
+      set({ error: 'Error de conexión. Verifica tu conexión a internet e inténtalo de nuevo.' })
       return false
     }
-
-    const profile = await loadProfile(data.user.id)
-
-    if (!profile) {
-      // Usuario existe en auth pero no tiene perfil en profiles
-      // Puede ocurrir si el trigger handle_new_user falló
-      set({ error: 'Perfil de usuario no encontrado. Contacta con el administrador.' })
-      await authSignOut()
-      return false
-    }
-
-    set({ isAuthenticated: true, user: profile, error: null })
-    return true
   },
 
   // ── logout ───────────────────────────────────────────────────

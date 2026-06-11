@@ -98,12 +98,23 @@ export function LoginView() {
     setLoading(true)
     clearError()
 
-    const ok = await login(email, password)
-    if (ok) {
-      navigate('/', { replace: true })
+    try {
+      const ok = await login(email, password)
+      if (ok) {
+        navigate('/', { replace: true })
+        return
+      }
+    } catch (err) {
+      // login() rechazó inesperadamente (error de red, timeout de Supabase…).
+      // El store puede no haber seteado un mensaje — establecemos uno genérico.
+      // No llamamos reportError aquí porque store.login() ya lo hará.
+      if (!useAuthStore.getState().error) {
+        useAuthStore.setState({ error: 'Error de conexión. Inténtalo de nuevo.' })
+      }
+      console.error('[LoginView] handleSubmit unexpected rejection', err)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   async function handleUpdatePassword(e: FormEvent) {
