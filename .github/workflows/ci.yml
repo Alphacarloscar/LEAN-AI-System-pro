@@ -34,15 +34,13 @@ jobs:
       - name: Unit + Service tests
         run: npm run test
         env:
-          # Vitest usa import.meta.env → en tests está mockeado, pero Vite
-          # necesita estas vars para no lanzar error en módulos no mockeados
           VITE_SUPABASE_URL: https://placeholder.supabase.co
           VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder
 
       - name: Production build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL_PRE || 'https://placeholder.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PRE || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
           VITE_DEMO_ENABLED: 'true'
         run: npm run build
 
@@ -71,6 +69,9 @@ jobs:
     name: Playwright E2E Tests
     runs-on: ubuntu-latest
     needs: ci
+    # 🚨 FILTRO DE SEGURIDAD ABSOLUTO: El trabajo E2E se salta por completo 
+    # si es un push directo o un merge confirmado en la rama de producción (main)
+    if: github.ref != 'refs/heads/main' || github.event_name == 'pull_request'
 
     steps:
       - name: Checkout
@@ -91,10 +92,9 @@ jobs:
       - name: Run E2E tests
         run: npx playwright test
         env:
-          # Base URL para el webServer de Playwright (arranca npm run dev)
           E2E_BASE_URL: http://localhost:5173
-          # Credenciales E2E — configurar en GitHub Actions secrets
-          # Si no se proporcionan, los tests saltan con test.skip(!DEV_PASSWORD, ...)
+
+          # Credenciales de laboratorio PRE — configurar en GitHub Actions secrets
           E2E_EMAIL:                  ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD:               ${{ secrets.E2E_PASSWORD }}
           E2E_SUPERADMIN_EMAIL:       ${{ secrets.E2E_SUPERADMIN_EMAIL }}
@@ -105,9 +105,10 @@ jobs:
           E2E_CLIENT_EDITOR_PASSWORD: ${{ secrets.E2E_CLIENT_EDITOR_PASSWORD }}
           E2E_CLIENT_VIEWER_EMAIL:    ${{ secrets.E2E_CLIENT_VIEWER_EMAIL }}
           E2E_CLIENT_VIEWER_PASSWORD: ${{ secrets.E2E_CLIENT_VIEWER_PASSWORD }}
-          # Supabase vars necesarias para que la app arranque sin errores de módulo
-          VITE_SUPABASE_URL:      ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
+
+          # Conexión a Supabase PRE
+          VITE_SUPABASE_URL:      ${{ secrets.SUPABASE_URL_PRE }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PRE }}
           VITE_DEMO_ENABLED: 'false'
 
       - name: Upload Playwright report
