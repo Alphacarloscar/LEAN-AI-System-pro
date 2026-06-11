@@ -57,6 +57,26 @@ jobs:
     # 🛡️ Seguridad: Bloqueamos la ejecución de E2E en main (PRO) para proteger datos reales de producción
     if: github.ref != 'refs/heads/main' || github.event_name == 'pull_request'
 
+    env:
+      # 🚀 URL DINÁMICA: develop → URL estable PRE en Vercel; resto → servidor dev local
+      E2E_BASE_URL: ${{ github.ref == 'refs/heads/develop' && 'https://gobytech-prod-git-develop-carlos-projects-52e64d02.vercel.app/' || 'http://localhost:5173' }}
+
+      # 🗄️ BASE DE DATOS: siempre apunta a PRE — no hay Supabase local en el runner de CI
+      VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL_PRE }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PRE }}
+
+      # Inyección de credenciales de laboratorio desde los Secretos de GitHub
+      E2E_EMAIL:                  ${{ secrets.E2E_EMAIL }}
+      E2E_PASSWORD:               ${{ secrets.E2E_PASSWORD }}
+      E2E_SUPERADMIN_EMAIL:       ${{ secrets.E2E_SUPERADMIN_EMAIL }}
+      E2E_SUPERADMIN_PASSWORD:    ${{ secrets.E2E_SUPERADMIN_PASSWORD }}
+      E2E_CONSULTANT_EMAIL:       ${{ secrets.E2E_CONSULTANT_EMAIL }}
+      E2E_CONSULTANT_PASSWORD:    ${{ secrets.E2E_CONSULTANT_PASSWORD }}
+      E2E_CLIENT_EDITOR_EMAIL:    ${{ secrets.E2E_CLIENT_EDITOR_EMAIL }}
+      E2E_CLIENT_EDITOR_PASSWORD: ${{ secrets.E2E_CLIENT_EDITOR_PASSWORD }}
+      E2E_CLIENT_VIEWER_EMAIL:    ${{ secrets.E2E_CLIENT_VIEWER_EMAIL }}
+      E2E_CLIENT_VIEWER_PASSWORD: ${{ secrets.E2E_CLIENT_VIEWER_PASSWORD }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -93,25 +113,6 @@ jobs:
 
       - name: Run Playwright E2E Tests
         run: npx playwright test
-        env:
-          # 🚀 URL DINÁMICA: Si es develop apunta a la URL estable de la rama PRE en Vercel; si es PR local, a localhost
-          E2E_BASE_URL: ${{ github.ref == 'refs/heads/develop' && 'https://gobytech-prod-git-develop-carlos-projects-52e64d02.vercel.app/' || 'http://localhost:5173' }}
-
-          # 🗄️ BASE DE DATOS: siempre apunta a PRE — no hay Supabase local en el runner de CI
-          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL_PRE }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PRE }}
-
-          # Inyección de credenciales de laboratorio desde los Secretos de GitHub
-          E2E_EMAIL:                  ${{ secrets.E2E_EMAIL }}
-          E2E_PASSWORD:               ${{ secrets.E2E_PASSWORD }}
-          E2E_SUPERADMIN_EMAIL:       ${{ secrets.E2E_SUPERADMIN_EMAIL }}
-          E2E_SUPERADMIN_PASSWORD:    ${{ secrets.E2E_SUPERADMIN_PASSWORD }}
-          E2E_CONSULTANT_EMAIL:       ${{ secrets.E2E_CONSULTANT_EMAIL }}
-          E2E_CONSULTANT_PASSWORD:    ${{ secrets.E2E_CONSULTANT_PASSWORD }}
-          E2E_CLIENT_EDITOR_EMAIL:    ${{ secrets.E2E_CLIENT_EDITOR_EMAIL }}
-          E2E_CLIENT_EDITOR_PASSWORD: ${{ secrets.E2E_CLIENT_EDITOR_PASSWORD }}
-          E2E_CLIENT_VIEWER_EMAIL:    ${{ secrets.E2E_CLIENT_VIEWER_EMAIL }}
-          E2E_CLIENT_VIEWER_PASSWORD: ${{ secrets.E2E_CLIENT_VIEWER_PASSWORD }}
 
       # 📦 Persistencia: Si algún test E2E falla, guardamos el reporte para depuración
       - name: Upload Playwright Test Report on Failure
