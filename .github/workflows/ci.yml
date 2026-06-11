@@ -97,9 +97,9 @@ jobs:
           # 🚀 URL DINÁMICA: Si es develop apunta a la URL estable de la rama PRE en Vercel; si es PR local, a localhost
           E2E_BASE_URL: ${{ github.ref == 'refs/heads/develop' && 'https://gobytech-prod-git-develop-carlos-projects-52e64d02.vercel.app/' || 'http://localhost:5173' }}
 
-          # 🗄️ BASE DE DATOS DINÁMICA: develop ataca a PRE real; las ramas locales usan el contenedor local
-          VITE_SUPABASE_URL: ${{ github.ref == 'refs/heads/develop' && secrets.SUPABASE_URL_PRE || 'http://127.0.0.1:54321' }}
-          VITE_SUPABASE_ANON_KEY: ${{ github.ref == 'refs/heads/develop' && secrets.SUPABASE_ANON_KEY_PRE || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.localplaceholder' }}
+          # 🗄️ BASE DE DATOS: siempre apunta a PRE — no hay Supabase local en el runner de CI
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL_PRE }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PRE }}
 
           # Inyección de credenciales de laboratorio desde los Secretos de GitHub
           E2E_EMAIL:                  ${{ secrets.E2E_EMAIL }}
