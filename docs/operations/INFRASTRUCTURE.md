@@ -27,10 +27,8 @@ AI-Ready Repository System v2.1.0
 |----------|---------|-------------|
 | `VITE_SUPABASE_URL` | Production | URL del proyecto Supabase PRO |
 | `VITE_SUPABASE_ANON_KEY` | Production | Clave anon pública del proyecto Supabase PRO |
-| `VITE_DEMO_ENABLED` | Production | `false` — siempre datos reales en PRO |
 | `VITE_SUPABASE_URL` | Preview | URL del proyecto Supabase DEV |
 | `VITE_SUPABASE_ANON_KEY` | Preview | Clave anon pública del proyecto Supabase DEV |
-| `VITE_DEMO_ENABLED` | Preview | `true` — datos demo en PRE |
 
 > No existe `VITE_CLAUDE_API_KEY` activa en el cliente — la Claude API key se gestiona como secret de Supabase Edge Functions, no como variable de Vite.
 

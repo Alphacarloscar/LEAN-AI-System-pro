@@ -2,8 +2,7 @@
 // GOBY — App root (Sprint 10)
 //
 // Sprint 10: Erradicación nuclear de DemoContext.
-//   — DemoContext eliminado. VITE_DEMO_ENABLED=false en staging.
-//   — Cada View lee companyName directamente de CompanyProfileStore.
+//   — DemoContext eliminado. Cada View lee companyName directamente de CompanyProfileStore.
 //   — T10RouteView pasa solo onNavigate; T10View se autoabastece.
 //   — ProjectRuntimeProvider orquesta el contexto base de proyecto.
 // ============================================================

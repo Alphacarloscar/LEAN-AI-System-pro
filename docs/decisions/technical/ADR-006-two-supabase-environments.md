@@ -24,8 +24,6 @@ Rama `main` → proyecto PRO → lean-ai.consultoriaalpha.com
 Rama `develop` → proyecto DEV → Vercel preview automático
 Local → proyecto DEV (mismas credenciales que develop)
 
-`VITE_DEMO_ENABLED=true` en el proyecto DEV activa modo demo con datos simulados.
-
 ## Alternatives considered
 
 | Option | Pros | Cons | Why rejected |
@@ -42,7 +40,7 @@ Local → proyecto DEV (mismas credenciales que develop)
 - Datos de producción nunca se mezclan con datos de desarrollo
 - Auth separada: usuarios de prueba no aparecen en el panel PRO
 - Edge Functions se pueden probar en DEV antes de deployar en PRO
-- `VITE_DEMO_ENABLED` permite a DEV mostrar datos demo a potenciales clientes
+- PRE/DEV opera siempre contra datos sintéticos del proyecto Supabase de desarrollo
 
 ### Negative / Trade-offs accepted
 - Las migraciones SQL deben aplicarse en AMBOS proyectos (DEV primero, PRO después de validar)
