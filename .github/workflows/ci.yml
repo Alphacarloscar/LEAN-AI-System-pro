@@ -38,6 +38,8 @@ jobs:
         run: npm run test
         env:
           NODE_ENV: test
+          VITE_SUPABASE_URL: https://placeholder-ci-test.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder-ci-test
 
       - name: Production Build Verification
         run: npm run build
