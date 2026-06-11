@@ -15,7 +15,7 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate }         from 'react-router-dom'
-import { supabase }            from '@/lib/supabase'
+import { getAuthSession, subscribeToAuthChanges, updateAuthUser } from '@services/auth.service'
 import { useAuthStore }        from './store'
 import { Spinner }             from '@shared/design-system/components'
 
@@ -60,12 +60,12 @@ export function ResetPasswordView() {
   // además de escuchar eventos futuros.
   useEffect(() => {
     // Comprobación inmediata — cubre el caso de token ya procesado
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getAuthSession().then(({ data: { session } }) => {
       if (session) setViewState('form')
     })
 
     // Listener para eventos que llegan mientras el componente ya está montado
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = subscribeToAuthChanges((event) => {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         setViewState('form')
       }
@@ -97,7 +97,7 @@ export function ResetPasswordView() {
 
     setSubmitting(true)
     // Actualiza contraseña Y borra el metadato needs_password_reset en auth.users
-    const { error: updateError } = await supabase.auth.updateUser({
+    const { error: updateError } = await updateAuthUser({
       password,
       data: { needs_password_reset: false },
     })

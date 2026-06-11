@@ -80,3 +80,13 @@ export async function signInWithPassword(email: string, password: string) {
 export async function signOut() {
   return supabase.auth.signOut()
 }
+
+/** Envía email de recuperación de contraseña con enlace de redirección opcional. */
+export async function resetPasswordForEmail(email: string, options?: { redirectTo?: string }) {
+  return supabase.auth.resetPasswordForEmail(email, options)
+}
+
+/** Actualiza atributos del usuario autenticado (contraseña, metadata user_metadata, etc.). */
+export async function updateAuthUser(attributes: { password?: string; data?: Record<string, unknown> }) {
+  return supabase.auth.updateUser(attributes)
+}

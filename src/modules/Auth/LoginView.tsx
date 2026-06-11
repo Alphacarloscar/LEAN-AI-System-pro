@@ -6,10 +6,10 @@
 // ============================================================
 
 import { useState, useEffect, FormEvent } from 'react'
-import { useNavigate }                    from 'react-router-dom'
-import { useAuthStore }                   from './store'
-import { supabase }                       from '@/lib/supabase'
-import { AlphaLogo }                      from '@/shared/components/AlphaLogo'
+import { useNavigate }                          from 'react-router-dom'
+import { useAuthStore }                         from './store'
+import { subscribeToAuthChanges, resetPasswordForEmail, updateAuthUser } from '@services/auth.service'
+import { AlphaLogo }                            from '@/shared/components/AlphaLogo'
 import { Spinner }                        from '@shared/design-system/components'
 
 // ── Campo de formulario ───────────────────────────────────────
@@ -73,7 +73,7 @@ export function LoginView() {
 
   // Detectar evento PASSWORD_RECOVERY de Supabase (llega al abrir el enlace del email)
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = subscribeToAuthChanges((event) => {
       if (event === 'PASSWORD_RECOVERY') setIsRecovery(true)
     })
     return () => subscription.unsubscribe()
@@ -85,7 +85,7 @@ export function LoginView() {
     setLoading(true)
     setForgotError('')
     const redirectTo = `${window.location.origin}/reset-password`
-    const { error: err } = await supabase.auth.resetPasswordForEmail(forgotEmail, { redirectTo })
+    const { error: err } = await resetPasswordForEmail(forgotEmail, { redirectTo })
     setLoading(false)
     if (err) { setForgotError(err.message); return }
     setForgotSent(true)
@@ -112,7 +112,7 @@ export function LoginView() {
     if (newPass.length < 6) { setRecError('La contraseña debe tener al menos 6 caracteres.'); return }
     if (newPass !== newPass2) { setRecError('Las contraseñas no coinciden.'); return }
     setLoading(true)
-    const { error: err } = await supabase.auth.updateUser({ password: newPass })
+    const { error: err } = await updateAuthUser({ password: newPass })
     setLoading(false)
     if (err) { setRecError(err.message); return }
     setRecOk(true)

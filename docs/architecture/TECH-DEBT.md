@@ -132,13 +132,13 @@ Creado `src/services/auth.service.ts` con `fetchProfile`, `getAuthUserCompanyId`
 
 ---
 
-### DEBT-014 — Auth views (Login/Reset/UpdatePassword) importan supabase directamente (ADR-011)
+### ~~DEBT-014~~ — Auth views (Login/Reset/UpdatePassword) importan supabase directamente (ADR-011) ✅ (Resuelto — 2026-06-11)
 **Severidad:** 🟡 Media
 **Detectado:** 2026-06-11 (auditoría forense + PR DEBT-013)
 **Área:** `src/modules/Auth/LoginView.tsx`, `src/modules/Auth/ResetPasswordView.tsx`, `src/modules/Auth/UpdatePasswordView.tsx`
-**Estado:** Pendiente
+**Estado:** Resuelto (2026-06-11)
 
-Los tres componentes de Auth views importan `{ supabase }` desde `@/lib/supabase` para llamadas a `supabase.auth.*`. ADR-011 exige que toda llamada pase por servicios. Resolución: extraer las llamadas al `auth.service.ts` creado en DEBT-013.
+Añadidos `resetPasswordForEmail` y `updateAuthUser` a `auth.service.ts`. Los tres archivos de vista eliminaron `import { supabase }` y delegan en el servicio mediante `subscribeToAuthChanges`, `getAuthSession`, `resetPasswordForEmail` y `updateAuthUser`. `tsc --noEmit` → 0 errores.
 
 ---
 
