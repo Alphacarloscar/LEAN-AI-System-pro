@@ -17,7 +17,7 @@ function rowToCanvas(row: T5CanvasRow): T5Canvas {
     companyName:        row.company_name,
     createdAt:          row.created_at,
     updatedAt:          row.updated_at,
-    domains:            (row.domains ?? {}) as Record<T5DomainCode, T5DomainAssessment>,
+    domains:            (row.domains ?? {}) as unknown as Record<T5DomainCode, T5DomainAssessment>,
     maturityLevel:      row.maturity_level as T5MaturityLevel,
     activationSequence: (row.activation_sequence ?? []) as T5DomainCode[],
     notes:              row.notes ?? undefined,
@@ -40,7 +40,7 @@ export async function getT5Canvas(projectId: string): Promise<T5Canvas | null> {
 
 /** Inserta o actualiza el canvas T5 de un proyecto (upsert por project_id). */
 export async function upsertT5Canvas(projectId: string, canvas: T5Canvas): Promise<void> {
-  const row: T5CanvasInsert & { updated_at: string } = {
+  const row: T5CanvasInsert = {
     project_id:          projectId,
     company_name:        canvas.companyName,
     domains:             canvas.domains as unknown as Json,

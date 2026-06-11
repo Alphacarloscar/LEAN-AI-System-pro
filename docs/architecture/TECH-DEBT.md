@@ -142,13 +142,36 @@ Los tres componentes de Auth views importan `{ supabase }` desde `@/lib/supabase
 
 ---
 
-### DEBT-015 — e2e/auth.spec.ts falla: título del app desactualizado
+### ~~DEBT-016~~ — T6View.tsx: `<Spinner>` usado sin importar ✅ (Resuelto — 2026-06-11)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-11 (tsc --noEmit)
+**Área:** `src/modules/T6_RiskGovernance/T6View.tsx:133`
+**Estado:** Resuelto (2026-06-11)
+
+`Spinner` estaba referenciado en el JSX pero ausente del `import { Tabs, Badge, ToolHeader }` de `@shared/design-system/components`. Introducido en la refactorización de P2 (refactor-AI-SOS) cuando se añadió el loading shield. Resuelto añadiendo `Spinner` al import existente.
+
+---
+
+### ~~DEBT-017~~ — database.types.ts desincronizado: `tool_outputs` y `bulk_upsert_t1_scores` ausentes ✅ (Resuelto — 2026-06-11)
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-11 (tsc --noEmit)
+**Área:** `src/types/database.types.ts`, `src/services/t1.service.ts`, `src/services/t5.service.ts`, `src/services/t6.service.ts`
+**Estado:** Resuelto (2026-06-11)
+
+El archivo de tipos se mantenía manualmente y había quedado desincronizado respecto al schema real de Supabase (verificado contra `npx supabase gen types --local`). Tres problemas resueltos en una sola sesión:
+1. `tool_outputs` table no registrada → error en `t6.service.ts` `supabase.from('tool_outputs')`. Resuelto: añadidos `ToolOutputRow`, `ToolOutputInsert` y la entrada en `Database.Tables`.
+2. `bulk_upsert_t1_scores` RPC no registrada → error en `t1.service.ts` `supabase.rpc(...)`. Resuelto: añadida en `Database.Functions`.
+3. `T5CanvasInsert` excluía `updated_at` explícitamente → `RejectExcessProperties` de Supabase rechazaba el upsert. Resuelto: añadido `updated_at?: string` a `T5CanvasInsert` y simplificado el tipo del `row` en `t5.service.ts`. Además corregido cast inseguro `as Record<...>` → `as unknown as Record<...>` en `rowToCanvas()`.
+
+---
+
+### ~~DEBT-015~~ — e2e/auth.spec.ts falla: título del app desactualizado ✅ (Resuelto — 2026-06-11)
 **Severidad:** 🟢 Baja
 **Detectado:** 2026-06-11 (ejecución Playwright)
 **Área:** `e2e/auth.spec.ts:17`
-**Estado:** Pendiente
+**Estado:** Resuelto (2026-06-11)
 
-La aserción `toHaveTitle(/L\.E\.A\.N\.|AI System/i)` usa el nombre antiguo del producto. El comentario en la misma línea dice "El título real es GOBY". Corrección trivial: cambiar el regex a `/GOBY/i`.
+La aserción `toHaveTitle(/L\.E\.A\.N\.|AI System/i)` usaba el nombre antiguo del producto. Corregido a `/GOBY/i`.
 
 ---
 

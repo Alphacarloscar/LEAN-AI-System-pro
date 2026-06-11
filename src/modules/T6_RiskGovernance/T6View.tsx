@@ -19,7 +19,7 @@ import { buildT6RecommendationContext } from './t6ContextBuilder'
 import { PhaseMiniMap }          from '@/shared/components/PhaseMiniMap'
 import { PolicyTab }             from './components/PolicyTab'
 import { RiskDashboardTab }      from './components/RiskDashboardTab'
-import { Tabs, Badge, ToolHeader } from '@shared/design-system/components'
+import { Tabs, Badge, ToolHeader, Spinner } from '@shared/design-system/components'
 
 // ── Types ─────────────────────────────────────────────────────
 
