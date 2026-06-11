@@ -8,7 +8,7 @@
 // ============================================================
 
 import { supabase } from '@/lib/supabase'
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
+import type { AuthChangeEvent, Session } from '@/lib/supabase'
 import type { AuthUser } from '@/modules/Auth/types'
 
 type AuthStateCallback = (event: AuthChangeEvent, session: Session | null) => void | Promise<void>

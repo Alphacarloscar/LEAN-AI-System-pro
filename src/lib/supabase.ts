@@ -22,3 +22,5 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: { persistSession: true },
 })
+
+export type { AuthChangeEvent, Session } from '@supabase/supabase-js'
