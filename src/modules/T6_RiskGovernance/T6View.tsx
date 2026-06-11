@@ -40,7 +40,7 @@ export function T6View({
     ensureLoaded: ensureT4,
   }                      = useT4Store()
   const { canvas }       = useT5Store()
-  const { syncEngagement: syncT6 } = useT6Store()
+  const { syncEngagement: syncT6, loadPolicyFromDb } = useT6Store()
   const companyProfile   = useCompanyProfileStore((s) => s.profile)
   const companyName      = companyProfile.engagementName
   const engagementId     = useEngagementStore((s) => s.activeEngagementId)
@@ -48,6 +48,11 @@ export function T6View({
   // stable Zustand action — mount-only: sincronizar al cambiar engagement
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { syncT6(engagementId) }, [engagementId])
+
+  // Cache-first fallback: carga política desde BD si el store local está vacío
+  // (primer acceso en este dispositivo o tras limpiar localStorage).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (engagementId) void loadPolicyFromDb(engagementId) }, [engagementId])
 
   // Cache-first con fallback a BD: si T4 no está cargado al montar T6View,
   // lo pedimos directamente — sin depender del Dashboard como precargador.

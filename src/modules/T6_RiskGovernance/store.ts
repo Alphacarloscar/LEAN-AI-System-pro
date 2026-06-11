@@ -11,7 +11,7 @@
 
 import { create }    from 'zustand'
 import { persist }   from 'zustand/middleware'
-import { savePolicyOutput } from '@/services/t6.service'
+import { savePolicyOutput, fetchPolicyFromDb } from '@/services/t6.service'
 import { reportError } from '@/lib/reportError'
 import type { ISO42001Control, ISO42001Status, GeneratedPolicyContent } from './types'
 import { ISO42001_BASE_CONTROLS } from './constants'
@@ -46,6 +46,8 @@ interface T6Store {
   saveGeneratedPolicy: (policy: GeneratedPolicyContent) => void
   clearGeneratedPolicy: () => void
   setPolicyGenerating: (value: boolean) => void
+  // Carga inicial desde Supabase (cache-first fallback tras F5 o primer acceso)
+  loadPolicyFromDb:    (projectId: string) => Promise<void>
   // Persistencia en Supabase
   persistenceStatus:   PersistenceStatus
   persistenceError:    string | null
@@ -97,6 +99,17 @@ export const useT6Store = create<T6Store>()(
 
       setPolicyGenerating: (value) =>
         set({ isPolicyGenerating: value }),
+
+      // ── Carga inicial desde DB ──
+      loadPolicyFromDb: async (projectId) => {
+        if (get().generatedPolicy !== null) return
+        try {
+          const policy = await fetchPolicyFromDb(projectId)
+          if (policy) set({ generatedPolicy: policy })
+        } catch (err) {
+          reportError('[T6Store] loadPolicyFromDb', err)
+        }
+      },
 
       // ── Persistencia ──
       persistenceStatus: 'idle',

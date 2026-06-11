@@ -16,6 +16,7 @@ import {
   listAllUsers,
   deleteUser,
   listCompanyProjects,
+  updateCompanySettings,
 } from '@/services/companies.service'
 import type { CompanyRow } from '@/types/database.types'
 
@@ -364,5 +365,52 @@ describe('listCompanyProjects', () => {
     vi.mocked(supabase.from).mockReturnValue(mockChain as never)
 
     await expect(listCompanyProjects('comp-001')).rejects.toThrow('[Companies] listCompanyProjects:')
+  })
+})
+
+// ── updateCompanySettings ─────────────────────────────────────────
+
+describe('updateCompanySettings', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('llama a update con sector y company_size filtrado por company_id', async () => {
+    const mockChain = {
+      update: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockResolvedValue({ error: null }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    await updateCompanySettings('company-abc', { sector: 'technology', company_size: '201-500' })
+
+    expect(supabase.from).toHaveBeenCalledWith('companies')
+    expect(mockChain.update).toHaveBeenCalledWith({
+      sector:       'technology',
+      company_size: '201-500',
+    })
+    expect(mockChain.eq).toHaveBeenCalledWith('id', 'company-abc')
+  })
+
+  it('no lanza si error es null (happy path)', async () => {
+    const mockChain = {
+      update: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockResolvedValue({ error: null }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    await expect(
+      updateCompanySettings('company-abc', { sector: 'finance', company_size: '51-200' }),
+    ).resolves.toBeUndefined()
+  })
+
+  it('lanza error con prefijo [Companies] si Supabase falla', async () => {
+    const mockChain = {
+      update: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockResolvedValue({ error: { message: 'RLS policy violated' } }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    await expect(
+      updateCompanySettings('company-abc', { sector: 'retail', company_size: '1-10' }),
+    ).rejects.toThrow('[Companies] updateCompanySettings:')
   })
 })

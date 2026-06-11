@@ -24,6 +24,18 @@ import {
 import { logTrace }    from '@/lib/loadTrace'
 import { reportError } from '@/lib/reportError'
 
+// ── Debounce helper (protección contra ametralladora de llamadas) ─
+const updateTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+function debounceUpdate(key: string, fn: () => void, ms: number): void {
+  const existing = updateTimers.get(key)
+  if (existing) clearTimeout(existing)
+  updateTimers.set(key, setTimeout(() => {
+    fn()
+    updateTimers.delete(key)
+  }, ms))
+}
+
 const STALE_MS = 5 * 60_000
 
 // ── Generador de ID local ────────────────────────────────────
@@ -151,9 +163,12 @@ export const useT4Store = create<T4Store>()(
 
         const { engagementId } = get()
         if (engagementId) {
-          updateUseCaseInDb(id, engagementId, updates).catch((err) =>
-            reportError('[T4Store] updateUseCase sync', err)
-          )
+          const key = `t4::${engagementId}::${id}`
+          debounceUpdate(key, () => {
+            updateUseCaseInDb(id, engagementId, updates).catch((err) =>
+              reportError('[T4Store] updateUseCase sync', err)
+            )
+          }, 500)
         }
       },
 

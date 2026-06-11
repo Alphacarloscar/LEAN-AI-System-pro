@@ -24,3 +24,26 @@ export async function savePolicyOutput(
   })
   if (error) throw new Error(`[T6] savePolicyOutput: ${error.message}`)
 }
+
+/**
+ * Cache-First fallback: consulta tool_outputs en Supabase cuando el store
+ * (localStorage) está vacío — por ejemplo, tras un F5 o primer acceso.
+ * Retorna null si el proyecto aún no tiene política generada.
+ */
+export async function fetchPolicyFromDb(
+  projectId: string,
+): Promise<GeneratedPolicyContent | null> {
+  const { data, error } = await supabase
+    .from('tool_outputs')
+    .select('payload')
+    .eq('project_id', projectId)
+    .eq('tool_code', TOOL_CODE)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw new Error(`[T6] fetchPolicyFromDb: ${error.message}`)
+  if (!data) return null
+  return (data as { payload: unknown }).payload as GeneratedPolicyContent
+}

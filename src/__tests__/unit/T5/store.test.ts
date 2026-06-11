@@ -5,6 +5,14 @@ import type { T5DomainScores } from '@/modules/T5_AITaxonomyCanvas/types'
 // Mock isDemoEnabled so the store initialises with empty canvas (no demo data)
 vi.mock('@/lib/config', () => ({ isDemoEnabled: false }))
 
+// Mock t5.service so load() never touches Supabase in unit tests
+vi.mock('@/services/t5.service', () => ({
+  getT5Canvas:    vi.fn(),
+  upsertT5Canvas: vi.fn(),
+}))
+
+import { getT5Canvas } from '@/services/t5.service'
+
 const ZERO_SCORES: T5DomainScores = {
   businessValue: 0,
   technicalReady: 0,
@@ -107,35 +115,46 @@ describe('useT5Store — updateDomainScores', () => {
   })
 })
 
-// ── syncEngagement ────────────────────────────────────────────
+// ── load ──────────────────────────────────────────────────────
+// syncEngagement fue eliminado del store (Sprint 10).
+// La misma semántica vive ahora en load(): setea engagementId,
+// descarga el canvas desde Supabase y hace early-return cuando
+// el proyecto ya está cargado.
 
-describe('useT5Store — syncEngagement', () => {
+describe('useT5Store — load', () => {
   beforeEach(() => {
-    useT5Store.setState({ engagementId: null })
+    vi.clearAllMocks()
+    vi.mocked(getT5Canvas).mockResolvedValue(null)
+    useT5Store.setState({ engagementId: null, isLoading: false, loadError: null })
     useT5Store.getState().resetCanvas()
   })
 
-  it('sincroniza el engagementId si es distinto', () => {
-    useT5Store.setState({ engagementId: 'old-id' })
-    useT5Store.getState().syncEngagement('new-id')
+  it('actualiza engagementId tras cargar un nuevo projectId', async () => {
+    await useT5Store.getState().load('new-id')
     expect(useT5Store.getState().engagementId).toBe('new-id')
   })
 
-  it('limpia el canvas si el engagement cambia', () => {
+  it('resetea el canvas al cambiar de engagement', async () => {
     useT5Store.setState({ engagementId: 'old-id' })
     useT5Store.getState().updateDomainScores('automatizacion_rpa', HIGH_SCORES)
-    useT5Store.getState().syncEngagement('new-id')
+    await useT5Store.getState().load('new-id')
     const domain = useT5Store.getState().canvas.domains['automatizacion_rpa']
     expect(domain.priorityScore).toBe(0)
   })
 
-  it('NO limpia el canvas si el engagement es el mismo', () => {
-    useT5Store.setState({ engagementId: 'same-id' })
+  it('NO recarga si el engagement es el mismo y el canvas ya está cargado', async () => {
+    // Forzar canvas.id no vacío para que se cumpla la condición de early-return
+    useT5Store.setState({
+      engagementId: 'same-id',
+      isLoading:    false,
+      canvas:       { ...useT5Store.getState().canvas, id: 'existing-canvas' },
+    })
     useT5Store.getState().updateDomainScores('automatizacion_rpa', HIGH_SCORES)
     const scoreBefore = useT5Store.getState().canvas.domains['automatizacion_rpa'].priorityScore
-    useT5Store.getState().syncEngagement('same-id')
+    await useT5Store.getState().load('same-id')
     const scoreAfter = useT5Store.getState().canvas.domains['automatizacion_rpa'].priorityScore
     expect(scoreAfter).toBe(scoreBefore)
+    expect(getT5Canvas).not.toHaveBeenCalled()
   })
 })
 

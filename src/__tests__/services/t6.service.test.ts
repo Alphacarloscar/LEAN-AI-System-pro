@@ -1,11 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/lib/supabase', () => ({
-  supabase: { rpc: vi.fn() },
+  supabase: {
+    rpc:  vi.fn(),
+    from: vi.fn(),
+  },
 }))
 
-import { supabase }          from '@/lib/supabase'
-import { savePolicyOutput }  from '@/services/t6.service'
+import { supabase }               from '@/lib/supabase'
+import { savePolicyOutput, fetchPolicyFromDb } from '@/services/t6.service'
 import type { GeneratedPolicyContent } from '@/modules/T6_RiskGovernance/types'
 
 const PROJECT_ID = 'proj-t6-test'
@@ -23,6 +26,8 @@ function makePolicy(overrides = {}): GeneratedPolicyContent {
     ...overrides,
   } as unknown as GeneratedPolicyContent
 }
+
+// ── savePolicyOutput ──────────────────────────────────────────
 
 describe('savePolicyOutput', () => {
   beforeEach(() => vi.clearAllMocks())
@@ -65,5 +70,101 @@ describe('savePolicyOutput', () => {
   it('no lanza si rpc tiene error null', async () => {
     vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never)
     await expect(savePolicyOutput(PROJECT_ID, makePolicy())).resolves.toBeUndefined()
+  })
+})
+
+// ── fetchPolicyFromDb — Cache-First con Fallback a BD ─────────
+
+describe('fetchPolicyFromDb', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('cache vacía (F5) → dispara SELECT limpio a tool_outputs y retorna la política', async () => {
+    const storedPayload = makePolicy({ sector: 'manufactura' })
+    const mockChain = {
+      select:      vi.fn().mockReturnThis(),
+      eq:          vi.fn().mockReturnThis(),
+      order:       vi.fn().mockReturnThis(),
+      limit:       vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: { payload: storedPayload }, error: null }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const result = await fetchPolicyFromDb(PROJECT_ID)
+
+    expect(supabase.from).toHaveBeenCalledWith('tool_outputs')
+    expect(mockChain.select).toHaveBeenCalledWith('payload')
+    expect(mockChain.eq).toHaveBeenCalledWith('project_id', PROJECT_ID)
+    expect(mockChain.eq).toHaveBeenCalledWith('tool_code', 't6_policy')
+    expect(mockChain.eq).toHaveBeenCalledWith('status', 'active')
+    expect(result).toEqual(storedPayload)
+  })
+
+  it('retorna null si el proyecto aún no tiene política generada', async () => {
+    const mockChain = {
+      select:      vi.fn().mockReturnThis(),
+      eq:          vi.fn().mockReturnThis(),
+      order:       vi.fn().mockReturnThis(),
+      limit:       vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const result = await fetchPolicyFromDb(PROJECT_ID)
+
+    expect(result).toBeNull()
+  })
+
+  it('lanza error con prefijo [T6] ante fallo de red o error PGRST de esquema', async () => {
+    const mockChain = {
+      select:      vi.fn().mockReturnThis(),
+      eq:          vi.fn().mockReturnThis(),
+      order:       vi.fn().mockReturnThis(),
+      limit:       vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data:  null,
+        error: { message: 'PGRST204: column "payload" not found' },
+      }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    await expect(fetchPolicyFromDb(PROJECT_ID)).rejects.toThrow('[T6] fetchPolicyFromDb:')
+  })
+
+  it('ordena por created_at DESC y limita a 1 (última política activa)', async () => {
+    const mockChain = {
+      select:      vi.fn().mockReturnThis(),
+      eq:          vi.fn().mockReturnThis(),
+      order:       vi.fn().mockReturnThis(),
+      limit:       vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    await fetchPolicyFromDb(PROJECT_ID)
+
+    expect(mockChain.order).toHaveBeenCalledWith('created_at', { ascending: false })
+    expect(mockChain.limit).toHaveBeenCalledWith(1)
+  })
+
+  it('no lee ni escribe en localStorage directamente (aislamiento total)', async () => {
+    const mockChain = {
+      select:      vi.fn().mockReturnThis(),
+      eq:          vi.fn().mockReturnThis(),
+      order:       vi.fn().mockReturnThis(),
+      limit:       vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const getSpy = vi.spyOn(Storage.prototype, 'getItem')
+    const setSpy = vi.spyOn(Storage.prototype, 'setItem')
+
+    await fetchPolicyFromDb(PROJECT_ID)
+
+    expect(getSpy).not.toHaveBeenCalled()
+    expect(setSpy).not.toHaveBeenCalled()
+
+    getSpy.mockRestore()
+    setSpy.mockRestore()
   })
 })
