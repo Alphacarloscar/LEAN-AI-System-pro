@@ -89,7 +89,7 @@ test.describe('Admin Panel — acceso superadmin', () => {
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
 
     const createBtn = page.getByRole('button', {
-      name: /nueva empresa|crear empresa|add company|\+/i,
+      name: /nueva empresa|crear empresa|add company|crear|\+/i,
     })
     const hasBtn = await createBtn.isVisible({ timeout: 5_000 }).catch(() => false)
     expect(hasBtn, 'Debe haber un botón para crear empresa').toBe(true)

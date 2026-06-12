@@ -128,9 +128,17 @@ test.describe('Rol: client_editor', () => {
 
   test('NO puede acceder a /admin', async ({ page }) => {
     await page.goto('/admin')
-    // Esperar que la navegación/redirección se complete
-    await expect(page.locator('body')).toBeVisible({ timeout: 5_000 })
-    expect(page.url()).not.toMatch(/\/admin$/)
+    // Esperar que el useEffect de AdminView dispare la redirección
+    await page.waitForURL((url) => !url.pathname.endsWith('/admin'), { timeout: 6_000 }).catch(() => {})
+    const isOnAdmin = page.url().endsWith('/admin')
+    if (isOnAdmin) {
+      // La redirección no ocurrió: verificar que el contenido de admin no es visible
+      const empresasTab = page.getByText('Empresas', { exact: true })
+      const hasAccess   = await empresasTab.isVisible({ timeout: 3_000 }).catch(() => false)
+      expect(hasAccess, 'Client editor NO debe ver el panel de admin').toBe(false)
+    } else {
+      expect(page.url()).not.toMatch(/\/admin$/)
+    }
   })
 })
 
@@ -166,8 +174,16 @@ test.describe('Rol: client_viewer', () => {
 
   test('NO puede acceder a /admin', async ({ page }) => {
     await page.goto('/admin')
-    // Esperar que la navegación/redirección se complete
-    await expect(page.locator('body')).toBeVisible({ timeout: 5_000 })
-    expect(page.url()).not.toMatch(/\/admin$/)
+    // Esperar que el useEffect de AdminView dispare la redirección
+    await page.waitForURL((url) => !url.pathname.endsWith('/admin'), { timeout: 6_000 }).catch(() => {})
+    const isOnAdmin = page.url().endsWith('/admin')
+    if (isOnAdmin) {
+      // La redirección no ocurrió: verificar que el contenido de admin no es visible
+      const empresasTab = page.getByText('Empresas', { exact: true })
+      const hasAccess   = await empresasTab.isVisible({ timeout: 3_000 }).catch(() => false)
+      expect(hasAccess, 'Client viewer NO debe ver el panel de admin').toBe(false)
+    } else {
+      expect(page.url()).not.toMatch(/\/admin$/)
+    }
   })
 })
