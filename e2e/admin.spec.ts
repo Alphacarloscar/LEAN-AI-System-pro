@@ -105,7 +105,7 @@ test.describe('Admin Panel — acceso superadmin', () => {
       const tabExists = await usuariosTab.isVisible({ timeout: 2_000 }).catch(() => false)
       if (tabExists) {
         await usuariosTab.click()
-        const inviteBtnAfterNav = page.getByRole('button', { name: /invitar|invite|\+/i })
+        const inviteBtnAfterNav = page.getByRole('button', { name: /invitar|enviar|invite|\+/i })
         const hasBtnAfter = await inviteBtnAfterNav.isVisible({ timeout: 3_000 }).catch(() => false)
         expect(hasBtnAfter, 'Debe haber un botón de invitar usuario').toBe(true)
       }
