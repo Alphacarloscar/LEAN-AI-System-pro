@@ -11,7 +11,7 @@
 
 import { supabase }       from '@/lib/supabase'
 import type { Json, UseCaseRow, UseCaseInsert } from '@/types/database.types'
-import type { UseCase }   from '@/modules/T4_UseCasePriorityBoard/types'
+import type { UseCase, UseCaseScores } from '@/modules/T4_UseCasePriorityBoard/types'
 import {
   safeParseJsonField,
   UseCaseScoresSchema,
@@ -30,6 +30,18 @@ function castOpt<T>(v: unknown): T | undefined {
   return v == null ? undefined : v as T
 }
 
+// Garantiza UseCaseScores con números aunque el JSONB tenga claves ausentes
+// (registros previos a la migración de schema no incluyen los 4 campos).
+function normalizeScores(raw: UseCaseScores | null | undefined): UseCaseScores {
+  const s = (raw ?? {}) as Partial<UseCaseScores>
+  return {
+    kpiImpact:      typeof s.kpiImpact === 'number' ? s.kpiImpact : 0,
+    feasibility:    typeof s.feasibility === 'number' ? s.feasibility : 0,
+    aiRisk:         typeof s.aiRisk === 'number' ? s.aiRisk : 0,
+    dataDependency: typeof s.dataDependency === 'number' ? s.dataDependency : 0,
+  }
+}
+
 export function rowToUseCase(row: UseCaseRow): UseCase {
   return {
     id:                   row.id,
@@ -42,8 +54,9 @@ export function rowToUseCase(row: UseCaseRow): UseCase {
     responsibleItData:    row.responsible_it_data ?? undefined,
     businessObjective:    row.business_objective ?? undefined,
     importedFromT3:       castOpt<UseCase['importedFromT3']>(row.imported_from_t3),
-    stakeholderScores:    safeParseJsonField(StakeholderScoresSchema, row.stakeholder_scores, 'stakeholder_scores') ?? [],
-    scores:               safeParseJsonField(UseCaseScoresSchema, row.scores, 'scores') as UseCase['scores'],
+    stakeholderScores:    (safeParseJsonField(StakeholderScoresSchema, row.stakeholder_scores, 'stakeholder_scores') ?? [])
+                            .map(s => ({ ...s, scores: normalizeScores(s.scores) })),
+    scores:               normalizeScores(safeParseJsonField(UseCaseScoresSchema, row.scores, 'scores')),
     priorityScore:        Number(row.priority_score),
     economics:            safeParseJsonField(UseCaseEconomicsSchema, row.economics, 'economics'),
     goNoGo:               safeParseJsonField(GoNoGoDecisionSchema, row.go_no_go, 'go_no_go'),

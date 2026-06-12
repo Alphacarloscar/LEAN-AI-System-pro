@@ -18,10 +18,12 @@ test.describe('Company Profile', () => {
     await login(page)
     // Inyectar engagement en localStorage para evitar el guard "Selecciona un proyecto"
     await selectEngagement(page)
-    await page.goto('/company-profile')
-    await expect(page.locator('main, [role="main"], #root > div').first()).toBeVisible({
-      timeout: 8_000,
-    })
+    // Navegar con networkidle para que el store hidrate antes de la comprobación
+    await page.goto('/company-profile', { waitUntil: 'domcontentloaded' })
+    // Recargar para garantizar que Zustand persist lee el localStorage ya escrito
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    // Esperar título específico del contenido real (no del guard "Selecciona un proyecto")
+    await expect(page.getByText(/Perfil de Empresa/i).first()).toBeVisible({ timeout: 15_000 })
   })
 
   test('la vista carga sin crash', async ({ page }) => {
@@ -70,8 +72,9 @@ test.describe('Company Profile', () => {
   })
 
   test('el botón de guardar es visible', async ({ page }) => {
-    const saveButton = page.getByRole('button', { name: /guardar|save/i })
-    const hasButton  = await saveButton.isVisible({ timeout: 10_000 }).catch(() => false)
+    // Puede ser "Guardar empresa" (tab Empresa) o "Guardar contexto" (tab Proyecto)
+    const saveButton = page.getByRole('button', { name: /guardar empresa|guardar contexto/i })
+    const hasButton  = await saveButton.first().isVisible({ timeout: 10_000 }).catch(() => false)
     expect(hasButton, 'Debe haber un botón de guardar en Company Profile').toBe(true)
   })
 })

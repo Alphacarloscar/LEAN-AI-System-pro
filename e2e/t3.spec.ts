@@ -1,24 +1,16 @@
 import { test, expect } from '@playwright/test'
+import { login, selectEngagement } from './helpers'
 
-const DEV_EMAIL    = process.env.E2E_EMAIL    ?? 'david.baquero@consultoriaalpha.com'
 const DEV_PASSWORD = process.env.E2E_PASSWORD ?? ''
-
-async function login(page: Parameters<Parameters<typeof test>[1]>[0]['page']) {
-  await page.goto('/login')
-  await page.locator('input[autocomplete="email"]').fill(DEV_EMAIL)
-  await page.locator('input[autocomplete="current-password"]').fill(DEV_PASSWORD)
-  await page.locator('button[type="submit"]').click()
-  await expect(page).not.toHaveURL(/login/, { timeout: 10_000 })
-}
 
 test.describe('T3 — Value Stream Map', () => {
   test.beforeEach(async ({ page }) => {
     test.skip(!DEV_PASSWORD, 'E2E_PASSWORD no configurado')
     await login(page)
-    await page.goto('/t3')
-    await expect(page.locator('main, [role="main"], #root > div').first()).toBeVisible({
-      timeout: 10_000,
-    })
+    // Inyectar engagement para que T3 cargue datos (sin esto hasDataT3=false → nada se muestra)
+    await selectEngagement(page)
+    await page.goto('/t3', { waitUntil: 'networkidle' })
+    await expect(page.getByText(/Value Stream Map/i).first()).toBeVisible({ timeout: 10_000 })
   })
 
   test('la vista /t3 carga sin crash JavaScript', async ({ page }) => {
@@ -41,11 +33,13 @@ test.describe('T3 — Value Stream Map', () => {
   })
 
   test('el estado vacío o lista de procesos es visible', async ({ page }) => {
-    // T3 muestra "Añadir primer proceso" en estado vacío, o la lista de procesos si hay datos
-    const emptyState = page.getByText(/añadir primer proceso|primer proceso|value stream/i)
-    const hasList    = page.locator('button, [role="listitem"]').filter({ hasText: /proceso|stream/i })
+    // Estado vacío: "No hay procesos todavía" / "+ Añadir primer proceso"
+    // Estado con datos: lista de tarjetas de proceso
+    const emptyState = page.getByText(/no hay procesos todavía|añadir primer proceso|primer proceso/i)
+    const hasList    = page.locator('[class*="card"], [class*="process"], [class*="proceso"]')
+      .or(page.locator('button').filter({ hasText: /\+ añadir primer proceso/i }))
 
-    const hasEmpty = await emptyState.first().isVisible({ timeout: 5_000 }).catch(() => false)
+    const hasEmpty = await emptyState.first().isVisible({ timeout: 8_000 }).catch(() => false)
     const hasItems = await hasList.first().isVisible({ timeout: 3_000 }).catch(() => false)
     expect(hasEmpty || hasItems, 'T3 debe mostrar estado vacío o lista de procesos').toBe(true)
   })

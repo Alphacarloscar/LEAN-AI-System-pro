@@ -69,12 +69,10 @@ test.describe('Admin Panel — acceso superadmin', () => {
 
   test('tab Usuarios muestra al menos un usuario', async ({ page }) => {
     await page.goto('/admin')
-    await expect(page.getByText('Panel de administración')).toBeVisible({ timeout: 12_000 })
-
-    const usuariosTab = page.getByRole('tab', { name: /usuarios/i })
-      .or(page.locator('button').filter({ hasText: /usuarios/i }).first())
-    const tabExists = await usuariosTab.isVisible({ timeout: 3_000 }).catch(() => false)
-    if (tabExists) await usuariosTab.click()
+    // Los tabs solo aparecen tras cargar datos (AdminLoadingScreen no los tiene)
+    const usuariosTabBtn = page.locator('button').filter({ hasText: /^Usuarios$/ })
+    await expect(usuariosTabBtn.first()).toBeVisible({ timeout: 15_000 })
+    await usuariosTabBtn.first().click()
 
     // UsersTab usa divs, no <table>. Esperar heading y verificar lista no vacía
     await expect(page.getByText(/usuarios registrados/i).first()).toBeVisible({ timeout: 8_000 })
@@ -84,13 +82,12 @@ test.describe('Admin Panel — acceso superadmin', () => {
 
   test('el botón de crear empresa está visible', async ({ page }) => {
     await page.goto('/admin')
-    // Esperar panel cargado antes de buscar el botón
-    await expect(page.getByText('Panel de administración')).toBeVisible({ timeout: 12_000 })
+    // Esperar que carguen los tabs reales (la pantalla de carga no los incluye)
+    await expect(page.locator('button').filter({ hasText: /^Empresas$/ }).first()).toBeVisible({ timeout: 15_000 })
 
-    const createBtn = page.getByRole('button', {
-      name: /nueva empresa|crear empresa|add company|crear|\+/i,
-    })
-    const hasBtn = await createBtn.isVisible({ timeout: 5_000 }).catch(() => false)
+    // Por defecto se muestra el tab Empresas con el formulario de creación
+    const createBtn = page.getByRole('button', { name: /^Crear$/ })
+    const hasBtn = await createBtn.first().isVisible({ timeout: 8_000 }).catch(() => false)
     expect(hasBtn, 'Debe haber un botón para crear empresa').toBe(true)
   })
 
