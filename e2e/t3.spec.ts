@@ -58,7 +58,6 @@ test.describe('T3 — Value Stream Map', () => {
     const count = await processBtns.count()
 
     if (count > 0) {
-      await processBtns.first().evaluate(el => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
       await processBtns.first().dispatchEvent('click')
       // Esperar a que el panel de detalle (dialogo o sección principal) sea visible
       await expect(page.locator('[role="dialog"], [role="main"]')).toBeVisible({ timeout: 5_000 })
