@@ -7,10 +7,22 @@ export const LAB_COMPANY_ID  = '0b83042d-414e-4d4c-8c83-3a469affbfb3'
 export const LAB_PROJECT_ID  = 'e2058bff-9759-465d-ae4d-df79fdf23815'
 
 export const USERS = {
-  superadmin: { email: 'superadmin@test.dev', password: 'temporal' },
-  consultor:  { email: 'consultor@test.dev',  password: 'temporal' },
-  editor:     { email: 'editor@test.dev',      password: 'temporal' },
-  viewer:     { email: 'viewer@test.dev',      password: 'temporal' },
+  superadmin: {
+    email:    process.env.E2E_SUPERADMIN_EMAIL    ?? 'superadmin@test.dev',
+    password: process.env.E2E_SUPERADMIN_PASSWORD ?? 'temporal',
+  },
+  consultor: {
+    email:    process.env.E2E_CONSULTANT_EMAIL    ?? 'consultor@test.dev',
+    password: process.env.E2E_CONSULTANT_PASSWORD ?? 'temporal',
+  },
+  editor: {
+    email:    process.env.E2E_CLIENT_EDITOR_EMAIL    ?? 'editor@test.dev',
+    password: process.env.E2E_CLIENT_EDITOR_PASSWORD ?? 'temporal',
+  },
+  viewer: {
+    email:    process.env.E2E_CLIENT_VIEWER_EMAIL    ?? 'viewer@test.dev',
+    password: process.env.E2E_CLIENT_VIEWER_PASSWORD ?? 'temporal',
+  },
 } as const
 
 // ── login ─────────────────────────────────────────────────────────────────────
