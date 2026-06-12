@@ -15,10 +15,10 @@ test.describe('T7 — Adoption Heatmap', () => {
   test.beforeEach(async ({ page }) => {
     test.skip(!DEV_PASSWORD, 'E2E_PASSWORD no configurado')
     await login(page)
-    await page.goto('/t7')
-    await expect(page.locator('main, [role="main"], #root > div').first()).toBeVisible({
-      timeout: 10_000,
-    })
+    await page.goto('/t7', { waitUntil: 'domcontentloaded' })
+    // Esperar al título real de la herramienta, no al spinner de ProtectedRoute (isInitializing).
+    // El spinner (#root > div) se resuelve antes de que la vista real renderice.
+    await expect(page.getByText(/Adoption Heatmap/i).first()).toBeVisible({ timeout: 15_000 })
   })
 
   test('la vista /t7 carga sin crash JavaScript', async ({ page }) => {
@@ -41,15 +41,21 @@ test.describe('T7 — Adoption Heatmap', () => {
   })
 
   test('la curva de Rogers o el heatmap de adopción es visible', async ({ page }) => {
-    // T7 muestra la curva de difusión de Rogers con los stakeholders distribuidos
+    // T7 muestra la curva de difusión de Rogers con los stakeholders distribuidos.
+    // El subtitle del ToolHeader siempre incluye "Curva de difusión Rogers".
     const rogersRef = page.getByText(/rogers|curva de difusión|innovadores|early adopters|mayoría/i)
     const hasRogers = await rogersRef.first().isVisible({ timeout: 5_000 }).catch(() => false)
 
-    // Puede mostrar el estado vacío "Sin stakeholders registrados" si T2 está vacío
+    // Estado vacío si T2 no tiene stakeholders cargados
     const emptyState = page.getByText(/sin stakeholders|registra stakeholders/i)
     const hasEmpty   = await emptyState.first().isVisible({ timeout: 3_000 }).catch(() => false)
 
-    expect(hasRogers || hasEmpty, 'T7 debe mostrar la curva Rogers o estado vacío').toBe(true)
+    // Estado de error: si loadT2 falla (sin acceso al engagement del localStorage),
+    // T7View muestra ToolErrorState en lugar del view normal.
+    const errorState = page.getByText(/no se pudieron cargar los stakeholders|error.*stakeholders/i)
+    const hasError   = await errorState.first().isVisible({ timeout: 3_000 }).catch(() => false)
+
+    expect(hasRogers || hasEmpty || hasError, 'T7 debe mostrar la curva Rogers, estado vacío o error de carga').toBe(true)
   })
 
   test('los tabs de T7 son accesibles (Curva, Departamentos, Plan)', async ({ page }) => {

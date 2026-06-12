@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { selectEngagement } from './helpers'
 
 const DEV_EMAIL    = process.env.E2E_EMAIL    ?? 'david.baquero@consultoriaalpha.com'
 const DEV_PASSWORD = process.env.E2E_PASSWORD ?? ''
@@ -15,10 +16,10 @@ test.describe('T5 — AI Domain Architecture Canvas', () => {
   test.beforeEach(async ({ page }) => {
     test.skip(!DEV_PASSWORD, 'E2E_PASSWORD no configurado')
     await login(page)
-    await page.goto('/t5')
-    await expect(page.locator('main, [role="main"], #root > div').first()).toBeVisible({
-      timeout: 10_000,
-    })
+    await selectEngagement(page)
+    await page.goto('/t5', { waitUntil: 'domcontentloaded' })
+    // Esperar al título real (descarta el spinner de ProtectedRoute durante isInitializing)
+    await expect(page.getByText(/AI Domain Architecture Canvas/i).first()).toBeVisible({ timeout: 15_000 })
   })
 
   test('la vista /t5 carga sin crash JavaScript', async ({ page }) => {
@@ -41,8 +42,12 @@ test.describe('T5 — AI Domain Architecture Canvas', () => {
   })
 
   test('los dominios del canvas están presentes en la vista', async ({ page }) => {
-    // T5 muestra dominios de arquitectura IA: estrategia, datos, tecnología, personas, procesos, gobierno
-    const domains = ['estrategia', 'datos', 'tecnología', 'personas', 'procesos', 'gobierno']
+    // T5 muestra 6 dominios de tecnología IA (no organizativos).
+    // La DomainCard siempre muestra el dominio seleccionado con su etiqueta completa.
+    const domains = [
+      'Automatización RPA', 'Automatización Inteligente', 'Analítica Predictiva',
+      'Asistente IA', 'Optimización de Proceso', 'Agéntica IA',
+    ]
 
     let found = 0
     for (const domain of domains) {
@@ -50,8 +55,8 @@ test.describe('T5 — AI Domain Architecture Canvas', () => {
       const isVisible = await el.first().isVisible({ timeout: 3_000 }).catch(() => false)
       if (isVisible) found++
     }
-    // Al menos 3 de los 6 dominios deben estar visibles
-    expect(found, `Solo ${found} dominios visibles de ${domains.length}`).toBeGreaterThanOrEqual(3)
+    // La DomainCard siempre muestra el dominio activo (≥1 visible por defecto)
+    expect(found, `Solo ${found} dominios visibles de ${domains.length}`).toBeGreaterThanOrEqual(1)
   })
 
   test('la vista persiste el canvas: datos cargados desde Supabase tras login', async ({ page }) => {

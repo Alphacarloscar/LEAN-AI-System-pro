@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { selectEngagement } from './helpers'
 
 const DEV_EMAIL    = process.env.E2E_EMAIL    ?? 'david.baquero@consultoriaalpha.com'
 const DEV_PASSWORD = process.env.E2E_PASSWORD ?? ''
@@ -15,10 +16,10 @@ test.describe('T6 — Risk & Governance', () => {
   test.beforeEach(async ({ page }) => {
     test.skip(!DEV_PASSWORD, 'E2E_PASSWORD no configurado')
     await login(page)
-    await page.goto('/t6')
-    await expect(page.locator('main, [role="main"], #root > div').first()).toBeVisible({
-      timeout: 10_000,
-    })
+    await selectEngagement(page)
+    await page.goto('/t6', { waitUntil: 'domcontentloaded' })
+    // Esperar al título real (descarta el spinner de ProtectedRoute durante isInitializing)
+    await expect(page.getByText(/Risk.*Governance/i).first()).toBeVisible({ timeout: 15_000 })
   })
 
   test('la vista /t6 carga sin crash JavaScript', async ({ page }) => {
@@ -40,14 +41,15 @@ test.describe('T6 — Risk & Governance', () => {
     await expect(title.first()).toBeVisible({ timeout: 8_000 })
   })
 
-  test('los tabs de T6 son accesibles (ISO 42001 y Política IA)', async ({ page }) => {
-    // T6 tiene: tab de controles ISO 42001 y tab de Política IA Corporativa
-    const isoTab     = page.getByText(/iso.*42001|controles|governance/i)
-    const policyTab  = page.getByText(/política ia|política ia corporativa/i)
+  test('los tabs de T6 son accesibles (Política IA y Dashboard AI Act)', async ({ page }) => {
+    // T6 tiene 2 tabs: "📄 Política IA Corporativa" y "⚖️ Dashboard AI Act"
+    // ISO 42001 fue trasladado a T12; ya no existe como tab en T6.
+    const policyTab = page.getByRole('tab').filter({ hasText: /política ia/i })
+    const aiActTab  = page.getByRole('tab').filter({ hasText: /dashboard ai act|ai act/i })
 
-    const hasISO    = await isoTab.first().isVisible({ timeout: 5_000 }).catch(() => false)
-    const hasPolicy = await policyTab.first().isVisible({ timeout: 5_000 }).catch(() => false)
-    expect(hasISO || hasPolicy, 'Al menos un tab de T6 debe ser visible').toBe(true)
+    const hasPolicy = await policyTab.isVisible({ timeout: 5_000 }).catch(() => false)
+    const hasAIAct  = await aiActTab.isVisible({ timeout: 5_000 }).catch(() => false)
+    expect(hasPolicy || hasAIAct, 'Al menos un tab de T6 debe ser visible').toBe(true)
   })
 
   test('los controles ISO 42001 están listados en la vista', async ({ page }) => {
