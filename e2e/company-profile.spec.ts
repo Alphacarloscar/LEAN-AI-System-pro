@@ -1,20 +1,11 @@
 import { test, expect } from '@playwright/test'
-import { selectEngagement } from './helpers'
-
-const DEV_EMAIL    = process.env.E2E_EMAIL    ?? 'david.baquero@consultoriaalpha.com'
-const DEV_PASSWORD = process.env.E2E_PASSWORD ?? ''
-
-async function login(page: Parameters<Parameters<typeof test>[1]>[0]['page']) {
-  await page.goto('/login')
-  await page.locator('input[autocomplete="email"]').fill(DEV_EMAIL)
-  await page.locator('input[autocomplete="current-password"]').fill(DEV_PASSWORD)
-  await page.locator('button[type="submit"]').click()
-  await expect(page).not.toHaveURL(/login/, { timeout: 10_000 })
-}
+import { login, selectEngagement } from './helpers'
 
 test.describe('Company Profile', () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(!DEV_PASSWORD, 'E2E_PASSWORD no configurado')
+    // Forzar tamaño de pantalla de escritorio para evitar colapsos de componentes
+    await page.setViewportSize({ width: 1280, height: 720 })
+
     await login(page)
     // Inyectar engagement en localStorage para evitar el guard "Selecciona un proyecto"
     await selectEngagement(page)
@@ -43,15 +34,15 @@ test.describe('Company Profile', () => {
     const tabButtons = page.locator('[role="tab"], button').filter({ hasText: /empresa|proyecto/i })
     // Espera a que los tabs carguen (la vista carga datos async)
     await expect(tabButtons.first()).toBeVisible({ timeout: 10_000 })
-    const count = await tabButtons.count()
-    expect(count).toBeGreaterThanOrEqual(2)
+    // Deberían existir exactamente 2 tabs con esos nombres
+    await expect(tabButtons).toHaveCount(2)
   })
 
   test('tab "Empresa" es accesible y muestra campos del formulario', async ({ page }) => {
     // Haz clic en el tab Empresa si no está activo
     const empresaTab = page.locator('[role="tab"], button').filter({ hasText: /empresa/i }).first()
     const tabExists  = await empresaTab.isVisible({ timeout: 3_000 }).catch(() => false)
-    if (tabExists) await empresaTab.click()
+    if (tabExists) await empresaTab.click({ force: true })
 
     // Verifica que hay al menos un campo de formulario visible
     await expect(page.locator('input, select, textarea').first()).toBeVisible({ timeout: 5_000 })
@@ -61,7 +52,7 @@ test.describe('Company Profile', () => {
     const proyectoTab = page.locator('[role="tab"], button').filter({ hasText: /proyecto/i }).first()
     const tabExists   = await proyectoTab.isVisible({ timeout: 3_000 }).catch(() => false)
     if (tabExists) {
-      await proyectoTab.click()
+      await proyectoTab.click({ force: true })
       await expect(page.locator('input, select, textarea').first()).toBeVisible({ timeout: 5_000 })
     } else {
       // Tab Proyecto no renderizado — la vista CompanyProfile sólo muestra el tab

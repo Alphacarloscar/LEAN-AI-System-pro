@@ -3,6 +3,8 @@ import { login, selectEngagement } from './helpers'
 
 test.describe('T4 — Use Case Priority Board', () => {
   test.beforeEach(async ({ page }) => {
+    // Forzar tamaño de pantalla de escritorio para evitar colapsos de componentes
+    await page.setViewportSize({ width: 1280, height: 720 })
     await login(page)
     await selectEngagement(page)
     // networkidle espera a que todos los fetch HTTP (Supabase REST) terminen — garantiza datos cargados
@@ -28,9 +30,13 @@ test.describe('T4 — Use Case Priority Board', () => {
 
   test('el executive dashboard muestra los 4 KPIs', async ({ page }) => {
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
-
-    const bodyText = await page.locator('body').innerText()
-    expect(bodyText.length).toBeGreaterThan(50)
+    
+    // Los 4 KPIs principales del dashboard ejecutivo
+    const kpis = ['Casos de Uso', 'Inversión Total', 'ROI Potencial', 'Riesgo Promedio']
+    
+    for (const kpi of kpis) {
+      await expect(page.getByText(kpi, { exact: false }).first()).toBeVisible({ timeout: 5_000 })
+    }
   })
 
   test('la sección del roadmap trimestral está visible', async ({ page }) => {
@@ -46,10 +52,7 @@ test.describe('T4 — Use Case Priority Board', () => {
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
 
     for (const tab of tabs) {
-      const tabEl = page.getByText(tab, { exact: false })
-      const isVisible = await tabEl.isVisible({ timeout: 3_000 }).catch(() => false)
-      if (!isVisible) continue
-      await expect(tabEl.first()).toBeVisible()
+      await expect(page.getByText(tab, { exact: false }).first()).toBeVisible({ timeout: 3_000 })
     }
   })
 
@@ -76,7 +79,7 @@ test.describe('T4 — Use Case Priority Board', () => {
       if (isVisible) found++
     }
 
-    expect(found, 'Deben ser visibles al menos 2 estados de casos de uso').toBeGreaterThanOrEqual(0)
+    expect(found, 'Deben ser visibles al menos 3 estados de casos de uso').toBeGreaterThanOrEqual(3)
   })
 
   test('con proyecto activo los casos de uso del seed son visibles', async ({ page }) => {

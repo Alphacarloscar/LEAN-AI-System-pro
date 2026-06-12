@@ -1,11 +1,10 @@
 import { test, expect } from '@playwright/test'
 import { login, selectEngagement } from './helpers'
 
-const DEV_PASSWORD = process.env.E2E_PASSWORD ?? ''
-
 test.describe('T3 — Value Stream Map', () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(!DEV_PASSWORD, 'E2E_PASSWORD no configurado')
+    // Forzar tamaño de pantalla de escritorio para evitar colapsos de componentes
+    await page.setViewportSize({ width: 1280, height: 720 })
     await login(page)
     // Inyectar engagement para que T3 cargue datos (sin esto hasDataT3=false → nada se muestra)
     await selectEngagement(page)
@@ -57,12 +56,12 @@ test.describe('T3 — Value Stream Map', () => {
     const count = await processBtns.count()
 
     if (count > 0) {
-      await processBtns.first().click()
-      // Esperar algún panel de detalle
-      await page.waitForTimeout(500)
+      await processBtns.first().click({ force: true })
+      // Esperar a que el panel de detalle (dialogo o sección principal) sea visible
+      await expect(page.locator('[role="dialog"], [role="main"]')).toBeVisible({ timeout: 5_000 })
     }
     // Si no hay procesos, validamos que la vista sigue intacta
-    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible()
   })
 
   test('la vista no muestra pantalla en blanco tras carga completa', async ({ page }) => {
