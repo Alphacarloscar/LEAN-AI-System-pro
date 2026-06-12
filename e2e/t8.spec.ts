@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { selectEngagement } from './helpers'
 
 const DEV_EMAIL    = process.env.E2E_EMAIL    ?? 'david.baquero@consultoriaalpha.com'
 const DEV_PASSWORD = process.env.E2E_PASSWORD ?? ''
@@ -15,10 +16,11 @@ test.describe('T8 — Communication Map', () => {
   test.beforeEach(async ({ page }) => {
     test.skip(!DEV_PASSWORD, 'E2E_PASSWORD no configurado')
     await login(page)
-    await page.goto('/t8')
-    await expect(page.locator('main, [role="main"], #root > div').first()).toBeVisible({
-      timeout: 10_000,
-    })
+    await selectEngagement(page)
+    await page.goto('/t8', { waitUntil: 'domcontentloaded' })
+    // Esperar al título real de la herramienta, no al spinner de ProtectedRoute (isInitializing).
+    // El spinner (#root > div) se resuelve antes de que la vista real renderice.
+    await expect(page.getByText(/Communication Map/i).first()).toBeVisible({ timeout: 15_000 })
   })
 
   test('la vista /t8 carga sin crash JavaScript', async ({ page }) => {
