@@ -1,5 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 
+declare const process: { env: { [key: string]: string | undefined } }
+
 const DEV_EMAIL    = process.env.E2E_EMAIL ?? 'david.baquero@consultoriaalpha.com'
 const DEV_PASSWORD = process.env.E2E_PASSWORD ?? ''
 
