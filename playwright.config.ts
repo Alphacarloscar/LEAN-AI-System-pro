@@ -15,6 +15,7 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:5173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    viewport: { width: 1280, height: 720 },
     extraHTTPHeaders: {
       ...(process.env.VERCEL_AUTOMATION_BYPASS_SECRET
         ? {
