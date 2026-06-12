@@ -12,3 +12,5 @@ conversacion-completa-*.md
 
 # Configuración local de Claude Code (IDE)
 .claude/
+
+test-results/

@@ -3,6 +3,8 @@ import { login, selectEngagement } from './helpers'
 
 test.describe('T1 — AI Readiness Assessment', () => {
   test.beforeEach(async ({ page }) => {
+    // Forzar tamaño de pantalla de escritorio para evitar colapsos de componentes
+    await page.setViewportSize({ width: 1280, height: 720 })
     await login(page)
     await selectEngagement(page)
     // networkidle espera a que todos los fetch HTTP (Supabase REST) terminen — garantiza datos cargados
