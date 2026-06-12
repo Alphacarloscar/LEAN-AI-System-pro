@@ -76,7 +76,7 @@ export function Avatar({ name, size = 'md', src, alt, className = '', ...props }
   // Fallback sin nombre ni foto
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-full bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 ${sizeClass} ${className}`}
+      className={`inline-flex items-center justify-center rounded-full bg-gray-200 text-gray-500 dark:bg-warm-600 dark:text-warm-300 ${sizeClass} ${className}`}
       aria-hidden="true"
     >
       <svg className="h-1/2 w-1/2" viewBox="0 0 24 24" fill="currentColor">
@@ -108,7 +108,7 @@ export function AvatarGroup({ users, max = 4, size = 'sm', className = '' }: Ava
           name={u.name}
           src={u.src}
           size={size}
-          className="ring-2 ring-white dark:ring-gray-900"
+          className="ring-2 ring-white dark:ring-warm-900"
         />
       ))}
       {overflow > 0 && (
@@ -116,7 +116,7 @@ export function AvatarGroup({ users, max = 4, size = 'sm', className = '' }: Ava
           className={[
             'inline-flex items-center justify-center rounded-full',
             'bg-gray-200 text-gray-600 text-xs font-medium',
-            'ring-2 ring-white dark:ring-gray-900',
+            'ring-2 ring-white dark:ring-warm-900',
             sizeClasses[size],
           ].join(' ')}
         >

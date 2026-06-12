@@ -58,7 +58,7 @@ export function Breadcrumb({
                 // Ítem activo — no es un enlace
                 <span
                   aria-current="page"
-                  className="font-medium text-lean-black dark:text-gray-100 truncate max-w-[180px]"
+                  className="font-medium text-lean-black dark:text-warm-50 truncate max-w-[180px]"
                 >
                   {item.label}
                 </span>
@@ -66,7 +66,7 @@ export function Breadcrumb({
                 <a
                   href={item.href}
                   className={[
-                    'text-text-muted hover:text-lean-black dark:hover:text-gray-100',
+                    'text-text-muted hover:text-lean-black dark:hover:text-warm-50',
                     'transition-colors truncate max-w-[180px]',
                     'underline-offset-2 hover:underline',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy rounded-sm',
@@ -78,7 +78,7 @@ export function Breadcrumb({
                 <button
                   onClick={item.onClick}
                   className={[
-                    'text-text-muted hover:text-lean-black dark:hover:text-gray-100',
+                    'text-text-muted hover:text-lean-black dark:hover:text-warm-50',
                     'transition-colors truncate max-w-[180px]',
                     'underline-offset-2 hover:underline',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy rounded-sm',

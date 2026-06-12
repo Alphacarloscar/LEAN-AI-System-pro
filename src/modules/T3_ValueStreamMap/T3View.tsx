@@ -1,991 +1,88 @@
 // ============================================================
-// T3 — Value Stream Map (Rediseño v2)
+// T3 — Value Stream Map
 //
 // Layout: 3 zonas verticales
-//   1. HERO — Dos gráficas protagonistas (Opportunity Matrix +
-//      Department Chart), grandes, sin texto, impacto visual.
-//   2. BANNER — KPI de fases + lista de procesos (cards clicables).
-//   3. DETALLE — Se despliega debajo al seleccionar un proceso.
-//      Tabs: Oportunidades | Entrevista | Etapas (Sprint 3+)
-//
-// Sprint 2 MVP: datos en Zustand (persist local).
-// Sprint 3+: Supabase tabla `value_stream`.
+//   1. HERO — Opportunity Matrix + Category Donut (interactivos)
+//   2. BANNER — KPI de fases + lista de procesos (cards clicables)
+//   3. DETALLE — Se despliega al seleccionar un proceso
 // ============================================================
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
-import { BackToDashboard }             from '@/shared/components/BackToDashboard'
-import { useT3Store }                  from './store'
-import { useEngagementStore }          from '@/modules/Engagement/store'
-import { useCompanyProfileStore }      from '@/modules/CompanyProfile/store'
-import { useDepartmentStore }          from '@/modules/CompanyProfile/useDepartmentStore'
-import { useT1Store }                  from '@/modules/T1_MaturityRadar/store'
-import { computeOverallScore }         from '@/modules/T1_MaturityRadar/types'
-import { buildT3OpportunitiesContext } from './t3OpportunitiesContextBuilder'
-import { supabase }                    from '@/lib/supabase'
-import {
-  AI_CATEGORY_CONFIG,
-  READINESS_CONFIG,
-  OPPORTUNITY_CONFIG,
-  PHASE_CONFIG,
-} from './constants'
-import { ProcessInterviewModal }     from './components/ProcessInterviewModal'
-import { StagesTab }                 from './components/StagesTab'
-import { PhaseMiniMap }              from '@/shared/components/PhaseMiniMap'
-import { isDemoEnabled }             from '@/lib/config'
-import { usePermissions }            from '@/modules/Auth'
-import { ViewerEmptyState }          from '@/shared/components/ViewerEmptyState'
-import type {
-  ValueStream, AICategoryCode, OrgReadinessLevel,
-  ProcessPhase, AIOpportunity,
-} from './types'
-
-// ── Constantes de color ───────────────────────────────────────
-
-const CAT_HEX: Record<AICategoryCode, string> = {
-  automatizacion_inteligente: '#6A90C0',
-  automatizacion_rpa:         '#5FAF8A',
-  analitica_predictiva:       '#2A2822',  // warm charcoal (era navy #1B2A4E)
-  asistente_ia:               '#D4A85C',
-  optimizacion_proceso:       '#C06060',
-  agéntica:                   '#7C3AED',
-}
-
-const CAT_ORDER: AICategoryCode[] = [
-  'automatizacion_inteligente',
-  'automatizacion_rpa',
-  'analitica_predictiva',
-  'asistente_ia',
-  'optimizacion_proceso',
-  'agéntica',
-]
+import { useState, useMemo, useEffect }    from 'react'
+import { useNavigate }                     from 'react-router-dom'
+import { Button, Badge, Card, ToolHeader } from '@shared/design-system/components'
+import { useT3Store }                      from './store'
+import { useEngagementStore }              from '@/modules/Engagement/store'
+import { useCompanyProfileStore }          from '@/modules/CompanyProfile/store'
+import { useDepartmentStore }              from '@/modules/CompanyProfile/useDepartmentStore'
+import { getProjectCompanyId }             from '@/services/projects.service'
+import { PHASE_CONFIG, OPPORTUNITY_CONFIG, AI_CATEGORY_CONFIG } from './constants'
+import { HeroOpportunityMatrix }           from './components/HeroOpportunityMatrix'
+import { HeroCategoryDonut }               from './components/HeroCategoryDonut'
+import { ProcessDetailPanel }              from './components/ProcessDetailPanel'
+import { ProcessInterviewModal }           from './components/ProcessInterviewModal'
+import { CAT_HEX, CAT_ORDER } from './components/T3Badges.constants'
+import { PhaseBadge } from './components/T3Badges'
+import { PhaseMiniMap }                    from '@/shared/components/PhaseMiniMap'
+import { isDemoEnabled }                   from '@/lib/config'
+import { usePermissions }                  from '@/modules/Auth'
+import { ViewerEmptyState }                from '@/shared/components/ViewerEmptyState'
+import type { ValueStream, ProcessPhase }  from './types'
 
 const ALL_PHASES: ProcessPhase[] = ['idea', 'validacion', 'piloto', 'estandarizacion', 'escalado']
-
-// ── Badges ────────────────────────────────────────────────────
-
-function CategoryBadge({ category }: { category: AICategoryCode }) {
-  const cfg = AI_CATEGORY_CONFIG[category]
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}>
-      {cfg.label}
-    </span>
-  )
-}
-
-function ReadinessBadge({ level }: { level: OrgReadinessLevel }) {
-  const cfg = READINESS_CONFIG[level]
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}>
-      {level === 'alta' ? '● ' : level === 'media' ? '◆ ' : '▲ '}
-      {level.charAt(0).toUpperCase() + level.slice(1)}
-    </span>
-  )
-}
-
-function PhaseBadge({ phase }: { phase: ProcessPhase }) {
-  const cfg = PHASE_CONFIG[phase]
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}>
-      {cfg.label}
-    </span>
-  )
-}
-
-// ── HERO CHART 1: Opportunity Matrix grande ───────────────────
-// Eje X = readiness, Eje Y = oportunidad IA. Dots by category.
-
-function HeroOpportunityMatrix({
-  processes,
-  activeId,
-  onSelect,
-}: {
-  processes: ValueStream[]
-  activeId:  string | null
-  onSelect:  (id: string) => void
-}) {
-  const S  = 320
-  const P  = 36
-  const IN = S - P * 2
-
-  const QUAD_LABELS = [
-    { qx: 0.60, qy: 0.08, text: 'PILOTAR YA',       color: '#5FAF8A' },
-    { qx: 0.03, qy: 0.08, text: 'PREPARAR TERRENO', color: '#D4A85C' },
-    { qx: 0.60, qy: 0.82, text: 'QUICK WINS',       color: '#9AAEC8' },
-    { qx: 0.03, qy: 0.82, text: 'EVALUAR',           color: '#94A3B8' },
-  ]
-
-  type T3Hovered = {
-    leftPct: number; topPct: number
-    name: string; hex: string; catLabel: string
-    opportunity: number; readiness: number
-  }
-  const [hovered, setHovered] = useState<T3Hovered | null>(null)
-
-  return (
-    <div className="relative w-full">
-    <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ display: 'block' }}>
-      <defs>
-        <clipPath id="t3hero-clip">
-          <rect x={P} y={P} width={IN} height={IN} rx={6} />
-        </clipPath>
-      </defs>
-
-      {/* Quadrant fills */}
-      <g clipPath="url(#t3hero-clip)">
-        <rect x={P}        y={P}        width={IN/2} height={IN/2} fill="#D4A85C" opacity={0.04} />
-        <rect x={P + IN/2} y={P}        width={IN/2} height={IN/2} fill="#5FAF8A" opacity={0.06} />
-        <rect x={P}        y={P + IN/2} width={IN/2} height={IN/2} fill="#E5E7EB" opacity={0.03} />
-        <rect x={P + IN/2} y={P + IN/2} width={IN/2} height={IN/2} fill="#9AAEC8" opacity={0.04} />
-      </g>
-
-      {/* Grid border */}
-      <rect x={P} y={P} width={IN} height={IN} rx={6} fill="none"
-        stroke="#E5E7EB" strokeWidth={1} />
-
-      {/* Dividers */}
-      <line x1={P + IN/2} y1={P} x2={P + IN/2} y2={P + IN}
-        stroke="#E5E7EB" strokeWidth={0.8} strokeDasharray="3 3" />
-      <line x1={P} y1={P + IN/2} x2={P + IN} y2={P + IN/2}
-        stroke="#E5E7EB" strokeWidth={0.8} strokeDasharray="3 3" />
-
-      {/* Quadrant labels */}
-      {QUAD_LABELS.map((q, i) => (
-        <text key={i}
-          x={P + q.qx * IN} y={P + q.qy * IN}
-          fontSize={7} fill={q.color} opacity={0.80}
-          fontFamily="ui-monospace,monospace" letterSpacing="0.06em" fontWeight="700">
-          {q.text}
-        </text>
-      ))}
-
-      {/* Axis labels */}
-      <text x={P + IN / 2} y={P - 12} fontSize={8} fill="#9CA3AF"
-        fontFamily="ui-monospace,monospace" textAnchor="middle" letterSpacing="0.08em">
-        READINESS →
-      </text>
-      <text
-        x={P - 14} y={P + IN / 2}
-        fontSize={8} fill="#9CA3AF"
-        fontFamily="ui-monospace,monospace"
-        textAnchor="middle"
-        letterSpacing="0.08em"
-        transform={`rotate(-90, ${P - 14}, ${P + IN/2})`}
-      >
-        OPORTUNIDAD IA ↑
-      </text>
-
-      {/* Process dots */}
-      {processes.map((p) => {
-        const score    = p.interview?.opportunityScore ?? 0
-        const ready    = p.interview?.readinessScore   ?? 0
-        const isActive = p.id === activeId
-        const r        = isActive ? 9 : 7
-        // Clamp dots so the circle never exits the grid boundary
-        const rawDx    = P + (ready / 4) * IN
-        const rawDy    = P + (1 - score / 4) * IN
-        const dx       = Math.max(P + r + 1, Math.min(P + IN - r - 1, rawDx))
-        const dy       = Math.max(P + r + 1, Math.min(P + IN - r - 1, rawDy))
-        const hex      = CAT_HEX[p.aiCategory]
-
-        const catLabel = AI_CATEGORY_CONFIG[p.aiCategory]?.label ?? p.aiCategory
-
-        return (
-          <g key={p.id} style={{ cursor: 'pointer' }}
-            onClick={() => onSelect(p.id)}
-            onMouseEnter={() => setHovered({
-              leftPct: (dx / S) * 100,
-              topPct:  (dy / S) * 100,
-              name:    p.name,
-              hex,
-              catLabel,
-              opportunity: score,
-              readiness:   ready,
-            })}
-            onMouseLeave={() => setHovered(null)}
-          >
-            {/* Main dot */}
-            <circle cx={dx} cy={dy} r={r} fill={hex}
-              opacity={isActive ? 1 : 0.82}
-              stroke={isActive ? '#fff' : 'rgba(255,255,255,0.6)'}
-              strokeWidth={isActive ? 2 : 1} />
-          </g>
-        )
-      })}
-    </svg>
-
-    {/* Tooltip */}
-    {hovered && (
-      <div
-        className="pointer-events-none absolute z-50 bg-white dark:bg-warm-800 border border-border dark:border-white/10 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[148px]"
-        style={{
-          left:      `${hovered.leftPct}%`,
-          top:       `${hovered.topPct}%`,
-          transform: `translate(${hovered.leftPct > 65 ? 'calc(-100% - 10px)' : '10px'}, -50%)`,
-        }}
-      >
-        <p className="font-semibold text-lean-black dark:text-gray-100 mb-1 leading-tight truncate max-w-[160px]">
-          {hovered.name}
-        </p>
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: hovered.hex }} />
-          <span className="text-text-muted">{hovered.catLabel}</span>
-        </div>
-        <div className="space-y-0.5 text-text-muted">
-          <div className="flex justify-between gap-4">
-            <span>Oportunidad</span>
-            <span className="font-medium text-lean-black dark:text-gray-200">{hovered.opportunity}/4</span>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span>Readiness</span>
-            <span className="font-medium text-lean-black dark:text-gray-200">{hovered.readiness}/4</span>
-          </div>
-        </div>
-      </div>
-    )}
-    </div>
-  )
-}
-
-// ── HERO CHART 2: Category Donut — distribución por tipología IA ─
-// Reemplaza el bar chart: gráfico circular con 5 sectores (una por
-// categoría IA), inspirado en el diseño de T2 StakeholderQuadrantChart.
-// Fondo oscuro, dots metallic por proceso, labels en el perímetro.
-
-function HeroCategoryDonut({
-  processes,
-  activeId,
-  onSelect,
-}: {
-  processes: ValueStream[]
-  activeId:  string | null
-  onSelect:  (id: string) => void
-}) {
-  const VB = 480, CX = 240, CY = 240
-  const R_OUTER = 152, R_INNER = 58
-
-  const total = processes.length
-
-  const [donutHovered, setDonutHovered] = useState<{
-    leftPct: number; topPct: number
-    name: string; hex: string; catLabel: string
-    opportunity: number; readiness: number
-  } | null>(null)
-
-  const catData = useMemo(() => CAT_ORDER
-    .map((cat) => ({
-      cat,
-      count: processes.filter((p) => p.aiCategory === cat).length,
-      procs: processes.filter((p) => p.aiCategory === cat),
-    }))
-    .filter((c) => c.count > 0),
-  [processes])
-
-  if (total === 0) {
-    return (
-      <svg viewBox={`0 0 ${VB} ${VB}`} width="100%" style={{ display: 'block' }}>
-        <text x={CX} y={CY + 5} textAnchor="middle" fontSize={13}
-          fill="#94A3B8" fontFamily="ui-monospace,monospace">
-          Sin procesos
-        </text>
-      </svg>
-    )
-  }
-
-  // Compute arc angles
-  const GAP_RAD = catData.length > 1 ? 0.03 : 0
-  let currentAngle = -Math.PI / 2
-
-  const arcs = catData.map(({ cat, count, procs }) => {
-    const fraction  = count / total
-    const arcSpan   = fraction * 2 * Math.PI - GAP_RAD
-    const startAngle = currentAngle + GAP_RAD / 2
-    const endAngle   = startAngle + arcSpan
-    currentAngle    += fraction * 2 * Math.PI
-    const midAngle   = (startAngle + endAngle) / 2
-    return { cat, count, procs, startAngle, endAngle, midAngle }
-  })
-
-  function arcPath(sa: number, ea: number, ro: number, ri: number) {
-    const x1o = CX + ro * Math.cos(sa), y1o = CY + ro * Math.sin(sa)
-    const x2o = CX + ro * Math.cos(ea), y2o = CY + ro * Math.sin(ea)
-    const x1i = CX + ri * Math.cos(sa), y1i = CY + ri * Math.sin(sa)
-    const x2i = CX + ri * Math.cos(ea), y2i = CY + ri * Math.sin(ea)
-    const large = ea - sa > Math.PI ? 1 : 0
-    return [
-      `M ${x1o.toFixed(2)} ${y1o.toFixed(2)}`,
-      `A ${ro} ${ro} 0 ${large} 1 ${x2o.toFixed(2)} ${y2o.toFixed(2)}`,
-      `L ${x2i.toFixed(2)} ${y2i.toFixed(2)}`,
-      `A ${ri} ${ri} 0 ${large} 0 ${x1i.toFixed(2)} ${y1i.toFixed(2)}`,
-      'Z',
-    ].join(' ')
-  }
-
-  return (
-    <div className="relative w-full">
-    <svg viewBox={`0 0 ${VB} ${VB}`} width="100%" style={{ display: 'block', overflow: 'visible' }}
-      className="text-lean-black dark:text-gray-100">
-
-      {/* Outer / inner ring guides */}
-      <circle cx={CX} cy={CY} r={R_OUTER} fill="none" stroke="rgba(148,163,184,0.28)" strokeWidth={1} />
-      <circle cx={CX} cy={CY} r={R_INNER} fill="none" stroke="rgba(148,163,184,0.18)" strokeWidth={0.6} />
-
-      {/* Concentric rings — decorative */}
-      {[75, 100, 126].map((r) => (
-        <circle key={r} cx={CX} cy={CY} r={r}
-          fill="none" stroke="rgba(148,163,184,0.18)" strokeWidth={0.6} />
-      ))}
-
-      {/* Sectors */}
-      {arcs.map(({ cat, count, procs, startAngle, endAngle, midAngle }) => {
-        const hex = CAT_HEX[cat]
-        const cfg = AI_CATEGORY_CONFIG[cat]
-
-        // Label — outside the donut
-        const labelR   = R_OUTER + 24
-        const lx       = CX + labelR * Math.cos(midAngle)
-        const ly       = CY + labelR * Math.sin(midAngle)
-        const cosM     = Math.cos(midAngle)
-        const anchor   = cosM < -0.2 ? 'end' : cosM > 0.2 ? 'start' : 'middle'
-
-        // Label text — short version
-        const words    = cfg.label.split(' ')
-        const line1    = words.slice(0, Math.ceil(words.length / 2)).join(' ')
-        const line2    = words.slice(Math.ceil(words.length / 2)).join(' ')
-
-        // Dots — one per process, distributed angularly, radially by opportunity score
-        const dots = procs.map((p, i) => {
-          const frac    = procs.length > 1 ? (i + 0.5) / procs.length : 0.5
-          const dotAng  = startAngle + frac * (endAngle - startAngle)
-          const opp     = p.interview?.opportunityScore ?? 2
-          const radPct  = 0.15 + (opp / 4) * 0.70  // maps 0-4 → 15%-85% of ring width
-          const dotR    = R_INNER + radPct * (R_OUTER - R_INNER)
-          return {
-            id:          p.id,
-            cx:          CX + dotR * Math.cos(dotAng),
-            cy:          CY + dotR * Math.sin(dotAng),
-            hex,
-            name:        p.name,
-            catLabel:    cfg.label,
-            opportunity: opp,
-            readiness:   p.interview?.readinessScore ?? 0,
-          }
-        })
-
-        return (
-          <g key={cat}>
-            {/* Sector fill — semi-transparent */}
-            <path d={arcPath(startAngle, endAngle, R_OUTER, R_INNER)}
-              fill={hex} opacity={0.18} />
-            {/* Sector border */}
-            <path d={arcPath(startAngle, endAngle, R_OUTER, R_INNER)}
-              fill="none" stroke={hex} strokeWidth={1} opacity={0.55} />
-
-            {/* Process dots — clickables, sincronizados con la matriz */}
-            {dots.map((dot) => {
-              const isActive = dot.id === activeId
-              return (
-                <g key={dot.id} style={{ cursor: 'pointer' }}
-                  onClick={() => onSelect(dot.id)}
-                  onMouseEnter={() => setDonutHovered({
-                    leftPct:     (dot.cx / VB) * 100,
-                    topPct:      (dot.cy / VB) * 100,
-                    name:        dot.name,
-                    hex:         dot.hex,
-                    catLabel:    dot.catLabel,
-                    opportunity: dot.opportunity,
-                    readiness:   dot.readiness,
-                  })}
-                  onMouseLeave={() => setDonutHovered(null)}
-                >
-                  {/* Anillos de selección activa */}
-                  {isActive && (
-                    <>
-                      <circle cx={dot.cx} cy={dot.cy} r={18}
-                        fill={dot.hex} opacity={0.10} />
-                      <circle cx={dot.cx} cy={dot.cy} r={13}
-                        fill={dot.hex} opacity={0.18} />
-                    </>
-                  )}
-                  {/* Halo */}
-                  <circle cx={dot.cx} cy={dot.cy} r={isActive ? 12 : 10}
-                    fill={dot.hex} opacity={isActive ? 0.28 : 0.15} />
-                  {/* Dot principal */}
-                  <circle cx={dot.cx} cy={dot.cy} r={isActive ? 9 : 7}
-                    fill={dot.hex} opacity={0.92}
-                    stroke={isActive ? 'rgba(255,255,255,0.90)' : 'rgba(255,255,255,0.50)'}
-                    strokeWidth={isActive ? 2 : 0.8} />
-                  {/* Shine */}
-                  <ellipse cx={dot.cx - 2} cy={dot.cy - 2}
-                    rx={2.5} ry={1.5}
-                    fill="rgba(255,255,255,0.55)" />
-                </g>
-              )
-            })}
-
-            {/* Count label — in arc midpoint near outer edge */}
-            <text
-              x={CX + (R_INNER + (R_OUTER - R_INNER) * 0.80) * Math.cos(midAngle)}
-              y={CY + (R_INNER + (R_OUTER - R_INNER) * 0.80) * Math.sin(midAngle) + 4}
-              textAnchor="middle" fontSize={11} fontWeight="700"
-              fill={hex} fontFamily="ui-monospace,monospace"
-            >
-              {count}
-            </text>
-
-            {/* Category label — outside ring */}
-            <text x={lx} y={ly - (line2 ? 5 : 0)} textAnchor={anchor}
-              fontSize={8} fontWeight="700"
-              fill={hex} fontFamily="ui-monospace,monospace" letterSpacing="0.05em">
-              {line1.toUpperCase()}
-            </text>
-            {line2 && (
-              <text x={lx} y={ly + 10} textAnchor={anchor}
-                fontSize={8} fontWeight="700"
-                fill={hex} fontFamily="ui-monospace,monospace" letterSpacing="0.05em">
-                {line2.toUpperCase()}
-              </text>
-            )}
-          </g>
-        )
-      })}
-
-      {/* Center text — transparent hole, reads on card background */}
-      <text x={CX} y={CY - 14} textAnchor="middle"
-        fontSize={7.5} fill="#94A3B8"
-        fontFamily="ui-monospace,monospace" letterSpacing="0.10em">
-        VALUE STREAM
-      </text>
-      <text x={CX} y={CY - 2} textAnchor="middle"
-        fontSize={7.5} fill="#94A3B8"
-        fontFamily="ui-monospace,monospace" letterSpacing="0.10em">
-        MAP
-      </text>
-      <text x={CX} y={CY + 22} textAnchor="middle"
-        fontSize={26} fontWeight="700"
-        fill="currentColor"
-        fontFamily="ui-monospace,monospace"
-      >
-        {total}
-      </text>
-    </svg>
-
-    {/* Tooltip */}
-    {donutHovered && (
-      <div
-        className="pointer-events-none absolute z-50 bg-white dark:bg-warm-800 border border-border dark:border-white/10 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[148px]"
-        style={{
-          left:      `${donutHovered.leftPct}%`,
-          top:       `${donutHovered.topPct}%`,
-          transform: `translate(${donutHovered.leftPct > 60 ? 'calc(-100% - 8px)' : '10px'}, -50%)`,
-        }}
-      >
-        <p className="font-semibold text-lean-black dark:text-gray-100 mb-1 leading-tight truncate max-w-[160px]">
-          {donutHovered.name}
-        </p>
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: donutHovered.hex }} />
-          <span className="text-text-muted">{donutHovered.catLabel}</span>
-        </div>
-        <div className="space-y-0.5 text-text-muted">
-          <div className="flex justify-between gap-4">
-            <span>Oportunidad</span>
-            <span className="font-medium text-lean-black dark:text-gray-200">{donutHovered.opportunity}/4</span>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span>Readiness</span>
-            <span className="font-medium text-lean-black dark:text-gray-200">{donutHovered.readiness}/4</span>
-          </div>
-        </div>
-      </div>
-    )}
-    </div>
-  )
-}
-
-// ── Mini matrix de posición para el panel de detalle ──────────
-
-function DetailPositionMap({
-  opportunityScore,
-  readinessScore,
-  category,
-  size = 200,
-}: {
-  opportunityScore: number
-  readinessScore:   number
-  category:         AICategoryCode
-  size?:            number
-}) {
-  const S = size, P = Math.round(S * 0.10), IN = S - P * 2
-  const dx  = P + (readinessScore   / 4) * IN
-  const dy  = P + (1 - opportunityScore / 4) * IN
-  const hex = CAT_HEX[category]
-  const r   = S * 0.048
-
-  const QUAD_LABELS = [
-    { qx: 0.52, qy: 0.06, text: 'Pilotar ya',       color: '#5FAF8A' },
-    { qx: 0.02, qy: 0.06, text: 'Preparar',          color: '#D4A85C' },
-    { qx: 0.52, qy: 0.86, text: 'Quick wins',        color: '#9AAEC8' },
-    { qx: 0.02, qy: 0.86, text: 'Evaluar',           color: '#94A3B8' },
-  ]
-
-  return (
-    <svg viewBox={`0 0 ${S} ${S}`} width={S} height={S} style={{ display: 'block' }}>
-      <defs>
-        <clipPath id="detail-map-clip">
-          <rect x={P} y={P} width={IN} height={IN} rx={5} />
-        </clipPath>
-      </defs>
-
-      <g clipPath="url(#detail-map-clip)">
-        <rect x={P}        y={P}        width={IN/2} height={IN/2} fill="#D4A85C" opacity={0.04} />
-        <rect x={P + IN/2} y={P}        width={IN/2} height={IN/2} fill="#5FAF8A" opacity={0.06} />
-        <rect x={P}        y={P + IN/2} width={IN/2} height={IN/2} fill="#E5E7EB" opacity={0.03} />
-        <rect x={P + IN/2} y={P + IN/2} width={IN/2} height={IN/2} fill="#9AAEC8" opacity={0.04} />
-      </g>
-
-      <rect x={P} y={P} width={IN} height={IN} rx={5} fill="none"
-        stroke="#E5E7EB" strokeWidth={1} />
-      <line x1={P + IN/2} y1={P} x2={P + IN/2} y2={P + IN}
-        stroke="#E5E7EB" strokeWidth={0.6} strokeDasharray="3 3" />
-      <line x1={P} y1={P + IN/2} x2={P + IN} y2={P + IN/2}
-        stroke="#E5E7EB" strokeWidth={0.6} strokeDasharray="3 3" />
-
-      {QUAD_LABELS.map((q, i) => (
-        <text key={i}
-          x={P + q.qx * IN} y={P + q.qy * IN}
-          fontSize={S * 0.045} fill={q.color} opacity={0.75}
-          fontFamily="ui-monospace,monospace" letterSpacing="0.03em">
-          {q.text}
-        </text>
-      ))}
-
-      {/* Dot */}
-      <circle cx={dx} cy={dy} r={r} fill={hex}
-        stroke="#fff" strokeWidth={1.5} />
-
-      {/* Crosshair lines from dot to axes */}
-      <line x1={P} y1={dy} x2={dx - r} y2={dy}
-        stroke={hex} strokeWidth={0.5} strokeDasharray="2 2" opacity={0.4} />
-      <line x1={dx} y1={P + IN} x2={dx} y2={dy + r}
-        stroke={hex} strokeWidth={0.5} strokeDasharray="2 2" opacity={0.4} />
-    </svg>
-  )
-}
-
-// ── Panel de detalle del proceso (desplegado debajo) ──────────
-
-type DetailTab = 'oportunidades' | 'etapas'
-
-function ProcessDetailPanel({ process }: { process: ValueStream }) {
-  const [tab, setTab] = useState<DetailTab>('oportunidades')
-
-  // ── AI personalización de oportunidades ────────────────────
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiError,   setAiError]   = useState<string | null>(null)
-
-  const updateProcess   = useT3Store((s) => s.updateProcess)
-  const engagementId    = useEngagementStore((s) => s.activeEngagementId)
-  const companyProfile  = useCompanyProfileStore((s) => s.profile)
-  const t1DimStates     = useT1Store((s) => s.dimensionStates)
-
-  // Score T1 para calibrar complejidad de recomendaciones.
-  // Usa los datos del primer entrevistado como proxy del estado global de madurez.
-  const t1MaturityScore = useMemo(() => {
-    const allDims = Object.values(t1DimStates)
-    if (allDims.length === 0) return undefined
-    try { return computeOverallScore(allDims[0]) }
-    catch { return undefined }
-  }, [t1DimStates])
-
-  const handlePersonalizeWithAI = useCallback(async () => {
-    setAiLoading(true)
-    setAiError(null)
-
-    const context = buildT3OpportunitiesContext(process, companyProfile, t1MaturityScore)
-
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('La generación tardó demasiado. Inténtalo de nuevo.')), 90_000)
-    )
-
-    try {
-      const { data: result, error: fnError } = await Promise.race([
-        supabase.functions.invoke('ai-recommend', {
-          body: { tool: 't3_opportunities', context, engagementId },
-        }),
-        timeoutPromise,
-      ])
-
-      if (fnError) throw new Error(fnError.message ?? 'Error al llamar a la Edge Function')
-      if (result?.error) throw new Error(result.error)
-
-      const raw = result?.data as { opportunities?: Array<{ title: string; description: string; effort: string; impact: string }> } | null
-      if (!raw?.opportunities?.length) throw new Error('La IA no devolvió oportunidades. Inténtalo de nuevo.')
-
-      const newOpportunities: AIOpportunity[] = raw.opportunities.map((o) => ({
-        id:          crypto.randomUUID(),
-        title:       o.title,
-        description: o.description,
-        effort:      (o.effort as AIOpportunity['effort'])   ?? 'medio',
-        impact:      (o.impact as AIOpportunity['impact'])   ?? 'medio',
-        status:      'sugerida' as const,
-      }))
-
-      await updateProcess(process.id, { opportunities: newOpportunities }, engagementId)
-
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Error desconocido'
-      setAiError(msg)
-      console.error('[T3] personalizeWithAI:', err)
-    } finally {
-      setAiLoading(false)
-    }
-  }, [process, companyProfile, t1MaturityScore, engagementId, updateProcess])
-
-  const catCfg       = AI_CATEGORY_CONFIG[process.aiCategory]
-  const hasInterview = !!process.interview
-
-  const effortColors = {
-    bajo:  'bg-success-light text-success-dark',
-    medio: 'bg-warning-light text-warning-dark',
-    alto:  'bg-danger-light text-danger-dark',
-  }
-  const impactColors = {
-    bajo:  'bg-warm-100 dark:bg-warm-700 text-gray-500',
-    medio: 'bg-info-light text-info-dark',
-    alto:  'bg-navy/10 dark:bg-navy/20 text-navy dark:text-warm-100',
-  }
-
-  return (
-    <div className="border-t border-border dark:border-white/6 bg-surface dark:bg-warm-950">
-
-      {/* Panel header */}
-      <div className="flex items-start gap-6 px-8 py-5 border-b border-border dark:border-white/6">
-
-        {/* Identity */}
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
-            {process.department}
-            {process.owner && ` · ${process.owner}`}
-            {process.ownerRole && ` · ${process.ownerRole}`}
-          </p>
-          <h2 className="text-lg font-semibold text-lean-black dark:text-gray-100 leading-tight mb-2">
-            {process.name}
-          </h2>
-          <div className="flex flex-wrap gap-1.5">
-            <PhaseBadge phase={process.phase} />
-            <CategoryBadge category={process.aiCategory} />
-            <ReadinessBadge level={process.orgReadiness} />
-            {process.manualOverride && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold
-                bg-warning-light text-warning-dark">
-                Override consultor
-              </span>
-            )}
-          </div>
-          {process.description && (
-            <p className="text-xs text-text-muted mt-2 leading-relaxed max-w-2xl">
-              {process.description}
-            </p>
-          )}
-        </div>
-
-        {/* Opp score hero */}
-        {hasInterview && (
-          <div className="shrink-0 text-center">
-            <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-0.5">
-              Score oportunidad
-            </p>
-            <p className="text-4xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
-              {process.interview!.opportunityScore.toFixed(1)}
-            </p>
-            <p className="text-[10px] text-text-subtle">/4.0</p>
-          </div>
-        )}
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-0 border-b border-border dark:border-white/6 px-8">
-        {([
-          { key: 'oportunidades', label: 'Oportunidades IA' },
-          { key: 'etapas',       label: 'Etapas del proceso' },
-        ] as { key: DetailTab; label: string }[]).map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={[
-              'px-4 py-3 text-xs font-medium border-b-2 transition-colors',
-              tab === key
-                ? 'border-navy text-lean-black dark:text-gray-100'
-                : 'border-transparent text-text-muted hover:text-text-default',
-            ].join(' ')}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab content */}
-      <div className="px-8 py-6">
-
-        {/* ── TAB: OPORTUNIDADES ───────────────────────────── */}
-        {tab === 'oportunidades' && (
-          <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8">
-
-            {/* LEFT — posición map grande */}
-            {hasInterview ? (
-              <div className="flex flex-col items-center gap-3">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-                  Posición en la matriz
-                </p>
-                <DetailPositionMap
-                  opportunityScore={process.interview!.opportunityScore}
-                  readinessScore={process.interview!.readinessScore}
-                  category={process.aiCategory}
-                  size={200}
-                />
-                <div className="w-full">
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
-                    Categoría IA
-                  </p>
-                  <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-1">
-                    {catCfg.tagline}
-                  </p>
-                  <p className="text-[11px] text-text-muted leading-relaxed">
-                    {catCfg.description}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center text-center gap-3 py-8">
-                <div className="h-10 w-10 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center text-xl">
-                  ◎
-                </div>
-                <p className="text-xs text-text-muted">
-                  Completa la entrevista para posicionar este proceso.
-                </p>
-              </div>
-            )}
-
-            {/* RIGHT — oportunidades IA */}
-            <div>
-              {/* Cabecera con contador + botón IA */}
-              {(() => {
-                const hasStages  = (process.stages ?? []).length > 0
-                // Botón habilitado solo si hay etapas documentadas — sin ellas la LLM
-                // no tiene el signal clave (sistemas usados) y daría recomendaciones genéricas.
-                const canGenerate = hasStages && !aiLoading
-                return (
-                  <div className="flex items-center justify-between gap-3 mb-4">
-                    <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-                      Oportunidades IA identificadas · {process.opportunities.length}
-                    </p>
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <button
-                        onClick={handlePersonalizeWithAI}
-                        disabled={!canGenerate}
-                        title={
-                          !hasStages
-                            ? 'Documenta las etapas del proceso primero — los sistemas usados son la señal clave para las recomendaciones'
-                            : 'Genera recomendaciones específicas con IA basadas en los sistemas usados, departamento y ecosistema tecnológico'
-                        }
-                        className={[
-                          'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-semibold',
-                          'transition-all border',
-                          aiLoading
-                            ? 'border-navy/20 bg-navy/5 text-navy/50 cursor-not-allowed'
-                            : !hasStages
-                              ? 'border-border bg-gray-50 dark:bg-gray-800/50 text-text-subtle cursor-not-allowed'
-                              : 'border-navy/30 bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 hover:bg-navy/15 dark:hover:bg-navy/25',
-                        ].join(' ')}
-                      >
-                        {aiLoading ? (
-                          <>
-                            <svg className="animate-spin h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                            Generando…
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-[11px]">✦</span>
-                            {process.opportunities.length > 0 ? 'Regenerar con IA' : 'Personalizar con IA'}
-                          </>
-                        )}
-                      </button>
-                      {/* Hint cuando no hay etapas */}
-                      {!hasStages && !aiLoading && (
-                        <p className="text-[9px] text-text-subtle text-right max-w-[180px] leading-tight">
-                          Documenta las etapas primero
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )
-              })()}
-
-              {/* Error de generación */}
-              {aiError && (
-                <div className="mb-4 rounded-xl border border-danger-dark/20 bg-danger-light/10
-                  px-3 py-2 flex items-start gap-2">
-                  <span className="text-danger-dark text-xs mt-0.5 shrink-0">!</span>
-                  <p className="text-xs text-danger-dark leading-relaxed">{aiError}</p>
-                </div>
-              )}
-
-              {process.opportunities.length === 0 ? (
-                <div className="flex flex-col gap-2">
-                  {(process.stages ?? []).length === 0 ? (
-                    <p className="text-xs text-text-subtle leading-relaxed">
-                      Ve a la pestaña <strong>Etapas del proceso</strong>, documenta qué sistemas
-                      usa cada etapa y vuelve aquí para generar recomendaciones IA específicas.
-                    </p>
-                  ) : (
-                    <p className="text-xs text-text-subtle leading-relaxed">
-                      Usa el botón <strong>"Personalizar con IA"</strong> para recibir recomendaciones
-                      concretas basadas en los sistemas de este proceso y el ecosistema tecnológico de la empresa.
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {process.opportunities.map((opp) => {
-                    const isValidated = opp.status === 'validada'
-                    return (
-                      <div key={opp.id}
-                        className={[
-                          'rounded-2xl border px-4 py-3.5 flex flex-col gap-2',
-                          isValidated
-                            ? 'border-success-dark/20 bg-success-light/8 dark:bg-success-dark/5'
-                            : 'border-border dark:border-white/8 bg-white dark:bg-warm-800/50',
-                        ].join(' ')}>
-                        <div className="flex items-start gap-2">
-                          <span className={`h-1.5 w-1.5 rounded-full mt-1 shrink-0 ${
-                            isValidated ? 'bg-success-dark' : 'bg-info-dark'
-                          }`} />
-                          <p className="text-xs font-semibold text-lean-black dark:text-gray-200 leading-snug">
-                            {opp.title}
-                          </p>
-                          {isValidated && (
-                            <span className="ml-auto shrink-0 text-[9px] font-bold text-success-dark">
-                              ✓
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-text-muted leading-relaxed">
-                          {opp.description}
-                        </p>
-                        <div className="flex gap-1.5 flex-wrap mt-auto">
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${effortColors[opp.effort]}`}>
-                            Esfuerzo {opp.effort}
-                          </span>
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${impactColors[opp.impact]}`}>
-                            Impacto {opp.impact}
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-
-              {/* Notas del consultor */}
-              {process.notes && (
-                <div className="mt-6 rounded-2xl bg-warm-50 dark:bg-warm-800/40
-                  border border-border dark:border-white/6 px-4 py-3">
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
-                    Notas del consultor
-                  </p>
-                  <p className="text-xs text-text-muted leading-relaxed italic">{process.notes}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── TAB: ETAPAS ──────────────────────────────────── */}
-        {tab === 'etapas' && (
-          <StagesTab
-            processId={process.id}
-            stages={process.stages ?? []}
-          />
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ── T3View principal ──────────────────────────────────────────
 
 interface T3ViewProps {
   onBack?: () => void
 }
 
 export function T3View({ onBack }: T3ViewProps) {
-  const { processes, addProcess, initDemo, ensureLoaded, isLoading: isLoadingT3, hasData: hasDataT3, loadError: loadErrorT3 } = useT3Store()
-  const engagementId                      = useEngagementStore((s) => s.activeEngagementId)
+  const navigate = useNavigate()
+  const {
+    processes, addProcess, initDemo, ensureLoaded,
+    isLoading: isLoadingT3, hasData: hasDataT3, loadError: loadErrorT3,
+  } = useT3Store()
+  const engagementId = useEngagementStore((s) => s.activeEngagementId)
   const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
-  const companyName                       = useCompanyProfileStore((s) => s.profile.engagementName)
-
+  const companyName  = useCompanyProfileStore((s) => s.profile.engagementName)
   const { isReadOnly } = usePermissions()
 
-  // Garantizar datos al montar la ruta.
-  // ensureLoaded es idempotente: si PRP ya cargó y los datos son frescos, no relanza fetch.
-  // Si PRP aún no terminó (o T3View montó después de que la carga falló), esta llamada lo resuelve.
   useEffect(() => {
-    if (engagementId) {
-      ensureLoaded(engagementId, { reason: 'route_mount' })
-    } else if (isDemoEnabled) {
-      initDemo()
-    }
+    if (engagementId) ensureLoaded(engagementId, { reason: 'route_mount' })
+    else if (isDemoEnabled) initDemo()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])
 
-  // Carga departamentos centralizados desde company_departments
   useEffect(() => {
     if (!engagementId) return
     let cancelled = false
-
-    supabase
-      .from('projects')
-      .select('company_id')
-      .eq('id', engagementId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (cancelled || !data?.company_id) return
-        fetchDepartments(data.company_id)
-      })
-
+    getProjectCompanyId(engagementId).then((companyId) => {
+      if (cancelled || !companyId) return
+      fetchDepartments(companyId)
+    })
     return () => {
       cancelled = true
       resetDepartments()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])
-  const [activeId, setActiveId]           = useState<string | null>(null)
-  const [showModal, setShowModal]         = useState(false)
-  const [filterPhase, setFilterPhase]     = useState<ProcessPhase | null>(null)
+
+  const [activeId,     setActiveId]     = useState<string | null>(null)
+  const [showModal,    setShowModal]    = useState(false)
+  const [filterPhase,  setFilterPhase]  = useState<ProcessPhase | null>(null)
 
   const activeProcess = useMemo(
     () => processes.find((p) => p.id === activeId) ?? null,
-    [processes, activeId]
+    [processes, activeId],
   )
 
-  // Procesos filtrados
   const filtered = useMemo(
     () => processes
       .filter((p) => !filterPhase || p.phase === filterPhase)
-      .sort((a, b) => {
-        const oA = a.interview?.opportunityScore ?? 0
-        const oB = b.interview?.opportunityScore ?? 0
-        return oB - oA
-      }),
-    [processes, filterPhase]
+      .sort((a, b) => (b.interview?.opportunityScore ?? 0) - (a.interview?.opportunityScore ?? 0)),
+    [processes, filterPhase],
   )
 
-  // KPIs globales
-  const phaseCount  = Object.fromEntries(
-    ALL_PHASES.map((ph) => [ph, processes.filter((p) => p.phase === ph).length])
+  const phaseCount = Object.fromEntries(
+    ALL_PHASES.map((ph) => [ph, processes.filter((p) => p.phase === ph).length]),
   ) as Record<ProcessPhase, number>
 
   const totalCritica = processes.filter((p) => p.opportunityLevel === 'critica').length
@@ -1003,26 +100,20 @@ export function T3View({ onBack }: T3ViewProps) {
   return (
     <div className="flex flex-col bg-surface dark:bg-warm-950 min-h-screen">
 
-      {/* ── HEADER ──────────────────────────────────────────── */}
-      <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm
-        border-b border-border dark:border-white/6 px-8 py-3">
-        <div className="flex items-center gap-4 max-w-7xl mx-auto">
-          <BackToDashboard onClick={onBack} />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">T3</span>
-              <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100">Value Stream Map</h1>
-              <PhaseMiniMap phaseId="listen" toolCode="T3" />
-            </div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">{companyName}</p>
-          </div>
-
-          {/* KPI strip — muestra "-" durante la carga inicial */}
+      {/* ── HEADER ── */}
+      <ToolHeader
+        sticky
+        onBack={() => onBack ? onBack() : navigate('/')}
+        toolCode="T3"
+        title="Value Stream Map"
+        subtitle={companyName}
+        phaseMiniMap={<PhaseMiniMap phaseId="listen" toolCode="T3" />}
+        chips={
           <div className="hidden md:flex items-center gap-5">
             {[
               { label: 'Opp crítica', value: hasDataT3 ? totalCritica : null, color: 'text-navy dark:text-warm-100' },
               { label: 'Opp alta',    value: hasDataT3 ? totalAlta    : null, color: 'text-info-dark' },
-              { label: 'Total',       value: hasDataT3 ? processes.length : null, color: 'text-lean-black dark:text-gray-100' },
+              { label: 'Total',       value: hasDataT3 ? processes.length : null, color: 'text-lean-black dark:text-warm-50' },
             ].map(({ label, value, color }) => (
               <div key={label} className="text-center">
                 <p className={`text-xl font-bold tabular-nums leading-none ${color}`}>
@@ -1032,27 +123,21 @@ export function T3View({ onBack }: T3ViewProps) {
               </div>
             ))}
           </div>
+        }
+        cta={!isReadOnly ? (
+          <Button variant="primary" size="sm" onClick={() => setShowModal(true)}>
+            + Proceso
+          </Button>
+        ) : undefined}
+      />
 
-          {!isReadOnly && (
-            <button
-              onClick={() => setShowModal(true)}
-              className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl
-                text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm"
-            >
-              + Proceso
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ── Estado: carga inicial (skeleton) ── */}
+      {/* ── Carga inicial ── */}
       {isLoadingT3 && !hasDataT3 && (
         <div className="flex items-center justify-center py-20">
           <div className="flex flex-col items-center gap-3">
             <div className="flex gap-1.5">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="w-2 h-2 rounded-full bg-navy/40 animate-bounce"
-                  style={{ animationDelay: `${i * 0.15}s` }} />
+                <div key={i} className="w-2 h-2 rounded-full bg-navy/40 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>
             <p className="text-xs text-text-muted">Cargando Value Stream Map…</p>
@@ -1060,33 +145,29 @@ export function T3View({ onBack }: T3ViewProps) {
         </div>
       )}
 
-      {/* ── Estado: error sin datos (carga falló y no hay nada que mostrar) ── */}
+      {/* ── Error sin datos ── */}
       {!isLoadingT3 && !hasDataT3 && loadErrorT3 && (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <div className="h-12 w-12 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 8v4M12 16h.01" />
+              <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
             </svg>
           </div>
           <div className="text-center">
-            <p className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-1">Error al cargar los datos</p>
+            <p className="text-sm font-semibold text-lean-black dark:text-warm-50 mb-1">Error al cargar los datos</p>
             <p className="text-xs text-text-subtle max-w-xs leading-relaxed mb-4">
-              {loadErrorT3 === 'timeout' ? 'La conexión tardó demasiado. Revisa tu conexión a Supabase.' : 'No se pudieron cargar los procesos. Inténtalo de nuevo.'}
+              {loadErrorT3 === 'timeout' ? 'La conexión tardó demasiado. Revisa tu conexión a Supabase.' : 'No se pudieron cargar los procesos.'}
             </p>
             {engagementId && (
-              <button
-                onClick={() => ensureLoaded(engagementId, { force: true, reason: 'retry' })}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors"
-              >
+              <Button variant="primary" size="sm" onClick={() => ensureLoaded(engagementId, { force: true, reason: 'retry' })}>
                 Reintentar
-              </button>
+              </Button>
             )}
           </div>
         </div>
       )}
 
-      {/* ── Estado: carga exitosa con 0 procesos (proyecto nuevo) ── */}
+      {/* ── 0 procesos ── */}
       {!isLoadingT3 && hasDataT3 && processes.length === 0 && !isReadOnly && (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center text-2xl">◎</div>
@@ -1094,214 +175,159 @@ export function T3View({ onBack }: T3ViewProps) {
           <p className="text-xs text-text-subtle max-w-xs leading-relaxed text-center">
             Añade el primer proceso para comenzar el análisis de oportunidades IA.
           </p>
-          <button
-            onClick={() => setShowModal(true)}
-            className="mt-2 px-4 py-2 rounded-xl text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors"
-          >
+          <Button variant="primary" size="sm" className="mt-2" onClick={() => setShowModal(true)}>
             + Añadir primer proceso
-          </button>
+          </Button>
         </div>
       )}
 
-      {/* ── Contenido principal: visible en cuanto hay datos.
-              Refetch en vuelo → datos permanecen visibles. ── */}
+      {/* ── Contenido principal ── */}
       <div className={!hasDataT3 ? 'hidden' : ''}>
 
-      {/* ── Indicador de actualización en background ── */}
-      {isLoadingT3 && (
-        <div className="max-w-7xl mx-auto px-8 pt-2">
-          <div className="flex items-center gap-1.5 text-[11px] text-text-subtle">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-            Actualizando datos…
+        {isLoadingT3 && (
+          <div className="max-w-7xl mx-auto px-8 pt-2">
+            <div className="flex items-center gap-1.5 text-[11px] text-text-subtle">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Actualizando datos…
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="flex-1 max-w-7xl mx-auto w-full px-8">
+        <div className="flex-1 max-w-7xl mx-auto w-full px-8">
 
-        {/* ── ZONA 1: HERO CHARTS ─────────────────────────── */}
-        <div className="py-8">
-          <div className="grid grid-cols-2 gap-6 items-stretch">
+          {/* ZONA 1: HERO CHARTS */}
+          <div className="py-8">
+            <div className="grid grid-cols-2 gap-6 items-stretch">
+              <Card variant="outlined" padding="none" className="rounded-3xl p-6 flex flex-col">
+                <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">Matriz de oportunidad</p>
+                <div className="flex-1 flex items-center justify-center">
+                  <HeroOpportunityMatrix processes={filtered} activeId={activeId} onSelect={handleSelectProcess} />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+                  {CAT_ORDER.filter((c) => processes.some((p) => p.aiCategory === c)).map((c) => {
+                    const cfg = AI_CATEGORY_CONFIG[c]
+                    return (
+                      <div key={c} className="flex items-center gap-1.5">
+                        <span className={`h-2 w-2 rounded-full ${cfg.dotBg} shrink-0`} />
+                        <span className="text-[10px] text-text-subtle">{cfg.label}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </Card>
 
-            {/* Opportunity Matrix */}
-            <div className="rounded-3xl bg-white dark:bg-warm-800 border border-border
-              dark:border-white/6 p-6 flex flex-col">
-              <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">
-                Matriz de oportunidad
+              <Card variant="outlined" padding="none" className="rounded-3xl p-6 flex flex-col">
+                <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">Distribución por categoría IA</p>
+                <div className="flex-1 flex items-center justify-center">
+                  <HeroCategoryDonut processes={processes} activeId={activeId} onSelect={handleSelectProcess} />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+                  {CAT_ORDER.filter((c) => processes.some((p) => p.aiCategory === c)).map((c) => {
+                    const cfg = AI_CATEGORY_CONFIG[c]
+                    return (
+                      <div key={c} className="flex items-center gap-1.5">
+                        <span className={`h-2 w-2 rounded-full ${cfg.dotBg} shrink-0`} />
+                        <span className="text-[10px] text-text-subtle">{cfg.label}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </Card>
+            </div>
+          </div>
+
+          {/* ZONA 2: BANNER DE PROCESOS */}
+          <div className="border-t border-border dark:border-white/6 pt-6 pb-4">
+            <div className="flex items-center gap-3 mb-5 flex-wrap">
+              <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mr-2 shrink-0">
+                Procesos mapeados · {processes.length}
               </p>
-              <div className="flex-1 flex items-center justify-center">
-                <HeroOpportunityMatrix
-                  processes={filtered}
-                  activeId={activeId}
-                  onSelect={handleSelectProcess}
-                />
-              </div>
-              {/* Leyenda compacta */}
-              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
-                {CAT_ORDER.filter((c) => processes.some((p) => p.aiCategory === c)).map((c) => {
-                  const cfg = AI_CATEGORY_CONFIG[c]
+              <div className="flex items-center gap-2 flex-wrap">
+                {ALL_PHASES.map((ph) => {
+                  const cfg = PHASE_CONFIG[ph]
+                  const cnt = phaseCount[ph]
                   return (
-                    <div key={c} className="flex items-center gap-1.5">
-                      <span className={`h-2 w-2 rounded-full ${cfg.dotBg} shrink-0`} />
-                      <span className="text-[10px] text-text-subtle">{cfg.label}</span>
-                    </div>
+                    <button key={ph} onClick={() => setFilterPhase(filterPhase === ph ? null : ph)}
+                      className={[
+                        'flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border transition-all',
+                        filterPhase === ph
+                          ? `${cfg.badgeBg} ${cfg.badgeText} border-transparent`
+                          : 'bg-transparent border-border dark:border-white/10 text-text-muted hover:border-gray-300',
+                      ].join(' ')}>
+                      <span className="tabular-nums font-bold">{cnt}</span>
+                      <span>{cfg.label}</span>
+                    </button>
                   )
                 })}
+                {filterPhase && (
+                  <Button variant="link" className="text-[10px] ml-1" onClick={() => setFilterPhase(null)}>
+                    Limpiar filtros ×
+                  </Button>
+                )}
               </div>
             </div>
 
-            {/* Category Donut Chart */}
-            <div className="rounded-3xl bg-white dark:bg-warm-800 border border-border
-              dark:border-white/6 p-6 flex flex-col">
-              <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">
-                Distribución por categoría IA
-              </p>
-              <div className="flex-1 flex items-center justify-center">
-                <HeroCategoryDonut
-                  processes={processes}
-                  activeId={activeId}
-                  onSelect={handleSelectProcess}
-                />
-              </div>
-              {/* Leyenda compacta */}
-              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
-                {CAT_ORDER.filter((c) => processes.some((p) => p.aiCategory === c)).map((c) => {
-                  const cfg = AI_CATEGORY_CONFIG[c]
-                  return (
-                    <div key={c} className="flex items-center gap-1.5">
-                      <span className={`h-2 w-2 rounded-full ${cfg.dotBg} shrink-0`} />
-                      <span className="text-[10px] text-text-subtle">{cfg.label}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── ZONA 2: BANNER DE PROCESOS ───────────────────── */}
-        <div className="border-t border-border dark:border-white/6 pt-6 pb-4">
-
-          {/* Phase KPI bar */}
-          <div className="flex items-center gap-3 mb-5 flex-wrap">
-            <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mr-2 shrink-0">
-              Procesos mapeados · {processes.length}
-            </p>
-            <div className="flex items-center gap-2 flex-wrap">
-              {ALL_PHASES.map((ph) => {
-                const cfg = PHASE_CONFIG[ph]
-                const cnt = phaseCount[ph]
-                return (
-                  <button
-                    key={ph}
-                    onClick={() => setFilterPhase(filterPhase === ph ? null : ph)}
-                    className={[
-                      'flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold',
-                      'border transition-all',
-                      filterPhase === ph
-                        ? `${cfg.badgeBg} ${cfg.badgeText} border-transparent`
-                        : 'bg-transparent border-border dark:border-white/10 text-text-muted hover:border-gray-300',
-                    ].join(' ')}
-                  >
-                    <span className="tabular-nums font-bold">{cnt}</span>
-                    <span>{cfg.label}</span>
-                  </button>
-                )
-              })}
-              {filterPhase && (
-                <button onClick={() => setFilterPhase(null) }
-                  className="text-[10px] text-text-subtle hover:text-text-muted transition-colors ml-1">
-                  Limpiar filtros ×
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Process cards — compact grid style */}
-          {filtered.length === 0 ? (
-            isReadOnly ? (
-              <ViewerEmptyState />
+            {filtered.length === 0 ? (
+              isReadOnly ? <ViewerEmptyState /> : (
+                <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
+                  <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center text-2xl">◎</div>
+                  <p className="text-sm font-bold text-text-muted">Sin procesos mapeados</p>
+                </div>
+              )
             ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-                <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700
-                  flex items-center justify-center text-2xl">◎</div>
-                <p className="text-sm font-bold text-text-muted">Sin procesos mapeados</p>
-                <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
-                  Añade el primer proceso para comenzar el análisis de oportunidades IA.
-                </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
+                {filtered.map((p) => {
+                  const isActive = p.id === activeId
+                  const catCfg   = AI_CATEGORY_CONFIG[p.aiCategory]
+                  const oppCfg   = OPPORTUNITY_CONFIG[p.opportunityLevel]
+
+                  return (
+                    <button key={p.id} onClick={() => handleSelectProcess(p.id)}
+                      className={[
+                        'w-full text-left rounded-2xl px-4 py-3 transition-all duration-150 border flex flex-col gap-2',
+                        isActive
+                          ? 'border-navy/40 bg-navy/5 dark:bg-navy/10 shadow-sm ring-1 ring-navy/20'
+                          : 'border-border dark:border-white/6 bg-white dark:bg-warm-800 hover:border-gray-300 dark:hover:border-white/14 hover:shadow-sm',
+                      ].join(' ')}>
+                      <div className="flex items-start gap-2.5">
+                        <div className="shrink-0 w-1 h-6 rounded-full mt-0.5"
+                          style={{ backgroundColor: CAT_HEX[p.aiCategory], opacity: isActive ? 1 : 0.6 }} />
+                        <p className="flex-1 text-xs font-bold text-lean-black dark:text-gray-200 leading-tight line-clamp-2">{p.name}</p>
+                        <span className={`shrink-0 text-text-subtle text-[10px] transition-transform duration-200 ${isActive ? 'rotate-180' : ''}`}>↓</span>
+                      </div>
+                      <p className="text-[10px] text-text-subtle truncate pl-3.5">{p.department}</p>
+                      <div className="flex items-center gap-1 flex-wrap pl-3.5">
+                        <PhaseBadge phase={p.phase} />
+                        <Badge
+                          shape="pill"
+                          size="xs"
+                          style={{ backgroundColor: `${CAT_HEX[p.aiCategory]}22`, color: CAT_HEX[p.aiCategory] }}
+                        >
+                          {catCfg.label.split(' ')[0]}
+                        </Badge>
+                        {p.interview && (
+                          <span className={`ml-auto text-xs font-bold tabular-nums ${oppCfg.badgeText}`}>
+                            {p.interview.opportunityScore.toFixed(1)}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
-            )
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
-              {filtered.map((p) => {
-                const isActive  = p.id === activeId
-                const catCfg    = AI_CATEGORY_CONFIG[p.aiCategory]
-                const oppCfg    = OPPORTUNITY_CONFIG[p.opportunityLevel]
-                const phaseCfg  = PHASE_CONFIG[p.phase]
-
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => handleSelectProcess(p.id)}
-                    className={[
-                      'w-full text-left rounded-2xl px-4 py-3 transition-all duration-150',
-                      'border flex flex-col gap-2',
-                      isActive
-                        ? 'border-navy/40 bg-navy/5 dark:bg-navy/10 shadow-sm ring-1 ring-navy/20'
-                        : 'border-border dark:border-white/6 bg-white dark:bg-warm-800 hover:border-gray-300 dark:hover:border-white/14 hover:shadow-sm',
-                    ].join(' ')}
-                  >
-                    {/* Header row: color bar + name + chevron */}
-                    <div className="flex items-start gap-2.5">
-                      <div
-                        className="shrink-0 w-1 h-6 rounded-full mt-0.5"
-                        style={{ backgroundColor: CAT_HEX[p.aiCategory], opacity: isActive ? 1 : 0.6 }}
-                      />
-                      <p className="flex-1 text-xs font-bold text-lean-black dark:text-gray-200 leading-tight line-clamp-2">
-                        {p.name}
-                      </p>
-                      <span className={`shrink-0 text-text-subtle text-[10px] transition-transform duration-200 ${
-                        isActive ? 'rotate-180' : ''
-                      }`}>↓</span>
-                    </div>
-
-                    {/* Dept */}
-                    <p className="text-[10px] text-text-subtle truncate pl-3.5">
-                      {p.department}
-                    </p>
-
-                    {/* Badges row */}
-                    <div className="flex items-center gap-1 flex-wrap pl-3.5">
-                      <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${phaseCfg.badgeBg} ${phaseCfg.badgeText}`}>
-                        {phaseCfg.label}
-                      </span>
-                      <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${catCfg.badgeBg} ${catCfg.badgeText}`}>
-                        {catCfg.label.split(' ')[0]}
-                      </span>
-                      {p.interview && (
-                        <span className={`ml-auto text-xs font-bold tabular-nums ${oppCfg.badgeText}`}>
-                          {p.interview.opportunityScore.toFixed(1)}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          )}
+            )}
+          </div>
         </div>
+
+        {/* ZONA 3: DETALLE */}
+        {activeProcess && (
+          <div className="max-w-7xl mx-auto w-full px-8 pb-16">
+            <ProcessDetailPanel process={activeProcess} />
+          </div>
+        )}
+
       </div>
 
-      {/* ── ZONA 3: DETALLE DEL PROCESO ──────────────────────── */}
-      {activeProcess && (
-        <div className="max-w-7xl mx-auto w-full px-8 pb-16">
-          <ProcessDetailPanel process={activeProcess} />
-        </div>
-      )}
-
-      </div> {/* fin contenido principal */}
-
-      {/* Modal de nueva entrevista */}
       {showModal && (
         <ProcessInterviewModal
           onClose={() => setShowModal(false)}

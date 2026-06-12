@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 
 // ─────────────────────────────────────────────────────────────
 // Toast — notificación efímera en esquina de pantalla
@@ -44,10 +44,10 @@ const icons: Record<ToastVariant, ReactNode> = {
 }
 
 const bgClasses: Record<ToastVariant, string> = {
-  success: 'border-l-4 border-success bg-white dark:bg-gray-900',
-  error:   'border-l-4 border-danger  bg-white dark:bg-gray-900',
-  warning: 'border-l-4 border-warning bg-white dark:bg-gray-900',
-  info:    'border-l-4 border-info    bg-white dark:bg-gray-900',
+  success: 'border-l-4 border-success bg-white dark:bg-warm-800',
+  error:   'border-l-4 border-danger  bg-white dark:bg-warm-800',
+  warning: 'border-l-4 border-warning bg-white dark:bg-warm-800',
+  info:    'border-l-4 border-info    bg-white dark:bg-warm-800',
 }
 
 // ── Componente individual ──
@@ -68,7 +68,7 @@ function ToastItem({ item, onRemove }: { item: ToastItem; onRemove: (id: string)
       ].join(' ')}
     >
       <span className="shrink-0 mt-0.5" aria-hidden="true">{icons[item.variant]}</span>
-      <p className="flex-1 text-sm text-lean-black dark:text-gray-100">{item.message}</p>
+      <p className="flex-1 text-sm text-lean-black dark:text-warm-50">{item.message}</p>
       <button
         onClick={() => onRemove(item.id)}
         aria-label="Cerrar"
@@ -101,25 +101,3 @@ export function ToastContainer({
   )
 }
 
-// ── Hook useToast ──
-export function useToast() {
-  const [toasts, setToasts] = useState<ToastItem[]>([])
-
-  const remove = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id))
-  }, [])
-
-  const add = useCallback((variant: ToastVariant, message: string, duration?: number) => {
-    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`
-    setToasts((prev) => [...prev, { id, variant, message, duration }])
-  }, [])
-
-  const toast = {
-    success: (msg: string, dur?: number) => add('success', msg, dur),
-    error:   (msg: string, dur?: number) => add('error',   msg, dur),
-    warning: (msg: string, dur?: number) => add('warning', msg, dur),
-    info:    (msg: string, dur?: number) => add('info',    msg, dur),
-  }
-
-  return { toasts, toast, remove }
-}

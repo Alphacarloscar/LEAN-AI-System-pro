@@ -6,10 +6,19 @@
 // Escala 0-4. Se actualiza en cada cambio sin delay.
 // ============================================================
 
-import type { T1DimensionState }                     from '../types'
+import { Badge, type BadgeVariant }                  from '@/shared/design-system/components'
+import type { T1DimensionState, MaturityTier }       from '../types'
 import { computeOverallScore,
          resolveMaturityTier, MATURITY_TIER_CONFIG } from '../types'
 import { T1SpiderChart }                             from './T1SpiderChart'
+
+const TIER_VARIANT: Record<MaturityTier, BadgeVariant> = {
+  inicial:     'danger',
+  exploracion: 'warning',
+  desarrollo:  'info',
+  avanzado:    'success',
+  lider:       'success',
+}
 
 interface T1RadarPanelProps {
   dimensions: T1DimensionState[]
@@ -41,9 +50,9 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
         </div>
 
         {/* Tier badge */}
-        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${config.color}`}>
+        <Badge variant={TIER_VARIANT[tier]} shape="pill" size="md" className="!font-semibold">
           {config.label}
-        </span>
+        </Badge>
 
         {/* Barra de progreso */}
         <div className="mt-4 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">

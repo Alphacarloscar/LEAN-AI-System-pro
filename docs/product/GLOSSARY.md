@@ -92,7 +92,6 @@ Ver ADR-008 para la decisión técnica de roles.
 | **Friction** | Punto de fricción IA detectado en un value stream (T3). | Tabla `frictions` |
 | **Use Case** | Caso de uso de IA priorizado en T4. | Tabla `use_cases` |
 | **Go/No-Go** | Decisión de pasar a implementación de un use case. | `use_cases.goNoGo.decision: 'go' \| 'no_go' \| 'pending'` |
-| **Demo mode** | Modo de demostración con datos simulados. Activado con `VITE_DEMO_ENABLED=true`. | `src/data/demo/` |
 | **isReadOnly** | Hook que activa modo solo-lectura para `client_viewer`. | `useIsReadOnly()` en `src/shared/hooks/` |
 | **Shadow AI** | Herramientas de IA usadas sin aprobación corporativa (riesgo de T6). | Detectadas en T2 → `unofficial_tools` |
 

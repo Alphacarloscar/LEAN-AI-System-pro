@@ -55,5 +55,5 @@ Las decisiones estratégicas de producto/mercado se documentan en:
 
 ## Próximo número disponible
 
-- **ADR:** ADR-010
+- **ADR:** ADR-016
 - **FDR:** FDR-001

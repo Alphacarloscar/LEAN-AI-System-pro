@@ -28,7 +28,6 @@
 
 - [ ] Tested locally on DEV environment
 - [ ] Tested in PRE (Vercel preview) — required before merge to `main`
-- [ ] Demo mode verified (`VITE_DEMO_ENABLED=true`)
 - [ ] Auth flow not broken (login, logout, role switching)
 - [ ] No new TypeScript errors (`npm run typecheck`)
 - [ ] No new lint warnings (`npm run lint`)

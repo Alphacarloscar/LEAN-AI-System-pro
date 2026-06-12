@@ -21,7 +21,8 @@
 //
 // Cada store usa el mecanismo de reset más adecuado:
 //   reset()              — T1, T2, T3, T4
-//   syncEngagement(null) — T5, T6, T7, T8, T9
+//   resetCanvas()        — T5
+//   syncEngagement(null) — T6, T7, T8, T9
 //   resetAll()           — T12
 //
 // Sprint 9 — Bloque 2 (estabilización) + Bloque 3 (eager loading)
@@ -51,7 +52,7 @@ export function resetAllEngagementStores(): void {
   useT4Store.getState().reset()
 
   // T5–T6: canvas y controles editados por el usuario, scoped al engagement
-  useT5Store.getState().syncEngagement(null)
+  useT5Store.getState().resetCanvas()
   useT6Store.getState().syncEngagement(null)
 
   // T7–T8: contenido generado por LLM, scoped al engagement

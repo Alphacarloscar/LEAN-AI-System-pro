@@ -127,6 +127,21 @@ export async function deleteUser(userId: string): Promise<void> {
   }
 }
 
+// ── Actualizar configuración de empresa ─────────────────────
+// Usado por CompanyProfileView (ADR-011).
+
+export async function updateCompanySettings(
+  companyId: string,
+  params: { sector: string; company_size: string },
+): Promise<void> {
+  const { error } = await supabase
+    .from('companies')
+    .update({ sector: params.sector, company_size: params.company_size })
+    .eq('id', companyId)
+
+  if (error) throw new Error(`[Companies] updateCompanySettings: ${error.message}`)
+}
+
 // ── Listar proyectos de una empresa ─────────────────────────
 
 export async function listCompanyProjects(companyId: string) {

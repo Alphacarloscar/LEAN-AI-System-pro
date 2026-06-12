@@ -20,7 +20,7 @@
 
 import { useState }    from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase }    from '@/lib/supabase'
+import { updateAuthUser } from '@services/auth.service'
 import { useAuthStore } from './store'
 
 // ── Logo GOBY inline ──────────────────────────────────────────
@@ -70,7 +70,7 @@ export function UpdatePasswordView() {
     setSubmitting(true)
 
     // Actualiza contraseña y elimina el flag needs_password_reset
-    const { error: updateError } = await supabase.auth.updateUser({
+    const { error: updateError } = await updateAuthUser({
       password,
       data: { needs_password_reset: false },
     })

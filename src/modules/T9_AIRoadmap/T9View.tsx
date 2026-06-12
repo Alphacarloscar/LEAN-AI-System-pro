@@ -15,24 +15,23 @@
 // ============================================================
 
 import { useState, useMemo, useEffect }   from 'react'
+import { useNavigate }                    from 'react-router-dom'
+import { Button, Card, ToolHeader, EmptyState } from '@shared/design-system/components'
 import { useT4Store }                     from '@/modules/T4_UseCasePriorityBoard/store'
 import { useT9Store }                     from './store'
 import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
 import { PhaseMiniMap }                   from '@/shared/components/PhaseMiniMap'
-import { BackToDashboard }                from '@/shared/components/BackToDashboard'
 import { RecommendationPanel }            from '@/components/RecommendationPanel'
 import { buildT9RecommendationContext }   from './t9ContextBuilder'
-import type { AIActRiskLevel, UseCase } from '@/modules/T4_UseCasePriorityBoard/types'
-import type {
-  AddFreeForm,
-  FreeItem,
-  FreeItemStatus,
-  RoadmapRiskLevel,
-  T9ItemOverride,
-} from './types'
-import { usePermissions }                     from '@/modules/Auth'
-import { ViewerEmptyState }                   from '@/shared/components/ViewerEmptyState'
+import { usePermissions }                 from '@/modules/Auth'
+import { ViewerEmptyState }               from '@/shared/components/ViewerEmptyState'
+import { GanttRowItem }                   from './components/GanttRowItem'
+import { AddFreeItemForm }                from './components/AddFreeItemForm'
+import { computeDefaultOverride, MONTH_NAMES } from './t9GanttHelpers'
+import { DS }                             from './components/GanttRowItem.constants'
+import type { AIGanttRow, FreeGanttRow, GanttRow } from './components/GanttRowItem'
+import type { AddFreeForm } from './types'
 
 // ── Props ─────────────────────────────────────────────────────
 
@@ -40,491 +39,10 @@ interface T9ViewProps {
   onBack: () => void
 }
 
-// ── Tipos internos ────────────────────────────────────────────
-
-type AIGanttRow   = { kind: 'ai';   uc: UseCase; override: T9ItemOverride }
-type FreeGanttRow = { kind: 'free'; item: FreeItem }
-type GanttRow     = AIGanttRow | FreeGanttRow
-
-// ── Design System tokens (hex refs — source of truth: tailwind.config.ts) ──────
-const DS = {
-  navy:           '#2A2822',  // warm charcoal (era #1B2A4E)
-  successLight:   '#D4EDE3',
-  successDark:    '#5FAF8A',
-  warningLight:   '#FAF0D7',
-  warningDark:    '#D4A85C',
-  dangerLight:    '#F5DEDE',
-  dangerDark:     '#C06060',
-  infoLight:      '#DDE8F5',
-  infoDark:       '#6A90C0',
-  surface:        '#F7F4EE',  // warm ivory (era #F9FAFB)
-  textMuted:      '#6B6864',  // warm text-muted (era #6B7280)
-  // Neutral decorative — free/initiative bars (warm gray, intentional)
-  freeBarPending: '#D4D0C8',  // warm (era #D3D1C7)
-  freeBar:        '#B4B0A8',  // warm (era #B4B2A9)
-  freeBarText:    '#2C2A26',  // warm (era #2C2C2A)
-  freeSourceColor:'#444441',
-} as const
-
-// ── Helpers de riesgo ─────────────────────────────────────────
-
-function mapAIActRisk(r?: AIActRiskLevel): RoadmapRiskLevel {
-  if (!r || r === 'minimo' || r === 'sin_clasificar') return 'bajo'
-  if (r === 'limitado') return 'medio'
-  return 'alto'  // 'alto' | 'prohibido'
-}
-
-const RISK_META: Record<RoadmapRiskLevel, { label: string; bg: string; color: string }> = {
-  alto:  { label: 'Riesgo alto',  bg: DS.dangerLight,  color: DS.dangerDark  },
-  medio: { label: 'Riesgo medio', bg: DS.warningLight, color: DS.warningDark },
-  bajo:  { label: 'Riesgo bajo',  bg: DS.successLight, color: DS.successDark },
-}
-
-// ── Helpers de status ─────────────────────────────────────────
-
-const T4_STATUS_META = {
-  go:         { label: 'Aprobado',   bg: DS.successLight, color: DS.successDark },
-  en_piloto:  { label: 'En piloto',  bg: DS.infoLight,    color: DS.infoDark   },
-  completado: { label: 'Completado', bg: DS.successLight, color: DS.successDark },
-  priorizado: { label: 'Priorizado', bg: DS.warningLight, color: DS.warningDark },
-  candidato:  { label: 'Candidato',  bg: DS.surface,      color: DS.textMuted  },
-  no_go:      { label: 'No Go',      bg: DS.dangerLight,  color: DS.dangerDark  },
-} as const
-
-const FREE_STATUS_META: Record<FreeItemStatus, { label: string; bg: string; color: string }> = {
-  pendiente:  { label: 'Pendiente',  bg: DS.surface,      color: DS.textMuted  },
-  en_curso:   { label: 'En curso',   bg: DS.infoLight,    color: DS.infoDark   },
-  completado: { label: 'Completado', bg: DS.successLight, color: DS.successDark },
-}
-
-// ── Helpers de posición ───────────────────────────────────────
-
-function quarterToStartMonth(quarter?: string): number {
-  if (!quarter) return 0
-  const q = quarter.toUpperCase()
-  if (q.includes('Q1')) return 0
-  if (q.includes('Q2')) return 3
-  if (q.includes('Q3')) return 6
-  if (q.includes('Q4')) return 9
-  return 0
-}
-
-function durationToSpan(duration?: string): number {
-  if (!duration) return 1
-  const lower = duration.toLowerCase()
-  if (lower.includes('semana')) {
-    return Math.max(1, Math.ceil((parseInt(lower, 10) || 2) / 4))
-  }
-  if (lower.includes('mes')) {
-    return Math.max(1, parseInt(lower, 10) || 1)
-  }
-  return 1
-}
-
-function computeDefaultOverride(uc: UseCase): T9ItemOverride {
-  const responsible = uc.roadmap?.owner ?? uc.sponsorName ?? '—'
-
-  // Prioridad: fechas explícitas (startDate/endDate) > quarter + duración estimada
-  if (uc.roadmap?.startDate) {
-    // Append T12:00:00 to avoid UTC-midnight timezone boundary issue (UTC+1/+2 shifts month)
-    const startD = new Date(uc.roadmap.startDate + 'T12:00:00')
-    // NaN guard: si la fecha es malformada, caer al branch quarter/duración
-    if (!isNaN(startD.getTime())) {
-      const startMonth = startD.getMonth()
-      const endD       = uc.roadmap?.endDate
-        ? new Date(uc.roadmap.endDate + 'T12:00:00')
-        : null
-      const endMonth   = (endD && !isNaN(endD.getTime()))
-        ? endD.getMonth()
-        : Math.min(startMonth + durationToSpan(uc.roadmap?.estimatedDuration) - 1, 11)
-      return {
-        useCaseId:   uc.id,
-        startMonth,
-        endMonth:    Math.min(Math.max(endMonth, startMonth), 11),
-        responsible,
-      }
-    }
-  }
-
-  const start = quarterToStartMonth(uc.roadmap?.quarter)
-  const span  = durationToSpan(uc.roadmap?.estimatedDuration)
-  return {
-    useCaseId:   uc.id,
-    startMonth:  start,
-    endMonth:    Math.min(start + span - 1, 11),
-    responsible,
-  }
-}
-
-// ── Estilos de barra (posición dinámica) ─────────────────────
-
-function barLeftPct(startMonth: number): string {
-  return `${(startMonth / 12) * 100}%`
-}
-
-function barWidthPct(startMonth: number, endMonth: number): string {
-  return `${Math.max(((endMonth - startMonth + 1) / 12) * 100, 4)}%`
-}
-
-function milestoneLeftPct(endMonth: number): string {
-  // borde derecho del mes — centrado en el marcador (5px = mitad del dot)
-  return `calc(${((endMonth + 1) / 12) * 100}% - 5px)`
-}
-
-// ── Badge ─────────────────────────────────────────────────────
-
-function Badge({ label, bg, color }: { label: string; bg: string; color: string }) {
-  return (
-    <span
-      style={{
-        background: bg,
-        color,
-        fontSize: 10,
-        padding: '1px 7px',
-        borderRadius: 10,
-        fontWeight: 500,
-        whiteSpace: 'nowrap',
-        flexShrink: 0,
-      }}
-    >
-      {label}
-    </span>
-  )
-}
-
-// ── GanttRow ──────────────────────────────────────────────────
-
-interface GanttRowProps {
-  row:           GanttRow
-  isEditing:     boolean
-  editValue:     string
-  onEditStart:   (current: string) => void
-  onEditChange:  (v: string) => void
-  onEditSave:    () => void
-}
-
-function GanttRowItem({
-  row, isEditing, editValue, onEditStart, onEditChange, onEditSave,
-}: GanttRowProps) {
-
-  // Extraer campos según tipo de fila
-  let name:          string
-  let department:    string
-  let responsible:   string
-  let startMonth:    number
-  let endMonth:      number
-  let riskMeta:      { label: string; bg: string; color: string }
-  let statusBadge:   React.ReactNode
-  let barBg:         string
-  let barTextColor:  string
-  let barOpacity:    number
-  let showMilestone: boolean
-  let sourceLabel:   string
-  let sourceBg:      string
-  let sourceColor:   string
-
-  if (row.kind === 'ai') {
-    const { uc, override } = row
-    name          = uc.name
-    department    = uc.department
-    responsible   = override.responsible
-    startMonth    = override.startMonth
-    endMonth      = override.endMonth
-    riskMeta      = RISK_META[mapAIActRisk(uc.aiActClassification?.riskLevel)]
-    const sm      = T4_STATUS_META[uc.status] ?? T4_STATUS_META.candidato
-    statusBadge   = <Badge label={sm.label} bg={sm.bg} color={sm.color} />
-    barBg         = DS.navy
-    barTextColor  = '#ffffff'
-    barOpacity    = uc.status === 'completado' ? 0.45 : 1
-    showMilestone = !!uc.roadmap?.quarter
-    sourceLabel   = 'T4 · Go'
-    sourceBg      = DS.infoLight
-    sourceColor   = DS.infoDark
-  } else {
-    const { item } = row
-    name          = item.name
-    department    = item.department
-    responsible   = item.responsible
-    startMonth    = item.startMonth
-    endMonth      = item.endMonth
-    riskMeta      = RISK_META[item.riskLevel]
-    const sm      = FREE_STATUS_META[item.status]
-    statusBadge   = <Badge label={sm.label} bg={sm.bg} color={sm.color} />
-    barBg         = item.status === 'pendiente' ? DS.freeBarPending : DS.freeBar
-    barTextColor  = DS.freeBarText
-    barOpacity    = item.status === 'completado' ? 0.5 : 1
-    showMilestone = false
-    sourceLabel   = 'Libre'
-    sourceBg      = DS.surface
-    sourceColor   = DS.freeSourceColor
-  }
-
-  return (
-    <div
-      className="grid border-t border-border dark:border-white/6 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
-      style={{ gridTemplateColumns: '260px 1fr', minHeight: 56 }}
-    >
-      {/* Columna izquierda: info */}
-      <div className="px-4 py-2 flex flex-col justify-center gap-1 border-r border-border dark:border-white/6 min-w-0">
-        <p
-          className="text-xs font-medium text-lean-black dark:text-gray-100 truncate"
-          style={{ maxWidth: 228 }}
-          title={name}
-        >
-          {name}
-        </p>
-
-        {/* Badges: fuente + status + riesgo */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <Badge label={sourceLabel} bg={sourceBg} color={sourceColor} />
-          {statusBadge}
-          <Badge label={riskMeta.label} bg={riskMeta.bg} color={riskMeta.color} />
-        </div>
-
-        {/* Departamento + responsable editable */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span
-            className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-text-muted"
-            style={{ flexShrink: 0 }}
-          >
-            {department || '—'}
-          </span>
-
-          {isEditing ? (
-            <input
-              autoFocus
-              value={editValue}
-              onChange={(e) => onEditChange(e.target.value)}
-              onBlur={onEditSave}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter')  onEditSave()
-                if (e.key === 'Escape') onEditSave()
-              }}
-              className="text-[10px] border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5 bg-white dark:bg-gray-800 text-text-muted w-28 outline-none focus:ring-1 focus:ring-blue-300"
-            />
-          ) : (
-            <button
-              onClick={() => onEditStart(responsible)}
-              className="flex items-center gap-0.5 text-[10px] text-text-muted hover:text-lean-black dark:hover:text-gray-100 transition-colors group"
-            >
-              <span>{responsible || '— sin responsable'}</span>
-              {/* Icono lápiz */}
-              <svg
-                className="opacity-0 group-hover:opacity-50 ml-0.5 flex-shrink-0"
-                width="9" height="9" viewBox="0 0 12 12" fill="none"
-                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-              >
-                <path d="M8.5 1.5l2 2L4 10H2V8L8.5 1.5z" />
-              </svg>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Columna derecha: barra Gantt */}
-      <div className="relative flex items-center px-2 overflow-hidden">
-
-        {/* Líneas de mes */}
-        <div
-          className="absolute inset-0 grid pointer-events-none"
-          style={{ gridTemplateColumns: 'repeat(12, 1fr)' }}
-        >
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div
-              key={i}
-              className={i < 11 ? 'border-r border-border/25 dark:border-white/5' : ''}
-            />
-          ))}
-        </div>
-
-        {/* Separadores de trimestre Q1|Q2|Q3|Q4 */}
-        {[25, 50, 75].map((pct) => (
-          <div
-            key={pct}
-            className="absolute top-0 bottom-0 pointer-events-none"
-            style={{ left: `${pct}%`, width: 1, background: 'rgba(0,0,0,0.10)' }}
-          />
-        ))}
-
-        {/* Barra */}
-        <div
-          className="absolute h-[22px] rounded flex items-center px-2 overflow-hidden"
-          style={{
-            left:       barLeftPct(startMonth),
-            width:      barWidthPct(startMonth, endMonth),
-            background: barBg,
-            opacity:    barOpacity,
-            transition: 'opacity 200ms',
-          }}
-        >
-          <span
-            className="text-[10px] font-medium truncate"
-            style={{ color: barTextColor }}
-          >
-            {name}
-          </span>
-        </div>
-
-        {/* Hito al final de la barra */}
-        {showMilestone && (
-          <div
-            className="absolute w-2.5 h-2.5 rounded-full z-10 pointer-events-none"
-            style={{
-              left:      milestoneLeftPct(endMonth),
-              top:       '50%',
-              transform: 'translateY(-50%)',
-              background: DS.dangerDark,
-            }}
-          />
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ── AddFreeItemForm ───────────────────────────────────────────
-
-const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
-
-const MONTH_OPTIONS = MONTH_NAMES.map((name, i) => ({ value: i, label: name }))
-
-const SELECT_CLS =
-  'w-full text-xs border border-border dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-lean-black dark:text-gray-100 outline-none focus:ring-1 focus:ring-blue-300'
-
-const INPUT_CLS = SELECT_CLS
-
-interface AddFormProps {
-  form:      AddFreeForm
-  onChange:  (updates: Partial<AddFreeForm>) => void
-  onSave:    () => void
-  onCancel:  () => void
-}
-
-function AddFreeItemForm({ form, onChange, onSave, onCancel }: AddFormProps) {
-  return (
-    <div className="border-t border-border dark:border-white/6 px-5 py-4 bg-gray-50 dark:bg-gray-800/30">
-      <p className="text-xs font-medium text-lean-black dark:text-gray-100 mb-3">
-        Nueva iniciativa libre
-      </p>
-
-      <div className="grid gap-3 mb-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-        {/* Nombre — ocupa 2 columnas */}
-        <div style={{ gridColumn: '1 / 3' }}>
-          <label className="text-[10px] text-text-subtle block mb-1">
-            Nombre de la iniciativa *
-          </label>
-          <input
-            value={form.name}
-            onChange={(e) => onChange({ name: e.target.value })}
-            placeholder="Ej: Migración ERP, Formación interna..."
-            className={INPUT_CLS}
-          />
-        </div>
-
-        {/* Departamento */}
-        <div>
-          <label className="text-[10px] text-text-subtle block mb-1">Departamento</label>
-          <input
-            value={form.department}
-            onChange={(e) => onChange({ department: e.target.value })}
-            placeholder="IT, RRHH, Finanzas..."
-            className={INPUT_CLS}
-          />
-        </div>
-
-        {/* Responsable */}
-        <div>
-          <label className="text-[10px] text-text-subtle block mb-1">Responsable</label>
-          <input
-            value={form.responsible}
-            onChange={(e) => onChange({ responsible: e.target.value })}
-            placeholder="Nombre y apellido"
-            className={INPUT_CLS}
-          />
-        </div>
-
-        {/* Mes inicio */}
-        <div>
-          <label className="text-[10px] text-text-subtle block mb-1">Mes inicio</label>
-          <select
-            value={form.startMonth}
-            onChange={(e) => {
-              const s = Number(e.target.value)
-              onChange({ startMonth: s, endMonth: Math.max(form.endMonth, s) })
-            }}
-            className={SELECT_CLS}
-          >
-            {MONTH_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Mes fin */}
-        <div>
-          <label className="text-[10px] text-text-subtle block mb-1">Mes fin</label>
-          <select
-            value={form.endMonth}
-            onChange={(e) => onChange({ endMonth: Number(e.target.value) })}
-            className={SELECT_CLS}
-          >
-            {MONTH_OPTIONS.filter((o) => o.value >= form.startMonth).map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Riesgo */}
-        <div>
-          <label className="text-[10px] text-text-subtle block mb-1">Nivel de riesgo</label>
-          <select
-            value={form.riskLevel}
-            onChange={(e) => onChange({ riskLevel: e.target.value as RoadmapRiskLevel })}
-            className={SELECT_CLS}
-          >
-            <option value="bajo">Bajo</option>
-            <option value="medio">Medio</option>
-            <option value="alto">Alto</option>
-          </select>
-        </div>
-
-        {/* Estado */}
-        <div>
-          <label className="text-[10px] text-text-subtle block mb-1">Estado</label>
-          <select
-            value={form.status}
-            onChange={(e) => onChange({ status: e.target.value as FreeItemStatus })}
-            className={SELECT_CLS}
-          >
-            <option value="pendiente">Pendiente</option>
-            <option value="en_curso">En curso</option>
-            <option value="completado">Completado</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="flex gap-2">
-        <button
-          onClick={onSave}
-          disabled={!form.name.trim()}
-          className="px-4 py-1.5 text-xs bg-navy-metallic text-white rounded-lg hover:bg-navy-metallic-hover disabled:opacity-40 transition-all shadow-sm"
-        >
-          Añadir al roadmap
-        </button>
-        <button
-          onClick={onCancel}
-          className="px-4 py-1.5 text-xs border border-border dark:border-white/10 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-text-muted transition-colors"
-        >
-          Cancelar
-        </button>
-      </div>
-    </div>
-  )
-}
-
 // ── T9View ────────────────────────────────────────────────────
 
 export function T9View({ onBack }: T9ViewProps) {
+  const navigate                    = useNavigate()
   const { isReadOnly } = usePermissions()
   const { useCases, engagementId: t4EngagementId, loadEngagement: loadT4 } = useT4Store()
   const { overrides, freeItems, setOverride, addFreeItem, updateFreeItem, syncEngagement: syncT9 } = useT9Store()
@@ -533,24 +51,22 @@ export function T9View({ onBack }: T9ViewProps) {
   const engagementId                                    = useEngagementStore((s) => s.activeEngagementId)
 
   // Scoping: si cambia el engagement, limpia overrides y freeItems del cliente anterior
+  // stable Zustand action — mount-only: sincronizar al cambiar engagement
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { syncT9(engagementId) }, [engagementId])
 
   // Cargar T4 al montar T9 si el engagement del store T4 no coincide con el activo
   // RC-3: condición engagement-aware — evita usar datos stale de un proyecto anterior
+  // stable Zustand action (loadT4) — referencia estable, no debe re-disparar el efecto
   useEffect(() => {
     if (engagementId && t4EngagementId !== engagementId) loadT4(engagementId)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId, t4EngagementId])
 
-  // ── Selector de año — declarado aquí para filtrar goCases ───
+  // ── Selector de año ───────────────────────────────────────────
   const currentYear = new Date().getFullYear()
   const [selectedYear, setSelectedYear] = useState(currentYear)
 
-  // Casos de uso aprobados para la hoja de ruta: go, en_piloto o completado.
-  // Se filtra por status (campo T4 canónico) y por selectedYear:
-  //   — Si el caso tiene fechas explícitas, se incluye si su rango cubre selectedYear.
-  //   — Si NO tiene fechas, solo se muestra en el año en curso (sin datos temporales
-  //     no tiene sentido arrastrarlos a vistas históricas).
-  // goNoGo es un campo documental opcional que T4 no sincroniza automáticamente con status.
   const goCases = useCases.filter((uc) => {
     if (!(uc.status === 'go' || uc.status === 'en_piloto' || uc.status === 'completado')) return false
     if (uc.roadmap?.startDate) {
@@ -560,7 +76,6 @@ export function T9View({ onBack }: T9ViewProps) {
         : startYear
       return startYear <= selectedYear && endYear >= selectedYear
     }
-    // Sin fechas explícitas: solo visible en el año en curso
     return selectedYear === currentYear
   })
 
@@ -572,28 +87,17 @@ export function T9View({ onBack }: T9ViewProps) {
   )
 
   // Construir filas ai_import: merge T4 data + override persistido
-  //
-  // Regla de precedencia:
-  //   — Si el caso tiene startDate explícito en T4, la POSICIÓN siempre se
-  //     recalcula desde T4 (evita que overrides persistidos antes de que
-  //     existiera startDate/endDate sombreen los datos reales).
-  //   — El campo `responsible` sí se conserva del override si el usuario
-  //     lo editó manualmente.
-  //   — Si no hay startDate, se usa el override persistido completo o el
-  //     default calculado por quarter/duración.
   const aiRows: AIGanttRow[] = goCases.map((uc) => {
     const persisted = overrides.find((o) => o.useCaseId === uc.id)
     const computed  = computeDefaultOverride(uc)
-    const override: T9ItemOverride = uc.roadmap?.startDate
+    const override  = uc.roadmap?.startDate
       ? { ...computed, responsible: persisted?.responsible ?? computed.responsible }
       : (persisted ?? computed)
     return { kind: 'ai' as const, uc, override }
   })
 
-  // Filas libres
   const freeRows: FreeGanttRow[] = freeItems.map((item) => ({ kind: 'free' as const, item }))
 
-  // Todas las filas ordenadas por startMonth ascendente
   const allRows: GanttRow[] = [...aiRows, ...freeRows].sort((a, b) => {
     const aS = a.kind === 'ai' ? a.override.startMonth : a.item.startMonth
     const bS = b.kind === 'ai' ? b.override.startMonth : b.item.startMonth
@@ -607,7 +111,7 @@ export function T9View({ onBack }: T9ViewProps) {
 
   const highRiskCount = allRows.filter((r) =>
     r.kind === 'ai'
-      ? mapAIActRisk(r.uc.aiActClassification?.riskLevel) === 'alto'
+      ? (r.uc.aiActClassification?.riskLevel === 'alto' || r.uc.aiActClassification?.riskLevel === 'prohibido')
       : r.item.riskLevel === 'alto'
   ).length
 
@@ -623,8 +127,6 @@ export function T9View({ onBack }: T9ViewProps) {
   function handleEditSave(rowId: string) {
     const aiRow = aiRows.find((r) => r.uc.id === rowId)
     if (aiRow) {
-      // Siempre recomputar posición desde T4 al persistir responsible,
-      // para no congelar posiciones stale en el override guardado.
       const base = computeDefaultOverride(aiRow.uc)
       setOverride({ ...base, responsible: editValue })
     } else {
@@ -658,76 +160,69 @@ export function T9View({ onBack }: T9ViewProps) {
   const MONTHS = MONTH_NAMES
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+    <div className="min-h-screen bg-surface dark:bg-warm-900">
 
-      {/* ── Header ──────────────────────────────────────────── */}
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <BackToDashboard onClick={onBack} className="mb-1.5" />
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">T9</span>
-            <h1 className="text-base font-semibold text-lean-black dark:text-gray-100">Roadmap IA — 6 meses</h1>
-            <PhaseMiniMap phaseId="activate" toolCode="T9" />
-          </div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">{companyName} · Sprint L.E.A.N.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Selector de año */}
-          <div className="flex items-center gap-0.5 border border-border dark:border-white/10 rounded-lg px-2 py-1 bg-white dark:bg-gray-900">
-            <button
-              onClick={() => setSelectedYear((y) => y - 1)}
-              className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-lean-black dark:hover:text-gray-100 transition-colors rounded"
-              aria-label="Año anterior"
-            >
-              ‹
-            </button>
-            <span className="text-xs font-mono font-medium text-lean-black dark:text-gray-100 px-1.5 tabular-nums">
-              {selectedYear}
-            </span>
-            <button
-              onClick={() => setSelectedYear((y) => y + 1)}
-              className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-lean-black dark:hover:text-gray-100 transition-colors rounded"
-              aria-label="Año siguiente"
-            >
-              ›
-            </button>
-          </div>
-          {!isReadOnly && (
-            <>
-              <button className="px-4 py-1.5 text-xs bg-navy-metallic text-white rounded-lg hover:bg-navy-metallic-hover transition-all shadow-sm">
-                Crear snapshot
-              </button>
+      {/* ── Header ── */}
+      <ToolHeader
+        onBack={onBack}
+        backLabel="Volver al dashboard"
+        toolCode="T9"
+        title="Roadmap IA — 6 meses"
+        subtitle={`${companyName} · Sprint L.E.A.N.`}
+        phaseMiniMap={<PhaseMiniMap phaseId="activate" toolCode="T9" />}
+        maxWidth="max-w-6xl"
+        cta={
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5 border border-border dark:border-white/10 rounded-lg px-2 py-1 bg-white dark:bg-gray-900">
               <button
-                onClick={() => { setShowAddForm(true) }}
-                className="px-4 py-1.5 text-xs bg-navy-metallic text-white rounded-lg hover:bg-navy-metallic-hover transition-all shadow-sm"
+                onClick={() => setSelectedYear((y) => y - 1)}
+                className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-lean-black dark:hover:text-gray-100 transition-colors rounded"
+                aria-label="Año anterior"
               >
-                + Añadir iniciativa
+                ‹
               </button>
-            </>
-          )}
-        </div>
-      </div>
+              <span className="text-xs font-mono font-medium text-lean-black dark:text-warm-50 px-1.5 tabular-nums">
+                {selectedYear}
+              </span>
+              <button
+                onClick={() => setSelectedYear((y) => y + 1)}
+                className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-lean-black dark:hover:text-gray-100 transition-colors rounded"
+                aria-label="Año siguiente"
+              >
+                ›
+              </button>
+            </div>
+            {!isReadOnly && (
+              <>
+                <Button variant="primary" size="sm">Crear snapshot</Button>
+                <Button variant="primary" size="sm" onClick={() => { setShowAddForm(true) }}>
+                  + Añadir iniciativa
+                </Button>
+              </>
+            )}
+          </div>
+        }
+      />
 
-      {/* ── Stats ───────────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+
+      {/* ── Stats ── */}
       <div className="grid grid-cols-4 gap-4">
         {([
-          { n: goCases.length,  label: 'Casos Go (T4)' },
+          { n: goCases.length,   label: 'Casos Go (T4)' },
           { n: freeItems.length, label: 'Iniciativas libres' },
-          { n: inPilotOrDone,   label: 'Activos o completados' },
-          { n: highRiskCount,   label: 'Riesgos altos' },
+          { n: inPilotOrDone,    label: 'Activos o completados' },
+          { n: highRiskCount,    label: 'Riesgos altos' },
         ] as const).map(({ n, label }) => (
-          <div
-            key={label}
-            className="rounded-xl bg-white dark:bg-gray-900 px-5 py-4 border border-border dark:border-white/6"
-          >
-            <p className="text-2xl font-semibold text-lean-black dark:text-gray-100">{n}</p>
+          <Card key={label} variant="outlined" padding="none" className="rounded-xl px-5 py-4">
+            <p className="text-2xl font-semibold text-lean-black dark:text-warm-50">{n}</p>
             <p className="text-[11px] text-text-muted mt-0.5">{label}</p>
-          </div>
+          </Card>
         ))}
       </div>
 
-      {/* ── Gantt ───────────────────────────────────────────── */}
-      <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 overflow-hidden">
+      {/* ── Gantt ── */}
+      <Card variant="outlined" padding="none" className="rounded-2xl overflow-hidden">
 
         {/* Cabecera */}
         <div className="grid border-b border-border dark:border-white/6" style={{ gridTemplateColumns: '260px 1fr' }}>
@@ -735,7 +230,7 @@ export function T9View({ onBack }: T9ViewProps) {
             Iniciativa / responsable
           </div>
           <div className="border-l border-border dark:border-white/6">
-            {/* Trimestres — 4Q */}
+            {/* Trimestres */}
             <div className="grid border-b border-border dark:border-white/6" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
               {([
                 { q: 'Q1', months: 'Ene–Mar', bg: DS.infoLight,    color: DS.infoDark    },
@@ -745,25 +240,19 @@ export function T9View({ onBack }: T9ViewProps) {
               ] as const).map(({ q, months, bg, color }, i) => (
                 <div
                   key={q}
-                  className={[
-                    'py-1.5 text-center text-[10px] font-medium uppercase tracking-widest',
-                    i < 3 ? 'border-r border-border dark:border-white/6' : '',
-                  ].join(' ')}
+                  className={['py-1.5 text-center text-[10px] font-medium uppercase tracking-widest', i < 3 ? 'border-r border-border dark:border-white/6' : ''].join(' ')}
                   style={{ background: bg, color }}
                 >
                   {q} {selectedYear} · {months}
                 </div>
               ))}
             </div>
-            {/* Meses — 12 columnas */}
+            {/* Meses */}
             <div className="grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)' }}>
               {MONTHS.map((m, i) => (
                 <div
                   key={m}
-                  className={[
-                    'py-1.5 text-center text-[11px] text-text-subtle',
-                    i < 11 ? 'border-r border-border dark:border-white/6' : '',
-                  ].join(' ')}
+                  className={['py-1.5 text-center text-[11px] text-text-subtle', i < 11 ? 'border-r border-border dark:border-white/6' : ''].join(' ')}
                 >
                   {m}
                 </div>
@@ -772,14 +261,24 @@ export function T9View({ onBack }: T9ViewProps) {
           </div>
         </div>
 
-        {/* Filas */}
+        {/* Filas vacías */}
         {allRows.length === 0 && (
           isReadOnly ? (
             <div className="px-6 py-10"><ViewerEmptyState /></div>
           ) : (
-            <div className="px-6 py-10 text-center text-sm text-text-muted">
-              No hay casos de uso con decisión Go en T4. Añade iniciativas libres o completa el proceso de scoring en T4.
-            </div>
+            <EmptyState
+              icon={
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="6" width="8" height="2.5" rx="1"/>
+                  <rect x="6" y="11" width="10" height="2.5" rx="1"/>
+                  <line x1="2" y1="3" x2="2" y2="17"/>
+                </svg>
+              }
+              title="Roadmap vacío"
+              description="Aprueba casos de uso en T4 o añade iniciativas libres para construir el roadmap de 6 meses."
+              action={<Button variant="ghost" size="sm" onClick={() => navigate('/t4')}>Ir a T4</Button>}
+              className="py-10"
+            />
           )
         )}
 
@@ -798,7 +297,6 @@ export function T9View({ onBack }: T9ViewProps) {
           )
         })}
 
-        {/* Formulario añadir */}
         {showAddForm && (
           <AddFreeItemForm
             form={addForm}
@@ -807,9 +305,9 @@ export function T9View({ onBack }: T9ViewProps) {
             onCancel={() => setShowAddForm(false)}
           />
         )}
-      </div>
+      </Card>
 
-      {/* ── Leyenda ──────────────────────────────────────────── */}
+      {/* ── Leyenda ── */}
       <div className="flex items-center gap-5 flex-wrap pb-2">
         <div className="flex items-center gap-2 text-[11px] text-text-muted">
           <div className="w-6 h-2 rounded" style={{ background: DS.navy }} />
@@ -831,7 +329,7 @@ export function T9View({ onBack }: T9ViewProps) {
         </div>
       </div>
 
-      {/* ── RECOMENDACIONES IA ──────────────────────────────── */}
+      {/* ── RECOMENDACIONES IA ── */}
       {t9LLMContext && (
         <RecommendationPanel
           tool="t9"
@@ -841,6 +339,7 @@ export function T9View({ onBack }: T9ViewProps) {
           engagementId={engagementId}
         />
       )}
+      </div>
     </div>
   )
 }

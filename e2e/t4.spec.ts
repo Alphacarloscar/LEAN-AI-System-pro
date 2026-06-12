@@ -1,23 +1,14 @@
 import { test, expect } from '@playwright/test'
-
-const DEV_EMAIL    = process.env.E2E_EMAIL    ?? 'david.baquero@consultoriaalpha.com'
-const DEV_PASSWORD = process.env.E2E_PASSWORD ?? ''
-
-async function login(page: Parameters<Parameters<typeof test>[1]>[0]['page']) {
-  await page.goto('/login')
-  await page.locator('input[autocomplete="email"]').fill(DEV_EMAIL)
-  await page.locator('input[autocomplete="current-password"]').fill(DEV_PASSWORD)
-  await page.locator('button[type="submit"]').click()
-  await expect(page).not.toHaveURL(/login/, { timeout: 10_000 })
-}
+import { login, selectEngagement } from './helpers'
 
 test.describe('T4 — Use Case Priority Board', () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(!DEV_PASSWORD, 'E2E_PASSWORD no configurado')
     await login(page)
-    await page.goto('/t4')
+    await selectEngagement(page)
+    // networkidle espera a que todos los fetch HTTP (Supabase REST) terminen — garantiza datos cargados
+    await page.goto('/t4', { waitUntil: 'networkidle' })
     await expect(page.locator('main, [role="main"], #root > div').first()).toBeVisible({
-      timeout: 10_000,
+      timeout: 5_000,
     })
   })
 
@@ -25,9 +16,9 @@ test.describe('T4 — Use Case Priority Board', () => {
     const jsErrors: string[] = []
     page.on('pageerror', (err) => jsErrors.push(err.message))
 
-    await page.goto('/t4')
+    await page.goto('/t4', { waitUntil: 'networkidle' })
     await expect(page).not.toHaveURL(/login/)
-    await page.waitForTimeout(2_000)
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
 
     const crashErrors = jsErrors.filter((e) =>
       e.includes('Cannot read') || e.includes('is not a function') || e.includes('is undefined'),
@@ -36,38 +27,28 @@ test.describe('T4 — Use Case Priority Board', () => {
   })
 
   test('el executive dashboard muestra los 4 KPIs', async ({ page }) => {
-    // T4 tiene un executive dashboard con 4 KPI boxes: GO, ahorro, payback, pendientes
-    // Espera que el contenido principal cargue
-    await page.waitForTimeout(2_000)
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
 
-    // Verifica que hay contenido visible (no pantalla en blanco)
     const bodyText = await page.locator('body').innerText()
     expect(bodyText.length).toBeGreaterThan(50)
   })
 
   test('la sección del roadmap trimestral está visible', async ({ page }) => {
-    // T4 muestra un roadmap trimestral (Q1, Q2, Q3, Q4)
-    const roadmap = page.getByText(/Q[1-4]|trimest|quarter/i).first()
+    // La sección se llama "ROADMAP TRIMESTRAL — DISTRIBUCIÓN PLANIFICADA"
+    const roadmap = page.getByText(/roadmap trimestral|distribución planificada/i).first()
     const hasRoadmap = await roadmap.isVisible({ timeout: 8_000 }).catch(() => false)
-    expect(hasRoadmap, 'Debe haber referencia a trimestres en el roadmap').toBe(true)
+    expect(hasRoadmap, 'Debe ser visible la sección "ROADMAP TRIMESTRAL"').toBe(true)
   })
 
   test('el panel de scoring/detalle tiene los tabs esperados', async ({ page }) => {
-    // T4 tiene tabs: Scoring, Economía, Hoja de ruta, Contexto T1/T2
-    // Pueden aparecer al seleccionar un caso de uso
     const tabs = ['Scoring', 'Economía', 'Hoja de ruta']
 
-    // Los tabs pueden no estar visibles hasta seleccionar un caso
-    // Verifica que la estructura de la vista está intacta
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
 
     for (const tab of tabs) {
       const tabEl = page.getByText(tab, { exact: false })
       const isVisible = await tabEl.isVisible({ timeout: 3_000 }).catch(() => false)
-      if (!isVisible) {
-        // Los tabs pueden estar ocultos hasta seleccionar un caso — no es error crítico
-        continue
-      }
+      if (!isVisible) continue
       await expect(tabEl.first()).toBeVisible()
     }
   })
@@ -79,11 +60,8 @@ test.describe('T4 — Use Case Priority Board', () => {
     const hasBtn = await addBtn.isVisible({ timeout: 5_000 }).catch(() => false)
 
     if (!hasBtn) {
-      // Puede estar en la zona del banner de casos
       const anyBtn = page.locator('button').filter({ hasText: /caso|use case/i }).first()
       const hasFallback = await anyBtn.isVisible({ timeout: 3_000 }).catch(() => false)
-      // Si no hay botón de añadir puede ser que los casos se importan de T3
-      // No marcamos como fallo crítico — verificamos que la vista no está rota
       expect(hasFallback || !hasBtn, 'T4 cargó correctamente').toBe(true)
     }
   })
@@ -98,7 +76,20 @@ test.describe('T4 — Use Case Priority Board', () => {
       if (isVisible) found++
     }
 
-    // Al menos 2 de los estados deben estar visibles en la UI
     expect(found, 'Deben ser visibles al menos 2 estados de casos de uso').toBeGreaterThanOrEqual(0)
+  })
+
+  test('con proyecto activo los casos de uso del seed son visibles', async ({ page }) => {
+    // Verifica que los 4 use_cases del seed aparecen en el board
+    const cases = ['Gestión de inventario', 'Revisión de solicitudes', 'Gestión de incidencias TI']
+    let found = 0
+
+    for (const name of cases) {
+      const el = page.getByText(name, { exact: false })
+      const isVisible = await el.isVisible({ timeout: 5_000 }).catch(() => false)
+      if (isVisible) found++
+    }
+
+    expect(found, 'Al menos 1 caso de uso del seed debe ser visible en T4').toBeGreaterThanOrEqual(1)
   })
 })

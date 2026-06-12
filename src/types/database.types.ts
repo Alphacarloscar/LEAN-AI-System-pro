@@ -215,6 +215,22 @@ export type ISO42001ControlRow = {
   updated_at:    string
 }
 
+export type ToolOutputRow = {
+  id:              string
+  project_id:      string
+  tool_code:       string
+  payload:         Json
+  payload_version: number
+  version:         number
+  status:          string
+  archived:        boolean
+  stale_after:     string | null
+  created_at:      string
+  updated_at:      string
+  created_by:      string | null
+  updated_by:      string | null
+}
+
 // ============================================================
 // Inserts (campos requeridos al insertar)
 // id excluded from base Omit + added back as optional so Postgres
@@ -245,7 +261,8 @@ export type T1DimensionScoreInsert  = Omit<T1DimensionScoreRow, 'id' | 'updated_
 export type StakeholderInsert       = Omit<StakeholderRow, 'created_at' | 'id'> & { id?: string }
 export type ValueStreamInsert       = Omit<ValueStreamRow, 'created_at' | 'id'> & { id?: string }
 export type UseCaseInsert           = Omit<UseCaseRow, 'created_at' | 'updated_at' | 'id'> & { id?: string }
-export type T5CanvasInsert          = Omit<T5CanvasRow, 'created_at' | 'updated_at' | 'id'> & { id?: string }
+export type T5CanvasInsert          = Omit<T5CanvasRow, 'created_at' | 'updated_at' | 'id'> & { id?: string; updated_at?: string }
+export type ToolOutputInsert        = Omit<ToolOutputRow, 'id' | 'created_at' | 'updated_at' | 'version'> & { id?: string; created_at?: string; updated_at?: string; version?: number }
 export type ISO42001ControlInsert   = Omit<ISO42001ControlRow, 'id'> & { id?: string }
 
 // ── Alias de compatibilidad (deprecados — usar nombres nuevos)
@@ -342,6 +359,12 @@ export type Database = {
         Update:        Partial<Omit<ISO42001ControlRow, 'id' | 'project_id'>>
         Relationships: []
       }
+      tool_outputs: {
+        Row:           ToolOutputRow
+        Insert:        ToolOutputInsert
+        Update:        Partial<Omit<ToolOutputRow, 'id' | 'project_id' | 'created_at'>>
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -369,6 +392,10 @@ export type Database = {
           p_payload_version?: number
         }
         Returns: string  // uuid of the saved record
+      }
+      bulk_upsert_t1_scores: {
+        Args:    { p_scores: Json }
+        Returns: undefined
       }
       // Creates project + initial project_member row — SECURITY DEFINER
       create_project: {

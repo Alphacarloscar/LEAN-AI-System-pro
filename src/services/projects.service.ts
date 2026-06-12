@@ -43,11 +43,18 @@ export async function createProject(params: {
     p_phase:      params.currentPhase ?? 'listen',
   })
 
-  if (error || !data || (data as ProjectRow[]).length === 0) {
-    throw new Error(`[Projects] createProject: ${error?.message ?? 'No data returned'}`)
+  if (error) {
+    throw new Error(`[Projects] createProject RPC error: ${error.message}`)
   }
 
-  return (data as ProjectRow[])[0]
+  // RPC can return a single object or an array of one. Handle both.
+  const project = Array.isArray(data) ? data[0] : data
+
+  if (!project) {
+    throw new Error('[Projects] createProject: No data returned from RPC.')
+  }
+
+  return project as ProjectRow
 }
 
 // ── Añadir miembro a proyecto ────────────────────────────────
@@ -85,6 +92,53 @@ export async function archiveProject(projectId: string): Promise<void> {
     .eq('id', projectId)
 
   if (error) throw new Error(`[Projects] archiveProject: ${error.message}`)
+}
+
+// ── Obtener company_id de un proyecto ───────────────────────
+// Usado por vistas de herramientas T1/T2/T3 para cargar departamentos
+// sin acceder a supabase directamente desde los componentes (ADR-011).
+
+export async function getProjectCompanyId(
+  projectId: string,
+): Promise<string | null> {
+  const { data } = await supabase
+    .from('projects')
+    .select('company_id')
+    .eq('id', projectId)
+    .maybeSingle()
+
+  return (data?.company_id as string | null) ?? null
+}
+
+// ── Obtener datos de empresa de un proyecto ──────────────────
+// Devuelve company_id y datos de la empresa asociada.
+// Usado por CompanyProfileView (ADR-011).
+
+export interface ProjectCompanyData {
+  company_id:   string | null
+  company_name: string
+  sector:       string
+  company_size: string
+}
+
+export async function getProjectWithCompany(
+  projectId: string,
+): Promise<ProjectCompanyData> {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('company_id, companies(name, sector, company_size)')
+    .eq('id', projectId)
+    .single()
+
+  if (error) throw new Error(`[Projects] getProjectWithCompany: ${error.message}`)
+
+  const company = data?.companies as { name?: string; sector?: string; company_size?: string } | null
+  return {
+    company_id:   (data?.company_id as string | null) ?? null,
+    company_name: company?.name       ?? '',
+    sector:       company?.sector     ?? '',
+    company_size: company?.company_size ?? '',
+  }
 }
 
 // ── Alias de compatibilidad (deprecados) ────────────────────

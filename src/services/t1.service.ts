@@ -197,12 +197,9 @@ export async function upsertAllScoresForInterviewee(params: {
     }
   }
 
-  const { error } = await supabase
-    .from('t1_dimension_scores')
-    .upsert(rows, {
-      onConflict: 'project_id,dimension_code,subdimension_code,interviewee_id',
-      ignoreDuplicates: false,
-    })
+  const { error } = await supabase.rpc('bulk_upsert_t1_scores', {
+    p_scores: rows,
+  })
 
   if (error) throw new Error(`[T1] upsertAllScoresForInterviewee: ${error.message}`)
 }

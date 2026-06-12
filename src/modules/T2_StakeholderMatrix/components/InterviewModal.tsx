@@ -14,7 +14,6 @@ import { useState, useEffect, useRef }   from 'react'
 import {
   INTERVIEW_QUESTIONS,
   ARCHETYPE_CONFIG,
-  RESISTANCE_CONFIG,
   computeInterviewResult,
 } from '../constants'
 import type {
@@ -27,6 +26,8 @@ import type {
 import { useDepartmentStore }            from '@/modules/CompanyProfile/useDepartmentStore'
 import { Select }                        from '@/shared/design-system/components/Select'
 import type { SelectOption }             from '@/shared/design-system/components/Select'
+import { Modal, Button, FormField, Badge, SegmentedControl } from '@shared/design-system/components'
+import { ArchetypeBadge, ResistanceBadge } from './T2Badges'
 
 // ── Props ─────────────────────────────────────────────────────
 
@@ -96,87 +97,71 @@ function StakeholderFormPhase({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-1.5">
-        <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">Nombre</label>
-        <input
-          ref={nameRef}
-          type="text"
-          value={form.name}
-          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-          placeholder="Ej. Javier Morales"
-          className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 dark:bg-gray-800 border border-border text-lean-black dark:text-gray-100 placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40 transition-all"
-        />
-      </div>
+      <FormField
+        id="stakeholder-name"
+        ref={nameRef}
+        label="Nombre"
+        type="text"
+        value={form.name}
+        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+        placeholder="Ej. Javier Morales"
+      />
 
-      <div className="space-y-1.5">
-        <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">Cargo</label>
-        <input
-          type="text"
-          value={form.role}
-          onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-          placeholder="Ej. CIO, Head of Digital, CFO…"
-          className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 dark:bg-gray-800 border border-border text-lean-black dark:text-gray-100 placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40 transition-all"
-        />
-      </div>
+      <FormField
+        id="stakeholder-role"
+        label="Cargo"
+        type="text"
+        value={form.role}
+        onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+        placeholder="Ej. CIO, Head of Digital, CFO…"
+      />
 
       {/* Shadow AI — campo empático, opcional */}
-      <div className="space-y-1.5">
-        <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
-          Herramientas externas (opcional)
-        </label>
-        <textarea
-          rows={2}
-          value={form.unofficialTools ?? ''}
-          onChange={(e) => setForm((f) => ({ ...f, unofficialTools: e.target.value }))}
-          placeholder="Herramientas externas (IA o digitales) que empleas por tu cuenta para agilizar cuellos de botella diarios"
-          className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-800/60 border border-border text-lean-black dark:text-gray-100 placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40 transition-all resize-none leading-snug cursor-text"
-        />
-        <p className="text-[10px] text-text-subtle px-0.5">
-          Ej. ChatGPT, Notion AI, Zapier… Su uso no implica incumplimiento; nos ayuda a entender el flujo real de trabajo.
-        </p>
-      </div>
+      <FormField
+        id="stakeholder-unofficial-tools"
+        label="Herramientas externas (opcional)"
+        multiline
+        rows={2}
+        value={form.unofficialTools ?? ''}
+        onChange={(e) => setForm((f) => ({ ...f, unofficialTools: e.target.value }))}
+        placeholder="Herramientas externas (IA o digitales) que empleas por tu cuenta para agilizar cuellos de botella diarios"
+        hint="Ej. ChatGPT, Notion AI, Zapier… Su uso no implica incumplimiento; nos ayuda a entender el flujo real de trabajo."
+      />
 
       {/* Departamento — Select centralizado desde company_departments */}
-      <div className="space-y-1.5">
-        <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
-          Departamento
-        </label>
-        <Select
-          options={deptOptions}
-          value={form.department}
-          onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
-          disabled={!hasDepts || isLoadingDepts}
-          placeholder={
-            isLoadingDepts
-              ? 'Cargando departamentos...'
-              : hasDepts
-              ? 'Selecciona un departamento'
-              : 'Configura los departamentos en el Perfil de Empresa primero'
-          }
-          helperText={
-            !hasDepts && !isLoadingDepts
-              ? 'Ve a Perfil de Empresa → Departamentos para configurarlos.'
-              : undefined
-          }
-        />
-      </div>
+      <Select
+        label="Departamento"
+        options={deptOptions}
+        value={form.department}
+        onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+        disabled={!hasDepts || isLoadingDepts}
+        placeholder={
+          isLoadingDepts
+            ? 'Cargando departamentos...'
+            : hasDepts
+            ? 'Selecciona un departamento'
+            : 'Configura los departamentos en el Perfil de Empresa primero'
+        }
+        helperText={
+          !hasDepts && !isLoadingDepts
+            ? 'Ve a Perfil de Empresa → Departamentos para configurarlos.'
+            : undefined
+        }
+      />
 
       <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border/60">
         A continuación, 5 preguntas que determinarán el arquetipo y el nivel de resistencia automáticamente.
       </p>
 
-      <button
+      <Button
         type="submit"
+        variant="primary"
+        size="sm"
+        fullWidth
         disabled={!canContinue}
-        className={[
-          'w-full py-2.5 rounded-lg text-xs font-semibold transition-all duration-150',
-          canContinue
-            ? 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98]'
-            : 'bg-gray-100 text-gray-300 cursor-not-allowed',
-        ].join(' ')}
       >
         Iniciar entrevista →
-      </button>
+      </Button>
     </form>
   )
 }
@@ -252,15 +237,33 @@ function InterviewPhase({
       </div>
 
       {current > 0 && (
-        <button
+        <Button
+          variant="link"
+          className="text-[10px]"
           onClick={() => setCurrent((c) => c - 1)}
-          className="text-[10px] text-text-subtle hover:text-text-muted transition-colors"
         >
           ← Pregunta anterior
-        </button>
+        </Button>
       )}
     </div>
   )
+}
+
+// ── Color de dominio para los selectores de ajuste manual ─────
+// Hex equivalentes de los tokens Tailwind en ARCHETYPE_CONFIG/RESISTANCE_CONFIG.
+const ARCHETYPE_ACTIVE_COLOR: Record<string, string> = {
+  adoptador:    '#D4EDE3',  // success-light
+  ambassador:   '#DDE8F5',  // info-light
+  decisor:      'rgba(42,40,34,0.1)',  // navy/10
+  critico:      '#F5DEDE',  // danger-light
+  reticente:    '#FAF0D7',  // warning-light
+  especialista: '#FAF0D7',  // backward-compat alias → mismo que reticente
+}
+
+const RESISTANCE_ACTIVE_COLOR: Record<string, string> = {
+  baja:  '#D4EDE3',  // success-light
+  media: '#FAF0D7',  // warning-light
+  alta:  '#F5DEDE',  // danger-light
 }
 
 // ── Fase 3: resultado ─────────────────────────────────────────
@@ -280,7 +283,6 @@ function ResultPhase({
   const isOverride = archetype !== result.archetype || resistance !== result.resistance
 
   const arc = ARCHETYPE_CONFIG[archetype]
-  const res = RESISTANCE_CONFIG[resistance]
 
   const scoreBars = [
     { label: 'Adopción IA',  value: result.adoptionScore,  color: 'bg-success-dark' },
@@ -297,16 +299,12 @@ function ResultPhase({
         </p>
 
         <div className="flex items-center gap-3 flex-wrap">
-          <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${arc.badgeBg} ${arc.badgeText}`}>
-            {arc.label}
-          </span>
-          <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${res.badgeBg} ${res.badgeText}`}>
-            {res.label}
-          </span>
+          <ArchetypeBadge archetype={archetype} />
+          <ResistanceBadge resistance={resistance} />
           {isOverride && (
-            <span className="text-[10px] text-warning-dark bg-warning-light px-2 py-0.5 rounded-full font-medium">
+            <Badge variant="warning" shape="pill" size="sm" className="!text-[10px] !font-semibold">
               Ajustado manualmente
-            </span>
+            </Badge>
           )}
         </div>
 
@@ -336,53 +334,40 @@ function ResultPhase({
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
           Ajuste manual (opcional)
         </p>
-        <div className="grid grid-cols-3 gap-1.5">
-          {(Object.keys(ARCHETYPE_CONFIG) as ArchetypeCode[]).map((code) => {
-            const a = ARCHETYPE_CONFIG[code]
-            return (
-              <button
-                key={code}
-                onClick={() => setArchetype(code)}
-                className={[
-                  'px-2 py-1.5 rounded-lg text-[11px] font-medium border transition-all duration-150 text-center',
-                  archetype === code
-                    ? `${a.badgeBg} ${a.badgeText} border-transparent`
-                    : 'border-border text-text-subtle hover:border-gray-300 dark:hover:border-gray-600',
-                ].join(' ')}
-              >
-                {a.label}
-              </button>
-            )
-          })}
-        </div>
+        <SegmentedControl
+          aria-label="Arquetipo del stakeholder"
+          value={archetype}
+          onChange={(v) => setArchetype(v as ArchetypeCode)}
+          columns={3}
+          options={(Object.keys(ARCHETYPE_CONFIG) as ArchetypeCode[]).map((code) => ({
+            value:       code,
+            label:       ARCHETYPE_CONFIG[code].label,
+            activeColor: ARCHETYPE_ACTIVE_COLOR[code],
+          }))}
+        />
 
-        <div className="flex gap-2 mt-1">
-          {(['baja', 'media', 'alta'] as ResistanceLevel[]).map((r) => {
-            const rc = RESISTANCE_CONFIG[r]
-            return (
-              <button
-                key={r}
-                onClick={() => setResistance(r)}
-                className={[
-                  'flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition-all duration-150',
-                  resistance === r
-                    ? `${rc.badgeBg} ${rc.badgeText} border-transparent`
-                    : 'border-border text-text-subtle hover:border-gray-300 dark:hover:border-gray-600',
-                ].join(' ')}
-              >
-                {r.charAt(0).toUpperCase() + r.slice(1)}
-              </button>
-            )
-          })}
+        <div className="mt-1">
+          <SegmentedControl
+            aria-label="Nivel de resistencia al cambio"
+            value={resistance}
+            onChange={(v) => setResistance(v as ResistanceLevel)}
+            options={[
+              { value: 'baja',  label: 'Baja',  activeColor: RESISTANCE_ACTIVE_COLOR.baja },
+              { value: 'media', label: 'Media', activeColor: RESISTANCE_ACTIVE_COLOR.media },
+              { value: 'alta',  label: 'Alta',  activeColor: RESISTANCE_ACTIVE_COLOR.alta },
+            ]}
+          />
         </div>
       </div>
 
-      <button
+      <Button
+        variant="primary"
+        size="sm"
+        fullWidth
         onClick={() => onConfirm(archetype, resistance, isOverride)}
-        className="w-full py-2.5 rounded-lg text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98] transition-all duration-150"
       >
         Añadir a la matrix
-      </button>
+      </Button>
     </div>
   )
 }
@@ -408,13 +393,6 @@ export function InterviewModal({ onClose, onSubmit, existingStakeholder }: Inter
       : { name: '', role: '', department: '', unofficialTools: '' }
   )
   const [answers, setAnswers] = useState<Record<number, InterviewAnswerCode>>({})
-
-  // Cerrar con Escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [onClose])
 
   function handleFormNext(f: NewStakeholderForm) {
     setForm(f)
@@ -453,46 +431,15 @@ export function InterviewModal({ onClose, onSubmit, existingStakeholder }: Inter
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
+    <Modal open={true} onClose={onClose} title={phaseTitle[phase]} size="md">
+      {/* Subtitle — nombre · cargo (visible en fases interview y result) */}
+      {phase !== 'form' && (
+        <p className="text-[11px] text-text-subtle -mt-2 mb-4">{form.name} · {form.role}</p>
+      )}
 
-      <div className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl border border-border shadow-2xl shadow-black/20 max-h-[90vh] overflow-y-auto">
-
-        {/* Header */}
-        <div className="sticky top-0 bg-white dark:bg-gray-900 flex items-center justify-between px-6 py-4 border-b border-border z-10">
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="px-1.5 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase">
-                T2
-              </span>
-              <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100">
-                {phaseTitle[phase]}
-              </h3>
-            </div>
-            {phase !== 'form' && (
-              <p className="text-[11px] text-text-subtle">{form.name} · {form.role}</p>
-            )}
-          </div>
-          <button
-            onClick={onClose}
-            className="h-7 w-7 rounded-lg flex items-center justify-center text-text-subtle hover:text-lean-black dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M1 1l11 11M12 1L1 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Contenido por fase */}
-        <div className="px-6 py-5">
-          {phase === 'form'      && <StakeholderFormPhase  onNext={handleFormNext} initialValues={existingStakeholder ? form : undefined} />}
-          {phase === 'interview' && <InterviewPhase         onComplete={handleInterviewComplete} />}
-          {phase === 'result'    && <ResultPhase            form={form} answers={answers}         onConfirm={handleConfirm} />}
-        </div>
-      </div>
-    </div>
+      {phase === 'form'      && <StakeholderFormPhase  onNext={handleFormNext} initialValues={existingStakeholder ? form : undefined} />}
+      {phase === 'interview' && <InterviewPhase         onComplete={handleInterviewComplete} />}
+      {phase === 'result'    && <ResultPhase            form={form} answers={answers}         onConfirm={handleConfirm} />}
+    </Modal>
   )
 }

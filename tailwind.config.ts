@@ -52,6 +52,7 @@ const config: Config = {
         'gold-hover': '#D4940F',   // hover del acento
         'gold-muted': '#8B6A30',   // acento atenuado / estados deshabilitados
         'gold-faint': '#2A1E08',   // fondo muy sutil sobre gold (dark mode)
+        'gold-text':  '#9B6408',   // text link — AA sobre fondos cálidos claros
 
         // ── Plata cálida — metales secundarios ──
         'silver':      '#C4C0B8',  // plata cálida — datos secundarios

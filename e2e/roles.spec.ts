@@ -76,7 +76,8 @@ test.describe('Rol: consultant', () => {
 
   test('NO puede acceder al panel de administración /admin', async ({ page }) => {
     await page.goto('/admin')
-    await page.waitForTimeout(2_000)
+    // Esperar que la navegación/redirección se complete
+    await expect(page.locator('body')).toBeVisible({ timeout: 5_000 })
 
     const isOnAdmin = page.url().endsWith('/admin')
     if (isOnAdmin) {
@@ -127,7 +128,8 @@ test.describe('Rol: client_editor', () => {
 
   test('NO puede acceder a /admin', async ({ page }) => {
     await page.goto('/admin')
-    await page.waitForTimeout(2_000)
+    // Esperar que la navegación/redirección se complete
+    await expect(page.locator('body')).toBeVisible({ timeout: 5_000 })
     expect(page.url()).not.toMatch(/\/admin$/)
   })
 })
@@ -148,7 +150,8 @@ test.describe('Rol: client_viewer', () => {
 
   test('la UI muestra el estado de solo lectura (isReadOnly)', async ({ page }) => {
     await page.goto('/t1')
-    await page.waitForTimeout(3_000)
+    // Esperar a que la vista T1 cargue completamente
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
 
     // En modo viewer los botones de edición deben estar deshabilitados u ocultos
     // Verifica que no hay botones de "guardar" ni "crear" activos
@@ -163,7 +166,8 @@ test.describe('Rol: client_viewer', () => {
 
   test('NO puede acceder a /admin', async ({ page }) => {
     await page.goto('/admin')
-    await page.waitForTimeout(2_000)
+    // Esperar que la navegación/redirección se complete
+    await expect(page.locator('body')).toBeVisible({ timeout: 5_000 })
     expect(page.url()).not.toMatch(/\/admin$/)
   })
 })

@@ -14,6 +14,7 @@
 
 import { useRecommendations }  from '@/hooks/useRecommendations'
 import type { T1Recommendation } from '@/hooks/useRecommendations'
+import { EmptyState as DSEmptyState } from '@shared/design-system/components'
 
 // ── Config visual por nivel de esfuerzo ──────────────────────
 
@@ -46,41 +47,6 @@ function RefreshIcon() {
 
 // ── Subcomponentes ────────────────────────────────────────────
 
-function EmptyState({ onGenerate, isDisabled }: { onGenerate: () => void; isDisabled: boolean }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-10 gap-4">
-      <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 flex items-center justify-center text-amber-600 dark:text-amber-400">
-        <SparkleIcon />
-      </div>
-      <div className="text-center">
-        <p className="text-sm font-medium text-lean-black dark:text-gray-200">
-          Recomendaciones IA disponibles
-        </p>
-        <p className="text-xs text-text-muted dark:text-gray-400 mt-1">
-          Genera recomendaciones específicas para este cliente basadas en los datos de la evaluación.
-        </p>
-      </div>
-      <button
-        onClick={onGenerate}
-        disabled={isDisabled}
-        className={[
-          'flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150',
-          isDisabled
-            ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-            : 'bg-[#C8860A] hover:bg-[#B57609] text-white shadow-sm hover:shadow',
-        ].join(' ')}
-      >
-        <SparkleIcon />
-        Generar recomendaciones
-      </button>
-      {isDisabled && (
-        <p className="text-[10px] text-text-subtle dark:text-gray-500">
-          Selecciona un engagement activo para generar recomendaciones.
-        </p>
-      )}
-    </div>
-  )
-}
 
 function LoadingState() {
   return (
@@ -232,7 +198,34 @@ export function RecommendationPanel({
             </div>
           </div>
         ) : (
-          <EmptyState onGenerate={refetch} isDisabled={isDisabled} />
+          <DSEmptyState
+            icon={<SparkleIcon />}
+            title="Recomendaciones IA disponibles"
+            description="Genera recomendaciones específicas para este cliente basadas en los datos de la evaluación."
+            action={
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  onClick={refetch}
+                  disabled={isDisabled}
+                  className={[
+                    'flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150',
+                    isDisabled
+                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                      : 'bg-[#C8860A] hover:bg-[#B57609] text-white shadow-sm hover:shadow',
+                  ].join(' ')}
+                >
+                  <SparkleIcon />
+                  Generar análisis
+                </button>
+                {isDisabled && (
+                  <p className="text-[10px] text-text-subtle dark:text-gray-500">
+                    Selecciona un engagement activo para generar recomendaciones.
+                  </p>
+                )}
+              </div>
+            }
+            className="py-10"
+          />
         )}
       </div>
     </div>

@@ -96,9 +96,8 @@ AI-Ready Repository System v2.1.0
 - Claude no ejecuta queries directas en PRO. Proporciona SQL para que Carlos lo ejecute.
 
 ### PRE — Pre-production (datos sintéticos)
-- `VITE_DEMO_ENABLED=true` → datos demo de `src/data/demo/scenarios/`.
-- Puede resetearse libremente. Sin datos reales de clientes.
-- Para QA y demos a potenciales clientes.
+- Datos sintéticos de prueba. Puede resetearse libremente. Sin datos reales de clientes.
+- Para QA antes de releases.
 
 ### DEV — Local development (datos desechables)
 - Supabase CLI local (`supabase start`) — BD propia en la máquina de desarrollo.

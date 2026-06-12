@@ -9,10 +9,19 @@
 // ============================================================
 
 import { useState } from 'react'
+import { Badge, Button, FormField, type BadgeVariant } from '@/shared/design-system/components'
 import type { T1DimensionState, T1SubdimensionState } from '../types'
 import { computeDimensionScore }                      from '../types'
 import type { DimensionDefinition }                    from '../constants'
 import { SUBDIMENSION_MAP }                            from '../constants'
+
+function dimScoreVariant(score: number | null): BadgeVariant {
+  if (score === null) return 'default'
+  if (score >= 3)     return 'success'
+  if (score >= 2)     return 'info'
+  if (score >= 1)     return 'warning'
+  return 'danger'
+}
 
 interface DimensionCardProps {
   state:      T1DimensionState
@@ -108,35 +117,34 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
 
       {/* ── Controles de expansión ── */}
       <div className="ml-11 flex items-center gap-3 pb-2">
-        {/* Ver criterios */}
-        <button
+        <Button
+          variant="link"
+          className="text-[10px]"
           onClick={() => onChange({ ...sub, showCriteria: !sub.showCriteria })}
-          className="flex items-center gap-1 text-[10px] font-medium text-navy dark:text-warm-100 hover:underline transition-colors"
+          icon={
+            <svg
+              className={`h-3 w-3 transition-transform duration-150 ${sub.showCriteria ? 'rotate-90' : ''}`}
+              viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+            >
+              <path d="M6 12l4-4-4-4" />
+            </svg>
+          }
         >
-          <svg
-            className={`h-3 w-3 transition-transform duration-150 ${sub.showCriteria ? 'rotate-90' : ''}`}
-            viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-          >
-            <path d="M6 12l4-4-4-4" />
-          </svg>
           Ver criterios por nivel
-        </button>
+        </Button>
 
-        {/* Nota de apoyo */}
-        <button
+        <Button
+          variant="link"
+          className="text-[10px]"
           onClick={() => onChange({ ...sub, showEvidence: !sub.showEvidence })}
-          className={[
-            'flex items-center gap-1 text-[10px] font-medium transition-colors',
-            sub.evidence
-              ? 'text-success-dark hover:underline'
-              : 'text-text-subtle hover:text-text-muted',
-          ].join(' ')}
+          icon={
+            <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 4h12M2 8h8M2 12h10" />
+            </svg>
+          }
         >
-          <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2 4h12M2 8h8M2 12h10" />
-          </svg>
-          {sub.evidence ? 'Nota añadida' : 'Añadir nota'}
-        </button>
+          {sub.evidence ? 'Editar nota' : 'Añadir nota'}
+        </Button>
       </div>
 
       {/* ── Criterios expandidos ── */}
@@ -163,17 +171,15 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
       {/* ── Textarea de evidencia ── */}
       {sub.showEvidence && (
         <div className="ml-11 mb-2">
-          <textarea
+          <FormField
+            id={`evidence-${sub.code}`}
+            label="Nota de apoyo"
+            multiline
+            rows={2}
             value={sub.evidence}
             onChange={(e) => onChange({ ...sub, evidence: e.target.value })}
-            rows={2}
             placeholder="Evidencia o nota de apoyo observada en la entrevista…"
-            className={[
-              'w-full text-[11px] text-lean-black dark:text-gray-200 leading-relaxed',
-              'bg-transparent border border-border rounded-lg px-2.5 py-1.5 resize-none',
-              'focus:outline-none focus:ring-1 focus:ring-navy/30 focus:border-navy/40',
-              'placeholder:text-text-subtle dark:placeholder:text-gray-600',
-            ].join(' ')}
+            className="!text-[11px] leading-relaxed resize-none"
           />
         </div>
       )}
@@ -188,13 +194,6 @@ export function DimensionCard({ state, definition, onChange }: DimensionCardProp
 
   const dimScore   = computeDimensionScore(state)
   const scoredCount = state.subdimensions.filter((s) => s.score !== null).length
-
-  const scoreBadgeColor =
-    dimScore === null       ? 'text-text-subtle bg-gray-100 dark:bg-gray-800' :
-    dimScore >= 3           ? 'text-success-dark bg-success-light' :
-    dimScore >= 2           ? 'text-info-dark bg-info-light'       :
-    dimScore >= 1           ? 'text-warning-dark bg-warning-light' :
-                              'text-danger-dark bg-danger-light'
 
   function updateSubdimension(updated: T1SubdimensionState) {
     onChange({
@@ -233,9 +232,9 @@ export function DimensionCard({ state, definition, onChange }: DimensionCardProp
           <span className="text-[10px] text-text-subtle tabular-nums">
             {scoredCount}/4
           </span>
-          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold tabular-nums ${scoreBadgeColor}`}>
+          <Badge variant={dimScoreVariant(dimScore)} shape="pill" className="!font-semibold tabular-nums">
             {dimScore !== null ? dimScore.toFixed(1) : '—'}
-          </span>
+          </Badge>
           <svg
             className={`h-3.5 w-3.5 text-text-subtle transition-transform duration-150 ${isCollapsed ? '-rotate-90' : ''}`}
             viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"

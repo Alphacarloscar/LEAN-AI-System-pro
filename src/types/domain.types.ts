@@ -6,16 +6,9 @@
 // Sprint 0.5: tipos base del dominio — se amplían en cada Sprint.
 // ============================================================
 
-// ---- Arquetipos de usuario (D7) ----
-export type UserRole =
-  | 'consultor_alpha'
-  | 'pm_cliente'
-  | 'viewer_csuite'
-  | 'admin_alpha'
-  | 'superadmin'
-
-// ---- Fases L.E.A.N. ----
-export type LeanPhase = 'listen' | 'evaluate' | 'activate' | 'normalize'
+// UserRole y LeanPhase: fuente única en database.types.ts (ADR-D10)
+import type { UserRole, LeanPhase } from './database.types'
+export type { UserRole, LeanPhase }
 
 // ---- Herramientas T1-T12 ----
 export type ToolCode =
@@ -32,7 +25,7 @@ export interface Engagement {
   name: string
   startDate: string | null
   endDate: string | null
-  currentPhase: LeanPhase | 'closed'
+  currentPhase: LeanPhase
   assignedConsultantId: string | null
   status: 'active' | 'archived'
   createdAt: string

@@ -14,10 +14,12 @@
 // ============================================================
 
 import { useState, useRef, useEffect }  from 'react'
+import { Spinner }                      from '@shared/design-system/components'
 import { useEngagementStore }           from '@/modules/Engagement/store'
 import { useAuthStore }                 from '@/modules/Auth'
 import { listCompanies }                from '@/services/companies.service'
 import { isDemoEnabled }                from '@/lib/config'
+import { reportError }                  from '@/lib/reportError'
 import type { CompanyRow }              from '@/types/database.types'
 
 // ── Iconos ────────────────────────────────────────────────────
@@ -43,14 +45,6 @@ function PlusIcon() {
   )
 }
 
-function SpinnerIcon() {
-  return (
-    <svg className="animate-spin" width="10" height="10" viewBox="0 0 12 12"
-         fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M6 1a5 5 0 11-5 5" strokeLinecap="round" />
-    </svg>
-  )
-}
 
 // ── Componente principal ──────────────────────────────────────
 
@@ -108,6 +102,9 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
   }, [creating])
 
   // Para superadmin/consultant: cargar empresas al abrir el form de creación
+  // companies.length y needsCompanySelector omitidos intencionalmente: el efecto solo debe
+  // dispararse al abrir el formulario (creating → true). Los guards internos cubren idempotencia.
+  // Añadirlos crearía un re-fetch cada vez que llegan datos o cambia el rol.
   useEffect(() => {
     if (!creating || !needsCompanySelector) return
     if (companies.length > 0) return // ya cargadas
@@ -116,6 +113,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
       .then(setCompanies)
       .catch(() => setCreateError('No se pudieron cargar las empresas'))
       .finally(() => setLoadingCo(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [creating])
 
   function closeCreate() {
@@ -148,7 +146,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
       setOpen(false)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al crear proyecto'
-      console.error('[EngagementSelector] createAndSelect:', err)
+      reportError('[EngagementSelector] createAndSelect', err)
       setCreateError(msg)
     } finally {
       setCreateBusy(false)
@@ -189,7 +187,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
         ].join(' ')}
       >
         {isLoading ? (
-          <SpinnerIcon />
+          <Spinner size="sm" />
         ) : (
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none"
                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -323,7 +321,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                       <div>
                         {loadingCo ? (
                           <div className={['flex items-center gap-1.5 text-xs px-1', dark ? 'text-gray-400' : 'text-gray-500'].join(' ')}>
-                            <SpinnerIcon /> Cargando empresas…
+                            <Spinner size="sm" /> Cargando empresas…
                           </div>
                         ) : (
                           <select
@@ -355,7 +353,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                       }
                       className="w-full py-1.5 rounded-lg bg-[#C8860A] text-white text-xs font-medium disabled:opacity-40 hover:bg-[#B57609] transition-colors flex items-center justify-center gap-1.5"
                     >
-                      {createBusy ? <><SpinnerIcon /> Creando…</> : 'Crear proyecto'}
+                      {createBusy ? <><Spinner size="sm" /> Creando…</> : 'Crear proyecto'}
                     </button>
                   </form>
 

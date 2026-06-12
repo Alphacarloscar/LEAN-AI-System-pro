@@ -9,7 +9,12 @@
 // ============================================================
 
 import { create } from 'zustand'
-import { supabase } from '@/lib/supabase'
+import { reportError } from '@/lib/reportError'
+import {
+  fetchDepartments  as svcFetchDepartments,
+  addDepartment     as svcAddDepartment,
+  deleteDepartment  as svcDeleteDepartment,
+} from '@/services/department.service'
 
 // ── Tipo público ──────────────────────────────────────────────
 
@@ -48,17 +53,11 @@ export const useDepartmentStore = create<DepartmentStore>()((set, get) => ({
   fetchDepartments: async (companyId: string) => {
     set({ isLoading: true, error: null })
     try {
-      const { data, error } = await supabase
-        .from('company_departments')
-        .select('id, company_id, name, color, created_at')
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: true })
-
-      if (error) throw error
-      set({ departments: data ?? [], isLoading: false })
+      const departments = await svcFetchDepartments(companyId)
+      set({ departments, isLoading: false })
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al cargar departamentos'
-      console.error('[DepartmentStore] fetchDepartments:', err)
+      reportError('[DepartmentStore] fetchDepartments', err)
       set({ isLoading: false, error: msg })
     }
   },
@@ -77,19 +76,11 @@ export const useDepartmentStore = create<DepartmentStore>()((set, get) => ({
 
     set({ error: null })
     try {
-      const { data, error } = await supabase
-        .from('company_departments')
-        .insert({ company_id: companyId, name: trimmed, color: '#C8860A' })
-        .select('id, company_id, name, color, created_at')
-        .single()
-
-      if (error) throw error
-      if (data) {
-        set((s) => ({ departments: [...s.departments, data] }))
-      }
+      const newDept = await svcAddDepartment(companyId, trimmed)
+      set((s) => ({ departments: [...s.departments, newDept] }))
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al añadir departamento'
-      console.error('[DepartmentStore] addDepartment:', err)
+      reportError('[DepartmentStore] addDepartment', err)
       set({ error: msg })
     }
   },
@@ -102,15 +93,10 @@ export const useDepartmentStore = create<DepartmentStore>()((set, get) => ({
     set((s) => ({ departments: s.departments.filter((d) => d.id !== id) }))
 
     try {
-      const { error } = await supabase
-        .from('company_departments')
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
+      await svcDeleteDepartment(id)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al eliminar departamento'
-      console.error('[DepartmentStore] deleteDepartment:', err)
+      reportError('[DepartmentStore] deleteDepartment', err)
       set({ departments: snapshot, error: msg })
     }
   },

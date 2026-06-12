@@ -11,668 +11,21 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useT4Store }        from '@/modules/T4_UseCasePriorityBoard'
 import { useT5Store }        from '@/modules/T5_AITaxonomyCanvas'
-import { useT2Store }        from '@/modules/T2_StakeholderMatrix'
 import { useT6Store }        from './store'
-import {
-  AIACT_RISK_CONFIG,
-} from './constants'
-import type { AIActRiskLevel } from '@/modules/T4_UseCasePriorityBoard/types'
 import { useCompanyProfileStore } from '@/modules/CompanyProfile/store'
 import { useEngagementStore }     from '@/modules/Engagement/store'
 import { RecommendationPanel }    from '@/components/RecommendationPanel'
 import { buildT6RecommendationContext } from './t6ContextBuilder'
-import { usePolicyGeneration }    from '@/hooks/usePolicyGeneration'
-import type { PolicyGenerationContext } from '@/hooks/usePolicyGeneration'
-import { PersistenceBanner }     from '@/shared/components/PersistenceBanner'
 import { PhaseMiniMap }          from '@/shared/components/PhaseMiniMap'
-import { BackToDashboard }       from '@/shared/components/BackToDashboard'
-import { PolicyDownloadButton }  from './PolicyPDF'
-import { usePermissions }        from '@/modules/Auth'
+import { PolicyTab }             from './components/PolicyTab'
+import { RiskDashboardTab }      from './components/RiskDashboardTab'
+import { Tabs, Badge, ToolHeader, Spinner } from '@shared/design-system/components'
 
 // ── Types ─────────────────────────────────────────────────────
 
 type T6Tab = 'politica' | 'riesgos'
 
-// ── Helpers ───────────────────────────────────────────────────
-
-const ALL_RISK_LEVELS: AIActRiskLevel[] = ['prohibido', 'alto', 'limitado', 'minimo', 'sin_clasificar']
-
-// ── Tab selector ──────────────────────────────────────────────
-
-function TabButton({
-  active, label, badge, onClick,
-}: {
-  active:   boolean
-  label:    string
-  badge?:   string
-  onClick:  () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={[
-        'px-4 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 flex items-center gap-1.5',
-        active
-          ? 'border-navy/50 bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 shadow-sm'
-          : 'border-border dark:border-white/10 text-text-muted hover:border-navy/30 hover:text-navy/70',
-      ].join(' ')}
-    >
-      {label}
-      {badge && (
-        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-navy/15 dark:bg-navy/30 text-navy dark:text-warm-100">
-          {badge}
-        </span>
-      )}
-    </button>
-  )
-}
-
-// ── ── ── Tab 1: POLÍTICA IA ── ── ──────────────────────────────
-
-function PolicyTab({ companyName, engagementId }: { companyName: string; engagementId: string | null }) {
-  const { isReadOnly } = usePermissions()
-  const { useCases }   = useT4Store()
-  const { canvas }     = useT5Store()
-  const { generatedPolicy, clearGeneratedPolicy, persistenceStatus, persistenceError, retrySave } = useT6Store()
-  const profile        = useCompanyProfileStore((s) => s.profile)
-  const { generate, isGenerating, error: genError, clearError } = usePolicyGeneration()
-  const now            = new Date()
-  const dateStr        = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
-  const nextReviewStr  = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
-    .toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })
-
-  const approvedCases  = useCases.filter((uc) => uc.status === 'go' || uc.status === 'en_piloto')
-  const highRiskCases  = useCases.filter((uc) => uc.aiActClassification?.riskLevel === 'alto' || uc.aiActClassification?.riskLevel === 'prohibido')
-
-  // Company context
-  const sector        = profile?.sector || null
-  const tamano        = profile?.tamanoEmpresa || null
-  const objetivo      = profile?.objetivoPrincipalIA || null
-  const horizonte     = profile?.horizonteEsperadoValor || null
-  const ecosistema    = profile?.ecosistemaTecnologico || null
-  const restricciones = profile?.restriccionesRelevantes || null
-  const areas         = profile?.areasPrioritarias ?? []
-
-  // Context para generación LLM de política
-  const policyGenContext: PolicyGenerationContext = {
-    company: {
-      name:          companyName,
-      sector:        sector        ?? 'No especificado',
-      tamano:        tamano        ?? 'No especificado',
-      objetivo:      objetivo      ?? 'No especificado',
-      horizonte:     horizonte     ?? 'No especificado',
-      ecosistema:    ecosistema    ?? 'No especificado',
-      restricciones: restricciones ?? 'Ninguna',
-      areas:         areas as string[],
-    },
-    aiActRisk: {
-      total:         useCases.length,
-      prohibido:     useCases.filter(uc => uc.aiActClassification?.riskLevel === 'prohibido').length,
-      alto:          highRiskCases.filter(uc => uc.aiActClassification?.riskLevel === 'alto').length,
-      limitado:      useCases.filter(uc => uc.aiActClassification?.riskLevel === 'limitado').length,
-      minimo:        useCases.filter(uc => uc.aiActClassification?.riskLevel === 'minimo').length,
-      sinClasificar: useCases.filter(uc => !uc.aiActClassification).length,
-      highRiskCases: highRiskCases.slice(0, 5).map(uc => ({
-        name: uc.name, department: uc.department ?? 'Sin departamento',
-      })),
-    },
-    useCases: {
-      total:  useCases.length,
-      go:     useCases.filter(uc => uc.status === 'go').length,
-      piloto: useCases.filter(uc => uc.status === 'en_piloto').length,
-    },
-    activeDomains: canvas.activationSequence?.slice(0, 4) ?? [],
-  }
-
-  // Principios a renderizar: LLM o plantilla por defecto
-  const principios = generatedPolicy?.principios ?? [
-    { title: 'Transparencia',        desc: 'Los usuarios deben saber cuándo interactúan con un sistema IA y comprender, en la medida de lo posible, cómo funciona.' },
-    { title: 'Supervisión humana',   desc: 'Los sistemas IA de alto riesgo requieren supervisión humana efectiva antes de que sus decisiones tengan efecto.' },
-    { title: 'Privacidad y datos',   desc: 'El tratamiento de datos personales por sistemas IA cumple el RGPD. Los datos sensibles requieren autorización explícita.' },
-    { title: 'No discriminación',    desc: 'Los sistemas IA no pueden generar sesgos injustificados basados en características protegidas por la legislación.' },
-    { title: 'Seguridad y robustez', desc: 'Los sistemas IA son seguros frente a manipulaciones y se monitorizan continuamente para detectar degradación del rendimiento.' },
-    { title: 'Rendición de cuentas', desc: 'Cada sistema IA tiene un responsable designado (AI Owner) que garantiza su uso conforme a esta política.' },
-  ]
-  const activeDomains = canvas.activationSequence?.slice(0, 3) ?? []
-
-  const pdfData = {
-    companyName,
-    dateStr,
-    nextReviewStr,
-    approvedCases,
-    highRiskCases,
-    activeDomains:   activeDomains.map(code => ({ code, domain: canvas.domains[code] })),
-    ownerDomains:    Object.values(canvas.domains).slice(0, 4),
-    generatedPolicy: generatedPolicy ?? null,
-  }
-
-  return (
-    <div className="flex flex-col gap-5">
-
-      {/* Action bar */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex flex-col gap-1">
-          {generatedPolicy ? (
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
-                ✦ Generada con IA · {generatedPolicy.sector}
-              </span>
-              <button
-                onClick={clearGeneratedPolicy}
-                className="text-[10px] text-text-subtle hover:text-red-500 transition-colors"
-              >
-                Volver a plantilla
-              </button>
-            </div>
-          ) : (
-            <p className="text-xs text-text-muted">
-              Documento generado desde los datos de T4 y T5. Genera con IA para adaptarlo a tu sector.
-            </p>
-          )}
-          {genError && (
-            <p className="text-[11px] text-red-500 flex items-center gap-1">
-              ⚠ {genError}
-              <button onClick={clearError} className="underline hover:no-underline ml-1">Cerrar</button>
-            </p>
-          )}
-          {(persistenceStatus === 'error' || persistenceStatus === 'saving') && (
-            <PersistenceBanner
-              error={persistenceError}
-              isRetrying={persistenceStatus === 'saving'}
-              onRetry={() => engagementId && retrySave(engagementId)}
-            />
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {!isReadOnly && (
-            <button
-              onClick={() => generate(policyGenContext, engagementId)}
-              disabled={isGenerating}
-              className={[
-                'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150',
-                isGenerating
-                  ? 'border-border text-text-subtle bg-gray-50 dark:bg-gray-800 cursor-not-allowed'
-                  : 'border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40',
-              ].join(' ')}
-            >
-              {isGenerating ? (
-                <>
-                  <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                  Generando…
-                </>
-              ) : (
-                <>✦ {generatedPolicy ? 'Regenerar con IA' : 'Generar política con IA'}</>
-              )}
-            </button>
-          )}
-          <PolicyDownloadButton data={pdfData} />
-        </div>
-      </div>
-
-      {/* Documento */}
-      <div
-        id="lean-policy-document"
-        className="rounded-2xl border border-border bg-white dark:bg-gray-900 overflow-hidden print:border-none print:shadow-none"
-      >
-        {/* Portada */}
-        <div className="px-10 py-8 border-b border-border dark:border-white/6 bg-navy text-white print:bg-navy">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-mono uppercase tracking-widest opacity-70 mb-2">
-                Política Corporativa de Inteligencia Artificial
-              </p>
-              <h1 className="text-2xl font-bold leading-tight mb-1">{companyName}</h1>
-              <p className="text-sm opacity-75">Versión 1.0 · {dateStr}</p>
-            </div>
-            <div className="text-right shrink-0">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold bg-white/15">
-                GOBY · T6
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="px-10 py-8 flex flex-col gap-8">
-
-          {/* 1. Declaración */}
-          <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
-              1. Declaración de Política
-            </h2>
-            <p className="text-sm text-text-muted leading-relaxed">
-              {generatedPolicy?.declaracion_opening ?? (
-                `${companyName}${sector ? `, empresa del sector ${sector}${tamano ? ` con ${tamano}` : ''},` : ''} se compromete a adoptar la Inteligencia Artificial de forma responsable, ética y conforme a la regulación aplicable, en particular el Reglamento Europeo de Inteligencia Artificial (EU AI Act, Reglamento UE 2024/1689) y el Reglamento General de Protección de Datos (RGPD). Esta política establece los principios, responsabilidades y controles que rigen el desarrollo, adquisición y despliegue de sistemas IA en la organización.`
-              )}
-            </p>
-            {!generatedPolicy && objetivo && (
-              <p className="text-sm text-text-muted leading-relaxed mt-3">
-                El objetivo estratégico principal de adopción IA de {companyName} es <strong className="text-lean-black dark:text-gray-200">{objetivo.toLowerCase()}</strong>
-                {horizonte ? `, con un horizonte de generación de valor esperado de ${horizonte.toLowerCase()}` : ''}.
-                Esta política enmarca y habilita dicha transformación dentro de los requisitos regulatorios aplicables.
-              </p>
-            )}
-            <p className="text-sm text-text-muted leading-relaxed mt-3">
-              {generatedPolicy?.declaracion_mandate ?? (
-                `Todo sistema de IA operativo en ${companyName} debe ser identificado, evaluado en términos de riesgo regulatorio y documentado en el catálogo corporativo de IA antes de su despliegue en producción.`
-              )}
-            </p>
-          </section>
-
-          {/* 2. Alcance */}
-          <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
-              2. Alcance
-            </h2>
-            <p className="text-sm text-text-muted leading-relaxed mb-3">
-              {generatedPolicy?.alcance_context ?? (
-                `Esta política aplica a todos los sistemas de IA desarrollados internamente, adquiridos a terceros o utilizados como servicio (AIaaS) por ${companyName}, independientemente del departamento o función de negocio.${areas.length > 0 ? ` Las áreas prioritarias en el programa actual de adopción son: ${(areas as string[]).join(', ')}.` : ''}`
-              )}
-            </p>
-            {(ecosistema || restricciones) && (
-              <div className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/50 px-4 py-3 mb-3 flex flex-col gap-2">
-                {ecosistema && (
-                  <div>
-                    <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Ecosistema tecnológico base</p>
-                    <p className="text-xs text-text-muted">{ecosistema}</p>
-                  </div>
-                )}
-                {restricciones && (
-                  <div>
-                    <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Restricciones relevantes</p>
-                    <p className="text-xs text-text-muted">{restricciones}</p>
-                  </div>
-                )}
-              </div>
-            )}
-            {activeDomains.length > 0 && (
-              <div className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/50 px-4 py-3">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
-                  Dominios IA activos en el scope actual
-                </p>
-                <ul className="flex flex-col gap-1">
-                  {activeDomains.map((code) => {
-                    const d = canvas.domains[code]
-                    return (
-                      <li key={code} className="text-xs text-text-muted flex items-center gap-2">
-                        <span className="text-navy">▶</span>
-                        <strong className="text-lean-black dark:text-gray-200">
-                          {code.replace(/_/g, ' ').replace('agéntica', 'Agéntica')}
-                        </strong>
-                        {' '}— Prioridad {d.priorityScore}/100
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            )}
-          </section>
-
-          {/* 3. Principios */}
-          <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
-              3. Principios de IA Responsable
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {principios.map(({ title, desc }) => (
-                <div key={title} className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/30 px-4 py-3">
-                  <p className="text-xs font-bold text-lean-black dark:text-gray-100 mb-1">{title}</p>
-                  <p className="text-[11px] text-text-muted leading-relaxed">{desc}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* 3b. Contexto regulatorio sectorial (solo si fue generado por LLM) */}
-          {generatedPolicy?.contexto_sectorial && (
-            <section>
-              <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
-                4. Contexto Regulatorio Sectorial
-              </h2>
-              <p className="text-sm text-text-muted leading-relaxed">
-                {generatedPolicy.contexto_sectorial}
-              </p>
-            </section>
-          )}
-
-          {/* 4/5. Catálogo de IA aprobada */}
-          <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
-              4. Catálogo de IA Aprobada
-            </h2>
-            <p className="text-sm text-text-muted leading-relaxed mb-4">
-              Los siguientes sistemas IA han sido evaluados, aprobados (Go) e incorporados al
-              pipeline de implementación de {companyName} a la fecha de emisión de esta política.
-            </p>
-            {approvedCases.length === 0 ? (
-              <p className="text-xs text-text-subtle italic">Sin casos de uso aprobados todavía. Completa el proceso Go/No-Go en T4.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr className="border-b border-border dark:border-white/6">
-                      <th className="text-left py-2 pr-4 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Sistema IA</th>
-                      <th className="text-left py-2 px-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Departamento</th>
-                      <th className="text-left py-2 px-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Riesgo AI Act</th>
-                      <th className="text-left py-2 pl-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {approvedCases.map((uc) => {
-                      const riskLevel = uc.aiActClassification?.riskLevel ?? 'sin_clasificar'
-                      const riskCfg   = AIACT_RISK_CONFIG[riskLevel]
-                      return (
-                        <tr key={uc.id} className="border-b border-border/40 dark:border-white/4">
-                          <td className="py-2 pr-4">
-                            <p className="text-xs font-medium text-lean-black dark:text-gray-200">{uc.name}</p>
-                          </td>
-                          <td className="py-2 px-3 text-xs text-text-muted">{uc.department}</td>
-                          <td className="py-2 px-3">
-                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-semibold ${riskCfg.badgeBg} ${riskCfg.badgeText}`}>
-                              {riskCfg.icon} {riskCfg.shortLabel}
-                            </span>
-                          </td>
-                          <td className="py-2 pl-3 text-[10px] text-success-dark font-semibold">
-                            {uc.status === 'go' ? '✓ Aprobado' : '⟳ En piloto'}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-
-          {/* 5. Controles de alto riesgo */}
-          {highRiskCases.length > 0 && (
-            <section>
-              <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
-                5. Medidas de Control — Sistemas de Alto Riesgo
-              </h2>
-              <p className="text-sm text-text-muted leading-relaxed mb-4">
-                Los siguientes sistemas han sido clasificados como alto riesgo según el Annex III del
-                AI Act. Requieren las siguientes medidas antes de su despliegue en producción:
-              </p>
-              <div className="flex flex-col gap-3">
-                {highRiskCases.map((uc) => (
-                  <div key={uc.id} className="rounded-xl border border-orange-200 dark:border-orange-800/40 bg-orange-50 dark:bg-orange-900/10 px-4 py-3">
-                    <p className="text-xs font-bold text-orange-700 dark:text-orange-300 mb-1">{uc.name} — {uc.department}</p>
-                    <ul className="flex flex-col gap-1 mt-2">
-                      {['Evaluación de conformidad documentada', 'Sistema de gestión de riesgos operativo', 'Supervisión humana definida y comunicada al equipo', 'Registro en base de datos EU de sistemas IA de alto riesgo'].map((m) => (
-                        <li key={m} className="text-[11px] text-orange-600 dark:text-orange-400 flex items-start gap-1.5">
-                          <span>▶</span><span>{m}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Roles y responsabilidades */}
-          <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
-              {highRiskCases.length > 0 ? '6.' : '5.'} Roles y Responsabilidades
-            </h2>
-            <div className="flex flex-col gap-2">
-              {Object.values(canvas.domains).slice(0, 4).map((d) => (
-                <div key={d.domainCode} className="flex items-start gap-3 py-2 border-b border-border/40 dark:border-white/4">
-                  <span className="text-[9px] font-mono text-text-subtle uppercase w-32 shrink-0 pt-0.5">AI Owner</span>
-                  <div>
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200">{d.suggestedOwner}</p>
-                    <p className="text-[10px] text-text-subtle">
-                      Responsable del dominio: {d.domainCode.replace(/_/g, ' ')}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Revisión */}
-          <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
-              {highRiskCases.length > 0 ? '7.' : '6.'} Revisión y Vigencia
-            </h2>
-            <p className="text-sm text-text-muted leading-relaxed">
-              Esta política será revisada anualmente o ante cambios regulatorios significativos
-              (nuevas disposiciones del AI Act, actualizaciones del RGPD o cambios en el catálogo
-              de sistemas IA de {companyName}). La siguiente revisión programada es{' '}
-              <strong className="text-lean-black dark:text-gray-200">
-                {new Date(now.getFullYear() + 1, now.getMonth(), now.getDate()).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })}
-              </strong>.
-            </p>
-            <p className="text-[11px] text-text-subtle mt-3 pt-3 border-t border-border dark:border-white/6">
-              Documento generado automáticamente por el GOBY — powered by Alpha Consulting (T6 — Risk &amp; Governance).
-              Alpha Consulting Solutions S.L. · {dateStr}
-            </p>
-          </section>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── ── ── Tab 2: RIESGOS AI ACT ── ── ─────────────────────────
-
-function ShadowAICard() {
-  const { stakeholders } = useT2Store()
-
-  const { total, withTools } = useMemo(() => {
-    const total     = stakeholders.length
-    const withTools = stakeholders.filter((s) => s.unofficialTools?.trim()).length
-    return { total, withTools }
-  }, [stakeholders])
-
-  const pct = total > 0 ? Math.round((withTools / total) * 100) : 0
-
-  const riskLabel =
-    pct >= 60 ? 'Riesgo alto'    :
-    pct >= 30 ? 'Riesgo medio'   :
-    total === 0 ? 'Sin datos'    :
-    'Riesgo bajo'
-
-  const riskColor =
-    pct >= 60 ? '#C8860A' :
-    pct >= 30 ? '#b07a00' :
-    '#6b7280'
-
-  return (
-    <div
-      className="rounded-2xl border px-5 py-4"
-      style={{ backgroundColor: 'rgba(200,134,10,0.04)', borderColor: 'rgba(200,134,10,0.25)' }}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-2.5">
-          <span className="text-xl">⚠️</span>
-          <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: '#C8860A' }}>
-              Riesgo de Shadow AI
-            </p>
-            <p className="text-xs text-text-muted mt-0.5">
-              Stakeholders que usan herramientas externas no aprobadas oficialmente
-            </p>
-          </div>
-        </div>
-
-        <div className="shrink-0 text-right">
-          <p className="text-3xl font-bold tabular-nums leading-none" style={{ color: '#C8860A' }}>
-            {total === 0 ? '—' : `${pct}%`}
-          </p>
-          <p className="text-[10px] font-semibold mt-0.5" style={{ color: riskColor }}>
-            {riskLabel}
-          </p>
-        </div>
-      </div>
-
-      {total > 0 && (
-        <div className="mt-3">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] text-text-subtle">{withTools} de {total} perfiles declaran herramientas externas</span>
-            <span className="text-[10px] font-semibold tabular-nums" style={{ color: '#C8860A' }}>{pct}%</span>
-          </div>
-          <div className="w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${pct}%`, backgroundColor: '#C8860A' }}
-            />
-          </div>
-        </div>
-      )}
-
-      {total === 0 && (
-        <p className="mt-2 text-[11px] text-text-subtle">
-          Completa entrevistas en T2 — Matriz de Stakeholders para activar este indicador.
-        </p>
-      )}
-    </div>
-  )
-}
-
-function RiskDashboardTab() {
-  const { useCases } = useT4Store()
-  const [selectedLevel, setSelectedLevel] = useState<AIActRiskLevel | null>(null)
-
-  const summary = useMemo(() => {
-    const byLevel = ALL_RISK_LEVELS.reduce((acc, l) => ({ ...acc, [l]: 0 }), {} as Record<AIActRiskLevel, number>)
-    let classified = 0
-    useCases.forEach((uc) => {
-      const level = uc.aiActClassification?.riskLevel ?? 'sin_clasificar'
-      byLevel[level]++
-      if (uc.aiActClassification) classified++
-    })
-    return {
-      total:           useCases.length,
-      byLevel,
-      classified,
-      unclassified:    useCases.length - classified,
-      coveragePercent: useCases.length > 0 ? Math.round((classified / useCases.length) * 100) : 0,
-    }
-  }, [useCases])
-
-  const filteredCases = selectedLevel
-    ? useCases.filter((uc) => (uc.aiActClassification?.riskLevel ?? 'sin_clasificar') === selectedLevel)
-    : useCases
-
-  return (
-    <div className="flex flex-col gap-5">
-
-      {/* Shadow AI risk indicator */}
-      <ShadowAICard />
-
-      {/* KPI cards — una por nivel */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        {ALL_RISK_LEVELS.map((level) => {
-          const cfg   = AIACT_RISK_CONFIG[level]
-          const count = summary.byLevel[level]
-          const isActive = selectedLevel === level
-          return (
-            <button
-              key={level}
-              onClick={() => setSelectedLevel(isActive ? null : level)}
-              className={[
-                'rounded-2xl border px-4 py-4 text-left transition-all duration-150',
-                isActive
-                  ? `${cfg.badgeBg} border-2`
-                  : 'border-border bg-white dark:bg-gray-900 hover:border-navy/30',
-              ].join(' ')}
-              style={{ borderColor: isActive ? cfg.hex : undefined }}
-            >
-              <p className="text-2xl mb-1">{cfg.icon}</p>
-              <p className="text-2xl font-bold tabular-nums text-lean-black dark:text-gray-100">{count}</p>
-              <p className={`text-[10px] font-semibold ${isActive ? cfg.badgeText : 'text-text-muted'}`}>
-                {cfg.shortLabel}
-              </p>
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Cobertura */}
-      <div className="rounded-2xl border border-border bg-white dark:bg-gray-900 px-5 py-4">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-            Cobertura de clasificación AI Act
-          </p>
-          <span className="text-sm font-bold text-lean-black dark:text-gray-100 tabular-nums">
-            {summary.classified}/{summary.total} casos ({summary.coveragePercent}%)
-          </span>
-        </div>
-        <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width:           `${summary.coveragePercent}%`,
-              backgroundColor: summary.coveragePercent === 100 ? '#16A34A' : summary.coveragePercent >= 50 ? '#D97706' : '#EA580C',
-            }}
-          />
-        </div>
-        {summary.unclassified > 0 && (
-          <p className="text-[10px] text-text-subtle mt-2">
-            {summary.unclassified} caso{summary.unclassified > 1 ? 's' : ''} pendiente{summary.unclassified > 1 ? 's' : ''} de clasificación. Accede a T4 → tab Regulatorio para clasificarlos.
-          </p>
-        )}
-      </div>
-
-      {/* Tabla de casos */}
-      <div className="rounded-2xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
-        <div className="px-5 py-3 border-b border-border dark:border-white/6 flex items-center justify-between">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-            {selectedLevel ? `Casos — ${AIACT_RISK_CONFIG[selectedLevel].label}` : 'Todos los casos de uso'}
-            <span className="ml-2 font-bold text-lean-black dark:text-gray-200">({filteredCases.length})</span>
-          </p>
-          {selectedLevel && (
-            <button onClick={() => setSelectedLevel(null)} className="text-[10px] text-navy dark:text-warm-100 hover:underline">
-              Ver todos ×
-            </button>
-          )}
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border dark:border-white/6">
-                <th className="text-left py-2 px-5 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Caso de uso</th>
-                <th className="text-left py-2 px-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Departamento</th>
-                <th className="text-left py-2 px-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Categoría IA</th>
-                <th className="text-left py-2 px-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Estado</th>
-                <th className="text-left py-2 px-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Riesgo AI Act</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCases.map((uc) => {
-                const riskLevel = uc.aiActClassification?.riskLevel ?? 'sin_clasificar'
-                const riskCfg   = AIACT_RISK_CONFIG[riskLevel]
-                return (
-                  <tr key={uc.id} className="border-b border-border/40 dark:border-white/4 hover:bg-gray-50 dark:hover:bg-gray-800/40">
-                    <td className="py-2.5 px-5">
-                      <p className="text-xs font-medium text-lean-black dark:text-gray-200 leading-tight">{uc.name}</p>
-                    </td>
-                    <td className="py-2.5 px-3 text-[11px] text-text-muted">{uc.department}</td>
-                    <td className="py-2.5 px-3 text-[11px] text-text-muted capitalize">{uc.aiCategory.replace(/_/g, ' ')}</td>
-                    <td className="py-2.5 px-3">
-                      <span className="text-[10px] font-medium capitalize text-text-muted">{uc.status.replace(/_/g, ' ')}</span>
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold ${riskCfg.badgeBg} ${riskCfg.badgeText}`}>
-                        {riskCfg.icon} {riskCfg.shortLabel}
-                      </span>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── ── ── Main View ── ── ────────────────────────────────────────
+// ── Main View ─────────────────────────────────────────────────
 
 export function T6View({
   onBack,
@@ -680,14 +33,40 @@ export function T6View({
   onBack: () => void
 }) {
   const [tab, setTab]    = useState<T6Tab>('politica')
-  const { useCases }     = useT4Store()
+  const {
+    useCases,
+    isLoading:   t4Loading,
+    isLoaded:    t4Loaded,
+    ensureLoaded: ensureT4,
+  }                      = useT4Store()
   const { canvas }       = useT5Store()
-  const { syncEngagement: syncT6 } = useT6Store()
+  const { syncEngagement: syncT6, loadPolicyFromDb } = useT6Store()
   const companyProfile   = useCompanyProfileStore((s) => s.profile)
   const companyName      = companyProfile.engagementName
   const engagementId     = useEngagementStore((s) => s.activeEngagementId)
 
+  // stable Zustand action — mount-only: sincronizar al cambiar engagement
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { syncT6(engagementId) }, [engagementId])
+
+  // Cache-first fallback: carga política desde BD si el store local está vacío
+  // (primer acceso en este dispositivo o tras limpiar localStorage).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (engagementId) void loadPolicyFromDb(engagementId) }, [engagementId])
+
+  // Cache-first con fallback a BD: si T4 no está cargado al montar T6View,
+  // lo pedimos directamente — sin depender del Dashboard como precargador.
+  useEffect(() => {
+    if (engagementId && !t4Loaded) {
+      void ensureT4(engagementId, { reason: 'T6View-mount' })
+    }
+  // ensureT4 es estable (referencia de store) — no necesita dep
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId, t4Loaded])
+
+  // Solo bloqueamos la UI en el primer ciclo de carga (sin caché).
+  // Si hay datos previos (t4Loaded) hacemos refetch silencioso en bg.
+  const showLoadingShield = t4Loading && !t4Loaded && engagementId !== null
 
   const t6LLMContext = useMemo(() =>
     companyProfile
@@ -703,60 +82,75 @@ export function T6View({
   ).length
 
   return (
-    <div className="max-w-[1100px] mx-auto space-y-5 px-8 py-8">
+    <div className="min-h-screen bg-surface dark:bg-warm-900">
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap print:hidden">
-        <div className="flex items-center gap-4">
-          <BackToDashboard onClick={onBack} />
-          <div className="w-px h-5 bg-border" />
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-navy text-white">T6</span>
-              <h1 className="text-lg font-semibold text-lean-black dark:text-gray-100">
-                Risk &amp; Governance
-              </h1>
+      {/* ── Header ── */}
+      <ToolHeader
+        onBack={onBack}
+        backLabel="Volver"
+        toolCode="T6"
+        title="Risk &amp; Governance"
+        subtitle={companyName}
+        phaseMiniMap={<PhaseMiniMap phaseId="evaluate" toolCode="T6" />}
+        maxWidth="max-w-[1100px]"
+        chips={
+          (highRisk > 0 || unclassified > 0) ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              {highRisk > 0 && (
+                <Badge variant="warning" shape="pill">
+                  🔴 {highRisk} caso{highRisk > 1 ? 's' : ''} alto riesgo
+                </Badge>
+              )}
+              {unclassified > 0 && (
+                <Badge variant="default" shape="pill">
+                  ⬜ {unclassified} sin clasificar
+                </Badge>
+              )}
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <p className="text-xs text-text-subtle">{companyName}</p>
-              <PhaseMiniMap phaseId="evaluate" toolCode="T6" />
-            </div>
+          ) : undefined
+        }
+        className="print:hidden"
+      />
+
+      <div className="max-w-[1100px] mx-auto space-y-5 px-8 py-8">
+
+        {/* Tabs — siempre visibles, incluso durante carga */}
+        <div className="print:hidden">
+          <Tabs
+            aria-label="Riesgos y gobernanza"
+            value={tab}
+            onChange={(v) => setTab(v as T6Tab)}
+            tabs={[
+              { value: 'politica', label: '📄 Política IA Corporativa' },
+              { value: 'riesgos',  label: '⚖️ Dashboard AI Act', badge: highRisk > 0 ? `${highRisk} alto` : undefined },
+            ]}
+          />
+        </div>
+
+        {/* Tab content — spinner solo en primer ciclo sin caché */}
+        {showLoadingShield ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <Spinner size="md" label="Cargando casos de uso…" />
+            <p className="text-xs text-text-muted">Cargando casos de uso desde la base de datos…</p>
           </div>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {highRisk > 0 && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300">
-              🔴 {highRisk} caso{highRisk > 1 ? 's' : ''} alto riesgo
-            </span>
-          )}
-          {unclassified > 0 && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-500">
-              ⬜ {unclassified} sin clasificar
-            </span>
-          )}
-        </div>
+        ) : (
+          <>
+            {tab === 'politica'  && <PolicyTab companyName={companyName} engagementId={engagementId} />}
+            {tab === 'riesgos'   && <RiskDashboardTab />}
+
+            {/* LLM Recommendations */}
+            {t6LLMContext && (
+              <RecommendationPanel
+                tool="t6"
+                title="Análisis de Riesgo y Cumplimiento"
+                subtitle="Recomendaciones de gobernanza basadas en tu exposición AI Act"
+                context={t6LLMContext}
+                engagementId={engagementId}
+              />
+            )}
+          </>
+        )}
       </div>
-
-      {/* Tabs */}
-      <div className="flex gap-2 flex-wrap print:hidden">
-        <TabButton active={tab === 'politica'}  label="📄 Política IA Corporativa"   onClick={() => setTab('politica')} />
-        <TabButton active={tab === 'riesgos'}   label="⚖️ Dashboard AI Act"          badge={highRisk > 0 ? `${highRisk} alto` : undefined} onClick={() => setTab('riesgos')} />
-      </div>
-
-      {/* Tab content */}
-      {tab === 'politica'  && <PolicyTab companyName={companyName} engagementId={engagementId} />}
-      {tab === 'riesgos'   && <RiskDashboardTab />}
-
-      {/* LLM Recommendations */}
-      {t6LLMContext && (
-        <RecommendationPanel
-          tool="t6"
-          title="Análisis de Riesgo y Cumplimiento"
-          subtitle="Recomendaciones de gobernanza basadas en tu exposición AI Act"
-          context={t6LLMContext}
-          engagementId={engagementId}
-        />
-      )}
     </div>
   )
 }
