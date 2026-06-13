@@ -37,7 +37,7 @@ export function T5View({
   const engagementId                    = useEngagementStore((s) => s.activeEngagementId)
 
   // Hidratar canvas desde Supabase al montar o cambiar de engagement
-  useEffect(() => { void loadT5(engagementId) }, [engagementId])
+  useEffect(() => { void loadT5(engagementId) }, [engagementId, loadT5])
 
   // Carga T3 si no hay procesos
   useEffect(() => {

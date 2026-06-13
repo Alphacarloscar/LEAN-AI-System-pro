@@ -631,7 +631,7 @@ export function AdminView() {
   // Redirigir si no es superadmin
   useEffect(() => {
     if (user && user.role !== 'superadmin') navigate('/', { replace: true })
-  }, [user])
+  }, [user, navigate])
 
   // Fetch único al montar: companies + users en paralelo
   useEffect(() => {
