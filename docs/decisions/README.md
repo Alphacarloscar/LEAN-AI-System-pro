@@ -35,6 +35,7 @@ AI-Ready Repository System v2.1.0 | Última actualización: 2026-06-01
 | [ADR-007](technical/ADR-007-zustand-state-management.md) | Zustand para estado global | ACCEPTED | 2026-04-19 | Arquitectura |
 | [ADR-008](technical/ADR-008-four-role-system.md) | Sistema de 4 roles de usuario | ACCEPTED | 2026-05-01 | Seguridad |
 | [ADR-009](technical/ADR-009-claude-api-via-edge-functions.md) | Claude API vía Supabase Edge Functions | ACCEPTED | 2026-05-15 | IA/Infraestructura |
+| [ADR-016](technical/ADR-016-vite-build-target-es2022.md) | Establecer build.target es2022 para compatibilidad esbuild >=0.28 | ACCEPTED | 2026-06-13 | Stack |
 
 ---
 
@@ -55,5 +56,5 @@ Las decisiones estratégicas de producto/mercado se documentan en:
 
 ## Próximo número disponible
 
-- **ADR:** ADR-016
+- **ADR:** ADR-017
 - **FDR:** FDR-001
