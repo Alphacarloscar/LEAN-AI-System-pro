@@ -1,5 +1,5 @@
 # GOBY — AI Dev Hub 🚀
-# v2.2.0 | Language: ESP (Human) / ENG (AI Files) | Owner: Carlos Sánchez
+# v2.2.0 | Language: ESP (Human) / ENG (AI Files) | Owner: Carlos Sánchez - Alpha Consulting
 
 > CRITICAL: Carlos operates via Web UI ONLY (ADR-005). NO CLI commands.
 > Provide raw SQL for Supabase SQL Editor and GitHub web guidelines.
