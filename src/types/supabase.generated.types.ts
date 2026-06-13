@@ -1,17 +1,3 @@
-// ============================================================
-// GOBY — Tipos de base de datos (Supabase)
-//
-// ⚠ Este archivo es FUENTE DE VERDAD para los tipos de BD.
-//   No editar manualmente — regenerar con:
-//   npx supabase gen types typescript --project-id <id> > src/types/database.types.ts
-//
-// IMPORTANT: All Row types MUST be `type`, not `interface`.
-// TypeScript interfaces do not satisfy Record<string, unknown>
-// in conditional type checks (Supabase GenericSchema constraint),
-// causing Schema=never and all .data types to collapse to never.
-// ============================================================
-
-
 export type Json =
   | string
   | number
@@ -62,52 +48,55 @@ export type Database = {
       }
       companies: {
         Row: {
-          company_size: string
+          company_size: string | null
           created_at: string | null
           id: string
           name: string
-          sector: string
+          sector: string | null
           slug: string | null
         }
         Insert: {
-          company_size?: string
+          company_size?: string | null
           created_at?: string | null
           id?: string
           name: string
-          sector?: string
+          sector?: string | null
           slug?: string | null
         }
         Update: {
-          company_size?: string
+          company_size?: string | null
           created_at?: string | null
           id?: string
           name?: string
-          sector?: string
+          sector?: string | null
           slug?: string | null
         }
         Relationships: []
       }
       company_departments: {
         Row: {
-          color: string
+          color: string | null
           company_id: string
           created_at: string | null
           id: string
           name: string
+          updated_at: string
         }
         Insert: {
-          color?: string
+          color?: string | null
           company_id: string
           created_at?: string | null
           id?: string
           name: string
+          updated_at?: string
         }
         Update: {
-          color?: string
+          color?: string | null
           company_id?: string
           created_at?: string | null
           id?: string
           name?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -781,7 +770,7 @@ export type Database = {
           project_id: string
           responsible_it_data?: string | null
           roadmap?: Json | null
-          scores?: Json
+          scores: Json
           sponsor_name?: string | null
           stakeholder_scores?: Json
           status?: string
@@ -897,13 +886,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_write_engagement: { Args: { eid: string }; Returns: boolean }
       can_write_project: { Args: { pid: string }; Returns: boolean }
       check_and_log_ai_call: {
         Args: { p_project_id: string; p_tool_code: string; p_user_id: string }
         Returns: Json
       }
       create_project: {
-        Args: { p_company_id?: string; p_name?: string; p_phase?: string }
+        Args: { p_company_id?: string; p_name: string; p_phase?: string }
         Returns: {
           company_id: string | null
           created_at: string | null
@@ -923,7 +913,18 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      create_snapshot: {
+        Args: {
+          p_created_by: string
+          p_engagement_id: string
+          p_label: string
+          p_notes?: string
+          p_type: string
+        }
+        Returns: string
+      }
       is_company_project: { Args: { pid: string }; Returns: boolean }
+      is_engagement_member: { Args: { eid: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
       is_project_member: { Args: { pid: string }; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
@@ -1077,63 +1078,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
-// ============================================================
-// TYPE ALIASES — Codebase convenience types
-//
-// Derivados de la interfaz Database auto-generada por Supabase CLI.
-// NO editar manualmente — regenerar con:
-//   npx supabase gen types typescript --project-id vbpgsgxsslccctjhuegt
-//   > src/types/database.types.ts
-// Luego mantener esta sección intacta (no la sobreescribe el CLI).
-// ============================================================
-
-// ── Union types de dominio ──────────────────────────────────────
-export type UserRole      = 'superadmin' | 'consultant' | 'client_editor' | 'client_viewer'
-export type MemberRole    = 'consultant' | 'viewer'
-export type ProjectStatus = 'active' | 'archived'
-export type LeanPhase     = 'listen' | 'evaluate' | 'activate' | 'normalize' | 'closed'
-export type ISO42001Status = 'no_iniciado' | 'en_progreso' | 'implementado'
-export type UseCaseStatus = 'candidato' | 'priorizado' | 'go' | 'no_go' | 'en_piloto' | 'completado'
-
-// ── Friction enums ────────────────────────────────────────────
-export type FrictionFrequency = 'Baja' | 'Media' | 'Alta'
-export type FrictionImpact    = 'Bajo' | 'Medio' | 'Alto'
-
-// ── Row types ───────────────────────────────────────────────────
-export type CompanyRow           = Database['public']['Tables']['companies']['Row']
-export type CompanyDepartmentRow = Database['public']['Tables']['company_departments']['Row']
-export type ProfileRow           = Database['public']['Tables']['profiles']['Row']
-export type ProjectRow           = Database['public']['Tables']['projects']['Row']
-export type ProjectMemberRow     = Database['public']['Tables']['project_members']['Row']
-export type CompanyProfileRow    = Database['public']['Tables']['company_profiles']['Row']
-export type FrictionRow          = Database['public']['Tables']['frictions']['Row']
-export type T1DimensionScoreRow  = Database['public']['Tables']['t1_dimension_scores']['Row']
-export type StakeholderRow       = Database['public']['Tables']['stakeholders']['Row']
-export type ValueStreamRow       = Database['public']['Tables']['value_streams']['Row']
-export type UseCaseRow           = Database['public']['Tables']['use_cases']['Row']
-export type T5CanvasRow          = Database['public']['Tables']['t5_canvas']['Row']
-export type ISO42001ControlRow   = Database['public']['Tables']['iso42001_controls']['Row']
-export type ToolOutputRow        = Database['public']['Tables']['tool_outputs']['Row']
-
-// ── Insert types ────────────────────────────────────────────────
-export type CompanyInsert          = Database['public']['Tables']['companies']['Insert']
-export type CompanyDepartmentInsert= Database['public']['Tables']['company_departments']['Insert']
-export type ProjectInsert          = Database['public']['Tables']['projects']['Insert']
-export type CompanyProfileInsert   = Database['public']['Tables']['company_profiles']['Insert']
-export type FrictionInsert         = Database['public']['Tables']['frictions']['Insert']
-export type T1DimensionScoreInsert = Database['public']['Tables']['t1_dimension_scores']['Insert']
-export type StakeholderInsert      = Database['public']['Tables']['stakeholders']['Insert']
-export type ValueStreamInsert      = Database['public']['Tables']['value_streams']['Insert']
-export type UseCaseInsert          = Database['public']['Tables']['use_cases']['Insert']
-export type T5CanvasInsert         = Database['public']['Tables']['t5_canvas']['Insert']
-export type ISO42001ControlInsert  = Database['public']['Tables']['iso42001_controls']['Insert']
-export type ToolOutputInsert       = Database['public']['Tables']['tool_outputs']['Insert']
-
-// ── Deprecated aliases (compatibilidad) ─────────────────────────
-/** @deprecated Usar ProjectRow */
-export type EngagementRow = ProjectRow
-/** @deprecated Usar ProjectMemberRow */
-export type EngagementMemberRow = ProjectMemberRow
-/** @deprecated Usar ProjectStatus */
-export type EngagementStatus = ProjectStatus

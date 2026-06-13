@@ -49,7 +49,7 @@ export function rowToUseCase(row: UseCaseRow): UseCase {
     description:          row.description ?? undefined,
     department:           row.department,
     aiCategory:           row.ai_category,
-    status:               row.status,
+    status:               row.status as UseCaseStatus,
     sponsorName:          row.sponsor_name ?? undefined,
     responsibleItData:    row.responsible_it_data ?? undefined,
     businessObjective:    row.business_objective ?? undefined,
@@ -65,7 +65,7 @@ export function rowToUseCase(row: UseCaseRow): UseCase {
     t2Context:            safeParseJsonField(T2ContextSchema,  row.t2_context,  't2_context'),
     aiActClassification:  safeParseJsonField(AIActClassificationSchema, row.ai_act_classification, 'ai_act_classification'),
     notes:                row.notes ?? undefined,
-    createdAt:            row.created_at,
+    createdAt:            row.created_at ?? '',
   }
 }
 
