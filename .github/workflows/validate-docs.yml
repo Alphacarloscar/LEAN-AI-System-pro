@@ -113,14 +113,19 @@ jobs:
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          if [ -z "$PR_BODY" ] || [ ${#PR_BODY} -lt 50 ]; then
+          # Trim leading/trailing whitespace before measuring length
+          TRIMMED=$(echo "$PR_BODY" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+          if [ -z "$TRIMMED" ] || [ ${#TRIMMED} -lt 50 ]; then
             echo "❌ Pull request description is too short (minimum 50 characters)"
-            echo "   Current length: ${#PR_BODY} characters"
+            echo "   Current length: ${#TRIMMED} characters"
             echo ""
-            echo "Describe what this PR does and why. Use the PR template sections."
+            echo "How to fix:"
+            echo "  1. Edit this PR on GitHub web and fill in the description."
+            echo "  2. Use the PR template at .github/PULL_REQUEST_TEMPLATE.md as guide."
+            echo "  3. At minimum describe WHAT the PR does and WHY in the first section."
             exit 1
           fi
-          echo "✅ PR description present (${#PR_BODY} characters)"
+          echo "✅ PR description present (${#TRIMMED} characters)"
 
       - name: "A5 | No Supabase direct imports outside lib/"
         run: |

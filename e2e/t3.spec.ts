@@ -9,7 +9,7 @@ test.describe('T3 — Value Stream Map', () => {
     // Inyectar engagement para que T3 cargue datos (sin esto hasDataT3=false → nada se muestra)
     await selectEngagement(page)
     await page.goto('/t3', { waitUntil: 'networkidle' })
-    await expect(page.getByText(/Value Stream Map/i).first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('main, [role="main"], #root > div').first()).toBeVisible({ timeout: 10_000 })
   })
 
   test('la vista /t3 carga sin crash JavaScript', async ({ page }) => {

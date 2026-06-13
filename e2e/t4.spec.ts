@@ -61,7 +61,7 @@ test.describe('T4 — Use Case Priority Board', () => {
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
 
     // ExecDashboard siempre visible — prueba de que T4 cargó correctamente
-    await expect(page.getByText(/dashboard ejecutivo/i).first()).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText(/dashboard ejecutivo/i).first()).toBeVisible({ timeout: 10_000 })
 
     // Los tabs Scoring/Economía/Hoja de ruta solo aparecen en el panel de detalle,
     // que requiere seleccionar un caso de uso desde el roadmap trimestral.

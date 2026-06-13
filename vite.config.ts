@@ -50,6 +50,7 @@ export default defineConfig({
     open: true,
   },
   build: {
+    target: 'es2022',
     outDir: 'dist',
     sourcemap: true,
     chunkSizeWarningLimit: 600,   // Recharts es ~540KB minificado — expected
