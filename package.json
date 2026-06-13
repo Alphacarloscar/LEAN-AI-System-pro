@@ -5,7 +5,7 @@
   "description": "GOBY — Alpha Consulting Solutions S.L.",
   "type": "module",
   "engines": {
-    "node": ">=22.0.0 <23.0.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "dev": "vite",
@@ -34,6 +34,9 @@
     "recharts": "^2.13.3",
     "zod": "^3.23.8",
     "zustand": "^5.0.2"
+  },
+  "overrides": {
+    "esbuild": ">=0.28.1"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^3.2.2",
