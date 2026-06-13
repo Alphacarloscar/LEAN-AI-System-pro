@@ -1,24 +1,12 @@
 import { test, expect } from '@playwright/test'
+import { USERS as HELPER_USERS } from './helpers'
 
-// Usuarios por rol — configurar vía variables de entorno
 const USERS = {
-  superadmin: {
-    email:    process.env.E2E_SUPERADMIN_EMAIL    ?? 'superadmin@test.dev',
-    password: process.env.E2E_SUPERADMIN_PASSWORD ?? '',
-  },
-  consultant: {
-    email:    process.env.E2E_CONSULTANT_EMAIL    ?? 'consultor@test.dev',
-    password: process.env.E2E_CONSULTANT_PASSWORD ?? '',
-  },
-  client_editor: {
-    email:    process.env.E2E_CLIENT_EDITOR_EMAIL    ?? 'client.editor@test.dev',
-    password: process.env.E2E_CLIENT_EDITOR_PASSWORD ?? '',
-  },
-  client_viewer: {
-    email:    process.env.E2E_CLIENT_VIEWER_EMAIL    ?? 'client.viewer@test.dev',
-    password: process.env.E2E_CLIENT_VIEWER_PASSWORD ?? '',
-  },
-} as const
+  superadmin:    { email: HELPER_USERS.superadmin.email,  password: HELPER_USERS.superadmin.password },
+  consultant:    { email: HELPER_USERS.consultor.email,   password: HELPER_USERS.consultor.password },
+  client_editor: { email: HELPER_USERS.editor.email,      password: HELPER_USERS.editor.password },
+  client_viewer: { email: HELPER_USERS.viewer.email,      password: HELPER_USERS.viewer.password },
+}
 
 async function loginAs(
   page: Parameters<Parameters<typeof test>[1]>[0]['page'],
@@ -36,7 +24,6 @@ async function loginAs(
 
 test.describe('Rol: superadmin', () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(!USERS.superadmin.password, 'E2E_SUPERADMIN_PASSWORD no configurado')
     await loginAs(page, USERS.superadmin.email, USERS.superadmin.password)
   })
 
@@ -64,7 +51,6 @@ test.describe('Rol: superadmin', () => {
 
 test.describe('Rol: consultant', () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(!USERS.consultant.password, 'E2E_CONSULTANT_PASSWORD no configurado')
     await loginAs(page, USERS.consultant.email, USERS.consultant.password)
   })
 
@@ -128,7 +114,6 @@ test.describe('Rol: consultant', () => {
 
 test.describe('Rol: client_editor', () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(!USERS.client_editor.password, 'E2E_CLIENT_EDITOR_PASSWORD no configurado')
     await loginAs(page, USERS.client_editor.email, USERS.client_editor.password)
   })
 
@@ -158,7 +143,6 @@ test.describe('Rol: client_editor', () => {
 
 test.describe('Rol: client_viewer', () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(!USERS.client_viewer.password, 'E2E_CLIENT_VIEWER_PASSWORD no configurado')
     await loginAs(page, USERS.client_viewer.email, USERS.client_viewer.password)
   })
 

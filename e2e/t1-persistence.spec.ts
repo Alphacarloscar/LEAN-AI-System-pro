@@ -9,22 +9,12 @@
  *   - No project is active (no subdimension sliders available)
  */
 import { test, expect } from '@playwright/test'
-
-const DEV_EMAIL    = process.env.E2E_EMAIL    ?? 'david.baquero@consultoriaalpha.com'
-const DEV_PASSWORD = process.env.E2E_PASSWORD ?? ''
-
-async function login(page: Parameters<Parameters<typeof test>[1]>[0]['page']) {
-  await page.goto('/login')
-  await page.locator('input[autocomplete="email"]').fill(DEV_EMAIL)
-  await page.locator('input[autocomplete="current-password"]').fill(DEV_PASSWORD)
-  await page.locator('button[type="submit"]').click()
-  await expect(page).not.toHaveURL(/login/, { timeout: 10_000 })
-}
+import { login, selectEngagement } from './helpers'
 
 test.describe('T1 — Score persistence after page reload', () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(!DEV_PASSWORD, 'E2E_PASSWORD no configurado — omitiendo test de persistencia')
     await login(page)
+    await selectEngagement(page)
     await page.goto('/t1')
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 10_000 })
   })

@@ -53,17 +53,22 @@ test.describe('T3 — Value Stream Map', () => {
   })
 
   test('el panel de detalle de proceso puede abrirse', async ({ page }) => {
-    // Si hay procesos, hacer clic en uno debería abrir el panel lateral de detalle
-    const processBtns = page.locator('button').filter({ hasText: /proceso|stream|fase/i })
+    // Las process cards son <button> con una flecha "↓" — a diferencia del botón CTA
+    // "+ Proceso" del header, que no tiene "↓". Así distinguimos cards vs add-button.
+    // ProcessDetailPanel se abre inline (sin role="dialog") con tabs "Oportunidades IA".
+    const processBtns = page.locator('button').filter({ hasText: '↓' })
     const count = await processBtns.count()
 
     if (count > 0) {
-      await processBtns.first().dispatchEvent('click')
-      // Esperar a que el panel de detalle (dialogo o sección principal) sea visible
-      await expect(page.locator('[role="dialog"], [role="main"]')).toBeVisible({ timeout: 5_000 })
+      await processBtns.first().click()
+      // El panel abre con tab "Oportunidades IA" siempre visible
+      await expect(
+        page.getByText('Oportunidades IA', { exact: false }).first()
+      ).toBeVisible({ timeout: 5_000 })
     }
-    // Si no hay procesos, validamos que la vista sigue intacta
-    await expect(page.locator('main, [role="main"]').first()).toBeVisible()
+    // Tanto si hay procesos como si no, la vista debe seguir cargada
+    const bodyText = await page.locator('body').innerText()
+    expect(bodyText.length, 'T3 debe mostrar contenido').toBeGreaterThan(50)
   })
 
   test('la vista no muestra pantalla en blanco tras carga completa', async ({ page }) => {

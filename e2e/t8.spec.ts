@@ -1,20 +1,8 @@
 import { test, expect } from '@playwright/test'
-import { selectEngagement } from './helpers'
-
-const DEV_EMAIL    = process.env.E2E_EMAIL    ?? 'david.baquero@consultoriaalpha.com'
-const DEV_PASSWORD = process.env.E2E_PASSWORD ?? ''
-
-async function login(page: Parameters<Parameters<typeof test>[1]>[0]['page']) {
-  await page.goto('/login')
-  await page.locator('input[autocomplete="email"]').fill(DEV_EMAIL)
-  await page.locator('input[autocomplete="current-password"]').fill(DEV_PASSWORD)
-  await page.locator('button[type="submit"]').click()
-  await expect(page).not.toHaveURL(/login/, { timeout: 10_000 })
-}
+import { login, selectEngagement } from './helpers'
 
 test.describe('T8 — Communication Map', () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(!DEV_PASSWORD, 'E2E_PASSWORD no configurado')
     await login(page)
     await selectEngagement(page)
     await page.goto('/t8', { waitUntil: 'domcontentloaded' })

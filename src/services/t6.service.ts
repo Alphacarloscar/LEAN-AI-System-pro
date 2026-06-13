@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import type { Json } from '@/types/database.types'
 import type { GeneratedPolicyContent } from '@/modules/T6_RiskGovernance/types'
 
 const TOOL_CODE       = 't6_policy'
@@ -18,7 +19,7 @@ export async function savePolicyOutput(
   const { error } = await supabase.rpc('save_tool_output', {
     p_project_id:      projectId,
     p_tool_code:       TOOL_CODE,
-    p_payload:         policy as unknown as Record<string, unknown>,
+    p_payload:         policy as unknown as Json,
     p_stale_after:     staleAfterISO(),
     p_payload_version: PAYLOAD_VERSION,
   })

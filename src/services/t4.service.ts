@@ -10,7 +10,7 @@
 // ============================================================
 
 import { supabase }       from '@/lib/supabase'
-import type { Json, UseCaseRow, UseCaseInsert } from '@/types/database.types'
+import type { Json, UseCaseRow, UseCaseInsert, UseCaseStatus } from '@/types/database.types'
 import type { UseCase, UseCaseScores } from '@/modules/T4_UseCasePriorityBoard/types'
 import {
   safeParseJsonField,

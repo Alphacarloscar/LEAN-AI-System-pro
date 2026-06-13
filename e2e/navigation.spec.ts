@@ -1,15 +1,5 @@
 import { test, expect } from '@playwright/test'
-
-const DEV_EMAIL    = process.env.E2E_EMAIL    ?? 'david.baquero@consultoriaalpha.com'
-const DEV_PASSWORD = process.env.E2E_PASSWORD ?? ''
-
-async function login(page: Parameters<Parameters<typeof test>[1]>[0]['page']) {
-  await page.goto('/login')
-  await page.locator('input[autocomplete="email"]').fill(DEV_EMAIL)
-  await page.locator('input[autocomplete="current-password"]').fill(DEV_PASSWORD)
-  await page.locator('button[type="submit"]').click()
-  await expect(page).not.toHaveURL(/login/, { timeout: 10_000 })
-}
+import { login, USERS } from './helpers'
 
 // Las rutas de la app y su título esperado en sidebar/header
 const TOOL_ROUTES = [
@@ -30,7 +20,7 @@ const TOOL_ROUTES = [
 
 test.describe('Navegación — todas las rutas', () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(!DEV_PASSWORD, 'E2E_PASSWORD no configurado')
+    test.skip(!USERS.consultor.password, 'E2E_CONSULTANT_PASSWORD no configurado')
     await login(page)
   })
 

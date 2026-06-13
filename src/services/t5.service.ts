@@ -15,8 +15,8 @@ function rowToCanvas(row: T5CanvasRow): T5Canvas {
   return {
     id:                 row.id,
     companyName:        row.company_name,
-    createdAt:          row.created_at,
-    updatedAt:          row.updated_at,
+    createdAt:          row.created_at ?? '',
+    updatedAt:          row.updated_at ?? '',
     domains:            (row.domains ?? {}) as unknown as Record<T5DomainCode, T5DomainAssessment>,
     maturityLevel:      row.maturity_level as T5MaturityLevel,
     activationSequence: (row.activation_sequence ?? []) as T5DomainCode[],

@@ -897,6 +897,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bulk_upsert_t1_scores: { Args: { p_scores: Json }; Returns: undefined }
       can_write_project: { Args: { pid: string }; Returns: boolean }
       check_and_log_ai_call: {
         Args: { p_project_id: string; p_tool_code: string; p_user_id: string }

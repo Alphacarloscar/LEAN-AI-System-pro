@@ -39,7 +39,7 @@ export async function createProject(params: {
 }): Promise<ProjectRow> {
   const { data, error } = await supabase.rpc('create_project', {
     p_name:       params.name,
-    p_company_id: params.companyId ?? null,
+    p_company_id: params.companyId ?? undefined,
     p_phase:      params.currentPhase ?? 'listen',
   })
 

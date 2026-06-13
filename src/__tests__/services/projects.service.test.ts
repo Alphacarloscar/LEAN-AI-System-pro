@@ -110,14 +110,14 @@ describe('createProject', () => {
     )
   })
 
-  it('usa companyId null si no se provee', async () => {
+  it('usa companyId undefined si no se provee', async () => {
     vi.mocked(supabase.rpc).mockResolvedValue({ data: [makeProject()], error: null } as never)
 
     await createProject({ name: 'Test' })
 
     expect(supabase.rpc).toHaveBeenCalledWith(
       'create_project',
-      expect.objectContaining({ p_company_id: null }),
+      expect.objectContaining({ p_company_id: undefined }),
     )
   })
 

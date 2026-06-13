@@ -22,7 +22,7 @@ export async function fetchDepartments(companyId: string): Promise<Department[]>
     .order('created_at', { ascending: true })
 
   if (error) throw new Error(`[DepartmentService] fetchDepartments: ${error.message}`)
-  return data ?? []
+  return (data ?? []).map(r => ({ ...r, created_at: r.created_at ?? '' }))
 }
 
 // ── Write ─────────────────────────────────────────────────────
@@ -40,7 +40,7 @@ export async function addDepartment(
 
   if (error) throw new Error(`[DepartmentService] addDepartment: ${error.message}`)
   if (!data)  throw new Error('[DepartmentService] addDepartment: no data returned')
-  return data
+  return { ...data, created_at: data.created_at ?? '' }
 }
 
 // ── Delete ────────────────────────────────────────────────────
