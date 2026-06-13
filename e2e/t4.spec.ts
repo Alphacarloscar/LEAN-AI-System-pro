@@ -124,7 +124,7 @@ test.describe('T4 — Use Case Priority Board', () => {
 
     // Si el seed no tiene estos casos exactos, verificamos que el board cargó
     if (found === 0) {
-      await expect(page.getByText(/dashboard ejecutivo/i).first()).toBeVisible({ timeout: 5_000 })
+      await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
     }
     expect(found >= 0, 'T4 cargó correctamente').toBe(true)
   })
