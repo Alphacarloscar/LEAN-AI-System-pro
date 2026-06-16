@@ -280,46 +280,33 @@ CREATE POLICY "audit_access_logs_select_superadmin"
 
 -- ── 3a. hmac_email_hash — pseudonimización GDPR ──────────────────────────
 --
--- Encapsula HMAC-SHA256 con pepper gestionado en Supabase Vault.
--- Garantías:
---   a) SECURITY DEFINER: el secreto via current_setting() solo accesible con
---      privilegios del propietario.
---   b) Fallo ruidoso si app.audit_pepper no está configurado.
---   c) NULL input → NULL output (no hashear ausencias).
+-- HMAC-SHA256 con pepper estático compilado en la función.
+-- Supabase Cloud no permite SET search_path = vault ni acceso a
+-- vault.decrypted_secrets desde funciones SQL normales.
+-- El pepper se puede rotar recreando la función con un nuevo valor.
+-- NULL input → NULL output.
 
 CREATE OR REPLACE FUNCTION public.hmac_email_hash(p_email text)
 RETURNS text
-LANGUAGE plpgsql
+LANGUAGE sql
+IMMUTABLE
 SECURITY DEFINER
-SET search_path = public, vault, extensions
+SET search_path = public, extensions
 AS $$
-DECLARE
-  v_pepper text;
-BEGIN
-  IF p_email IS NULL THEN
-    RETURN NULL;
-  END IF;
-
-  SELECT decrypted_secret INTO v_pepper
-  FROM   vault.decrypted_secrets
-  WHERE  name = 'audit_pepper'
-  LIMIT  1;
-
-  IF v_pepper IS NULL OR trim(v_pepper) = '' THEN
-    RAISE EXCEPTION
-      'hmac_email_hash: secreto "audit_pepper" no encontrado en Vault. '
-      'Añádelo en Dashboard → Project Settings → Vault → Add new secret.';
-  END IF;
-
-  RETURN encode(hmac(p_email, v_pepper, 'sha256'), 'hex');
-END;
+  SELECT CASE
+    WHEN p_email IS NULL THEN NULL
+    ELSE encode(
+      extensions.hmac(p_email::bytea, 'goby-audit-pepper-v1'::bytea, 'sha256'),
+      'hex'
+    )
+  END;
 $$;
 
 REVOKE ALL     ON FUNCTION public.hmac_email_hash(text) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION public.hmac_email_hash(text) TO service_role;
 
 COMMENT ON FUNCTION public.hmac_email_hash(text) IS
-  'Pseudonimiza un email con HMAC-SHA256 usando app.audit_pepper del Vault. '
+  'Pseudonimiza un email con HMAC-SHA256 (pepper estático). '
   'SECURITY DEFINER. Solo service_role puede invocarla. '
   'Devuelve NULL si p_email es NULL.';
 
