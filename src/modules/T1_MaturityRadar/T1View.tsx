@@ -14,6 +14,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect } from 'react'
+import { useParams }                    from 'react-router-dom'
 import { Button, ToolHeader } from '@/shared/design-system/components'
 import { RetryBanner }                          from '@/shared/components/RetryBanner'
 import { DIMENSION_DEFINITIONS, TOTAL_SUBDIMENSIONS } from './constants'
@@ -49,9 +50,12 @@ export function T1View({ onBack }: T1ViewProps) {
   const { isReadOnly } = usePermissions()
 
   // ── Store T1 + engagement ────────────────────────────────────
-  const store          = useT1Store()
-  const engagementId   = useEngagementStore((s) => s.activeEngagementId)
+  const store                    = useT1Store()
+  const { engagementId: urlId }  = useParams<{ engagementId: string }>()
+  const storeId                  = useEngagementStore((s) => s.activeEngagementId)
+  const engagementId             = urlId ?? storeId
   const profile        = useCompanyProfileStore((s) => s.profile)
+  const loadProfile    = useCompanyProfileStore((s) => s.loadProfile)
 
   // ── Departamentos centralizados (para el modal de alta) ──────
   const { departments, fetchDepartments, reset: resetDepartments } = useDepartmentStore()
@@ -83,6 +87,7 @@ export function T1View({ onBack }: T1ViewProps) {
   useEffect(() => {
     if (engagementId) {
       store.ensureLoaded(engagementId, { reason: 'route_mount' })
+      void loadProfile(engagementId)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])

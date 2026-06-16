@@ -12,7 +12,8 @@
 //   Datos a Medir — KPIs por nivel
 // ============================================================
 
-import { useState, useMemo }              from 'react'
+import { useState, useMemo, useEffect }   from 'react'
+import { useParams }                      from 'react-router-dom'
 import { PhaseMiniMap }                   from '@/shared/components/PhaseMiniMap'
 import { buildOperatingModel }            from './engine'
 import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
@@ -25,7 +26,7 @@ import { buildT11RecommendationContext }  from './t11ContextBuilder'
 import { T11_MATURITY_CONFIG, T11_LEVEL_CONFIG } from './constants'
 import type { T11Event }                  from './types'
 
-import { Tabs, Button, Card, ToolHeader } from '@shared/design-system/components'
+import { Tabs, Button, Card, ToolHeader, Spinner } from '@shared/design-system/components'
 import { AdaptiveModeBadge }  from './components/AdaptiveModeBadge'
 import { MaturityPill }       from './components/MaturityPill'
 import { EventDetailPanel }   from './components/EventDetailPanel'
@@ -52,8 +53,23 @@ export function T11View({ onBack }: T11ViewProps) {
   const [activeTab, setActiveTab]         = useState<T11Tab>('bigpicture')
   const [selectedEvent, setSelectedEvent] = useState<T11Event | null>(null)
   const { profile: companyProfile }       = useCompanyProfileStore()
+  const loadProfile                       = useCompanyProfileStore((s) => s.loadProfile)
   const companyName                       = companyProfile.engagementName
-  const engagementId                      = useEngagementStore((s) => s.activeEngagementId)
+  const { engagementId: urlId }           = useParams<{ engagementId: string }>()
+  const storeId                           = useEngagementStore((s) => s.activeEngagementId)
+  const engagementId                      = urlId ?? storeId
+
+  const ensureT1    = useT1Store((s) => s.ensureLoaded)
+  const isT1Loading = useT1Store((s) => s.isLoading)
+  const hasT1Data   = useT1Store((s) => s.hasData)
+
+  // Garantiza datos frescos aunque el usuario llegue por enlace directo sin pasar por T1
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!engagementId) return
+    void ensureT1(engagementId, { reason: 't11-mount' })
+    void loadProfile(engagementId)
+  }, [engagementId])
 
   // Compute RadarDimension[] from T1Store — agrega todos los entrevistados
   const dimensionStates = useT1Store((s) => s.dimensionStates)
@@ -92,6 +108,17 @@ export function T11View({ onBack }: T11ViewProps) {
   const matCfg        = T11_MATURITY_CONFIG[maturityTier]
   const criticalCount = recommendedEvents.filter((e) => e.isCritical).length
   const totalKpis     = kpiGroups.reduce((acc, g) => acc + g.kpis.length, 0)
+
+  // Guard: si T1 todavía está cargando y no hay datos reales, congela el render
+  // para evitar que buildOperatingModel use el fallback ficticio de madurez 2.0
+  if (isT1Loading && !hasT1Data) {
+    return (
+      <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center gap-3">
+        <Spinner size="md" label="Cargando datos de madurez…" />
+        <span className="text-sm text-text-muted dark:text-warm-300">Cargando datos de madurez…</span>
+      </div>
+    )
+  }
 
   function handleExport() {
     const html = generateOperatingModelHTML(companyName, model)

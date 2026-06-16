@@ -3,6 +3,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect }   from 'react'
+import { useParams }                      from 'react-router-dom'
 import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
 import { RecommendationPanel }            from '@/components/RecommendationPanel'
@@ -34,10 +35,17 @@ export function T5View({
   const initT3Demo                      = useT3Store(s => s.initDemo)
   const { profile: companyProfile }     = useCompanyProfileStore()
   const companyName                     = companyProfile.engagementName
-  const engagementId                    = useEngagementStore((s) => s.activeEngagementId)
+  const loadProfile                     = useCompanyProfileStore((s) => s.loadProfile)
+  const { engagementId: urlId }         = useParams<{ engagementId: string }>()
+  const storeId                         = useEngagementStore((s) => s.activeEngagementId)
+  const engagementId                    = urlId ?? storeId
 
   // Hidratar canvas desde Supabase al montar o cambiar de engagement
-  useEffect(() => { void loadT5(engagementId) }, [engagementId, loadT5])
+  useEffect(() => {
+    void loadT5(engagementId)
+    if (engagementId) void loadProfile(engagementId)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId, loadT5])
 
   // Carga T3 si no hay procesos
   useEffect(() => {

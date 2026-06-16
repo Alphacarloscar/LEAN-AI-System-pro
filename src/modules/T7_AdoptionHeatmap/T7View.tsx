@@ -12,7 +12,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect }  from 'react'
-import { useNavigate }                   from 'react-router-dom'
+import { useNavigate, useParams }        from 'react-router-dom'
 import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
 import { useT4Store }                    from '@/modules/T4_UseCasePriorityBoard'
 import { useT1Store }                    from '@/modules/T1_MaturityRadar/store'
@@ -48,7 +48,10 @@ export function T7View({ onBack }: T7ViewProps) {
   const companyName                 = useCompanyProfileStore(s => s.profile.engagementName)
   const { dark }                    = useDarkMode()
   const { profile: companyProfile } = useCompanyProfileStore()
-  const engagementId                = useEngagementStore((s) => s.activeEngagementId)
+  const loadProfile                 = useCompanyProfileStore(s => s.loadProfile)
+  const { engagementId: urlId }     = useParams<{ engagementId: string }>()
+  const storeId                     = useEngagementStore((s) => s.activeEngagementId)
+  const engagementId                = urlId ?? storeId
   const [activeTab, setActiveTab]  = useState<'curve' | 'dept' | 'plan'>('curve')
 
   // Cargar T2 al montar T7 (por si el usuario llega directamente sin pasar por T2).
@@ -56,12 +59,17 @@ export function T7View({ onBack }: T7ViewProps) {
   // stable Zustand action (loadT2); stakeholders.length omitida intencionalmente para evitar
   // re-fetch en cada actualización de la lista — el guard `=== 0` cubre la lógica necesaria
   useEffect(() => {
-    if (engagementId && stakeholders.length === 0) loadT2(engagementId)
+    if (!engagementId) return
+    if (stakeholders.length === 0) loadT2(engagementId)
+    // Garantiza casos de uso reales aunque el usuario no haya pasado por T4
+    void ensureLoadedT4(engagementId, { reason: 't7-mount' })
+    void loadProfile(engagementId)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])
 
   // T4 use cases para contexto del plan de cambio
-  const useCases = useT4Store(s => s.useCases)
+  const useCases      = useT4Store(s => s.useCases)
+  const ensureLoadedT4 = useT4Store(s => s.ensureLoaded)
 
   // T1 — promedio de madurez agregado de todos los entrevistados
   const dimensionStates = useT1Store(s => s.dimensionStates)
@@ -216,7 +224,7 @@ export function T7View({ onBack }: T7ViewProps) {
           }
           title="Sin stakeholders registrados"
           description="Completa T2 — AI Stakeholder Matrix para mapear al equipo antes de analizar la adopción."
-          action={<Button variant="ghost" size="sm" onClick={() => navigate('/t2')}>Ir a T2</Button>}
+          action={<Button variant="ghost" size="sm" onClick={() => navigate(engagementId ? `/t2/${engagementId}` : '/t2')}>Ir a T2</Button>}
           className="py-12"
         />
       ) : (

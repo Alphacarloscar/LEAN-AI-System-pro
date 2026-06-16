@@ -9,6 +9,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect } from 'react'
+import { useParams }         from 'react-router-dom'
 import { useT4Store }        from '@/modules/T4_UseCasePriorityBoard'
 import { useT5Store }        from '@/modules/T5_AITaxonomyCanvas'
 import { useT6Store }        from './store'
@@ -39,11 +40,14 @@ export function T6View({
     isLoaded:    t4Loaded,
     ensureLoaded: ensureT4,
   }                      = useT4Store()
-  const { canvas }       = useT5Store()
+  const { canvas, load: loadT5 } = useT5Store()
   const { syncEngagement: syncT6, loadPolicyFromDb } = useT6Store()
   const companyProfile   = useCompanyProfileStore((s) => s.profile)
   const companyName      = companyProfile.engagementName
-  const engagementId     = useEngagementStore((s) => s.activeEngagementId)
+  const loadProfile      = useCompanyProfileStore((s) => s.loadProfile)
+  const { engagementId: urlId } = useParams<{ engagementId: string }>()
+  const storeId                 = useEngagementStore((s) => s.activeEngagementId)
+  const engagementId            = urlId ?? storeId
 
   // stable Zustand action — mount-only: sincronizar al cambiar engagement
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -53,6 +57,10 @@ export function T6View({
   // (primer acceso en este dispositivo o tras limpiar localStorage).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (engagementId) void loadPolicyFromDb(engagementId) }, [engagementId])
+
+  // Garantiza perfil y canvas T5 aunque el usuario llegue directamente a T6
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (engagementId) { void loadProfile(engagementId); void loadT5(engagementId) } }, [engagementId])
 
   // Cache-first con fallback a BD: si T4 no está cargado al montar T6View,
   // lo pedimos directamente — sin depender del Dashboard como precargador.
