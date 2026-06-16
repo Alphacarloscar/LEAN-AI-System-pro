@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { UseCaseRow } from '@/types/database.types'
 
+vi.mock('@/lib/audit/auditClient', () => ({ fireAuditLog: vi.fn() }))
+vi.mock('@/lib/audit', () => ({ makeAuditable: <T>(s: T) => s }))
+
 // Mock completo del cliente Supabase — debe ir antes de los imports del servicio
 vi.mock('@/lib/supabase', () => ({
   supabase: {

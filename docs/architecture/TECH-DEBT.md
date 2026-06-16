@@ -1,6 +1,6 @@
 ﻿# Technical Debt Register — GOBY
 
-Last updated: 2026-06-09
+Last updated: 2026-06-15
 AI-Ready Repository System v2.1.0
 
 > Registro activo de deuda técnica conocida. Cada item tiene severidad, impacto y plan de acción.
@@ -188,6 +188,144 @@ T5, T9, T10, T11, T12, Auth, Admin, CompanyProfile, Engagement no tienen tests. 
 **Estado:** Resuelto (2026-06-09)
 
 `rowToUseCase()` ahora usa `safeParseJsonField` con `RoadmapSchema`, `T1ContextSchema` y `T2ContextSchema` — schemas definidos en `src/lib/schemas/t4.schemas.ts`. Eliminados los 3 `castOpt` correspondientes. Tests en `src/__tests__/schemas/jsonb-schemas.test.ts` (20 casos).
+
+---
+
+### DEBT-018 — Casts temporales `as unknown as SupabaseClient` por database.types.ts no regenerado
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-15 (Sprint audit-logging)
+**Caducidad estricta:** 2026-07-15
+**Área:** `src/lib/audit/types.ts`, `src/lib/audit/auditClient.ts`, `src/services/auditLogs.service.ts`
+**Estado:** Pendiente (las migraciones están ejecutadas en DEV; pendiente regenerar tipos)
+
+**Descripción:**
+Las migraciones del sistema de auditoría están aplicadas en DEV y los logs se insertan
+correctamente en runtime. Sin embargo, `database.types.ts` aún no incluye las tablas
+`audit_logs` y `audit_access_logs`, por lo que tres artefactos usan casts temporales:
+
+1. `AuditLogInsert` en `src/lib/audit/types.ts` — interfaz manual que debería derivarse de
+   `Database['public']['Tables']['audit_logs']['Insert']`.
+2. `supabase as unknown as SupabaseClient` en `src/lib/audit/auditClient.ts` — elude el
+   genérico de Database porque `audit_logs` no aparece en los tipos generados. Nota: este
+   cast es actualmente inerte porque `auditClient.ts` ya no inserta directamente en la tabla
+   sino que invoca la Edge Function `log-audit-event` vía `supabase.functions.invoke`.
+3. `supabase as unknown as SupabaseClient` en `src/services/auditLogs.service.ts` — misma
+   causa: `audit_logs` y `audit_access_logs` ausentes de `database.types.ts`.
+
+**Impacto:**
+Medio. El comportamiento en runtime es correcto. El riesgo es que un cambio de esquema en
+`audit_logs` o `audit_access_logs` no lo detecte el compilador hasta que se regeneren los tipos.
+
+**Plan de acción:**
+1. Regenerar tipos con el schema DEV actual:
+   `npx supabase gen types typescript --local > src/types/database.types.ts`
+2. En `src/lib/audit/types.ts`: reemplazar `AuditLogInsert` por
+   `export type AuditLogInsert = Database['public']['Tables']['audit_logs']['Insert']`.
+3. En `src/lib/audit/auditClient.ts`: eliminar cast `as unknown as SupabaseClient`
+   e import de `SupabaseClient` (ya son innecesarios al usar `supabase.functions.invoke`).
+4. En `src/services/auditLogs.service.ts`: eliminar cast `as unknown as SupabaseClient`
+   y la importación de `SupabaseClient`; usar `supabase` directamente. Registrar también
+   `get_audit_logs` en `Database.Functions` para que `.rpc('get_audit_logs', ...)` esté tipado.
+5. `npm run typecheck` → 0 errores.
+
+**Requiere ADR:** No (solo sincronización de tipos generados).
+**Relacionado:** ADR-017, ADR-018, ADR-019, DEBT-017.
+
+---
+
+### ~~DEBT-019~~ — Ventana de null en engagement_id / race condition correlation_id ✅ (Resuelto — 2026-06-15)
+**Severidad:** 🟡 Media → Resuelto
+**Detectado:** 2026-06-15 (revisión de gobierno de datos + análisis de concurrencia)
+**Área:** `src/lib/audit/makeAuditable.ts`, `src/lib/audit/context.ts`
+**Estado:** Resuelto (2026-06-15)
+
+Dos problemas resueltos en un único PR:
+
+**Problema 1 — Race condition en correlation_id (estado global)**
+`withCorrelationId()` usaba `_correlationId` como estado de módulo. En `Promise.all()`
+con dos flujos multi-step, el segundo flujo sobreescribía el ID del primero antes de
+que el primero leyera el valor en su segundo método. El `finally` del primer flujo
+borraba el ID del segundo.
+
+Fix: eliminado `withCorrelationId`, `getCorrelationId`, `setCorrelationId`,
+`clearCorrelationId` de `context.ts`. El `correlation_id` se pasa ahora como campo
+de `defaultMetadata` al construir el proxy — cada instancia tiene su propio valor
+en su closure. Imposible corrupción entre flujos paralelos.
+
+Test específico de regresión: `src/__tests__/unit/audit/makeAuditable.test.ts`
+describe block 6 — "race condition: flujos paralelos aislados".
+
+**Problema 2 — engagement_id null tras refresh (DEBT-019 original)**
+`makeAuditable.ts` ahora lee `activeEngagementId` de `localStorage` (clave
+`lean-active-engagement`, formato Zustand persist) en call-time, no en creación del
+proxy. El ID está disponible desde el primer render tras la hidratación síncrona de
+Zustand, antes de cualquier llamada a servicio auditado.
+
+Prioridad: `defaultMetadata.engagement_id` explícito > localStorage > omitido.
+
+**Requiere ADR:** No. **Relacionado:** ADR-017, DEBT-018.
+
+---
+
+### ~~DEBT-020~~ — SHA-256 simple sobre email del archivo era reversible por diccionario ✅ (Resuelto — 2026-06-15)
+**Severidad:** 🔴 Alta (GDPR/privacidad)
+**Detectado:** 2026-06-15 (revisión de seguridad de pseudonimización en archivo frío)
+**Área:** `supabase/migrations/20260615_003_audit_system.sql`
+**Estado:** Resuelto (2026-06-15)
+
+**Descripción:**
+`purge_old_audit_logs()` usaba `encode(digest(al.user_email, 'sha256'), 'hex')` para pseudonimizar el email al archivar. SHA-256 sin sal es determinista y el espacio de emails de un tenant SaaS es pequeño y predecible: un atacante con una lista de usuarios conocidos puede calcular el hash offline y correlacionar registros del archivo frío (ataque de diccionario).
+
+**Fix aplicado:**
+Incluido en la migración consolidada `20260615_003_audit_system.sql`:
+1. Función `public.hmac_email_hash(p_email text)` SECURITY DEFINER que aplica
+   `encode(hmac(email, pepper, 'sha256'), 'hex')` leyendo `app.audit_pepper` del Vault.
+2. `purge_old_audit_logs()` llama a `hmac_email_hash()` en lugar de `digest()`.
+3. Si `app.audit_pepper` no está configurado, la función lanza excepción explícita — fallo
+   ruidoso mejor que hash débil silencioso.
+
+**Acción pendiente (manual — Carlos):**
+Antes de ejecutar la migración en PRE/PRO:
+1. Generar secreto: `SELECT encode(gen_random_bytes(32), 'hex');`
+2. Guardarlo en Supabase Vault como `audit_pepper`.
+3. Ejecutar: `ALTER DATABASE postgres SET app.audit_pepper = '<valor>';`
+4. Ejecutar la migración en el SQL Editor.
+
+**Requiere ADR:** No (refuerzo de control existente, no decisión arquitectónica nueva).
+**Relacionado:** ADR-018 (retención), DEBT-018 (tipos no regenerados).
+
+---
+
+### DEBT-021 — context.ts vacío: limpiar o implementar
+**Severidad:** 🟢 Baja
+**Detectado:** 2026-06-16 (auditoría de documentación)
+**Caducidad:** 2026-09-15
+**Área:** `src/lib/audit/context.ts`, `src/lib/audit/index.ts`
+**Owner:** audit-system
+**Estado:** Pendiente
+
+**Descripción:**
+`context.ts` está vacío. Fue diseñado como singleton de contexto de usuario client-side
+(patrón `setAuditContextProvider` / `getAuditUserContext`), pero con la introducción de
+la Edge Function `log-audit-event` como receptor del log, el contexto de usuario se
+extrae server-side del JWT — el cliente ya no necesita inyectarlo.
+
+El archivo sigue siendo re-exportado desde `index.ts` (`export * from './context'`), lo
+que no causa errores pero es ruido arquitectónico: un módulo vacío en el barrel export.
+
+**Impacto:**
+Nulo en runtime. Confusión para futuros colaboradores que lean el barrel y encuentren
+una referencia a un módulo sin contenido.
+
+**Plan de acción:**
+1. Eliminar `export * from './context'` de `src/lib/audit/index.ts`.
+2. Eliminar o repurpursar `src/lib/audit/context.ts` (puede eliminarse completamente).
+3. Verificar que ningún consumidor externo importa de `@/lib/audit` esperando
+   `setAuditContextProvider` o `getAuditUserContext`.
+4. `npm run typecheck` → 0 errores.
+
+**Requiere ADR:** No.
+**Relacionado:** DEBT-018, ADR-017.
 
 ---
 

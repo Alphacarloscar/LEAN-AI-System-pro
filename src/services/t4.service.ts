@@ -10,6 +10,7 @@
 // ============================================================
 
 import { supabase }       from '@/lib/supabase'
+import { makeAuditable }    from '@/lib/audit'
 import type { Json, UseCaseRow, UseCaseInsert, UseCaseStatus } from '@/types/database.types'
 import type { UseCase, UseCaseScores } from '@/modules/T4_UseCasePriorityBoard/types'
 import {
@@ -77,10 +78,10 @@ function toJson<T>(v: T | undefined | null): Json {
   return (v ?? null) as unknown as Json
 }
 
-export function useCaseToInsert(uc: UseCase, engagementId: string): UseCaseInsert {
+export function useCaseToInsert(uc: UseCase, projectId: string): UseCaseInsert {
   return {
     id:                    uc.id,
-    project_id:         engagementId,
+    project_id:         projectId,
     name:                  uc.name,
     description:           uc.description ?? null,
     department:            uc.department,
@@ -103,85 +104,99 @@ export function useCaseToInsert(uc: UseCase, engagementId: string): UseCaseInser
   }
 }
 
-// ── Operaciones CRUD ─────────────────────────────────────────
+// ── Implementación privada ───────────────────────────────────
 
-/** Carga todos los casos de uso de un engagement */
-export async function fetchUseCases(engagementId: string): Promise<UseCase[]> {
-  const { data, error } = await supabase
-    .from('use_cases')
-    .select('*')
-    .eq('project_id', engagementId)
-    .order('created_at', { ascending: true })
+const _impl = {
+  /** Carga todos los casos de uso de un engagement */
+  async fetchUseCases(projectId: string): Promise<UseCase[]> {
+    const { data, error } = await supabase
+      .from('use_cases')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: true })
 
-  if (error) throw new Error(`[T4] fetchUseCases: ${error.message}`)
-  return (data ?? []).map(rowToUseCase)
+    if (error) throw new Error(`[T4] fetchUseCases: ${error.message}`)
+    return (data ?? []).map(rowToUseCase)
+  },
+
+  /** Inserta un nuevo caso de uso */
+  async insertUseCase(uc: UseCase, projectId: string): Promise<void> {
+    const { error } = await supabase
+      .from('use_cases')
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      .insert(useCaseToInsert(uc, projectId))
+
+    if (error) throw new Error(`[T4] insertUseCase: ${error.message}`)
+  },
+
+  /** Actualiza un caso de uso existente (solo los campos cambiados) */
+  async updateUseCaseInDb(
+    id: string,
+    projectId: string,
+    updates: Partial<Omit<UseCase, 'id' | 'createdAt'>>,
+  ): Promise<void> {
+    const patch: Partial<Omit<UseCaseRow, 'id' | 'project_id' | 'created_at'>> = {}
+
+    if (updates.name             !== undefined) patch.name = updates.name
+    if (updates.description      !== undefined) patch.description = updates.description ?? null
+    if (updates.department       !== undefined) patch.department = updates.department
+    if (updates.aiCategory       !== undefined) patch.ai_category = updates.aiCategory
+    if (updates.status           !== undefined) patch.status = updates.status
+    if (updates.sponsorName      !== undefined) patch.sponsor_name = updates.sponsorName ?? null
+    if (updates.responsibleItData !== undefined) patch.responsible_it_data = updates.responsibleItData ?? null
+    if (updates.businessObjective !== undefined) patch.business_objective = updates.businessObjective ?? null
+    if (updates.stakeholderScores !== undefined) patch.stakeholder_scores = toJson(updates.stakeholderScores)
+    if (updates.scores           !== undefined) patch.scores = toJson(updates.scores)
+    if (updates.priorityScore    !== undefined) patch.priority_score = updates.priorityScore
+    if (updates.economics        !== undefined) patch.economics = updates.economics ? toJson(updates.economics) : null
+    if (updates.goNoGo           !== undefined) patch.go_no_go = updates.goNoGo ? toJson(updates.goNoGo) : null
+    if (updates.roadmap          !== undefined) patch.roadmap = updates.roadmap ? toJson(updates.roadmap) : null
+    if (updates.t1Context        !== undefined) patch.t1_context = updates.t1Context ? toJson(updates.t1Context) : null
+    if (updates.t2Context        !== undefined) patch.t2_context = updates.t2Context ? toJson(updates.t2Context) : null
+    if (updates.aiActClassification !== undefined) patch.ai_act_classification = updates.aiActClassification ? toJson(updates.aiActClassification) : null
+    if (updates.notes            !== undefined) patch.notes = updates.notes ?? null
+
+    // NOTA: la tabla use_cases no tiene columna updated_at — no añadir al patch.
+
+    const { error } = await supabase
+      .from('use_cases')
+      .update(patch)
+      .eq('id', id)
+      .eq('project_id', projectId)
+
+    if (error) throw new Error(`[T4] updateUseCaseInDb: ${error.message}`)
+  },
+
+  /** Elimina un caso de uso */
+  async deleteUseCaseFromDb(id: string, projectId: string): Promise<void> {
+    const { error } = await supabase
+      .from('use_cases')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId)
+
+    if (error) throw new Error(`[T4] deleteUseCaseFromDb: ${error.message}`)
+  },
+
+  /** Inserta múltiples casos de uso de golpe (útil para seed de demo data) */
+  async bulkInsertUseCases(
+    useCases: UseCase[],
+    projectId: string,
+  ): Promise<void> {
+    const rows = useCases.map((uc) => useCaseToInsert(uc, projectId))
+    const { error } = await supabase.from('use_cases').insert(rows)
+    if (error) throw new Error(`[T4] bulkInsertUseCases: ${error.message}`)
+  },
 }
 
-/** Inserta un nuevo caso de uso */
-export async function insertUseCase(uc: UseCase, engagementId: string): Promise<void> {
-  const { error } = await supabase
-    .from('use_cases')
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    .insert(useCaseToInsert(uc, engagementId))
+// ── Punto de exportación auditado ────────────────────────────
 
-  if (error) throw new Error(`[T4] insertUseCase: ${error.message}`)
-}
+const _service = makeAuditable(_impl, 'services.t4')
 
-/** Actualiza un caso de uso existente (solo los campos cambiados) */
-export async function updateUseCaseInDb(
-  id: string,
-  engagementId: string,
-  updates: Partial<Omit<UseCase, 'id' | 'createdAt'>>,
-): Promise<void> {
-  const patch: Partial<Omit<UseCaseRow, 'id' | 'project_id' | 'created_at'>> = {}
-
-  if (updates.name             !== undefined) patch.name = updates.name
-  if (updates.description      !== undefined) patch.description = updates.description ?? null
-  if (updates.department       !== undefined) patch.department = updates.department
-  if (updates.aiCategory       !== undefined) patch.ai_category = updates.aiCategory
-  if (updates.status           !== undefined) patch.status = updates.status
-  if (updates.sponsorName      !== undefined) patch.sponsor_name = updates.sponsorName ?? null
-  if (updates.responsibleItData !== undefined) patch.responsible_it_data = updates.responsibleItData ?? null
-  if (updates.businessObjective !== undefined) patch.business_objective = updates.businessObjective ?? null
-  if (updates.stakeholderScores !== undefined) patch.stakeholder_scores = toJson(updates.stakeholderScores)
-  if (updates.scores           !== undefined) patch.scores = toJson(updates.scores)
-  if (updates.priorityScore    !== undefined) patch.priority_score = updates.priorityScore
-  if (updates.economics        !== undefined) patch.economics = updates.economics ? toJson(updates.economics) : null
-  if (updates.goNoGo           !== undefined) patch.go_no_go = updates.goNoGo ? toJson(updates.goNoGo) : null
-  if (updates.roadmap          !== undefined) patch.roadmap = updates.roadmap ? toJson(updates.roadmap) : null
-  if (updates.t1Context        !== undefined) patch.t1_context = updates.t1Context ? toJson(updates.t1Context) : null
-  if (updates.t2Context        !== undefined) patch.t2_context = updates.t2Context ? toJson(updates.t2Context) : null
-  if (updates.aiActClassification !== undefined) patch.ai_act_classification = updates.aiActClassification ? toJson(updates.aiActClassification) : null
-  if (updates.notes            !== undefined) patch.notes = updates.notes ?? null
-
-  // NOTA: la tabla use_cases no tiene columna updated_at — no añadir al patch.
-
-  const { error } = await supabase
-    .from('use_cases')
-    .update(patch)
-    .eq('id', id)
-    .eq('project_id', engagementId)
-
-  if (error) throw new Error(`[T4] updateUseCaseInDb: ${error.message}`)
-}
-
-/** Elimina un caso de uso */
-export async function deleteUseCaseFromDb(id: string, engagementId: string): Promise<void> {
-  const { error } = await supabase
-    .from('use_cases')
-    .delete()
-    .eq('id', id)
-    .eq('project_id', engagementId)
-
-  if (error) throw new Error(`[T4] deleteUseCaseFromDb: ${error.message}`)
-}
-
-/** Inserta múltiples casos de uso de golpe (útil para seed de demo data) */
-export async function bulkInsertUseCases(
-  useCases: UseCase[],
-  engagementId: string,
-): Promise<void> {
-  const rows = useCases.map((uc) => useCaseToInsert(uc, engagementId))
-  const { error } = await supabase.from('use_cases').insert(rows)
-  if (error) throw new Error(`[T4] bulkInsertUseCases: ${error.message}`)
-}
+export const {
+  fetchUseCases,
+  insertUseCase,
+  updateUseCaseInDb,
+  deleteUseCaseFromDb,
+  bulkInsertUseCases,
+} = _service
