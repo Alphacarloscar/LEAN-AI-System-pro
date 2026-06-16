@@ -7,6 +7,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added (v1.0 — Sistema de Auditoría)
+- [Audit] `src/lib/audit/` — librería de auditoría completa (ADR-017)
+  - `makeAuditable` — Proxy genérico que intercepta métodos async de cualquier servicio; registra args, response, duración, status y correlation_id sin bloquear al caller
+  - `auditClient` — escritor fire-and-forget que invoca la Edge Function `log-audit-event`; fallos de red nunca propagan al caller (aislados en IIFE async)
+  - `types.ts` — contratos `AuditLogInsert`, `AuditAIMetadata`, `AuditUserContext`
+  - `context.ts` — helper `getAuditUserContext()` para capturar sesión activa
+- [Audit] `supabase/functions/log-audit-event/` — Edge Function segura que añade contexto de usuario (user_id, email, rol) desde el JWT, bypasseando RLS con service_role_key
+- [Audit] `src/services/auditLogs.service.ts` — servicio de lectura de logs para el panel de superadmin
+- [DB] `supabase/migrations/20260615_003_audit_system.sql` — tablas `audit_logs` + `audit_logs_archive` + `audit_access_logs`, RLS, función de archivado pg_cron (ADR-018, ADR-019)
+- [DB] `supabase/migrations/20260615_007_perf_profiles_idx.sql` — índice de rendimiento en `profiles`
+- [DB] `supabase/migrations/20260616_004_audit_schema_drift.sql` — `ADD COLUMN IF NOT EXISTS` idempotente para `correlation_id`, `user_email_hash`, `ai_provider`, `ai_model`, `ai_total_tokens` en ambas tablas
+- [Services] Todos los servicios instrumentados con `makeAuditable`: auth, companies, company-profile, department, projects, T1–T8
+- [Tests] `src/__tests__/unit/audit/makeAuditable.test.ts` — 533 tests unitarios; cubre intercepción async, pass-through síncrono, truncación de payloads, correlation_id race-condition-safe, engagement_id desde localStorage
+- [Docs] `docs/architecture/audit-system.md`, ADR-017/018/019 documentados
+
 ### Fixed
 - [E2E] `t3.spec.ts` beforeEach: cambiado espera de texto "Value Stream Map" por selector `main` — evita timeouts en PRE cuando T3View tiene estado de carga inicial
 - [CI] `validate-docs.yml` A4: trim de whitespace antes de medir longitud del body + mensaje de error orientativo con ruta al PR template
