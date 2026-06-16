@@ -19,9 +19,8 @@
 --   1. pg_cron habilitado: Dashboard → Database → Extensions → pg_cron
 --   2. Secreto en Vault:
 --        SELECT encode(gen_random_bytes(32), 'hex');   -- generar
---        Dashboard → Project Settings → Vault → New Secret
+--        Dashboard → Project Settings → Vault → Add new secret
 --        Name: audit_pepper  /  Value: <hex 64 chars>
---        ALTER DATABASE postgres SET app.audit_pepper = '<valor>';
 --
 -- Ejecutar en Supabase SQL Editor (PRE y DEV por separado).
 -- Relacionado: ADR-017 · ADR-018 · ADR-019
@@ -292,7 +291,7 @@ CREATE OR REPLACE FUNCTION public.hmac_email_hash(p_email text)
 RETURNS text
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, vault, extensions
 AS $$
 DECLARE
   v_pepper text;
@@ -301,12 +300,15 @@ BEGIN
     RETURN NULL;
   END IF;
 
-  v_pepper := current_setting('app.audit_pepper', false);
+  SELECT decrypted_secret INTO v_pepper
+  FROM   vault.decrypted_secrets
+  WHERE  name = 'audit_pepper'
+  LIMIT  1;
 
   IF v_pepper IS NULL OR trim(v_pepper) = '' THEN
     RAISE EXCEPTION
-      'hmac_email_hash: app.audit_pepper is not set. '
-      'Configure the secret in Supabase Vault before running purge_old_audit_logs().';
+      'hmac_email_hash: secreto "audit_pepper" no encontrado en Vault. '
+      'Añádelo en Dashboard → Project Settings → Vault → Add new secret.';
   END IF;
 
   RETURN encode(hmac(p_email, v_pepper, 'sha256'), 'hex');
@@ -337,7 +339,7 @@ CREATE OR REPLACE FUNCTION public.log_audit_access(
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, auth, extensions
 AS $$
 DECLARE
   v_caller_id    uuid := auth.uid();
@@ -396,7 +398,7 @@ CREATE OR REPLACE FUNCTION public.purge_old_audit_logs(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, vault, extensions
 AS $$
 DECLARE
   v_cutoff   timestamptz := now() - (p_cutoff_days || ' days')::interval;
@@ -477,7 +479,7 @@ CREATE OR REPLACE FUNCTION public.purge_old_audit_archive()
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
 DECLARE
   v_cutoff   timestamptz := now() - interval '5 years';
@@ -525,7 +527,7 @@ CREATE OR REPLACE FUNCTION public.get_audit_logs(
 RETURNS SETOF public.audit_logs
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, auth, extensions
 AS $$
 DECLARE
   v_caller_id    uuid    := auth.uid();
@@ -643,10 +645,8 @@ SELECT cron.schedule(
 --      );
 --      -- prosecdef = true en todas
 --
--- E. Test HMAC (requiere pepper configurado):
---      SET app.audit_pepper = 'test-pepper-verificacion';
+-- E. Test HMAC (requiere secreto 'audit_pepper' en Vault):
 --      SELECT public.hmac_email_hash('user@example.com');  -- hex 64 chars
---      RESET app.audit_pepper;
 --
 -- F. Test acceso superadmin (sesión activa con rol superadmin):
 --      SELECT * FROM public.get_audit_logs('{"limit": 5}'::jsonb);
