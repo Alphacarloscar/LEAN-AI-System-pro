@@ -41,6 +41,10 @@ import { useEngagementStore }      from '@/modules/Engagement/store'
 let _authSubscription:  { unsubscribe: () => void } | null = null
 let _intentionalSignOut = false
 let _isInitializing     = false
+// Evita que el SIGNED_IN inmediato tras getSession() duplique la carga de perfil.
+// initialize() lo pone a true mientras gestiona la sesión inicial; el listener
+// lo resetea a false en cuanto lo consume, para que futuros SIGNED_IN (re-login) sigan funcionando.
+let _skipNextSignedIn   = false
 
 // ── Estado de recuperación de sesión ─────────────────────────────────────────
 // 'idle'         — estado normal, sesión activa o no autenticado
@@ -120,6 +124,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       console.debug('[AUTH] initialize:session', session ? 'found' : 'none')
 
       if (session?.user) {
+        _skipNextSignedIn = true
         const profile    = await loadProfile(session.user.id)
         const needsReset = session.user.user_metadata?.needs_password_reset === true
         set({
@@ -172,6 +177,11 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       }
 
       if (event === 'SIGNED_IN' && session?.user) {
+        if (_skipNextSignedIn) {
+          _skipNextSignedIn = false
+          console.debug('[AUTH] callback sync complete — event=SIGNED_IN skipped (already loaded by initialize)')
+          return
+        }
         const needsReset = session.user.user_metadata?.needs_password_reset === true
         const wasExpired = useAuthStore.getState().sessionRecoveryState === 'expired'
 

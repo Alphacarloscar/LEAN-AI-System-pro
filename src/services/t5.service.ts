@@ -6,6 +6,7 @@
 // ============================================================
 
 import { supabase }  from '@/lib/supabase'
+import { makeAuditable } from '@/lib/audit'
 import type { Json, T5CanvasRow, T5CanvasInsert } from '@/types/database.types'
 import type { T5Canvas, T5DomainCode, T5DomainAssessment, T5MaturityLevel } from '@/modules/T5_AITaxonomyCanvas/types'
 
@@ -24,35 +25,46 @@ function rowToCanvas(row: T5CanvasRow): T5Canvas {
   }
 }
 
-// ── Operaciones ───────────────────────────────────────────────
+// ── Implementación privada ───────────────────────────────────
 
-/** Carga el canvas T5 de un proyecto. Retorna null si aún no existe fila. */
-export async function getT5Canvas(projectId: string): Promise<T5Canvas | null> {
-  const { data, error } = await supabase
-    .from('t5_canvas')
-    .select('*')
-    .eq('project_id', projectId)
-    .maybeSingle()
+const _impl = {
+  /** Carga el canvas T5 de un proyecto. Retorna null si aún no existe fila. */
+  async getT5Canvas(projectId: string): Promise<T5Canvas | null> {
+    const { data, error } = await supabase
+      .from('t5_canvas')
+      .select('*')
+      .eq('project_id', projectId)
+      .maybeSingle()
 
-  if (error) throw new Error(`[T5] getT5Canvas: ${error.message}`)
-  return data ? rowToCanvas(data) : null
+    if (error) throw new Error(`[T5] getT5Canvas: ${error.message}`)
+    return data ? rowToCanvas(data) : null
+  },
+
+  /** Inserta o actualiza el canvas T5 de un proyecto (upsert por project_id). */
+  async upsertT5Canvas(projectId: string, canvas: T5Canvas): Promise<void> {
+    const row: T5CanvasInsert = {
+      project_id:          projectId,
+      company_name:        canvas.companyName,
+      domains:             canvas.domains as unknown as Json,
+      maturity_level:      canvas.maturityLevel,
+      activation_sequence: canvas.activationSequence as unknown as Json,
+      notes:               canvas.notes ?? null,
+      updated_at:          new Date().toISOString(),
+    }
+
+    const { error } = await supabase
+      .from('t5_canvas')
+      .upsert(row, { onConflict: 'project_id' })
+
+    if (error) throw new Error(`[T5] upsertT5Canvas: ${error.message}`)
+  },
 }
 
-/** Inserta o actualiza el canvas T5 de un proyecto (upsert por project_id). */
-export async function upsertT5Canvas(projectId: string, canvas: T5Canvas): Promise<void> {
-  const row: T5CanvasInsert = {
-    project_id:          projectId,
-    company_name:        canvas.companyName,
-    domains:             canvas.domains as unknown as Json,
-    maturity_level:      canvas.maturityLevel,
-    activation_sequence: canvas.activationSequence as unknown as Json,
-    notes:               canvas.notes ?? null,
-    updated_at:          new Date().toISOString(),
-  }
+// ── Punto de exportación auditado ────────────────────────────
 
-  const { error } = await supabase
-    .from('t5_canvas')
-    .upsert(row, { onConflict: 'project_id' })
+const _service = makeAuditable(_impl, 'services.t5')
 
-  if (error) throw new Error(`[T5] upsertT5Canvas: ${error.message}`)
-}
+export const {
+  getT5Canvas,
+  upsertT5Canvas,
+} = _service

@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { T5CanvasRow } from '@/types/database.types'
 
+vi.mock('@/lib/audit/auditClient', () => ({ fireAuditLog: vi.fn() }))
+vi.mock('@/lib/audit', () => ({ makeAuditable: <T>(s: T) => s }))
+
 // Mock del cliente Supabase — antes de los imports del servicio
 vi.mock('@/lib/supabase', () => ({
   supabase: {

@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/lib/audit/auditClient', () => ({ fireAuditLog: vi.fn() }))
+vi.mock('@/lib/audit', () => ({ makeAuditable: <T>(s: T) => s }))
+
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     rpc:  vi.fn(),

@@ -171,7 +171,11 @@ describe('createCompany', () => {
       select: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: row, error: null }),
     }
-    vi.mocked(supabase.from).mockReturnValue(chain as never)
+    // mockImplementation en lugar de mockReturnValue para que el mock de audit_logs
+    // (fire-and-forget de makeAuditable) no comparta la misma chain y no altere contadores.
+    vi.mocked(supabase.from).mockImplementation((table) =>
+      table === 'companies' ? (chain as never) : ({ insert: vi.fn().mockResolvedValue({ error: null }) } as never)
+    )
 
     const result = await createCompany({ name: 'Acme S.A.' })
 

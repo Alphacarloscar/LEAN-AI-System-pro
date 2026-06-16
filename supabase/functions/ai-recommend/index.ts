@@ -18,7 +18,8 @@
 // Response shape: { data: <GeneratedContent>, persistence: { saved: boolean, error?: string } }
 // ================================================================
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient }           from 'https://esm.sh/@supabase/supabase-js@2'
+import type { AIAuditEntry }      from '../_shared/audit-types.ts'
 
 // ── CORS — Allowlist exacta de orígenes permitidos ───────────
 // Lista cerrada: cualquier origen fuera de esta lista no recibirá
@@ -554,13 +555,24 @@ interface AnthropicMessage {
   content: string
 }
 
+/** Resultado completo de la llamada a Claude — incluye métricas de consumo. */
+interface ClaudeResult {
+  text:             string
+  modelResponded:   string   // modelo real en la respuesta (puede diferir del solicitado)
+  inputTokens:      number   // prompt_tokens en nomenclatura estándar
+  outputTokens:     number   // completion_tokens
+  cacheWriteTokens: number   // tokens escritos a prompt cache (0 si no aplica)
+  cacheReadTokens:  number   // tokens leídos de prompt cache (0 si no aplica)
+  stopReason:       string
+}
+
 async function callClaude(
   apiKey:    string,
   model:     string,
   maxTokens: number,
   system:    string,
   messages:  AnthropicMessage[],
-): Promise<string> {
+): Promise<ClaudeResult> {
   const controller = new AbortController()
   const timeoutId  = setTimeout(() => controller.abort(), ANTHROPIC_TIMEOUT_MS)
 
@@ -586,6 +598,13 @@ async function callClaude(
     const result = await response.json() as {
       content:     Array<{ type: string; text: string }>
       stop_reason: string
+      model:       string
+      usage: {
+        input_tokens:                 number
+        output_tokens:                number
+        cache_creation_input_tokens?: number
+        cache_read_input_tokens?:     number
+      }
     }
 
     if (!result.content?.[0]?.text) {
@@ -596,7 +615,15 @@ async function callClaude(
       console.warn(`[ai-recommend] stop_reason=max_tokens para model=${model}. Considera aumentar maxTokens.`)
     }
 
-    return result.content[0].text
+    return {
+      text:             result.content[0].text,
+      modelResponded:   result.model,
+      inputTokens:      result.usage.input_tokens,
+      outputTokens:     result.usage.output_tokens,
+      cacheWriteTokens: result.usage.cache_creation_input_tokens ?? 0,
+      cacheReadTokens:  result.usage.cache_read_input_tokens     ?? 0,
+      stopReason:       result.stop_reason,
+    }
 
   } catch (err) {
     clearTimeout(timeoutId)
@@ -605,6 +632,75 @@ async function callClaude(
     }
     throw err
   }
+}
+
+
+// ── Audit log de métricas de IA — fire-and-forget ─────────────
+//
+// Inserta en audit_logs las métricas de consumo de tokens de cada
+// llamada a Anthropic. Usa el cliente admin (service_role) para que
+// la inserción no dependa de permisos RLS del usuario.
+// Su propio try/catch garantiza que un fallo de logging NUNCA
+// interrumpa ni retrase la respuesta al frontend.
+//
+// El tipo AIAuditEntry se importa desde ../_shared/audit-types.ts
+// para mantener SSOT entre Edge Functions (ADR-017).
+
+// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function logAIAudit(supabaseAdmin: any, entry: AIAuditEntry): void {
+  // Guardia defensiva: user_id es obligatorio para atribución de costes (ADR-017).
+  // Si llega vacío, es un bug de llamada — se registra el error y se aborta el log
+  // en lugar de insertar un registro huérfano con user_id = NULL.
+  if (!entry.userId) {
+    console.error('[ai-recommend][audit_log] Aborted: entry.userId is empty — JWT extraction failed before logAIAudit call.')
+    return
+  }
+
+  const totalTokens = (entry.inputTokens !== null && entry.outputTokens !== null)
+    ? entry.inputTokens + entry.outputTokens
+    : null
+
+  void (async () => {
+    try {
+      const { error } = await supabaseAdmin
+        .from('audit_logs')
+        .insert({
+          user_id:          entry.userId,
+          user_email:       entry.userEmail,
+          user_role:        null,
+          service_name:     'edge.ai-recommend',
+          method_name:      entry.tool,
+          args_payload:     { project_id: entry.projectId, context_bytes: entry.contextBytes },
+          status:           entry.status,
+          response_payload: entry.status === 'success'
+            ? { model_responded: entry.modelResponded, chars: null }
+            : null,
+          error_message:    entry.errorMessage,
+          error_stack:      null,
+          duration_ms:      entry.durationMs,
+          resource_id:      entry.projectId,
+          metadata: {
+            provider:           'anthropic',
+            model_requested:    entry.modelRequested,
+            model_responded:    entry.modelResponded,
+            input_tokens:       entry.inputTokens,
+            output_tokens:      entry.outputTokens,
+            total_tokens:       totalTokens,
+            cache_write_tokens: entry.cacheWriteTokens,
+            cache_read_tokens:  entry.cacheReadTokens,
+            stop_reason:        entry.stopReason,
+            function_version:   FUNCTION_VERSION,
+          },
+        })
+
+      if (error) {
+        console.warn('[ai-recommend][audit_log] Insert failed (non-critical):', error.message)
+      }
+    } catch (err) {
+      console.warn('[ai-recommend][audit_log] Unexpected error (non-critical):', err)
+    }
+  })()
 }
 
 
@@ -805,12 +901,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
 
   // ── PASO 9 — Llamar a Anthropic Claude API ────────────────────
+  // El timer mide solo la latencia de la llamada LLM, no el paso de guardado.
+  // logAIAudit se dispara inmediatamente tras callClaude (éxito o error) para
+  // garantizar que ningún token quede sin registrar aunque falle el paso 10.
 
   const { system, user: userMessage } = toolConfig.buildPrompt(context)
 
-  let rawLLMText: string
+  const llmStartedAt = Date.now()
+  let claudeResult: ClaudeResult
   try {
-    rawLLMText = await callClaude(
+    claudeResult = await callClaude(
       ANTHROPIC_API_KEY,
       toolConfig.model,
       toolConfig.maxTokens,
@@ -818,12 +918,60 @@ Deno.serve(async (req: Request): Promise<Response> => {
       [{ role: 'user', content: userMessage }],
     )
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Error desconocido'
+    const durationMs = Date.now() - llmStartedAt
+    const msg        = err instanceof Error ? err.message : 'Error desconocido'
     console.error('[ai-recommend] Error Anthropic:', msg)
+
+    logAIAudit(supabaseAdmin, {
+      userId:           user.id,
+      userEmail:        user.email ?? null,
+      projectId,
+      tool,
+      status:           'error',
+      durationMs,
+      contextBytes,
+      errorMessage:     msg,
+      modelRequested:   toolConfig.model,
+      modelResponded:   null,
+      inputTokens:      null,
+      outputTokens:     null,
+      cacheWriteTokens: null,
+      cacheReadTokens:  null,
+      stopReason:       null,
+    })
+
     return errorResponse(`Error al generar contenido con IA: ${msg}`, 502, corsH)
   }
 
-  console.log(`[ai-recommend] Anthropic OK (${rawLLMText.length} chars)`)
+  const llmDurationMs = Date.now() - llmStartedAt
+  const rawLLMText    = claudeResult.text
+
+  // Registrar consumo de tokens ANTES de cualquier procesamiento posterior.
+  // Si el JSON parse o el guardado fallan, los tokens ya están registrados.
+  logAIAudit(supabaseAdmin, {
+    userId:           user.id,
+    userEmail:        user.email ?? null,
+    projectId,
+    tool,
+    status:           'success',
+    durationMs:       llmDurationMs,
+    contextBytes,
+    errorMessage:     null,
+    modelRequested:   toolConfig.model,
+    modelResponded:   claudeResult.modelResponded,
+    inputTokens:      claudeResult.inputTokens,
+    outputTokens:     claudeResult.outputTokens,
+    cacheWriteTokens: claudeResult.cacheWriteTokens,
+    cacheReadTokens:  claudeResult.cacheReadTokens,
+    stopReason:       claudeResult.stopReason,
+  })
+
+  console.log(
+    `[ai-recommend] Anthropic OK (${rawLLMText.length} chars) ${llmDurationMs}ms` +
+    ` | in=${claudeResult.inputTokens} out=${claudeResult.outputTokens}` +
+    ` total=${claudeResult.inputTokens + claudeResult.outputTokens}` +
+    ` model=${claudeResult.modelResponded}`,
+  )
 
 
   // ── Parsear y validar JSON ────────────────────────────────────
