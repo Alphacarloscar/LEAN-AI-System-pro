@@ -647,6 +647,7 @@ async function callClaude(
 // para mantener SSOT entre Edge Functions (ADR-017).
 
 // deno-lint-ignore no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function logAIAudit(supabaseAdmin: any, entry: AIAuditEntry): void {
   // Guardia defensiva: user_id es obligatorio para atribución de costes (ADR-017).
   // Si llega vacío, es un bug de llamada — se registra el error y se aborta el log

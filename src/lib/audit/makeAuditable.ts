@@ -176,6 +176,7 @@ export function makeAuditable<T extends Record<string, unknown>>(
         // Construir metadata JSONB:
         //   - correlation_id se excluye (va a su propia columna en la BD)
         //   - engagement_id se enriquece desde localStorage si no fue explícito
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { correlation_id: _omit, ...baseMetadata } = defaultMetadata as Record<string, unknown>
         const enrichedMeta: Record<string, unknown> = engagementId != null
           ? { ...baseMetadata, engagement_id: engagementId }

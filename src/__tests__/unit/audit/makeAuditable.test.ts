@@ -45,7 +45,7 @@ const MOCK_CORRELATION_ID = 'corr-0000-aaaa-bbbb-cccccccccccc'
 function buildTestService() {
   return {
     asyncSuccess: async (id: string) => ({ id, name: 'Empresa A' }),
-    asyncError:   async (_id: string): Promise<never> => {
+    asyncError:   async (_id: string): Promise<never> => { // eslint-disable-line @typescript-eslint/no-unused-vars
       throw new Error('DB unavailable')
     },
     syncDouble:   (n: number): number => n * 2,
@@ -267,7 +267,7 @@ describe('makeAuditable — truncación y bandera response_truncated en metadata
 
   it('inyecta response_truncated:true en metadata de error cuando los args son grandes', async () => {
     const svc = {
-      save: async (_data: string): Promise<never> => {
+      save: async (_data: string): Promise<never> => { // eslint-disable-line @typescript-eslint/no-unused-vars
         throw new Error('write failed')
       },
     }
