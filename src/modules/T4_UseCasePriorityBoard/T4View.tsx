@@ -3,7 +3,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect } from 'react'
-import { useNavigate }            from 'react-router-dom'
+import { useNavigate, useParams }       from 'react-router-dom'
 import { useT4Store }             from './store'
 import { useT1Store }             from '@/modules/T1_MaturityRadar/store'
 import { useT2Store }             from '@/modules/T2_StakeholderMatrix/store'
@@ -29,16 +29,24 @@ export function T4View({ onBack }: T4ViewProps) {
   const { useCases, isLoading, isLoaded, ensureLoaded } = useT4Store()
   const { profile: companyProfile }                      = useCompanyProfileStore()
   const companyName                                      = companyProfile.engagementName
-  const engagementId                                     = useEngagementStore((s) => s.activeEngagementId)
+  const loadProfile                                      = useCompanyProfileStore((s) => s.loadProfile)
+  const { engagementId: urlId }                          = useParams<{ engagementId: string }>()
+  const storeId                                          = useEngagementStore((s) => s.activeEngagementId)
+  const engagementId                                     = urlId ?? storeId
   const user                                             = useAuthStore((s) => s.user)
   const isAuth                                           = !!user
 
-  const dimensionStates = useT1Store((s) => s.dimensionStates)
-  const stakeholders    = useT2Store((s) => s.stakeholders)
+  const dimensionStates  = useT1Store((s) => s.dimensionStates)
+  const ensureLoadedT1   = useT1Store((s) => s.ensureLoaded)
+  const stakeholders     = useT2Store((s) => s.stakeholders)
+  const ensureLoadedT2   = useT2Store((s) => s.ensureLoaded)
 
   useEffect(() => {
     if (engagementId) {
       ensureLoaded(engagementId, { reason: 'route_mount' })
+      void loadProfile(engagementId)
+      void ensureLoadedT1(engagementId, { reason: 't4-mount' })
+      void ensureLoadedT2(engagementId, { reason: 't4-mount' })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])

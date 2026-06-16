@@ -3,21 +3,22 @@ import { login, selectEngagement } from './helpers'
 
 test.describe('T2 — AI Stakeholder Matrix', () => {
   test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 })
     await login(page)
     await selectEngagement(page)
-    await page.goto('/t2')
-    await expect(page.locator('main, [role="main"], #root > div').first()).toBeVisible({
-      timeout: 10_000,
-    })
+    // networkidle espera a que los fetch de Supabase REST terminen — evita timeout en ToolHeader
+    await page.goto('/t2', { waitUntil: 'networkidle' })
+    // Espera dirigida al título real del ToolHeader (descarta el spinner de ProtectedRoute)
+    await page.waitForSelector('text=AI Stakeholder Matrix', { timeout: 15_000 })
   })
 
   test('la vista /t2 carga sin crash JavaScript', async ({ page }) => {
     const jsErrors: string[] = []
     page.on('pageerror', (err) => jsErrors.push(err.message))
 
-    await page.goto('/t2')
+    await page.goto('/t2', { waitUntil: 'networkidle' })
     await expect(page).not.toHaveURL(/login/)
-    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 10_000 })
 
     const crashErrors = jsErrors.filter((e) =>
       e.includes('Cannot read') || e.includes('is not a function') || e.includes('is undefined'),
@@ -26,8 +27,9 @@ test.describe('T2 — AI Stakeholder Matrix', () => {
   })
 
   test('el título "AI Stakeholder Matrix" está visible en la cabecera', async ({ page }) => {
+    // El ToolHeader ya está garantizado por el beforeEach — sólo verifica la aserción
     const title = page.getByText(/AI Stakeholder Matrix/i)
-    await expect(title.first()).toBeVisible({ timeout: 8_000 })
+    await expect(title.first()).toBeVisible({ timeout: 5_000 })
   })
 
   test('el cuadrante de stakeholders está presente en la vista', async ({ page }) => {

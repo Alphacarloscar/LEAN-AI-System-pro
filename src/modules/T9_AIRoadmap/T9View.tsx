@@ -15,7 +15,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect }   from 'react'
-import { useNavigate }                    from 'react-router-dom'
+import { useNavigate, useParams }         from 'react-router-dom'
 import { Button, Card, ToolHeader, EmptyState } from '@shared/design-system/components'
 import { useT4Store }                     from '@/modules/T4_UseCasePriorityBoard/store'
 import { useT9Store }                     from './store'
@@ -48,12 +48,18 @@ export function T9View({ onBack }: T9ViewProps) {
   const { overrides, freeItems, setOverride, addFreeItem, updateFreeItem, syncEngagement: syncT9 } = useT9Store()
   const { profile: companyProfile }                     = useCompanyProfileStore()
   const companyName                                     = companyProfile.engagementName
-  const engagementId                                    = useEngagementStore((s) => s.activeEngagementId)
+  const loadProfile                                     = useCompanyProfileStore((s) => s.loadProfile)
+  const { engagementId: urlId }                         = useParams<{ engagementId: string }>()
+  const storeId                                         = useEngagementStore((s) => s.activeEngagementId)
+  const engagementId                                    = urlId ?? storeId
 
   // Scoping: si cambia el engagement, limpia overrides y freeItems del cliente anterior
   // stable Zustand action — mount-only: sincronizar al cambiar engagement
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { syncT9(engagementId) }, [engagementId])
+  useEffect(() => {
+    syncT9(engagementId)
+    if (engagementId) void loadProfile(engagementId)
+  }, [engagementId])
 
   // Cargar T4 al montar T9 si el engagement del store T4 no coincide con el activo
   // RC-3: condición engagement-aware — evita usar datos stale de un proyecto anterior
@@ -276,7 +282,7 @@ export function T9View({ onBack }: T9ViewProps) {
               }
               title="Roadmap vacío"
               description="Aprueba casos de uso en T4 o añade iniciativas libres para construir el roadmap de 6 meses."
-              action={<Button variant="ghost" size="sm" onClick={() => navigate('/t4')}>Ir a T4</Button>}
+              action={<Button variant="ghost" size="sm" onClick={() => navigate(engagementId ? `/t4/${engagementId}` : '/t4')}>Ir a T4</Button>}
               className="py-10"
             />
           )

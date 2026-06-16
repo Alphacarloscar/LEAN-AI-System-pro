@@ -11,6 +11,7 @@
 
 import { useState }                   from 'react'
 import { useNavigate, useLocation }   from 'react-router-dom'
+import { useEngagementStore }         from '@/modules/Engagement/store'
 
 // ── Registro estático del producto ───────────────────────────
 // Fuente de verdad de la navegación. NUNCA debe depender de:
@@ -22,7 +23,9 @@ interface ToolNavItem {
   path:  string
 }
 
-const TOOL_NAVIGATION: ToolNavItem[] = [
+// Códigos base de navegación — la ruta final se construye dinámicamente
+// con el engagementId activo en AppSidebar.
+const TOOL_NAVIGATION_BASE: ToolNavItem[] = [
   { code: 'T1',  label: 'AI Readiness Assessment',   path: '/t1'  },
   { code: 'T2',  label: 'Stakeholder Matrix',         path: '/t2'  },
   { code: 'T3',  label: 'Value Stream Map',           path: '/t3'  },
@@ -39,9 +42,18 @@ const TOOL_NAVIGATION: ToolNavItem[] = [
 
 // ── Sidebar ────────────────────────────────────────────────────
 export function AppSidebar() {
-  const [open, setOpen] = useState(false)
-  const navigate        = useNavigate()
-  const location        = useLocation()
+  const [open, setOpen]  = useState(false)
+  const navigate         = useNavigate()
+  const location         = useLocation()
+  const engagementId     = useEngagementStore((s) => s.activeEngagementId)
+
+  // Construye la ruta final: T1–T12 incluyen el engagementId en la URL.
+  // T10 (path '/') no lleva engagementId porque es el dashboard raíz.
+  const TOOL_NAVIGATION = TOOL_NAVIGATION_BASE.map((tool) =>
+    tool.path !== '/' && engagementId
+      ? { ...tool, path: `${tool.path}/${engagementId}` }
+      : tool
+  )
 
   function goTo(path: string) {
     navigate(path)

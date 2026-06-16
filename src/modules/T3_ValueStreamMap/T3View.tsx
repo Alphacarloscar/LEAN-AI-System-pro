@@ -8,7 +8,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect }    from 'react'
-import { useNavigate }                     from 'react-router-dom'
+import { useNavigate, useParams }          from 'react-router-dom'
 import { Button, Badge, Card, ToolHeader } from '@shared/design-system/components'
 import { useT3Store }                      from './store'
 import { useEngagementStore }              from '@/modules/Engagement/store'
@@ -40,14 +40,21 @@ export function T3View({ onBack }: T3ViewProps) {
     processes, addProcess, initDemo, ensureLoaded,
     isLoading: isLoadingT3, hasData: hasDataT3, loadError: loadErrorT3,
   } = useT3Store()
-  const engagementId = useEngagementStore((s) => s.activeEngagementId)
+  const { engagementId: urlId } = useParams<{ engagementId: string }>()
+  const storeId                 = useEngagementStore((s) => s.activeEngagementId)
+  const engagementId            = urlId ?? storeId
   const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
   const companyName  = useCompanyProfileStore((s) => s.profile.engagementName)
+  const loadProfile  = useCompanyProfileStore((s) => s.loadProfile)
   const { isReadOnly } = usePermissions()
 
   useEffect(() => {
-    if (engagementId) ensureLoaded(engagementId, { reason: 'route_mount' })
-    else if (isDemoEnabled) initDemo()
+    if (engagementId) {
+      ensureLoaded(engagementId, { reason: 'route_mount' })
+      void loadProfile(engagementId)
+    } else if (isDemoEnabled) {
+      initDemo()
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])
 
