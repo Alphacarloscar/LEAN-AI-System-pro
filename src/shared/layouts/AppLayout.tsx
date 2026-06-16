@@ -17,7 +17,7 @@
 //   <main>          — <Outlet /> con la vista activa
 // ============================================================
 
-import { useEffect }                              from 'react'
+import { useEffect, useLayoutEffect, useRef }     from 'react'
 import { Spinner }                                from '@shared/design-system/components'
 import { Outlet }                                 from 'react-router-dom'
 import type { AppLayoutContext }                  from './AppLayout.hooks'
@@ -211,6 +211,7 @@ export function AppLayout() {
   const { user, sessionRecoveryState, clearSessionExpired } = useAuthStore()
   const { loadMyProjects }                      = useEngagementStore()
   const navigate                                = useNavigate()
+  const headerRef                               = useRef<HTMLElement>(null)
 
   // Cargar engagements del usuario en cuanto esté autenticado
   // [user?.id] intencional: solo re-cargar cuando cambia el usuario, no en cada re-render de auth
@@ -221,6 +222,19 @@ export function AppLayout() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
+  // Expone la altura real del header como CSS var --header-h para que
+  // AppSidebar y ToolHeader puedan posicionarse sin hardcodear 57px.
+  // Se recalcula en resize y cuando cambia sessionRecoveryState (puede añadir altura).
+  useLayoutEffect(() => {
+    function updateHeaderHeight() {
+      const h = headerRef.current?.offsetHeight ?? 57
+      document.documentElement.style.setProperty('--header-h', `${h}px`)
+    }
+    updateHeaderHeight()
+    window.addEventListener('resize', updateHeaderHeight)
+    return () => window.removeEventListener('resize', updateHeaderHeight)
+  }, [sessionRecoveryState])
+
   function handleReLogin() {
     clearSessionExpired()
     navigate('/login', { replace: true })
@@ -230,8 +244,16 @@ export function AppLayout() {
     <ProjectRuntimeProvider>
       <div className="min-h-screen bg-surface dark:bg-warm-900">
 
+        {/* ── Skip-link — primer elemento del DOM, visible solo en foco (WCAG 2.4.1) ── */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-navy focus:text-white focus:rounded-md"
+        >
+          Saltar al contenido principal
+        </a>
+
         {/* ── Header sticky — siempre visible ── */}
-        <header className={[
+        <header ref={headerRef} className={[
           'sticky top-0 z-20 flex items-center justify-between px-6 py-3 gap-4',
           'backdrop-blur-sm border-b',
           dark
@@ -262,7 +284,7 @@ export function AppLayout() {
         <AppSidebar />
 
         {/* ── Contenido de la ruta activa ── */}
-        <main>
+        <main id="main-content" tabIndex={-1}>
           <ErrorBoundary>
             <Outlet context={{ dark } satisfies AppLayoutContext} />
           </ErrorBoundary>

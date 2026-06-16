@@ -86,8 +86,9 @@ export function AppSidebar() {
 
       {/* ── Panel lateral ── */}
       <aside
+        aria-label="Navegación principal"
         className={[
-          'fixed top-[57px] left-0 z-30 h-[calc(100vh-57px)]',
+          'fixed top-[var(--header-h)] left-0 z-30 h-[calc(100vh-var(--header-h))]',
           'w-64 bg-white dark:bg-warm-900 border-r border-black/8 dark:border-warm-600/20 shadow-xl',
           'flex flex-col overflow-hidden',
           'transition-transform duration-300 ease-in-out',
@@ -105,7 +106,7 @@ export function AppSidebar() {
         </div>
 
         {/* Navegación */}
-        <nav className="flex-1 overflow-y-auto py-2">
+        <nav aria-label="Herramientas T1 a T12" className="flex-1 overflow-y-auto py-2">
 
           {/* ── Perfil de Empresa — acceso global ── */}
           <button

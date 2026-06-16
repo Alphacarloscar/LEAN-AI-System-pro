@@ -329,6 +329,145 @@ una referencia a un módulo sin contenido.
 
 ---
 
+### DEBT-022 — A11y crítico: skip-link, ARIA labels y semántica de navegación
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-16 (Auditoría UI/UX + ADR-020)
+**Área:** `src/shared/layouts/AppLayout.tsx`, `src/shared/components/AppSidebar.tsx`
+**Estado:** Resuelto (2026-06-16) — PR `feat/a11y-applayout-skip-link-aria`
+
+**Descripción:**
+Cinco hallazgos críticos de A11y se concentran en el chasis de la app:
+1. `<main>` existe (línea 265 de `AppLayout.tsx`) pero sin `id="main-content"` ni `tabIndex={-1}` — los lectores de pantalla no pueden saltar al contenido.
+2. No hay link `Saltar al contenido principal` como primer elemento del DOM.
+3. `<aside>` en `AppSidebar.tsx:100` sin `aria-label="Navegación principal"`.
+4. `<nav>` en `AppSidebar.tsx:120` sin `aria-label="Herramientas T1–T12"`.
+5. `AlphaLogo` sin garantía de `alt` descriptivo (verificar en `src/shared/components/AlphaLogo.tsx`).
+
+**Impacto:** Bloqueante para WCAG 2.1 AA. Usuarios de NVDA/VoiceOver navegan ciegamente, deben recorrer todo el header y sidebar en cada cambio de ruta.
+
+**Plan de acción:** Implementado como **PR #1 del backlog de ADR-020** (Fase 2, pantalla piloto AppLayout). Una sola PR cierra los 5 críticos. Estimación: XS.
+
+**Requiere ADR:** No (ya cubierto por ADR-020).
+**Relacionado:** ADR-020, FDR-002 (pendiente).
+
+---
+
+### DEBT-023 — Doble sticky con altura `top-[57px]` hardcoded en ToolHeader
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-16 (Auditoría UI/UX)
+**Área:** `src/shared/design-system/components/ToolHeader.tsx:68`, `src/shared/layouts/AppLayout.tsx:234-259`
+**Estado:** Resuelto-parcial (2026-06-16) — PR `feat/a11y-applayout-skip-link-aria`
+
+**Descripción:**
+`ToolHeader` usa `sticky top-[57px] z-10` pero `AppLayout` no fija la altura del header — depende de `py-3` + contenido. Si el header crece (banner de mantenimiento, `SessionRecoveryBanner`, breadcrumb que ocupe más alto), el `ToolHeader` se solapa con el header global. Frágil.
+
+**Impacto:** Solape visual ya posible hoy si el `EngagementSelector` muestra un nombre de proyecto largo en mobile. Cualquier banner futuro lo rompe.
+
+**Plan de acción:**
+1. ✅ Medir la altura del header con `useLayoutEffect` y exponerla como CSS variable `--header-h` en `document.documentElement` (`AppLayout.tsx`).
+2. ✅ En `ToolHeader.tsx`: cambiado `top-[57px]` por `top-[var(--header-h)]`.
+3. ⏳ Test E2E en Playwright: verificar que `ToolHeader` no se solapa con `SessionRecoveryBanner` activo (pendiente PR de E2E).
+
+**Pendiente:** El test E2E del punto 3 queda para la PR de cobertura E2E de A11y.
+**Requiere ADR:** No (cubierto por ADR-020 Fase 2).
+**Relacionado:** ADR-020.
+
+---
+
+### DEBT-024 — Formularios sin react-hook-form + zod en 11/12 vistas
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-16 (Auditoría UI/UX + ADR-020)
+**Área:** `src/views/T1View.tsx`...`T12View.tsx`, `src/views/LoginView.tsx`
+**Estado:** Pendiente
+
+**Descripción:**
+`react-hook-form ^7.54.0` y `zod ^3.23.8` están en `package.json` y `OVERVIEW.md` los declara como estándar de formularios, pero solo `src/lib/schemas/t4.schemas.ts` los usa. Las otras 11 herramientas + `LoginView` validan con `useState` por campo, ratios `onChange`/`onBlur`/`onSubmit` inconsistentes, mensajes de error hardcodeados, sin `dirty state` tracking, sin protección contra doble envío garantizada.
+
+**Impacto:**
+- UX inconsistente entre vistas (validación cuándo, mensajes cómo).
+- LoginView con primera experiencia de usuario sin validación de email en tiempo real ni toggle de visibilidad de contraseña.
+- Pérdida silenciosa de datos al cambiar engagement con formulario sucio.
+
+**Plan de acción:**
+1. Definir un schema Zod por vista en `src/lib/schemas/t{N}.schemas.ts` (siguiendo el patrón de `t4.schemas.ts`).
+2. Migrar a `useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) })`.
+3. Habilitar `formState.isDirty` para `useUnsavedChanges` (ver DEBT-026).
+4. Bloquear botón submit con `isSubmitting` para evitar doble envío.
+5. PRs separadas por vista para mantener `< 400 líneas/PR` (ADR-013).
+
+**Requiere ADR:** Sí (ADR-022 — Estándar de formularios con RHF+Zod, propuesto en ADR-020 Fase 3 #5).
+**Relacionado:** ADR-020, ADR-015 (Zod JSONB validation).
+
+---
+
+### DEBT-025 — Gráficos Recharts sin alternativa textual accesible
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (Auditoría UI/UX)
+**Área:** `src/shared/components/charts/ChartWrapper.tsx`, `LeanBarChart.tsx`, `LeanRadarChart.tsx`
+**Estado:** Pendiente
+
+**Descripción:**
+`ChartWrapper` envuelve todos los gráficos pero no añade `aria-label`, `role="img"` ni tabla alternativa. El SVG de Recharts es completamente invisible para lectores de pantalla. T1 (radar de madurez), T7 (heatmap de adopción), T9 (Gantt), T10 (dashboard) todos afectados.
+
+**Impacto:** Usuarios con lectores de pantalla no pueden leer ningún KPI ni tendencia.
+
+**Plan de acción:**
+1. Añadir props `ariaLabel: string` y `dataTable: ReactNode` a `ChartWrapperProps`.
+2. Envolver el `ResponsiveContainer` en `<div role="img" aria-label={ariaLabel}>`.
+3. Añadir `<details><summary>Ver datos como tabla</summary>{dataTable}</details>` debajo del gráfico para fallback accesible.
+4. En cada vista que use el wrapper, pasar `ariaLabel` y construir la `dataTable` (puede ser `<Table>` del DS).
+
+**Requiere ADR:** No (cubierto por ADR-020 Fase 3 #3).
+**Relacionado:** ADR-020, ADR-021 (pendiente).
+
+---
+
+### DEBT-026 — Sidebar sin colapso responsive en viewports `< lg`
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (Auditoría UI/UX)
+**Área:** `src/shared/components/AppSidebar.tsx:103`
+**Estado:** Pendiente
+
+**Descripción:**
+`AppSidebar` usa `w-64` (256 px) fijo. En viewports 768–1024 px (iPad portrait, portátil 13"), el sidebar abierto ocupa 25–33% del ancho de contenido sin que se active un breakpoint de colapso automático.
+
+**Impacto:** Tablas T1–T12 muy comprimidas en tablet, scroll horizontal masivo.
+
+**Plan de acción:**
+1. Añadir prop `defaultOpen: boolean` que sea `false` en `< lg` (1024 px) y `true` en `>= lg`.
+2. Hook `useMediaQuery('(min-width: 1024px)')` para reaccionar al resize.
+3. En `>= lg`, el sidebar se renderiza inline (no fixed), reservando su ancho en el grid.
+4. En `< lg`, mantiene comportamiento actual (fixed + backdrop).
+
+**Requiere ADR:** No (cubierto por ADR-020 Fase 3 #7).
+**Relacionado:** ADR-020.
+
+---
+
+### DEBT-027 — Toast sin cola limitada y LLM sin feedback progresivo
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (Auditoría UI/UX)
+**Área:** `src/shared/design-system/components/Toast.tsx`, vistas T* con `useEdgeFunctionInvoke`
+**Estado:** Pendiente
+
+**Descripción:**
+Dos defectos relacionados de feedback al usuario:
+1. `Toast` no tiene `ToastProvider` con límite de slots ni descarte ordenado. 3 toasts simultáneos se apilan sin tope, pueden salirse de viewport en mobile. Duración fija 4000 ms insuficiente para `danger` con instrucciones.
+2. Llamadas a Edge Functions LLM (ADR-014, `useEdgeFunctionInvoke`) tardan 5–30 s. `ToolLoadingScreen` bloquea toda la UI durante la espera. No hay `StreamingIndicator` ni barra de progreso indeterminada por sección.
+
+**Impacto:** Usuario percibe la app como "colgada" durante invocaciones LLM. Confusión cuando se acumulan toasts simultáneos.
+
+**Plan de acción:**
+1. `ToastProvider` con cola máxima de 3, descarta el más antiguo al pasar el límite.
+2. Variantes con duración custom: `danger` → 8000 ms, `success` → 3000 ms, `info` → 4000 ms; `persistent: true` opcional.
+3. Componente `StreamingIndicator` reutilizable con shimmer + label "Generando con IA…" insertable en cualquier sección.
+4. Refactor de `useEdgeFunctionInvoke` para exponer fase (`idle`/`pending`/`success`/`error`) y consumirla con `StreamingIndicator` inline en lugar de bloquear con `ToolLoadingScreen`.
+
+**Requiere ADR:** No (cubierto por ADR-020 Fase 3 #6 y #8). ADR-014 se extiende con la fase observable.
+**Relacionado:** ADR-014, ADR-020.
+
+---
+
 ## Cómo añadir un item
 
 Cuando detectes deuda técnica en un PR:

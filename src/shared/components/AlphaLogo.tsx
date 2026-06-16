@@ -25,8 +25,8 @@ export function AlphaLogo({ size = 'sm', dark = false }: AlphaLogoProps) {
     return (
       <img
         src={src}
-        alt="Alpha Consulting Solutions"
-        title="Alpha Consulting Solutions"
+        alt="GOBY — Alpha Consulting"
+        title="GOBY — Alpha Consulting"
         style={{
           width:      48,
           height:     'auto',
@@ -42,7 +42,7 @@ export function AlphaLogo({ size = 'sm', dark = false }: AlphaLogoProps) {
     <div className="flex flex-col items-center select-none" style={{ gap: 16 }}>
       <img
         src={src}
-        alt="Alpha Consulting Solutions"
+        alt="GOBY — Alpha Consulting"
         style={{
           width:   160,
           height:  'auto',

@@ -65,7 +65,7 @@ export function ToolHeader({
         'bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm',
         'border-b border-border dark:border-white/6',
         'px-8 py-3',
-        sticky ? 'sticky top-[57px] z-10' : '',
+        sticky ? 'sticky top-[var(--header-h)] z-10' : '',
         className,
       ].filter(Boolean).join(' ')}
     >
