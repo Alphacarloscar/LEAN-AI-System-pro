@@ -27,14 +27,14 @@
 //              migration 20260615_006_get_audit_logs_secure.sql
 // ============================================================
 
-import { supabase }      from '@/lib/supabase'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import { reportError }   from '@/lib/reportError'
+import { supabase }    from '@/lib/supabase'
+import { reportError } from '@/lib/reportError'
 import type { AuditLogRow, AuditAccessLogRow } from '@/lib/audit'
 
 // Cast temporal hasta que database.types.ts incluya las nuevas tablas.
 // Ver DEBT-018 para el plan de eliminación de este cast.
-const db = supabase as unknown as SupabaseClient
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as unknown as any
 
 // ── Filtros públicos ──────────────────────────────────────────────────────
 
