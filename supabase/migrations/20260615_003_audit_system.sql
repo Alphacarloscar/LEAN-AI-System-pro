@@ -331,15 +331,11 @@ AS $$
 DECLARE
   v_caller_id    uuid := auth.uid();
   v_caller_email text := auth.jwt() ->> 'email';
-  v_caller_role  text;
+  v_caller_role  text := (SELECT role FROM public.profiles WHERE id = auth.uid());
 BEGIN
   IF v_caller_id IS NULL THEN
     RAISE EXCEPTION 'log_audit_access: caller must be authenticated (got null uid)';
   END IF;
-
-  SELECT p.role INTO v_caller_role
-  FROM   public.profiles p
-  WHERE  p.id = v_caller_id;
 
   INSERT INTO public.audit_access_logs (
     user_id, user_email, user_role, query_filters, rows_returned
@@ -515,16 +511,12 @@ AS $$
 DECLARE
   v_caller_id    uuid    := auth.uid();
   v_caller_email text    := auth.jwt() ->> 'email';
-  v_caller_role  text;
+  v_caller_role  text    := (SELECT role FROM public.profiles WHERE id = auth.uid());
   v_limit        integer;
 BEGIN
   IF v_caller_id IS NULL THEN
     RAISE EXCEPTION 'get_audit_logs: caller must be authenticated (got null uid)';
   END IF;
-
-  SELECT p.role INTO v_caller_role
-  FROM   public.profiles p
-  WHERE  p.id = v_caller_id;
 
   IF v_caller_role IS DISTINCT FROM 'superadmin' THEN
     RAISE EXCEPTION
