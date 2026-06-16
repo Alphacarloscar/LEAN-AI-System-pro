@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# .githooks/pre-commit
+# Auto-updates CHANGELOG.md [Unreleased] when src/ files are staged.
+# Satisfies CI check A2 (validate-docs.yml) without manual edits.
+
+set -e
+
+# ── 1. Check if any src/ files are staged ────────────────────────────────────
+staged_src=$(git diff --cached --name-only | grep "^src/" || true)
+
+if [ -z "$staged_src" ]; then
+  exit 0  # Nothing in src/ — no CHANGELOG update needed
+fi
+
+# ── 2. If CHANGELOG.md is already staged, let the commit proceed ──────────────
+if git diff --cached --name-only | grep -q "^CHANGELOG.md$"; then
+  exit 0
+fi
+
+# ── 3. Build the entry: list of changed src/ files ───────────────────────────
+today=$(date +%Y-%m-%d)
+branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+file_list=$(echo "$staged_src" | sed 's/^/  - /')
+
+entry="
+### Changed ($(date +%Y-%m-%d) — $branch)
+$file_list
+"
+
+# ── 4. Inject entry after the first [Unreleased] line ────────────────────────
+# Works on both LF and CRLF files (sed strips \r, we rewrite cleanly)
+tmp=$(mktemp)
+awk -v entry="$entry" '
+  /^\[Unreleased\]|^## \[Unreleased\]/ && !injected {
+    print
+    print entry
+    injected=1
+    next
+  }
+  { print }
+' CHANGELOG.md > "$tmp"
+
+# Preserve original line endings if CRLF
+if file CHANGELOG.md | grep -q CRLF 2>/dev/null || \
+   head -1 CHANGELOG.md | cat -A | grep -q '\^M'; then
+  sed -i 's/$/\r/' "$tmp" 2>/dev/null || true
+fi
+
+mv "$tmp" CHANGELOG.md
+
+# ── 5. Stage CHANGELOG.md so it's included in the commit ─────────────────────
+git add CHANGELOG.md
+
+echo "✅ CHANGELOG.md updated automatically with staged src/ changes."

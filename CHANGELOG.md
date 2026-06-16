@@ -7,6 +7,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed (2026-06-16 — feat/atomic-screen-independence)
+- [Screens] T1–T12 Views refactorizados para independencia atómica: cada módulo gestiona su propio estado de carga y persiste datos sin recargar el árbol global
+- [App] `App.tsx` y `AppSidebar.tsx` enrutados para activar cada pantalla de forma aislada
+- [E2E] `t2`, `t4`, `t5`, `t8` specs actualizados con nuevos selectores y flujos por pantalla
+
 ### Added (v1.0 — Sistema de Auditoría)
 - [Audit] `src/lib/audit/` — librería de auditoría completa (ADR-017)
   - `makeAuditable` — Proxy genérico que intercepta métodos async de cualquier servicio; registra args, response, duración, status y correlation_id sin bloquear al caller
