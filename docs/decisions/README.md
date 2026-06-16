@@ -39,6 +39,8 @@ AI-Ready Repository System v2.1.0 | Última actualización: 2026-06-01
 | [ADR-017](technical/ADR-017-audit-logging-proxy.md) | Sistema de Audit Logging transversal mediante patrón Proxy | ACCEPTED | 2026-06-15 | Infraestructura |
 | [ADR-018](technical/ADR-018-audit-log-retention-pg-cron.md) | Política de retención de audit_logs: 90 días activos + 5 años archivo via pg_cron | ACCEPTED | 2026-06-15 | Infraestructura |
 | [ADR-019](technical/ADR-019-audit-logs-read-security-definer.md) | Acceso a audit_logs exclusivamente vía función SECURITY DEFINER | ACCEPTED | 2026-06-15 | Seguridad |
+| [ADR-020](technical/ADR-020-ux-ui-strategy-master-plan.md) | Plan Maestro de Estrategia UX/UI y Sistema de Diseño | PROPOSED | 2026-06-16 | UX/UI · Stack |
+| [ADR-021](technical/ADR-021-design-system-charter.md) | Design System Charter — escala space, tokens CSS vars, densidad configurable | ACCEPTED | 2026-06-16 | UX/UI · Stack |
 
 ---
 
@@ -59,5 +61,5 @@ Las decisiones estratégicas de producto/mercado se documentan en:
 
 ## Próximo número disponible
 
-- **ADR:** ADR-020
-- **FDR:** FDR-001
+- **ADR:** ADR-022 (reservado por ADR-020 Fase 3 #5 — Estándar de formularios RHF+Zod)
+- **FDR:** FDR-002 (reservado por ADR-020 Fase 2 — pantalla piloto AppLayout)

@@ -181,3 +181,29 @@ html.dark .dark\:bg-gray-900\/80 { background-color: rgba(34, 32, 28, 0.80); }
 html.dark .dark\:border-white\/14 { border-color: rgba(240, 237, 232, 0.14); }
 html.dark .dark\:hover\:border-white\/14:hover { border-color: rgba(240, 237, 232, 0.14); }
 html.dark .dark\:border-white\/20 { border-color: rgba(240, 237, 232, 0.20); }
+
+/* ============================================================
+   ADR-021 — Design System Charter: tokens de color como CSS vars
+   Equivalencia 1:1 con tailwind.config.ts.
+   Usar token() helper (src/shared/design-system/tokens.ts) para
+   leer estos valores desde JS/TSX (componentes no-chart).
+   ============================================================ */
+
+:root {
+  --color-gold:       #C8860A;
+  --color-navy:       #2A2822;
+  --color-warm-950:   #16140F;
+  --color-warm-900:   #22201C;
+  --color-warm-100:   #C4C0B8;
+  --color-surface:    #F7F4EE;
+  --color-border:     #D4D0C8;
+  --color-success:    #86C7A8;
+  --color-danger:     #D89090;
+  --color-warning:    #E8C281;
+  --color-info:       #9BB5D9;
+}
+
+html.dark {
+  --color-surface:    #22201C;
+  --color-border:     #3E3B35;
+}

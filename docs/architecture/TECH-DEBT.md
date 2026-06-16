@@ -329,6 +329,29 @@ una referencia a un módulo sin contenido.
 
 ---
 
+---
+
+### DEBT-028 — Hex inline en componentes shared: pendiente migrar a token()
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (audit grep ADR-021)
+**Área:** `AppSidebar.tsx`, `AlphaLogo.tsx`, `EngagementSelector.tsx`, `ErrorBoundary.tsx`, `PersistenceBanner.tsx`, `SegmentedControl.tsx`
+**Estado:** Pendiente
+
+**Descripción:**
+El audit de hex inline previo a la implementación de ADR-021 detectó literales `#RRGGBB` hardcodeados en 6 componentes del área `src/shared/`. Detalle completo en la tabla de ADR-021 sección DEBT-028. El charter (ADR-021) prohíbe nuevos hex inline, pero la migración de los existentes se difiere para evitar scope creep en esta PR.
+
+**Impacto:** Si la paleta de colores cambia (marca blanca multi-tenant), estos componentes no heredan el cambio automáticamente.
+
+**Plan de acción:**
+1. Por cada componente, sustituir hex inline por `token('nombre')` o clase Tailwind del token.
+2. `SegmentedControl.tsx` tiene hex `#1C1A16`/`#FFFFFF` en una función de contraste algorítmica — mantener como excepción documentada o migrar a `token('lean-black')`.
+3. PR dedicada: `refactor: migrar hex inline a tokens ADR-021 — shared components`.
+
+**Requiere ADR:** No (ADR-021 ya establece la regla).
+**Relacionado:** ADR-021, DEBT-022.
+
+---
+
 ## Cómo añadir un item
 
 Cuando detectes deuda técnica en un PR:

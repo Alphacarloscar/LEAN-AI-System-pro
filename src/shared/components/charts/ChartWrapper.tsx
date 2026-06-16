@@ -18,7 +18,11 @@ import { ResponsiveContainer } from 'recharts'
 // ─────────────────────────────────────────────────────────────
 
 // ── Paleta de colores — valores hex que espeja tailwind.config.ts ──
-// Recharts no puede leer CSS variables, necesita hex directos.
+// ADR-021: Recharts resuelve colores en construcción del SVG y no soporta
+// CSS vars en props de presentación (stroke, fill). Por tanto este objeto
+// hex estático es la fuente de verdad para componentes Recharts.
+// Para componentes no-chart usar token() de design-system/tokens.ts.
+// Al actualizar tailwind.config.ts actualizar también este objeto.
 export const CHART_PALETTE = {
   navy:         '#2A2822',   // warm charcoal (era #1B2A4E)
   navyDark:     '#16140F',   // warm-950 (era #0A1530)

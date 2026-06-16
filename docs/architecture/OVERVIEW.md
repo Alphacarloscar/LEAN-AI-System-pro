@@ -1,6 +1,6 @@
 ﻿# Architecture Overview — GOBY
 
-Last updated: 2026-06-01
+Last updated: 2026-06-16
 AI-Ready Repository System v2.1.0
 
 > Este documento es una síntesis de arquitectura para orientación rápida.
@@ -23,7 +23,7 @@ AI-Ready Repository System v2.1.0
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | Frontend | React 18 + Vite 6 + TypeScript 5.7 | SPA — UI de las 13 herramientas |
-| Styles | Tailwind CSS 3 + Lucide React | Design system (tokens en tailwind.config.ts) |
+| Styles | Tailwind CSS 3 + Lucide React | Design system con tokens en CSS vars (ADR-020, ADR-021) |
 | State | Zustand 5 | Estado global por dominio (ADR-007) |
 | Charts | Recharts | Gráficos T1 (araña), T2 (burbujas), T7 (heatmap), T9 (Gantt), T10 |
 | Forms | React-Hook-Form + Zod | Formularios con validación tipada |
