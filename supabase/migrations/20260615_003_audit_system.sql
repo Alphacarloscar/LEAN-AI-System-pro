@@ -326,20 +326,16 @@ CREATE OR REPLACE FUNCTION public.log_audit_access(
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, auth, extensions
+SET search_path = public, extensions
 AS $$
 DECLARE
   v_caller_id    uuid := auth.uid();
-  v_caller_email text;
+  v_caller_email text := auth.jwt() ->> 'email';
   v_caller_role  text;
 BEGIN
   IF v_caller_id IS NULL THEN
     RAISE EXCEPTION 'log_audit_access: caller must be authenticated (got null uid)';
   END IF;
-
-  SELECT u.email INTO v_caller_email
-  FROM   auth.users u
-  WHERE  u.id = v_caller_id;
 
   SELECT p.role INTO v_caller_role
   FROM   public.profiles p
@@ -385,7 +381,7 @@ CREATE OR REPLACE FUNCTION public.purge_old_audit_logs(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, vault, extensions
+SET search_path = public, extensions
 AS $$
 DECLARE
   v_cutoff   timestamptz := now() - (p_cutoff_days || ' days')::interval;
@@ -514,21 +510,17 @@ CREATE OR REPLACE FUNCTION public.get_audit_logs(
 RETURNS SETOF public.audit_logs
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, auth, extensions
+SET search_path = public, extensions
 AS $$
 DECLARE
   v_caller_id    uuid    := auth.uid();
-  v_caller_email text;
+  v_caller_email text    := auth.jwt() ->> 'email';
   v_caller_role  text;
   v_limit        integer;
 BEGIN
   IF v_caller_id IS NULL THEN
     RAISE EXCEPTION 'get_audit_logs: caller must be authenticated (got null uid)';
   END IF;
-
-  SELECT u.email INTO v_caller_email
-  FROM   auth.users u
-  WHERE  u.id = v_caller_id;
 
   SELECT p.role INTO v_caller_role
   FROM   public.profiles p
