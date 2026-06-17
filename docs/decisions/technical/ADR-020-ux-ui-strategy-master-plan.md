@@ -62,6 +62,7 @@ Implementar un plan de mejora UX/UI en 4 fases:
 | 2026-06-16 | Prompt 6: `ToastProvider` con cola FIFO limitada (máx. 3), duraciones por variante, `persistent` | `refactor/ux-ui-adr020-consolidation` | DEBT-027 parte 1 cerrado. |
 | 2026-06-16 | Prompt 7: Sidebar responsive `>= lg` inline + `Table` con `columnPriority`/`mobileView` | `refactor/ux-ui-adr020-consolidation` | DEBT-026 cerrado. DEBT-026-bis creado. |
 | 2026-06-16 | Prompt 8: `StreamingIndicator` inline para invocaciones LLM + `useEdgeFunctionInvoke` state | `refactor/ux-ui-adr020-consolidation` | DEBT-027 parte 2 cerrado. ADR-014 Appendix A añadido. |
+| 2026-06-16 | Prompt 9: T4 separación visual estado vs tabs — `SegmentedControl` + `Tabs variant="underline"` (FDR-003) | `refactor/ux-ui-adr020-consolidation` | FDR-003 creado y aceptado. |
 
 ---
 
@@ -79,6 +80,6 @@ Origen del backlog: `docs/sessions/2026-06-16_ux-ui-prompts-ia-code.md`.
 | 6 — ToastProvider con cola limitada | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
 | 7 — Sidebar responsive + tablas mobile (DEBT-026) | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
 | 8 — StreamingIndicator para LLM | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
-| 9 — FDR-003 T4 estados vs tabs | `refactor/ux-ui-adr020-consolidation` | ❌ No iniciado | Re-ejecutar Prompt 9 |
+| 9 — FDR-003 T4 estados vs tabs | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
 
-**Resumen:** 8 de 9 prompts ejecutados y commiteados. 1 pendiente.
+**Resumen:** 9 de 9 prompts ejecutados y commiteados. ✅ Sesión completa.

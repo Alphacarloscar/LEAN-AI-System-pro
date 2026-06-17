@@ -11,7 +11,7 @@ import {
 import { priorityScoreColor } from './T4Badges.constants'
 import type { UseCase, UseCaseStatus, UseCaseScores, AIActClassification } from '../types'
 import type { Stakeholder } from '@/modules/T2_StakeholderMatrix/types'
-import { Button, Badge, Card, Tabs } from '@shared/design-system/components'
+import { Button, Badge, Card, Tabs, SegmentedControl } from '@shared/design-system/components'
 import { StatusBadge, CategoryBadge } from './T4Badges'
 import { EconomicsTab }              from './EconomicsTab'
 import { AIActClassificationModal } from './AIActClassificationModal'
@@ -114,29 +114,19 @@ export function UseCaseDetailPanel({
               )
             })()}
           </div>
-          <div className="flex items-center gap-2 mt-3 flex-wrap">
-            <span className="text-[10px] font-mono uppercase text-text-subtle shrink-0">Estado:</span>
-            <div className="flex flex-wrap gap-1.5">
-              {STATUS_ORDER.map((st) => {
-                const cfg      = STATUS_CONFIG[st]
-                const isActive = useCase.status === st
-                return (
-                  <button
-                    key={st}
-                    onClick={() => handleStatusChange(st)}
-                    disabled={isActive}
-                    className={[
-                      'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-100',
-                      isActive
-                        ? `${cfg.badgeBg} ${cfg.badgeText} border-transparent cursor-default ring-2 ring-offset-1 ring-current/20`
-                        : 'bg-white dark:bg-warm-800/60 border-border dark:border-white/10 text-text-muted hover:border-gray-300 dark:hover:border-white/20 hover:text-lean-black dark:hover:text-gray-200',
-                    ].join(' ')}
-                  >
-                    {cfg.label}
-                  </button>
-                )
-              })}
-            </div>
+          <div className="flex items-center gap-3 mt-3 flex-wrap">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-text-subtle shrink-0">Estado:</span>
+            <SegmentedControl
+              aria-label="Estado del caso de uso"
+              size="sm"
+              value={useCase.status}
+              onChange={(v) => handleStatusChange(v as UseCaseStatus)}
+              options={STATUS_ORDER.map((st) => ({
+                value:       st,
+                label:       STATUS_CONFIG[st].label,
+                activeColor: STATUS_CONFIG[st].hex,
+              }))}
+            />
           </div>
           {useCase.description && (
             <p className="text-xs text-text-muted mt-2 leading-relaxed max-w-2xl">
@@ -167,10 +157,11 @@ export function UseCaseDetailPanel({
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="px-8 py-3 border-b border-border dark:border-white/6">
+      {/* Tabs de navegación */}
+      <div className="px-8 border-b border-border dark:border-white/6">
         <Tabs
           aria-label="Secciones del caso de uso"
+          variant="underline"
           value={tab}
           onChange={(v) => setTab(v as DetailTab)}
           tabs={[
