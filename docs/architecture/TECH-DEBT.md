@@ -398,6 +398,25 @@ T2 (`StakeholderFormPhase`) y T3 (`ProcessFormPhase`) migrados en la PR de activ
 
 ---
 
+### ~~DEBT-027 (parte 1)~~ — useToast sin provider global: cola no limitada ✅ (Resuelto — 2026-06-16)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (ADR-020 / sesión UX/UI)
+**Área:** `src/shared/design-system/components/Toast.tsx`, `Toast.hooks.ts`
+**Estado:** Parte 1 Resuelta (2026-06-16) · Parte 2 Pendiente (StreamingIndicator)
+
+**Fix aplicado:**
+1. `ToastProvider` con `ToastContext` — un único estado global en el árbol.
+2. Cola FIFO con `MAX_TOASTS = 3`: al añadir el 4º, se descarta el más antiguo.
+3. Duraciones por variante: `success 3 s · info 4 s · warning 6 s · error 8 s`.
+4. Prop `persistent?: boolean` en `ShowToastOptions` — si `true`, no hay auto-cierre y el botón X es siempre visible.
+5. Posicionamiento responsive: mobile `top-center`, desktop `bottom-right`.
+6. `useToast()` lanza error claro si se usa fuera del provider.
+7. `Toast.hooks.ts` convertido en re-export para backward compat.
+
+**Relacionado:** ADR-020.
+
+---
+
 ### DEBT-028 — Hex inline en componentes shared: pendiente migrar a token()
 **Severidad:** 🟡 Media
 **Detectado:** 2026-06-16 (audit grep ADR-021)

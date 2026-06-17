@@ -8,7 +8,7 @@
 // ============================================================
 
 import { useEffect }                            from 'react'
-import { Spinner }                              from '@shared/design-system/components'
+import { Spinner, ToastProvider }               from '@shared/design-system/components'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AppLayout }                            from '@/shared/layouts/AppLayout'
 import { LoginView, ResetPasswordView, UpdatePasswordView, useAuthStore } from '@/modules/Auth'
@@ -112,6 +112,7 @@ export default function App() {
   useEffect(() => { initialize() }, [initialize])
 
   return (
+    <ToastProvider>
     <Routes>
       {/* Rutas públicas — sin AppLayout */}
       <Route path="login"            element={<LoginView />} />
@@ -145,5 +146,6 @@ export default function App() {
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </ToastProvider>
   )
 }

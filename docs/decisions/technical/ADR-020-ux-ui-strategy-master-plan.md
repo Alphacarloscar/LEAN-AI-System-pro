@@ -59,6 +59,7 @@ Implementar un plan de mejora UX/UI en 4 fases:
 | 2026-06-16 | Prompt 3: ChartWrapper accesible — `ariaLabel` obligatoria + `dataTable` opcional | `refactor/ux-ui-adr020-consolidation` | DEBT-025 cerrado. `LeanBarChart` + `LeanRadarChart` actualizados. |
 | 2026-06-16 | Prompt 4: `useUnsavedChanges` Zustand + confirm modal en EngagementSelector y AppSidebar | `refactor/ux-ui-adr020-consolidation` | Guard ante navegación/cambio de proyecto con cambios sin guardar. |
 | 2026-06-16 | Prompt 5: T2/T3 migrados a react-hook-form + zodResolver (ADR-022) | `refactor/ux-ui-adr020-consolidation` | `t2.schemas.ts`, `t3.schemas.ts`, `@hookform/resolvers` añadida. DEBT-024 actualizado. |
+| 2026-06-16 | Prompt 6: `ToastProvider` con cola FIFO limitada (máx. 3), duraciones por variante, `persistent` | `refactor/ux-ui-adr020-consolidation` | DEBT-027 parte 1 cerrado. |
 
 ---
 
@@ -73,9 +74,9 @@ Origen del backlog: `docs/sessions/2026-06-16_ux-ui-prompts-ia-code.md`.
 | 3 — ChartWrapper a11y (DEBT-025) | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
 | 4 — useUnsavedChanges + EngagementSelector | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
 | 5 — RHF+Zod en T2/T3/T4 (ADR-022) | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
-| 6 — ToastProvider con cola limitada | `refactor/ux-ui-adr020-consolidation` | ❌ No iniciado | Re-ejecutar Prompt 6 |
+| 6 — ToastProvider con cola limitada | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
 | 7 — Sidebar responsive + tablas mobile (DEBT-026) | `refactor/ux-ui-adr020-consolidation` | ❌ No iniciado | Re-ejecutar Prompt 7 |
 | 8 — StreamingIndicator para LLM | `refactor/ux-ui-adr020-consolidation` | ❌ No iniciado | Re-ejecutar Prompt 8 |
 | 9 — FDR-003 T4 estados vs tabs | `refactor/ux-ui-adr020-consolidation` | ❌ No iniciado | Re-ejecutar Prompt 9 |
 
-**Resumen:** 5 de 9 prompts ejecutados y commiteados. 4 pendientes.
+**Resumen:** 6 de 9 prompts ejecutados y commiteados. 3 pendientes.

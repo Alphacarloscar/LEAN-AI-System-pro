@@ -1,23 +1,44 @@
-import { useEffect, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  type ReactNode,
+} from 'react'
 
 // ─────────────────────────────────────────────────────────────
-// Toast — notificación efímera en esquina de pantalla
+// Toast — notificación efímera con cola FIFO (máx. 3)
 //
 // Uso:
-//   const { toasts, toast } = useToast()
+//   // 1. Envuelve el árbol en App.tsx:
+//   <ToastProvider><App /></ToastProvider>
+//
+//   // 2. En cualquier componente:
+//   const { toast } = useToast()
 //   toast.success('Guardado correctamente')
-//   toast.error('Error al conectar')
-//   <ToastContainer toasts={toasts} onRemove={remove} />
+//   toast.warning('Revisa los datos', { persistent: true })
 // ─────────────────────────────────────────────────────────────
 
 export type ToastVariant = 'success' | 'error' | 'warning' | 'info'
 
 export interface ToastItem {
-  id:       string
-  variant:  ToastVariant
-  message:  string
-  duration?: number
+  id:          string
+  variant:     ToastVariant
+  message:     string
+  duration?:   number
+  persistent?: boolean
 }
+
+// Duraciones por defecto por variante (ms)
+const DEFAULT_DURATIONS: Record<ToastVariant, number> = {
+  success: 3000,
+  info:    4000,
+  warning: 6000,
+  error:   8000,
+}
+
+const MAX_TOASTS = 3
 
 // ── Iconos por variante ──
 const icons: Record<ToastVariant, ReactNode> = {
@@ -50,10 +71,86 @@ const bgClasses: Record<ToastVariant, string> = {
   info:    'border-l-4 border-info    bg-white dark:bg-warm-800',
 }
 
+// ── Opciones de showToast ──
+export interface ShowToastOptions {
+  duration?:   number
+  persistent?: boolean
+}
+
+// ── Contexto ──
+interface ToastContextValue {
+  toasts: ToastItem[]
+  remove: (id: string) => void
+  toast: {
+    success: (msg: string, opts?: ShowToastOptions) => void
+    error:   (msg: string, opts?: ShowToastOptions) => void
+    warning: (msg: string, opts?: ShowToastOptions) => void
+    info:    (msg: string, opts?: ShowToastOptions) => void
+  }
+}
+
+const ToastContext = createContext<ToastContextValue | null>(null)
+
+// ── Provider ──
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [toasts, setToasts] = useState<ToastItem[]>([])
+
+  const remove = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id))
+  }, [])
+
+  const add = useCallback((
+    variant: ToastVariant,
+    message: string,
+    opts: ShowToastOptions = {},
+  ) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    const duration = opts.persistent
+      ? undefined
+      : (opts.duration ?? DEFAULT_DURATIONS[variant])
+
+    setToasts((prev) => {
+      const next = [...prev, { id, variant, message, duration, persistent: opts.persistent }]
+      // Cola FIFO: si supera MAX_TOASTS, descarta el más antiguo
+      return next.length > MAX_TOASTS ? next.slice(next.length - MAX_TOASTS) : next
+    })
+  }, [])
+
+  const toast = {
+    success: (msg: string, opts?: ShowToastOptions) => add('success', msg, opts),
+    error:   (msg: string, opts?: ShowToastOptions) => add('error',   msg, opts),
+    warning: (msg: string, opts?: ShowToastOptions) => add('warning', msg, opts),
+    info:    (msg: string, opts?: ShowToastOptions) => add('info',    msg, opts),
+  }
+
+  return (
+    <ToastContext.Provider value={{ toasts, remove, toast }}>
+      {children}
+      <ToastContainer toasts={toasts} onRemove={remove} />
+    </ToastContext.Provider>
+  )
+}
+
+// ── Hook público ──
+export function useToast(): ToastContextValue {
+  const ctx = useContext(ToastContext)
+  if (!ctx) {
+    throw new Error('useToast must be used inside <ToastProvider>')
+  }
+  return ctx
+}
+
 // ── Componente individual ──
-function ToastItem({ item, onRemove }: { item: ToastItem; onRemove: (id: string) => void }) {
+function ToastItemComponent({
+  item,
+  onRemove,
+}: {
+  item: ToastItem
+  onRemove: (id: string) => void
+}) {
   useEffect(() => {
-    const t = setTimeout(() => onRemove(item.id), item.duration ?? 4000)
+    if (item.persistent || item.duration == null) return
+    const t = setTimeout(() => onRemove(item.id), item.duration)
     return () => clearTimeout(t)
   }, [item, onRemove])
 
@@ -62,13 +159,15 @@ function ToastItem({ item, onRemove }: { item: ToastItem; onRemove: (id: string)
       role="alert"
       aria-live="polite"
       className={[
-        'flex items-start gap-3 p-4 rounded-lg shadow-lg min-w-[280px] max-w-sm',
+        'flex items-start gap-3 p-4 rounded-lg shadow-lg',
+        'w-[calc(100vw-32px)] sm:min-w-[280px] sm:w-auto sm:max-w-sm',
         'animate-fade-in',
         bgClasses[item.variant],
       ].join(' ')}
     >
       <span className="shrink-0 mt-0.5" aria-hidden="true">{icons[item.variant]}</span>
       <p className="flex-1 text-sm text-lean-black dark:text-warm-50">{item.message}</p>
+      {/* X siempre visible en persistent; también presente en auto-close para cierre manual */}
       <button
         onClick={() => onRemove(item.id)}
         aria-label="Cerrar"
@@ -82,7 +181,9 @@ function ToastItem({ item, onRemove }: { item: ToastItem; onRemove: (id: string)
   )
 }
 
-// ── Contenedor de toasts ──
+// ── Contenedor de toasts — responsive ──
+// Mobile (< sm): top-center, full width menos 16px padding
+// Desktop (>= sm): bottom-right
 export function ToastContainer({
   toasts,
   onRemove,
@@ -93,11 +194,18 @@ export function ToastContainer({
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed bottom-4 right-4 z-toast flex flex-col gap-2">
+    <div
+      className={[
+        'fixed z-toast flex flex-col gap-2',
+        // Mobile: top-center
+        'top-4 left-1/2 -translate-x-1/2 items-center',
+        // Desktop: bottom-right (reset mobile transforms)
+        'sm:top-auto sm:bottom-4 sm:left-auto sm:right-4 sm:translate-x-0 sm:items-end',
+      ].join(' ')}
+    >
       {toasts.map((t) => (
-        <ToastItem key={t.id} item={t} onRemove={onRemove} />
+        <ToastItemComponent key={t.id} item={t} onRemove={onRemove} />
       ))}
     </div>
   )
 }
-
