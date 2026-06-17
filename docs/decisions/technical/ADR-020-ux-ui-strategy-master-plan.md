@@ -57,6 +57,7 @@ Implementar un plan de mejora UX/UI en 4 fases:
 | 2026-06-16 | Fase 1: Design System Charter aprobado | ADR-021 / `feat/ds-charter-css-vars` | Tokens, escala space, densidad |
 | 2026-06-16 | Fase 2 piloto: chasis A11y AppLayout — skip-link, ARIA labels, `--header-h` | `feat/a11y-applayout-skip-link-aria` | DEBT-022 cerrado; DEBT-023 parcial (E2E pendiente) |
 | 2026-06-16 | Prompt 3: ChartWrapper accesible — `ariaLabel` obligatoria + `dataTable` opcional | `refactor/ux-ui-adr020-consolidation` | DEBT-025 cerrado. `LeanBarChart` + `LeanRadarChart` actualizados. |
+| 2026-06-16 | Prompt 4: `useUnsavedChanges` Zustand + confirm modal en EngagementSelector y AppSidebar | `refactor/ux-ui-adr020-consolidation` | Guard ante navegación/cambio de proyecto con cambios sin guardar. |
 
 ---
 
@@ -69,11 +70,11 @@ Origen del backlog: `docs/sessions/2026-06-16_ux-ui-prompts-ia-code.md`.
 | 1 — A11y AppLayout chassis | `feat/a11y-applayout-skip-link-aria` | ✅ Commiteado | Merge a `refactor/ux-ui-adr020-consolidation` |
 | 2 — Design System Charter (ADR-021) | `feat/ds-charter-css-vars` | ✅ Commiteado | Ya integrado en consolidación |
 | 3 — ChartWrapper a11y (DEBT-025) | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
-| 4 — useUnsavedChanges + EngagementSelector | `refactor/ux-ui-adr020-consolidation` | ❌ No iniciado | Re-ejecutar Prompt 4 |
+| 4 — useUnsavedChanges + EngagementSelector | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
 | 5 — RHF+Zod en T2/T3/T4 (ADR-022) | `refactor/ux-ui-adr020-consolidation` | ❌ No iniciado | Re-ejecutar Prompt 5 |
 | 6 — ToastProvider con cola limitada | `refactor/ux-ui-adr020-consolidation` | ❌ No iniciado | Re-ejecutar Prompt 6 |
 | 7 — Sidebar responsive + tablas mobile (DEBT-026) | `refactor/ux-ui-adr020-consolidation` | ❌ No iniciado | Re-ejecutar Prompt 7 |
 | 8 — StreamingIndicator para LLM | `refactor/ux-ui-adr020-consolidation` | ❌ No iniciado | Re-ejecutar Prompt 8 |
 | 9 — FDR-003 T4 estados vs tabs | `refactor/ux-ui-adr020-consolidation` | ❌ No iniciado | Re-ejecutar Prompt 9 |
 
-**Resumen:** 3 de 9 prompts ejecutados y commiteados. 6 pendientes.
+**Resumen:** 4 de 9 prompts ejecutados y commiteados. 5 pendientes.

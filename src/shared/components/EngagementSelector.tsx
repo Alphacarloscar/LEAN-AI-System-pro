@@ -14,13 +14,14 @@
 // ============================================================
 
 import { useState, useRef, useEffect }  from 'react'
-import { Spinner }                      from '@shared/design-system/components'
+import { Spinner, Modal, Button }       from '@shared/design-system/components'
 import { useEngagementStore }           from '@/modules/Engagement/store'
 import { useAuthStore }                 from '@/modules/Auth'
 import { listCompanies }                from '@/services/companies.service'
 import { isDemoEnabled }                from '@/lib/config'
 import { reportError }                  from '@/lib/reportError'
 import type { CompanyRow }              from '@/types/database.types'
+import { useUnsavedChanges }            from '@/shared/hooks/useUnsavedChanges'
 
 // ── Iconos ────────────────────────────────────────────────────
 
@@ -70,11 +71,13 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
   // client_viewer no puede crear proyectos
   const canCreateProject     = userRole !== 'client_viewer'
 
-  const [open,        setOpen]        = useState(false)
-  const [creating,    setCreating]    = useState(false)
-  const [newName,     setNewName]     = useState('')
-  const [createBusy,  setCreateBusy]  = useState(false)
-  const [createError, setCreateError] = useState<string | null>(null)
+  const [open,           setOpen]          = useState(false)
+  const [creating,       setCreating]      = useState(false)
+  const [newName,        setNewName]       = useState('')
+  const [createBusy,     setCreateBusy]    = useState(false)
+  const [createError,    setCreateError]   = useState<string | null>(null)
+  const [pendingId,      setPendingId]     = useState<string | null | undefined>(undefined)
+  const { isDirty, clearDirty } = useUnsavedChanges()
 
   // Estado solo para superadmin/consultant
   const [companies,      setCompanies]      = useState<CompanyRow[]>([])
@@ -213,7 +216,10 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
             <>
               <div className="py-1">
                 <button
-                  onClick={() => { selectEngagement(null); setOpen(false) }}
+                  onClick={() => {
+                      if (isDirty) { setPendingId(null); return }
+                      selectEngagement(null); setOpen(false)
+                    }}
                   className={[
                     'w-full text-left px-4 py-2.5 text-xs transition-colors',
                     !activeEngagementId
@@ -254,7 +260,10 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                 return (
                   <button
                     key={eng.id}
-                    onClick={() => { selectEngagement(eng.id); setOpen(false) }}
+                    onClick={() => {
+                        if (isDirty) { setPendingId(eng.id); return }
+                        selectEngagement(eng.id); setOpen(false)
+                      }}
                     className={[
                       'w-full text-left px-4 py-2.5 text-xs transition-colors',
                       isActive
@@ -381,6 +390,30 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
           )}
         </div>
       )}
+
+      <Modal
+        open={pendingId !== undefined}
+        onClose={() => setPendingId(undefined)}
+        title="Cambios sin guardar"
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setPendingId(undefined)}>Cancelar</Button>
+            <Button variant="danger" onClick={() => {
+              clearDirty()
+              selectEngagement(pendingId ?? null)
+              setPendingId(undefined)
+              setOpen(false)
+            }}>
+              Descartar y continuar
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-text-muted">
+          Tienes cambios sin guardar. ¿Deseas descartarlos y cambiar de proyecto?
+        </p>
+      </Modal>
     </div>
   )
 }
