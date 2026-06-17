@@ -61,6 +61,7 @@ Implementar un plan de mejora UX/UI en 4 fases:
 | 2026-06-16 | Prompt 5: T2/T3 migrados a react-hook-form + zodResolver (ADR-022) | `refactor/ux-ui-adr020-consolidation` | `t2.schemas.ts`, `t3.schemas.ts`, `@hookform/resolvers` añadida. DEBT-024 actualizado. |
 | 2026-06-16 | Prompt 6: `ToastProvider` con cola FIFO limitada (máx. 3), duraciones por variante, `persistent` | `refactor/ux-ui-adr020-consolidation` | DEBT-027 parte 1 cerrado. |
 | 2026-06-16 | Prompt 7: Sidebar responsive `>= lg` inline + `Table` con `columnPriority`/`mobileView` | `refactor/ux-ui-adr020-consolidation` | DEBT-026 cerrado. DEBT-026-bis creado. |
+| 2026-06-16 | Prompt 8: `StreamingIndicator` inline para invocaciones LLM + `useEdgeFunctionInvoke` state | `refactor/ux-ui-adr020-consolidation` | DEBT-027 parte 2 cerrado. ADR-014 Appendix A añadido. |
 
 ---
 
@@ -77,7 +78,7 @@ Origen del backlog: `docs/sessions/2026-06-16_ux-ui-prompts-ia-code.md`.
 | 5 — RHF+Zod en T2/T3/T4 (ADR-022) | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
 | 6 — ToastProvider con cola limitada | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
 | 7 — Sidebar responsive + tablas mobile (DEBT-026) | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
-| 8 — StreamingIndicator para LLM | `refactor/ux-ui-adr020-consolidation` | ❌ No iniciado | Re-ejecutar Prompt 8 |
+| 8 — StreamingIndicator para LLM | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
 | 9 — FDR-003 T4 estados vs tabs | `refactor/ux-ui-adr020-consolidation` | ❌ No iniciado | Re-ejecutar Prompt 9 |
 
-**Resumen:** 7 de 9 prompts ejecutados y commiteados. 2 pendientes.
+**Resumen:** 8 de 9 prompts ejecutados y commiteados. 1 pendiente.

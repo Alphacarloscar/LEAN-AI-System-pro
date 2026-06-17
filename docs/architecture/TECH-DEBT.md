@@ -450,6 +450,23 @@ Por cada tabla en T1–T12: añadir `columnPriority`, evaluar `mobileView="cards
 
 ---
 
+### ~~DEBT-027 (parte 2)~~ — StreamingIndicator inline para LLM ✅ (Resuelto — 2026-06-16)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (ADR-020 / sesión UX/UI)
+**Área:** `src/shared/design-system/components/StreamingIndicator.tsx`
+**Estado:** Resuelto (2026-06-16) — `refactor/ux-ui-adr020-consolidation`
+
+**Fix aplicado:**
+1. `StreamingIndicator` creado con props `label?` y `variant?: 'inline' | 'card'`. `role="status"` + `aria-live="polite"`.
+2. `useEdgeFunctionInvoke` extendido con `state: 'idle' | 'pending' | 'success' | 'error'` — no-breaking.
+3. T6 `PolicyTab`: `StreamingIndicator variant="inline"` insertado. El formulario y la navegación permanecen activos durante la espera.
+4. `ToolLoadingScreen` conservado — sigue siendo válido para cargas de vista completa.
+5. ADR-014: Appendix A añadido documentando la fase observable y el patrón `StreamingIndicator`.
+
+**Relacionado:** DEBT-027 parte 1, ADR-014.
+
+---
+
 ### DEBT-028 — Hex inline en componentes shared: pendiente migrar a token()
 **Severidad:** 🟡 Media
 **Detectado:** 2026-06-16 (audit grep ADR-021)

@@ -18,9 +18,12 @@ export interface UseEdgeFunctionInvokeOptions<TContext, TResult> {
   logPrefix?:          string
 }
 
+export type EdgeFunctionState = 'idle' | 'pending' | 'success' | 'error'
+
 export interface UseEdgeFunctionInvokeReturn<TContext> {
   invoke:       (context: TContext, engagementId: string | null) => Promise<void>
   isGenerating: boolean
+  state:        EdgeFunctionState
   error:        string | null
   clearError:   () => void
 }
@@ -39,6 +42,7 @@ export function useEdgeFunctionInvoke<TContext, TResult>(
   } = options
 
   const [isGenerating, setIsGenerating] = useState(false)
+  const [state,        setState]        = useState<EdgeFunctionState>('idle')
   const [error,        setError]        = useState<string | null>(null)
 
   const invoke = useCallback(async (
@@ -47,10 +51,12 @@ export function useEdgeFunctionInvoke<TContext, TResult>(
   ) => {
     if (!engagementId) {
       setError(noEngagementMessage)
+      setState('error')
       return
     }
 
     setIsGenerating(true)
+    setState('pending')
     setError(null)
 
     try {
@@ -80,6 +86,7 @@ export function useEdgeFunctionInvoke<TContext, TResult>(
 
       const validated = validate(result?.data)
       onSuccess(validated, engagementId, context)
+      setState('success')
 
       if (onPersistence) {
         onPersistence(result?.persistence as EdgeFunctionPersistence | undefined)
@@ -87,13 +94,17 @@ export function useEdgeFunctionInvoke<TContext, TResult>(
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error desconocido'
       setError(msg)
+      setState('error')
       reportError(logPrefix, err)
     } finally {
       setIsGenerating(false)
     }
   }, [tool, timeoutMs, noEngagementMessage, validate, onSuccess, onPersistence, logPrefix])
 
-  const clearError = useCallback(() => setError(null), [])
+  const clearError = useCallback(() => {
+    setError(null)
+    setState('idle')
+  }, [])
 
-  return { invoke, isGenerating, error, clearError }
+  return { invoke, isGenerating, state, error, clearError }
 }

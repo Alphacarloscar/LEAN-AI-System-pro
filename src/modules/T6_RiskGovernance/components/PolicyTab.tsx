@@ -12,7 +12,7 @@ import { usePolicyGeneration } from '@/hooks/usePolicyGeneration'
 import type { PolicyGenerationContext } from '@/hooks/usePolicyGeneration'
 import { PolicyDownloadButton } from '../PolicyPDF'
 import { PersistenceBanner } from '@/shared/components/PersistenceBanner'
-import { Badge, Spinner } from '@shared/design-system/components'
+import { Badge, StreamingIndicator } from '@shared/design-system/components'
 
 interface PolicyTabProps {
   companyName:  string
@@ -145,19 +145,20 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
                   : 'border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40',
               ].join(' ')}
             >
-              {isGenerating ? (
-                <>
-                  <Spinner size="sm" label="Generando…" />
-                  Generando…
-                </>
-              ) : (
-                <>✦ {generatedPolicy ? 'Regenerar con IA' : 'Generar política con IA'}</>
-              )}
+              {isGenerating
+                ? 'Generando…'
+                : <>✦ {generatedPolicy ? 'Regenerar con IA' : 'Generar política con IA'}</>
+              }
             </button>
           )}
           <PolicyDownloadButton data={pdfData} />
         </div>
       </div>
+
+      {/* Streaming indicator — visible while LLM call is in flight */}
+      {isGenerating && (
+        <StreamingIndicator label="Generando política con IA…" variant="inline" />
+      )}
 
       {/* Documento */}
       <div
