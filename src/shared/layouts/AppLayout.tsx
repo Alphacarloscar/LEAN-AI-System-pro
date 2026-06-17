@@ -26,6 +26,7 @@ import { AlphaLogo }                              from '@/shared/components/Alph
 import { EngagementSelector }                     from '@/shared/components/EngagementSelector'
 import { useDarkMode }                            from '@/shared/hooks/useDarkMode'
 import { useMediaQuery }                          from '@/shared/hooks/useMediaQuery'
+import { useSidebar }                             from '@/shared/hooks/useSidebar'
 import { useAuthStore }                           from '@/modules/Auth'
 import type { SessionRecoveryState }              from '@/modules/Auth/store'
 import { useEngagementStore }                     from '@/modules/Engagement/store'
@@ -210,6 +211,7 @@ function SessionRecoveryBanner({ state, onReLogin }: {
 export function AppLayout() {
   const { dark, toggle }                        = useDarkMode()
   const isLg                                    = useMediaQuery('(min-width: 1024px)')
+  const { open: sidebarOpen }                   = useSidebar()
   const { user, sessionRecoveryState, clearSessionExpired } = useAuthStore()
   const { loadMyProjects }                      = useEngagementStore()
   const navigate                                = useNavigate()
@@ -264,7 +266,7 @@ export function AppLayout() {
         <AppSidebar />
 
         {/* ── Contenido de la ruta activa ── */}
-        <main className={isLg ? 'ml-64' : undefined}>
+        <main className={isLg && sidebarOpen ? 'ml-64 transition-[margin] duration-300' : isLg ? 'ml-0 transition-[margin] duration-300' : undefined}>
           <ErrorBoundary>
             <Outlet context={{ dark } satisfies AppLayoutContext} />
           </ErrorBoundary>

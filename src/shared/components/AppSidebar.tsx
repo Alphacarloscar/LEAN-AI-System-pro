@@ -19,6 +19,7 @@ import { useState }                   from 'react'
 import { useNavigate, useLocation }   from 'react-router-dom'
 import { useMediaQuery }              from '@/shared/hooks/useMediaQuery'
 import { useUnsavedChanges }          from '@/shared/hooks/useUnsavedChanges'
+import { useSidebar }                 from '@/shared/hooks/useSidebar'
 import { Modal, Button }              from '@shared/design-system/components'
 
 // ── Registro estático del producto ───────────────────────────
@@ -159,6 +160,7 @@ export function AppSidebar() {
   const navigate        = useNavigate()
   const isLg            = useMediaQuery('(min-width: 1024px)')
   const { isDirty, clearDirty } = useUnsavedChanges()
+  const { open: lgOpen, toggle: lgToggle, setOpen: lgSetOpen } = useSidebar()
 
   function goTo(path: string) {
     if (isDirty) {
@@ -167,6 +169,7 @@ export function AppSidebar() {
     }
     navigate(path)
     setOpen(false)
+    if (lgOpen) lgSetOpen(false)
   }
 
   function confirmDiscard() {
@@ -175,12 +178,22 @@ export function AppSidebar() {
     navigate(pendingPath)
     setPendingPath(null)
     setOpen(false)
+    if (lgOpen) lgSetOpen(false)
   }
 
   // ── Modo inline >= lg ────────────────────────────────────────
   if (isLg) {
     return (
       <>
+        {/* Backdrop — cierra el sidebar al pulsar fuera */}
+        {lgOpen && (
+          <div
+            className="fixed inset-0 z-20"
+            onClick={lgToggle}
+            aria-hidden="true"
+          />
+        )}
+
         <aside
           className={[
             'fixed top-0 left-0 z-30 w-64',
@@ -188,10 +201,32 @@ export function AppSidebar() {
             'mt-[var(--header-h,57px)]',
             'bg-white dark:bg-warm-900 border-r border-black/8 dark:border-warm-600/20',
             'flex flex-col overflow-hidden',
+            'transition-transform duration-300 ease-in-out',
+            lgOpen ? 'translate-x-0' : '-translate-x-full',
           ].join(' ')}
         >
           <SidebarPanel onNav={goTo} />
         </aside>
+
+        {/* Botón hamburguesa — solo visible cuando el sidebar está cerrado */}
+        {!lgOpen && (
+          <button
+            onClick={lgToggle}
+            aria-label="Abrir menú"
+            className={[
+              'fixed top-[72px] left-0 z-30',
+              'flex items-center justify-center',
+              'h-10 w-10 rounded-r-xl',
+              'bg-white dark:bg-warm-800 border border-l-0 border-black/10 dark:border-warm-600/30 shadow-sm',
+              'hover:bg-[#F0EDE8] dark:hover:bg-warm-700 transition-colors duration-150',
+            ].join(' ')}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#3E3B35" strokeWidth="1.8" strokeLinecap="round" className="dark:stroke-warm-100">
+              <path d="M2 4h10M2 7h10M2 10h10" />
+            </svg>
+          </button>
+        )}
+
         <UnsavedChangesModal
           open={pendingPath !== null}
           onCancel={() => setPendingPath(null)}
