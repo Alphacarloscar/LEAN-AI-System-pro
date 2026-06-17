@@ -2,12 +2,15 @@
 // ProcessFormPhase — Step 1 of ProcessInterviewModal
 // ============================================================
 
-import { useState, useRef } from 'react'
-import { PHASE_CONFIG } from '../constants'
+import { useEffect }                     from 'react'
+import { useForm, Controller }           from 'react-hook-form'
+import { zodResolver }                   from '@hookform/resolvers/zod'
+import { processFormSchema, type ProcessFormValues } from '@/lib/schemas/t3.schemas'
+import { PHASE_CONFIG }                  from '../constants'
 import type { NewValueStreamForm, ProcessPhase } from '../types'
-import { useDepartmentStore }  from '@/modules/CompanyProfile/useDepartmentStore'
-import { Select }              from '@/shared/design-system/components/Select'
-import type { SelectOption }   from '@/shared/design-system/components/Select'
+import { useDepartmentStore }            from '@/modules/CompanyProfile/useDepartmentStore'
+import { Select }                        from '@/shared/design-system/components/Select'
+import type { SelectOption }             from '@/shared/design-system/components/Select'
 import { Button, FormField, SegmentedControl } from '@shared/design-system/components'
 
 // ── Colores hex de fases para SegmentedControl activeColor ────
@@ -27,25 +30,44 @@ interface ProcessFormPhaseProps {
 }
 
 export function ProcessFormPhase({ onNext }: ProcessFormPhaseProps) {
-  const [form, setForm] = useState<NewValueStreamForm>({
-    name: '', department: '', owner: '', ownerRole: '', description: '', phase: 'validacion',
-  })
-  const nameRef = useRef<HTMLInputElement>(null)
-
   const { departments, isLoading: isLoadingDepts } = useDepartmentStore()
   const deptOptions: SelectOption[] = departments.map((d) => ({ value: d.name, label: d.name }))
   const hasDepts = deptOptions.length > 0
 
-  const canContinue = form.name.trim() && form.department.trim()
+  const {
+    register,
+    handleSubmit,
+    control,
+    setFocus,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<ProcessFormValues>({
+    resolver: zodResolver(processFormSchema),
+    defaultValues: {
+      name: '', department: '', owner: '', ownerRole: '', description: '', phase: 'validacion',
+    },
+  })
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!canContinue) return
-    onNext(form)
+  useEffect(() => {
+    setFocus('name')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const currentPhase = watch('phase')
+
+  function onValid(data: ProcessFormValues) {
+    onNext({
+      name:        data.name,
+      department:  data.department,
+      owner:       data.owner     || undefined,
+      ownerRole:   data.ownerRole || undefined,
+      description: data.description || undefined,
+      phase:       data.phase,
+    })
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit(onValid)} className="flex flex-col gap-5">
       <div>
         <p className="text-xs font-mono uppercase tracking-widest text-text-subtle mb-1">
           Paso 1 de 3
@@ -60,33 +82,39 @@ export function ProcessFormPhase({ onNext }: ProcessFormPhaseProps) {
 
       <FormField
         id="process-name"
-        ref={nameRef}
         label="Nombre del proceso"
         required
         type="text"
-        value={form.name}
-        onChange={(e) => setForm({ ...form, name: e.target.value })}
         placeholder="Ej: Gestión de incidencias TI, Conciliación financiera..."
+        error={errors.name?.message}
+        {...register('name')}
       />
 
-      <Select
-        label="Departamento / Área"
-        options={deptOptions}
-        value={form.department}
-        onChange={(e) => setForm({ ...form, department: e.target.value })}
-        disabled={!hasDepts || isLoadingDepts}
-        placeholder={
-          isLoadingDepts
-            ? 'Cargando departamentos...'
-            : hasDepts
-            ? 'Selecciona un departamento'
-            : 'Configura los departamentos en el Perfil de Empresa primero'
-        }
-        helperText={
-          !hasDepts && !isLoadingDepts
-            ? 'Ve a Perfil de Empresa → Departamentos para configurarlos.'
-            : undefined
-        }
+      <Controller
+        name="department"
+        control={control}
+        render={({ field }) => (
+          <Select
+            label="Departamento / Área"
+            options={deptOptions}
+            value={field.value}
+            onChange={(e) => field.onChange(e.target.value)}
+            disabled={!hasDepts || isLoadingDepts}
+            errorText={errors.department?.message}
+            placeholder={
+              isLoadingDepts
+                ? 'Cargando departamentos...'
+                : hasDepts
+                ? 'Selecciona un departamento'
+                : 'Configura los departamentos en el Perfil de Empresa primero'
+            }
+            helperText={
+              !hasDepts && !isLoadingDepts
+                ? 'Ve a Perfil de Empresa → Departamentos para configurarlos.'
+                : undefined
+            }
+          />
+        )}
       />
 
       <div className="grid grid-cols-2 gap-3">
@@ -94,17 +122,17 @@ export function ProcessFormPhase({ onNext }: ProcessFormPhaseProps) {
           id="process-owner"
           label="Responsable del proceso"
           type="text"
-          value={form.owner ?? ''}
-          onChange={(e) => setForm({ ...form, owner: e.target.value })}
           placeholder="Nombre"
+          error={errors.owner?.message}
+          {...register('owner')}
         />
         <FormField
           id="process-owner-role"
           label="Rol / Cargo"
           type="text"
-          value={form.ownerRole ?? ''}
-          onChange={(e) => setForm({ ...form, ownerRole: e.target.value })}
           placeholder="Ej: COO, Head of..."
+          error={errors.ownerRole?.message}
+          {...register('ownerRole')}
         />
       </div>
 
@@ -113,32 +141,38 @@ export function ProcessFormPhase({ onNext }: ProcessFormPhaseProps) {
         label="Descripción breve"
         multiline
         rows={2}
-        value={form.description ?? ''}
-        onChange={(e) => setForm({ ...form, description: e.target.value })}
         placeholder="¿Qué hace este proceso? ¿Cuál es su objetivo de negocio?"
+        error={errors.description?.message}
+        {...register('description')}
       />
 
       <div className="flex flex-col gap-2">
         <p className="text-label font-medium text-lean-black dark:text-warm-50">
           Fase de madurez de la iniciativa <span className="ml-0.5 text-danger" aria-hidden="true">*</span>
         </p>
-        <SegmentedControl
-          aria-label="Fase de madurez de la iniciativa"
-          value={form.phase}
-          onChange={(v) => setForm({ ...form, phase: v as ProcessPhase })}
-          columns={3}
-          options={PHASE_ORDER.map((p) => ({
-            value:       p,
-            label:       PHASE_CONFIG[p].label,
-            activeColor: PHASE_ACTIVE_COLOR[p],
-          }))}
+        <Controller
+          name="phase"
+          control={control}
+          render={({ field }) => (
+            <SegmentedControl
+              aria-label="Fase de madurez de la iniciativa"
+              value={field.value}
+              onChange={(v) => field.onChange(v as ProcessPhase)}
+              columns={3}
+              options={PHASE_ORDER.map((p) => ({
+                value:       p,
+                label:       PHASE_CONFIG[p].label,
+                activeColor: PHASE_ACTIVE_COLOR[p],
+              }))}
+            />
+          )}
         />
         <p className="text-[11px] text-text-subtle">
-          {form.phase === 'idea'            && 'Identificado, sin validación formal todavía.'}
-          {form.phase === 'validacion'      && 'Análisis de viabilidad en curso.'}
-          {form.phase === 'piloto'          && 'Piloto activo en un área o equipo.'}
-          {form.phase === 'estandarizacion' && 'Escalando a otros equipos de la organización.'}
-          {form.phase === 'escalado'        && 'Operativo y normalizado en toda la organización.'}
+          {currentPhase === 'idea'            && 'Identificado, sin validación formal todavía.'}
+          {currentPhase === 'validacion'      && 'Análisis de viabilidad en curso.'}
+          {currentPhase === 'piloto'          && 'Piloto activo en un área o equipo.'}
+          {currentPhase === 'estandarizacion' && 'Escalando a otros equipos de la organización.'}
+          {currentPhase === 'escalado'        && 'Operativo y normalizado en toda la organización.'}
         </p>
       </div>
 
@@ -147,7 +181,8 @@ export function ProcessFormPhase({ onNext }: ProcessFormPhaseProps) {
         variant="primary"
         size="sm"
         fullWidth
-        disabled={!canContinue}
+        disabled={isSubmitting}
+        loading={isSubmitting}
       >
         Continuar con la entrevista →
       </Button>

@@ -331,6 +331,54 @@ una referencia a un módulo sin contenido.
 
 ---
 
+### DEBT-024 — Migración de formularios a react-hook-form + Zod (ADR-022)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (ADR-020 Fase 3 / ADR-022)
+**Área:** Todos los formularios de T1–T12 + LoginView
+**Estado:** En progreso (2/12 migradas — T2, T3 en `refactor/ux-ui-adr020-consolidation`)
+
+**Descripción:**
+ADR-022 establece `react-hook-form + zodResolver` como estándar para todos los formularios.
+T2 (`StakeholderFormPhase`) y T3 (`ProcessFormPhase`) migrados en la PR de activación del ADR.
+
+**Pendiente (DEBT-024-bis):** T1, T4–T12, LoginView.
+
+**Impacto:** Formularios no migrados carecen de mensajes de error accesibles, `isSubmitting` y `isDirty`.
+
+**Plan de acción:**
+1. Por cada PR que toque un formulario no migrado, aplicar el patrón de ADR-022 en esa misma PR.
+2. PR dedicada opcional para migración masiva del resto: ver DEBT-024-bis.
+
+**Requiere ADR:** No (ADR-022 ya establece la regla).
+**Relacionado:** ADR-022, DEBT-024-bis.
+
+---
+
+### DEBT-024-bis — Lista de formularios pendientes de migrar a RHF+Zod
+**Severidad:** 🟢 Baja
+**Detectado:** 2026-06-16
+**Área:** T1, T4–T12, LoginView
+**Estado:** Pendiente
+
+| Vista / Componente | Formulario | Schema a crear |
+|--------------------|------------|----------------|
+| T1 | Formulario de dimensiones / assessment | `t1.schemas.ts` |
+| T4 | Formularios de puntuación vía stores | `t4.schemas.ts` (parcialmente existente) |
+| T5 | Formulario de proceso / configuración | `t5.schemas.ts` |
+| T6 | Formulario de herramientas | `t6.schemas.ts` |
+| T7 | Formulario de datos | `t7.schemas.ts` |
+| T8 | Formulario de configuración | `t8.schemas.ts` |
+| T9 | Formulario de análisis | `t9.schemas.ts` |
+| T10 | Formulario de roadmap | `t10.schemas.ts` |
+| T11 | Formulario de métricas | `t11.schemas.ts` |
+| T12 | Formulario de entrega | `t12.schemas.ts` |
+| LoginView | Login + Reset Password | `auth.schemas.ts` |
+
+**Requiere ADR:** No (ADR-022 ya establece la regla).
+**Relacionado:** ADR-022, DEBT-024.
+
+---
+
 ### ~~DEBT-025~~ — ChartWrapper sin accesibilidad: sin role ni ariaLabel ✅ (Resuelto — 2026-06-16)
 **Severidad:** 🟡 Media
 **Detectado:** 2026-06-16 (ADR-020 / sesión UX/UI)

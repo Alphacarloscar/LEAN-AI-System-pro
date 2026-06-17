@@ -10,7 +10,9 @@
 //   3. Resultado: arquetipo + resistencia + opción de ajuste manual
 // ============================================================
 
-import { useState, useEffect, useRef }   from 'react'
+import { useState, useEffect }           from 'react'
+import { useForm, Controller }           from 'react-hook-form'
+import { zodResolver }                   from '@hookform/resolvers/zod'
 import {
   INTERVIEW_QUESTIONS,
   ARCHETYPE_CONFIG,
@@ -23,6 +25,7 @@ import type {
   NewStakeholderForm,
   Stakeholder,
 } from '../types'
+import { stakeholderFormSchema, type StakeholderFormValues } from '@/lib/schemas/t2.schemas'
 import { useDepartmentStore }            from '@/modules/CompanyProfile/useDepartmentStore'
 import { Select }                        from '@/shared/design-system/components/Select'
 import type { SelectOption }             from '@/shared/design-system/components/Select'
@@ -72,48 +75,48 @@ function StakeholderFormPhase({
   onNext:         (form: NewStakeholderForm) => void
   initialValues?: NewStakeholderForm
 }) {
-  const [form, setForm] = useState<NewStakeholderForm>(
-    initialValues ?? { name: '', role: '', department: '', unofficialTools: '' }
-  )
-  const nameRef = useRef<HTMLInputElement>(null)
-
-  // Departamentos del store centralizado
   const { departments, isLoading: isLoadingDepts } = useDepartmentStore()
   const deptOptions: SelectOption[] = departments.map((d) => ({ value: d.name, label: d.name }))
   const hasDepts = deptOptions.length > 0
 
-  // Foco en nombre al abrir (si es formulario en blanco)
+  const {
+    register,
+    handleSubmit,
+    control,
+    setFocus,
+    formState: { errors, isSubmitting },
+  } = useForm<StakeholderFormValues>({
+    resolver: zodResolver(stakeholderFormSchema),
+    defaultValues: initialValues ?? { name: '', role: '', department: '', unofficialTools: '' },
+  })
+
   useEffect(() => {
-    if (!initialValues?.name) nameRef.current?.focus()
+    if (!initialValues?.name) setFocus('name')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const canContinue = form.name.trim() && form.role.trim() && form.department.trim()
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (canContinue) onNext(form)
+  function onValid(data: StakeholderFormValues) {
+    onNext(data)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onValid)} className="space-y-4">
       <FormField
         id="stakeholder-name"
-        ref={nameRef}
         label="Nombre"
         type="text"
-        value={form.name}
-        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
         placeholder="Ej. Javier Morales"
+        error={errors.name?.message}
+        {...register('name')}
       />
 
       <FormField
         id="stakeholder-role"
         label="Cargo"
         type="text"
-        value={form.role}
-        onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
         placeholder="Ej. CIO, Head of Digital, CFO…"
+        error={errors.role?.message}
+        {...register('role')}
       />
 
       {/* Shadow AI — campo empático, opcional */}
@@ -122,31 +125,37 @@ function StakeholderFormPhase({
         label="Herramientas externas (opcional)"
         multiline
         rows={2}
-        value={form.unofficialTools ?? ''}
-        onChange={(e) => setForm((f) => ({ ...f, unofficialTools: e.target.value }))}
         placeholder="Herramientas externas (IA o digitales) que empleas por tu cuenta para agilizar cuellos de botella diarios"
         hint="Ej. ChatGPT, Notion AI, Zapier… Su uso no implica incumplimiento; nos ayuda a entender el flujo real de trabajo."
+        {...register('unofficialTools')}
       />
 
       {/* Departamento — Select centralizado desde company_departments */}
-      <Select
-        label="Departamento"
-        options={deptOptions}
-        value={form.department}
-        onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
-        disabled={!hasDepts || isLoadingDepts}
-        placeholder={
-          isLoadingDepts
-            ? 'Cargando departamentos...'
-            : hasDepts
-            ? 'Selecciona un departamento'
-            : 'Configura los departamentos en el Perfil de Empresa primero'
-        }
-        helperText={
-          !hasDepts && !isLoadingDepts
-            ? 'Ve a Perfil de Empresa → Departamentos para configurarlos.'
-            : undefined
-        }
+      <Controller
+        name="department"
+        control={control}
+        render={({ field }) => (
+          <Select
+            label="Departamento"
+            options={deptOptions}
+            value={field.value}
+            onChange={(e) => field.onChange(e.target.value)}
+            disabled={!hasDepts || isLoadingDepts}
+            errorText={errors.department?.message}
+            placeholder={
+              isLoadingDepts
+                ? 'Cargando departamentos...'
+                : hasDepts
+                ? 'Selecciona un departamento'
+                : 'Configura los departamentos en el Perfil de Empresa primero'
+            }
+            helperText={
+              !hasDepts && !isLoadingDepts
+                ? 'Ve a Perfil de Empresa → Departamentos para configurarlos.'
+                : undefined
+            }
+          />
+        )}
       />
 
       <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border/60">
@@ -158,7 +167,8 @@ function StakeholderFormPhase({
         variant="primary"
         size="sm"
         fullWidth
-        disabled={!canContinue}
+        disabled={isSubmitting}
+        loading={isSubmitting}
       >
         Iniciar entrevista →
       </Button>
