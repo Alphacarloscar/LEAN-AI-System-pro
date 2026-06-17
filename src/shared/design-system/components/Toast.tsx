@@ -4,6 +4,7 @@ import {
   useState,
   useCallback,
   useEffect,
+  useMemo,
   type ReactNode,
 } from 'react'
 
@@ -116,12 +117,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  const toast = {
+  const toast = useMemo(() => ({
     success: (msg: string, opts?: ShowToastOptions) => add('success', msg, opts),
     error:   (msg: string, opts?: ShowToastOptions) => add('error',   msg, opts),
     warning: (msg: string, opts?: ShowToastOptions) => add('warning', msg, opts),
     info:    (msg: string, opts?: ShowToastOptions) => add('info',    msg, opts),
-  }
+  }), [add])
 
   return (
     <ToastContext.Provider value={{ toasts, remove, toast }}>

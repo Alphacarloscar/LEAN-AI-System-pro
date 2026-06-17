@@ -13,7 +13,7 @@
 //   4. Kit por departamento (readiness + acciones concretas)
 // ============================================================
 
-import { useState, useMemo, useEffect }  from 'react'
+import { useState, useMemo, useEffect, useRef }  from 'react'
 import { useNavigate }                   from 'react-router-dom'
 import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
 import { useT4Store }                   from '@/modules/T4_UseCasePriorityBoard/store'
@@ -27,7 +27,7 @@ import { useT8Generation }              from '@/hooks/useT8Generation'
 import { PersistenceBanner }           from '@/shared/components/PersistenceBanner'
 import { usePermissions }              from '@/modules/Auth'
 import { generateCommPlan, generateArchetypeMessages, generateMaterials, generateDeptKits } from './T8Generators'
-import { Tabs, Button, Card, ToolHeader, EmptyState } from '@shared/design-system/components'
+import { Tabs, Button, Card, ToolHeader, EmptyState, useToast } from '@shared/design-system/components'
 import { TimelineTab }                 from './components/T8TimelineTab'
 import { ArchetypeMessagesTab }        from './components/T8ArchetypeMessagesTab'
 import { MaterialsTab }                from './components/T8MaterialsTab'
@@ -70,6 +70,13 @@ export function T8View({ onBack }: T8ViewProps) {
 
   // Hook de generación
   const { generate, isGenerating, error } = useT8Generation()
+  const { toast } = useToast()
+  const toastRef = useRef(toast)
+  toastRef.current = toast
+
+  useEffect(() => {
+    if (error) toastRef.current.error(error)
+  }, [error])
 
   // Contexto para la generación LLM
   const t8CommContext = useMemo(
@@ -161,9 +168,6 @@ export function T8View({ onBack }: T8ViewProps) {
                   </Button>
                 )}
               </>
-            )}
-            {error && (
-              <span className="text-xs text-danger-dark">{error}</span>
             )}
             {(persistenceStatus === 'error' || persistenceStatus === 'saving') && (
               <PersistenceBanner
