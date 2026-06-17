@@ -398,6 +398,39 @@ T2 (`StakeholderFormPhase`) y T3 (`ProcessFormPhase`) migrados en la PR de activ
 
 ---
 
+### ~~DEBT-026~~ — Sidebar fixed cubre contenido en pantallas grandes, altura hardcoded ✅ (Resuelto — 2026-06-16)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (ADR-020 Fase 2)
+**Área:** `src/shared/components/AppSidebar.tsx`, `src/shared/layouts/AppLayout.tsx`
+**Estado:** Resuelto (2026-06-16)
+
+**Fix aplicado:**
+1. `useMediaQuery('(min-width: 1024px)')` — hook creado en `src/shared/hooks/useMediaQuery.ts`.
+2. `AppSidebar` en `>= lg`: sidebar `fixed` + `mt-[var(--header-h,57px)]` siempre visible, sin toggle ni backdrop.
+3. `AppSidebar` en `< lg`: comportamiento original — toggle + backdrop + `translate-x-full/0`.
+4. `AppLayout.main`: añadido `ml-64` cuando `isLg`, sin margen en `< lg`.
+5. Altura migrada a `h-[calc(100vh-var(--header-h,57px))]` en ambos modos.
+
+**Relacionado:** ADR-020, DEBT-026-bis.
+
+---
+
+### DEBT-026-bis — Aplicar columnPriority en tablas T1–T12
+**Severidad:** 🟢 Baja
+**Detectado:** 2026-06-16 (PR feat/sidebar-responsive-tables-mobile)
+**Área:** Todos los `<Table>` en `src/modules/T*/` (T1–T12)
+**Estado:** Pendiente
+
+La PR que añadió `columnPriority` y `mobileView` al componente `Table` no migró las tablas T1–T12. En viewports `< 640 px` las tablas de T1–T12 requieren scroll horizontal sin prioridades declaradas.
+
+**Plan de acción:**
+Por cada tabla en T1–T12: añadir `columnPriority`, evaluar `mobileView="cards"` para tablas con > 5 columnas.
+
+**Requiere ADR:** No.
+**Relacionado:** DEBT-026, ADR-020.
+
+---
+
 ### ~~DEBT-027 (parte 1)~~ — useToast sin provider global: cola no limitada ✅ (Resuelto — 2026-06-16)
 **Severidad:** 🟡 Media
 **Detectado:** 2026-06-16 (ADR-020 / sesión UX/UI)
