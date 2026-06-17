@@ -10,9 +10,17 @@ import { ResponsiveContainer } from 'recharts'
 // - Estado vacío
 // - Título / subtítulo opcionales
 // - Paleta de colores derivada de los design tokens D9
+// - Accesibilidad: role="img" + ariaLabel (WCAG 1.1.1, DEBT-025)
+// - Tabla alternativa opcional expandible para lectores de pantalla
 //
 // Uso:
-//   <ChartWrapper title="Madurez IA" height={320} loading={isLoading}>
+//   <ChartWrapper
+//     title="Madurez IA"
+//     ariaLabel="Radar de madurez IA en 6 dimensiones para Acme Corp"
+//     height={320}
+//     loading={isLoading}
+//     dataTable={<Table columns={cols} rows={data} keyExtractor={r => r.id} />}
+//   >
 //     <RadarChart data={...} />
 //   </ChartWrapper>
 // ─────────────────────────────────────────────────────────────
@@ -97,21 +105,27 @@ function ChartEmpty({ message }: { message: string }) {
 // ── Props ─────────────────────────────────────────────────────
 
 export interface ChartWrapperProps {
-  children:     ReactNode
-  height?:      number
-  title?:       string
-  subtitle?:    string
-  loading?:     boolean
-  empty?:       boolean
+  children:      ReactNode
+  /** Descripción concisa del gráfico para lectores de pantalla (WCAG 1.1.1). Obligatoria. */
+  ariaLabel:     string
+  /** Tabla de datos alternativa renderizada en un <details> expandible (accesibilidad). */
+  dataTable?:    ReactNode
+  height?:       number
+  title?:        string
+  subtitle?:     string
+  loading?:      boolean
+  empty?:        boolean
   emptyMessage?: string
-  className?:   string
-  action?:      ReactNode    // botón o link en esquina superior derecha
+  className?:    string
+  action?:       ReactNode    // botón o link en esquina superior derecha
 }
 
 // ── Componente ────────────────────────────────────────────────
 
 export function ChartWrapper({
   children,
+  ariaLabel,
+  dataTable,
   height       = 300,
   title,
   subtitle,
@@ -150,9 +164,18 @@ export function ChartWrapper({
             <ChartEmpty message={emptyMessage} />
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={height}>
-            {children as React.ReactElement}
-          </ResponsiveContainer>
+          <div role="img" aria-label={ariaLabel}>
+            <ResponsiveContainer width="100%" height={height}>
+              {children as React.ReactElement}
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {dataTable && (
+          <details className="mt-2 text-xs text-text-muted">
+            <summary className="cursor-pointer">Ver datos como tabla</summary>
+            <div className="mt-2">{dataTable}</div>
+          </details>
         )}
       </div>
     </div>

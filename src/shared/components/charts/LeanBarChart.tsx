@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import {
   BarChart,
   Bar,
@@ -10,7 +11,8 @@ import {
   ReferenceLine,
   type TooltipProps,
 } from 'recharts'
-import { CHART_PALETTE, CHART_SERIES_COLORS } from './ChartWrapper'
+import { ChartWrapper, CHART_PALETTE, CHART_SERIES_COLORS } from './ChartWrapper'
+import { Table } from '@shared/design-system/components'
 
 // ─────────────────────────────────────────────────────────────
 // LeanBarChart — Gráfico de barras para KPIs y comparativas
@@ -34,6 +36,10 @@ export interface BarDataPoint {
 export interface LeanBarChartProps {
   data:          BarDataPoint[]
   keys:          string[]          // nombres de las series a renderizar
+  /** Descripción del gráfico para lectores de pantalla (WCAG 1.1.1). Obligatoria. */
+  ariaLabel:     string
+  /** Tabla de datos alternativa. Si se omite se genera automáticamente desde `data`. */
+  dataTable?:    ReactNode
   layout?:       'vertical' | 'horizontal'
   referenceValue?: number          // línea de target
   referenceLabel?: string
@@ -41,6 +47,10 @@ export interface LeanBarChartProps {
   thresholdGood?: number           // >= este valor = verde
   thresholdWarn?: number           // >= este valor (y < good) = naranja
   unit?:         string            // sufijo en tooltip, ej. "%" o "€"
+  height?:       number
+  title?:        string
+  subtitle?:     string
+  loading?:      boolean
   className?:    string
 }
 
@@ -81,11 +91,30 @@ function getThresholdColor(
   return CHART_PALETTE.dangerDark
 }
 
+// ── Tabla accesible autogenerada ─────────────────────────────────
+
+function buildBarTable(data: BarDataPoint[], keys: string[], unit: string): ReactNode {
+  const columns = [
+    { key: 'label', header: 'Categoría' },
+    ...keys.map(k => ({ key: k, header: k, align: 'right' as const,
+      render: (r: BarDataPoint) => `${r[k]}${unit}` })),
+  ]
+  return (
+    <Table<BarDataPoint>
+      columns={columns}
+      rows={data}
+      keyExtractor={(r) => r.label}
+    />
+  )
+}
+
 // ── Componente principal ───────────────────────────────────────
 
 export function LeanBarChart({
   data,
   keys,
+  ariaLabel,
+  dataTable,
   layout          = 'vertical',
   referenceValue,
   referenceLabel  = 'Objetivo',
@@ -93,10 +122,15 @@ export function LeanBarChart({
   thresholdGood   = 80,
   thresholdWarn   = 50,
   unit            = '',
+  height          = 300,
+  title,
+  subtitle,
+  loading         = false,
   className       = '',
 }: LeanBarChartProps) {
-  const isHorizontal = layout === 'horizontal'
-  const isSingleKey  = keys.length === 1
+  const isHorizontal  = layout === 'horizontal'
+  const isSingleKey   = keys.length === 1
+  const resolvedTable = dataTable ?? buildBarTable(data, keys, unit)
 
   // Márgenes según orientación
   const margin = isHorizontal
@@ -104,7 +138,16 @@ export function LeanBarChart({
     : { top: 5, right: 20, bottom: 20, left: 10 }
 
   return (
-    <div className={className}>
+    <ChartWrapper
+      ariaLabel={ariaLabel}
+      dataTable={resolvedTable}
+      height={height}
+      title={title}
+      subtitle={subtitle}
+      loading={loading}
+      empty={data.length === 0}
+      className={className}
+    >
       <BarChart
         data={data}
         layout={isHorizontal ? 'horizontal' : 'vertical'}
@@ -211,7 +254,7 @@ export function LeanBarChart({
           </Bar>
         ))}
       </BarChart>
-    </div>
+    </ChartWrapper>
   )
 }
 

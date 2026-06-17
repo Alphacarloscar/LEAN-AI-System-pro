@@ -331,6 +331,25 @@ una referencia a un módulo sin contenido.
 
 ---
 
+### ~~DEBT-025~~ — ChartWrapper sin accesibilidad: sin role ni ariaLabel ✅ (Resuelto — 2026-06-16)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (ADR-020 / sesión UX/UI)
+**Área:** `src/shared/components/charts/ChartWrapper.tsx`
+**Estado:** Resuelto (2026-06-16)
+
+`ChartWrapper` envolvía el `ResponsiveContainer` sin ningún atributo de accesibilidad. Los lectores de pantalla encontraban el gráfico como contenido anónimo sin descripción.
+
+**Fix aplicado (PR feat/a11y-chartwrapper-aria-table):**
+1. `ariaLabel: string` añadida como prop **obligatoria** a `ChartWrapperProps` — TypeScript impide compilar cualquier `<ChartWrapper>` sin ella.
+2. `ResponsiveContainer` envuelto en `<div role="img" aria-label={ariaLabel}>` — el gráfico se anuncia correctamente a lectores de pantalla.
+3. `dataTable?: ReactNode` prop opcional: si se pasa, renderiza un `<details>` expandible con `<summary>Ver datos como tabla</summary>` para ofrecer los datos en formato tabular sin alterar el aspecto visual.
+
+**Nota:** En la fecha de resolución, `LeanBarChart` y `LeanRadarChart` ya incluyen `ariaLabel` descriptivo en sus wrappers. La prop obligatoria garantiza accesibilidad en toda integración futura.
+
+**Relacionado:** ADR-021 (Design System Charter).
+
+---
+
 ### DEBT-028 — Hex inline en componentes shared: pendiente migrar a token()
 **Severidad:** 🟡 Media
 **Detectado:** 2026-06-16 (audit grep ADR-021)

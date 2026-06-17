@@ -164,4 +164,13 @@ Los siguientes ficheros contienen hex inline identificados en el audit de esta P
 | `SegmentedControl.tsx` | `#1C1A16`, `#FFFFFF` (función de contraste — justificado algorítmicamente) |
 
 ---
+
+## Execution log
+
+| Fecha | PR / Branch | Cambio |
+|---|---|---|
+| 2026-06-16 | feat/ds-charter-css-vars | ADR creado — charter aprobado, tokens CSS vars, escala space-*, CHART_PALETTE restante como excepción documentada |
+| 2026-06-16 | refactor/ux-ui-adr020-consolidation | `ChartWrapper`: `ariaLabel` obligatoria + `dataTable` opcional. Cierra DEBT-025. `role="img"` en ResponsiveContainer. `LeanBarChart` y `LeanRadarChart` actualizados con `ariaLabel` descriptivo. |
+
+---
 *AI-Ready Repository System v2.1.0 — docs/decisions/technical/*
