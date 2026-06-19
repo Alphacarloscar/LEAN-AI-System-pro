@@ -50,7 +50,7 @@ export function DashboardHeader({
               <rect x="3" y="7" width="10" height="7" rx="1.5" />
               <path d="M5 7V5a3 3 0 016 0v2" />
             </svg>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#9BB5D9]">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-info-dark dark:text-info">
               Proyecto de tu empresa · Solo lectura — no puedes guardar cambios en este proyecto
             </span>
           </div>

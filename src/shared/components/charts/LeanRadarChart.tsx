@@ -9,7 +9,8 @@ import {
   Legend,
   type TooltipProps,
 } from 'recharts'
-import { ChartWrapper, CHART_PALETTE } from './ChartWrapper'
+import { ChartWrapper } from './ChartWrapper'
+import { getThemeColor } from '@shared/design-system/charts/chartTokens'
 import { Table } from '@shared/design-system/components'
 
 // ─────────────────────────────────────────────────────────────
@@ -128,14 +129,14 @@ export function LeanRadarChart({
         // se puede especificar aquí.
       >
         <PolarGrid
-          stroke={CHART_PALETTE.border}
+          stroke={getThemeColor('border')}
           strokeDasharray="4 2"
         />
 
         <PolarAngleAxis
           dataKey="dimension"
           tick={{
-            fill:     CHART_PALETTE.muted,
+            fill:     getThemeColor('text-muted'),
             fontSize: 11,
             fontFamily: 'Inter, sans-serif',
           }}
@@ -145,22 +146,22 @@ export function LeanRadarChart({
           angle={90}
           domain={[0, maxValue]}
           tick={{
-            fill:     CHART_PALETTE.subtle,
+            fill:     getThemeColor('text-subtle'),
             fontSize: 9,
           }}
           tickCount={maxValue + 1}
-          stroke={CHART_PALETTE.border}
+          stroke={getThemeColor('border')}
         />
 
         {/* Área de estado actual */}
         <Radar
           name="Estado actual"
           dataKey="current"
-          stroke={CHART_PALETTE.navy}
-          fill={CHART_PALETTE.navy}
+          stroke={getThemeColor('navy')}
+          fill={getThemeColor('navy')}
           fillOpacity={0.18}
           strokeWidth={2}
-          dot={{ r: 3, fill: CHART_PALETTE.navy, strokeWidth: 0 }}
+          dot={{ r: 3, fill: getThemeColor('navy'), strokeWidth: 0 }}
         />
 
         {/* Área de objetivo — solo si showTarget */}
@@ -168,12 +169,12 @@ export function LeanRadarChart({
           <Radar
             name="Objetivo"
             dataKey="target"
-            stroke={CHART_PALETTE.success}
-            fill={CHART_PALETTE.success}
+            stroke={getThemeColor('success')}
+            fill={getThemeColor('success')}
             fillOpacity={0.10}
             strokeWidth={2}
             strokeDasharray="5 3"
-            dot={{ r: 3, fill: CHART_PALETTE.success, strokeWidth: 0 }}
+            dot={{ r: 3, fill: getThemeColor('success'), strokeWidth: 0 }}
           />
         )}
 
@@ -183,7 +184,7 @@ export function LeanRadarChart({
           <Legend
             wrapperStyle={{
               fontSize:   '11px',
-              color:      CHART_PALETTE.muted,
+              color:      getThemeColor('text-muted'),
               fontFamily: 'Inter, sans-serif',
             }}
           />

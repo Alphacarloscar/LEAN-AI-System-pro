@@ -1,5 +1,6 @@
 // P3 — T2+T7 Adopción
 
+import { AlertTriangle } from 'lucide-react'
 import { DeptBar }         from '../DeptBar'
 import { NavButton }       from '../NavButton'
 import { ExpandedSection } from '../ExpandedSection'
@@ -63,23 +64,20 @@ export function P3AdoptionPanel({ t2data, shadowAIPct, expanded, onToggle, onNav
             </div>
           </div>
           {shadowAIPct !== null && (
-            <div
-              className="rounded-xl border px-3 py-2.5 mb-3"
-              style={{ backgroundColor: 'rgba(200,134,10,0.04)', borderColor: 'rgba(200,134,10,0.25)' }}
-            >
+            <div className="rounded-xl border border-gold/25 bg-gold/[0.04] px-3 py-2.5 mb-3">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm">⚠️</span>
-                  <p className="text-[9px] font-mono uppercase tracking-widest" style={{ color: '#C8860A' }}>
+                  <AlertTriangle size={14} strokeWidth={1.75} className="text-gold" />
+                  <p className="text-[9px] font-mono uppercase tracking-widest text-gold">
                     Riesgo de Shadow AI
                   </p>
                 </div>
-                <span className="text-sm font-bold tabular-nums" style={{ color: '#C8860A' }}>
+                <span className="text-sm font-bold tabular-nums text-gold">
                   {shadowAIPct.pct}%
                 </span>
               </div>
-              <div className="w-full h-1 rounded-full bg-gray-100 dark:bg-warm-700 overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: `${shadowAIPct.pct}%`, backgroundColor: '#C8860A' }} />
+              <div className="w-full h-1 rounded-full bg-border dark:bg-warm-700 overflow-hidden">
+                <div className="h-full rounded-full bg-gold" style={{ width: `${shadowAIPct.pct}%` }} />
               </div>
               <p className="text-[9px] text-text-subtle mt-1">
                 {shadowAIPct.withTools} de {shadowAIPct.total} perfiles declaran herramientas externas · Ver detalle en T6

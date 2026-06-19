@@ -156,7 +156,9 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center text-center gap-3 py-8">
-                <div className="h-10 w-10 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center text-xl">◎</div>
+                <div className="h-10 w-10 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg>
+                </div>
                 <p className="text-xs text-text-muted">Completa la entrevista para posicionar este proceso.</p>
               </div>
             )}
@@ -233,7 +235,7 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
                         <div className="flex items-start gap-2">
                           <span className={`h-1.5 w-1.5 rounded-full mt-1 shrink-0 ${isValidated ? 'bg-success-dark' : 'bg-info-dark'}`} />
                           <p className="text-xs font-semibold text-lean-black dark:text-gray-200 leading-snug">{opp.title}</p>
-                          {isValidated && <span className="ml-auto shrink-0 text-[9px] font-bold text-success-dark">✓</span>}
+                          {isValidated && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="ml-auto shrink-0 text-success-dark"><polyline points="20 6 9 17 4 12" /></svg>}
                         </div>
                         <p className="text-[11px] text-text-muted leading-relaxed">{opp.description}</p>
                         <div className="flex gap-1.5 flex-wrap mt-auto">

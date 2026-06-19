@@ -94,7 +94,7 @@ export function T7View({ onBack }: T7ViewProps) {
   useEffect(() => { syncT7(engagementId) }, [engagementId])
 
   // Hook de generación del plan de cambio
-  const { generate, isGenerating, error } = useChangePlanGeneration()
+  const { generate, isGenerating, status: planStatus, error } = useChangePlanGeneration()
 
   // Contexto para el plan de cambio IA
   const planContext = useMemo(
@@ -228,6 +228,7 @@ export function T7View({ onBack }: T7ViewProps) {
               <ChangeManagementPlanTab
                 generatedPlan={generatedPlan}
                 isGenerating={isGenerating}
+                planStatus={planStatus}
                 error={error}
                 canGenerate={!!planContext && !!engagementId}
                 onGenerate={() => planContext && generate(planContext, engagementId)}

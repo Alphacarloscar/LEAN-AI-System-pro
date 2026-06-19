@@ -8,11 +8,12 @@
 //   • Cards por etapa: nombre, responsable, sistema,
 //     tiempos (proc + espera), barra proporcional.
 //   • Color por valueContribution (alta/media/baja/nula).
-//   • Marcador de cuello de botella (🔥 — mayor waitTime).
+//   • Marcador de cuello de botella (Flame icon — mayor waitTime).
 //   • Modal add/edit/delete de etapas.
 // ============================================================
 
 import { useState } from 'react'
+import { User, Settings, Flame } from 'lucide-react'
 import { Button, Card } from '@shared/design-system/components'
 import type { ProcessStage } from '../types'
 import { StageModal } from './StageModal'
@@ -70,8 +71,8 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
   if (stages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-        <div className="h-14 w-14 rounded-3xl bg-navy/5 dark:bg-navy/10 flex items-center justify-center text-2xl">
-          ◎
+        <div className="h-14 w-14 rounded-3xl bg-navy/5 dark:bg-navy/10 flex items-center justify-center">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg>
         </div>
         <div>
           <p className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-1">
@@ -204,7 +205,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         {isBottleneck && (
-                          <span title="Cuello de botella — mayor tiempo de espera" className="text-sm leading-none">🔥</span>
+                          <Flame size={16} strokeWidth={1.75} aria-label="Cuello de botella — mayor tiempo de espera" className="text-danger-dark shrink-0" />
                         )}
                         <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${cfg.chipBg} ${cfg.chipText}`}>
                           {cfg.label}
@@ -215,13 +216,15 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
                     {(stage.responsible || stage.system) && (
                       <div className="space-y-0.5">
                         {stage.responsible && (
-                          <p className="text-[10px] text-text-muted truncate leading-none">
-                            👤 {stage.responsible}
+                          <p className="text-[10px] text-text-muted truncate leading-none flex items-center gap-1">
+                            <User size={10} strokeWidth={1.75} className="shrink-0" />
+                            {stage.responsible}
                           </p>
                         )}
                         {stage.system && (
-                          <p className="text-[10px] text-text-subtle truncate leading-none">
-                            ⚙ {stage.system}
+                          <p className="text-[10px] text-text-subtle truncate leading-none flex items-center gap-1">
+                            <Settings size={10} strokeWidth={1.75} className="shrink-0" />
+                            {stage.system}
                           </p>
                         )}
                       </div>
@@ -276,7 +279,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
       {/* ── Bottleneck callout ─────────────────────────────────── */}
       {bottleneck && bottleneck.waitTimeHours > 0 && (
         <div className="mt-4 rounded-2xl bg-danger-light border border-red-100 dark:border-red-900/20 px-4 py-3 flex items-start gap-3">
-          <span className="text-lg shrink-0 leading-none mt-0.5">🔥</span>
+          <Flame size={20} strokeWidth={1.75} className="text-danger-dark shrink-0 mt-0.5" />
           <div>
             <p className="text-xs font-semibold text-danger-dark mb-0.5">
               Cuello de botella detectado — {bottleneck.name}

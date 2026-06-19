@@ -1,13 +1,4 @@
-BEGIN;
-
-UPDATE auth.users
-SET 
-  email = 'superadmin@test.dev',
-  raw_user_meta_data = raw_user_meta_data || '{"email": "superadmin@test.dev"}'::jsonb
-WHERE email = 'david.baquero@consultoriaalpha.com';
-
-UPDATE public.profiles
-SET email = 'superadmin@test.dev'
-WHERE email = 'david.baquero@consultoriaalpha.com';
-
-COMMIT;
+SELECT created_at, service_name, method_name, status, user_email, duration_ms
+FROM public.audit_logs
+ORDER BY created_at DESC
+LIMIT 10;

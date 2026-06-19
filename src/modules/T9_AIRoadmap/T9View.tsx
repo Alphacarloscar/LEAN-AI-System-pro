@@ -24,14 +24,16 @@ import { useEngagementStore }             from '@/modules/Engagement/store'
 import { PhaseMiniMap }                   from '@/shared/components/PhaseMiniMap'
 import { RecommendationPanel }            from '@/components/RecommendationPanel'
 import { buildT9RecommendationContext }   from './t9ContextBuilder'
-import { usePermissions }                 from '@/modules/Auth'
+import { usePermissions, useAuthStore }   from '@/modules/Auth'
 import { ViewerEmptyState }               from '@/shared/components/ViewerEmptyState'
 import { GanttRowItem }                   from './components/GanttRowItem'
 import { AddFreeItemForm }                from './components/AddFreeItemForm'
 import { computeDefaultOverride, MONTH_NAMES } from './t9GanttHelpers'
 import { DS }                             from './components/GanttRowItem.constants'
 import type { AIGanttRow, FreeGanttRow, GanttRow } from './components/GanttRowItem'
-import type { AddFreeForm } from './types'
+import type { AddFreeItemFormValues } from '@/lib/schemas/t9.schemas'
+import { createSnapshot }                 from '@/services/t9.service'
+import { reportError }                    from '@/lib/reportError'
 
 // ── Props ─────────────────────────────────────────────────────
 
@@ -49,6 +51,8 @@ export function T9View({ onBack }: T9ViewProps) {
   const { profile: companyProfile }                     = useCompanyProfileStore()
   const companyName                                     = companyProfile.engagementName
   const engagementId                                    = useEngagementStore((s) => s.activeEngagementId)
+  const { user }                                        = useAuthStore()
+  const [snapshotLoading, setSnapshotLoading]           = useState(false)
 
   // Scoping: si cambia el engagement, limpia overrides y freeItems del cliente anterior
   // stable Zustand action — mount-only: sincronizar al cambiar engagement
@@ -135,25 +139,25 @@ export function T9View({ onBack }: T9ViewProps) {
     setEditingId(null)
   }
 
+  // ── Crear snapshot ────────────────────────────────────────────
+  async function handleCreateSnapshot() {
+    if (!engagementId || !user?.id) return
+    setSnapshotLoading(true)
+    try {
+      const label = `Roadmap ${selectedYear} — ${new Date().toLocaleDateString('es-ES')}`
+      await createSnapshot({ engagementId, createdBy: user.id, label, type: 'roadmap' })
+    } catch (err) {
+      reportError('T9.createSnapshot', err)
+    } finally {
+      setSnapshotLoading(false)
+    }
+  }
+
   // ── Formulario añadir libre ───────────────────────────────────
   const [showAddForm, setShowAddForm] = useState(false)
-  const [addForm, setAddForm] = useState<AddFreeForm>({
-    name:        '',
-    department:  '',
-    responsible: '',
-    startMonth:  0,
-    endMonth:    1,
-    riskLevel:   'bajo',
-    status:      'pendiente',
-  })
 
-  function handleAddFree() {
-    if (!addForm.name.trim()) return
-    addFreeItem(addForm)
-    setAddForm({
-      name: '', department: '', responsible: '',
-      startMonth: 0, endMonth: 1, riskLevel: 'bajo', status: 'pendiente',
-    })
+  function handleAddFree(data: AddFreeItemFormValues) {
+    addFreeItem(data)
     setShowAddForm(false)
   }
 
@@ -194,7 +198,9 @@ export function T9View({ onBack }: T9ViewProps) {
             </div>
             {!isReadOnly && (
               <>
-                <Button variant="primary" size="sm">Crear snapshot</Button>
+                <Button variant="primary" size="sm" onClick={handleCreateSnapshot} disabled={snapshotLoading}>
+                  {snapshotLoading ? 'Guardando…' : 'Crear snapshot'}
+                </Button>
                 <Button variant="primary" size="sm" onClick={() => { setShowAddForm(true) }}>
                   + Añadir iniciativa
                 </Button>
@@ -290,6 +296,9 @@ export function T9View({ onBack }: T9ViewProps) {
               row={row}
               isEditing={editingId === rowId}
               editValue={editValue}
+              isDirty={editingId === rowId && editValue !== (
+                row.kind === 'ai' ? row.override.responsible : row.item.responsible
+              )}
               onEditStart={(current) => handleEditStart(rowId, current)}
               onEditChange={setEditValue}
               onEditSave={() => handleEditSave(rowId)}
@@ -299,8 +308,6 @@ export function T9View({ onBack }: T9ViewProps) {
 
         {showAddForm && (
           <AddFreeItemForm
-            form={addForm}
-            onChange={(updates) => setAddForm((prev) => ({ ...prev, ...updates }))}
             onSave={handleAddFree}
             onCancel={() => setShowAddForm(false)}
           />

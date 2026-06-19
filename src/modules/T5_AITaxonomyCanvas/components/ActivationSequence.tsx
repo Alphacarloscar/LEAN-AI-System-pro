@@ -26,9 +26,11 @@ export function ActivationSequence({ canvas, onCardClick }: ActivationSequencePr
 
       <div className="flex gap-3 overflow-x-auto pb-1">
         {canvas.activationSequence.map((code, idx) => {
-          const d       = canvas.domains[code]
+          const d = canvas.domains[code]
+          if (!d) return null
           const domCfg  = T5_DOMAIN_CONFIG[code]
           const recCfg  = T5_RECOMMENDATION_CONFIG[d.recommendation]
+          if (!domCfg || !recCfg) return null
           const isLast  = idx === canvas.activationSequence.length - 1
           return (
             <div key={code} className="flex items-center gap-2 shrink-0">

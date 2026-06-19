@@ -17,6 +17,12 @@
     box-sizing: border-box;
   }
 
+  /* Tokens RGB para Recharts — consumir con rgb(var(--color-gold-rgb) / 0.8) */
+  :root {
+    --color-gold-rgb: 200 134 10;
+    --color-navy-rgb: 42 40 34;
+  }
+
   html {
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-feature-settings: 'cv11', 'ss01';

@@ -7,6 +7,7 @@
 // ============================================================
 
 import { useState, useMemo } from 'react'
+import { Settings, Cpu, TrendingUp, MessageSquare, RefreshCw, Network } from 'lucide-react'
 import {
   T5_DOMAIN_CONFIG,
   T5_RECOMMENDATION_CONFIG,
@@ -14,6 +15,15 @@ import {
 import { Card } from '@shared/design-system/components'
 import type { T5Canvas, T5DomainCode } from '../types'
 import { DeptCategoryModal } from './DeptCategoryModal'
+
+const DOMAIN_ICON_MAP: Record<string, React.ReactElement> = {
+  settings:        <Settings      size={14} strokeWidth={1.75} />,
+  cpu:             <Cpu           size={14} strokeWidth={1.75} />,
+  'trending-up':   <TrendingUp    size={14} strokeWidth={1.75} />,
+  'message-square':<MessageSquare size={14} strokeWidth={1.75} />,
+  'refresh-cw':    <RefreshCw     size={14} strokeWidth={1.75} />,
+  network:         <Network       size={14} strokeWidth={1.75} />,
+}
 
 // ── Collision resolution ──────────────────────────────────────
 
@@ -305,9 +315,10 @@ export function PortfolioMatrix({
                       boxShadow: isSelected
                         ? `0 0 0 4px ${recCfg.hex}35, 0 6px 20px ${recCfg.hex}45`
                         : `0 2px 8px ${recCfg.hex}25`,
+                      color: recCfg.hex,
                     }}
                   >
-                    <span className="text-sm leading-none select-none">{domCfg.icon}</span>
+                    <span className="leading-none select-none">{DOMAIN_ICON_MAP[domCfg.icon] ?? <Settings size={14} strokeWidth={1.75} />}</span>
                     <span
                       className="text-[8px] font-bold leading-tight text-center text-lean-black dark:text-gray-200 select-none"
                       style={{ maxWidth: pos.size - 10, wordBreak: 'break-word', padding: '0 3px' }}

@@ -1,6 +1,6 @@
 ﻿# Technical Debt Register — GOBY
 
-Last updated: 2026-06-15
+Last updated: 2026-06-17
 AI-Ready Repository System v2.1.0
 
 > Registro activo de deuda técnica conocida. Cada item tiene severidad, impacto y plan de acción.
@@ -335,7 +335,7 @@ una referencia a un módulo sin contenido.
 **Severidad:** 🟡 Media
 **Detectado:** 2026-06-16 (ADR-020 Fase 3 / ADR-022)
 **Área:** Todos los formularios de T1–T12 + LoginView
-**Estado:** En progreso (2/12 migradas — T2, T3 en `refactor/ux-ui-adr020-consolidation`)
+**Estado:** En progreso (4/12 migradas — T2, T3; T4-EconomicsTab 2026-06-18; T1-NewInterviewModal 2026-06-18)
 
 **Descripción:**
 ADR-022 establece `react-hook-form + zodResolver` como estándar para todos los formularios.
@@ -354,6 +354,31 @@ T2 (`StakeholderFormPhase`) y T3 (`ProcessFormPhase`) migrados en la PR de activ
 
 ---
 
+### ~~VIS-001~~ — Erradicación de emojis Unicode en JSX ✅ (Resuelto — 2026-06-17)
+**Severidad:** 🟡 Media (sobriedad ejecutiva — ADR-021 / DESIGN-SYSTEM.md)
+**Detectado:** 2026-06-17 (auditoría DESIGN-SYSTEM.md)
+**Área:** `src/modules/` (T2, T3, T4, T5, T6, T7, T8, T10, T12) + `src/shared/components/ErrorBoundary.tsx`
+**Estado:** Resuelto (2026-06-17)
+
+**Descripción:**
+31 archivos contenían emojis Unicode literales embebidos en JSX (🔥, ⚠️, 🚫, ✓, ✕, ◎, 🔴, ⬜, 👤, 📊, ⚡, 🚀, 💡, etc.). DESIGN-SYSTEM.md (ADR-021) los prohíbe explícitamente: _"emoji, playful micro-interactions — is categorically prohibited"_.
+
+**Cambios aplicados:**
+- **Empty states** `◎` (bullseye) → SVG inline (`circle + center dot`) en T2, T3, T4 (x3), T7.
+- **Iconos semánticos** (⚠️ → `AlertTriangle`, 🚫 → `Ban`, ✓ → `Check`, ✕ → `X`, 🔥 → `Flame`, 💡 → `Lightbulb`, 🚀 → `Rocket`, ⚡ → `Zap`) — todos `size` ajustado a 12/14/16/20 según contexto y `strokeWidth={1.75}` uniforme.
+- **Config objects** `icon: '🔴'` → `icon: 'alert-circle'` con mapa de renderizado en componentes consumidores (`RISK_ICON_MAP`, `DOMAIN_ICON_MAP`, `PHASE_ICON_MAP`, etc.) — T4 constants, T5 constants, T6 constants, T7 CHANGE_PLAN, T8 TYPE_CFG + CHANNEL_CFG.
+- **Labels de Tabs** `'📄 Política IA'` → `icon: <FileText />` usando el prop `icon?: ReactNode` del componente Tabs existente.
+- **Texto en templates de email** (`✅`, `⚠️`, `📅`, `💬` en strings literales) → ASCII equivalentes (`✓`, `!`, `→`).
+- **ErrorBoundary** `❌ Error de renderizado` → texto limpio sin emoji.
+- `T12/constants.ts`: `dot: '◎'` → `dot: '◔'` (caracter de círculo semáforo estándar, no emoji de color).
+
+**Verificación:** `npm run typecheck` → 0 errores. Revisión manual de patrones residuales → 0 emojis en módulos cubiertos por DESIGN-SYSTEM.md.
+
+**Requiere ADR:** No (cumplimiento de ADR-021 ya vigente).
+**Relacionado:** ADR-021, DESIGN-SYSTEM.md.
+
+---
+
 ### DEBT-024-bis — Lista de formularios pendientes de migrar a RHF+Zod
 **Severidad:** 🟢 Baja
 **Detectado:** 2026-06-16
@@ -362,8 +387,10 @@ T2 (`StakeholderFormPhase`) y T3 (`ProcessFormPhase`) migrados en la PR de activ
 
 | Vista / Componente | Formulario | Schema a crear |
 |--------------------|------------|----------------|
-| T1 | Formulario de dimensiones / assessment | `t1.schemas.ts` |
-| T4 | Formularios de puntuación vía stores | `t4.schemas.ts` (parcialmente existente) |
+| ~~T1-NewInterviewModal~~ | ~~NewInterviewModal.tsx~~ | ~~`NewInterviewModal.schema.ts`~~ ✅ 2026-06-18 |
+| T1 | DimensionCard evidencias (textarea directo, sin submit) | n/a — patrón instant-save, no requiere RHF |
+| ~~T4-EconomicsTab~~ | ~~EconomicsTab.tsx~~ | ~~`EconomicsTab.schema.ts`~~ ✅ 2026-06-18 |
+| T4 | ScoringTabContent, AIActClassificationModal | `t4.schemas.ts` (pendiente) |
 | T5 | Formulario de proceso / configuración | `t5.schemas.ts` |
 | T6 | Formulario de herramientas | `t6.schemas.ts` |
 | T7 | Formulario de datos | `t7.schemas.ts` |
@@ -431,6 +458,24 @@ Por cada tabla en T1–T12: añadir `columnPriority`, evaluar `mobileView="cards
 
 ---
 
+### ~~DEBT-027 (parte 3)~~ — Gestión visual de errores asíncronos: sin ServiceErrorToast ni useServiceError ✅ (Resuelto — 2026-06-17)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-17 (ADR-020 PR #6 — DEBT-027 cierre completo)
+**Área:** `src/shared/design-system/components/ServiceErrorToast.tsx`, `src/shared/hooks/useServiceError.ts`, `src/shared/design-system/components/Toast.tsx`
+**Estado:** Resuelto (2026-06-17) — `refactor/ux-ui-adr020-consolidation`
+
+**Fix aplicado:**
+1. `Toast.tsx` — Portal via `createPortal(container, document.body)` para evitar conflictos de z-index con el chasis. Contenedor top respeta `var(--header-h, 56px)` medida por `ResizeObserver` en `AppLayout`.
+2. `Toast.tsx` — variante `error` forzada a `persistent: true` automáticamente — requiere cierre manual explícito.
+3. `Toast.tsx` — nueva firma `addNode(node: ReactNode): string` en el contexto permite inyectar JSX custom (ServiceErrorToast) en la cola FIFO.
+4. `ServiceErrorToast.tsx` — componente con `border-l-4 border-l-danger`, icono `AlertCircle`, botón X de cierre, y badge `DBG` que expande panel `<pre>` con `error.message`, `hint`, `code`, `stack`.
+5. `useServiceError.ts` — hook `notifyError(error, customMessage?)` que consume `addNode` del `ToastContext` — sin imports de Supabase (ADR-011 compliant).
+6. Barrel `index.ts` — exporta `ServiceErrorToast` y `ServiceErrorToastProps`.
+
+**Relacionado:** DEBT-027 parte 1, DEBT-027 parte 2, ADR-020, ADR-011.
+
+---
+
 ### ~~DEBT-027 (parte 1)~~ — useToast sin provider global: cola no limitada ✅ (Resuelto — 2026-06-16)
 **Severidad:** 🟡 Media
 **Detectado:** 2026-06-16 (ADR-020 / sesión UX/UI)
@@ -485,6 +530,41 @@ El audit de hex inline previo a la implementación de ADR-021 detectó literales
 
 **Requiere ADR:** No (ADR-021 ya establece la regla).
 **Relacionado:** ADR-021, DEBT-022.
+
+---
+
+### DEBT-029 — useUnsavedGuard: chasis listo, vistas pendientes de suscribirse ✅ (Chasis — 2026-06-17)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-17 (ADR-020 PR #4 — DEBT-024 parcial)
+**Área:** `src/shared/hooks/useUnsavedGuard.ts` + vistas T1–T12
+**Estado:** Chasis implementado (2026-06-17) — adopción en vistas pendiente
+
+**Descripción:**
+`EngagementSelector` y `AppSidebar` ya leen `useUnsavedChanges` para interceptar la navegación.
+El store Zustand (`isDirty`, `setDirty`, `clearDirty`) existía, pero ninguna vista lo declaraba.
+Se ha creado `useUnsavedGuard(isDirty: boolean, source?)` — hook de integración que las vistas
+llaman con su booleano local de formulario sucio. El hook sincroniza el store global y limpia
+al desmontar, garantizando que ningún módulo deja el flag activo al salir.
+
+**Pendiente (DEBT-029):**
+Por cada vista con formulario mutable (T1–T12, CompanyProfile, LoginView):
+```tsx
+// En la vista, una vez que el formulario tenga isDirty del estado local:
+useUnsavedGuard(isDirty)   // solo una línea
+```
+Las vistas migradas a react-hook-form (ADR-022) exponen `formState.isDirty` directamente.
+Las no migradas necesitan un flag local `useState<boolean>`.
+
+**Impacto actual (sin adopción en vistas):** El modal aparece pero el flag nunca se activa —
+la protección existe pero está inerte hasta que cada vista lo adopte.
+
+**Plan de acción:**
+1. Al migrar cada vista a RHF (DEBT-024), añadir `useUnsavedGuard(formState.isDirty)`.
+2. Para vistas con estado Zustand mutable directo (ej. T1 setScore), derivar un `isDirty` local
+   comparando la snapshot de carga con el estado actual del store.
+
+**Requiere ADR:** No.
+**Relacionado:** DEBT-024, DEBT-024-bis, ADR-020, ADR-022.
 
 ---
 

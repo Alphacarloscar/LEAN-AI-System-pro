@@ -1,7 +1,18 @@
 // ── T8 Tab 2: Mensajes por Arquetipo ──────────────────────────
 
 import { useState } from 'react'
+import { AlertTriangle, Lightbulb,
+  Mail, Building2, MessageSquare, Monitor, Video, FileText } from 'lucide-react'
 import { ARCHETYPE_CONFIG, CHANNEL_CFG } from '../T8Generators'
+
+const CHANNEL_ICON_MAP: Record<string, React.ReactElement> = {
+  mail:            <Mail          size={12} strokeWidth={1.75} />,
+  building:        <Building2     size={12} strokeWidth={1.75} />,
+  'message-square':<MessageSquare size={12} strokeWidth={1.75} />,
+  monitor:         <Monitor       size={12} strokeWidth={1.75} />,
+  video:           <Video         size={12} strokeWidth={1.75} />,
+  'file-text':     <FileText      size={12} strokeWidth={1.75} />,
+}
 import type { ArchetypeCode } from '@/modules/T2_StakeholderMatrix/types'
 import type { ArchetypeMessage } from '../types'
 import { Card } from '@shared/design-system/components'
@@ -78,7 +89,7 @@ export function ArchetypeMessagesTab({ messages }: { messages: ArchetypeMessage[
             {/* Do not say + Opening */}
             <div className="space-y-4">
               <Card variant="flat" padding="none" className="rounded-xl border border-danger-light bg-danger-light/20 p-4">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-danger-dark mb-2">⚠ No decir</p>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-danger-dark mb-2 flex items-center gap-1"><AlertTriangle size={11} strokeWidth={1.75} /> No decir</p>
                 <p className="text-xs text-danger-dark leading-relaxed">{msg.doNotSay}</p>
               </Card>
               <Card variant="outlined" padding="none" className="rounded-xl p-4">
@@ -90,12 +101,12 @@ export function ArchetypeMessagesTab({ messages }: { messages: ArchetypeMessage[
 
           {/* Resistance note + Channel */}
           <Card variant="flat" padding="none" className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/50 p-4 flex items-start gap-3">
-            <span className="text-base flex-shrink-0">💡</span>
+            <Lightbulb size={16} strokeWidth={1.75} className="flex-shrink-0 text-text-subtle" />
             <div>
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Nota de resistencia</p>
               <p className="text-xs text-text-muted leading-relaxed">{msg.resistanceNote}</p>
               <p className="text-[10px] text-text-subtle mt-2">
-                Canal recomendado: <span className="font-medium text-text-muted">{CHANNEL_CFG[msg.channel]?.icon} {CHANNEL_CFG[msg.channel]?.label ?? msg.channel}</span>
+                Canal recomendado: <span className="font-medium text-text-muted inline-flex items-center gap-1">{CHANNEL_ICON_MAP[CHANNEL_CFG[msg.channel]?.icon ?? ''] ?? null} {CHANNEL_CFG[msg.channel]?.label ?? msg.channel}</span>
               </p>
             </div>
           </Card>

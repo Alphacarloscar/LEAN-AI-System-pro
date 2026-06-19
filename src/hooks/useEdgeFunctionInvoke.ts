@@ -16,6 +16,8 @@ export interface UseEdgeFunctionInvokeOptions<TContext, TResult> {
   onSuccess:           (result: TResult, engagementId: string, context: TContext) => void
   onPersistence?:      (persistence: EdgeFunctionPersistence | undefined) => void
   logPrefix?:          string
+  /** Si se provee, dispara automáticamente un ServiceErrorToast en el estado 'error'. */
+  notifyError?:        (error: unknown, customMessage?: string) => void
 }
 
 export type EdgeFunctionState = 'idle' | 'pending' | 'success' | 'error'
@@ -24,6 +26,8 @@ export interface UseEdgeFunctionInvokeReturn<TContext> {
   invoke:       (context: TContext, engagementId: string | null) => Promise<void>
   isGenerating: boolean
   state:        EdgeFunctionState
+  /** Alias semántico de clearError — devuelve el estado a 'idle'. */
+  reset:        () => void
   error:        string | null
   clearError:   () => void
 }
@@ -38,6 +42,7 @@ export function useEdgeFunctionInvoke<TContext, TResult>(
     validate,
     onSuccess,
     onPersistence,
+    notifyError,
     logPrefix          = `[useEdgeFunctionInvoke:${tool}]`,
   } = options
 
@@ -96,15 +101,16 @@ export function useEdgeFunctionInvoke<TContext, TResult>(
       setError(msg)
       setState('error')
       reportError(logPrefix, err)
+      notifyError?.(err)
     } finally {
       setIsGenerating(false)
     }
-  }, [tool, timeoutMs, noEngagementMessage, validate, onSuccess, onPersistence, logPrefix])
+  }, [tool, timeoutMs, noEngagementMessage, validate, onSuccess, onPersistence, notifyError, logPrefix])
 
   const clearError = useCallback(() => {
     setError(null)
     setState('idle')
   }, [])
 
-  return { invoke, isGenerating, state, error, clearError }
+  return { invoke, isGenerating, state, reset: clearError, error, clearError }
 }

@@ -65,9 +65,10 @@ export function ToolHeader({
         'bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm',
         'border-b border-border dark:border-white/6',
         'px-8 py-3',
-        sticky ? 'sticky top-[57px] z-10' : '',
+        sticky ? 'sticky top-[57px] z-[15]' : '',
         className,
       ].filter(Boolean).join(' ')}
+      style={sticky ? { top: 'var(--header-h, 57px)' } : undefined}
     >
       {/* ── Main row ── */}
       <div className={`flex items-center gap-3 ${maxWidth} mx-auto`}>

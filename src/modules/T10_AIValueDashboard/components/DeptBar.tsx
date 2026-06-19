@@ -14,9 +14,9 @@ export function DeptBar({ label, innovadores, early, rezagados, total }: {
     <div className="flex items-center gap-2 mb-1.5">
       <span className="text-[9px] text-text-muted dark:text-warm-300 w-20 flex-shrink-0 truncate">{label}</span>
       <div className="flex flex-1 h-[6px] rounded-full overflow-hidden gap-px">
-        <div style={{ width: `${pI}%`, background: '#86C7A8' }} />
-        <div style={{ width: `${pE}%`, background: '#9BB5D9' }} />
-        <div style={{ width: `${pR}%`, background: '#C4C0B8' }} />
+        <div className="bg-success"  style={{ width: `${pI}%` }} />
+        <div className="bg-info"     style={{ width: `${pE}%` }} />
+        <div className="bg-warm-100" style={{ width: `${pR}%` }} />
       </div>
       <span className="text-[9px] text-text-muted dark:text-warm-300 w-4 text-right">{total}</span>
     </div>

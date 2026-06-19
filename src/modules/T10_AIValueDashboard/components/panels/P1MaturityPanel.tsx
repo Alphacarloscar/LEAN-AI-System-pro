@@ -38,7 +38,7 @@ export function P1MaturityPanel({
     >
       <div className="space-y-[5px]">
         {radar.slice(0, 4).map(dim => (
-          <DimBar key={dim.dimension} label={dim.dimension} value={dim.current} max={4} color="#C8860A" />
+          <DimBar key={dim.dimension} label={dim.dimension} value={dim.current} max={4} color="var(--color-gold)" />
         ))}
         {radar.length > 4 && (
           <p className="text-[10px] text-text-subtle dark:text-warm-400 pt-0.5">+{radar.length - 4} más</p>

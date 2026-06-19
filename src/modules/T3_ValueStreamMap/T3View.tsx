@@ -104,6 +104,7 @@ export function T3View({ onBack }: T3ViewProps) {
       <ToolHeader
         sticky
         onBack={() => onBack ? onBack() : navigate('/')}
+        backLabel="Volver al dashboard"
         toolCode="T3"
         title="Value Stream Map"
         subtitle={companyName}
@@ -170,7 +171,7 @@ export function T3View({ onBack }: T3ViewProps) {
       {/* ── 0 procesos ── */}
       {!isLoadingT3 && hasDataT3 && processes.length === 0 && !isReadOnly && (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center text-2xl">◎</div>
+          <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg></div>
           <p className="text-sm font-bold text-text-muted">No hay procesos todavía</p>
           <p className="text-xs text-text-subtle max-w-xs leading-relaxed text-center">
             Añade el primer proceso para comenzar el análisis de oportunidades IA.
@@ -270,7 +271,7 @@ export function T3View({ onBack }: T3ViewProps) {
             {filtered.length === 0 ? (
               isReadOnly ? <ViewerEmptyState /> : (
                 <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-                  <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center text-2xl">◎</div>
+                  <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg></div>
                   <p className="text-sm font-bold text-text-muted">Sin procesos mapeados</p>
                 </div>
               )

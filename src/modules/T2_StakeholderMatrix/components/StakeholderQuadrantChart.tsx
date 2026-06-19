@@ -189,9 +189,9 @@ export function StakeholderQuadrantChart({
 
                   {s.resistance === 'alta' && (
                     <>
-                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 12} fill="#C06060" opacity={0.06} />
-                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 8}  fill="#C06060" opacity={0.11} />
-                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 5}  fill="#C06060" opacity={0.17} />
+                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 12} fill={ARCHETYPE_HEX.critico} opacity={0.06} />
+                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 8}  fill={ARCHETYPE_HEX.critico} opacity={0.11} />
+                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 5}  fill={ARCHETYPE_HEX.critico} opacity={0.17} />
                     </>
                   )}
 
@@ -235,7 +235,7 @@ export function StakeholderQuadrantChart({
             })}
           </g>
 
-          <circle cx={CX} cy={CY} r={CR} fill="none" stroke="#D1D5DB" strokeWidth={1.5} />
+          <circle cx={CX} cy={CY} r={CR} fill="none" stroke="var(--color-border)" strokeWidth={1.5} />
 
           {/* Quadrant labels */}
           <text x={94} y={91} textAnchor="middle" fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.critico} letterSpacing="0.06em">CRÍTICO</text>
@@ -248,11 +248,11 @@ export function StakeholderQuadrantChart({
           <text x={426} y={436} textAnchor="middle" fontSize={7.5} fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.adoptador} opacity={0.65}>usa y adopta</text>
 
           {/* Axis labels */}
-          <text x={CX} y={CY - CR - 14} textAnchor="middle" fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">↑ Alta influencia</text>
-          <text x={CX} y={CY + CR + 22} textAnchor="middle" fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">Baja influencia ↓</text>
-          <text x={CX - CR - 6} y={CY + 4} textAnchor="end" fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">← Baja</text>
-          <text x={CX + CR + 6} y={CY + 4} textAnchor="start" fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">Alta →</text>
-          <text x={CX} y={VB - 6} textAnchor="middle" fontSize={9} fill="#6B7280" fontFamily="Inter, sans-serif">Adopción IA</text>
+          <text x={CX} y={CY - CR - 14} textAnchor="middle" fontSize={8.5} fill="var(--color-warm-100)" fontFamily="ui-monospace, monospace">↑ Alta influencia</text>
+          <text x={CX} y={CY + CR + 22} textAnchor="middle" fontSize={8.5} fill="var(--color-warm-100)" fontFamily="ui-monospace, monospace">Baja influencia ↓</text>
+          <text x={CX - CR - 6} y={CY + 4} textAnchor="end" fontSize={8.5} fill="var(--color-warm-100)" fontFamily="ui-monospace, monospace">← Baja</text>
+          <text x={CX + CR + 6} y={CY + 4} textAnchor="start" fontSize={8.5} fill="var(--color-warm-100)" fontFamily="ui-monospace, monospace">Alta →</text>
+          <text x={CX} y={VB - 6} textAnchor="middle" fontSize={9} fill="var(--color-border)" fontFamily="Inter, sans-serif">Adopción IA</text>
 
           {/* Tooltips */}
           {withScores.map((s) => {
@@ -270,8 +270,8 @@ export function StakeholderQuadrantChart({
 
             return (
               <g key={`tt-${s.id}`} style={{ pointerEvents: 'none' }}>
-                <rect x={ttX} y={ttY} width={ttW} height={ttH} rx={6} fill="#0A0A0A" opacity={0.88} />
-                <text x={ttX + ttW / 2} y={ttY + 14} textAnchor="middle" fontSize={10.5} fontWeight="600" fill="#FFFFFF" fontFamily="Inter, sans-serif">{s.name}</text>
+                <rect x={ttX} y={ttY} width={ttW} height={ttH} rx={6} fill="var(--color-warm-950)" opacity={0.88} />
+                <text x={ttX + ttW / 2} y={ttY + 14} textAnchor="middle" fontSize={10.5} fontWeight="600" fill="var(--color-surface)" fontFamily="Inter, sans-serif">{s.name}</text>
                 <text x={ttX + ttW / 2} y={ttY + 27} textAnchor="middle" fontSize={9.5} fill={fill} fontFamily="Inter, sans-serif">
                   {(ARCHETYPE_CONFIG[s.archetype] ?? ARCHETYPE_CONFIG.adoptador).label} · {RESISTANCE_CONFIG[s.resistance].label}
                 </text>

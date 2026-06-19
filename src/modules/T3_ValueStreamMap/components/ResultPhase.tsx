@@ -172,7 +172,7 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
           className="flex-[2]"
           onClick={() => onConfirm(aiCategory, orgReadiness, manualOverride)}
         >
-          Añadir proceso al mapa ✓
+          Añadir proceso al mapa
         </Button>
       </div>
     </div>

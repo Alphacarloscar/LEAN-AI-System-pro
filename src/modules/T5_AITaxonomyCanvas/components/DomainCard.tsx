@@ -6,10 +6,20 @@
 // de activación.
 // ============================================================
 
+import { Settings, Cpu, TrendingUp, MessageSquare, RefreshCw, Network, User, BarChart2, AlertTriangle } from 'lucide-react'
 import { T5_DOMAIN_CONFIG, T5_RECOMMENDATION_CONFIG } from '../constants'
 import { Button, Badge, Card }                         from '@shared/design-system/components'
 import type { T5DomainAssessment }                     from '../types'
 import { T5DimBars }                                   from './T5DimBars'
+
+const DOMAIN_ICON_MAP: Record<string, React.ReactElement> = {
+  settings:        <Settings     size={20} strokeWidth={1.75} />,
+  cpu:             <Cpu          size={20} strokeWidth={1.75} />,
+  'trending-up':   <TrendingUp   size={20} strokeWidth={1.75} />,
+  'message-square':<MessageSquare size={20} strokeWidth={1.75} />,
+  'refresh-cw':    <RefreshCw    size={20} strokeWidth={1.75} />,
+  network:         <Network      size={20} strokeWidth={1.75} />,
+}
 
 interface DomainCardProps {
   assessment: T5DomainAssessment
@@ -27,10 +37,10 @@ export function DomainCard({ assessment, onEdit }: DomainCardProps) {
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
-            style={{ backgroundColor: domCfg.hex + '22', border: `1.5px solid ${domCfg.hex}55` }}
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+            style={{ backgroundColor: domCfg.hex + '22', border: `1.5px solid ${domCfg.hex}55`, color: domCfg.hex }}
           >
-            {domCfg.icon}
+            {DOMAIN_ICON_MAP[domCfg.icon] ?? <Settings size={20} strokeWidth={1.75} />}
           </div>
           <div>
             <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100 leading-tight">
@@ -79,7 +89,7 @@ export function DomainCard({ assessment, onEdit }: DomainCardProps) {
 
         <div className="flex flex-col gap-2.5">
           <div className="flex items-start gap-2.5">
-            <span className="text-sm shrink-0 mt-0.5">👤</span>
+            <User size={16} strokeWidth={1.75} className="shrink-0 mt-0.5 text-text-subtle" />
             <div>
               <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide">Owner sugerido</p>
               <p className="text-[11px] font-medium text-lean-black dark:text-gray-200 leading-tight mt-0.5">
@@ -88,7 +98,7 @@ export function DomainCard({ assessment, onEdit }: DomainCardProps) {
             </div>
           </div>
           <div className="flex items-start gap-2.5">
-            <span className="text-sm shrink-0 mt-0.5">📊</span>
+            <BarChart2 size={16} strokeWidth={1.75} className="shrink-0 mt-0.5 text-text-subtle" />
             <div>
               <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide">KPI principal</p>
               <p className="text-[11px] font-medium text-lean-black dark:text-gray-200 leading-tight mt-0.5">
@@ -119,7 +129,7 @@ export function DomainCard({ assessment, onEdit }: DomainCardProps) {
 
         {assessment.governanceNotes && (
           <div className="rounded-lg bg-warning-light/40 border border-warning-dark/20 px-3 py-2">
-            <p className="text-[10px] text-warning-dark leading-relaxed">⚠️ {assessment.governanceNotes}</p>
+            <p className="text-[10px] text-warning-dark leading-relaxed flex items-start gap-1.5"><AlertTriangle size={12} strokeWidth={1.75} className="shrink-0 mt-0.5" />{assessment.governanceNotes}</p>
           </div>
         )}
       </Card>

@@ -20,7 +20,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
     hex:         '#5FAF8A',
     tagline:     'Procesos repetitivos, cero intervención humana',
     description: 'Robots que replican tareas manuales estructuradas: entrada de datos, extracción y transferencia entre sistemas.',
-    icon:        '⚙️',
+    icon:        'settings',
   },
   automatizacion_inteligente: {
     label:       'Automatización Inteligente',
@@ -28,7 +28,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
     hex:         '#6A90C0',
     tagline:     'RPA + comprensión contextual mediante IA',
     description: 'Combina automatización con capacidades cognitivas: clasificación, extracción de documentos no estructurados, decisiones contextuales.',
-    icon:        '🤖',
+    icon:        'cpu',
   },
   analitica_predictiva: {
     label:       'Analítica Predictiva',
@@ -36,7 +36,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
     hex:         '#2A2822',  // warm charcoal (era navy #1B2A4E)
     tagline:     'Anticipar para decidir mejor y más rápido',
     description: 'Modelos que predicen demanda, riesgo, fallos o comportamientos a partir de datos históricos y señales en tiempo real.',
-    icon:        '📊',
+    icon:        'trending-up',
   },
   asistente_ia: {
     label:       'Asistente IA',
@@ -44,7 +44,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
     hex:         '#D4A85C',
     tagline:     'Copilot para equipos — amplifica, no reemplaza',
     description: 'Interfaces conversacionales y copilotos que asisten en redacción, búsqueda, síntesis y toma de decisiones operativas.',
-    icon:        '💬',
+    icon:        'message-square',
   },
   optimizacion_proceso: {
     label:       'Optimización de Proceso',
@@ -52,7 +52,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
     hex:         '#C06060',
     tagline:     'Reducir ineficiencias de forma continua y adaptativa',
     description: 'Algoritmos que detectan cuellos de botella, optimizan flujos de trabajo y asignación de recursos de forma dinámica.',
-    icon:        '🔄',
+    icon:        'refresh-cw',
   },
   'agéntica': {
     label:       'Agéntica IA',
@@ -60,7 +60,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
     hex:         '#7C3AED',
     tagline:     'Agentes autónomos que ejecutan tareas complejas',
     description: 'Sistemas de múltiples agentes que planifican, deciden y ejecutan cadenas de pasos complejos de forma autónoma sin supervisión constante.',
-    icon:        '🧠',
+    icon:        'network',
   },
 }
 

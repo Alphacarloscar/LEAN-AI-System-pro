@@ -7,14 +7,7 @@
 
 import { useMemo } from 'react'
 import type { Stakeholder, ArchetypeCode } from '../types'
-
-const ARCH_HEX: Record<ArchetypeCode, string> = {
-  adoptador:  '#5FAF8A',
-  ambassador: '#6A90C0',
-  decisor:    '#2A2822',
-  critico:    '#C06060',
-  reticente:  '#D4A85C',
-}
+import { ARCHETYPE_HEX as ARCH_HEX } from './quadrantChartHelpers'
 
 const ARCH_ORDER: ArchetypeCode[] = ['decisor', 'ambassador', 'adoptador', 'critico', 'reticente']
 
@@ -86,15 +79,15 @@ export function DepartmentOverviewChart({ stakeholders }: DepartmentOverviewChar
             })}
           </defs>
 
-          <line x1={LM} y1={TM} x2={LM} y2={TM + CH} stroke="#E2E8F0" strokeWidth={0.5} />
+          <line x1={LM} y1={TM} x2={LM} y2={TM + CH} stroke="var(--color-border)" strokeWidth={0.5} />
 
           {yTicks.map((tick) => {
             const ty = TM + CH - (tick / maxCount) * CH
             return (
               <g key={tick}>
                 <line x1={LM} y1={ty} x2={VBW - RM} y2={ty}
-                  stroke="#F1F5F9" strokeWidth={0.5} strokeDasharray="2 3" />
-                <text x={LM - 6} y={ty + 3} textAnchor="end" fontSize={9} fill="#CBD5E1"
+                  stroke="var(--color-border)" strokeWidth={0.5} strokeDasharray="2 3" opacity={0.5} />
+                <text x={LM - 6} y={ty + 3} textAnchor="end" fontSize={9} fill="var(--color-warm-100)"
                   fontFamily="ui-monospace,monospace">{tick}</text>
               </g>
             )
@@ -117,7 +110,7 @@ export function DepartmentOverviewChart({ stakeholders }: DepartmentOverviewChar
               <g key={dept}>
                 {isRisk && (
                   <rect x={bx - 3} y={topY - 2} width={BW + 6} height={TM + CH - topY + 2}
-                    fill="#C06060" opacity={0.06} rx={3} />
+                    fill={ARCH_HEX.critico} opacity={0.06} rx={3} />
                 )}
 
                 {rects.map(({ arch, segH, rectY }, ri) => (
@@ -145,7 +138,7 @@ export function DepartmentOverviewChart({ stakeholders }: DepartmentOverviewChar
 
                 <text x={bx + BW / 2} y={topY - 6}
                   textAnchor="middle" fontSize={10} fontWeight="700"
-                  fill={isRisk ? '#C06060' : '#64748B'}
+                  fill={isRisk ? ARCH_HEX.critico : 'var(--color-border)'}
                   fontFamily="ui-monospace,monospace"
                 >
                   {total}
@@ -160,13 +153,13 @@ export function DepartmentOverviewChart({ stakeholders }: DepartmentOverviewChar
                     <>
                       <text x={bx + BW / 2} y={TM + CH + 16}
                         textAnchor="middle" fontSize={10}
-                        fill={isRisk ? '#C06060' : '#64748B'} fontFamily="ui-sans-serif,sans-serif">
+                        fill={isRisk ? ARCH_HEX.critico : 'var(--color-border)'} fontFamily="ui-sans-serif,sans-serif">
                         {line1}
                       </text>
                       {line2 && (
                         <text x={bx + BW / 2} y={TM + CH + 29}
                           textAnchor="middle" fontSize={10}
-                          fill={isRisk ? '#C06060' : '#64748B'} fontFamily="ui-sans-serif,sans-serif">
+                          fill={isRisk ? ARCH_HEX.critico : 'var(--color-border)'} fontFamily="ui-sans-serif,sans-serif">
                           {line2}
                         </text>
                       )}
@@ -175,7 +168,7 @@ export function DepartmentOverviewChart({ stakeholders }: DepartmentOverviewChar
                 })()}
                 {isRisk && (
                   <circle cx={bx + BW / 2} cy={TM + CH + 36} r={2}
-                    fill="#C06060" opacity={0.7} />
+                    fill={ARCH_HEX.critico} opacity={0.7} />
                 )}
               </g>
             )

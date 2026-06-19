@@ -7,6 +7,13 @@ verify_jwt = false
 # de error estructurados en lugar de respuestas vacías de la plataforma.
 entrypoint = "./functions/ai-recommend/index.ts"
 
+[functions.log-audit-event]
+enabled = true
+verify_jwt = false
+# JWT validado manualmente en el handler para enriquecer el log con user_id/email/role
+# extraídos server-side. verify_jwt=false permite devolver errores 401 estructurados.
+entrypoint = "./functions/log-audit-event/index.ts"
+
 [functions.invite-user]
 enabled = true
 verify_jwt = true

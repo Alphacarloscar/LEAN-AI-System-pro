@@ -7,18 +7,21 @@ import {
   useMemo,
   type ReactNode,
 } from 'react'
+import { createPortal } from 'react-dom'
 
 // ─────────────────────────────────────────────────────────────
 // Toast — notificación efímera con cola FIFO (máx. 3)
 //
-// Uso:
-//   // 1. Envuelve el árbol en App.tsx:
-//   <ToastProvider><App /></ToastProvider>
-//
-//   // 2. En cualquier componente:
+// Uso básico (mensaje string):
 //   const { toast } = useToast()
 //   toast.success('Guardado correctamente')
-//   toast.warning('Revisa los datos', { persistent: true })
+//   toast.error('Algo salió mal')         // persistente por defecto
+//
+// Uso avanzado (nodo JSX custom — p.ej. ServiceErrorToast):
+//   const { addNode } = useToast()
+//   addNode(<ServiceErrorToast ... />, { persistent: true })
+//
+// Los toasts 'error' son siempre persistent: true (requieren cierre manual).
 // ─────────────────────────────────────────────────────────────
 
 export type ToastVariant = 'success' | 'error' | 'warning' | 'info'
@@ -29,6 +32,8 @@ export interface ToastItem {
   message:     string
   duration?:   number
   persistent?: boolean
+  /** Nodo JSX custom. Si está presente, reemplaza el layout estándar. */
+  node?:       ReactNode
 }
 
 // Duraciones por defecto por variante (ms)
@@ -80,14 +85,16 @@ export interface ShowToastOptions {
 
 // ── Contexto ──
 interface ToastContextValue {
-  toasts: ToastItem[]
-  remove: (id: string) => void
+  toasts:  ToastItem[]
+  remove:  (id: string) => void
   toast: {
     success: (msg: string, opts?: ShowToastOptions) => void
     error:   (msg: string, opts?: ShowToastOptions) => void
     warning: (msg: string, opts?: ShowToastOptions) => void
     info:    (msg: string, opts?: ShowToastOptions) => void
   }
+  /** Añade un toast con nodo JSX custom (p.ej. ServiceErrorToast). Retorna el id del toast creado. */
+  addNode: (node: ReactNode, opts?: ShowToastOptions) => string
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null)
@@ -104,18 +111,26 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     variant: ToastVariant,
     message: string,
     opts: ShowToastOptions = {},
-  ) => {
+    node?: ReactNode,
+  ): string => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`
-    const duration = opts.persistent
+    // error siempre persistente — requiere cierre manual explícito
+    const isPersistent = opts.persistent ?? (variant === 'error')
+    const duration = isPersistent
       ? undefined
       : (opts.duration ?? DEFAULT_DURATIONS[variant])
 
     setToasts((prev) => {
-      const next = [...prev, { id, variant, message, duration, persistent: opts.persistent }]
+      const next = [...prev, { id, variant, message, duration, persistent: isPersistent, node }]
       // Cola FIFO: si supera MAX_TOASTS, descarta el más antiguo
       return next.length > MAX_TOASTS ? next.slice(next.length - MAX_TOASTS) : next
     })
+    return id
   }, [])
+
+  const addNode = useCallback((node: ReactNode, opts: ShowToastOptions = {}): string => {
+    return add('error', '', { persistent: true, ...opts }, node)
+  }, [add])
 
   const toast = useMemo(() => ({
     success: (msg: string, opts?: ShowToastOptions) => add('success', msg, opts),
@@ -125,7 +140,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }), [add])
 
   return (
-    <ToastContext.Provider value={{ toasts, remove, toast }}>
+    <ToastContext.Provider value={{ toasts, remove, toast, addNode }}>
       {children}
       <ToastContainer toasts={toasts} onRemove={remove} />
     </ToastContext.Provider>
@@ -133,6 +148,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 // ── Hook público ──
+// eslint-disable-next-line react-refresh/only-export-components
 export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext)
   if (!ctx) {
@@ -146,7 +162,7 @@ function ToastItemComponent({
   item,
   onRemove,
 }: {
-  item: ToastItem
+  item:     ToastItem
   onRemove: (id: string) => void
 }) {
   useEffect(() => {
@@ -154,6 +170,11 @@ function ToastItemComponent({
     const t = setTimeout(() => onRemove(item.id), item.duration)
     return () => clearTimeout(t)
   }, [item, onRemove])
+
+  // Nodo custom (ServiceErrorToast u otros): renderiza directo
+  if (item.node) {
+    return <div className="animate-fade-in">{item.node}</div>
+  }
 
   return (
     <div
@@ -168,7 +189,6 @@ function ToastItemComponent({
     >
       <span className="shrink-0 mt-0.5" aria-hidden="true">{icons[item.variant]}</span>
       <p className="flex-1 text-sm text-lean-black dark:text-warm-50">{item.message}</p>
-      {/* X siempre visible en persistent; también presente en auto-close para cierre manual */}
       <button
         onClick={() => onRemove(item.id)}
         aria-label="Cerrar"
@@ -182,9 +202,11 @@ function ToastItemComponent({
   )
 }
 
-// ── Contenedor de toasts — responsive ──
-// Mobile (< sm): top-center, full width menos 16px padding
-// Desktop (>= sm): bottom-right
+// ── Contenedor de toasts — Portal + responsive ──
+// Renderiza fuera del árbol de stacking contexts via Portal para evitar
+// conflictos con z-index del chasis.
+// Mobile: top justo bajo el header (respeta --header-h), centrado.
+// Desktop (>= sm): fixed bottom-right.
 export function ToastContainer({
   toasts,
   onRemove,
@@ -194,19 +216,24 @@ export function ToastContainer({
 }) {
   if (toasts.length === 0) return null
 
-  return (
+  const container = (
     <div
       className={[
-        'fixed z-toast flex flex-col gap-2',
-        // Mobile: top-center
-        'top-4 left-1/2 -translate-x-1/2 items-center',
-        // Desktop: bottom-right (reset mobile transforms)
+        'fixed z-toast flex flex-col gap-2 pointer-events-none',
+        // Mobile: centrado bajo el header
+        'left-1/2 -translate-x-1/2 items-center',
+        // Desktop: bottom-right
         'sm:top-auto sm:bottom-4 sm:left-auto sm:right-4 sm:translate-x-0 sm:items-end',
       ].join(' ')}
+      style={{ top: 'calc(var(--header-h, 56px) + 8px)' }}
     >
       {toasts.map((t) => (
-        <ToastItemComponent key={t.id} item={t} onRemove={onRemove} />
+        <div key={t.id} className="pointer-events-auto">
+          <ToastItemComponent item={t} onRemove={onRemove} />
+        </div>
       ))}
     </div>
   )
+
+  return createPortal(container, document.body)
 }

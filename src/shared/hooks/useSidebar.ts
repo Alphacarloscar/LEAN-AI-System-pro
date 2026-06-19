@@ -7,7 +7,7 @@ interface SidebarState {
 }
 
 export const useSidebar = create<SidebarState>((set) => ({
-  open: true,
+  open: false,
   setOpen: (open) => set({ open }),
   toggle:  ()    => set((s) => ({ open: !s.open })),
 }))

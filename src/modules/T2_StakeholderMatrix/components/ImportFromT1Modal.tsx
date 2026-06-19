@@ -17,6 +17,7 @@
 // ============================================================
 
 import { useState }                       from 'react'
+import { Check }                          from 'lucide-react'
 import { useT1Store }                     from '@/modules/T1_MaturityRadar/store'
 import { useT2Store }                     from '../store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
@@ -169,8 +170,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
 
             {interviewees.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-                <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
-                  flex items-center justify-center text-2xl">◎</div>
+                <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg></div>
                 <p className="text-sm font-medium text-text-muted">Sin entrevistados en T1</p>
                 <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
                   Añade entrevistados en el Madurez Radar (T1) primero para importarlos aquí.
@@ -269,8 +269,8 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
                         </p>
                         <p className="text-[10px] text-text-subtle">{person.role}</p>
                       </div>
-                      <span className="text-[9px] font-semibold text-success-dark shrink-0">
-                        Ya en T2 ✓
+                      <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-success-dark shrink-0">
+                        Ya en T2 <Check size={10} strokeWidth={1.75} />
                       </span>
                     </div>
                   ))}
@@ -281,9 +281,8 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
       ) : (
         /* Importación completada */
         <div className="flex flex-col items-center justify-center py-8 px-4 text-center gap-5">
-          <div className="h-14 w-14 rounded-3xl bg-success-light flex items-center
-            justify-center text-2xl text-success-dark">
-            ✓
+          <div className="h-14 w-14 rounded-3xl bg-success-light flex items-center justify-center text-success-dark">
+            <Check size={28} strokeWidth={1.75} />
           </div>
           <div>
             <p className="text-base font-semibold text-lean-black dark:text-gray-100 mb-1">

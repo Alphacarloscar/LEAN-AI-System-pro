@@ -1,9 +1,30 @@
 // ── T8 Tab 1: Timeline ────────────────────────────────────────
 
 import { useState } from 'react'
+import { Megaphone, GraduationCap, BarChart2, Handshake, Zap, Newspaper, ClipboardList,
+  Mail, Building2, MessageSquare, Monitor, Video, FileText,
+  Users, Target, User } from 'lucide-react'
 import { PHASE_CFG, TYPE_CFG, CHANNEL_CFG, PRIORITY_CFG } from '../T8Generators'
 import type { CommAction, CommPhase } from '../types'
 import { Card, Badge } from '@shared/design-system/components'
+
+const TYPE_ICON_MAP: Record<string, React.ReactElement> = {
+  megaphone:       <Megaphone    size={12} strokeWidth={1.75} />,
+  'graduation-cap':<GraduationCap size={12} strokeWidth={1.75} />,
+  'bar-chart-2':   <BarChart2    size={12} strokeWidth={1.75} />,
+  handshake:       <Handshake    size={12} strokeWidth={1.75} />,
+  zap:             <Zap          size={12} strokeWidth={1.75} />,
+  newspaper:       <Newspaper    size={12} strokeWidth={1.75} />,
+  'clipboard-list':<ClipboardList size={12} strokeWidth={1.75} />,
+}
+const CHANNEL_ICON_MAP: Record<string, React.ReactElement> = {
+  mail:            <Mail         size={12} strokeWidth={1.75} />,
+  building:        <Building2    size={12} strokeWidth={1.75} />,
+  'message-square':<MessageSquare size={12} strokeWidth={1.75} />,
+  monitor:         <Monitor      size={12} strokeWidth={1.75} />,
+  video:           <Video        size={12} strokeWidth={1.75} />,
+  'file-text':     <FileText     size={12} strokeWidth={1.75} />,
+}
 
 export function TimelineTab({ actions }: { actions: CommAction[] }) {
   const [activePhase, setActivePhase] = useState<CommPhase | 'all'>('all')
@@ -65,8 +86,8 @@ export function TimelineTab({ actions }: { actions: CommAction[] }) {
                 return (
                   <Card key={action.id} variant="outlined" padding="none" className="rounded-xl p-5">
                     <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-base">
-                        {typeCfg.icon}
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-text-subtle">
+                        {TYPE_ICON_MAP[typeCfg.icon] ?? <BarChart2 size={14} strokeWidth={1.75} />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-3 flex-wrap mb-1.5">
@@ -82,10 +103,10 @@ export function TimelineTab({ actions }: { actions: CommAction[] }) {
                         <p className="text-xs text-text-muted leading-relaxed mb-3">{action.message}</p>
 
                         <div className="flex flex-wrap gap-2">
-                          <Badge variant="default" shape="pill" size="xs">👥 {action.audience}</Badge>
-                          <Badge variant="default" shape="pill" size="xs">{channelCfg.icon} {channelCfg.label}</Badge>
-                          <Badge variant="default" shape="pill" size="xs">🎯 {typeCfg.label}</Badge>
-                          <Badge variant="default" shape="pill" size="xs">👤 {action.owner}</Badge>
+                          <Badge variant="default" shape="pill" size="xs"><span className="inline-flex items-center gap-1"><Users size={10} strokeWidth={1.75} />{action.audience}</span></Badge>
+                          <Badge variant="default" shape="pill" size="xs"><span className="inline-flex items-center gap-1">{CHANNEL_ICON_MAP[channelCfg.icon] ?? <Mail size={10} strokeWidth={1.75} />}{channelCfg.label}</span></Badge>
+                          <Badge variant="default" shape="pill" size="xs"><span className="inline-flex items-center gap-1"><Target size={10} strokeWidth={1.75} />{typeCfg.label}</span></Badge>
+                          <Badge variant="default" shape="pill" size="xs"><span className="inline-flex items-center gap-1"><User size={10} strokeWidth={1.75} />{action.owner}</span></Badge>
                         </div>
 
                         {action.materials && action.materials.length > 0 && (

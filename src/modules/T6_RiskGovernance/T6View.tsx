@@ -9,6 +9,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect } from 'react'
+import { AlertCircle, Circle, FileText, Scale } from 'lucide-react'
 import { useT4Store }        from '@/modules/T4_UseCasePriorityBoard'
 import { useT5Store }        from '@/modules/T5_AITaxonomyCanvas'
 import { useT6Store }        from './store'
@@ -87,7 +88,7 @@ export function T6View({
       {/* ── Header ── */}
       <ToolHeader
         onBack={onBack}
-        backLabel="Volver"
+        backLabel="Volver al dashboard"
         toolCode="T6"
         title="Risk &amp; Governance"
         subtitle={companyName}
@@ -98,12 +99,12 @@ export function T6View({
             <div className="flex items-center gap-2 flex-wrap">
               {highRisk > 0 && (
                 <Badge variant="warning" shape="pill">
-                  🔴 {highRisk} caso{highRisk > 1 ? 's' : ''} alto riesgo
+                  <span className="inline-flex items-center gap-1"><AlertCircle size={12} strokeWidth={1.75} /> {highRisk} caso{highRisk > 1 ? 's' : ''} alto riesgo</span>
                 </Badge>
               )}
               {unclassified > 0 && (
                 <Badge variant="default" shape="pill">
-                  ⬜ {unclassified} sin clasificar
+                  <span className="inline-flex items-center gap-1"><Circle size={12} strokeWidth={1.75} /> {unclassified} sin clasificar</span>
                 </Badge>
               )}
             </div>
@@ -121,8 +122,8 @@ export function T6View({
             value={tab}
             onChange={(v) => setTab(v as T6Tab)}
             tabs={[
-              { value: 'politica', label: '📄 Política IA Corporativa' },
-              { value: 'riesgos',  label: '⚖️ Dashboard AI Act', badge: highRisk > 0 ? `${highRisk} alto` : undefined },
+              { value: 'politica', label: 'Política IA Corporativa', icon: <FileText size={14} strokeWidth={1.75} /> },
+              { value: 'riesgos',  label: 'Dashboard AI Act', icon: <Scale size={14} strokeWidth={1.75} />, badge: highRisk > 0 ? `${highRisk} alto` : undefined },
             ]}
           />
         </div>

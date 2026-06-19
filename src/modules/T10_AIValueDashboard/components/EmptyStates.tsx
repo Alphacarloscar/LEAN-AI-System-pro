@@ -6,10 +6,7 @@ export function EmptyNoProject() {
   return (
     <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center px-6">
       <div className="text-center max-w-sm space-y-4">
-        <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto"
-          style={{ background: 'rgba(200,134,10,0.06)', border: '1.5px solid rgba(200,134,10,0.18)' }}
-        >
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto bg-gold/5 border border-gold/20">
           <svg width="22" height="22" viewBox="0 0 14 14" fill="none" stroke="#C8860A" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
             <rect x="2" y="3" width="10" height="10" rx="1" />
             <path d="M5 13V9h4v4M2 6h10" />
@@ -36,10 +33,7 @@ export function EmptyNoData({ onNavigate }: { onNavigate: (path: string) => void
     <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center px-6">
       <div className="text-center max-w-md space-y-5">
         {/* Icono */}
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
-          style={{ background: 'rgba(200,134,10,0.06)', border: '1.5px solid rgba(200,134,10,0.18)' }}
-        >
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto bg-gold/5 border border-gold/20">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C8860A" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
             <path d="M12 8v4M12 16h.01" strokeWidth="1.8" />
@@ -56,11 +50,8 @@ export function EmptyNoData({ onNavigate }: { onNavigate: (path: string) => void
           </p>
         </div>
         {/* Progress de herramientas completadas */}
-        <div
-          className="rounded-xl px-4 py-3 text-left space-y-1.5"
-          style={{ background: 'rgba(200,134,10,0.04)', border: '1px solid rgba(200,134,10,0.14)' }}
-        >
-          <p className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: '#C8860A' }}>
+        <div className="rounded-xl px-4 py-3 text-left space-y-1.5 bg-gold/[0.04] border border-gold/15">
+          <p className="text-[10px] font-mono uppercase tracking-widest mb-2 text-gold">
             Ruta de activación recomendada
           </p>
           {[
@@ -71,12 +62,11 @@ export function EmptyNoData({ onNavigate }: { onNavigate: (path: string) => void
           ].map((step, i) => (
             <div key={i} className="flex items-center gap-2.5">
               <div
-                className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-bold"
-                style={{
-                  background: step.active ? '#C8860A' : 'rgba(200,134,10,0.08)',
-                  color:      step.active ? '#fff'    : '#C8860A',
-                  border:     step.active ? 'none'   : '1px solid rgba(200,134,10,0.25)',
-                }}
+                className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-bold ${
+                  step.active
+                    ? 'bg-gold text-white'
+                    : 'bg-gold/8 text-gold border border-gold/25'
+                }`}
               >
                 {i + 1}
               </div>
@@ -89,8 +79,7 @@ export function EmptyNoData({ onNavigate }: { onNavigate: (path: string) => void
         {/* CTA */}
         <button
           onClick={() => onNavigate('/t1')}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 shadow-sm"
-          style={{ background: '#C8860A' }}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gold transition-all hover:opacity-90 shadow-sm"
         >
           Comenzar con T1 — Radar de Madurez
           <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

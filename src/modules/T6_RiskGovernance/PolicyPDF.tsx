@@ -41,7 +41,7 @@ export interface PolicyPDFData {
 }
 
 function statusLabel(status: string): string {
-  return status === 'go' ? '✓ Aprobado' : '⟳ En piloto'
+  return status === 'go' ? '✓ Aprobado' : '→ En piloto'
 }
 
 // ── Componente PDF ─────────────────────────────────────────────
@@ -296,7 +296,7 @@ export function PolicyDownloadButton({ data }: PolicyDownloadButtonProps) {
                 Generando PDF…
               </>
             ) : error ? (
-              '⚠ Error al generar'
+              '! Error al generar'
             ) : (
               '↓ Descargar PDF'
             )}

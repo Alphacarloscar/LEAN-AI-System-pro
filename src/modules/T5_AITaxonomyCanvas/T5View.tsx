@@ -63,7 +63,7 @@ export function T5View({
       {/* ── Header ── */}
       <ToolHeader
         onBack={onBack}
-        backLabel="Volver"
+        backLabel="Volver al dashboard"
         toolCode="T5"
         title="AI Domain Architecture Canvas"
         subtitle={companyName}

@@ -11,7 +11,8 @@ import {
   ReferenceLine,
   type TooltipProps,
 } from 'recharts'
-import { ChartWrapper, CHART_PALETTE, CHART_SERIES_COLORS } from './ChartWrapper'
+import { ChartWrapper, CHART_SERIES_COLORS } from './ChartWrapper'
+import { getThemeColor } from '@shared/design-system/charts/chartTokens'
 import { Table } from '@shared/design-system/components'
 
 // ─────────────────────────────────────────────────────────────
@@ -86,9 +87,9 @@ function getThresholdColor(
   thresholdGood: number,
   thresholdWarn: number
 ): string {
-  if (value >= thresholdGood) return CHART_PALETTE.successDark
-  if (value >= thresholdWarn) return CHART_PALETTE.warningDark
-  return CHART_PALETTE.dangerDark
+  if (value >= thresholdGood) return getThemeColor('success-dark')
+  if (value >= thresholdWarn) return getThemeColor('warning-dark')
+  return getThemeColor('danger-dark')
 }
 
 // ── Tabla accesible autogenerada ─────────────────────────────────
@@ -157,7 +158,7 @@ export function LeanBarChart({
       >
         <CartesianGrid
           strokeDasharray="4 2"
-          stroke={CHART_PALETTE.border}
+          stroke={getThemeColor('border')}
           vertical={!isHorizontal}
           horizontal={isHorizontal || !isHorizontal}
         />
@@ -168,14 +169,14 @@ export function LeanBarChart({
             dataKey="label"
             type="category"
             width={92}
-            tick={{ fill: CHART_PALETTE.muted, fontSize: 11, fontFamily: 'Inter, sans-serif' }}
+            tick={{ fill: getThemeColor('text-muted'), fontSize: 11, fontFamily: 'Inter, sans-serif' }}
             axisLine={false}
             tickLine={false}
           />
         ) : (
           <XAxis
             dataKey="label"
-            tick={{ fill: CHART_PALETTE.muted, fontSize: 11, fontFamily: 'Inter, sans-serif' }}
+            tick={{ fill: getThemeColor('text-muted'), fontSize: 11, fontFamily: 'Inter, sans-serif' }}
             axisLine={false}
             tickLine={false}
           />
@@ -185,14 +186,14 @@ export function LeanBarChart({
         {isHorizontal ? (
           <XAxis
             type="number"
-            tick={{ fill: CHART_PALETTE.subtle, fontSize: 10, fontFamily: 'Inter, sans-serif' }}
+            tick={{ fill: getThemeColor('text-subtle'), fontSize: 10, fontFamily: 'Inter, sans-serif' }}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v) => `${v}${unit}`}
           />
         ) : (
           <YAxis
-            tick={{ fill: CHART_PALETTE.subtle, fontSize: 10, fontFamily: 'Inter, sans-serif' }}
+            tick={{ fill: getThemeColor('text-subtle'), fontSize: 10, fontFamily: 'Inter, sans-serif' }}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v) => `${v}${unit}`}
@@ -200,13 +201,13 @@ export function LeanBarChart({
           />
         )}
 
-        <Tooltip content={<CustomTooltip unit={unit} />} cursor={{ fill: CHART_PALETTE.surface }} />
+        <Tooltip content={<CustomTooltip unit={unit} />} cursor={{ fill: getThemeColor('surface') }} />
 
         {keys.length > 1 && (
           <Legend
             wrapperStyle={{
               fontSize:   '11px',
-              color:      CHART_PALETTE.muted,
+              color:      getThemeColor('text-muted'),
               fontFamily: 'Inter, sans-serif',
               paddingTop: '12px',
             }}
@@ -217,13 +218,13 @@ export function LeanBarChart({
         {referenceValue !== undefined && (
           <ReferenceLine
             {...(isHorizontal ? { x: referenceValue } : { y: referenceValue })}
-            stroke={CHART_PALETTE.navy}
+            stroke={getThemeColor('navy')}
             strokeDasharray="6 3"
             strokeWidth={1.5}
             label={{
               value:    referenceLabel,
               position: 'insideTopRight',
-              fill:     CHART_PALETTE.navy,
+              fill:     getThemeColor('navy'),
               fontSize: 10,
               fontFamily: 'Inter, sans-serif',
             }}

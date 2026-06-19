@@ -22,7 +22,7 @@ export const AIACT_RISK_CONFIG: Record<AIActRiskLevel, {
     badgeBg:     'bg-red-100 dark:bg-red-900/30',
     badgeText:   'text-red-700 dark:text-red-300',
     hex:         '#DC2626',
-    icon:        '🚫',
+    icon:        'ban',
     description: 'Sistema potencialmente en categoría prohibida (Art. 5 AI Act). Requiere revisión legal inmediata antes de cualquier desarrollo o despliegue.',
   },
   alto: {
@@ -31,7 +31,7 @@ export const AIACT_RISK_CONFIG: Record<AIActRiskLevel, {
     badgeBg:     'bg-orange-100 dark:bg-orange-900/30',
     badgeText:   'text-orange-700 dark:text-orange-300',
     hex:         '#EA580C',
-    icon:        '🔴',
+    icon:        'alert-circle',
     description: 'Sistema de alto riesgo según Annex III del AI Act. Requiere evaluación de conformidad, documentación de riesgos y supervisión humana antes del despliegue (obligatorio antes de agosto 2026).',
   },
   limitado: {
@@ -40,7 +40,7 @@ export const AIACT_RISK_CONFIG: Record<AIActRiskLevel, {
     badgeBg:     'bg-yellow-100 dark:bg-yellow-900/20',
     badgeText:   'text-yellow-700 dark:text-yellow-300',
     hex:         '#D97706',
-    icon:        '🟡',
+    icon:        'alert-triangle',
     description: 'Obligaciones de transparencia (Art. 50). Los usuarios deben saber que interactúan con IA. Requisitos menores de documentación.',
   },
   minimo: {
@@ -49,7 +49,7 @@ export const AIACT_RISK_CONFIG: Record<AIActRiskLevel, {
     badgeBg:     'bg-green-100 dark:bg-green-900/20',
     badgeText:   'text-green-700 dark:text-green-300',
     hex:         '#16A34A',
-    icon:        '🟢',
+    icon:        'check-circle',
     description: 'Sin requisitos regulatorios específicos del AI Act. Recomendado documentar en el catálogo corporativo de IA como buena práctica de gobernanza.',
   },
   sin_clasificar: {
@@ -58,7 +58,7 @@ export const AIACT_RISK_CONFIG: Record<AIActRiskLevel, {
     badgeBg:     'bg-gray-100 dark:bg-gray-800',
     badgeText:   'text-gray-500 dark:text-gray-400',
     hex:         '#94A3B8',
-    icon:        '⬜',
+    icon:        'circle',
     description: 'Pendiente de clasificación. Completa el cuestionario AI Act en la tab Regulatorio de cada caso de uso en T4.',
   },
 }

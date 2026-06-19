@@ -2,6 +2,7 @@
 // T4 — ContextoTabContent (T1/T2 context)
 // ============================================================
 
+import { Check } from 'lucide-react'
 import { Badge, Card } from '@shared/design-system/components'
 import type { UseCase } from '../types'
 import type { Stakeholder } from '@/modules/T2_StakeholderMatrix/types'
@@ -50,7 +51,7 @@ export function ContextoTabContent({ useCase, catHex, autoT1Context, autoT2Conte
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-success-dark">✓ Madurez IA suficiente en todas las dimensiones</p>
+              <p className="text-xs text-success-dark flex items-center gap-1"><Check size={12} strokeWidth={1.75} /> Madurez IA suficiente en todas las dimensiones</p>
             )}
           </>
         ) : (
@@ -69,7 +70,7 @@ export function ContextoTabContent({ useCase, catHex, autoT1Context, autoT2Conte
             {useCase.t2Context.championArchetype && (
               <div>
                 <p className="text-[10px] font-mono text-text-subtle mb-0.5">Champion</p>
-                <p className="text-xs font-medium text-success-dark">✓ {useCase.t2Context.championArchetype}</p>
+                <p className="text-xs font-medium text-success-dark flex items-center gap-1"><Check size={12} strokeWidth={1.75} /> {useCase.t2Context.championArchetype}</p>
               </div>
             )}
             {useCase.t2Context.blockerArchetypes?.length ? (
@@ -89,7 +90,7 @@ export function ContextoTabContent({ useCase, catHex, autoT1Context, autoT2Conte
             {autoT2Context.champions.length > 0 && (
               <div>
                 <p className="text-[10px] font-mono text-success-dark mb-1">Champions potenciales</p>
-                {autoT2Context.champions.map((s) => <p key={s.id} className="text-xs font-medium text-success-dark">✓ {s.name} · {s.role}</p>)}
+                {autoT2Context.champions.map((s) => <p key={s.id} className="text-xs font-medium text-success-dark flex items-center gap-1"><Check size={12} strokeWidth={1.75} /> {s.name} · {s.role}</p>)}
               </div>
             )}
             {autoT2Context.blockers.length > 0 && (

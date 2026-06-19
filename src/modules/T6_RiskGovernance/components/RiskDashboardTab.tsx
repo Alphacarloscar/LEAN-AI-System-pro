@@ -3,11 +3,28 @@
 // ============================================================
 
 import { useState, useMemo } from 'react'
+import { Ban, AlertCircle, AlertTriangle, CheckCircle, Circle, AlertTriangle as AT } from 'lucide-react'
 import { useT4Store }    from '@/modules/T4_UseCasePriorityBoard'
 import { useT2Store }    from '@/modules/T2_StakeholderMatrix'
 import { AIACT_RISK_CONFIG } from '../constants'
 import type { AIActRiskLevel } from '@/modules/T4_UseCasePriorityBoard/types'
 import { Button, Card } from '@shared/design-system/components'
+
+const RISK_ICON_MAP = {
+  ban:              <Ban           size={20} strokeWidth={1.75} />,
+  'alert-circle':   <AlertCircle  size={20} strokeWidth={1.75} />,
+  'alert-triangle': <AlertTriangle size={20} strokeWidth={1.75} />,
+  'check-circle':   <CheckCircle  size={20} strokeWidth={1.75} />,
+  circle:           <Circle       size={20} strokeWidth={1.75} />,
+} as const
+
+const RISK_ICON_SM = {
+  ban:              <Ban           size={14} strokeWidth={1.75} />,
+  'alert-circle':   <AlertCircle  size={14} strokeWidth={1.75} />,
+  'alert-triangle': <AlertTriangle size={14} strokeWidth={1.75} />,
+  'check-circle':   <CheckCircle  size={14} strokeWidth={1.75} />,
+  circle:           <Circle       size={14} strokeWidth={1.75} />,
+} as const
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -44,7 +61,7 @@ function ShadowAICard() {
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-2.5">
-          <span className="text-xl">⚠️</span>
+          <AT size={20} strokeWidth={1.75} style={{ color: '#C8860A' }} className="shrink-0" />
           <div>
             <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: '#C8860A' }}>
               Riesgo de Shadow AI
@@ -140,7 +157,7 @@ export function RiskDashboardTab() {
               ].join(' ')}
               style={{ borderColor: isActive ? cfg.hex : undefined }}
             >
-              <p className="text-2xl mb-1">{cfg.icon}</p>
+              <span className="block mb-1" style={{ color: cfg.hex }}>{RISK_ICON_MAP[cfg.icon as keyof typeof RISK_ICON_MAP]}</span>
               <p className="text-2xl font-bold tabular-nums text-lean-black dark:text-gray-100">{count}</p>
               <p className={`text-[10px] font-semibold ${isActive ? cfg.badgeText : 'text-text-muted'}`}>
                 {cfg.shortLabel}
@@ -216,7 +233,7 @@ export function RiskDashboardTab() {
                     </td>
                     <td className="py-2.5 px-3">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold ${riskCfg.badgeBg} ${riskCfg.badgeText}`}>
-                        {riskCfg.icon} {riskCfg.shortLabel}
+                        {RISK_ICON_SM[riskCfg.icon as keyof typeof RISK_ICON_SM]} {riskCfg.shortLabel}
                       </span>
                     </td>
                   </tr>

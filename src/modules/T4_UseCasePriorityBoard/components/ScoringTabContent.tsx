@@ -2,6 +2,7 @@
 // T4 — ScoringTabContent
 // ============================================================
 
+import { Check, X } from 'lucide-react'
 import { Button, Card } from '@shared/design-system/components'
 import { DIMENSION_CONFIG, STATUS_CONFIG, STATUS_ORDER } from '../constants'
 import type { UseCase, UseCaseScores } from '../types'
@@ -128,8 +129,13 @@ export function ScoringTabContent({
           }`}>
             <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">Decisión go/no-go</p>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className={`text-xs font-bold ${useCase.goNoGo.decision === 'go' ? 'text-success-dark' : useCase.goNoGo.decision === 'no_go' ? 'text-danger-dark' : 'text-warning-dark'}`}>
-                {useCase.goNoGo.decision === 'go' ? '✓ GO' : useCase.goNoGo.decision === 'no_go' ? '✕ NO-GO' : '◎ PENDIENTE'}
+              <span className={`inline-flex items-center gap-1 text-xs font-bold ${useCase.goNoGo.decision === 'go' ? 'text-success-dark' : useCase.goNoGo.decision === 'no_go' ? 'text-danger-dark' : 'text-warning-dark'}`}>
+                {useCase.goNoGo.decision === 'go'
+                  ? <><Check size={14} strokeWidth={1.75} /> GO</>
+                  : useCase.goNoGo.decision === 'no_go'
+                  ? <><X size={14} strokeWidth={1.75} /> NO-GO</>
+                  : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg> PENDIENTE</>
+                }
               </span>
               {useCase.goNoGo.decidedBy && <span className="text-[10px] text-text-subtle">· {useCase.goNoGo.decidedBy}</span>}
             </div>

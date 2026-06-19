@@ -17,7 +17,7 @@
 //   <main>          — <Outlet /> con la vista activa
 // ============================================================
 
-import { useEffect }                              from 'react'
+import { useEffect, useRef }                      from 'react'
 import { Spinner }                                from '@shared/design-system/components'
 import { Outlet }                                 from 'react-router-dom'
 import type { AppLayoutContext }                  from './AppLayout.hooks'
@@ -25,8 +25,6 @@ import { AppSidebar }                             from '@/shared/components/AppS
 import { AlphaLogo }                              from '@/shared/components/AlphaLogo'
 import { EngagementSelector }                     from '@/shared/components/EngagementSelector'
 import { useDarkMode }                            from '@/shared/hooks/useDarkMode'
-import { useMediaQuery }                          from '@/shared/hooks/useMediaQuery'
-import { useSidebar }                             from '@/shared/hooks/useSidebar'
 import { useAuthStore }                           from '@/modules/Auth'
 import type { SessionRecoveryState }              from '@/modules/Auth/store'
 import { useEngagementStore }                     from '@/modules/Engagement/store'
@@ -210,20 +208,28 @@ function SessionRecoveryBanner({ state, onReLogin }: {
 // ── Layout principal ──────────────────────────────────────────
 export function AppLayout() {
   const { dark, toggle }                        = useDarkMode()
-  const isLg                                    = useMediaQuery('(min-width: 1024px)')
-  const { open: sidebarOpen }                   = useSidebar()
   const { user, sessionRecoveryState, clearSessionExpired } = useAuthStore()
   const { loadMyProjects }                      = useEngagementStore()
   const navigate                                = useNavigate()
 
   // Cargar engagements del usuario en cuanto esté autenticado
-  // [user?.id] intencional: solo re-cargar cuando cambia el usuario, no en cada re-render de auth
-  // loadMyProjects es stable Zustand action; user (objeto) se omite para evitar re-fetch por
-  // cambios de referencia que no implican cambio de identidad
   useEffect(() => {
     if (user) loadMyProjects()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
+
+  // ResizeObserver: mide la altura real del header y la expone como --header-h
+  const headerRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+    const observer = new ResizeObserver(([entry]) => {
+      const height = entry.contentRect.height
+      document.documentElement.style.setProperty('--header-h', `${height}px`)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   function handleReLogin() {
     clearSessionExpired()
@@ -232,10 +238,20 @@ export function AppLayout() {
 
   return (
     <ProjectRuntimeProvider>
-      <div className="min-h-screen bg-surface dark:bg-warm-900">
+      <div className="flex flex-col min-h-screen bg-surface dark:bg-warm-900">
+
+        {/* ── Skip link — accesibilidad teclado ── */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[200]
+            focus:px-4 focus:py-2 focus:rounded-lg focus:bg-gold focus:text-white
+            focus:text-sm focus:font-semibold focus:shadow-lg focus:outline-none"
+        >
+          Saltar al contenido principal
+        </a>
 
         {/* ── Header sticky — siempre visible ── */}
-        <header className={[
+        <header ref={headerRef} className={[
           'sticky top-0 z-20 flex items-center justify-between px-6 py-3 gap-4',
           'backdrop-blur-sm border-b',
           dark
@@ -266,7 +282,11 @@ export function AppLayout() {
         <AppSidebar />
 
         {/* ── Contenido de la ruta activa ── */}
-        <main className={isLg && sidebarOpen ? 'ml-64 transition-[margin] duration-300' : isLg ? 'ml-0 transition-[margin] duration-300' : undefined}>
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 focus:outline-none"
+        >
           <ErrorBoundary>
             <Outlet context={{ dark } satisfies AppLayoutContext} />
           </ErrorBoundary>

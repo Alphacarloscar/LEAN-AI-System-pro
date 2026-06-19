@@ -13,14 +13,18 @@ import type { T5Canvas, T5DomainCode, T5DomainAssessment, T5MaturityLevel } from
 // ── Mapeo BD → dominio ───────────────────────────────────────
 
 function rowToCanvas(row: T5CanvasRow): T5Canvas {
+  const domains = (row.domains ?? {}) as unknown as Record<T5DomainCode, T5DomainAssessment>
+  const rawSeq  = (row.activation_sequence ?? []) as T5DomainCode[]
+  // Guard: drop any code that doesn't exist in domains (stale BD data or schema drift)
+  const activationSequence = rawSeq.filter(code => code in domains)
   return {
     id:                 row.id,
     companyName:        row.company_name,
     createdAt:          row.created_at ?? '',
     updatedAt:          row.updated_at ?? '',
-    domains:            (row.domains ?? {}) as unknown as Record<T5DomainCode, T5DomainAssessment>,
+    domains,
     maturityLevel:      row.maturity_level as T5MaturityLevel,
-    activationSequence: (row.activation_sequence ?? []) as T5DomainCode[],
+    activationSequence,
     notes:              row.notes ?? undefined,
   }
 }

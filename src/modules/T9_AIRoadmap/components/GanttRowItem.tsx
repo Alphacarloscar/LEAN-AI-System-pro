@@ -7,6 +7,7 @@
 
 import type { ReactNode } from 'react'
 import { Badge }          from '@shared/design-system/components'
+import { useUnsavedGuard } from '@/shared/hooks/useUnsavedGuard'
 import {
   DS,
   mapAIActRisk,
@@ -27,6 +28,7 @@ interface GanttRowProps {
   row:           GanttRow
   isEditing:     boolean
   editValue:     string
+  isDirty:       boolean
   onEditStart:   (current: string) => void
   onEditChange:  (v: string) => void
   onEditSave:    () => void
@@ -35,8 +37,9 @@ interface GanttRowProps {
 // ── Componente ────────────────────────────────────────────────
 
 export function GanttRowItem({
-  row, isEditing, editValue, onEditStart, onEditChange, onEditSave,
+  row, isEditing, editValue, isDirty, onEditStart, onEditChange, onEditSave,
 }: GanttRowProps) {
+  useUnsavedGuard(isDirty, 'T9_GanttRowItem')
 
   let name:          string
   let department:    string

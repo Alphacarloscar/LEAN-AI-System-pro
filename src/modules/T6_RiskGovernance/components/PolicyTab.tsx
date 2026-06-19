@@ -2,6 +2,7 @@
 // PolicyTab — Tab 1 of T6View: Corporate AI Policy document
 // ============================================================
 
+import { AlertTriangle, Check, RefreshCw, Ban, AlertCircle, CheckCircle, Circle } from 'lucide-react'
 import { useT4Store }        from '@/modules/T4_UseCasePriorityBoard'
 import { useT5Store }        from '@/modules/T5_AITaxonomyCanvas'
 import { useT6Store }        from '../store'
@@ -14,6 +15,14 @@ import { PolicyDownloadButton } from '../PolicyPDF'
 import { PersistenceBanner } from '@/shared/components/PersistenceBanner'
 import { Badge, StreamingIndicator } from '@shared/design-system/components'
 
+const RISK_ICON_SM = {
+  ban:              <Ban           size={12} strokeWidth={1.75} />,
+  'alert-circle':   <AlertCircle  size={12} strokeWidth={1.75} />,
+  'alert-triangle': <AlertTriangle size={12} strokeWidth={1.75} />,
+  'check-circle':   <CheckCircle  size={12} strokeWidth={1.75} />,
+  circle:           <Circle       size={12} strokeWidth={1.75} />,
+} as const
+
 interface PolicyTabProps {
   companyName:  string
   engagementId: string | null
@@ -25,7 +34,8 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
   const { canvas }     = useT5Store()
   const { generatedPolicy, clearGeneratedPolicy, persistenceStatus, persistenceError, retrySave } = useT6Store()
   const profile        = useCompanyProfileStore((s) => s.profile)
-  const { generate, isGenerating, error: genError, clearError } = usePolicyGeneration()
+  const { generate, status: genStatus, error: genError, clearError } = usePolicyGeneration()
+  const isPending = genStatus === 'pending'
   const now            = new Date()
   const dateStr        = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
   const nextReviewStr  = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
@@ -121,7 +131,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
           )}
           {genError && (
             <p className="text-[11px] text-red-500 flex items-center gap-1">
-              ⚠ {genError}
+              <AlertTriangle size={12} strokeWidth={1.75} className="shrink-0" /> {genError}
               <button onClick={clearError} className="underline hover:no-underline ml-1">Cerrar</button>
             </p>
           )}
@@ -137,15 +147,15 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
           {!isReadOnly && (
             <button
               onClick={() => generate(policyGenContext, engagementId)}
-              disabled={isGenerating}
+              disabled={isPending}
               className={[
                 'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150',
-                isGenerating
+                isPending
                   ? 'border-border text-text-subtle bg-gray-50 dark:bg-gray-800 cursor-not-allowed'
                   : 'border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40',
               ].join(' ')}
             >
-              {isGenerating
+              {isPending
                 ? 'Generando…'
                 : <>✦ {generatedPolicy ? 'Regenerar con IA' : 'Generar política con IA'}</>
               }
@@ -156,8 +166,8 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
       </div>
 
       {/* Streaming indicator — visible while LLM call is in flight */}
-      {isGenerating && (
-        <StreamingIndicator label="Generando política con IA…" variant="inline" />
+      {isPending && (
+        <StreamingIndicator label="Generando política con IA…" variant="card-full" />
       )}
 
       {/* Documento */}
@@ -319,11 +329,14 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
                           <td className="py-2 px-3 text-xs text-text-muted">{uc.department}</td>
                           <td className="py-2 px-3">
                             <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-semibold ${riskCfg.badgeBg} ${riskCfg.badgeText}`}>
-                              {riskCfg.icon} {riskCfg.shortLabel}
+                              <span className="inline-flex items-center gap-1">{RISK_ICON_SM[riskCfg.icon as keyof typeof RISK_ICON_SM]} {riskCfg.shortLabel}</span>
                             </span>
                           </td>
                           <td className="py-2 pl-3 text-[10px] text-success-dark font-semibold">
-                            {uc.status === 'go' ? '✓ Aprobado' : '⟳ En piloto'}
+                            {uc.status === 'go'
+                              ? <span className="inline-flex items-center gap-1"><Check size={10} strokeWidth={1.75} /> Aprobado</span>
+                              : <span className="inline-flex items-center gap-1"><RefreshCw size={10} strokeWidth={1.75} /> En piloto</span>
+                            }
                           </td>
                         </tr>
                       )

@@ -61,7 +61,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             'dark:bg-warm-800 dark:text-warm-50 dark:placeholder:text-warm-400',
             hasError
               ? 'border-danger focus:border-danger focus:ring-2 focus:ring-danger/20'
-              : 'border-border focus:border-navy focus:ring-2 focus:ring-navy/15',
+              : 'border-border hover:border-navy/40 focus:border-gold focus:ring-2 focus:ring-gold/20',
             disabled ? 'opacity-50 cursor-not-allowed bg-surface dark:bg-warm-700' : '',
             resizeClass,
             className,

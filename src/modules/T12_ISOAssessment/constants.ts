@@ -60,7 +60,7 @@ export const T12_STATUS_CONFIG: Record<T12Status, {
     badgeBg:   'bg-blue-50 dark:bg-blue-900/20',
     badgeText: 'text-blue-600 dark:text-blue-400',
     hex:       '#6A90C0',
-    dot:       '◎',
+    dot:       '◔',
     next:      'aprobado',
     nextLabel: 'Aprobar control',
   },

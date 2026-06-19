@@ -11,6 +11,7 @@ import {
 import { priorityScoreColor } from './T4Badges.constants'
 import type { UseCase, UseCaseStatus, UseCaseScores, AIActClassification } from '../types'
 import type { Stakeholder } from '@/modules/T2_StakeholderMatrix/types'
+import { AlertTriangle, Check, X, Ban } from 'lucide-react'
 import { Button, Badge, Card, Tabs, SegmentedControl } from '@shared/design-system/components'
 import { StatusBadge, CategoryBadge } from './T4Badges'
 import { EconomicsTab }              from './EconomicsTab'
@@ -269,13 +270,19 @@ export function UseCaseDetailPanel({
                   <div>
                     <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P3 · Datos sensibles</p>
                     <p className="text-xs font-medium text-lean-black dark:text-gray-200">
-                      {cls.sensitiveData ? '⚠️ Sí — datos RGPD Art. 9' : '✓ No'}
+                      {cls.sensitiveData
+                        ? <span className="inline-flex items-center gap-1"><AlertTriangle size={12} strokeWidth={1.75} className="text-warning-dark" /> Sí — datos RGPD Art. 9</span>
+                        : <span className="inline-flex items-center gap-1"><Check size={12} strokeWidth={1.75} className="text-success-dark" /> No</span>
+                      }
                     </p>
                   </div>
                   <div>
                     <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P4 · Explicabilidad</p>
                     <p className="text-xs font-medium text-lean-black dark:text-gray-200">
-                      {cls.explainability === 'yes' ? '✓ Sistema explicable / trazable' : '✕ Output opaco'}
+                      {cls.explainability === 'yes'
+                        ? <span className="inline-flex items-center gap-1"><Check size={12} strokeWidth={1.75} className="text-success-dark" /> Sistema explicable / trazable</span>
+                        : <span className="inline-flex items-center gap-1"><X size={12} strokeWidth={1.75} className="text-danger-dark" /> Output opaco</span>
+                      }
                     </p>
                   </div>
                 </div>
@@ -287,8 +294,9 @@ export function UseCaseDetailPanel({
                 </p>
                 {cls.riskLevel === 'prohibido' && (
                   <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3">
-                    <p className="text-xs font-semibold text-red-700 dark:text-red-300 mb-1">
-                      🚫 Sistema potencialmente prohibido — Art. 5 AI Act
+                    <p className="text-xs font-semibold text-red-700 dark:text-red-300 mb-1 flex items-center gap-1.5">
+                      <Ban size={14} strokeWidth={1.75} className="shrink-0" />
+                      Sistema potencialmente prohibido — Art. 5 AI Act
                     </p>
                     <p className="text-[10px] text-red-600 dark:text-red-400 leading-relaxed">
                       Detener el desarrollo e iniciar revisión legal inmediata.
@@ -327,8 +335,9 @@ export function UseCaseDetailPanel({
                   </ul>
                 )}
                 {cls.riskLevel === 'minimo' && (
-                  <p className="text-xs text-success-dark leading-relaxed">
-                    ✓ Sin obligaciones regulatorias específicas del AI Act. Se recomienda documentar el uso en el catálogo corporativo de IA como buena práctica de gobernanza.
+                  <p className="text-xs text-success-dark leading-relaxed flex items-start gap-1.5">
+                    <Check size={14} strokeWidth={1.75} className="shrink-0 mt-0.5" />
+                    Sin obligaciones regulatorias específicas del AI Act. Se recomienda documentar el uso en el catálogo corporativo de IA como buena práctica de gobernanza.
                   </p>
                 )}
               </Card>

@@ -125,7 +125,7 @@ export function T4View({ onBack }: T4ViewProps) {
             Usa el selector <span className="font-semibold text-lean-black dark:text-gray-300">▾ Proyecto</span> en la barra superior para seleccionar uno existente o crear uno nuevo.
           </p>
           <Button variant="link" className="mt-2" onClick={() => navigate('/')}>
-            Volver al Dashboard
+            Volver al dashboard
           </Button>
         </div>
       </div>
@@ -139,6 +139,7 @@ export function T4View({ onBack }: T4ViewProps) {
       <ToolHeader
         sticky
         onBack={() => onBack ? onBack() : navigate('/')}
+        backLabel="Volver al dashboard"
         toolCode="T4"
         title="Use Case Priority Board"
         subtitle={
@@ -179,7 +180,7 @@ export function T4View({ onBack }: T4ViewProps) {
 
         {useCases.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center text-2xl">◎</div>
+            <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg></div>
             <p className="text-sm font-bold text-text-muted">Sin casos de uso</p>
             <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
               Importa procesos desde T3 o añade un caso de uso manualmente.

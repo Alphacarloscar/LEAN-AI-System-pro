@@ -56,7 +56,7 @@ export function P4EcosystemPanel({ t3data, expanded, onToggle, onNavigate }: P4P
               ))}
             </div>
           </div>
-          <div className="rounded-md px-2.5 py-1.5 mt-2" style={{ background: 'rgba(127, 119, 221, 0.08)' }}>
+          <div className="rounded-md px-2.5 py-1.5 mt-2 bg-[#7F77DD]/[0.08]">
             <p className="text-[10px] text-[#534AB7] dark:text-[#AFA9EC]">
               Mayor espera: <span className="font-semibold truncate">{t3data.bottleneck}</span>
             </p>
@@ -73,8 +73,8 @@ export function P4EcosystemPanel({ t3data, expanded, onToggle, onNavigate }: P4P
           {t3data ? (
             <div className="flex gap-2 mb-3">
               <MetricChip label="Mapeados"   value={`${t3data.processesMapped}/${t3data.processesTotal}`} />
-              <MetricChip label="Opp crítica" value={String(t3data.oppCritica)} valueColor="#C06060" />
-              <MetricChip label="Opp alta"    value={String(t3data.oppAlta)}    valueColor="#D4A85C" />
+              <MetricChip label="Opp crítica" value={String(t3data.oppCritica)} valueColor="var(--color-danger-dark, #C06060)" />
+              <MetricChip label="Opp alta"    value={String(t3data.oppAlta)}    valueColor="var(--color-warning-dark, #D4A85C)" />
             </div>
           ) : null}
           <NavButton label="Abrir T3 Procesos" onClick={() => onNavigate('/t3')} />

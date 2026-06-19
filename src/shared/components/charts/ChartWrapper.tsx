@@ -108,8 +108,8 @@ export interface ChartWrapperProps {
   children:      ReactNode
   /** Descripción concisa del gráfico para lectores de pantalla (WCAG 1.1.1). Obligatoria. */
   ariaLabel:     string
-  /** Tabla de datos alternativa renderizada en un <details> expandible (accesibilidad). */
-  dataTable?:    ReactNode
+  /** Tabla semántica con el desglose de datos, mostrada en un <details> accesible. Obligatoria. */
+  dataTable:     ReactNode
   height?:       number
   title?:        string
   subtitle?:     string
@@ -171,12 +171,15 @@ export function ChartWrapper({
           </div>
         )}
 
-        {dataTable && (
-          <details className="mt-2 text-xs text-text-muted">
-            <summary className="cursor-pointer">Ver datos como tabla</summary>
-            <div className="mt-2">{dataTable}</div>
-          </details>
-        )}
+        {/* Tabla de datos accesible — scroll independiente para no desplazar el layout */}
+        <details className="mt-4 border-t border-border/50 pt-2 text-xs text-text-muted select-none">
+          <summary className="cursor-pointer hover:text-text-muted/80 transition-colors">
+            Ver datos como tabla
+          </summary>
+          <div className="mt-2 max-h-56 overflow-y-auto overscroll-contain">
+            {dataTable}
+          </div>
+        </details>
       </div>
     </div>
   )

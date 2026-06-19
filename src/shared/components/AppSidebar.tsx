@@ -1,30 +1,24 @@
 // ============================================================
-// AppSidebar — Menú lateral colapsable (responsive)
+// AppSidebar — Menú lateral overlay colapsable (todos los tamaños)
 //
-// Sprint 10: navegación estática T1–T12.
-//   — Eliminado prop `phases` (dependía de DemoContext).
-//   — La lista T1–T12 es una constante del producto, no datos
-//     cargados de Supabase ni del proyecto activo.
-//   — El item activo se detecta por location.pathname.
-//   — Siempre visible cuando hay sesión; no depende de cargas.
-//
-// Responsive (Fase 2 ADR-020):
-//   — >= lg (1024 px): sidebar inline, reserva w-64 en el grid.
-//     El toggle desaparece; el sidebar nunca se colapsa.
-//   — <  lg           : comportamiento original — fixed, backdrop,
-//     toggle visible, colapsable.
+// Comportamiento:
+//   — El sidebar es siempre un overlay fixed. Nunca desplaza
+//     el contenido de la página (main nunca tiene ml-*).
+//   — Se abre con el botón hamburguesa (fixed, visible siempre).
+//   — Se cierra al:
+//       · pulsar sobre el backdrop translúcido
+//       · seleccionar cualquier herramienta de la lista
+//   — El backdrop oscurece levemente el contenido pero NO lo
+//     desplaza ni redimensiona.
 // ============================================================
 
-import { useState }                   from 'react'
 import { useNavigate, useLocation }   from 'react-router-dom'
-import { useMediaQuery }              from '@/shared/hooks/useMediaQuery'
 import { useUnsavedChanges }          from '@/shared/hooks/useUnsavedChanges'
 import { useSidebar }                 from '@/shared/hooks/useSidebar'
 import { Modal, Button }              from '@shared/design-system/components'
+import { useState }                   from 'react'
 
 // ── Registro estático del producto ───────────────────────────
-// Fuente de verdad de la navegación. NUNCA debe depender de:
-//   DemoContext, Supabase, CompanyProfileStore, ni datos cargados.
 
 interface ToolNavItem {
   code:  string
@@ -47,7 +41,7 @@ const TOOL_NAVIGATION: ToolNavItem[] = [
   { code: 'T12', label: 'ISO 42001 Assessment',       path: '/t12' },
 ]
 
-// ── Panel interior — compartido por ambos modos ───────────────
+// ── Panel interior ────────────────────────────────────────────
 function SidebarPanel({ onNav }: { onNav: (path: string) => void }) {
   const location = useLocation()
   const isCompanyProfileActive = location.pathname === '/company-profile'
@@ -65,9 +59,9 @@ function SidebarPanel({ onNav }: { onNav: (path: string) => void }) {
       </div>
 
       {/* Navegación */}
-      <nav className="flex-1 overflow-y-auto py-2">
+      <nav aria-label="Herramientas metodológicas T1 a T12" className="flex-1 overflow-y-auto py-2">
 
-        {/* ── Perfil de Empresa — acceso global ── */}
+        {/* ── Perfil de Empresa ── */}
         <button
           onClick={() => onNav('/company-profile')}
           className={[
@@ -103,7 +97,7 @@ function SidebarPanel({ onNav }: { onNav: (path: string) => void }) {
         {/* Separador */}
         <div className="mx-4 my-2 border-t border-black/6 dark:border-white/6" />
 
-        {/* ── T1–T12 — lista estática del producto ── */}
+        {/* ── T1–T12 ── */}
         <div className="px-3 space-y-0.5">
           {TOOL_NAVIGATION.map((tool) => {
             const isActive = location.pathname === tool.path ||
@@ -117,13 +111,15 @@ function SidebarPanel({ onNav }: { onNav: (path: string) => void }) {
                   'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left',
                   'transition-all duration-100',
                   isActive
-                    ? 'bg-[#C8860A]/10 dark:bg-[#C8860A]/15'
+                    ? 'bg-gold/10 dark:bg-gold/15'
                     : 'hover:bg-black/3 dark:hover:bg-white/4',
                 ].join(' ')}
               >
                 <span
-                  className="font-mono text-[10px] shrink-0 w-7 text-center"
-                  style={{ color: isActive ? '#C8860A' : '#9ca3af' }}
+                  className={[
+                    'font-mono text-[10px] shrink-0 w-7 text-center',
+                    isActive ? 'text-gold' : 'text-gray-400',
+                  ].join(' ')}
                 >
                   {tool.code}
                 </span>
@@ -131,7 +127,7 @@ function SidebarPanel({ onNav }: { onNav: (path: string) => void }) {
                   className={[
                     'text-xs truncate',
                     isActive
-                      ? 'font-semibold text-[#C8860A] dark:text-amber-400'
+                      ? 'font-semibold text-gold dark:text-amber-400'
                       : 'text-black/65 dark:text-gray-300',
                   ].join(' ')}
                 >
@@ -155,21 +151,19 @@ function SidebarPanel({ onNav }: { onNav: (path: string) => void }) {
 
 // ── Sidebar ────────────────────────────────────────────────────
 export function AppSidebar() {
-  const [open,         setOpen]        = useState(false)
-  const [pendingPath,  setPendingPath] = useState<string | null>(null)
-  const navigate        = useNavigate()
-  const isLg            = useMediaQuery('(min-width: 1024px)')
-  const { isDirty, clearDirty } = useUnsavedChanges()
-  const { open: lgOpen, toggle: lgToggle, setOpen: lgSetOpen } = useSidebar()
+  const [pendingPath, setPendingPath] = useState<string | null>(null)
+  const navigate                      = useNavigate()
+  const { isDirty, clearDirty }       = useUnsavedChanges()
+  const { open, toggle, setOpen }     = useSidebar()
 
   function goTo(path: string) {
+    // Cierra el sidebar inmediatamente al seleccionar
+    setOpen(false)
     if (isDirty) {
       setPendingPath(path)
       return
     }
     navigate(path)
-    setOpen(false)
-    if (lgOpen) lgSetOpen(false)
   }
 
   function confirmDiscard() {
@@ -177,74 +171,17 @@ export function AppSidebar() {
     clearDirty()
     navigate(pendingPath)
     setPendingPath(null)
-    setOpen(false)
-    if (lgOpen) lgSetOpen(false)
   }
 
-  // ── Modo inline >= lg ────────────────────────────────────────
-  if (isLg) {
-    return (
-      <>
-        {/* Backdrop — cierra el sidebar al pulsar fuera */}
-        {lgOpen && (
-          <div
-            className="fixed inset-0 z-20"
-            onClick={lgToggle}
-            aria-hidden="true"
-          />
-        )}
-
-        <aside
-          className={[
-            'fixed top-0 left-0 z-30 w-64',
-            'h-[calc(100vh-var(--header-h,57px))]',
-            'mt-[var(--header-h,57px)]',
-            'bg-white dark:bg-warm-900 border-r border-black/8 dark:border-warm-600/20',
-            'flex flex-col overflow-hidden',
-            'transition-transform duration-300 ease-in-out',
-            lgOpen ? 'translate-x-0' : '-translate-x-full',
-          ].join(' ')}
-        >
-          <SidebarPanel onNav={goTo} />
-        </aside>
-
-        {/* Botón hamburguesa — solo visible cuando el sidebar está cerrado */}
-        {!lgOpen && (
-          <button
-            onClick={lgToggle}
-            aria-label="Abrir menú"
-            className={[
-              'fixed top-[72px] left-0 z-30',
-              'flex items-center justify-center',
-              'h-10 w-10 rounded-r-xl',
-              'bg-white dark:bg-warm-800 border border-l-0 border-black/10 dark:border-warm-600/30 shadow-sm',
-              'hover:bg-[#F0EDE8] dark:hover:bg-warm-700 transition-colors duration-150',
-            ].join(' ')}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#3E3B35" strokeWidth="1.8" strokeLinecap="round" className="dark:stroke-warm-100">
-              <path d="M2 4h10M2 7h10M2 10h10" />
-            </svg>
-          </button>
-        )}
-
-        <UnsavedChangesModal
-          open={pendingPath !== null}
-          onCancel={() => setPendingPath(null)}
-          onDiscard={confirmDiscard}
-        />
-      </>
-    )
-  }
-
-  // ── Modo overlay < lg ────────────────────────────────────────
   return (
     <>
-      {/* Toggle */}
+      {/* Botón hamburguesa — siempre visible, no forma parte del sidebar */}
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggle}
         aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
+        aria-expanded={open}
         className={[
-          'fixed top-[72px] left-0 z-30',
+          'fixed top-[72px] left-0 z-40',
           'flex items-center justify-center',
           'h-10 w-10 rounded-r-xl',
           'bg-white dark:bg-warm-800 border border-l-0 border-black/10 dark:border-warm-600/30 shadow-sm',
@@ -262,24 +199,26 @@ export function AppSidebar() {
         )}
       </button>
 
-      {/* Backdrop */}
+      {/* Backdrop — cierra el sidebar al pulsar fuera, no afecta al layout */}
       {open && (
         <div
-          className="fixed inset-0 z-20 bg-black/10 backdrop-blur-[1px]"
+          className="fixed inset-0 z-30 bg-black/15 backdrop-blur-[1px]"
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />
       )}
 
-      {/* Panel lateral */}
+      {/* Panel lateral — overlay puro, nunca desplaza el contenido */}
       <aside
+        aria-label="Navegación principal de la plataforma"
+        aria-hidden={!open}
         className={[
-          'fixed top-0 left-0 z-30 w-64',
+          'fixed top-0 left-0 z-40 w-64',
           'h-[calc(100vh-var(--header-h,57px))]',
           'mt-[var(--header-h,57px)]',
           'bg-white dark:bg-warm-900 border-r border-black/8 dark:border-warm-600/20 shadow-xl',
           'flex flex-col overflow-hidden',
-          'transition-transform duration-300 ease-in-out',
+          'transition-transform duration-250 ease-in-out',
           open ? 'translate-x-0' : '-translate-x-full',
         ].join(' ')}
       >
@@ -288,14 +227,14 @@ export function AppSidebar() {
 
       <UnsavedChangesModal
         open={pendingPath !== null}
-        onCancel={() => setPendingPath(null)}
+        onCancel={() => { setPendingPath(null) }}
         onDiscard={confirmDiscard}
       />
     </>
   )
 }
 
-// ── Modal de confirmación de cambios sin guardar ──────────────
+// ── Modal de cambios sin guardar ──────────────────────────────
 function UnsavedChangesModal({
   open, onCancel, onDiscard,
 }: { open: boolean; onCancel: () => void; onDiscard: () => void }) {

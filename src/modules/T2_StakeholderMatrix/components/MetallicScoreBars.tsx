@@ -66,7 +66,7 @@ export function MetallicScoreBars({
 
         return (
           <g key={key}>
-            <text x={0} y={cy + 4} fontSize={10} fill="#64748B"
+            <text x={0} y={cy + 4} fontSize={10} fill="var(--color-border)"
               fontFamily="ui-monospace,monospace" letterSpacing="0.04em" fontWeight="600">
               {label}
             </text>
@@ -88,7 +88,7 @@ export function MetallicScoreBars({
 
             <text
               x={TX + TRACK_W + G2} y={cy + 4}
-              fontSize={11} fontWeight="600" fill="#94A3B8"
+              fontSize={11} fontWeight="600" fill="var(--color-warm-100)"
               fontFamily="ui-monospace,monospace"
             >
               {val.toFixed(1)}<tspan fontSize={8} opacity={0.5}>/4</tspan>
