@@ -174,7 +174,7 @@ export function T9View({ onBack }: T9ViewProps) {
         title="Roadmap IA — 6 meses"
         subtitle={`${companyName} · Sprint L.E.A.N.`}
         phaseMiniMap={<PhaseMiniMap phaseId="activate" toolCode="T9" />}
-        maxWidth="max-w-6xl"
+        maxWidth="max-w-7xl"
         cta={
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-0.5 border border-border dark:border-white/10 rounded-lg px-2 py-1 bg-white dark:bg-gray-900">
@@ -210,7 +210,7 @@ export function T9View({ onBack }: T9ViewProps) {
         }
       />
 
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
 
       {/* ── Stats ── */}
       <div className="grid grid-cols-4 gap-4">
@@ -228,7 +228,7 @@ export function T9View({ onBack }: T9ViewProps) {
       </div>
 
       {/* ── Gantt ── */}
-      <Card variant="outlined" padding="none" className="rounded-2xl overflow-hidden">
+      <Card variant="outlined" padding="none" className="rounded-xl overflow-hidden">
 
         {/* Cabecera */}
         <div className="grid border-b border-border dark:border-white/6" style={{ gridTemplateColumns: '260px 1fr' }}>

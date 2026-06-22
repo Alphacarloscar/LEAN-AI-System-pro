@@ -65,7 +65,7 @@ export function BigPictureTab({
         return (
           <div key={level}>
             {/* Band */}
-            <div className={`rounded-2xl border-2 ${lcfg.border} overflow-hidden`}>
+            <div className={`rounded-xl border-2 ${lcfg.border} overflow-hidden`}>
               {/* Band header */}
               <div className={`px-4 py-2 ${lcfg.bg} flex items-center gap-3`}>
                 <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${lcfg.badge} ${lcfg.badgeText}`}>

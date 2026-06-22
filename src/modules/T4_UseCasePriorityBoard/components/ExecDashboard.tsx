@@ -61,7 +61,7 @@ export function ExecDashboard({ useCases }: ExecDashboardProps) {
           key={kpi.label}
           variant="outlined"
           padding="none"
-          className="rounded-2xl px-5 py-4 flex flex-col gap-1.5"
+          className="rounded-xl px-5 py-4 flex flex-col gap-1.5"
         >
           <div className="flex items-center gap-2">
             <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${kpi.dotColor}`} />

@@ -18,6 +18,14 @@ export type ChartTokenName =
   | 'gold'
   | 'navy'
   | 'warm-950'
+  | 'warm-900'
+  | 'warm-800'
+  | 'warm-700'
+  | 'warm-600'
+  | 'warm-500'
+  | 'warm-400'
+  | 'warm-300'
+  | 'warm-200'
   | 'warm-100'
   | 'surface'
   | 'border'
@@ -41,6 +49,14 @@ const FALLBACKS: Record<ChartTokenName, string> = {
   'gold':          '#C8860A',
   'navy':          '#2A2822',
   'warm-950':      '#16140F',
+  'warm-900':      '#22201C',
+  'warm-800':      '#2A2822',
+  'warm-700':      '#4A4740',
+  'warm-600':      '#6B6864',
+  'warm-500':      '#8A857C',
+  'warm-400':      '#9A9790',
+  'warm-300':      '#B8B4AB',
+  'warm-200':      '#D4D0C8',
   'warm-100':      '#C4C0B8',
   'surface':       '#F7F4EE',
   'border':        '#D4D0C8',
@@ -110,4 +126,46 @@ export function getNavyRgb(opacity = 1): string {
     .trim()
   const channels = raw || '42 40 34'
   return opacity < 1 ? `rgb(${channels} / ${opacity})` : `rgb(${channels})`
+}
+
+// ── ADR-021 §4 — Semantic chart color groups ──────────────────
+//
+// Estos tokens centralizan colores que antes estaban dispersos en T2, T7, T10.
+// Son objetos hex estáticos (igual que CHART_PALETTE) porque Recharts no resuelve CSS vars.
+// Fuente de verdad: tailwind.config.ts + index.css tokens semánticos.
+
+/** Colores por cuadrante de influencia/adopción (T2 StakeholderMatrix) */
+export const QUADRANT_COLORS = {
+  critico:   { fill: '#C06060', bg: '#F5DEDE', bgDark: 'rgba(192,96,96,0.28)'   },
+  decisor:   { fill: '#2A2822', bg: 'rgba(42,40,34,0.10)', bgDark: 'rgba(196,192,184,0.18)' },
+  reticente: { fill: '#D4A85C', bg: '#FAF0D7', bgDark: 'rgba(212,168,92,0.28)'  },
+  adoptador: { fill: '#5FAF8A', bg: '#D4EDE3', bgDark: 'rgba(95,175,138,0.28)'  },
+} as const
+
+/** Segmentos de la curva de Rogers (T7 AdoptionHeatmap, T10 AIValueDashboard) */
+export const ROGERS_SEGMENT_COLORS = {
+  innovadores:   '#5FAF8A',  // success-dark — adopción temprana
+  earlyMajority: '#6A90C0',  // info-dark    — masa crítica
+  rezagados:     '#C4C0B8',  // warm-100     — rezagados / neutro
+} as const
+
+/** Dominios funcionales de IA (T5 AITaxonomyCanvas) */
+export const DOMAIN_COLORS = {
+  automatizacion: '#C8860A',  // gold    — procesos automatizados
+  augmentation:   '#6A90C0',  // info-dark — herramientas de apoyo a personas
+  analytics:      '#5FAF8A',  // success-dark — análisis y predicción
+  generative:     '#D4A85C',  // warning-dark — IA generativa
+} as const
+
+/**
+ * Devuelve un color hex según un score 0–100 (semáforo rojo/ámbar/verde).
+ * Uso: componentes de métricas tipo HeroMetric (T10) y badges de estado.
+ *
+ * @param score - Valor 0–100, o undefined para color neutro (gold)
+ */
+export function getHeroColor(score?: number): string {
+  if (score == null) return '#C8860A'  // gold neutro
+  if (score < 30)   return '#C05035'  // danger-dark (rojo)
+  if (score < 60)   return '#C8860A'  // gold (ámbar)
+  return '#2A7A52'                    // success verde oscuro
 }

@@ -189,6 +189,21 @@ html.dark .dark\:hover\:border-white\/14:hover { border-color: rgba(240, 237, 23
 html.dark .dark\:border-white\/20 { border-color: rgba(240, 237, 232, 0.20); }
 
 /* ============================================================
+   ADR-021 TRANSITORIO — Eliminar cuando la migración gray→warm esté completa
+   Redirige clases bg-gray-* / text-gray-* / border-gray-* → escala warm en light mode
+   ============================================================ */
+
+.bg-gray-50    { background-color: var(--color-warm-50, #F7F4EE) !important; }
+.bg-gray-100   { background-color: #F0EDE8 !important; }
+.bg-gray-200   { background-color: var(--color-warm-200) !important; }
+.text-gray-400 { color: var(--color-warm-400) !important; }
+.text-gray-500 { color: var(--color-warm-500) !important; }
+.text-gray-600 { color: var(--color-warm-600) !important; }
+.text-gray-700 { color: var(--color-warm-700) !important; }
+.border-gray-200 { border-color: var(--color-warm-200) !important; }
+.border-gray-300 { border-color: var(--color-warm-300) !important; }
+
+/* ============================================================
    ADR-021 — Design System Charter: tokens de color como CSS vars
    Equivalencia 1:1 con tailwind.config.ts.
    Usar token() helper (src/shared/design-system/tokens.ts) para
@@ -200,16 +215,39 @@ html.dark .dark\:border-white\/20 { border-color: rgba(240, 237, 232, 0.20); }
   --color-navy:       #2A2822;
   --color-warm-950:   #16140F;
   --color-warm-900:   #22201C;
+  --color-warm-800:   #2A2822;
+  --color-warm-700:   #4A4740;
+  --color-warm-600:   #6B6864;
+  --color-warm-500:   #8A857C;
+  --color-warm-400:   #9A9790;
+  --color-warm-300:   #B8B4AB;
+  --color-warm-200:   #D4D0C8;
   --color-warm-100:   #C4C0B8;
   --color-surface:    #F7F4EE;
   --color-border:     #D4D0C8;
   --color-success:    #86C7A8;
+  --color-success-light: #E8F5EE;
+  --color-success-dark:  #5FAF8A;
   --color-danger:     #D89090;
+  --color-danger-light:  #FDECEC;
+  --color-danger-dark:   #C06060;
   --color-warning:    #E8C281;
+  --color-warning-light: #FEF6E8;
+  --color-warning-dark:  #D4A85C;
   --color-info:       #9BB5D9;
+  --color-info-light:    #EBF2FA;
+  --color-info-dark:     #6A90C0;
 }
 
 html.dark {
   --color-surface:    #22201C;
   --color-border:     #3E3B35;
+  --color-success-light: #1A3328;
+  --color-success-dark:  #5FAF8A;
+  --color-danger-light:  #3A1A1A;
+  --color-danger-dark:   #C06060;
+  --color-warning-light: #3A2A10;
+  --color-warning-dark:  #D4A85C;
+  --color-info-light:    #1A2840;
+  --color-info-dark:     #6A90C0;
 }

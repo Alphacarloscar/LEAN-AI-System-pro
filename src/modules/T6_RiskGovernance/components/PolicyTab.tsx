@@ -173,7 +173,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
       {/* Documento */}
       <div
         id="lean-policy-document"
-        className="rounded-2xl border border-border bg-white dark:bg-gray-900 overflow-hidden print:border-none print:shadow-none"
+        className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden print:border-none print:shadow-none"
       >
         {/* Portada */}
         <div className="px-10 py-8 border-b border-border dark:border-white/6 bg-navy text-white print:bg-navy">

@@ -149,7 +149,7 @@ export function T3View({ onBack }: T3ViewProps) {
       {/* ── Error sin datos ── */}
       {!isLoadingT3 && !hasDataT3 && loadErrorT3 && (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+          <div className="h-12 w-12 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
             </svg>
@@ -171,7 +171,7 @@ export function T3View({ onBack }: T3ViewProps) {
       {/* ── 0 procesos ── */}
       {!isLoadingT3 && hasDataT3 && processes.length === 0 && !isReadOnly && (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg></div>
+          <div className="h-12 w-12 rounded-xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg></div>
           <p className="text-sm font-bold text-text-muted">No hay procesos todavía</p>
           <p className="text-xs text-text-subtle max-w-xs leading-relaxed text-center">
             Añade el primer proceso para comenzar el análisis de oportunidades IA.
@@ -199,7 +199,7 @@ export function T3View({ onBack }: T3ViewProps) {
           {/* ZONA 1: HERO CHARTS */}
           <div className="py-8">
             <div className="grid grid-cols-2 gap-6 items-stretch">
-              <Card variant="outlined" padding="none" className="rounded-3xl p-6 flex flex-col">
+              <Card variant="outlined" padding="none" className="rounded-xl p-6 flex flex-col">
                 <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">Matriz de oportunidad</p>
                 <div className="flex-1 flex items-center justify-center">
                   <HeroOpportunityMatrix processes={filtered} activeId={activeId} onSelect={handleSelectProcess} />
@@ -217,7 +217,7 @@ export function T3View({ onBack }: T3ViewProps) {
                 </div>
               </Card>
 
-              <Card variant="outlined" padding="none" className="rounded-3xl p-6 flex flex-col">
+              <Card variant="outlined" padding="none" className="rounded-xl p-6 flex flex-col">
                 <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">Distribución por categoría IA</p>
                 <div className="flex-1 flex items-center justify-center">
                   <HeroCategoryDonut processes={processes} activeId={activeId} onSelect={handleSelectProcess} />
@@ -271,7 +271,7 @@ export function T3View({ onBack }: T3ViewProps) {
             {filtered.length === 0 ? (
               isReadOnly ? <ViewerEmptyState /> : (
                 <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-                  <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg></div>
+                  <div className="h-12 w-12 rounded-xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg></div>
                   <p className="text-sm font-bold text-text-muted">Sin procesos mapeados</p>
                 </div>
               )
@@ -285,7 +285,7 @@ export function T3View({ onBack }: T3ViewProps) {
                   return (
                     <button key={p.id} onClick={() => handleSelectProcess(p.id)}
                       className={[
-                        'w-full text-left rounded-2xl px-4 py-3 transition-all duration-150 border flex flex-col gap-2',
+                        'w-full text-left rounded-xl px-4 py-3 transition-all duration-150 border flex flex-col gap-2',
                         isActive
                           ? 'border-navy/40 bg-navy/5 dark:bg-navy/10 shadow-sm ring-1 ring-navy/20'
                           : 'border-border dark:border-white/6 bg-white dark:bg-warm-800 hover:border-gray-300 dark:hover:border-white/14 hover:shadow-sm',

@@ -128,7 +128,7 @@ export function GanttRowItem({
                 if (e.key === 'Enter')  onEditSave()
                 if (e.key === 'Escape') onEditSave()
               }}
-              className="text-[10px] border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5 bg-white dark:bg-gray-800 text-text-muted w-28 outline-none focus:ring-1 focus:ring-blue-300"
+              className="text-[10px] border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5 bg-white dark:bg-gray-800 text-text-muted w-28 outline-none focus:ring-1 focus:ring-gold/20 focus:border-gold"
             />
           ) : (
             <button

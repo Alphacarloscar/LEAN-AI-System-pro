@@ -156,7 +156,7 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center text-center gap-3 py-8">
-                <div className="h-10 w-10 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-muted"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg>
                 </div>
                 <p className="text-xs text-text-muted">Completa la entrevista para posicionar este proceso.</p>
@@ -226,7 +226,7 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
                         variant="flat"
                         padding="none"
                         className={[
-                          'rounded-2xl border px-4 py-3.5 flex flex-col gap-2',
+                          'rounded-xl border px-4 py-3.5 flex flex-col gap-2',
                           isValidated
                             ? 'border-success-dark/20 bg-success-light/8 dark:bg-success-dark/5'
                             : 'border-border dark:border-white/8 bg-white dark:bg-warm-800/50',
@@ -257,7 +257,7 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
               )}
 
               {process.notes && (
-                <div className="mt-6 rounded-2xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
+                <div className="mt-6 rounded-xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
                   <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1.5">Notas del consultor</p>
                   <p className="text-xs text-text-muted leading-relaxed italic">{process.notes}</p>
                 </div>

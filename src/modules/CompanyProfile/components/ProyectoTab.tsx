@@ -24,7 +24,7 @@ export function ProyectoTab() {
   return (
     <>
       {/* Contexto del proyecto */}
-      <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 p-6 space-y-6">
+      <div className="rounded-xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 p-6 space-y-6">
         <SectionLabel>Contexto del proyecto</SectionLabel>
 
         <div>
@@ -116,7 +116,7 @@ export function ProyectoTab() {
       </div>
 
       {/* Fricciones y oportunidades */}
-      <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 p-6 space-y-4">
+      <div className="rounded-xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <SectionLabel>Fricciones y oportunidades detectadas</SectionLabel>

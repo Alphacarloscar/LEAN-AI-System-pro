@@ -115,7 +115,7 @@ export function T11View({ onBack }: T11ViewProps) {
         toolCode="T11"
         title="AI Operating Rhythm"
         phaseMiniMap={<PhaseMiniMap phaseId="normalize" toolCode="T11" />}
-        maxWidth="max-w-5xl"
+        maxWidth="max-w-7xl"
         cta={
           <Button
             variant="primary"
@@ -129,10 +129,10 @@ export function T11View({ onBack }: T11ViewProps) {
       />
 
       {/* ── Contenido ── */}
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
 
         {/* Hero */}
-        <Card variant="flat" padding="none" className="rounded-2xl bg-white dark:bg-warm-700 border border-border dark:border-warm-500 px-6 py-5">
+        <Card variant="flat" padding="none" className="rounded-xl bg-white dark:bg-warm-700 border border-border dark:border-warm-500 px-6 py-5">
           <div className="flex items-start justify-between gap-6 flex-wrap">
             <div>
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle dark:text-warm-300 mb-1">
@@ -168,7 +168,7 @@ export function T11View({ onBack }: T11ViewProps) {
         </div>
 
         {/* How it works */}
-        <Card variant="flat" padding="none" className="rounded-2xl border border-border dark:border-warm-500 bg-white dark:bg-warm-700 px-6 py-5">
+        <Card variant="flat" padding="none" className="rounded-xl border border-border dark:border-warm-500 bg-white dark:bg-warm-700 px-6 py-5">
           <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle dark:text-warm-300 mb-3">
             ¿Cómo funciona este modelo?
           </p>
@@ -233,7 +233,7 @@ export function T11View({ onBack }: T11ViewProps) {
 
       {/* ── RECOMENDACIONES IA ──────────────────────────────── */}
       {t11LLMContext && (
-        <div className="max-w-5xl mx-auto w-full px-8 pb-8">
+        <div className="max-w-7xl mx-auto w-full px-8 pb-8">
           <RecommendationPanel
             tool="t11"
             title="Recomendaciones IA — Modelo Operativo"

@@ -46,7 +46,7 @@ export function LowScoreRecommendations({ useCase }: { useCase: UseCase }) {
 
   return (
     <div
-      className="mt-4 rounded-2xl border px-4 py-4"
+      className="mt-4 rounded-xl border px-4 py-4"
       style={{ backgroundColor: 'rgba(200,134,10,0.04)', borderColor: 'rgba(200,134,10,0.18)' }}
     >
       <div className="flex items-center gap-2 mb-3">

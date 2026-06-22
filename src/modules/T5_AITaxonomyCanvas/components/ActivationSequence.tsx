@@ -16,7 +16,7 @@ interface ActivationSequenceProps {
 
 export function ActivationSequence({ canvas, onCardClick }: ActivationSequenceProps) {
   return (
-    <Card variant="outlined" padding="none" className="rounded-2xl p-5">
+    <Card variant="outlined" padding="none" className="rounded-xl p-5">
       <p className="text-xs font-mono uppercase tracking-widest text-text-subtle mb-1">
         Secuencia de activación recomendada
       </p>

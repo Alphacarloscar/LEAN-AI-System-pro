@@ -15,7 +15,7 @@ import { MONTH_NAMES }                 from '../t9GanttHelpers'
 const MONTH_OPTIONS = MONTH_NAMES.map((name, i) => ({ value: i, label: name }))
 
 const SELECT_CLS =
-  'w-full text-xs border border-border dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-lean-black dark:text-warm-50 outline-none focus:ring-1 focus:ring-blue-300'
+  'w-full text-xs border border-border dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-lean-black dark:text-warm-50 outline-none focus:ring-1 focus:ring-gold/20 focus:border-gold'
 
 interface AddFormProps {
   onSave:   (data: AddFreeItemFormValues) => void

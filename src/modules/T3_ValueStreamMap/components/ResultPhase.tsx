@@ -64,7 +64,7 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
       </div>
 
       {/* Proceso identificado */}
-      <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 px-4 py-3 border border-border dark:border-white/6">
+      <div className="rounded-xl bg-gray-50 dark:bg-gray-800/50 px-4 py-3 border border-border dark:border-white/6">
         <p className="text-xs font-medium text-text-muted">{formData.department}</p>
         <p className="text-sm font-semibold text-lean-black dark:text-gray-100">{formData.name}</p>
         {formData.owner && (
@@ -73,7 +73,7 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
       </div>
 
       {/* Categoría auto-asignada */}
-      <div className="rounded-2xl border border-border dark:border-white/10 overflow-hidden">
+      <div className="rounded-xl border border-border dark:border-white/10 overflow-hidden">
         <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
           <CategoryBadge category={result.aiCategory} />
           <span className="text-[11px] text-text-subtle">
@@ -141,7 +141,7 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
       </div>
 
       {/* Ajuste manual */}
-      <div className="rounded-2xl border border-border dark:border-white/10 px-4 py-3">
+      <div className="rounded-xl border border-border dark:border-white/10 px-4 py-3">
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
           Ajuste del consultor (opcional)
         </p>

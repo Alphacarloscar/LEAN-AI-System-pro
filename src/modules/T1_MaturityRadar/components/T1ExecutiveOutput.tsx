@@ -104,7 +104,7 @@ export function T1ExecutiveOutput({
   })
 
   return (
-    <div className="rounded-2xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
+    <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
 
       {/* ── Cabecera del informe ── */}
       <div className="px-8 py-6 border-b border-border bg-navy dark:bg-navy/90">

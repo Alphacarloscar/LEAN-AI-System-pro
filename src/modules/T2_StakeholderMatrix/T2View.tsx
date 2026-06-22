@@ -105,7 +105,7 @@ export function T2View({ onBack }: T2ViewProps) {
         toolCode="T2"
         title="AI Stakeholder Matrix"
         phaseMiniMap={<PhaseMiniMap phaseId="listen" toolCode="T2" />}
-        maxWidth="max-w-6xl"
+        maxWidth="max-w-7xl"
         cta={!isReadOnly ? (
           <>
             <Button
@@ -138,7 +138,7 @@ export function T2View({ onBack }: T2ViewProps) {
       />
 
       {/* ── Subheader: empresa ── */}
-      <div className="max-w-6xl mx-auto px-8 pt-5 pb-1">
+      <div className="max-w-7xl mx-auto px-8 pt-5 pb-1">
         <p className="text-sm font-semibold text-lean-black dark:text-warm-50">{companyName}</p>
         <p className="text-xs text-text-subtle mt-0.5">
           Haz clic en un stakeholder para ver su perfil y las intervenciones recomendadas.
@@ -169,7 +169,7 @@ export function T2View({ onBack }: T2ViewProps) {
       <div className={!hasDataT2 ? 'hidden' : ''}>
 
         {isLoadingT2 && (
-          <div className="max-w-6xl mx-auto px-8 pt-2">
+          <div className="max-w-7xl mx-auto px-8 pt-2">
             <div className="flex items-center gap-1.5 text-[11px] text-text-subtle">
               <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
               Actualizando datos…
@@ -178,7 +178,7 @@ export function T2View({ onBack }: T2ViewProps) {
         )}
 
         {/* ── Two-column layout ── */}
-        <div className="max-w-6xl mx-auto px-8 py-5">
+        <div className="max-w-7xl mx-auto px-8 py-5">
           <div className="flex gap-6 items-start">
 
             {/* Columna izquierda: gráfico + matrix */}
@@ -219,7 +219,7 @@ export function T2View({ onBack }: T2ViewProps) {
         </div>
 
         {/* ── Recomendaciones IA ── */}
-        <div className="max-w-6xl mx-auto px-8 pb-10">
+        <div className="max-w-7xl mx-auto px-8 pb-10">
           <RecommendationPanel
             tool="t2"
             context={t2LLMContext}

@@ -204,7 +204,7 @@ export function T1View({ onBack }: T1ViewProps) {
         toolCode="T1"
         title="AI Readiness Assessment"
         phaseMiniMap={<PhaseMiniMap phaseId="listen" toolCode="T1" />}
-        maxWidth="max-w-6xl"
+        maxWidth="max-w-7xl"
         chips={
           <div className="flex items-center gap-4">
             <span className="text-xs text-text-muted tabular-nums">
@@ -235,7 +235,7 @@ export function T1View({ onBack }: T1ViewProps) {
       />
 
       {/* ── Empresa + contexto ── */}
-      <div className="max-w-6xl mx-auto px-8 pt-6 pb-2">
+      <div className="max-w-7xl mx-auto px-8 pt-6 pb-2">
         <div className="flex items-center gap-3 flex-wrap">
           {profile.engagementName && (
             <p className="text-sm font-semibold text-lean-black dark:text-gray-100">
@@ -288,7 +288,7 @@ export function T1View({ onBack }: T1ViewProps) {
 
         {/* ── Indicador de actualización en background ── */}
         {isLoadingT1 && (
-          <div className="max-w-6xl mx-auto px-8 pt-2">
+          <div className="max-w-7xl mx-auto px-8 pt-2">
             <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
               <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
               Actualizando datos…
@@ -315,7 +315,7 @@ export function T1View({ onBack }: T1ViewProps) {
         />
 
         {/* ── Layout two-column ── */}
-        <div className="max-w-6xl mx-auto px-8 pb-6">
+        <div className="max-w-7xl mx-auto px-8 pb-6">
           <div className="flex gap-6 items-start">
 
             {/* Columna izquierda — 6 DimensionCards */}
@@ -351,7 +351,7 @@ export function T1View({ onBack }: T1ViewProps) {
           </div>
 
           {/* ── Motor LLM — Recomendaciones dinámicas ── */}
-          <div className="mt-6 max-w-6xl">
+          <div className="mt-6 max-w-7xl">
             <RecommendationPanel
               tool="t1"
               context={t1LLMContext}

@@ -98,7 +98,7 @@ export function ToolHeader({
                 {toolCode}
               </Badge>
             )}
-            <h1 className="text-sm font-semibold text-lean-black dark:text-warm-50 truncate">
+            <h1 className="text-xl font-semibold text-lean-black dark:text-warm-50 truncate">
               {title}
             </h1>
             {phaseMiniMap}

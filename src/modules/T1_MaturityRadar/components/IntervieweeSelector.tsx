@@ -30,7 +30,7 @@ export function IntervieweeSelector({
   const activeInterviewee = interviewees.find((i) => i.id === activeId)
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-3">
+    <div className="max-w-7xl mx-auto px-8 py-3">
       <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
 
         {/* Toggle bar */}

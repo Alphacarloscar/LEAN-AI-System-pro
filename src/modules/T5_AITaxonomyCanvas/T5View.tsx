@@ -69,10 +69,10 @@ export function T5View({
         subtitle={companyName}
         phaseMiniMap={<PhaseMiniMap phaseId="evaluate" toolCode="T5" />}
         cta={<MaturityBadge level={canvas.maturityLevel} />}
-        maxWidth="max-w-[1200px]"
+        maxWidth="max-w-7xl"
       />
 
-      <div className="max-w-[1200px] mx-auto space-y-5 px-8 py-8">
+      <div className="max-w-7xl mx-auto space-y-5 px-8 py-8">
 
       {/* ── Main grid ── */}
       <div className="grid grid-cols-12 gap-5 items-start">

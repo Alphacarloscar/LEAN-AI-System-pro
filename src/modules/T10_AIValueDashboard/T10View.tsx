@@ -261,7 +261,7 @@ export function T10View({ onNavigate }: T10ViewProps) {
         aiDisplay={aiDisplay} tier={tier} isReadOnly={isReadOnlyProject}
       />
 
-      <div className="max-w-6xl mx-auto px-8 py-7">
+      <div className="max-w-7xl mx-auto px-8 py-7">
         <div className="grid grid-cols-3 gap-5">
 
           <P1MaturityPanel

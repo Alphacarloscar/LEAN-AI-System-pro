@@ -127,7 +127,7 @@ export function ResetPasswordView() {
 
   if (viewState === 'error_no_session') return (
     <div className="min-h-screen flex items-center justify-center bg-[#F7F4EE] px-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-black/8 p-8 w-full max-w-sm text-center">
+      <div className="bg-white rounded-xl shadow-sm border border-black/8 p-8 w-full max-w-sm text-center">
         <GobyLogo />
         <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -150,7 +150,7 @@ export function ResetPasswordView() {
 
   if (viewState === 'success') return (
     <div className="min-h-screen flex items-center justify-center bg-[#F7F4EE] px-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-black/8 p-8 w-full max-w-sm text-center">
+      <div className="bg-white rounded-xl shadow-sm border border-black/8 p-8 w-full max-w-sm text-center">
         <GobyLogo />
         <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -167,7 +167,7 @@ export function ResetPasswordView() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F7F4EE] px-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-black/8 p-8 w-full max-w-sm">
+      <div className="bg-white rounded-xl shadow-sm border border-black/8 p-8 w-full max-w-sm">
         <GobyLogo />
 
         <h1 className="text-lg font-semibold text-[#2A2822] mb-1">

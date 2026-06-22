@@ -51,7 +51,7 @@ export function RoadmapTabContent({ useCase, onUpdateRoadmap }: RoadmapTabProps)
         <FormField id="rm-next-steps" label="Próximos pasos" multiline rows={4} value={rm.nextSteps ?? ''} onChange={(e) => onUpdateRoadmap({ nextSteps: e.target.value || undefined })} placeholder="Acciones concretas para arrancar este caso de uso…" />
         <FormField id="rm-dependencies" label="Dependencias" multiline rows={3} value={rm.dependencies ?? ''} onChange={(e) => onUpdateRoadmap({ dependencies: e.target.value || undefined })} placeholder="Dependencias con otros casos de uso, sistemas o equipos…" />
         {useCase.notes && (
-          <Card variant="flat" padding="none" className="rounded-2xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
+          <Card variant="flat" padding="none" className="rounded-xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
             <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">Notas del consultor</p>
             <p className="text-xs text-text-muted leading-relaxed italic">{useCase.notes}</p>
           </Card>

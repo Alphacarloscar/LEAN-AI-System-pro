@@ -101,7 +101,7 @@ function DeleteConfirmModal({
         onClick={onCancel}
       />
       {/* Card */}
-      <div className="relative bg-white rounded-2xl shadow-lg border border-black/8 p-6 w-full max-w-sm">
+      <div className="relative bg-white rounded-xl shadow-lg border border-black/8 p-6 w-full max-w-sm">
         {/* Icono de advertencia */}
         <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">

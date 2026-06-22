@@ -71,7 +71,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
   if (stages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-        <div className="h-14 w-14 rounded-3xl bg-navy/5 dark:bg-navy/10 flex items-center justify-center">
+        <div className="h-14 w-14 rounded-xl bg-navy/5 dark:bg-navy/10 flex items-center justify-center">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg>
         </div>
         <div>
@@ -105,7 +105,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
       {/* ── KPI strip ─────────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
 
-        <Card variant="outlined" padding="none" className="rounded-2xl px-4 py-3">
+        <Card variant="outlined" padding="none" className="rounded-xl px-4 py-3">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
             Eficiencia de flujo
           </p>
@@ -116,7 +116,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
           <p className="text-[10px] text-text-muted mt-1">Tiempo útil / ciclo total</p>
         </Card>
 
-        <Card variant="outlined" padding="none" className="rounded-2xl px-4 py-3">
+        <Card variant="outlined" padding="none" className="rounded-xl px-4 py-3">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1">
             Ciclo total
           </p>
@@ -126,7 +126,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
           <p className="text-[10px] text-text-muted mt-1">Proceso + espera acumulados</p>
         </Card>
 
-        <Card variant="outlined" padding="none" className="rounded-2xl px-4 py-3">
+        <Card variant="outlined" padding="none" className="rounded-xl px-4 py-3">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1">
             Tiempo valor añadido
           </p>
@@ -136,7 +136,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
           <p className="text-[10px] text-text-muted mt-1">Etapas de valor alto</p>
         </Card>
 
-        <Card variant="outlined" padding="none" className="rounded-2xl px-4 py-3">
+        <Card variant="outlined" padding="none" className="rounded-xl px-4 py-3">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1">
             Handoffs totales
           </p>
@@ -187,7 +187,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
                 <div
                   style={{ width: `${widthPx}px` }}
                   onClick={() => setModalStage(stage)}
-                  className="relative flex flex-col rounded-2xl border border-border dark:border-white/6
+                  className="relative flex flex-col rounded-xl border border-border dark:border-white/6
                     bg-white dark:bg-gray-900 overflow-hidden cursor-pointer
                     hover:border-navy/30 hover:shadow-sm transition-all"
                 >
@@ -278,7 +278,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
 
       {/* ── Bottleneck callout ─────────────────────────────────── */}
       {bottleneck && bottleneck.waitTimeHours > 0 && (
-        <div className="mt-4 rounded-2xl bg-danger-light border border-red-100 dark:border-red-900/20 px-4 py-3 flex items-start gap-3">
+        <div className="mt-4 rounded-xl bg-danger-light border border-red-100 dark:border-red-900/20 px-4 py-3 flex items-start gap-3">
           <Flame size={20} strokeWidth={2} className="text-danger-dark shrink-0 mt-0.5" />
           <div>
             <p className="text-xs font-semibold text-danger-dark mb-0.5">

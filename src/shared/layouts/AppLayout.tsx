@@ -172,7 +172,7 @@ function SessionRecoveryBanner({ state, onReLogin }: {
   // state === 'expired'
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-sm mx-4 bg-white dark:bg-warm-800 rounded-2xl
+      <div className="w-full max-w-sm mx-4 bg-white dark:bg-warm-800 rounded-xl
         border border-border shadow-2xl p-6 text-center space-y-4"
       >
         <div className="h-12 w-12 rounded-full bg-amber-50 dark:bg-amber-900/30

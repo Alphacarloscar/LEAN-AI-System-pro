@@ -35,7 +35,7 @@ export function QuarterlyRoadmap({
   const unassigned = useCases.filter((uc) => !uc.roadmap?.quarter)
 
   return (
-    <Card variant="outlined" padding="none" className="rounded-2xl px-6 py-5">
+    <Card variant="outlined" padding="none" className="rounded-xl px-6 py-5">
       <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-5">
         Roadmap trimestral — distribución planificada
       </p>

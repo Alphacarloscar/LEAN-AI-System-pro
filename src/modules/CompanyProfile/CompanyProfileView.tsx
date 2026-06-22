@@ -138,7 +138,7 @@ export function CompanyProfileView() {
     return (
       <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center">
         <div className="max-w-sm text-center space-y-3 px-6">
-          <div className="h-12 w-12 mx-auto rounded-2xl bg-navy/8 dark:bg-navy/20 border border-navy/15 dark:border-navy/30 flex items-center justify-center">
+          <div className="h-12 w-12 mx-auto rounded-xl bg-navy/8 dark:bg-navy/20 border border-navy/15 dark:border-navy/30 flex items-center justify-center">
             <svg width="20" height="20" viewBox="0 0 14 14" fill="none" stroke="#2A2822" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="dark:stroke-warm-200">
               <rect x="2" y="3" width="10" height="10" rx="1" />
               <path d="M5 13V9h4v4M2 6h10" />

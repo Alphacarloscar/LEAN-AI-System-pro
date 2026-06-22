@@ -56,7 +56,7 @@ function ShadowAICard() {
 
   return (
     <div
-      className="rounded-2xl border px-5 py-4"
+      className="rounded-xl border px-5 py-4"
       style={{ backgroundColor: 'rgba(200,134,10,0.04)', borderColor: 'rgba(200,134,10,0.25)' }}
     >
       <div className="flex items-start justify-between gap-4">
@@ -152,7 +152,7 @@ export function RiskDashboardTab() {
               key={level}
               onClick={() => setSelectedLevel(isActive ? null : level)}
               className={[
-                'rounded-2xl border px-4 py-4 text-left transition-all duration-150',
+                'rounded-xl border px-4 py-4 text-left transition-all duration-150',
                 isActive
                   ? `${cfg.badgeBg} border-2`
                   : 'border-border bg-white dark:bg-gray-900 hover:border-navy/30',
@@ -170,7 +170,7 @@ export function RiskDashboardTab() {
       </div>
 
       {/* Cobertura */}
-      <Card variant="outlined" padding="none" className="rounded-2xl px-5 py-4">
+      <Card variant="outlined" padding="none" className="rounded-xl px-5 py-4">
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
             Cobertura de clasificación AI Act
@@ -196,7 +196,7 @@ export function RiskDashboardTab() {
       </Card>
 
       {/* Tabla de casos */}
-      <Card variant="outlined" padding="none" className="rounded-2xl overflow-hidden">
+      <Card variant="outlined" padding="none" className="rounded-xl overflow-hidden">
         <div className="px-5 py-3 border-b border-border dark:border-white/6 flex items-center justify-between">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
             {selectedLevel ? `Casos — ${AIACT_RISK_CONFIG[selectedLevel].label}` : 'Todos los casos de uso'}

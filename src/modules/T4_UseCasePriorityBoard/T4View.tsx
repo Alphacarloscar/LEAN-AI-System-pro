@@ -109,7 +109,7 @@ export function T4View({ onBack }: T4ViewProps) {
     return (
       <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center">
         <div className="max-w-sm text-center space-y-3 px-6">
-          <div className="h-12 w-12 mx-auto rounded-2xl bg-navy/8 dark:bg-navy/20 border border-navy/15 dark:border-navy/30 flex items-center justify-center">
+          <div className="h-12 w-12 mx-auto rounded-xl bg-navy/8 dark:bg-navy/20 border border-navy/15 dark:border-navy/30 flex items-center justify-center">
             <svg
               width="20" height="20" viewBox="0 0 14 14" fill="none"
               stroke="#2A2822" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"
@@ -180,7 +180,7 @@ export function T4View({ onBack }: T4ViewProps) {
 
         {useCases.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg></div>
+            <div className="h-12 w-12 rounded-xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg></div>
             <p className="text-sm font-bold text-text-muted">Sin casos de uso</p>
             <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
               Importa procesos desde T3 o añade un caso de uso manualmente.

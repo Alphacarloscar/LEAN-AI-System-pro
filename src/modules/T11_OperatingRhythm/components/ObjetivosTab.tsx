@@ -40,7 +40,7 @@ export function ObjetivosTab({ objectives }: { objectives: T11PhaseObjective[] }
       </div>
 
       {current && (
-        <div className="rounded-2xl border border-border dark:border-warm-500 bg-white dark:bg-warm-600 overflow-hidden">
+        <div className="rounded-xl border border-border dark:border-warm-500 bg-white dark:bg-warm-600 overflow-hidden">
           <div className="px-6 py-4" style={{ backgroundColor: PHASE_COLORS[current.phase] + '18' }}>
             <div className="flex items-center gap-3">
               <span className="px-2.5 py-1 rounded-lg text-xs font-bold font-mono text-white" style={{ backgroundColor: PHASE_COLORS[current.phase] }}>

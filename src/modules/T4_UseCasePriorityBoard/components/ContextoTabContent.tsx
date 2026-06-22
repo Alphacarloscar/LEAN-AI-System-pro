@@ -18,7 +18,7 @@ export function ContextoTabContent({ useCase, catHex, autoT1Context, autoT2Conte
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* T1 context */}
-      <Card variant="outlined" padding="none" className="rounded-2xl px-5 py-4">
+      <Card variant="outlined" padding="none" className="rounded-xl px-5 py-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="h-6 w-6 rounded-lg bg-navy/10 dark:bg-navy/20 flex items-center justify-center text-xs font-bold text-navy dark:text-warm-100">T1</div>
           <p className="text-xs font-semibold text-lean-black dark:text-gray-200">Contexto de madurez IA (T1)</p>
@@ -60,7 +60,7 @@ export function ContextoTabContent({ useCase, catHex, autoT1Context, autoT2Conte
       </Card>
 
       {/* T2 context */}
-      <Card variant="outlined" padding="none" className="rounded-2xl px-5 py-4">
+      <Card variant="outlined" padding="none" className="rounded-xl px-5 py-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="h-6 w-6 rounded-lg bg-info-light flex items-center justify-center text-xs font-bold text-info-dark">T2</div>
           <p className="text-xs font-semibold text-lean-black dark:text-gray-200">Contexto de stakeholders (T2)</p>
@@ -109,7 +109,7 @@ export function ContextoTabContent({ useCase, catHex, autoT1Context, autoT2Conte
       </Card>
 
       {/* AI Category */}
-      <Card variant="outlined" padding="none" className="rounded-2xl px-5 py-4">
+      <Card variant="outlined" padding="none" className="rounded-xl px-5 py-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: catHex }} />
           <p className="text-xs font-semibold text-lean-black dark:text-gray-200">Categoría IA</p>

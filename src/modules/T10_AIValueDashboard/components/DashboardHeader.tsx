@@ -17,7 +17,7 @@ export function DashboardHeader({
 }) {
   return (
     <div className="bg-lean-black dark:bg-warm-950">
-      <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between gap-4 flex-wrap">
+      <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between gap-4 flex-wrap">
         <div>
           <p className="text-[10px] font-mono uppercase tracking-widest text-warm-300 mb-0.5">
             {[displaySector, displayTamano].filter(Boolean).join(' · ')}
@@ -45,7 +45,7 @@ export function DashboardHeader({
       {/* Banner solo-lectura */}
       {isReadOnly && (
         <div className="border-t border-warm-700">
-          <div className="max-w-6xl mx-auto px-8 py-2 flex items-center gap-2">
+          <div className="max-w-7xl mx-auto px-8 py-2 flex items-center gap-2">
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#9BB5D9" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="7" width="10" height="7" rx="1.5" />
               <path d="M5 7V5a3 3 0 016 0v2" />

@@ -239,7 +239,7 @@ export function UseCaseDetailPanel({
 
           return (
             <div className="flex flex-col gap-5 max-w-2xl">
-              <div className={`rounded-2xl border px-5 py-4 ${riskCfg.badgeBg}`}>
+              <div className={`rounded-xl border px-5 py-4 ${riskCfg.badgeBg}`}>
                 <p
                   className="text-[10px] font-mono uppercase tracking-widest mb-2"
                   style={{ color: riskCfg.hex }}
@@ -262,7 +262,7 @@ export function UseCaseDetailPanel({
                 </div>
               </div>
 
-              <Card variant="outlined" padding="none" className="rounded-2xl px-5 py-4 flex flex-col gap-3">
+              <Card variant="outlined" padding="none" className="rounded-xl px-5 py-4 flex flex-col gap-3">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
                   Respuestas del cuestionario
                 </p>
@@ -300,7 +300,7 @@ export function UseCaseDetailPanel({
                 </div>
               </Card>
 
-              <Card variant="outlined" padding="none" className="rounded-2xl px-5 py-4">
+              <Card variant="outlined" padding="none" className="rounded-xl px-5 py-4">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
                   Obligaciones regulatorias aplicables
                 </p>

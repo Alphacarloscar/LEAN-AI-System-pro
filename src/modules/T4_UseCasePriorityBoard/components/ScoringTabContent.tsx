@@ -67,7 +67,7 @@ export function ScoringTabContent({
         {!editingScore ? (
           <>
             <T4ScoreBars scores={useCase.scores} />
-            <Card variant="flat" padding="none" className="mt-5 rounded-2xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
+            <Card variant="flat" padding="none" className="mt-5 rounded-xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Score compuesto · ponderado</p>
               <p className="text-2xl font-bold tabular-nums text-lean-black dark:text-gray-100">
                 {useCase.priorityScore.toFixed(1)}<span className="text-sm font-normal text-text-subtle">/100</span>
@@ -122,7 +122,7 @@ export function ScoringTabContent({
         )}
 
         {useCase.goNoGo && !editingScore && (
-          <div className={`mt-5 rounded-2xl px-4 py-3 border ${
+          <div className={`mt-5 rounded-xl px-4 py-3 border ${
             useCase.goNoGo.decision === 'go'    ? 'border-success-dark/20 bg-success-light/8 dark:bg-success-dark/5' :
             useCase.goNoGo.decision === 'no_go' ? 'border-danger-dark/20 bg-danger-light/8' :
             'border-border dark:border-white/8 bg-warm-50 dark:bg-warm-800/40'

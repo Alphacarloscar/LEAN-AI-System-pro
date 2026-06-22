@@ -144,7 +144,7 @@ export function RecommendationPanel({
   const isDisabled  = !engagementId
 
   return (
-    <div className="rounded-2xl bg-surface dark:bg-warm-900/40 border border-border dark:border-white/6 overflow-hidden">
+    <div className="rounded-xl bg-surface dark:bg-warm-900/40 border border-border dark:border-white/6 overflow-hidden">
 
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-border dark:border-white/6">

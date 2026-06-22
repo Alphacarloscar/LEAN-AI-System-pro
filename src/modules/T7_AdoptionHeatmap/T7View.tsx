@@ -140,7 +140,7 @@ export function T7View({ onBack }: T7ViewProps) {
         title="Adoption Heatmap"
         subtitle={<p className="text-xs text-text-muted">{companyName} · Curva de difusión Rogers</p>}
         phaseMiniMap={<PhaseMiniMap phaseId="activate" toolCode="T7" />}
-        maxWidth="max-w-5xl"
+        maxWidth="max-w-7xl"
         chips={
           <div className="flex items-center gap-3 flex-wrap">
             <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-warm-700 border border-border dark:border-white/6">
@@ -161,7 +161,7 @@ export function T7View({ onBack }: T7ViewProps) {
         }
       />
 
-      <div className="max-w-5xl mx-auto space-y-6 px-8 py-8">
+      <div className="max-w-7xl mx-auto space-y-6 px-8 py-8">
 
       {/* Banner no bloqueante — stakeholders pendientes */}
       {(isLoadingT2 || (!isLoadingT2 && stakeholders.length === 0)) && (

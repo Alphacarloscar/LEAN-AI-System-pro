@@ -166,7 +166,7 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
               key={kpi.label}
               variant="flat"
               padding="none"
-              className="rounded-2xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3"
+              className="rounded-xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3"
             >
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
                 {kpi.label}
@@ -179,7 +179,7 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
 
         {/* Benchmark context */}
         {benchmarkCost && !editing && (
-          <div className="rounded-2xl border border-navy/15 bg-navy/3 dark:bg-navy/8 px-4 py-3">
+          <div className="rounded-xl border border-navy/15 bg-navy/3 dark:bg-navy/8 px-4 py-3">
             <p className="text-[10px] font-mono uppercase tracking-widest text-navy/60 mb-1">
               Benchmark · {AI_CATEGORY_LABELS[useCase.aiCategory] ?? useCase.aiCategory}
             </p>
@@ -227,7 +227,7 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
         </div>
 
         {/* Fields grid */}
-        <Card variant="flat" padding="none" className="rounded-2xl border border-border dark:border-white/8 bg-warm-50 dark:bg-warm-900/50 px-5 py-4 flex flex-col gap-5">
+        <Card variant="flat" padding="none" className="rounded-xl border border-border dark:border-white/8 bg-warm-50 dark:bg-warm-900/50 px-5 py-4 flex flex-col gap-5">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
             {/* KPI principal */}

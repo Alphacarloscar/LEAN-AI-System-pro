@@ -67,7 +67,7 @@ export function InterviewPhase({ onComplete }: InterviewPhaseProps) {
       </div>
 
       {/* Pregunta */}
-      <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 px-5 py-4 border border-border dark:border-white/6">
+      <div className="rounded-xl bg-gray-50 dark:bg-gray-800/50 px-5 py-4 border border-border dark:border-white/6">
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
           Pregunta {String(currentQ + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
         </p>
