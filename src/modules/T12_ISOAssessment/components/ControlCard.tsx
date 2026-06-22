@@ -64,7 +64,7 @@ export function ControlCard({ control, forceExpanded, onUpdate }: ControlCardPro
             </p>
             <div className="flex items-center gap-1.5 shrink-0">
               {control.importedFromT6 && (
-                <span className="px-1.5 py-0.5 rounded text-[8px] font-mono bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800">
+                <span className="px-1.5 py-0.5 rounded text-[8px] font-mono bg-warm-100 dark:bg-warm-700/60 text-gold dark:text-gold border border-warm-200 dark:border-warm-600">
                   T6
                 </span>
               )}

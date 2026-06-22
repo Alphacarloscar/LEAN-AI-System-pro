@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T1 — Executive Output (QW1 preview)
 //
 // Panel de output ejecutivo auto-generado desde los scores.
@@ -50,7 +50,7 @@ function miniBarFill(score: number): string {
 
 function miniBar(score: number, max = 4) {
   return (
-    <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+    <div className="flex-1 h-1.5 bg-gray-100 dark:bg-warm-600 rounded-full overflow-hidden">
       <div
         className={`h-full ${miniBarFill(score)} rounded-full transition-all duration-300`}
         style={{ width: `${(score / max) * 100}%` }}
@@ -104,7 +104,7 @@ export function T1ExecutiveOutput({
   })
 
   return (
-    <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
+    <div className="rounded-xl border border-border bg-white dark:bg-warm-800 overflow-hidden">
 
       {/* ── Cabecera del informe ── */}
       <div className="px-8 py-6 border-b border-border bg-navy dark:bg-navy/90">
@@ -145,7 +145,7 @@ export function T1ExecutiveOutput({
             <div className="space-y-2">
               {strengths.length > 0 ? strengths.map((d) => (
                 <div key={d.code} className="flex items-center justify-between gap-2">
-                  <span className="text-sm text-lean-black dark:text-gray-200">{d.label}</span>
+                  <span className="text-sm text-lean-black dark:text-warm-100">{d.label}</span>
                   <span className={`text-sm font-bold tabular-nums ${scoreColor(d.score)}`}>{d.score.toFixed(1)}</span>
                 </div>
               )) : (
@@ -159,7 +159,7 @@ export function T1ExecutiveOutput({
             <div className="space-y-2">
               {gaps.length > 0 ? gaps.map((d) => (
                 <div key={d.code} className="flex items-center justify-between gap-2">
-                  <span className="text-sm text-lean-black dark:text-gray-200">{d.label}</span>
+                  <span className="text-sm text-lean-black dark:text-warm-100">{d.label}</span>
                   <div className="flex items-center gap-1.5">
                     <span className={`text-sm font-bold tabular-nums ${scoreColor(d.score)}`}>{d.score.toFixed(1)}</span>
                     <span className="text-[10px] text-text-muted">→ {TARGET.toFixed(1)}</span>
@@ -207,12 +207,12 @@ export function T1ExecutiveOutput({
             </p>
             <div className="space-y-3">
               {priorityActions.map((item, i) => (
-                <div key={i} className="flex gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                <div key={i} className="flex gap-3 p-3 rounded-lg bg-gray-50 dark:bg-warm-700/50">
                   <span className="flex-shrink-0 h-5 w-5 rounded-full bg-navy text-white text-[10px] font-bold flex items-center justify-center">
                     {i + 1}
                   </span>
                   <div>
-                    <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-0.5">{item.dimension}</p>
+                    <p className="text-xs font-semibold text-lean-black dark:text-warm-100 mb-0.5">{item.dimension}</p>
                     <p className="text-xs text-text-muted leading-relaxed">{item.action}</p>
                   </div>
                 </div>

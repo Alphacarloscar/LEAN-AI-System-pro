@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T4 — Use Case Priority Board
 // ============================================================
 
@@ -98,7 +98,7 @@ export function T4View({ onBack }: T4ViewProps) {
       <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Spinner size="lg" label="Cargando casos de uso…" className="text-navy dark:text-warm-200" />
-          <p className="text-xs text-text-subtle dark:text-gray-500 font-mono">Cargando casos de uso...</p>
+          <p className="text-xs text-text-subtle dark:text-warm-400 font-mono">Cargando casos de uso...</p>
         </div>
       </div>
     )
@@ -120,9 +120,9 @@ export function T4View({ onBack }: T4ViewProps) {
             </svg>
           </div>
           <h2 className="text-sm font-semibold text-lean-black dark:text-warm-50">Selecciona un proyecto</h2>
-          <p className="text-xs text-text-muted dark:text-gray-500 leading-relaxed">
+          <p className="text-xs text-text-muted dark:text-warm-400 leading-relaxed">
             Los casos de uso están vinculados al proyecto activo.
-            Usa el selector <span className="font-semibold text-lean-black dark:text-gray-300">▾ Proyecto</span> en la barra superior para seleccionar uno existente o crear uno nuevo.
+            Usa el selector <span className="font-semibold text-lean-black dark:text-warm-200">▾ Proyecto</span> en la barra superior para seleccionar uno existente o crear uno nuevo.
           </p>
           <Button variant="link" className="mt-2" onClick={() => navigate('/')}>
             Volver al dashboard

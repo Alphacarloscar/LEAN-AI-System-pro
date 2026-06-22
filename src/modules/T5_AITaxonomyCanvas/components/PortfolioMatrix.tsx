@@ -162,7 +162,7 @@ function DepartmentAdoptionChart({
                         >
                           {DOMAIN_ICON_MAP[domCfg.icon] ?? <Settings size={14} strokeWidth={1.5} />}
                         </span>
-                        <span className="text-[11px] font-medium tracking-tight text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        <span className="text-[11px] font-medium tracking-tight text-warm-600 dark:text-warm-400 whitespace-nowrap">
                           {domCfg.shortLabel}
                         </span>
                       </button>
@@ -292,10 +292,10 @@ export function PortfolioMatrix({
           >
             {/* Quadrant backgrounds */}
             <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 pointer-events-none">
-              <div className="bg-warning-light/45 dark:bg-amber-900/20 border-r border-b border-border/30" />
-              <div className="bg-success-light/45 dark:bg-emerald-900/20 border-b border-border/30" />
+              <div className="bg-warning-light/45 dark:bg-warm-800/40 border-r border-b border-border/30" />
+              <div className="bg-success-light/45 dark:bg-warm-800/30 border-b border-border/30" />
               <div className="bg-gray-100/80 dark:bg-gray-700/35 border-r border-border/30" />
-              <div className="bg-info-light/20 dark:bg-blue-900/20" />
+              <div className="bg-info-light/20 dark:bg-warm-800/20" />
             </div>
 
             {/* Quadrant labels */}
@@ -361,7 +361,7 @@ export function PortfolioMatrix({
 
                   {/* Hover tooltip */}
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-20 whitespace-nowrap">
-                    <div className="bg-lean-black text-white text-[10px] rounded-lg px-3 py-1.5 shadow-xl">
+                    <div className="bg-lean-black text-white text-[10px] rounded-lg px-3 py-1.5 shadow-sm">
                       <p className="font-semibold">{domCfg.label}</p>
                       <p style={{ color: recCfg.hex }}>{recCfg.label}</p>
                     </div>

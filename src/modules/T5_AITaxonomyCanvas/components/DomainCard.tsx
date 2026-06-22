@@ -31,7 +31,12 @@ export function DomainCard({ assessment, onEdit }: DomainCardProps) {
   const recCfg = T5_RECOMMENDATION_CONFIG[assessment.recommendation]
 
   return (
-    <Card variant="outlined" padding="none" className="rounded-xl p-5 flex flex-col gap-4">
+    <Card
+      variant="outlined"
+      padding="none"
+      className="rounded-xl p-5 flex flex-col gap-4 bg-warm-50 dark:bg-warm-800"
+      style={{ borderLeft: `3px solid ${domCfg.hex}` }}
+    >
 
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
@@ -89,7 +94,7 @@ export function DomainCard({ assessment, onEdit }: DomainCardProps) {
 
         <div className="flex flex-col gap-2.5">
           <div className="flex items-start gap-2.5">
-            <span className="p-1.5 bg-slate-50 border border-slate-100 rounded-md dark:bg-slate-800/60 dark:border-slate-700 shrink-0">
+            <span className="p-1.5 bg-warm-50 border border-warm-200 rounded-md dark:bg-warm-800/60 dark:border-warm-700 shrink-0">
               <User size={16} strokeWidth={1.5} className="text-text-muted" />
             </span>
             <div>
@@ -100,7 +105,7 @@ export function DomainCard({ assessment, onEdit }: DomainCardProps) {
             </div>
           </div>
           <div className="flex items-start gap-2.5">
-            <span className="p-1.5 bg-slate-50 border border-slate-100 rounded-md dark:bg-slate-800/60 dark:border-slate-700 shrink-0">
+            <span className="p-1.5 bg-warm-50 border border-warm-200 rounded-md dark:bg-warm-800/60 dark:border-warm-700 shrink-0">
               <BarChart2 size={16} strokeWidth={1.5} className="text-text-muted" />
             </span>
             <div>

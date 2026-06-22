@@ -13,13 +13,13 @@ export const T12_CLAUSE_CONFIG: Record<T12Clause, {
   hex:       string
   bg:        string
 }> = {
-  context:     { label: 'Contexto de la organización', shortLabel: 'Contexto',     number: '4', hex: '#6A90C0', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-  leadership:  { label: 'Liderazgo',                   shortLabel: 'Liderazgo',    number: '5', hex: '#7C3AED', bg: 'bg-violet-50 dark:bg-violet-900/20' },
-  planning:    { label: 'Planificación',                shortLabel: 'Planificación',number: '6', hex: '#0891B2', bg: 'bg-cyan-50 dark:bg-cyan-900/20' },
-  support:     { label: 'Apoyo',                        shortLabel: 'Apoyo',        number: '7', hex: '#5FAF8A', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-  operation:   { label: 'Operación',                   shortLabel: 'Operación',    number: '8', hex: '#D4A85C', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-  evaluation:  { label: 'Evaluación del desempeño',    shortLabel: 'Evaluación',   number: '9', hex: '#C06060', bg: 'bg-red-50 dark:bg-red-900/20' },
-  improvement: { label: 'Mejora',                      shortLabel: 'Mejora',       number: '10', hex: '#C8860A', bg: 'bg-orange-50 dark:bg-orange-900/20' },
+  context:     { label: 'Contexto de la organización', shortLabel: 'Contexto',     number: '4', hex: '#6A90C0', bg: 'bg-info-light dark:bg-info-light/10'       },
+  leadership:  { label: 'Liderazgo',                   shortLabel: 'Liderazgo',    number: '5', hex: '#C8860A', bg: 'bg-warm-100 dark:bg-warm-700/40'          },
+  planning:    { label: 'Planificación',                shortLabel: 'Planificación',number: '6', hex: '#6A90C0', bg: 'bg-info-light dark:bg-info-light/10'       },
+  support:     { label: 'Apoyo',                        shortLabel: 'Apoyo',        number: '7', hex: '#5FAF8A', bg: 'bg-success-light dark:bg-success-light/10' },
+  operation:   { label: 'Operación',                   shortLabel: 'Operación',    number: '8', hex: '#D4A85C', bg: 'bg-warning-light dark:bg-warning-light/10' },
+  evaluation:  { label: 'Evaluación del desempeño',    shortLabel: 'Evaluación',   number: '9', hex: '#C06060', bg: 'bg-danger-light dark:bg-danger-light/10'   },
+  improvement: { label: 'Mejora',                      shortLabel: 'Mejora',       number: '10', hex: '#C8860A', bg: 'bg-warm-50 dark:bg-warm-800/40'            },
 }
 
 export const T12_CLAUSE_ORDER: T12Clause[] = [
@@ -39,9 +39,9 @@ export const T12_STATUS_CONFIG: Record<T12Status, {
 }> = {
   no_iniciado: {
     label:     'No iniciado',
-    badgeBg:   'bg-gray-100 dark:bg-gray-800',
-    badgeText: 'text-gray-500 dark:text-gray-400',
-    hex:       '#94A3B8',
+    badgeBg:   'bg-warm-100 dark:bg-warm-700',
+    badgeText: 'text-warm-500 dark:text-warm-400',
+    hex:       '#8A857C',
     dot:       '○',
     next:      'en_progreso',
     nextLabel: 'Marcar en progreso',
@@ -57,8 +57,8 @@ export const T12_STATUS_CONFIG: Record<T12Status, {
   },
   pendiente_revision: {
     label:     'Pendiente revisión',
-    badgeBg:   'bg-blue-50 dark:bg-blue-900/20',
-    badgeText: 'text-blue-600 dark:text-blue-400',
+    badgeBg:   'bg-info-light dark:bg-info-light/10',
+    badgeText: 'text-info-dark dark:text-info-dark',
     hex:       '#6A90C0',
     dot:       '◔',
     next:      'aprobado',

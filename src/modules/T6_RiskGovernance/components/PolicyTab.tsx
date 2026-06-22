@@ -119,7 +119,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
               </Badge>
               <button
                 onClick={clearGeneratedPolicy}
-                className="text-[10px] text-text-subtle hover:text-red-500 transition-colors"
+                className="text-[10px] text-text-subtle hover:text-danger transition-colors"
               >
                 Volver a plantilla
               </button>
@@ -130,7 +130,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
             </p>
           )}
           {genError && (
-            <p className="text-[11px] text-red-500 flex items-center gap-1">
+            <p className="text-[11px] text-danger flex items-center gap-1">
               <AlertTriangle size={12} strokeWidth={2} className="shrink-0" /> {genError}
               <button onClick={clearError} className="underline hover:no-underline ml-1">Cerrar</button>
             </p>
@@ -152,7 +152,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
                 'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150',
                 isPending
                   ? 'border-border text-text-subtle bg-gray-50 dark:bg-gray-800 cursor-not-allowed'
-                  : 'border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40',
+                  : 'border-warning dark:border-warning-dark text-warning-dark dark:text-warning bg-warning-light dark:bg-warning/10 hover:bg-warning/20 dark:hover:bg-warning/20',
               ].join(' ')}
             >
               {isPending
@@ -359,11 +359,11 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
               </p>
               <div className="flex flex-col gap-3">
                 {highRiskCases.map((uc) => (
-                  <div key={uc.id} className="rounded-xl border border-orange-200 dark:border-orange-800/40 bg-orange-50 dark:bg-orange-900/10 px-4 py-3">
-                    <p className="text-xs font-bold text-orange-700 dark:text-orange-300 mb-1">{uc.name} — {uc.department}</p>
+                  <div key={uc.id} className="rounded-xl border border-border bg-surface dark:bg-gray-800/40 border-l-2 border-l-warning px-4 py-3">
+                    <p className="text-xs font-bold text-warning-dark dark:text-warning mb-1">{uc.name} — {uc.department}</p>
                     <ul className="flex flex-col gap-1 mt-2">
                       {['Evaluación de conformidad documentada', 'Sistema de gestión de riesgos operativo', 'Supervisión humana definida y comunicada al equipo', 'Registro en base de datos EU de sistemas IA de alto riesgo'].map((m) => (
-                        <li key={m} className="text-[11px] text-orange-600 dark:text-orange-400 flex items-start gap-1.5">
+                        <li key={m} className="text-[11px] text-warning-dark dark:text-warning flex items-start gap-1.5">
                           <span>▶</span><span>{m}</span>
                         </li>
                       ))}

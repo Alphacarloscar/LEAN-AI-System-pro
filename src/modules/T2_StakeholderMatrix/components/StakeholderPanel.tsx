@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T2 — StakeholderPanel
 //
 // Panel derecho con detalle de stakeholder activo:
@@ -32,17 +32,17 @@ export function StakeholderPanel({
     stakeholder.resistance === 'alta'
 
   return (
-    <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
+    <div className="rounded-xl border border-border bg-white dark:bg-warm-800 overflow-hidden">
 
       {/* ── HEADER: identidad izquierda | notas derecha ── */}
-      <div className={`border-b border-border ${isHighRisk ? 'bg-danger-light dark:bg-danger-dark/20' : 'bg-gray-50 dark:bg-gray-800/50'}`}>
+      <div className={`border-b border-border ${isHighRisk ? 'bg-danger-light dark:bg-danger-dark/20' : 'bg-gray-50 dark:bg-warm-700/50'}`}>
         <div className="flex divide-x divide-border/40">
 
           {/* Identidad */}
           <div className="flex-1 min-w-0 px-4 py-3">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-lean-black dark:text-gray-100 truncate">
+                <p className="text-sm font-semibold text-lean-black dark:text-warm-50 truncate">
                   {stakeholder.name}
                 </p>
                 <p className="text-xs text-text-muted mt-0.5">{stakeholder.role}</p>
@@ -50,7 +50,7 @@ export function StakeholderPanel({
               </div>
               <button
                 onClick={onClose}
-                className="h-6 w-6 rounded-md flex items-center justify-center text-text-subtle hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0"
+                className="h-6 w-6 rounded-md flex items-center justify-center text-text-subtle hover:bg-gray-200 dark:hover:bg-warm-600 transition-colors shrink-0"
               >
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
                   <path d="M1 1l9 9M10 1L1 10" />
@@ -61,7 +61,7 @@ export function StakeholderPanel({
               <ArchetypeBadge archetype={stakeholder.archetype} />
               <ResistanceBadge resistance={stakeholder.resistance} />
               {stakeholder.manualOverride && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] bg-gray-100 dark:bg-gray-800 text-text-subtle">
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-gray-100 dark:bg-warm-700 text-text-subtle">
                   Ajuste manual
                 </span>
               )}
@@ -102,7 +102,7 @@ export function StakeholderPanel({
 
           {/* Perfil arquetipo */}
           <div>
-            <p className="text-[8px] font-mono uppercase tracking-widest text-lean-black dark:text-gray-200 mb-1">
+            <p className="text-[8px] font-mono uppercase tracking-widest text-lean-black dark:text-warm-100 mb-1">
               Perfil — {cfg.label}
             </p>
             <p className="text-[10px] text-text-muted leading-relaxed">{cfg.description}</p>
@@ -144,7 +144,7 @@ export function StakeholderPanel({
 
         {/* RIGHT — intervenciones */}
         <div className="flex-1 min-w-0 px-4 py-4">
-          <p className="text-[8px] font-mono font-bold uppercase tracking-widest text-lean-black dark:text-gray-200 mb-3">
+          <p className="text-[8px] font-mono font-bold uppercase tracking-widest text-lean-black dark:text-warm-100 mb-3">
             Intervenciones · {res.label}
           </p>
           <ol className="space-y-3">

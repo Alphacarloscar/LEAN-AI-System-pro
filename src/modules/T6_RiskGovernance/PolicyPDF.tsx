@@ -19,7 +19,7 @@ import {
 } from '@react-pdf/renderer'
 import type { UseCase }            from '@/modules/T4_UseCasePriorityBoard/types'
 import type { T5DomainAssessment } from '@/modules/T5_AITaxonomyCanvas/types'
-import { s, RISK_LABEL } from './components/policyPdfStyles'
+import { s, RISK_LABEL, ORANGE, GRAY_400, GREEN } from './components/policyPdfStyles'
 
 export interface PolicyPDFData {
   companyName:      string
@@ -99,7 +99,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
               {gp?.declaracion_mandate ?? `Todo sistema de IA operativo en ${companyName} debe ser identificado, evaluado en términos de riesgo regulatorio y documentado en el catálogo corporativo de IA antes de su despliegue en producción.`}
             </Text>
             {hasGenerated && (
-              <Text style={{ fontSize: 7, color: '#C8860A', marginTop: 4 }}>
+              <Text style={{ fontSize: 7, color: ORANGE, marginTop: 4 }}>
                 ✦ Contenido generado con IA · Sector: {gp?.sector}
               </Text>
             )}
@@ -156,7 +156,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
               pipeline de implementación de {companyName} a la fecha de emisión de esta política.
             </Text>
             {approvedCases.length === 0 ? (
-              <Text style={{ ...s.paragraph, fontStyle: 'italic', color: '#9A9790' }}>
+              <Text style={{ ...s.paragraph, fontStyle: 'italic', color: GRAY_400 }}>
                 Sin casos de uso aprobados. Completa el proceso Go/No-Go en T4.
               </Text>
             ) : (
@@ -179,7 +179,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
                           <Text style={{ color: rCfg.color }}>{rCfg.label}</Text>
                         </View>
                       </View>
-                      <Text style={[s.tdCell, s.col4, { color: '#166534', fontFamily: 'Helvetica-Bold', fontSize: 7.5 }]}>
+                      <Text style={[s.tdCell, s.col4, { color: GREEN, fontFamily: 'Helvetica-Bold', fontSize: 7.5 }]}>
                         {statusLabel(uc.status)}
                       </Text>
                     </View>

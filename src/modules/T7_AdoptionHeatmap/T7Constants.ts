@@ -74,11 +74,11 @@ export const BELL_FILL   = buildBellFillPath()
 export const BELL_STROKE = buildBellStrokePath()
 
 export const SEG_LABELS: Record<RogersSegment, { label: string; pct: string; bg: string; darkBg: string }> = {
-  innovators:     { label: 'Innovadores',    pct: '2.5%',  bg: '#EFF6FF', darkBg: 'rgba(59,130,246,0.07)'  },
-  early_adopters: { label: 'Early Adopters', pct: '13.5%', bg: '#F0FDF4', darkBg: 'rgba(34,197,94,0.07)'   },
-  early_majority: { label: 'Mayoría Temp.',  pct: '34%',   bg: '#FEFCE8', darkBg: 'rgba(234,179,8,0.07)'   },
-  late_majority:  { label: 'Mayoría Tardía', pct: '34%',   bg: '#FFF7ED', darkBg: 'rgba(249,115,22,0.07)'  },
-  laggards:       { label: 'Rezagados',      pct: '16%',   bg: '#F9FAFB', darkBg: 'rgba(148,163,184,0.05)' },
+  innovators:     { label: 'Innovadores',    pct: '2.5%',  bg: '#DDE8F5', darkBg: 'rgba(106,144,192,0.07)' },  // info-light
+  early_adopters: { label: 'Early Adopters', pct: '13.5%', bg: '#D4EDE3', darkBg: 'rgba(95,175,138,0.07)'  },  // success-light
+  early_majority: { label: 'Mayoría Temp.',  pct: '34%',   bg: '#F8EDD3', darkBg: 'rgba(212,168,92,0.07)'  },  // warning-light
+  late_majority:  { label: 'Mayoría Tardía', pct: '34%',   bg: '#FAF0D7', darkBg: 'rgba(200,134,10,0.07)'  },  // gold-light
+  laggards:       { label: 'Rezagados',      pct: '16%',   bg: '#F7F4EE', darkBg: 'rgba(196,192,184,0.05)' },  // surface
 }
 
 // ── Departamentos ─────────────────────────────────────────────

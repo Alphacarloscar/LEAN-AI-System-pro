@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // ITBizGapSection — IT vs Business gap analysis for T1ExecutiveOutput
 // ============================================================
 
@@ -162,7 +162,7 @@ export function ITBizGapSection({ dimensions, itInterviewees, bizInterviewees }:
       </div>
 
       {/* Resumen global */}
-      <div className="flex items-center gap-6 mb-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-border/60">
+      <div className="flex items-center gap-6 mb-4 p-4 rounded-xl bg-gray-50 dark:bg-warm-700/50 border border-border/60">
         <div className="text-center">
           <p className={`text-2xl font-bold tabular-nums ${IT_TEXT_CLASS}`}>{itOverall.toFixed(1)}</p>
           <p className="text-[11px] text-text-muted mt-0.5">IT (avg)</p>
@@ -176,7 +176,7 @@ export function ITBizGapSection({ dimensions, itInterviewees, bizInterviewees }:
                 : `IT +${(itOverall - bizOverall).toFixed(1)} pts`}
             </span>
           </div>
-          <div className="mt-2 w-full max-w-48 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden relative">
+          <div className="mt-2 w-full max-w-48 h-1 bg-gray-200 dark:bg-warm-600 rounded-full overflow-hidden relative">
             <div className="absolute inset-0 flex">
               <div className={`${IT_BAR_CLASS} rounded-full opacity-90`} style={{ width: `${(itOverall / 4) * 100}%` }} />
             </div>
@@ -202,7 +202,7 @@ export function ITBizGapSection({ dimensions, itInterviewees, bizInterviewees }:
               <span className={`text-[11px] font-semibold tabular-nums w-7 text-right ${IT_TEXT_CLASS}`}>
                 {row.itScore.toFixed(1)}
               </span>
-              <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden relative">
+              <div className="flex-1 h-1.5 bg-gray-100 dark:bg-warm-700 rounded-full overflow-hidden relative">
                 <div className={`absolute top-0 bottom-0 left-0 ${IT_BAR_CLASS} rounded-full`}
                   style={{ width: `${(row.itScore / 4) * 100}%` }} />
                 <div className={`absolute top-0 bottom-0 left-0 ${BIZ_BAR_CLASS} rounded-full opacity-75`}
@@ -215,7 +215,7 @@ export function ITBizGapSection({ dimensions, itInterviewees, bizInterviewees }:
                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full w-12 text-center ${
                   absDiff > 0.8 ? 'text-danger-dark bg-danger-light' :
                   absDiff > 0.5 ? 'text-warning-dark bg-warning-light' :
-                  'text-text-subtle bg-gray-100 dark:bg-gray-800'
+                  'text-text-subtle bg-gray-100 dark:bg-warm-700'
                 }`}>
                   {isBizHigher ? '+' : '-'}{absDiff.toFixed(1)}
                 </span>

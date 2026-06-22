@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+﻿import { useMemo } from 'react'
 import { STATUS_CONFIG, ROADMAP_QUARTERS, computeROIFromEconomics } from '../constants'
 import { priorityScoreColor, fmtEur } from './T4Badges.constants'
 import { Card } from '@shared/design-system/components'
@@ -50,7 +50,7 @@ export function QuarterlyRoadmap({
               className={`flex items-start gap-5 py-4 first:pt-0 last:pb-0 ${isEmpty ? 'opacity-40' : ''}`}
             >
               <div className="shrink-0 w-20 pt-1">
-                <p className="text-sm font-bold text-lean-black dark:text-gray-200 tabular-nums">
+                <p className="text-sm font-bold text-lean-black dark:text-warm-100 tabular-nums">
                   {quarter.split(' ')[0]}
                 </p>
                 <p className="text-[10px] text-text-subtle tabular-nums">
@@ -107,7 +107,7 @@ export function QuarterlyRoadmap({
                               {uc.priorityScore.toFixed(0)}
                             </span>
                           </div>
-                          <p className="text-xs font-semibold text-lean-black dark:text-gray-200 leading-tight line-clamp-2 mb-1">
+                          <p className="text-xs font-semibold text-lean-black dark:text-warm-100 leading-tight line-clamp-2 mb-1">
                             {uc.name}
                           </p>
                           <p className="text-[10px] text-text-subtle truncate">{uc.department}</p>

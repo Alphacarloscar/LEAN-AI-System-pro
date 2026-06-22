@@ -4,11 +4,11 @@ import { useState } from 'react'
 import type { T11PhaseObjective } from '../types'
 
 const PHASE_COLORS: Record<string, string> = {
-  listen:      '#6A90C0',
-  enable:      '#7C3AED',
-  accelerate:  '#D4A85C',
-  normalize:   '#5FAF8A',
-  scale:       '#C8860A',
+  listen:      '#6A90C0',  // info-dark
+  enable:      '#C8860A',  // gold (reemplaza violet)
+  accelerate:  '#D4A85C',  // warning-dark
+  normalize:   '#5FAF8A',  // success-dark
+  scale:       '#2A2822',  // navy
 }
 
 export function ObjetivosTab({ objectives }: { objectives: T11PhaseObjective[] }) {

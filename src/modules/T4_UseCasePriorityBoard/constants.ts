@@ -21,7 +21,7 @@ export const STATUS_CONFIG: Record<UseCaseStatus, {
   go:         { label: 'Go',         badgeBg: 'bg-success-light',                    badgeText: 'text-success-dark',        dotBg: 'bg-success-dark',        hex: '#5FAF8A', order: 0 },
   en_piloto:  { label: 'En piloto',  badgeBg: 'bg-warning-light',                    badgeText: 'text-warning-dark',        dotBg: 'bg-warning-dark',        hex: '#D4A85C', order: 1 },
   priorizado: { label: 'Priorizado', badgeBg: 'bg-info-light',                       badgeText: 'text-info-dark',           dotBg: 'bg-info-dark',           hex: '#6A90C0', order: 2 },
-  candidato:  { label: 'Candidato',  badgeBg: 'bg-gray-100 dark:bg-gray-800',        badgeText: 'text-gray-500',            dotBg: 'bg-gray-400',            hex: '#94A3B8', order: 3 },
+  candidato:  { label: 'Candidato',  badgeBg: 'bg-warm-100 dark:bg-warm-700',        badgeText: 'text-warm-500',            dotBg: 'bg-warm-400',            hex: '#94A3B8', order: 3 },
   no_go:      { label: 'No-Go',      badgeBg: 'bg-danger-light',                     badgeText: 'text-danger-dark',         dotBg: 'bg-danger-dark',         hex: '#C06060', order: 4 },
   completado: { label: 'Completado', badgeBg: 'bg-navy/10 dark:bg-navy/20',          badgeText: 'text-navy dark:text-warm-100', dotBg: 'bg-navy',          hex: '#2A2822', order: 5 },
 }

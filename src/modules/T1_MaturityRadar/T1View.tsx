@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T1 — Vista completa (AI Readiness Assessment)
 //
 // Layout: header sticky (breadcrumb + progreso + score)
@@ -208,11 +208,11 @@ export function T1View({ onBack }: T1ViewProps) {
         chips={
           <div className="flex items-center gap-4">
             <span className="text-xs text-text-muted tabular-nums">
-              <span className="font-semibold text-lean-black dark:text-gray-200">{scoredCount}</span>
+              <span className="font-semibold text-lean-black dark:text-warm-100">{scoredCount}</span>
               /{TOTAL_SUBDIMENSIONS} subdimensiones puntuadas
             </span>
             <div className="text-right">
-              <span className="text-xl font-bold tabular-nums text-lean-black dark:text-gray-100">
+              <span className="text-xl font-bold tabular-nums text-lean-black dark:text-warm-50">
                 {overallScore.toFixed(1)}
               </span>
               <span className="text-sm font-light text-text-muted"> / 4</span>
@@ -238,7 +238,7 @@ export function T1View({ onBack }: T1ViewProps) {
       <div className="max-w-7xl mx-auto px-8 pt-6 pb-2">
         <div className="flex items-center gap-3 flex-wrap">
           {profile.engagementName && (
-            <p className="text-sm font-semibold text-lean-black dark:text-gray-100">
+            <p className="text-sm font-semibold text-lean-black dark:text-warm-50">
               {profile.engagementName}
             </p>
           )}

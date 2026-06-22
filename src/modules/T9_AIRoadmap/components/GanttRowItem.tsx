@@ -67,7 +67,7 @@ export function GanttRowItem({
     const sm      = T4_STATUS_META[uc.status] ?? T4_STATUS_META.candidato
     statusBadge   = <Badge shape="pill" size="xs" style={{ backgroundColor: sm.bg, color: sm.color }}>{sm.label}</Badge>
     barBg         = DS.navy
-    barTextColor  = '#ffffff'
+    barTextColor  = DS.white
     barOpacity    = uc.status === 'completado' ? 0.45 : 1
     showMilestone = !!uc.roadmap?.quarter
     sourceLabel   = 'T4 · Go'

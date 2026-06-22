@@ -1,4 +1,4 @@
-import { GO_NOGO_THRESHOLDS } from '../constants'
+﻿import { GO_NOGO_THRESHOLDS } from '../constants'
 import { Card } from '@shared/design-system/components'
 import type { UseCase } from '../types'
 
@@ -70,13 +70,13 @@ export function LowScoreRecommendations({ useCase }: { useCase: UseCase }) {
             padding="none"
             className="rounded-xl px-3 py-2.5"
           >
-            <p className="text-[10px] font-semibold text-lean-black dark:text-gray-200 mb-0.5">
+            <p className="text-[10px] font-semibold text-lean-black dark:text-warm-100 mb-0.5">
               {rec.dimension}
             </p>
-            <p className="text-[10px] text-text-muted dark:text-gray-400 leading-relaxed mb-1">
+            <p className="text-[10px] text-text-muted dark:text-warm-300 leading-relaxed mb-1">
               {rec.message}
             </p>
-            <p className="text-[10px] text-text-default dark:text-gray-300 leading-relaxed">
+            <p className="text-[10px] text-text-default dark:text-warm-200 leading-relaxed">
               → {rec.action}
             </p>
           </Card>

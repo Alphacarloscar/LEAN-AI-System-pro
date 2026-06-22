@@ -149,7 +149,7 @@ export function BellCurveTab({ stakeholders, dark }: { stakeholders: Stakeholder
               <line
                 key={x}
                 x1={x} y1={0} x2={x} y2={BASELINE}
-                stroke={dark ? 'rgba(255,255,255,0.1)' : '#CBD5E1'}
+                stroke={dark ? 'rgba(255,255,255,0.1)' : '#D4D0C8'}
                 strokeWidth={1}
                 strokeDasharray="4 3"
               />
@@ -162,12 +162,12 @@ export function BellCurveTab({ stakeholders, dark }: { stakeholders: Stakeholder
             <path
               d={BELL_STROKE}
               fill="none"
-              stroke={dark ? '#64748B' : '#475569'}
-              strokeWidth={2}
+              stroke={dark ? '#8A857C' : '#6B6864'}
+              strokeWidth={1.5}
             />
 
             {/* Baseline */}
-            <line x1={0} y1={BASELINE} x2={W} y2={BASELINE} stroke={dark ? 'rgba(255,255,255,0.1)' : '#CBD5E1'} strokeWidth={1} />
+            <line x1={0} y1={BASELINE} x2={W} y2={BASELINE} stroke={dark ? 'rgba(255,255,255,0.1)' : '#D4D0C8'} strokeWidth={1} />
 
             {/* Etiquetas de segmento */}
             {SEGMENT_ORDER.map(seg => {
@@ -175,9 +175,9 @@ export function BellCurveTab({ stakeholders, dark }: { stakeholders: Stakeholder
               const cx    = (x1 + x2) / 2
               const cfg   = SEG_LABELS[seg]
               const count = countBySeg[seg]
-              const labelFill  = dark ? '#94A3B8' : '#475569'
-              const pctFill    = dark ? '#64748B' : '#94A3B8'
-              const countFill  = dark ? '#64748B' : '#64748B'
+              const labelFill  = dark ? '#9A9790' : '#6B6864'
+              const pctFill    = dark ? '#6B6864' : '#9A9790'
+              const countFill  = dark ? '#6B6864' : '#6B6864'
               return (
                 <g key={seg}>
                   <text

@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // IntervieweeSelector — Collapsible list of interviewees for T1
 // ============================================================
 
@@ -31,11 +31,11 @@ export function IntervieweeSelector({
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-3">
-      <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
+      <div className="rounded-xl border border-border bg-white dark:bg-warm-800 overflow-hidden">
 
         {/* Toggle bar */}
         <div
-          className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+          className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-warm-700/50 transition-colors"
           onClick={() => setShowInterviewees((v) => !v)}
         >
           <div className="flex items-center gap-3">
@@ -51,7 +51,7 @@ export function IntervieweeSelector({
             </span>
             {activeInterviewee && (
               <span className="text-[10px] text-text-muted">
-                Puntuando: <span className="font-semibold text-lean-black dark:text-gray-200">
+                Puntuando: <span className="font-semibold text-lean-black dark:text-warm-100">
                   {activeInterviewee.name}
                 </span>
               </span>
@@ -84,7 +84,7 @@ export function IntervieweeSelector({
                       'flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all duration-150 group',
                       isActive
                         ? 'bg-navy-metallic text-white border-navy shadow-sm'
-                        : 'bg-white dark:bg-gray-900 border-border hover:border-navy/30 hover:bg-gray-50 dark:hover:bg-gray-800',
+                        : 'bg-white dark:bg-warm-800 border-border hover:border-navy/30 hover:bg-gray-50 dark:hover:bg-warm-700',
                     ].join(' ')}
                   >
                     {/* Selección del entrevistado */}
@@ -103,7 +103,7 @@ export function IntervieweeSelector({
                         {person.type === 'it' ? 'IT' : 'BIZ'}
                       </span>
                       <div className="min-w-0">
-                        <p className={`text-xs font-semibold truncate ${isActive ? 'text-white' : 'text-lean-black dark:text-gray-100'}`}>
+                        <p className={`text-xs font-semibold truncate ${isActive ? 'text-white' : 'text-lean-black dark:text-warm-50'}`}>
                           {person.name}
                         </p>
                         <p className={`text-[10px] truncate ${isActive ? 'text-white/70' : 'text-text-muted'}`}>

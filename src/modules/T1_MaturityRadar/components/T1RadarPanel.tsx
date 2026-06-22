@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T1 — RadarPanel (sticky)
 //
 // Muestra el radar de madurez en tiempo real + overall score + tier badge.
@@ -36,14 +36,14 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
     <div className="space-y-4">
 
       {/* ── Overall score + tier ── */}
-      <div className="rounded-xl border border-border bg-white dark:bg-gray-900 p-5">
+      <div className="rounded-xl border border-border bg-white dark:bg-warm-800 p-5">
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-3">
           Madurez IA global
         </p>
 
         {/* Número hero */}
         <div className="flex items-baseline gap-2 mb-2">
-          <span className="text-5xl font-bold tracking-tight text-lean-black dark:text-gray-50 tabular-nums">
+          <span className="text-5xl font-bold tracking-tight text-lean-black dark:text-warm-50 tabular-nums">
             {overallScore.toFixed(1)}
           </span>
           <span className="text-xl font-light text-text-muted">/ 4</span>
@@ -55,7 +55,7 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
         </Badge>
 
         {/* Barra de progreso */}
-        <div className="mt-4 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className="mt-4 h-2 bg-gray-100 dark:bg-warm-600 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-300 ${
               overallScore >= 3   ? 'bg-success-dark' :
@@ -78,7 +78,7 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
       </div>
 
       {/* ── Radar chart ── */}
-      <div className="rounded-xl border border-border bg-white dark:bg-gray-900 p-5">
+      <div className="rounded-xl border border-border bg-white dark:bg-warm-800 p-5">
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1">
           Radar de madurez IA
         </p>

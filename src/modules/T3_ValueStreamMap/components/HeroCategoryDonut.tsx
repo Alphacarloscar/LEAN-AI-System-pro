@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { AI_CATEGORY_CONFIG } from '../constants'
 import { CAT_HEX, CAT_ORDER } from './T3Badges.constants'
+import { T3_QUADRANT_COLORS } from '@shared/design-system/charts/chartTokens'
 import type { ValueStream } from '../types'
 
 type HoveredDot = {
@@ -37,7 +38,7 @@ export function HeroCategoryDonut({
     return (
       <svg viewBox={`0 0 ${VB} ${VB}`} width="100%" style={{ display: 'block' }}>
         <text x={CX} y={CY + 5} textAnchor="middle" fontSize={13}
-          fill="#94A3B8" fontFamily="ui-monospace,monospace">
+          fill={T3_QUADRANT_COLORS.evaluar} fontFamily="ui-monospace,monospace">
           Sin procesos
         </text>
       </svg>
@@ -157,9 +158,9 @@ export function HeroCategoryDonut({
           )
         })}
 
-        <text x={CX} y={CY - 14} textAnchor="middle" fontSize={7.5} fill="#94A3B8"
+        <text x={CX} y={CY - 14} textAnchor="middle" fontSize={7.5} fill={T3_QUADRANT_COLORS.evaluar}
           fontFamily="ui-monospace,monospace" letterSpacing="0.10em">VALUE STREAM</text>
-        <text x={CX} y={CY - 2}  textAnchor="middle" fontSize={7.5} fill="#94A3B8"
+        <text x={CX} y={CY - 2}  textAnchor="middle" fontSize={7.5} fill={T3_QUADRANT_COLORS.evaluar}
           fontFamily="ui-monospace,monospace" letterSpacing="0.10em">MAP</text>
         <text x={CX} y={CY + 22} textAnchor="middle" fontSize={26} fontWeight="700"
           fill="currentColor" fontFamily="ui-monospace,monospace">
@@ -168,7 +169,7 @@ export function HeroCategoryDonut({
       </svg>
 
       {donutHovered && (
-        <div className="pointer-events-none absolute z-50 bg-white dark:bg-warm-800 border border-border dark:border-white/10 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[148px]"
+        <div className="pointer-events-none absolute z-50 bg-white dark:bg-warm-800 border border-border dark:border-white/10 rounded-lg shadow-sm px-3 py-2 text-[11px] min-w-[148px]"
           style={{
             left:      `${donutHovered.leftPct}%`,
             top:       `${donutHovered.topPct}%`,

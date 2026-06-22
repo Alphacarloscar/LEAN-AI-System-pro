@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T1 — DimensionCard (sección de dimensión con subdimensiones)
 //
 // Muestra una dimensión principal (D1–D6) con sus 4 subdimensiones.
@@ -74,7 +74,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
 
         {/* Label + descripción */}
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-lean-black dark:text-gray-200 leading-snug">
+          <p className="text-xs font-medium text-lean-black dark:text-warm-100 leading-snug">
             {sub.label}
           </p>
           {def?.description && (
@@ -96,7 +96,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
                 'focus:outline-none focus:ring-2 focus:ring-navy/30',
                 sub.score === n
                   ? `${scoreColor(n)} shadow-sm scale-[1.08]`
-                  : 'bg-gray-100 dark:bg-gray-800 text-text-muted hover:bg-gray-200 dark:hover:bg-gray-700',
+                  : 'bg-gray-100 dark:bg-warm-700 text-text-muted hover:bg-gray-200 dark:hover:bg-warm-600',
               ].join(' ')}
             >
               {n}
@@ -107,8 +107,8 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
 
       {/* ── Score activo — descripción del nivel ── */}
       {hasScore && (
-        <div className="ml-11 mb-1 text-[11px] text-text-muted leading-snug px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-md">
-          <span className="font-medium text-lean-black dark:text-gray-300">
+        <div className="ml-11 mb-1 text-[11px] text-text-muted leading-snug px-2 py-1 bg-gray-50 dark:bg-warm-700/50 rounded-md">
+          <span className="font-medium text-lean-black dark:text-warm-200">
             {SCORE_LABELS[sub.score!]}:{' '}
           </span>
           {def?.criteria[sub.score as 0|1|2|3|4] ?? ''}
@@ -149,7 +149,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
 
       {/* ── Criterios expandidos ── */}
       {sub.showCriteria && def && (
-        <div className="ml-11 mb-2 rounded-lg border border-border/60 bg-gray-50 dark:bg-gray-800/40 divide-y divide-border/40 overflow-hidden">
+        <div className="ml-11 mb-2 rounded-lg border border-border/60 bg-gray-50 dark:bg-warm-700/40 divide-y divide-border/40 overflow-hidden">
           {([0, 1, 2, 3, 4] as const).map((n) => (
             <div
               key={n}
@@ -157,7 +157,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
                 'flex gap-2.5 px-3 py-1.5 text-[11px] cursor-pointer transition-colors',
                 sub.score === n
                   ? 'bg-navy/8 dark:bg-navy/20'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700/50',
+                  : 'hover:bg-gray-100 dark:hover:bg-warm-600/50',
               ].join(' ')}
               onClick={() => setScore(n)}
             >
@@ -205,12 +205,12 @@ export function DimensionCard({ state, definition, onChange }: DimensionCardProp
   }
 
   return (
-    <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden transition-shadow hover:shadow-sm">
+    <div className="rounded-xl border border-border bg-white dark:bg-warm-800 overflow-hidden transition-shadow hover:shadow-sm">
 
       {/* ── Cabecera de dimensión ── */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
+        className="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-gray-50/50 dark:hover:bg-warm-700/50 transition-colors"
       >
         {/* Número D1-D6 */}
         <span className="shrink-0 px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[11px] font-mono font-bold text-navy dark:text-warm-100">
@@ -219,7 +219,7 @@ export function DimensionCard({ state, definition, onChange }: DimensionCardProp
 
         {/* Label + descripción */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-lean-black dark:text-gray-100">
+          <p className="text-sm font-semibold text-lean-black dark:text-warm-50">
             {definition.label}
           </p>
           <p className="text-[11px] text-text-muted mt-0.5 leading-snug truncate pr-4">

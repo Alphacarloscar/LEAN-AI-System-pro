@@ -131,7 +131,7 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
 
   // Clases comunes de input para mantener consistencia visual
   const inputCls = `px-2 py-1.5 rounded-xl border border-border dark:border-white/10
-    bg-white dark:bg-warm-800 text-xs text-lean-black dark:text-gray-200
+    bg-white dark:bg-warm-800 text-xs text-lean-black dark:text-warm-100
     focus:outline-none focus:ring-1 focus:ring-navy/30 tabular-nums`
 
   const errorCls = 'mt-1 text-[10px] text-danger-dark'
@@ -153,7 +153,7 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
               label: 'Payback estimado',
               value: roiDisplay.paybackMonths > 0 ? `${roiDisplay.paybackMonths.toFixed(1)} meses` : '—',
               sub:   `${fmtEur(econ.implementationCost)} inversión`,
-              color: 'text-lean-black dark:text-gray-100',
+              color: 'text-lean-black dark:text-warm-50',
             },
             {
               label: 'ROI 3 años',
@@ -186,12 +186,12 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
             <div className="flex flex-wrap gap-4">
               <div>
                 <p className="text-[10px] text-text-subtle">Coste de implementación</p>
-                <p className="text-xs font-bold text-lean-black dark:text-gray-200">{benchmarkCost.label}</p>
+                <p className="text-xs font-bold text-lean-black dark:text-warm-100">{benchmarkCost.label}</p>
               </div>
               {benchmarkEff && (
                 <div>
                   <p className="text-[10px] text-text-subtle">Ganancia de eficiencia</p>
-                  <p className="text-xs font-bold text-lean-black dark:text-gray-200">{benchmarkEff.label}</p>
+                  <p className="text-xs font-bold text-lean-black dark:text-warm-100">{benchmarkEff.label}</p>
                 </div>
               )}
             </div>
@@ -246,7 +246,7 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
                   )}
                 </>
               ) : (
-                <p className="text-xs font-medium text-lean-black dark:text-gray-200">
+                <p className="text-xs font-medium text-lean-black dark:text-warm-100">
                   {econ.kpiPrincipal || <span className="italic text-text-subtle">Sin definir</span>}
                 </p>
               )}
@@ -270,7 +270,7 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
                   )}
                 </>
               ) : (
-                <p className="text-xl font-bold text-lean-black dark:text-gray-200 tabular-nums">
+                <p className="text-xl font-bold text-lean-black dark:text-warm-100 tabular-nums">
                   {econ.processHoursPerWeek}
                   <span className="text-xs font-normal text-text-subtle ml-1">h/semana</span>
                 </p>
@@ -295,7 +295,7 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
                   )}
                 </>
               ) : (
-                <p className="text-xl font-bold text-lean-black dark:text-gray-200 tabular-nums">
+                <p className="text-xl font-bold text-lean-black dark:text-warm-100 tabular-nums">
                   {econ.headcount}
                   <span className="text-xs font-normal text-text-subtle ml-1">personas</span>
                 </p>
@@ -362,7 +362,7 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
                   )}
                 </>
               ) : (
-                <p className="text-xl font-bold text-lean-black dark:text-gray-200 tabular-nums">
+                <p className="text-xl font-bold text-lean-black dark:text-warm-100 tabular-nums">
                   {Math.round(econ.efficiencyGain * 100)}%
                   {econ.efficiencyGainMode === 'benchmark' && (
                     <span className="text-[10px] font-normal text-text-subtle ml-1">benchmark</span>
@@ -425,8 +425,8 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
                                 className={[
                                   'text-left px-3 py-2 rounded-xl border text-[10px] transition-all',
                                   presetField.value === key
-                                    ? 'border-navy/40 bg-navy/5 text-lean-black dark:text-gray-200'
-                                    : 'border-border dark:border-white/8 text-text-muted hover:border-gray-300',
+                                    ? 'border-navy/40 bg-navy/5 text-lean-black dark:text-warm-100'
+                                    : 'border-border dark:border-white/8 text-text-muted hover:border-warm-300',
                                 ].join(' ')}
                               >
                                 <span className="font-bold">{p.label}</span>
@@ -455,7 +455,7 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
                   }
                 />
               ) : (
-                <p className="text-xl font-bold text-lean-black dark:text-gray-200 tabular-nums">
+                <p className="text-xl font-bold text-lean-black dark:text-warm-100 tabular-nums">
                   €{econ.hourlyRate}/h
                   {econ.hourlyRateMode === 'preset' && econ.hourlyRatePreset && (
                     <span className="text-[10px] font-normal text-text-subtle ml-1">
@@ -527,7 +527,7 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
                   }}
                 />
               ) : (
-                <p className="text-xl font-bold text-lean-black dark:text-gray-200 tabular-nums">
+                <p className="text-xl font-bold text-lean-black dark:text-warm-100 tabular-nums">
                   {fmtEur(econ.implementationCost)}
                   {econ.implementationCostMode === 'benchmark' && benchmarkCost && (
                     <span className="text-[10px] font-normal text-text-subtle ml-1">

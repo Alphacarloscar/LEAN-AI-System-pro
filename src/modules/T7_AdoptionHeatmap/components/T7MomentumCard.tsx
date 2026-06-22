@@ -54,7 +54,7 @@ export function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) 
       <div>
         <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">Momentum</p>
         <div className="flex items-end gap-1.5 mb-1.5">
-          <span className="text-2xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
+          <span className="text-2xl font-bold text-lean-black dark:text-warm-50 tabular-nums leading-none">
             {momentumPct}%
           </span>
           <Badge variant={momentumVariant} size="xs" className="mb-0.5">
@@ -62,7 +62,7 @@ export function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) 
           </Badge>
         </div>
         {/* Barra de progreso */}
-        <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+        <div className="h-1.5 rounded-full bg-warm-100 dark:bg-warm-700 overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{

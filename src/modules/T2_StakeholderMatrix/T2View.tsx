@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T2 — AI Stakeholder Matrix
 //
 // Layout: header sticky + two-column (matrix izq | panel der)
@@ -207,7 +207,7 @@ export function T2View({ onBack }: T2ViewProps) {
                   onStartInterview={(s) => setInterviewingExisting(s)}
                 />
               ) : (
-                <div className="rounded-xl border border-dashed border-border bg-white/50 dark:bg-gray-900/50 p-6 flex flex-col items-center justify-center text-center gap-2 min-h-[200px]">
+                <div className="rounded-xl border border-dashed border-border bg-white/50 dark:bg-warm-800/50 p-6 flex flex-col items-center justify-center text-center gap-2 min-h-[200px]">
                   <svg className="h-8 w-8 text-text-subtle" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" />
                   </svg>

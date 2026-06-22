@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T4 — ScoringTabContent
 // ============================================================
 
@@ -69,7 +69,7 @@ export function ScoringTabContent({
             <T4ScoreBars scores={useCase.scores} />
             <Card variant="flat" padding="none" className="mt-5 rounded-xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Score compuesto · ponderado</p>
-              <p className="text-2xl font-bold tabular-nums text-lean-black dark:text-gray-100">
+              <p className="text-2xl font-bold tabular-nums text-lean-black dark:text-warm-50">
                 {useCase.priorityScore.toFixed(1)}<span className="text-sm font-normal text-text-subtle">/100</span>
               </p>
               <p className="text-[10px] text-text-subtle mt-0.5">KPI 35% · facilidad 30% · riesgo IA 20% · dep. datos 15%</p>
@@ -103,14 +103,14 @@ export function ScoringTabContent({
                     <div className="h-5 w-5 rounded-full bg-navy/10 dark:bg-navy/20 flex items-center justify-center text-[9px] font-bold text-navy dark:text-warm-100 shrink-0">
                       {ss.stakeholderName.charAt(0)}
                     </div>
-                    <p className="text-xs font-semibold text-lean-black dark:text-gray-200">{ss.stakeholderName}</p>
+                    <p className="text-xs font-semibold text-lean-black dark:text-warm-100">{ss.stakeholderName}</p>
                     <p className="text-[10px] text-text-subtle">{ss.stakeholderRole}</p>
                   </div>
                   <div className="flex gap-3 flex-wrap">
                     {(['kpiImpact', 'feasibility', 'aiRisk', 'dataDependency'] as const).map((dim) => (
                       <div key={dim} className="flex items-center gap-1">
                         <span className="text-[9px] text-text-subtle" style={{ color: DIMENSION_CONFIG[dim].hex }}>{DIMENSION_CONFIG[dim].label.split(' ')[0]}:</span>
-                        <span className="text-[10px] font-bold text-lean-black dark:text-gray-200">{ss.scores[dim]}</span>
+                        <span className="text-[10px] font-bold text-lean-black dark:text-warm-100">{ss.scores[dim]}</span>
                       </div>
                     ))}
                   </div>

@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T4 — ContextoTabContent (T1/T2 context)
 // ============================================================
 
@@ -21,7 +21,7 @@ export function ContextoTabContent({ useCase, catHex, autoT1Context, autoT2Conte
       <Card variant="outlined" padding="none" className="rounded-xl px-5 py-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="h-6 w-6 rounded-lg bg-navy/10 dark:bg-navy/20 flex items-center justify-center text-xs font-bold text-navy dark:text-warm-100">T1</div>
-          <p className="text-xs font-semibold text-lean-black dark:text-gray-200">Contexto de madurez IA (T1)</p>
+          <p className="text-xs font-semibold text-lean-black dark:text-warm-100">Contexto de madurez IA (T1)</p>
         </div>
         {useCase.t1Context ? (
           <>
@@ -63,7 +63,7 @@ export function ContextoTabContent({ useCase, catHex, autoT1Context, autoT2Conte
       <Card variant="outlined" padding="none" className="rounded-xl px-5 py-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="h-6 w-6 rounded-lg bg-info-light flex items-center justify-center text-xs font-bold text-info-dark">T2</div>
-          <p className="text-xs font-semibold text-lean-black dark:text-gray-200">Contexto de stakeholders (T2)</p>
+          <p className="text-xs font-semibold text-lean-black dark:text-warm-100">Contexto de stakeholders (T2)</p>
         </div>
         {useCase.t2Context ? (
           <div className="flex flex-col gap-3">
@@ -112,7 +112,7 @@ export function ContextoTabContent({ useCase, catHex, autoT1Context, autoT2Conte
       <Card variant="outlined" padding="none" className="rounded-xl px-5 py-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: catHex }} />
-          <p className="text-xs font-semibold text-lean-black dark:text-gray-200">Categoría IA</p>
+          <p className="text-xs font-semibold text-lean-black dark:text-warm-100">Categoría IA</p>
         </div>
         <p className="text-sm font-semibold mb-1" style={{ color: catHex }}>{useCase.aiCategory}</p>
         {useCase.importedFromT3 && (

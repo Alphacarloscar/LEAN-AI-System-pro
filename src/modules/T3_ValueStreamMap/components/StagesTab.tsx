@@ -15,16 +15,17 @@
 import { useState } from 'react'
 import { User, Settings, Flame } from 'lucide-react'
 import { Button, Card } from '@shared/design-system/components'
+import { T3_VALUE_BAR_COLORS } from '@shared/design-system/charts/chartTokens'
 import type { ProcessStage } from '../types'
 import { StageModal } from './StageModal'
 
 // ── Paleta de valor ──────────────────────────────────────────
 
 const VALUE_CONFIG = {
-  alta:  { label: 'Valor alto',  barColor: '#5FAF8A', chipBg: 'bg-success-light',  chipText: 'text-success-dark'  },
-  media: { label: 'Valor medio', barColor: '#6A90C0', chipBg: 'bg-info-light',     chipText: 'text-info-dark'     },
-  baja:  { label: 'Valor bajo',  barColor: '#D4A85C', chipBg: 'bg-warning-light',  chipText: 'text-warning-dark'  },
-  nula:  { label: 'Sin valor',   barColor: '#C06060', chipBg: 'bg-danger-light',   chipText: 'text-danger-dark'   },
+  alta:  { label: 'Valor alto',  barColor: T3_VALUE_BAR_COLORS.alta,  chipBg: 'bg-success-light',  chipText: 'text-success-dark'  },
+  media: { label: 'Valor medio', barColor: T3_VALUE_BAR_COLORS.media, chipBg: 'bg-info-light',     chipText: 'text-info-dark'     },
+  baja:  { label: 'Valor bajo',  barColor: T3_VALUE_BAR_COLORS.baja,  chipBg: 'bg-warning-light',  chipText: 'text-warning-dark'  },
+  nula:  { label: 'Sin valor',   barColor: T3_VALUE_BAR_COLORS.nula,  chipBg: 'bg-danger-light',   chipText: 'text-danger-dark'   },
 } as const
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -75,7 +76,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg>
         </div>
         <div>
-          <p className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-1">
+          <p className="text-sm font-semibold text-lean-black dark:text-warm-50 mb-1">
             Sin etapas definidas
           </p>
           <p className="text-xs text-text-muted max-w-sm leading-relaxed">
@@ -120,7 +121,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1">
             Ciclo total
           </p>
-          <p className="text-2xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
+          <p className="text-2xl font-bold text-lean-black dark:text-warm-50 tabular-nums leading-none">
             {fmtHours(totalCycle)}
           </p>
           <p className="text-[10px] text-text-muted mt-1">Proceso + espera acumulados</p>
@@ -130,7 +131,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1">
             Tiempo valor añadido
           </p>
-          <p className="text-2xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
+          <p className="text-2xl font-bold text-lean-black dark:text-warm-50 tabular-nums leading-none">
             {fmtHours(valueAddedTime)}
           </p>
           <p className="text-[10px] text-text-muted mt-1">Etapas de valor alto</p>
@@ -140,7 +141,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1">
             Handoffs totales
           </p>
-          <p className="text-2xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
+          <p className="text-2xl font-bold text-lean-black dark:text-warm-50 tabular-nums leading-none">
             {totalHandoffs}
           </p>
           <p className="text-[10px] text-text-muted mt-1">Transferencias entre pasos</p>
@@ -154,11 +155,11 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
         </p>
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1 text-[10px] text-text-subtle">
-            <span className="inline-block w-3 h-1.5 rounded-sm bg-[#6A90C0]" />
+            <span className="inline-block w-3 h-1.5 rounded-sm bg-info-dark" />
             Proceso
           </span>
           <span className="flex items-center gap-1 text-[10px] text-text-subtle">
-            <span className="inline-block w-3 h-1.5 rounded-sm bg-gray-200 dark:bg-gray-700" />
+            <span className="inline-block w-3 h-1.5 rounded-sm bg-warm-200 dark:bg-warm-700" />
             Espera
           </span>
           <Button variant="primary" size="xs" onClick={() => setModalStage('new')}>
@@ -188,7 +189,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
                   style={{ width: `${widthPx}px` }}
                   onClick={() => setModalStage(stage)}
                   className="relative flex flex-col rounded-xl border border-border dark:border-white/6
-                    bg-white dark:bg-gray-900 overflow-hidden cursor-pointer
+                    bg-white dark:bg-warm-900 overflow-hidden cursor-pointer
                     hover:border-navy/30 hover:shadow-sm transition-all"
                 >
                   <div className="h-1.5 w-full shrink-0" style={{ background: cfg.barColor }} />
@@ -199,7 +200,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
                         <span className="text-[9px] font-mono text-text-muted shrink-0 mt-0.5">
                           {String(idx + 1).padStart(2, '0')}
                         </span>
-                        <span className="text-xs font-semibold text-lean-black dark:text-gray-100 leading-tight line-clamp-2">
+                        <span className="text-xs font-semibold text-lean-black dark:text-warm-50 leading-tight line-clamp-2">
                           {stage.name}
                         </span>
                       </div>
@@ -233,25 +234,25 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
                     <div className="mt-auto space-y-1.5">
                       <div className="flex items-center gap-3 text-[10px] text-text-subtle">
                         <span>
-                          <span className="font-semibold text-lean-black dark:text-gray-200">
+                          <span className="font-semibold text-lean-black dark:text-warm-100">
                             {fmtHours(stage.procTimeHours)}
                           </span>
                           {' '}proc
                         </span>
                         <span>
-                          <span className={`font-semibold ${isBottleneck ? 'text-danger-dark' : 'text-lean-black dark:text-gray-200'}`}>
+                          <span className={`font-semibold ${isBottleneck ? 'text-danger-dark' : 'text-lean-black dark:text-warm-100'}`}>
                             {fmtHours(stage.waitTimeHours)}
                           </span>
                           {' '}espera
                         </span>
                         <span>
-                          <span className="font-semibold text-lean-black dark:text-gray-200">
+                          <span className="font-semibold text-lean-black dark:text-warm-100">
                             {stage.handoffs}
                           </span>
                           {' '}HO
                         </span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                      <div className="h-2 w-full rounded-full bg-warm-100 dark:bg-warm-700 overflow-hidden">
                         <div
                           className="h-full rounded-full"
                           style={{ width: `${procPct}%`, background: cfg.barColor }}
@@ -262,7 +263,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
                 </div>
 
                 {idx < stages.length - 1 && (
-                  <div className="flex items-center px-1 text-gray-300 dark:text-gray-600 shrink-0">
+                  <div className="flex items-center px-1 text-warm-300 dark:text-warm-600 shrink-0">
                     <svg width="20" height="16" viewBox="0 0 20 16" fill="none">
                       <path d="M1 8h14M11 2l6 6-6 6"
                         stroke="currentColor" strokeWidth="1.5"

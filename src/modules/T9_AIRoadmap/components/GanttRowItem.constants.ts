@@ -28,6 +28,7 @@ export const DS = {
   freeBar:        '#B4B0A8',
   freeBarText:    '#2C2A26',
   freeSourceColor:'#444441',
+  white:          '#FFFFFF',
 } as const
 
 // ── Helpers de riesgo ─────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { computeROIFromEconomics } from '../constants'
+﻿import { computeROIFromEconomics } from '../constants'
 import { fmtEur } from './T4Badges.constants'
 import { Card } from '@shared/design-system/components'
 import type { UseCase } from '../types'
@@ -35,14 +35,14 @@ export function ExecDashboard({ useCases }: ExecDashboardProps) {
       label:    'Ahorro anual estimado',
       value:    fmtEur(totalAnnualSaving),
       subtext:  `${roisWithData.length} casos con datos económicos`,
-      color:    'text-lean-black dark:text-gray-100',
+      color:    'text-lean-black dark:text-warm-50',
       dotColor: 'bg-navy',
     },
     {
       label:    'Payback promedio',
       value:    avgPayback !== null ? `${avgPayback.toFixed(1)} meses` : '—',
       subtext:  'recuperación de inversión',
-      color:    'text-lean-black dark:text-gray-100',
+      color:    'text-lean-black dark:text-warm-50',
       dotColor: 'bg-info-dark',
     },
     {

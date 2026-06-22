@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useT4Store } from '../store'
 import { usePermissions } from '@/modules/Auth'
 import {
@@ -97,7 +97,7 @@ export function UseCaseDetailPanel({
             {useCase.importedFromT3 && ` · Importado desde T3`}
             {useCase.sponsorName && ` · ${useCase.sponsorName}`}
           </p>
-          <h2 className="text-lg font-semibold text-lean-black dark:text-gray-100 leading-tight mb-2">
+          <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 leading-tight mb-2">
             {useCase.name}
           </h2>
           <div className="flex flex-wrap gap-1.5 items-center">
@@ -220,7 +220,7 @@ export function UseCaseDetailPanel({
               <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
                 <span className="text-4xl">⚖️</span>
                 <div>
-                  <p className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-1">
+                  <p className="text-sm font-semibold text-lean-black dark:text-warm-50 mb-1">
                     Sin clasificación AI Act
                   </p>
                   <p className="text-xs text-text-muted max-w-sm leading-relaxed">
@@ -269,11 +269,11 @@ export function UseCaseDetailPanel({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P1 · Ámbito</p>
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200 leading-tight">{scopeLabel}</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-100 leading-tight">{scopeLabel}</p>
                   </div>
                   <div>
                     <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P2 · Impacto en personas</p>
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200">
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-100">
                       {cls.personImpact === 'no'           ? 'No afecta a personas físicas'
                       : cls.personImpact === 'human_review' ? 'Sí, con revisión humana'
                       :                                       'Sí, de forma autónoma'}
@@ -281,7 +281,7 @@ export function UseCaseDetailPanel({
                   </div>
                   <div>
                     <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P3 · Datos sensibles</p>
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200">
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-100">
                       {cls.sensitiveData
                         ? <span className="inline-flex items-center gap-1"><AlertTriangle size={12} strokeWidth={2} className="text-warning-dark" /> Sí — datos RGPD Art. 9</span>
                         : <span className="inline-flex items-center gap-1"><Check size={12} strokeWidth={2} className="text-success-dark" /> No</span>
@@ -290,7 +290,7 @@ export function UseCaseDetailPanel({
                   </div>
                   <div>
                     <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P4 · Explicabilidad</p>
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200">
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-100">
                       {cls.explainability === 'yes'
                         ? <span className="inline-flex items-center gap-1"><Check size={12} strokeWidth={2} className="text-success-dark" /> Sistema explicable / trazable</span>
                         : <span className="inline-flex items-center gap-1"><X size={12} strokeWidth={2} className="text-danger-dark" /> Output opaco</span>

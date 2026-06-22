@@ -13,6 +13,7 @@ export const GRAY_200= '#D4D0C8'   // warm border
 export const GRAY_400= '#9A9790'   // warm muted
 export const GRAY_600= '#6B6864'   // warm text-muted
 export const ORANGE  = '#C8860A'   // gold accent
+export const GREEN   = '#166534'   // success-dark (minimo risk / approved status)
 
 export const RISK_LABEL: Record<string, { label: string; bg: string; color: string }> = {
   prohibido:      { label: 'Prohibido',      bg: '#FEE2E2', color: '#991B1B' },

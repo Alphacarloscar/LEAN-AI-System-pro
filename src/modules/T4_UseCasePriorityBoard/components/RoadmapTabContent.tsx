@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T4 — RoadmapTabContent
 // ============================================================
 
@@ -30,7 +30,7 @@ export function RoadmapTabContent({ useCase, onUpdateRoadmap }: RoadmapTabProps)
                     'px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all',
                     isActive
                       ? 'bg-navy text-white border-navy shadow-sm'
-                      : 'border-border dark:border-white/10 text-text-muted hover:border-navy/40 hover:text-lean-black dark:hover:text-gray-200',
+                      : 'border-border dark:border-white/10 text-text-muted hover:border-navy/40 hover:text-lean-black dark:hover:text-warm-100',
                   ].join(' ')}
                 >
                   {q}

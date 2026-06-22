@@ -142,6 +142,32 @@ export const QUADRANT_COLORS = {
   adoptador: { fill: '#5FAF8A', bg: '#D4EDE3', bgDark: 'rgba(95,175,138,0.28)'  },
 } as const
 
+/** Colores por cuadrante de la Opportunity Matrix (T3 ValueStreamMap) */
+export const T3_QUADRANT_COLORS = {
+  pilotarYa:       '#5FAF8A',  // success-dark  — alto impacto + alto readiness
+  prepararTerreno: '#D4A85C',  // warning-dark  — alto impacto + bajo readiness
+  quickWins:       '#9AAEC8',  // info-medium   — bajo impacto + alto readiness
+  evaluar:         '#94A3B8',  // neutral slate — bajo impacto + bajo readiness
+  border:          '#D4D0C8',  // warm-200      — bordes y líneas guía (antes #E5E7EB frío)
+  axisLabel:       '#9A9790',  // warm-500      — etiquetas de eje (antes #9CA3AF frío)
+} as const
+
+/** barColor por valueContribution (T3 StagesTab / StageModal — usable en SVG fill) */
+export const T3_VALUE_BAR_COLORS: Record<'alta' | 'media' | 'baja' | 'nula', string> = {
+  alta:  '#5FAF8A',  // success-dark
+  media: '#6A90C0',  // info-dark
+  baja:  '#D4A85C',  // warning-dark
+  nula:  '#C06060',  // danger-dark
+} as const
+
+/** bg tint activo por valueContribution (T3 StageModal selector) */
+export const T3_VALUE_ACTIVE_BG: Record<'alta' | 'media' | 'baja' | 'nula', string> = {
+  alta:  '#D4EDE3',  // success-light
+  media: '#DDE8F5',  // info-light
+  baja:  '#FAF0D7',  // warning-light
+  nula:  '#F5DEDE',  // danger-light
+} as const
+
 /** Segmentos de la curva de Rogers (T7 AdoptionHeatmap, T10 AIValueDashboard) */
 export const ROGERS_SEGMENT_COLORS = {
   innovadores:   '#5FAF8A',  // success-dark — adopción temprana

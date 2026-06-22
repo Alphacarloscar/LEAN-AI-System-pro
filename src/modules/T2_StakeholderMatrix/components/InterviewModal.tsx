@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T2 — InterviewModal
 //
 // Flujo de 5 preguntas paso a paso → auto-asignación de
@@ -53,7 +53,7 @@ type Phase = 'form' | 'interview' | 'result'
 function ProgressBar({ current, total }: { current: number; total: number }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+      <div className="flex-1 h-1 bg-gray-100 dark:bg-warm-700 rounded-full overflow-hidden">
         <div
           className="h-full bg-navy rounded-full transition-all duration-300"
           style={{ width: `${(current / total) * 100}%` }}
@@ -158,7 +158,7 @@ function StakeholderFormPhase({
         )}
       />
 
-      <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border/60">
+      <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-warm-700/50 border border-border/60">
         A continuación, 5 preguntas que determinarán el arquetipo y el nivel de resistencia automáticamente.
       </p>
 
@@ -217,7 +217,7 @@ function InterviewPhase({
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
           Pregunta {current + 1} de {INTERVIEW_QUESTIONS.length}
         </p>
-        <p className="text-sm font-semibold text-lean-black dark:text-gray-100 leading-snug">
+        <p className="text-sm font-semibold text-lean-black dark:text-warm-50 leading-snug">
           {question.text}
         </p>
         {question.hint && (
@@ -236,7 +236,7 @@ function InterviewPhase({
                 'w-full text-left px-4 py-3 rounded-xl border text-xs font-medium transition-all duration-150',
                 isSelected
                   ? answerColors[answer.code]
-                  : 'border-border bg-white dark:bg-gray-800 text-text-muted hover:border-navy/30 hover:bg-gray-50 dark:hover:bg-gray-700',
+                  : 'border-border bg-white dark:bg-warm-700 text-text-muted hover:border-navy/30 hover:bg-gray-50 dark:hover:bg-warm-600',
               ].join(' ')}
             >
               <span className="font-bold mr-2 opacity-50">{answer.code})</span>
@@ -303,7 +303,7 @@ function ResultPhase({
   return (
     <div className="space-y-5">
       {/* Resultado automático */}
-      <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-border space-y-3">
+      <div className="p-4 rounded-xl bg-gray-50 dark:bg-warm-700/50 border border-border space-y-3">
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
           Clasificación automática · {form.name}
         </p>
@@ -325,7 +325,7 @@ function ResultPhase({
           {scoreBars.map(({ label, value, color }) => (
             <div key={label} className="flex items-center gap-2">
               <span className="text-[10px] text-text-subtle w-20 shrink-0">{label}</span>
-              <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="flex-1 h-1.5 bg-gray-200 dark:bg-warm-600 rounded-full overflow-hidden">
                 <div
                   className={`h-full ${color} rounded-full transition-all duration-500`}
                   style={{ width: `${(value / 4) * 100}%` }}

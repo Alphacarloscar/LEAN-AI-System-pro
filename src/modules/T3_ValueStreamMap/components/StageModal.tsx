@@ -12,23 +12,19 @@ import { useUnsavedGuard }                from '@/shared/hooks/useUnsavedGuard'
 import { Modal, Button, FormField, SegmentedControl } from '@shared/design-system/components'
 import { Select }                         from '@/shared/design-system/components/Select'
 import type { SelectOption }              from '@/shared/design-system/components/Select'
+import { T3_VALUE_BAR_COLORS, T3_VALUE_ACTIVE_BG } from '@shared/design-system/charts/chartTokens'
 import type { ProcessStage }              from '../types'
 
 // ── Paleta de valor ──────────────────────────────────────────
 
 const VALUE_CONFIG = {
-  alta:  { label: 'Valor alto',  barColor: '#5FAF8A', chipBg: 'bg-success-light',  chipText: 'text-success-dark'  },
-  media: { label: 'Valor medio', barColor: '#6A90C0', chipBg: 'bg-info-light',     chipText: 'text-info-dark'     },
-  baja:  { label: 'Valor bajo',  barColor: '#D4A85C', chipBg: 'bg-warning-light',  chipText: 'text-warning-dark'  },
-  nula:  { label: 'Sin valor',   barColor: '#C06060', chipBg: 'bg-danger-light',   chipText: 'text-danger-dark'   },
+  alta:  { label: 'Valor alto',  barColor: T3_VALUE_BAR_COLORS.alta,  chipBg: 'bg-success-light',  chipText: 'text-success-dark'  },
+  media: { label: 'Valor medio', barColor: T3_VALUE_BAR_COLORS.media, chipBg: 'bg-info-light',     chipText: 'text-info-dark'     },
+  baja:  { label: 'Valor bajo',  barColor: T3_VALUE_BAR_COLORS.baja,  chipBg: 'bg-warning-light',  chipText: 'text-warning-dark'  },
+  nula:  { label: 'Sin valor',   barColor: T3_VALUE_BAR_COLORS.nula,  chipBg: 'bg-danger-light',   chipText: 'text-danger-dark'   },
 } as const
 
-const VALUE_ACTIVE_COLOR: Record<ProcessStage['valueContribution'], string> = {
-  alta:  '#D4EDE3',
-  media: '#DDE8F5',
-  baja:  '#FAF0D7',
-  nula:  '#F5DEDE',
-}
+const VALUE_ACTIVE_COLOR: Record<ProcessStage['valueContribution'], string> = T3_VALUE_ACTIVE_BG
 
 interface StageModalProps {
   processId: string

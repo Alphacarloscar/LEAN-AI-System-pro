@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T4 — ImportFromT3Modal
 //
 // Lista los procesos del store de T3 y permite seleccionar
@@ -230,7 +230,7 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
                   {/* Info del proceso */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-2">
-                      <p className="text-xs font-bold text-lean-black dark:text-gray-200
+                      <p className="text-xs font-bold text-lean-black dark:text-warm-100
                         leading-tight flex-1">
                         {process.name}
                       </p>
@@ -293,7 +293,7 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
                           </svg>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-lean-black dark:text-gray-200
+                          <p className="text-xs font-bold text-lean-black dark:text-warm-100
                             leading-tight">
                             {process.name}
                           </p>
@@ -318,7 +318,7 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
             <Check size={28} strokeWidth={2} />
           </div>
           <div>
-            <p className="text-base font-semibold text-lean-black dark:text-gray-100 mb-1">
+            <p className="text-base font-semibold text-lean-black dark:text-warm-50 mb-1">
               {importCount} caso{importCount !== 1 ? 's' : ''} de uso importado{importCount !== 1 ? 's' : ''}
             </p>
             <p className="text-xs text-text-muted leading-relaxed max-w-sm">

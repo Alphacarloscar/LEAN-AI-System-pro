@@ -12,6 +12,7 @@ import type { InterviewAnswerCode, AICategoryCode, OrgReadinessLevel, NewValueSt
 import { Select }  from '@/shared/design-system/components/Select'
 import { Button, Badge } from '@shared/design-system/components'
 import { CategoryBadge } from './T3Badges'
+import { T3_QUADRANT_COLORS } from '@shared/design-system/charts/chartTokens'
 
 interface ResultPhaseProps {
   formData:  NewValueStreamForm
@@ -39,11 +40,11 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
   const ALL_READINESS: OrgReadinessLevel[] = ['alta', 'media', 'baja']
 
   const scoreBars = [
-    { label: 'AUTOMATIZACIÓN', value: result.automationScore, hex: '#6A90C0', light: '#B8D0E8' },
-    { label: 'DATOS',          value: result.dataScore,       hex: '#5FAF8A', light: '#B4E4CF' },
-    { label: 'VOLUMEN',        value: result.volumeScore,     hex: '#9AAEC8', light: '#C8DAE8' },
-    { label: 'IMPACTO',        value: result.impactScore,     hex: '#D4A85C', light: '#E8D0A0' },
-    { label: 'READINESS',      value: result.readinessScore,  hex: '#C06060', light: '#DDA8A8' },
+    { label: 'AUTOMATIZACIÓN', value: result.automationScore, hex: '#6A90C0',                          light: '#B8D0E8' },
+    { label: 'DATOS',          value: result.dataScore,       hex: T3_QUADRANT_COLORS.pilotarYa,       light: '#B4E4CF' },
+    { label: 'VOLUMEN',        value: result.volumeScore,     hex: T3_QUADRANT_COLORS.quickWins,       light: '#C8DAE8' },
+    { label: 'IMPACTO',        value: result.impactScore,     hex: T3_QUADRANT_COLORS.prepararTerreno, light: '#E8D0A0' },
+    { label: 'READINESS',      value: result.readinessScore,  hex: '#C06060',                          light: '#DDA8A8' },
   ]
 
   const MAX = 4
@@ -121,7 +122,7 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
             const cy    = i * ROW_H + ROW_H / 2 + 3
             return (
               <g key={label}>
-                <text x={0} y={cy + 3} fontSize={7} fill="#64748B"
+                <text x={0} y={cy + 3} fontSize={7} fill={T3_QUADRANT_COLORS.axisLabel}
                   fontFamily="ui-monospace,monospace" letterSpacing="0.05em">
                   {label}
                 </text>
@@ -130,7 +131,7 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
                 <rect x={TX} y={cy - 1.5} width={fillW} height={3} fill={`url(#ri-bar-${i})`} rx={1.5} />
                 <rect x={TX + fillW * 0.08} y={cy - 2} width={fillW * 0.45} height={0.7}
                   fill={light} opacity={0.60} rx={0.35} />
-                <text x={TX + TRACK_W + G2} y={cy + 3} fontSize={8} fontWeight="600" fill="#94A3B8"
+                <text x={TX + TRACK_W + G2} y={cy + 3} fontSize={8} fontWeight="600" fill={T3_QUADRANT_COLORS.evaluar}
                   fontFamily="ui-monospace,monospace">
                   {value.toFixed(1)}<tspan fontSize={6.5} opacity={0.5}>/4</tspan>
                 </text>

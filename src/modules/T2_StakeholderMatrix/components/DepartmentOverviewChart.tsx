@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T2 — DepartmentOverviewChart
 //
 // Gráfico de barras apiladas metálicas (SVG) mostrando la
@@ -53,7 +53,7 @@ export function DepartmentOverviewChart({ stakeholders }: DepartmentOverviewChar
   const yTicks = Array.from({ length: maxCount + 1 }, (_, i) => i)
 
   return (
-    <div className="rounded-xl border border-border bg-white dark:bg-gray-900 px-5 py-4">
+    <div className="rounded-xl border border-border bg-white dark:bg-warm-800 px-5 py-4">
       <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">
         Composición por departamento
       </p>

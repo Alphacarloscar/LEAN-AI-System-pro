@@ -1,4 +1,4 @@
-import { useForm, Controller } from 'react-hook-form'
+﻿import { useForm, Controller } from 'react-hook-form'
 import { zodResolver }         from '@hookform/resolvers/zod'
 import { AlertTriangle } from 'lucide-react'
 import { usePermissions }      from '@/modules/Auth'
@@ -112,7 +112,7 @@ export function AIActClassificationModal({
           control={control}
           render={({ field }) => (
             <div>
-              <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-0.5">
+              <p className="text-xs font-semibold text-lean-black dark:text-warm-100 mb-0.5">
                 P1 · ¿En qué ámbito opera este sistema?
               </p>
               <p className="text-[10px] text-text-subtle mb-2">
@@ -128,7 +128,7 @@ export function AIActClassificationModal({
                       'text-left px-3 py-2 rounded-xl border text-xs transition-all duration-100',
                       field.value === key
                         ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 font-medium'
-                        : 'border-border text-text-muted hover:border-navy/30 hover:text-lean-black dark:hover:text-gray-200',
+                        : 'border-border text-text-muted hover:border-navy/30 hover:text-lean-black dark:hover:text-warm-100',
                     ].join(' ')}
                   >
                     {label}
@@ -145,7 +145,7 @@ export function AIActClassificationModal({
           control={control}
           render={({ field }) => (
             <div>
-              <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-0.5">
+              <p className="text-xs font-semibold text-lean-black dark:text-warm-100 mb-0.5">
                 P2 · ¿El sistema toma decisiones que afectan a personas físicas?
               </p>
               <p className="text-[10px] text-text-subtle mb-2">
@@ -165,7 +165,7 @@ export function AIActClassificationModal({
                       'text-left px-3 py-2 rounded-xl border text-xs transition-all duration-100',
                       field.value === v
                         ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 font-medium'
-                        : 'border-border text-text-muted hover:border-navy/30 hover:text-lean-black dark:hover:text-gray-200',
+                        : 'border-border text-text-muted hover:border-navy/30 hover:text-lean-black dark:hover:text-warm-100',
                     ].join(' ')}
                   >
                     {l}
@@ -182,7 +182,7 @@ export function AIActClassificationModal({
           control={control}
           render={({ field }) => (
             <div>
-              <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-0.5">
+              <p className="text-xs font-semibold text-lean-black dark:text-warm-100 mb-0.5">
                 P3 · ¿Utiliza o procesa datos de salud, biométricos, religión, origen étnico o datos sexuales?
               </p>
               <p className="text-[10px] text-text-subtle mb-2">
@@ -215,7 +215,7 @@ export function AIActClassificationModal({
           control={control}
           render={({ field }) => (
             <div>
-              <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-0.5">
+              <p className="text-xs font-semibold text-lean-black dark:text-warm-100 mb-0.5">
                 P4 · ¿El output del sistema es explicable o trazable para el usuario afectado?
               </p>
               <p className="text-[10px] text-text-subtle mb-2">
@@ -234,7 +234,7 @@ export function AIActClassificationModal({
                       'flex-1 text-left px-3 py-2 rounded-xl border text-xs transition-all duration-100',
                       field.value === v
                         ? 'border-navy bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 font-medium'
-                        : 'border-border text-text-muted hover:border-navy/30 hover:text-lean-black dark:hover:text-gray-200',
+                        : 'border-border text-text-muted hover:border-navy/30 hover:text-lean-black dark:hover:text-warm-100',
                     ].join(' ')}
                   >
                     {l}

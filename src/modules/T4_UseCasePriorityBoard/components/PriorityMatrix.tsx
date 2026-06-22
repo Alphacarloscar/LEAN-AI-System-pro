@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { STATUS_CONFIG, PRIORITY_QUADRANTS } from '../constants'
 import type { UseCase } from '../types'
 
@@ -133,7 +133,7 @@ export function PriorityMatrix({
             transform: `translate(${hovered.leftPct > 65 ? 'calc(-100% - 10px)' : '10px'}, -50%)`,
           }}
         >
-          <p className="font-semibold text-lean-black dark:text-gray-100 mb-1 leading-tight truncate max-w-[160px]">
+          <p className="font-semibold text-lean-black dark:text-warm-50 mb-1 leading-tight truncate max-w-[160px]">
             {hovered.name}
           </p>
           <div className="flex items-center gap-1.5 mb-1.5">
@@ -143,11 +143,11 @@ export function PriorityMatrix({
           <div className="space-y-0.5 text-text-muted">
             <div className="flex justify-between gap-4">
               <span>Facilidad</span>
-              <span className="font-medium text-lean-black dark:text-gray-200">{hovered.feasibility}</span>
+              <span className="font-medium text-lean-black dark:text-warm-100">{hovered.feasibility}</span>
             </div>
             <div className="flex justify-between gap-4">
               <span>Impacto KPI</span>
-              <span className="font-medium text-lean-black dark:text-gray-200">{hovered.kpiImpact}</span>
+              <span className="font-medium text-lean-black dark:text-warm-100">{hovered.kpiImpact}</span>
             </div>
           </div>
         </div>

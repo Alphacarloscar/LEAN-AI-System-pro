@@ -21,7 +21,7 @@ export function EventDetailPanel({
         onClick={onClose}
       />
       {/* Panel */}
-      <aside className="fixed right-0 top-0 h-full w-[400px] max-w-[92vw] bg-white dark:bg-warm-800 border-l border-border dark:border-warm-600 z-50 overflow-y-auto animate-slide-in-right shadow-xl">
+      <aside className="fixed right-0 top-0 h-full w-[400px] max-w-[92vw] bg-white dark:bg-warm-800 border-l border-border dark:border-warm-600 z-50 overflow-y-auto animate-slide-in-right shadow-sm">
 
         {/* Panel header */}
         <div className={`px-5 py-4 ${lcfg.bg} border-b border-border dark:border-warm-600 sticky top-0 z-10`}>

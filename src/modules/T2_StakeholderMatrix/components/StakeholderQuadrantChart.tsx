@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T2 — StakeholderQuadrantChart (v2 — circular)
 //
 // Gráfico circular: X = Adopción IA (0-4), Y = Influencia (0-4)
@@ -90,7 +90,7 @@ export function StakeholderQuadrantChart({
   const archetypesPresent = [...new Set(stakeholders.map((s) => s.archetype))]
 
   return (
-    <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
+    <div className="rounded-xl border border-border bg-white dark:bg-warm-800 overflow-hidden">
 
       {/* Header */}
       <div className="px-5 py-3.5 border-b border-border flex items-center justify-between gap-4 flex-wrap">
