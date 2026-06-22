@@ -252,7 +252,8 @@ export function AppLayout() {
 
         {/* ── Header sticky — siempre visible ── */}
         <header ref={headerRef} className={[
-          'sticky top-0 z-20 flex items-center justify-between px-6 py-3 gap-4',
+          'sticky top-0 z-20 flex items-center justify-between px-6 gap-4',
+          'h-14 shrink-0',
           'backdrop-blur-sm border-b',
           dark
             ? 'bg-warm-900/92 border-warm-600/20'
@@ -260,7 +261,7 @@ export function AppLayout() {
         ].join(' ')}>
 
           {/* ── Izquierda: logo + selector de proyecto ── */}
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-3 min-w-0 shrink-0">
             <AlphaLogo dark={dark} />
             <EngagementSelector dark={dark} />
           </div>

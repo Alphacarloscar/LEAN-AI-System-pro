@@ -16,11 +16,11 @@ import { PersistenceBanner } from '@/shared/components/PersistenceBanner'
 import { Badge, StreamingIndicator } from '@shared/design-system/components'
 
 const RISK_ICON_SM = {
-  ban:              <Ban           size={12} strokeWidth={1.75} />,
-  'alert-circle':   <AlertCircle  size={12} strokeWidth={1.75} />,
-  'alert-triangle': <AlertTriangle size={12} strokeWidth={1.75} />,
-  'check-circle':   <CheckCircle  size={12} strokeWidth={1.75} />,
-  circle:           <Circle       size={12} strokeWidth={1.75} />,
+  ban:              <Ban           size={12} strokeWidth={2} />,
+  'alert-circle':   <AlertCircle  size={12} strokeWidth={2} />,
+  'alert-triangle': <AlertTriangle size={12} strokeWidth={2} />,
+  'check-circle':   <CheckCircle  size={12} strokeWidth={2} />,
+  circle:           <Circle       size={12} strokeWidth={2} />,
 } as const
 
 interface PolicyTabProps {
@@ -131,7 +131,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
           )}
           {genError && (
             <p className="text-[11px] text-red-500 flex items-center gap-1">
-              <AlertTriangle size={12} strokeWidth={1.75} className="shrink-0" /> {genError}
+              <AlertTriangle size={12} strokeWidth={2} className="shrink-0" /> {genError}
               <button onClick={clearError} className="underline hover:no-underline ml-1">Cerrar</button>
             </p>
           )}
@@ -334,8 +334,8 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
                           </td>
                           <td className="py-2 pl-3 text-[10px] text-success-dark font-semibold">
                             {uc.status === 'go'
-                              ? <span className="inline-flex items-center gap-1"><Check size={10} strokeWidth={1.75} /> Aprobado</span>
-                              : <span className="inline-flex items-center gap-1"><RefreshCw size={10} strokeWidth={1.75} /> En piloto</span>
+                              ? <span className="inline-flex items-center gap-1"><Check size={10} strokeWidth={2} /> Aprobado</span>
+                              : <span className="inline-flex items-center gap-1"><RefreshCw size={10} strokeWidth={2} /> En piloto</span>
                             }
                           </td>
                         </tr>

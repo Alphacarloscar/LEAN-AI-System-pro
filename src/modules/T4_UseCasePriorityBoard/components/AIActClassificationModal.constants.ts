@@ -1,4 +1,14 @@
+import type { LucideIcon } from 'lucide-react'
+import { Ban, AlertCircle, AlertTriangle, CheckCircle, Circle } from 'lucide-react'
 import type { AIActScope } from '../types'
+
+export const AIACT_ICON_MAP: Record<string, LucideIcon> = {
+  'ban':            Ban,
+  'alert-circle':   AlertCircle,
+  'alert-triangle': AlertTriangle,
+  'check-circle':   CheckCircle,
+  'circle':         Circle,
+}
 
 export const AIACT_RISK_CONFIG = {
   prohibido:      { label: 'Prohibido',       badgeBg: 'bg-red-100 dark:bg-red-900/30',      badgeText: 'text-red-700 dark:text-red-300',   hex: '#DC2626', icon: 'ban' },

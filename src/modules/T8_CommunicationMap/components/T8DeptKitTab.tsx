@@ -6,12 +6,12 @@ import type { DeptKit } from '../types'
 import { Card, Badge } from '@shared/design-system/components'
 
 const CHANNEL_ICON_MAP: Record<string, React.ReactElement> = {
-  mail:            <Mail          size={12} strokeWidth={1.75} />,
-  building:        <Building2     size={12} strokeWidth={1.75} />,
-  'message-square':<MessageSquare size={12} strokeWidth={1.75} />,
-  monitor:         <Monitor       size={12} strokeWidth={1.75} />,
-  video:           <Video         size={12} strokeWidth={1.75} />,
-  'file-text':     <FileText      size={12} strokeWidth={1.75} />,
+  mail:            <Mail          size={12} strokeWidth={2} />,
+  building:        <Building2     size={12} strokeWidth={2} />,
+  'message-square':<MessageSquare size={12} strokeWidth={2} />,
+  monitor:         <Monitor       size={12} strokeWidth={2} />,
+  video:           <Video         size={12} strokeWidth={2} />,
+  'file-text':     <FileText      size={12} strokeWidth={2} />,
 }
 
 export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
@@ -47,7 +47,7 @@ export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
             {/* Concern + Approach */}
             <div className="space-y-2.5">
               <div className="flex gap-2 items-start p-3 rounded-lg bg-warning-light/40 border border-warning-light">
-                <AlertTriangle size={14} strokeWidth={1.75} className="text-warning-dark flex-shrink-0 mt-0.5" />
+                <AlertTriangle size={14} strokeWidth={2} className="text-warning-dark flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[10px] font-mono uppercase tracking-widest text-warning-dark mb-0.5">Preocupación principal</p>
                   <p className="text-xs text-warning-dark leading-relaxed">{kit.mainConcern}</p>

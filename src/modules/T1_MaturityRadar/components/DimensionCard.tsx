@@ -68,7 +68,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
       <div className="flex items-start gap-3 py-3">
 
         {/* Número de subdimensión */}
-        <span className="shrink-0 mt-0.5 text-[10px] font-mono font-semibold text-text-subtle w-8">
+        <span className="shrink-0 mt-0.5 text-[10px] font-mono font-semibold text-text-muted w-8">
           {def?.subdimNumber ?? sub.code}
         </span>
 
@@ -78,7 +78,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
             {sub.label}
           </p>
           {def?.description && (
-            <p className="text-[11px] text-text-subtle mt-0.5 leading-snug">
+            <p className="text-[11px] text-text-muted mt-0.5 leading-snug line-clamp-2">
               {def.description}
             </p>
           )}
@@ -161,7 +161,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
               ].join(' ')}
               onClick={() => setScore(n)}
             >
-              <span className="shrink-0 font-bold text-text-subtle w-3 text-center">{n}</span>
+              <span className="shrink-0 font-bold text-text-muted w-3 text-center">{n}</span>
               <span className="text-text-muted leading-relaxed">{def.criteria[n]}</span>
             </div>
           ))}
@@ -229,7 +229,7 @@ export function DimensionCard({ state, definition, onChange }: DimensionCardProp
 
         {/* Score + contador */}
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[10px] text-text-subtle tabular-nums">
+          <span className="text-[10px] text-text-muted tabular-nums">
             {scoredCount}/4
           </span>
           <Badge variant={dimScoreVariant(dimScore)} shape="pill" className="!font-semibold tabular-nums">

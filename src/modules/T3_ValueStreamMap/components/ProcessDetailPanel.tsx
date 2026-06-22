@@ -87,12 +87,12 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
       {/* Panel header */}
       <div className="flex items-start gap-6 px-8 py-5 border-b border-border dark:border-white/6">
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1 truncate">
             {process.department}
             {process.owner && ` · ${process.owner}`}
             {process.ownerRole && ` · ${process.ownerRole}`}
           </p>
-          <h2 className="text-lg font-semibold text-lean-black dark:text-gray-100 leading-tight mb-2">
+          <h2 className="text-lg font-semibold text-lean-black dark:text-gray-100 leading-tight mb-2 line-clamp-2">
             {process.name}
           </h2>
           <div className="flex flex-wrap gap-1.5">
@@ -110,11 +110,11 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
 
         {hasInterview && (
           <div className="shrink-0 text-center">
-            <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-0.5">Score oportunidad</p>
+            <p className="text-[9px] font-mono uppercase tracking-widest text-text-muted mb-0.5">Score oportunidad</p>
             <p className="text-4xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
               {process.interview!.opportunityScore.toFixed(1)}
             </p>
-            <p className="text-[10px] text-text-subtle">/4.0</p>
+            <p className="text-[10px] text-text-muted">/4.0</p>
           </div>
         )}
       </div>
@@ -141,7 +141,7 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
             {/* LEFT — position map */}
             {hasInterview ? (
               <div className="flex flex-col items-center gap-3">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">Posición en la matriz</p>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">Posición en la matriz</p>
                 <DetailPositionMap
                   opportunityScore={process.interview!.opportunityScore}
                   readinessScore={process.interview!.readinessScore}
@@ -149,7 +149,7 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
                   size={200}
                 />
                 <div className="w-full">
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">Categoría IA</p>
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1.5">Categoría IA</p>
                   <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-1">{catCfg.tagline}</p>
                   <p className="text-[11px] text-text-muted leading-relaxed">{catCfg.description}</p>
                 </div>
@@ -157,7 +157,7 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
             ) : (
               <div className="flex flex-col items-center justify-center text-center gap-3 py-8">
                 <div className="h-10 w-10 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-muted"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg>
                 </div>
                 <p className="text-xs text-text-muted">Completa la entrevista para posicionar este proceso.</p>
               </div>
@@ -170,7 +170,7 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
                 const canGenerate = hasStages && !aiLoading
                 return (
                   <div className="flex items-center justify-between gap-3 mb-4">
-                    <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
                       Oportunidades IA identificadas · {process.opportunities.length}
                     </p>
                     <div className="flex flex-col items-end gap-1 shrink-0">
@@ -188,7 +188,7 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
                           : process.opportunities.length > 0 ? 'Regenerar con IA' : 'Personalizar con IA'}
                       </Button>
                       {!hasStages && !aiLoading && (
-                        <p className="text-[9px] text-text-subtle text-right max-w-[180px] leading-tight">
+                        <p className="text-[9px] text-text-muted text-right max-w-[180px] leading-tight">
                           Documenta las etapas primero
                         </p>
                       )}
@@ -207,11 +207,11 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
               {process.opportunities.length === 0 ? (
                 <div className="flex flex-col gap-2">
                   {(process.stages ?? []).length === 0 ? (
-                    <p className="text-xs text-text-subtle leading-relaxed">
+                    <p className="text-xs text-text-muted leading-relaxed">
                       Ve a la pestaña <strong>Etapas del proceso</strong>, documenta qué sistemas usa cada etapa y vuelve aquí para generar recomendaciones IA.
                     </p>
                   ) : (
-                    <p className="text-xs text-text-subtle leading-relaxed">
+                    <p className="text-xs text-text-muted leading-relaxed">
                       Usa el botón <strong>"Personalizar con IA"</strong> para recibir recomendaciones concretas basadas en los sistemas de este proceso.
                     </p>
                   )}
@@ -258,7 +258,7 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
 
               {process.notes && (
                 <div className="mt-6 rounded-2xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">Notas del consultor</p>
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1.5">Notas del consultor</p>
                   <p className="text-xs text-text-muted leading-relaxed italic">{process.notes}</p>
                 </div>
               )}

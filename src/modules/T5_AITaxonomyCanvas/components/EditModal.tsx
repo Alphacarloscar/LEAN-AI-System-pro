@@ -5,6 +5,7 @@
 // Sliders por dimensión con preview de recomendación resultante.
 // ============================================================
 
+import { Settings, Cpu, TrendingUp, MessageSquare, RefreshCw, Network } from 'lucide-react'
 import { useForm }          from 'react-hook-form'
 import { zodResolver }      from '@hookform/resolvers/zod'
 import { usePermissions }   from '@/modules/Auth'
@@ -19,6 +20,15 @@ import {
 import { T5DomainScoresSchema }        from '@/lib/schemas/t5.schemas'
 import type { T5DomainScoresFormValues } from '@/lib/schemas/t5.schemas'
 import type { T5DomainCode, T5DomainScores, T5DomainAssessment } from '../types'
+
+const DOMAIN_ICON_MAP: Record<string, React.ReactElement> = {
+  settings:         <Settings      size={18} strokeWidth={1.5} />,
+  cpu:              <Cpu           size={18} strokeWidth={1.5} />,
+  'trending-up':    <TrendingUp    size={18} strokeWidth={1.5} />,
+  'message-square': <MessageSquare size={18} strokeWidth={1.5} />,
+  'refresh-cw':     <RefreshCw     size={18} strokeWidth={1.5} />,
+  network:          <Network       size={18} strokeWidth={1.5} />,
+}
 
 interface EditModalProps {
   domainCode: T5DomainCode
@@ -62,7 +72,12 @@ export function EditModal({ domainCode, assessment, onSave, onCancel }: EditModa
       footer={footer}
     >
       <div className="flex items-center gap-3 mb-5">
-        <span className="text-xl">{domCfg.icon}</span>
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ backgroundColor: domCfg.hex + '22', border: `1.5px solid ${domCfg.hex}55`, color: domCfg.hex }}
+        >
+          {DOMAIN_ICON_MAP[domCfg.icon] ?? <Settings size={18} strokeWidth={1.5} />}
+        </div>
         <p className="text-[10px] text-text-subtle font-mono uppercase tracking-wide">Editar evaluación</p>
       </div>
 

@@ -90,15 +90,24 @@ export interface DeptCfg {
   badgeText: string
 }
 
+// Hex values sourced exclusively from tailwind.config.ts tokens.
+// success-dark=#5FAF8A  info-dark=#6A90C0  warning-dark=#D4A85C
+// danger-dark=#C06060   gold=#C8860A       silver=#C4C0B8
 export const DEPT_CFG: Record<string, DeptCfg> = {
-  'Dirección General':     { fill: '#2A2822', darkFill: '#7BA7D4', badgeBg: 'bg-slate-100  dark:bg-slate-800', badgeText: 'text-slate-700  dark:text-slate-300' },
-  'IT / Tecnología':       { fill: '#6366F1', darkFill: '#818CF8', badgeBg: 'bg-indigo-100 dark:bg-indigo-900/40', badgeText: 'text-indigo-700 dark:text-indigo-300' },
-  'Operaciones':           { fill: '#F97316', darkFill: '#FB923C', badgeBg: 'bg-orange-100 dark:bg-orange-900/40', badgeText: 'text-orange-700 dark:text-orange-300' },
-  'Marketing & Comercial': { fill: '#10B981', darkFill: '#34D399', badgeBg: 'bg-emerald-100 dark:bg-emerald-900/40', badgeText: 'text-emerald-700 dark:text-emerald-300' },
+  // ── Entradas canónicas (keys del store de datos) ───────────────
+  'Dirección General':     { fill: '#6A90C0', darkFill: '#9BB5D9', badgeBg: 'bg-info-light   dark:bg-info-light/10',    badgeText: 'text-info-dark'    },
+  'IT / Tecnología':       { fill: '#5FAF8A', darkFill: '#86C7A8', badgeBg: 'bg-success-light dark:bg-success-light/10', badgeText: 'text-success-dark' },
+  'Operaciones':           { fill: '#D4A85C', darkFill: '#E8C281', badgeBg: 'bg-warning-light dark:bg-warning-light/10', badgeText: 'text-warning-dark' },
+  'Marketing & Comercial': { fill: '#C8860A', darkFill: '#D4940F', badgeBg: 'bg-warning-light dark:bg-warning-light/10', badgeText: 'text-gold'         },
+  'RRHH':                  { fill: '#C06060', darkFill: '#D89090', badgeBg: 'bg-danger-light  dark:bg-danger-light/10',  badgeText: 'text-danger-dark'  },
+  // ── Aliases cortos (datos importados de otros módulos) ─────────
+  'Dirección':             { fill: '#6A90C0', darkFill: '#9BB5D9', badgeBg: 'bg-info-light   dark:bg-info-light/10',    badgeText: 'text-info-dark'    },
+  'IT':                    { fill: '#5FAF8A', darkFill: '#86C7A8', badgeBg: 'bg-success-light dark:bg-success-light/10', badgeText: 'text-success-dark' },
+  'Marketing':             { fill: '#C8860A', darkFill: '#D4940F', badgeBg: 'bg-warning-light dark:bg-warning-light/10', badgeText: 'text-gold'         },
 }
 
 export function deptCfg(dept: string): DeptCfg {
-  return DEPT_CFG[dept] ?? { fill: '#94A3B8', darkFill: '#CBD5E1', badgeBg: 'bg-gray-100', badgeText: 'text-gray-700' }
+  return DEPT_CFG[dept] ?? { fill: '#C4C0B8', darkFill: '#9A9790', badgeBg: 'bg-surface', badgeText: 'text-text-muted' }
 }
 
 export function deptFill(dept: string, dark: boolean): string {

@@ -99,12 +99,12 @@ export function T6View({
             <div className="flex items-center gap-2 flex-wrap">
               {highRisk > 0 && (
                 <Badge variant="warning" shape="pill">
-                  <span className="inline-flex items-center gap-1"><AlertCircle size={12} strokeWidth={1.75} /> {highRisk} caso{highRisk > 1 ? 's' : ''} alto riesgo</span>
+                  <span className="inline-flex items-center gap-1"><AlertCircle size={12} strokeWidth={2} /> {highRisk} caso{highRisk > 1 ? 's' : ''} alto riesgo</span>
                 </Badge>
               )}
               {unclassified > 0 && (
                 <Badge variant="default" shape="pill">
-                  <span className="inline-flex items-center gap-1"><Circle size={12} strokeWidth={1.75} /> {unclassified} sin clasificar</span>
+                  <span className="inline-flex items-center gap-1"><Circle size={12} strokeWidth={2} /> {unclassified} sin clasificar</span>
                 </Badge>
               )}
             </div>
@@ -122,8 +122,8 @@ export function T6View({
             value={tab}
             onChange={(v) => setTab(v as T6Tab)}
             tabs={[
-              { value: 'politica', label: 'Política IA Corporativa', icon: <FileText size={14} strokeWidth={1.75} /> },
-              { value: 'riesgos',  label: 'Dashboard AI Act', icon: <Scale size={14} strokeWidth={1.75} />, badge: highRisk > 0 ? `${highRisk} alto` : undefined },
+              { value: 'politica', label: 'Política IA Corporativa', icon: <FileText size={14} strokeWidth={2} /> },
+              { value: 'riesgos',  label: 'Dashboard AI Act', icon: <Scale size={14} strokeWidth={2} />, badge: highRisk > 0 ? `${highRisk} alto` : undefined },
             ]}
           />
         </div>

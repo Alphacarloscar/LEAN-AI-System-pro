@@ -5,9 +5,9 @@ import type { GeneratedChangePlanPhase } from '../types'
 import { Card, Badge } from '@shared/design-system/components'
 
 const PHASE_ICON_MAP: Record<string, React.ReactElement> = {
-  zap:          <Zap       size={20} strokeWidth={1.75} />,
-  'bar-chart-2':<BarChart2 size={20} strokeWidth={1.75} />,
-  rocket:       <Rocket    size={20} strokeWidth={1.75} />,
+  zap:          <Zap       size={20} strokeWidth={2} />,
+  'bar-chart-2':<BarChart2 size={20} strokeWidth={2} />,
+  rocket:       <Rocket    size={20} strokeWidth={2} />,
 }
 
 export function PlanPhaseCard({ step }: { step: GeneratedChangePlanPhase }) {
@@ -15,7 +15,7 @@ export function PlanPhaseCard({ step }: { step: GeneratedChangePlanPhase }) {
     <Card variant="outlined" padding="none" className="rounded-xl p-6">
       <div className="flex items-start gap-4 mb-4">
         <div className="flex-shrink-0 text-center">
-          <div className="flex items-center justify-center text-navy dark:text-warm-100">{PHASE_ICON_MAP[step.icon] ?? <span className="text-base">{step.icon}</span>}</div>
+          <div className="flex items-center justify-center p-2 bg-slate-50 border border-slate-100 rounded-md dark:bg-slate-800/60 dark:border-slate-700 text-navy dark:text-warm-100">{PHASE_ICON_MAP[step.icon] ?? <span className="text-base">{step.icon}</span>}</div>
           <span className="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-navy/10 dark:bg-navy/20 text-navy dark:text-warm-100">
             {step.phase}
           </span>

@@ -33,7 +33,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
   analitica_predictiva: {
     label:       'Analítica Predictiva',
     shortLabel:  'Predictiva',
-    hex:         '#2A2822',  // warm charcoal (era navy #1B2A4E)
+    hex:         '#8B6A30',  // gold-muted token — ámbar oscuro diferenciado de warning-dark
     tagline:     'Anticipar para decidir mejor y más rápido',
     description: 'Modelos que predicen demanda, riesgo, fallos o comportamientos a partir de datos históricos y señales en tiempo real.',
     icon:        'trending-up',
@@ -57,7 +57,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
   'agéntica': {
     label:       'Agéntica IA',
     shortLabel:  'Agéntica',
-    hex:         '#7C3AED',
+    hex:         '#C8860A',  // gold token — máximo contraste, único token de marca sin asignar
     tagline:     'Agentes autónomos que ejecutan tareas complejas',
     description: 'Sistemas de múltiples agentes que planifican, deciden y ejecutan cadenas de pasos complejos de forma autónoma sin supervisión constante.',
     icon:        'network',

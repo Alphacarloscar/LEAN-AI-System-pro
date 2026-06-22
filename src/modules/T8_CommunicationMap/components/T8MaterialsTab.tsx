@@ -7,16 +7,16 @@ import type { MaterialTemplate } from '../types'
 import { Card, Badge } from '@shared/design-system/components'
 
 const MATERIAL_ICON_MAP: Record<string, React.ReactElement> = {
-  megaphone:        <Megaphone      size={20} strokeWidth={1.75} />,
-  'graduation-cap': <GraduationCap  size={20} strokeWidth={1.75} />,
-  'bar-chart-2':    <BarChart2      size={20} strokeWidth={1.75} />,
-  flag:             <Flag           size={20} strokeWidth={1.75} />,
+  megaphone:        <Megaphone      size={20} strokeWidth={2} />,
+  'graduation-cap': <GraduationCap  size={20} strokeWidth={2} />,
+  'bar-chart-2':    <BarChart2      size={20} strokeWidth={2} />,
+  flag:             <Flag           size={20} strokeWidth={2} />,
 }
 const MATERIAL_ICON_SM: Record<string, React.ReactElement> = {
-  megaphone:        <Megaphone      size={16} strokeWidth={1.75} />,
-  'graduation-cap': <GraduationCap  size={16} strokeWidth={1.75} />,
-  'bar-chart-2':    <BarChart2      size={16} strokeWidth={1.75} />,
-  flag:             <Flag           size={16} strokeWidth={1.75} />,
+  megaphone:        <Megaphone      size={16} strokeWidth={2} />,
+  'graduation-cap': <GraduationCap  size={16} strokeWidth={2} />,
+  'bar-chart-2':    <BarChart2      size={16} strokeWidth={2} />,
+  flag:             <Flag           size={16} strokeWidth={2} />,
 }
 
 export function MaterialsTab({ materials }: { materials: MaterialTemplate[] }) {
@@ -38,7 +38,7 @@ export function MaterialsTab({ materials }: { materials: MaterialTemplate[] }) {
                 : 'border-border dark:border-white/6 hover:border-navy/20 bg-white dark:bg-gray-900',
             ].join(' ')}
           >
-            <span className="flex-shrink-0 mt-0.5 text-text-subtle">{MATERIAL_ICON_SM[m.icon] ?? <BarChart2 size={16} strokeWidth={1.75} />}</span>
+            <span className="flex-shrink-0 mt-0.5 text-text-subtle">{MATERIAL_ICON_SM[m.icon] ?? <BarChart2 size={16} strokeWidth={2} />}</span>
             <div className="min-w-0">
               <p className={`text-xs font-semibold leading-tight ${selected === m.id ? 'text-navy dark:text-warm-100' : 'text-lean-black dark:text-gray-100'}`}>
                 {m.title}
@@ -55,7 +55,7 @@ export function MaterialsTab({ materials }: { materials: MaterialTemplate[] }) {
           {/* Header */}
           <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-border dark:border-white/6">
             <div className="flex items-center gap-2.5">
-              <span className="text-text-subtle">{MATERIAL_ICON_MAP[mat.icon] ?? <BarChart2 size={20} strokeWidth={1.75} />}</span>
+              <span className="text-text-subtle">{MATERIAL_ICON_MAP[mat.icon] ?? <BarChart2 size={20} strokeWidth={2} />}</span>
               <div>
                 <p className="font-semibold text-sm text-lean-black dark:text-gray-100">{mat.title}</p>
                 <p className="text-xs text-text-muted">{mat.subtitle}</p>

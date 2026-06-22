@@ -232,7 +232,7 @@ export function T9View({ onBack }: T9ViewProps) {
 
         {/* Cabecera */}
         <div className="grid border-b border-border dark:border-white/6" style={{ gridTemplateColumns: '260px 1fr' }}>
-          <div className="px-4 py-2.5 text-[10px] font-medium uppercase tracking-widest text-text-subtle">
+          <div className="px-4 py-2.5 text-[10px] font-medium uppercase tracking-widest text-text-muted">
             Iniciativa / responsable
           </div>
           <div className="border-l border-border dark:border-white/6">
@@ -258,7 +258,7 @@ export function T9View({ onBack }: T9ViewProps) {
               {MONTHS.map((m, i) => (
                 <div
                   key={m}
-                  className={['py-1.5 text-center text-[11px] text-text-subtle', i < 11 ? 'border-r border-border dark:border-white/6' : ''].join(' ')}
+                  className={['py-1.5 text-center text-[11px] text-text-muted', i < 11 ? 'border-r border-border dark:border-white/6' : ''].join(' ')}
                 >
                   {m}
                 </div>

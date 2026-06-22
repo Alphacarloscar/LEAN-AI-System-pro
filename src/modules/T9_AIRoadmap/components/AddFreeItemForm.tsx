@@ -79,7 +79,7 @@ export function AddFreeItemForm({ onSave, onCancel }: AddFormProps) {
           </div>
 
           <div>
-            <label className="text-[10px] text-text-subtle block mb-1">Mes inicio</label>
+            <label className="text-[10px] text-text-muted block mb-1">Mes inicio</label>
             <Controller
               name="startMonth"
               control={control}
@@ -98,7 +98,7 @@ export function AddFreeItemForm({ onSave, onCancel }: AddFormProps) {
           </div>
 
           <div>
-            <label className="text-[10px] text-text-subtle block mb-1">Mes fin</label>
+            <label className="text-[10px] text-text-muted block mb-1">Mes fin</label>
             <Controller
               name="endMonth"
               control={control}
@@ -117,7 +117,7 @@ export function AddFreeItemForm({ onSave, onCancel }: AddFormProps) {
           </div>
 
           <div>
-            <label className="text-[10px] text-text-subtle block mb-1">Nivel de riesgo</label>
+            <label className="text-[10px] text-text-muted block mb-1">Nivel de riesgo</label>
             <select {...register('riskLevel')} className={SELECT_CLS}>
               <option value="bajo">Bajo</option>
               <option value="medio">Medio</option>
@@ -126,7 +126,7 @@ export function AddFreeItemForm({ onSave, onCancel }: AddFormProps) {
           </div>
 
           <div>
-            <label className="text-[10px] text-text-subtle block mb-1">Estado</label>
+            <label className="text-[10px] text-text-muted block mb-1">Estado</label>
             <select {...register('status')} className={SELECT_CLS}>
               <option value="pendiente">Pendiente</option>
               <option value="en_curso">En curso</option>

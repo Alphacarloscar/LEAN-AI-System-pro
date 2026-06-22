@@ -5,12 +5,22 @@
 // asociados a un dominio IA.
 // ============================================================
 
+import { Settings, Cpu, TrendingUp, MessageSquare, RefreshCw, Network } from 'lucide-react'
 import { useT3Store } from '@/modules/T3_ValueStreamMap'
 import { useT4Store } from '@/modules/T4_UseCasePriorityBoard'
 import { T5_DOMAIN_CONFIG } from '../constants'
 import { Modal, Button, Badge, Card } from '@shared/design-system/components'
 import type { T5DomainCode } from '../types'
 import { UC_STATUS_LABEL, UC_STATUS_VARIANT, UC_COMPLETADO_STYLE, PHASE_LABEL } from './t5StatusMaps'
+
+const DOMAIN_ICON_MAP: Record<string, React.ReactElement> = {
+  settings:         <Settings      size={18} strokeWidth={1.5} />,
+  cpu:              <Cpu           size={18} strokeWidth={1.5} />,
+  'trending-up':    <TrendingUp    size={18} strokeWidth={1.5} />,
+  'message-square': <MessageSquare size={18} strokeWidth={1.5} />,
+  'refresh-cw':     <RefreshCw     size={18} strokeWidth={1.5} />,
+  network:          <Network       size={18} strokeWidth={1.5} />,
+}
 
 interface DomainProjectsModalProps {
   domainCode: T5DomainCode
@@ -40,10 +50,10 @@ export function DomainProjectsModal({ domainCode, onClose }: DomainProjectsModal
       {/* Domain icon + subtitle */}
       <div className="flex items-center gap-3 mb-5">
         <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-xl shrink-0"
-          style={{ backgroundColor: domCfg.hex + '22', border: `1.5px solid ${domCfg.hex}55` }}
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ backgroundColor: domCfg.hex + '22', border: `1.5px solid ${domCfg.hex}55`, color: domCfg.hex }}
         >
-          {domCfg.icon}
+          {DOMAIN_ICON_MAP[domCfg.icon] ?? <Settings size={18} strokeWidth={1.5} />}
         </div>
         <p className="text-[10px] text-text-subtle font-mono uppercase tracking-wide">Proyectos identificados</p>
       </div>

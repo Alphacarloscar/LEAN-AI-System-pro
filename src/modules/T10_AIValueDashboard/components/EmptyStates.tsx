@@ -6,7 +6,7 @@ export function EmptyNoProject() {
   return (
     <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center px-6">
       <div className="text-center max-w-sm space-y-4">
-        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto bg-gold/5 border border-gold/20">
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto bg-card dark:bg-warm-700 border border-border dark:border-warm-500">
           <svg width="22" height="22" viewBox="0 0 14 14" fill="none" stroke="#C8860A" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
             <rect x="2" y="3" width="10" height="10" rx="1" />
             <path d="M5 13V9h4v4M2 6h10" />
@@ -33,7 +33,7 @@ export function EmptyNoData({ onNavigate }: { onNavigate: (path: string) => void
     <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center px-6">
       <div className="text-center max-w-md space-y-5">
         {/* Icono */}
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto bg-gold/5 border border-gold/20">
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto bg-card dark:bg-warm-700 border border-border dark:border-warm-500">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C8860A" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
             <path d="M12 8v4M12 16h.01" strokeWidth="1.8" />
@@ -50,7 +50,7 @@ export function EmptyNoData({ onNavigate }: { onNavigate: (path: string) => void
           </p>
         </div>
         {/* Progress de herramientas completadas */}
-        <div className="rounded-xl px-4 py-3 text-left space-y-1.5 bg-gold/[0.04] border border-gold/15">
+        <div className="rounded-xl px-4 py-3 text-left space-y-1.5 border-l-4 border-l-gold bg-card dark:bg-warm-700">
           <p className="text-[10px] font-mono uppercase tracking-widest mb-2 text-gold">
             Ruta de activación recomendada
           </p>

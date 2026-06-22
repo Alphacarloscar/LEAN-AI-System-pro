@@ -136,7 +136,7 @@ export function ITBizGapSection({ dimensions, itInterviewees, bizInterviewees }:
 
   return (
     <div>
-      <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-4">
+      <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-4">
         Brecha IT / Negocio
       </p>
 
@@ -165,7 +165,7 @@ export function ITBizGapSection({ dimensions, itInterviewees, bizInterviewees }:
       <div className="flex items-center gap-6 mb-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-border/60">
         <div className="text-center">
           <p className={`text-2xl font-bold tabular-nums ${IT_TEXT_CLASS}`}>{itOverall.toFixed(1)}</p>
-          <p className="text-[11px] text-text-subtle mt-0.5">IT (avg)</p>
+          <p className="text-[11px] text-text-muted mt-0.5">IT (avg)</p>
         </div>
         <div className="flex-1 flex flex-col items-center">
           <div className="flex items-center gap-1.5 text-xs text-text-muted">
@@ -187,7 +187,7 @@ export function ITBizGapSection({ dimensions, itInterviewees, bizInterviewees }:
         </div>
         <div className="text-center">
           <p className={`text-2xl font-bold tabular-nums ${BIZ_TEXT_CLASS}`}>{bizOverall.toFixed(1)}</p>
-          <p className="text-[11px] text-text-subtle mt-0.5">Negocio (avg)</p>
+          <p className="text-[11px] text-text-muted mt-0.5">Negocio (avg)</p>
         </div>
       </div>
 
@@ -225,7 +225,7 @@ export function ITBizGapSection({ dimensions, itInterviewees, bizInterviewees }:
         })}
       </div>
 
-      <p className="mt-3 text-[11px] text-text-subtle">
+      <p className="mt-3 text-[11px] text-text-muted">
         <span className="inline-flex items-center gap-1.5 mr-3">
           <span className={`h-2 w-2 rounded-full ${IT_BAR_CLASS}`} /> IT
         </span>

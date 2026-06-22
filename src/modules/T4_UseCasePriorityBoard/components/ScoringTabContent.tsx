@@ -131,9 +131,9 @@ export function ScoringTabContent({
             <div className="flex items-center gap-2 mb-1.5">
               <span className={`inline-flex items-center gap-1 text-xs font-bold ${useCase.goNoGo.decision === 'go' ? 'text-success-dark' : useCase.goNoGo.decision === 'no_go' ? 'text-danger-dark' : 'text-warning-dark'}`}>
                 {useCase.goNoGo.decision === 'go'
-                  ? <><Check size={14} strokeWidth={1.75} /> GO</>
+                  ? <><Check size={14} strokeWidth={2} /> GO</>
                   : useCase.goNoGo.decision === 'no_go'
-                  ? <><X size={14} strokeWidth={1.75} /> NO-GO</>
+                  ? <><X size={14} strokeWidth={2} /> NO-GO</>
                   : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg> PENDIENTE</>
                 }
               </span>

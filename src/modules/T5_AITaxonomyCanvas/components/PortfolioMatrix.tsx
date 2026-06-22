@@ -17,12 +17,12 @@ import type { T5Canvas, T5DomainCode } from '../types'
 import { DeptCategoryModal } from './DeptCategoryModal'
 
 const DOMAIN_ICON_MAP: Record<string, React.ReactElement> = {
-  settings:        <Settings      size={14} strokeWidth={1.75} />,
-  cpu:             <Cpu           size={14} strokeWidth={1.75} />,
-  'trending-up':   <TrendingUp    size={14} strokeWidth={1.75} />,
-  'message-square':<MessageSquare size={14} strokeWidth={1.75} />,
-  'refresh-cw':    <RefreshCw     size={14} strokeWidth={1.75} />,
-  network:         <Network       size={14} strokeWidth={1.75} />,
+  settings:        <Settings      size={14} strokeWidth={1.5} />,
+  cpu:             <Cpu           size={14} strokeWidth={1.5} />,
+  'trending-up':   <TrendingUp    size={14} strokeWidth={1.5} />,
+  'message-square':<MessageSquare size={14} strokeWidth={1.5} />,
+  'refresh-cw':    <RefreshCw     size={14} strokeWidth={1.5} />,
+  network:         <Network       size={14} strokeWidth={1.5} />,
 }
 
 // ── Collision resolution ──────────────────────────────────────
@@ -83,6 +83,25 @@ function resolveChipCollisions(chips: ChipPos[]): ChipPos[] {
   return result
 }
 
+// ── Department dot palette — tokens from tailwind.config.ts ──
+// Mirrors T7 DEPT_CFG. Hex sourced exclusively from the token registry:
+// info-dark=#6A90C0  success-dark=#5FAF8A  warning-dark=#D4A85C
+// gold=#C8860A       danger-dark=#C06060   silver=#C4C0B8
+const DEPT_DOT: Record<string, string> = {
+  'Dirección General':     '#6A90C0',  // info-dark
+  'Dirección':             '#6A90C0',  // info-dark
+  'IT / Tecnología':       '#5FAF8A',  // success-dark
+  'IT':                    '#5FAF8A',  // success-dark
+  'Operaciones':           '#D4A85C',  // warning-dark
+  'Marketing & Comercial': '#C8860A',  // gold
+  'Marketing':             '#C8860A',  // gold
+  'RRHH':                  '#C06060',  // danger-dark
+}
+
+function deptDotColor(dept: string): string {
+  return DEPT_DOT[dept] ?? '#C4C0B8'  // silver fallback
+}
+
 // ── All domain codes constant ─────────────────────────────────
 
 const ALL_DOMAIN_CODES: T5DomainCode[] = [
@@ -114,14 +133,14 @@ function DepartmentAdoptionChart({
   return (
     <>
       <div className="mt-4 pt-4 border-t border-border/50">
-        <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-3">
           Adopción por departamento
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-[10px]">
             <thead>
               <tr>
-                <th className="text-left pb-3 pr-3 font-medium text-text-subtle w-32" />
+                <th className="text-left pb-3 pr-3 font-medium text-text-muted w-32" />
                 {ALL_DOMAIN_CODES.map(code => {
                   const domCfg = T5_DOMAIN_CONFIG[code]
                   const recCfg = T5_RECOMMENDATION_CONFIG[canvas.domains[code].recommendation]
@@ -130,19 +149,20 @@ function DepartmentAdoptionChart({
                       <button
                         onClick={() => onSelectDomain(code)}
                         title={domCfg.label}
-                        className="mx-auto flex flex-col items-center justify-center rounded-full
-                          transition-all duration-150 hover:scale-110 focus:outline-none"
-                        style={{
-                          width:           40,
-                          height:          40,
-                          border:          `2px solid ${recCfg.hex}`,
-                          backgroundColor: recCfg.hex + '22',
-                        }}
+                        className="mx-auto flex flex-col items-center gap-1.5
+                          transition-all duration-150 hover:scale-105 focus:outline-none"
                       >
                         <span
-                          className="text-[8px] font-bold leading-tight text-center text-lean-black dark:text-gray-200"
-                          style={{ maxWidth: 34, wordBreak: 'break-word', padding: '0 2px' }}
+                          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                          style={{
+                            border:          `2px solid ${recCfg.hex}`,
+                            backgroundColor: recCfg.hex + '22',
+                            color:           recCfg.hex,
+                          }}
                         >
+                          {DOMAIN_ICON_MAP[domCfg.icon] ?? <Settings size={14} strokeWidth={1.5} />}
+                        </span>
+                        <span className="text-[11px] font-medium tracking-tight text-slate-600 dark:text-slate-400 whitespace-nowrap">
                           {domCfg.shortLabel}
                         </span>
                       </button>
@@ -154,8 +174,17 @@ function DepartmentAdoptionChart({
             <tbody>
               {departments.map(dept => (
                 <tr key={dept} className="border-t border-border/30">
-                  <td className="py-1.5 pr-3 text-text-muted leading-tight">
-                    {dept.split('/')[0].trim()}
+                  <td className="py-1.5 pr-3 leading-tight max-w-[128px]" title={dept}>
+                    <span className="flex items-center gap-1.5 min-w-0">
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: deptDotColor(dept) }}
+                        aria-hidden="true"
+                      />
+                      <span className="truncate font-medium text-lean-black dark:text-gray-200">
+                        {dept.split('/')[0].trim()}
+                      </span>
+                    </span>
                   </td>
                   {ALL_DOMAIN_CODES.map(code => {
                     const active = deptCats[dept]?.has(code)
@@ -186,7 +215,7 @@ function DepartmentAdoptionChart({
             </tbody>
           </table>
         </div>
-        <p className="text-[9px] text-text-subtle/60 mt-2">
+        <p className="text-[9px] text-text-muted/60 mt-2">
           Haz clic en cualquier punto para ver los proyectos del departamento en ese dominio
         </p>
       </div>
@@ -233,10 +262,10 @@ export function PortfolioMatrix({
 
   return (
     <Card variant="outlined" padding="none" className="rounded-2xl p-5">
-      <p className="text-xs font-mono uppercase tracking-widest text-text-subtle mb-1">
+      <p className="text-xs font-mono uppercase tracking-widest text-text-muted mb-1">
         Portfolio map — 6 dominios IA
       </p>
-      <p className="text-[10px] text-text-subtle mb-4">
+      <p className="text-[10px] text-text-muted mb-4">
         Haz clic en un dominio para ver su ficha de governance
       </p>
 
@@ -246,13 +275,13 @@ export function PortfolioMatrix({
           <span className="text-[9px] font-semibold text-success-dark">Alto</span>
           <div className="flex-1 flex items-center justify-center">
             <span
-              className="text-[9px] text-text-subtle whitespace-nowrap"
+              className="text-[9px] text-text-muted whitespace-nowrap"
               style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
             >
               Valor de negocio →
             </span>
           </div>
-          <span className="text-[9px] font-semibold text-gray-400">Bajo</span>
+          <span className="text-[9px] font-semibold text-text-muted">Bajo</span>
         </div>
 
         <div className="flex-1 flex flex-col gap-1.5 min-w-0">
@@ -318,14 +347,14 @@ export function PortfolioMatrix({
                       color: recCfg.hex,
                     }}
                   >
-                    <span className="leading-none select-none">{DOMAIN_ICON_MAP[domCfg.icon] ?? <Settings size={14} strokeWidth={1.75} />}</span>
+                    <span className="leading-none select-none">{DOMAIN_ICON_MAP[domCfg.icon] ?? <Settings size={14} strokeWidth={1.5} />}</span>
                     <span
                       className="text-[8px] font-bold leading-tight text-center text-lean-black dark:text-gray-200 select-none"
                       style={{ maxWidth: pos.size - 10, wordBreak: 'break-word', padding: '0 3px' }}
                     >
                       {domCfg.shortLabel}
                     </span>
-                    <span className="text-[8px] tabular-nums text-text-subtle select-none">
+                    <span className="text-[8px] tabular-nums text-text-muted select-none">
                       {d.priorityScore}
                     </span>
                   </div>
@@ -345,7 +374,7 @@ export function PortfolioMatrix({
 
           {/* X-axis labels */}
           <div className="flex justify-between items-center px-1">
-            <span className="text-[9px] text-gray-400">← Baja madurez técnica</span>
+            <span className="text-[9px] text-text-muted">← Baja madurez técnica</span>
             <span className="text-[9px] text-info-dark">Alta madurez técnica →</span>
           </div>
         </div>

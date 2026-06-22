@@ -41,12 +41,12 @@ export function DepartmentOverviewChart({ stakeholders }: DepartmentOverviewChar
   const maxCount = Math.max(...deptData.map((d) => d.total), 1)
 
   const BW    = 16
-  const GAP   = 34
+  const GAP   = 44
   const LM    = 32
-  const RM    = 8
+  const RM    = 16
   const CH    = 140
   const TM    = 22
-  const LH    = 42
+  const LH    = 72
   const VBW   = LM + deptData.length * (BW + GAP) - GAP + RM
   const VBH   = TM + CH + LH
 
@@ -144,31 +144,20 @@ export function DepartmentOverviewChart({ stakeholders }: DepartmentOverviewChar
                   {total}
                 </text>
 
-                {(() => {
-                  const words = dept.split(/[\s/]+/)
-                  const mid   = Math.ceil(words.length / 2)
-                  const line1 = words.slice(0, mid).join(' ')
-                  const line2 = words.slice(mid).join(' ')
-                  return (
-                    <>
-                      <text x={bx + BW / 2} y={TM + CH + 16}
-                        textAnchor="middle" fontSize={10}
-                        fill={isRisk ? ARCH_HEX.critico : 'var(--color-border)'} fontFamily="ui-sans-serif,sans-serif">
-                        {line1}
-                      </text>
-                      {line2 && (
-                        <text x={bx + BW / 2} y={TM + CH + 29}
-                          textAnchor="middle" fontSize={10}
-                          fill={isRisk ? ARCH_HEX.critico : 'var(--color-border)'} fontFamily="ui-sans-serif,sans-serif">
-                          {line2}
-                        </text>
-                      )}
-                    </>
-                  )
-                })()}
+                <text
+                  x={bx + BW / 2}
+                  y={TM + CH + 8}
+                  textAnchor="end"
+                  fontSize={10}
+                  fill={isRisk ? ARCH_HEX.critico : 'var(--color-border)'}
+                  fontFamily="ui-sans-serif,sans-serif"
+                  transform={`rotate(-32, ${bx + BW / 2}, ${TM + CH + 8})`}
+                >
+                  {dept}
+                </text>
                 {isRisk && (
-                  <circle cx={bx + BW / 2} cy={TM + CH + 36} r={2}
-                    fill={ARCH_HEX.critico} opacity={0.7} />
+                  <circle cx={bx + BW / 2} cy={TM + CH + 5} r={2.5}
+                    fill={ARCH_HEX.critico} opacity={0.75} />
                 )}
               </g>
             )

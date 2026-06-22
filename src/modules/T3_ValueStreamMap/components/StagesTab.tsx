@@ -113,43 +113,43 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
             {flowEff.toFixed(1)}
             <span className="text-sm font-normal text-text-subtle">%</span>
           </p>
-          <p className="text-[10px] text-text-subtle mt-1">Tiempo útil / ciclo total</p>
+          <p className="text-[10px] text-text-muted mt-1">Tiempo útil / ciclo total</p>
         </Card>
 
         <Card variant="outlined" padding="none" className="rounded-2xl px-4 py-3">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1">
             Ciclo total
           </p>
           <p className="text-2xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
             {fmtHours(totalCycle)}
           </p>
-          <p className="text-[10px] text-text-subtle mt-1">Proceso + espera acumulados</p>
+          <p className="text-[10px] text-text-muted mt-1">Proceso + espera acumulados</p>
         </Card>
 
         <Card variant="outlined" padding="none" className="rounded-2xl px-4 py-3">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1">
             Tiempo valor añadido
           </p>
           <p className="text-2xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
             {fmtHours(valueAddedTime)}
           </p>
-          <p className="text-[10px] text-text-subtle mt-1">Etapas de valor alto</p>
+          <p className="text-[10px] text-text-muted mt-1">Etapas de valor alto</p>
         </Card>
 
         <Card variant="outlined" padding="none" className="rounded-2xl px-4 py-3">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1">
             Handoffs totales
           </p>
           <p className="text-2xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
             {totalHandoffs}
           </p>
-          <p className="text-[10px] text-text-subtle mt-1">Transferencias entre pasos</p>
+          <p className="text-[10px] text-text-muted mt-1">Transferencias entre pasos</p>
         </Card>
       </div>
 
       {/* ── Header swimlane ───────────────────────────────────── */}
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
           Mapa de etapas — {stages.length} etapa{stages.length !== 1 ? 's' : ''}
         </p>
         <div className="flex items-center gap-3">
@@ -195,17 +195,17 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
 
                   <div className="flex flex-col flex-1 p-3 gap-2">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-1.5 min-w-0">
-                        <span className="text-[9px] font-mono text-text-subtle shrink-0 mt-0.5">
+                      <div className="flex items-start gap-1.5 min-w-0 flex-1">
+                        <span className="text-[9px] font-mono text-text-muted shrink-0 mt-0.5">
                           {String(idx + 1).padStart(2, '0')}
                         </span>
-                        <span className="text-xs font-semibold text-lean-black dark:text-gray-100 leading-tight break-words">
+                        <span className="text-xs font-semibold text-lean-black dark:text-gray-100 leading-tight line-clamp-2">
                           {stage.name}
                         </span>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         {isBottleneck && (
-                          <Flame size={16} strokeWidth={1.75} aria-label="Cuello de botella — mayor tiempo de espera" className="text-danger-dark shrink-0" />
+                          <Flame size={16} strokeWidth={2} aria-label="Cuello de botella — mayor tiempo de espera" className="text-danger-dark shrink-0" />
                         )}
                         <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${cfg.chipBg} ${cfg.chipText}`}>
                           {cfg.label}
@@ -216,15 +216,15 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
                     {(stage.responsible || stage.system) && (
                       <div className="space-y-0.5">
                         {stage.responsible && (
-                          <p className="text-[10px] text-text-muted truncate leading-none flex items-center gap-1">
-                            <User size={10} strokeWidth={1.75} className="shrink-0" />
-                            {stage.responsible}
+                          <p className="text-[10px] text-text-muted truncate leading-none flex items-center gap-1 min-w-0">
+                            <User size={10} strokeWidth={2} className="shrink-0" />
+                            <span className="truncate">{stage.responsible}</span>
                           </p>
                         )}
                         {stage.system && (
-                          <p className="text-[10px] text-text-subtle truncate leading-none flex items-center gap-1">
-                            <Settings size={10} strokeWidth={1.75} className="shrink-0" />
-                            {stage.system}
+                          <p className="text-[10px] text-text-muted truncate leading-none flex items-center gap-1 min-w-0">
+                            <Settings size={10} strokeWidth={2} className="shrink-0" />
+                            <span className="truncate">{stage.system}</span>
                           </p>
                         )}
                       </div>
@@ -279,7 +279,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
       {/* ── Bottleneck callout ─────────────────────────────────── */}
       {bottleneck && bottleneck.waitTimeHours > 0 && (
         <div className="mt-4 rounded-2xl bg-danger-light border border-red-100 dark:border-red-900/20 px-4 py-3 flex items-start gap-3">
-          <Flame size={20} strokeWidth={1.75} className="text-danger-dark shrink-0 mt-0.5" />
+          <Flame size={20} strokeWidth={2} className="text-danger-dark shrink-0 mt-0.5" />
           <div>
             <p className="text-xs font-semibold text-danger-dark mb-0.5">
               Cuello de botella detectado — {bottleneck.name}

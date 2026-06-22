@@ -180,8 +180,9 @@ export function AppSidebar() {
         onClick={toggle}
         aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
         aria-expanded={open}
+        style={{ top: 'calc(var(--header-h, 56px) + 8px)' }}
         className={[
-          'fixed top-[72px] left-0 z-40',
+          'fixed left-0 z-40',
           'flex items-center justify-center',
           'h-10 w-10 rounded-r-xl',
           'bg-white dark:bg-warm-800 border border-l-0 border-black/10 dark:border-warm-600/30 shadow-sm',
@@ -214,8 +215,8 @@ export function AppSidebar() {
         aria-hidden={!open}
         className={[
           'fixed top-0 left-0 z-40 w-64',
-          'h-[calc(100vh-var(--header-h,57px))]',
-          'mt-[var(--header-h,57px)]',
+          'h-[calc(100vh-var(--header-h,56px))]',
+          'mt-[var(--header-h,56px)]',
           'bg-white dark:bg-warm-900 border-r border-black/8 dark:border-warm-600/20 shadow-xl',
           'flex flex-col overflow-hidden',
           'transition-transform duration-250 ease-in-out',

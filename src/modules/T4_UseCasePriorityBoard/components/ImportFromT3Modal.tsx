@@ -302,7 +302,7 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
                           </p>
                         </div>
                         <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-success-dark shrink-0">
-                          Importado <Check size={10} strokeWidth={1.75} />
+                          Importado <Check size={10} strokeWidth={2} />
                         </span>
                       </div>
                     )
@@ -315,7 +315,7 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
         /* Estado: importación completada */
         <div className="flex flex-col items-center justify-center py-8 px-2 text-center gap-5">
           <div className="h-14 w-14 rounded-3xl bg-success-light flex items-center justify-center text-success-dark">
-            <Check size={28} strokeWidth={1.75} />
+            <Check size={28} strokeWidth={2} />
           </div>
           <div>
             <p className="text-base font-semibold text-lean-black dark:text-gray-100 mb-1">

@@ -32,7 +32,7 @@ export function P3AdoptionPanel({ t2data, shadowAIPct, expanded, onToggle, onNav
       heroSlot={<HeroMetric label="Adopción activa" value={`${t2data.activePercent}%`} colorScore={t2data.activePercent} />}
     >
       <div className="mb-2">
-        <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle dark:text-warm-400 mb-1.5">
+        <p className="text-[9px] font-mono uppercase tracking-widest text-text-muted dark:text-warm-400 mb-1.5">
           Composición por departamento
         </p>
         {t2data.departments.length > 0
@@ -64,10 +64,10 @@ export function P3AdoptionPanel({ t2data, shadowAIPct, expanded, onToggle, onNav
             </div>
           </div>
           {shadowAIPct !== null && (
-            <div className="rounded-xl border border-gold/25 bg-gold/[0.04] px-3 py-2.5 mb-3">
+            <div className="rounded-r-xl border-l-4 border-l-gold bg-card dark:bg-warm-700 px-3 py-2.5 mb-3">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1.5">
-                  <AlertTriangle size={14} strokeWidth={1.75} className="text-gold" />
+                  <AlertTriangle size={14} strokeWidth={2} className="text-gold" />
                   <p className="text-[9px] font-mono uppercase tracking-widest text-gold">
                     Riesgo de Shadow AI
                   </p>
@@ -79,7 +79,7 @@ export function P3AdoptionPanel({ t2data, shadowAIPct, expanded, onToggle, onNav
               <div className="w-full h-1 rounded-full bg-border dark:bg-warm-700 overflow-hidden">
                 <div className="h-full rounded-full bg-gold" style={{ width: `${shadowAIPct.pct}%` }} />
               </div>
-              <p className="text-[9px] text-text-subtle mt-1">
+              <p className="text-[9px] text-text-muted mt-1">
                 {shadowAIPct.withTools} de {shadowAIPct.total} perfiles declaran herramientas externas · Ver detalle en T6
               </p>
             </div>

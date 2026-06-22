@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useT4Store } from '../store'
 import { usePermissions } from '@/modules/Auth'
 import {
@@ -16,7 +16,7 @@ import { Button, Badge, Card, Tabs, SegmentedControl } from '@shared/design-syst
 import { StatusBadge, CategoryBadge } from './T4Badges'
 import { EconomicsTab }              from './EconomicsTab'
 import { AIActClassificationModal } from './AIActClassificationModal'
-import { AIACT_RISK_CONFIG, AIACT_SCOPE_LABELS } from './AIActClassificationModal.constants'
+import { AIACT_RISK_CONFIG, AIACT_SCOPE_LABELS, AIACT_ICON_MAP } from './AIActClassificationModal.constants'
 import { ScoringTabContent }         from './ScoringTabContent'
 import { RoadmapTabContent }         from './RoadmapTabContent'
 import { ContextoTabContent }        from './ContextoTabContent'
@@ -43,6 +43,15 @@ export function UseCaseDetailPanel({
   const [localScores, setLocalScores]   = useState<UseCaseScores>(useCase.scores)
   const [pendingStatus, setPendingStatus]   = useState<UseCaseStatus | null>(null)
   const [showAIActModal, setShowAIActModal] = useState(false)
+
+  // Sincroniza localScores cuando cambia el caso activo o cuando el store
+  // recibe los scores reales de Supabase. Se omite durante la edición para
+  // no pisar los sliders del usuario mientras está ajustando valores.
+  useEffect(() => {
+    if (!editingScore) {
+      setLocalScores(useCase.scores)
+    }
+  }, [useCase.id, useCase.scores.kpiImpact, useCase.scores.feasibility, useCase.scores.aiRisk, useCase.scores.dataDependency, editingScore])
 
   const recommendation = getGoNoGoRecommendation(useCase.priorityScore)
   const catHex         = AI_CATEGORY_HEX[useCase.aiCategory] ?? '#94A3B8'
@@ -109,7 +118,10 @@ export function UseCaseDetailPanel({
                   className="hover:opacity-80 transition-opacity"
                 >
                   <Badge shape="pill" size="xs" style={{ backgroundColor: `${cfg.hex}22`, color: cfg.hex }}>
-                    {cfg.icon} {cfg.label}
+                    <span className="inline-flex items-center gap-1">
+                      {(() => { const Icon = AIACT_ICON_MAP[cfg.icon] ?? AlertTriangle; return <Icon size={11} strokeWidth={2} /> })()}
+                      {cfg.label}
+                    </span>
                   </Badge>
                 </button>
               )
@@ -235,8 +247,8 @@ export function UseCaseDetailPanel({
                   Nivel de riesgo EU AI Act
                 </p>
                 <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{riskCfg.icon}</span>
+                  <div className="flex items-center gap-3" style={{ color: riskCfg.hex }}>
+                    {(() => { const Icon = AIACT_ICON_MAP[riskCfg.icon] ?? AlertTriangle; return <Icon size={32} strokeWidth={2} /> })()}
                     <div>
                       <p className="text-lg font-bold" style={{ color: riskCfg.hex }}>{riskCfg.label}</p>
                       <p className="text-[10px] text-text-subtle mt-0.5">
@@ -271,8 +283,8 @@ export function UseCaseDetailPanel({
                     <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P3 · Datos sensibles</p>
                     <p className="text-xs font-medium text-lean-black dark:text-gray-200">
                       {cls.sensitiveData
-                        ? <span className="inline-flex items-center gap-1"><AlertTriangle size={12} strokeWidth={1.75} className="text-warning-dark" /> Sí — datos RGPD Art. 9</span>
-                        : <span className="inline-flex items-center gap-1"><Check size={12} strokeWidth={1.75} className="text-success-dark" /> No</span>
+                        ? <span className="inline-flex items-center gap-1"><AlertTriangle size={12} strokeWidth={2} className="text-warning-dark" /> Sí — datos RGPD Art. 9</span>
+                        : <span className="inline-flex items-center gap-1"><Check size={12} strokeWidth={2} className="text-success-dark" /> No</span>
                       }
                     </p>
                   </div>
@@ -280,8 +292,8 @@ export function UseCaseDetailPanel({
                     <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P4 · Explicabilidad</p>
                     <p className="text-xs font-medium text-lean-black dark:text-gray-200">
                       {cls.explainability === 'yes'
-                        ? <span className="inline-flex items-center gap-1"><Check size={12} strokeWidth={1.75} className="text-success-dark" /> Sistema explicable / trazable</span>
-                        : <span className="inline-flex items-center gap-1"><X size={12} strokeWidth={1.75} className="text-danger-dark" /> Output opaco</span>
+                        ? <span className="inline-flex items-center gap-1"><Check size={12} strokeWidth={2} className="text-success-dark" /> Sistema explicable / trazable</span>
+                        : <span className="inline-flex items-center gap-1"><X size={12} strokeWidth={2} className="text-danger-dark" /> Output opaco</span>
                       }
                     </p>
                   </div>
@@ -295,7 +307,7 @@ export function UseCaseDetailPanel({
                 {cls.riskLevel === 'prohibido' && (
                   <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3">
                     <p className="text-xs font-semibold text-red-700 dark:text-red-300 mb-1 flex items-center gap-1.5">
-                      <Ban size={14} strokeWidth={1.75} className="shrink-0" />
+                      <Ban size={14} strokeWidth={2} className="shrink-0" />
                       Sistema potencialmente prohibido — Art. 5 AI Act
                     </p>
                     <p className="text-[10px] text-red-600 dark:text-red-400 leading-relaxed">
@@ -336,7 +348,7 @@ export function UseCaseDetailPanel({
                 )}
                 {cls.riskLevel === 'minimo' && (
                   <p className="text-xs text-success-dark leading-relaxed flex items-start gap-1.5">
-                    <Check size={14} strokeWidth={1.75} className="shrink-0 mt-0.5" />
+                    <Check size={14} strokeWidth={2} className="shrink-0 mt-0.5" />
                     Sin obligaciones regulatorias específicas del AI Act. Se recomienda documentar el uso en el catálogo corporativo de IA como buena práctica de gobernanza.
                   </p>
                 )}

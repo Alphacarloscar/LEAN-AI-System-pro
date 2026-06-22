@@ -37,7 +37,7 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
 
       {/* ── Overall score + tier ── */}
       <div className="rounded-xl border border-border bg-white dark:bg-gray-900 p-5">
-        <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-3">
           Madurez IA global
         </p>
 
@@ -67,8 +67,8 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
           />
         </div>
         <div className="flex justify-between mt-1">
-          <span className="text-[10px] text-text-subtle">Sin evidencia</span>
-          <span className="text-[10px] text-text-subtle">Óptimo</span>
+          <span className="text-[10px] text-text-muted">Sin evidencia</span>
+          <span className="text-[10px] text-text-muted">Óptimo</span>
         </div>
 
         {/* Descripción del tier */}
@@ -79,7 +79,7 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
 
       {/* ── Radar chart ── */}
       <div className="rounded-xl border border-border bg-white dark:bg-gray-900 p-5">
-        <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1">
           Radar de madurez IA
         </p>
         <p className="text-xs text-text-muted mb-3">Estado actual · Objetivo sprint</p>

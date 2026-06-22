@@ -51,14 +51,14 @@ export function P4EcosystemPanel({ t3data, expanded, onToggle, onNavigate }: P4P
                   <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: t.color }} />
                   <span className="text-text-muted dark:text-warm-300 flex-1 truncate">{t.label}</span>
                   <span className="font-medium text-lean-black dark:text-warm-100">{t.count}</span>
-                  <span className="text-text-subtle dark:text-warm-400">{t.pct}%</span>
+                  <span className="text-text-muted dark:text-warm-400">{t.pct}%</span>
                 </div>
               ))}
             </div>
           </div>
-          <div className="rounded-md px-2.5 py-1.5 mt-2 bg-[#7F77DD]/[0.08]">
-            <p className="text-[10px] text-[#534AB7] dark:text-[#AFA9EC]">
-              Mayor espera: <span className="font-semibold truncate">{t3data.bottleneck}</span>
+          <div className="rounded-md px-2.5 py-1.5 mt-2 border-l-4 border-l-[#7F77DD] bg-card dark:bg-warm-700">
+            <p className="text-[10px] text-text-muted dark:text-warm-300">
+              Mayor espera: <span className="font-semibold text-lean-black dark:text-warm-100 truncate">{t3data.bottleneck}</span>
             </p>
           </div>
         </>

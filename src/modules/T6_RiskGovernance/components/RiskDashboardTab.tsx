@@ -11,19 +11,19 @@ import type { AIActRiskLevel } from '@/modules/T4_UseCasePriorityBoard/types'
 import { Button, Card } from '@shared/design-system/components'
 
 const RISK_ICON_MAP = {
-  ban:              <Ban           size={20} strokeWidth={1.75} />,
-  'alert-circle':   <AlertCircle  size={20} strokeWidth={1.75} />,
-  'alert-triangle': <AlertTriangle size={20} strokeWidth={1.75} />,
-  'check-circle':   <CheckCircle  size={20} strokeWidth={1.75} />,
-  circle:           <Circle       size={20} strokeWidth={1.75} />,
+  ban:              <Ban           size={20} strokeWidth={2} />,
+  'alert-circle':   <AlertCircle  size={20} strokeWidth={2} />,
+  'alert-triangle': <AlertTriangle size={20} strokeWidth={2} />,
+  'check-circle':   <CheckCircle  size={20} strokeWidth={2} />,
+  circle:           <Circle       size={20} strokeWidth={2} />,
 } as const
 
 const RISK_ICON_SM = {
-  ban:              <Ban           size={14} strokeWidth={1.75} />,
-  'alert-circle':   <AlertCircle  size={14} strokeWidth={1.75} />,
-  'alert-triangle': <AlertTriangle size={14} strokeWidth={1.75} />,
-  'check-circle':   <CheckCircle  size={14} strokeWidth={1.75} />,
-  circle:           <Circle       size={14} strokeWidth={1.75} />,
+  ban:              <Ban           size={14} strokeWidth={2} />,
+  'alert-circle':   <AlertCircle  size={14} strokeWidth={2} />,
+  'alert-triangle': <AlertTriangle size={14} strokeWidth={2} />,
+  'check-circle':   <CheckCircle  size={14} strokeWidth={2} />,
+  circle:           <Circle       size={14} strokeWidth={2} />,
 } as const
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -61,7 +61,9 @@ function ShadowAICard() {
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-2.5">
-          <AT size={20} strokeWidth={1.75} style={{ color: '#C8860A' }} className="shrink-0" />
+          <span className="p-1.5 bg-amber-50 border border-amber-100 rounded-md dark:bg-amber-900/20 dark:border-amber-800/40 shrink-0">
+            <AT size={20} strokeWidth={2} style={{ color: '#C8860A' }} />
+          </span>
           <div>
             <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: '#C8860A' }}>
               Riesgo de Shadow AI

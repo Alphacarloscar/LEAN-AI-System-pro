@@ -207,7 +207,7 @@ export function T1View({ onBack }: T1ViewProps) {
         maxWidth="max-w-6xl"
         chips={
           <div className="flex items-center gap-4">
-            <span className="text-xs text-text-subtle tabular-nums">
+            <span className="text-xs text-text-muted tabular-nums">
               <span className="font-semibold text-lean-black dark:text-gray-200">{scoredCount}</span>
               /{TOTAL_SUBDIMENSIONS} subdimensiones puntuadas
             </span>
@@ -255,7 +255,7 @@ export function T1View({ onBack }: T1ViewProps) {
             </>
           )}
         </div>
-        <p className="text-xs text-text-subtle mt-1 max-w-xl">
+        <p className="text-xs text-text-muted mt-1 max-w-xl">
           Selecciona el entrevistado y ajusta los scores en tiempo real. El informe ejecutivo se genera automáticamente.
         </p>
       </div>
@@ -289,7 +289,7 @@ export function T1View({ onBack }: T1ViewProps) {
         {/* ── Indicador de actualización en background ── */}
         {isLoadingT1 && (
           <div className="max-w-6xl mx-auto px-8 pt-2">
-            <div className="flex items-center gap-1.5 text-[11px] text-text-subtle">
+            <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
               <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
               Actualizando datos…
             </div>

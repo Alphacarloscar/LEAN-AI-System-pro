@@ -132,16 +132,16 @@ export function T1ExecutiveOutput({
 
         {/* ── Diagnóstico ── */}
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">Diagnóstico</p>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-2">Diagnóstico</p>
           <p className="text-sm text-text-muted leading-relaxed">{tierConfig.description}</p>
-          <p className="text-xs text-text-subtle mt-2">Informe generado automáticamente · {today}</p>
+          <p className="text-xs text-text-muted mt-2">Informe generado automáticamente · {today}</p>
         </div>
 
         {/* ── 3 columnas: fortalezas / gaps / puntuaciones ── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">Top 3 fortalezas</p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-3">Top 3 fortalezas</p>
             <div className="space-y-2">
               {strengths.length > 0 ? strengths.map((d) => (
                 <div key={d.code} className="flex items-center justify-between gap-2">
@@ -149,37 +149,37 @@ export function T1ExecutiveOutput({
                   <span className={`text-sm font-bold tabular-nums ${scoreColor(d.score)}`}>{d.score.toFixed(1)}</span>
                 </div>
               )) : (
-                <p className="text-xs text-text-subtle">Puntúa subdimensiones para ver fortalezas.</p>
+                <p className="text-xs text-text-muted">Puntúa subdimensiones para ver fortalezas.</p>
               )}
             </div>
           </div>
 
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">Top 3 áreas de mejora</p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-3">Top 3 áreas de mejora</p>
             <div className="space-y-2">
               {gaps.length > 0 ? gaps.map((d) => (
                 <div key={d.code} className="flex items-center justify-between gap-2">
                   <span className="text-sm text-lean-black dark:text-gray-200">{d.label}</span>
                   <div className="flex items-center gap-1.5">
                     <span className={`text-sm font-bold tabular-nums ${scoreColor(d.score)}`}>{d.score.toFixed(1)}</span>
-                    <span className="text-[10px] text-text-subtle">→ {TARGET.toFixed(1)}</span>
+                    <span className="text-[10px] text-text-muted">→ {TARGET.toFixed(1)}</span>
                   </div>
                 </div>
               )) : (
-                <p className="text-xs text-text-subtle">Sin brechas significativas detectadas.</p>
+                <p className="text-xs text-text-muted">Sin brechas significativas detectadas.</p>
               )}
             </div>
           </div>
 
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">Puntuaciones completas</p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-3">Puntuaciones completas</p>
             <div className="space-y-1.5">
               {dimensions.map((d) => {
                 const s = computeDimensionScore(d)
                 return (
                   <div key={d.code} className="flex items-center gap-2">
                     {miniBar(s ?? 0)}
-                    <span className="text-[11px] text-text-subtle w-16 truncate">{d.label}</span>
+                    <span className="text-[11px] text-text-muted w-16 truncate">{d.label}</span>
                     <span className={`text-[11px] font-semibold tabular-nums w-6 text-right ${scoreColor(s)}`}>
                       {s !== null ? s.toFixed(1) : '—'}
                     </span>
@@ -202,7 +202,7 @@ export function T1ExecutiveOutput({
         {/* ── 3 acciones prioritarias ── */}
         {priorityActions.length > 0 && (
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-3">
               3 acciones prioritarias recomendadas
             </p>
             <div className="space-y-3">
@@ -223,8 +223,8 @@ export function T1ExecutiveOutput({
 
         {/* ── Footer ── */}
         <div className="border-t border-border pt-4 flex items-center justify-between gap-4 flex-wrap">
-          <p className="text-[11px] text-text-subtle">Generado por GOBY · Alpha Consulting Solutions S.L.</p>
-          <p className="text-[11px] text-text-subtle">Este informe cubre el ~12% del AIMS requerido para ISO/IEC 42001:2023</p>
+          <p className="text-[11px] text-text-muted">Generado por GOBY · Alpha Consulting Solutions S.L.</p>
+          <p className="text-[11px] text-text-muted">Este informe cubre el ~12% del AIMS requerido para ISO/IEC 42001:2023</p>
         </div>
       </div>
     </div>
