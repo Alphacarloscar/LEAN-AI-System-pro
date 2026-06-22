@@ -21,6 +21,7 @@ import { useT12Store }                   from '@/modules/T12_ISOAssessment/store
 import { useT9Store }                    from '@/modules/T9_AIRoadmap/store'
 import { usePermissions }                from '@/modules/Auth'
 
+import { getThemeColor }               from '@shared/design-system/charts/chartTokens'
 import { EmptyNoProject, EmptyNoData } from './components/EmptyStates'
 import { DashboardHeader }             from './components/DashboardHeader'
 import { P1MaturityPanel }             from './components/panels/P1MaturityPanel'
@@ -41,10 +42,10 @@ export interface T10ViewProps {
 // ── Constantes de módulo ─────────────────────────────────────
 
 const AI_CAT_META: Record<string, { label: string; color: string }> = {
-  automatizacion_inteligente: { label: 'Automatización Inteligente', color: '#86C7A8' },
-  analitica_predictiva:       { label: 'Analítica Predictiva',       color: '#9BB5D9' },
-  automatizacion_rpa:         { label: 'RPA',                        color: '#E8C281' },
-  asistente_ia:               { label: 'Asistente IA',               color: '#C8860A' },
+  automatizacion_inteligente: { label: 'Automatización Inteligente', color: getThemeColor('success') },
+  analitica_predictiva:       { label: 'Analítica Predictiva',       color: getThemeColor('info') },
+  automatizacion_rpa:         { label: 'RPA',                        color: getThemeColor('warning') },
+  asistente_ia:               { label: 'Asistente IA',               color: getThemeColor('gold') },
 }
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -240,18 +241,18 @@ export function T10View({ onNavigate }: T10ViewProps) {
   // ── Segmentos precalculados para barras ──────────────────────
   const t4n = liveT4.totalInitiatives; const t4s = liveT4.statuses
   const t4Segments = t4n > 0 ? [
-    { pct: Math.round((t4s.active     / t4n) * 100), color: '#86C7A8', label: `Activas ${t4s.active}` },
-    { pct: Math.round((t4s.validating / t4n) * 100), color: '#E8C281', label: `Validando ${t4s.validating}` },
-    { pct: Math.round((t4s.backlog    / t4n) * 100), color: '#9BB5D9', label: `Backlog ${t4s.backlog}` },
-    { pct: Math.round((t4s.stopped   / t4n) * 100), color: '#C4C0B8', label: `Paradas ${t4s.stopped}` },
-  ] : [{ pct: 100, color: '#D4D0C8', label: 'Sin datos' }]
+    { pct: Math.round((t4s.active     / t4n) * 100), color: getThemeColor('success'),      label: `Activas ${t4s.active}` },
+    { pct: Math.round((t4s.validating / t4n) * 100), color: getThemeColor('warning'),      label: `Validando ${t4s.validating}` },
+    { pct: Math.round((t4s.backlog    / t4n) * 100), color: getThemeColor('info'),         label: `Backlog ${t4s.backlog}` },
+    { pct: Math.round((t4s.stopped   / t4n) * 100), color: getThemeColor('warm-300'),     label: `Paradas ${t4s.stopped}` },
+  ] : [{ pct: 100, color: getThemeColor('warm-200'), label: 'Sin datos' }]
 
   const rTotal = liveP5.risks.total
   const riskSegments = rTotal > 0 ? [
-    { pct: Math.round((liveP5.risks.high   / rTotal) * 100), color: '#D85A30' },
-    { pct: Math.round((liveP5.risks.medium / rTotal) * 100), color: '#EF9F27' },
-    { pct: Math.round((liveP5.risks.low    / rTotal) * 100), color: '#97C459' },
-  ] : [{ pct: 100, color: '#D4D0C8' }]
+    { pct: Math.round((liveP5.risks.high   / rTotal) * 100), color: getThemeColor('danger') },
+    { pct: Math.round((liveP5.risks.medium / rTotal) * 100), color: getThemeColor('warning') },
+    { pct: Math.round((liveP5.risks.low    / rTotal) * 100), color: getThemeColor('success') },
+  ] : [{ pct: 100, color: getThemeColor('warm-200') }]
 
   return (
     <div className="min-h-screen bg-surface dark:bg-warm-900">

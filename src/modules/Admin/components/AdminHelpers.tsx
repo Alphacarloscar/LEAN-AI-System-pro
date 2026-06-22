@@ -104,7 +104,7 @@ export function AdminLoadingScreen() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
       <div className="mb-8">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-[#C8860A]">Platform Admin</span>
+        <span className="text-xs font-mono uppercase tracking-widest text-[#C8860A]">Platform Admin</span>
         <h1 className="text-xl font-semibold text-[#2A2822] mt-1">Panel de administración</h1>
       </div>
       <div className="flex items-center gap-3 text-sm text-gray-400 mt-12">
@@ -127,7 +127,7 @@ const ROLE_META: Record<UserRole, { label: string; color: string; bg: string }> 
 export function RoleBadge({ role }: { role: UserRole }) {
   const meta = ROLE_META[role] ?? ROLE_META.client_viewer
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ color: meta.color, backgroundColor: meta.bg }}>
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" style={{ color: meta.color, backgroundColor: meta.bg }}>
       {meta.label}
     </span>
   )

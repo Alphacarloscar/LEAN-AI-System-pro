@@ -34,7 +34,7 @@ export function CompaniesTab({ companies, onCompanyAdd }: SharedProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-sm font-semibold text-[#2A2822] mb-4">Crear empresa cliente</h2>
+        <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-4">Crear empresa cliente</h2>
         <form onSubmit={handleCreate} className="flex gap-3 max-w-md">
           <input
             value={name}
@@ -55,9 +55,9 @@ export function CompaniesTab({ companies, onCompanyAdd }: SharedProps) {
       </div>
 
       <div>
-        <h3 className="text-xs font-mono uppercase tracking-wide text-gray-400 mb-3">
+        <h4 className="text-xs font-mono uppercase tracking-widest text-warm-400 mb-3">
           Empresas registradas ({companies.length})
-        </h3>
+        </h4>
         {companies.length === 0 ? (
           <p className="text-sm text-gray-400">Sin empresas todavía.</p>
         ) : (
@@ -66,7 +66,7 @@ export function CompaniesTab({ companies, onCompanyAdd }: SharedProps) {
               <div key={c.id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-gray-50 border border-gray-100">
                 <div>
                   <p className="text-sm font-medium text-[#2A2822]">{c.name}</p>
-                  <p className="text-[10px] font-mono text-gray-400">{c.slug ?? '—'}</p>
+                  <p className="text-xs font-mono text-gray-400">{c.slug ?? '—'}</p>
                 </div>
               </div>
             ))}

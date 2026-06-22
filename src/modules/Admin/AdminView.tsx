@@ -77,7 +77,7 @@ function RoleBadge({ role }: { role: UserRole }) {
   const meta = ROLE_META[role] ?? ROLE_META.client_viewer
   return (
     <span
-      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
+      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
       style={{ color: meta.color, backgroundColor: meta.bg }}
     >
       {meta.label}
@@ -151,7 +151,7 @@ function AdminLoadingScreen() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
       <div className="mb-8">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-gold">
+        <span className="text-xs font-mono uppercase tracking-widest text-gold">
           Platform Admin
         </span>
         <h1 className="text-xl font-semibold text-lean-black dark:text-warm-50 mt-1">Panel de administración</h1>
@@ -191,7 +191,7 @@ function CompaniesTab({ companies, onCompanyAdd }: SharedProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-sm font-semibold text-lean-black dark:text-warm-50 mb-4">Crear empresa cliente</h2>
+        <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-4">Crear empresa cliente</h2>
         <form onSubmit={handleCreate} className="flex gap-3 max-w-md">
           <input
             value={name}
@@ -212,9 +212,9 @@ function CompaniesTab({ companies, onCompanyAdd }: SharedProps) {
       </div>
 
       <div>
-        <h3 className="text-xs font-mono uppercase tracking-wide text-text-subtle mb-3">
+        <h4 className="text-xs font-mono uppercase tracking-widest text-warm-400 mb-3">
           Empresas registradas ({companies.length})
-        </h3>
+        </h4>
         {companies.length === 0 ? (
           <p className="text-sm text-text-subtle">Sin empresas todavía.</p>
         ) : (
@@ -223,7 +223,7 @@ function CompaniesTab({ companies, onCompanyAdd }: SharedProps) {
               <div key={c.id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-warm-50 border border-border">
                 <div>
                   <p className="text-sm font-medium text-lean-black dark:text-warm-50">{c.name}</p>
-                  <p className="text-[10px] font-mono text-text-subtle">{c.slug ?? '—'}</p>
+                  <p className="text-xs font-mono text-text-subtle">{c.slug ?? '—'}</p>
                 </div>
               </div>
             ))}
@@ -342,7 +342,7 @@ function UsersTab({ companies, users, currentUserId, onUserAdded, onUserDelete }
 
       {/* Formulario de invitación */}
       <div className="max-w-md">
-        <h2 className="text-sm font-semibold text-lean-black dark:text-warm-50 mb-1">Invitar usuario</h2>
+        <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-1">Invitar usuario</h2>
         <p className="text-xs text-text-muted mb-4">
           El usuario recibirá un email para crear su propia contraseña.
         </p>
@@ -426,9 +426,9 @@ function UsersTab({ companies, users, currentUserId, onUserAdded, onUserDelete }
       {/* Lista de usuarios existentes */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-mono uppercase tracking-wide text-text-subtle">
+          <h4 className="text-xs font-mono uppercase tracking-widest text-warm-400">
             Usuarios registrados ({filteredUsers.length}{filteredUsers.length !== users.length ? ` de ${users.length}` : ''})
-          </h3>
+          </h4>
           {/* Filtros */}
           <div className="flex gap-2">
             <select
@@ -473,12 +473,12 @@ function UsersTab({ companies, users, currentUserId, onUserAdded, onUserDelete }
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-lean-black dark:text-warm-50 truncate">{u.name}</p>
-                  <p className="text-[10px] font-mono text-text-subtle truncate">{u.email}</p>
+                  <p className="text-xs font-mono text-text-subtle truncate">{u.email}</p>
                 </div>
                 <div className="flex items-center gap-3 ml-4 shrink-0">
                   <div className="flex flex-col items-end gap-1">
                     <RoleBadge role={u.role} />
-                    <p className="text-[10px] text-text-subtle">
+                    <p className="text-xs text-text-subtle">
                       {u.company_id ? (companyMap[u.company_id] ?? 'Empresa desconocida') : 'Sin empresa'}
                     </p>
                   </div>
@@ -537,7 +537,7 @@ function ProjectsTab({ companies }: ProjectsTabProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-sm font-semibold text-lean-black dark:text-warm-50 mb-4">Crear proyecto</h2>
+        <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-4">Crear proyecto</h2>
         <form onSubmit={handleCreate} className="flex gap-3 max-w-xl">
           <input
             value={name}
@@ -571,9 +571,9 @@ function ProjectsTab({ companies }: ProjectsTabProps) {
       </div>
 
       <div>
-        <h3 className="text-xs font-mono uppercase tracking-wide text-text-subtle mb-3">
+        <h4 className="text-xs font-mono uppercase tracking-widest text-warm-400 mb-3">
           Proyectos activos ({projects.length})
-        </h3>
+        </h4>
         {projects.length === 0 ? (
           <p className="text-sm text-text-subtle">Sin proyectos todavía.</p>
         ) : (
@@ -584,7 +584,7 @@ function ProjectsTab({ companies }: ProjectsTabProps) {
                 <div key={p.id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-warm-50 border border-border">
                   <div>
                     <p className="text-sm font-medium text-lean-black dark:text-warm-50">{p.name}</p>
-                    <p className="text-[10px] font-mono text-text-subtle">
+                    <p className="text-xs font-mono text-text-subtle">
                       {company ? company.name : 'Sin empresa'} · {p.current_phase}
                     </p>
                   </div>
@@ -670,7 +670,7 @@ export function AdminView() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-gold">
+          <span className="text-xs font-mono uppercase tracking-widest text-gold">
             Platform Admin
           </span>
         </div>

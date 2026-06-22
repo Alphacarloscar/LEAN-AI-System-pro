@@ -144,7 +144,7 @@ export function CompanyProfileView() {
               <path d="M5 13V9h4v4M2 6h10" />
             </svg>
           </div>
-          <h2 className="text-sm font-semibold text-lean-black dark:text-gray-100">Selecciona un proyecto</h2>
+          <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50">Selecciona un proyecto</h2>
           <p className="text-xs text-text-muted dark:text-gray-500 leading-relaxed">
             El perfil de empresa está vinculado al proyecto activo.
             Usa el selector <span className="font-semibold text-lean-black dark:text-gray-300">▾ Proyecto</span> en la barra superior.

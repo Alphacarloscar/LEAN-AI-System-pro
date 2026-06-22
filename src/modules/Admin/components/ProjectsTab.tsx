@@ -43,7 +43,7 @@ export function ProjectsTab({ companies }: ProjectsTabProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-sm font-semibold text-[#2A2822] mb-4">Crear proyecto</h2>
+        <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-4">Crear proyecto</h2>
         <form onSubmit={handleCreate} className="flex gap-3 max-w-xl">
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del proyecto (ej: Diagnóstico IA Q3 2026)" required className={inputClass} />
           <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} className="h-9 px-3 rounded-lg border border-gray-200 text-sm bg-gray-50 outline-none focus:border-[#C8860A]/60">
@@ -60,7 +60,7 @@ export function ProjectsTab({ companies }: ProjectsTabProps) {
       </div>
 
       <div>
-        <h3 className="text-xs font-mono uppercase tracking-wide text-gray-400 mb-3">Proyectos activos ({projects.length})</h3>
+        <h4 className="text-xs font-mono uppercase tracking-widest text-warm-400 mb-3">Proyectos activos ({projects.length})</h4>
         {projects.length === 0 ? (
           <p className="text-sm text-gray-400">Sin proyectos todavía.</p>
         ) : (
@@ -71,7 +71,7 @@ export function ProjectsTab({ companies }: ProjectsTabProps) {
                 <div key={p.id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-gray-50 border border-gray-100">
                   <div>
                     <p className="text-sm font-medium text-[#2A2822]">{p.name}</p>
-                    <p className="text-[10px] font-mono text-gray-400">{company ? company.name : 'Sin empresa'} · {p.current_phase}</p>
+                    <p className="text-xs font-mono text-gray-400">{company ? company.name : 'Sin empresa'} · {p.current_phase}</p>
                   </div>
                 </div>
               )

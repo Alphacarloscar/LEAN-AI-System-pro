@@ -13,7 +13,7 @@ export function EmptyNoProject() {
           </svg>
         </div>
         <div>
-          <h2 className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-1.5">
+          <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-1.5">
             Selecciona un proyecto
           </h2>
           <p className="text-xs text-text-muted dark:text-gray-500 leading-relaxed">
@@ -41,7 +41,7 @@ export function EmptyNoData({ onNavigate }: { onNavigate: (path: string) => void
         </div>
         {/* Texto */}
         <div>
-          <h2 className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-2">
+          <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-2">
             No hay datos suficientes para calcular el valor
           </h2>
           <p className="text-xs text-text-muted dark:text-gray-500 leading-relaxed">
@@ -51,7 +51,7 @@ export function EmptyNoData({ onNavigate }: { onNavigate: (path: string) => void
         </div>
         {/* Progress de herramientas completadas */}
         <div className="rounded-xl px-4 py-3 text-left space-y-1.5 border-l-4 border-l-gold bg-card dark:bg-warm-700">
-          <p className="text-[10px] font-mono uppercase tracking-widest mb-2 text-gold">
+          <p className="text-xs font-mono uppercase tracking-widest mb-2 text-gold">
             Ruta de activación recomendada
           </p>
           {[
@@ -62,7 +62,7 @@ export function EmptyNoData({ onNavigate }: { onNavigate: (path: string) => void
           ].map((step, i) => (
             <div key={i} className="flex items-center gap-2.5">
               <div
-                className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-bold ${
+                className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
                   step.active
                     ? 'bg-gold text-white'
                     : 'bg-gold/8 text-gold border border-gold/25'

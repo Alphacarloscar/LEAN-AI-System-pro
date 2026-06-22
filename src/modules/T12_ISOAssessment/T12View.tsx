@@ -179,7 +179,7 @@ export function T12View({ onBack }: T12ViewProps) {
                 >
                   Cláusula {T12_CLAUSE_CONFIG[activeClause].number}
                 </span>
-                <h2 className="text-sm font-semibold text-lean-black dark:text-warm-50">
+                <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50">
                   {T12_CLAUSE_CONFIG[activeClause].label}
                 </h2>
               </div>

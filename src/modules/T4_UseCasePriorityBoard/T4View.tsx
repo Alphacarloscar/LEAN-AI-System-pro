@@ -119,7 +119,7 @@ export function T4View({ onBack }: T4ViewProps) {
               <path d="M5 13V9h4v4M2 6h10" />
             </svg>
           </div>
-          <h2 className="text-sm font-semibold text-lean-black dark:text-warm-50">Selecciona un proyecto</h2>
+          <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50">Selecciona un proyecto</h2>
           <p className="text-xs text-text-muted dark:text-warm-400 leading-relaxed">
             Los casos de uso están vinculados al proyecto activo.
             Usa el selector <span className="font-semibold text-lean-black dark:text-warm-200">▾ Proyecto</span> en la barra superior para seleccionar uno existente o crear uno nuevo.

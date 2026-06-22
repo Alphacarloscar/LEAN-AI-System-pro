@@ -91,7 +91,7 @@ export function UsersTab({ companies, users, currentUserId, onUserAdded, onUserD
 
       {/* Formulario de invitación */}
       <div className="max-w-md">
-        <h2 className="text-sm font-semibold text-[#2A2822] mb-1">Invitar usuario</h2>
+        <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-1">Invitar usuario</h2>
         <p className="text-xs text-gray-500 mb-4">El usuario recibirá un email para crear su propia contraseña.</p>
         <form onSubmit={handleInvite} className="flex flex-col gap-3">
           <input value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Nombre completo" required className={inputClass} />
@@ -130,9 +130,9 @@ export function UsersTab({ companies, users, currentUserId, onUserAdded, onUserD
       {/* Lista de usuarios */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-mono uppercase tracking-wide text-gray-400">
+          <h4 className="text-xs font-mono uppercase tracking-widest text-warm-400">
             Usuarios registrados ({filteredUsers.length}{filteredUsers.length !== users.length ? ` de ${users.length}` : ''})
-          </h3>
+          </h4>
           <div className="flex gap-2">
             <select value={filterRole} onChange={(e) => setFilterRole(e.target.value as UserRole | '')} className="h-7 px-2 rounded-lg border border-gray-200 text-xs bg-gray-50 outline-none focus:border-[#C8860A]/60">
               <option value="">Todos los roles</option>
@@ -157,12 +157,12 @@ export function UsersTab({ companies, users, currentUserId, onUserAdded, onUserD
               <div key={u.id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-gray-50 border border-gray-100">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-[#2A2822] truncate">{u.name}</p>
-                  <p className="text-[10px] font-mono text-gray-400 truncate">{u.email}</p>
+                  <p className="text-xs font-mono text-gray-400 truncate">{u.email}</p>
                 </div>
                 <div className="flex items-center gap-3 ml-4 shrink-0">
                   <div className="flex flex-col items-end gap-1">
                     <RoleBadge role={u.role} />
-                    <p className="text-[10px] text-gray-400">
+                    <p className="text-xs text-gray-400">
                       {u.company_id ? (companyMap[u.company_id] ?? 'Empresa desconocida') : 'Sin empresa'}
                     </p>
                   </div>

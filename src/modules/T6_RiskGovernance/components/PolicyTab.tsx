@@ -197,7 +197,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
 
           {/* 1. Declaración */}
           <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+            <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
               1. Declaración de Política
             </h2>
             <p className="text-sm text-text-muted leading-relaxed">
@@ -221,7 +221,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
 
           {/* 2. Alcance */}
           <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+            <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
               2. Alcance
             </h2>
             <p className="text-sm text-text-muted leading-relaxed mb-3">
@@ -270,7 +270,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
 
           {/* 3. Principios */}
           <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+            <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
               3. Principios de IA Responsable
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -286,7 +286,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
           {/* 3b. Contexto regulatorio sectorial (solo si fue generado por LLM) */}
           {generatedPolicy?.contexto_sectorial && (
             <section>
-              <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+              <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
                 4. Contexto Regulatorio Sectorial
               </h2>
               <p className="text-sm text-text-muted leading-relaxed">
@@ -297,7 +297,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
 
           {/* 4/5. Catálogo de IA aprobada */}
           <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+            <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
               4. Catálogo de IA Aprobada
             </h2>
             <p className="text-sm text-text-muted leading-relaxed mb-4">
@@ -350,7 +350,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
           {/* 5. Controles de alto riesgo */}
           {highRiskCases.length > 0 && (
             <section>
-              <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+              <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
                 5. Medidas de Control — Sistemas de Alto Riesgo
               </h2>
               <p className="text-sm text-text-muted leading-relaxed mb-4">
@@ -376,7 +376,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
 
           {/* Roles y responsabilidades */}
           <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+            <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
               {highRiskCases.length > 0 ? '6.' : '5.'} Roles y Responsabilidades
             </h2>
             <div className="flex flex-col gap-2">
@@ -396,7 +396,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
 
           {/* Revisión */}
           <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+            <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
               {highRiskCases.length > 0 ? '7.' : '6.'} Revisión y Vigencia
             </h2>
             <p className="text-sm text-text-muted leading-relaxed">
