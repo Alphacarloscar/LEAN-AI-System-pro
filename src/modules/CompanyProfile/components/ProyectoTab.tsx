@@ -80,6 +80,7 @@ export function ProyectoTab() {
               onChange={(e) => updateField('restriccionesRelevantes', e.target.value)}
               disabled={isReadOnly}
               rows={3}
+              aria-label="Restricciones relevantes del proyecto"
               placeholder="Ej: presupuesto limitado, sistemas legacy, GDPR sector financiero..."
               className="w-full px-4 py-2.5 rounded-lg text-sm bg-white dark:bg-gray-900 border border-border dark:border-white/8 text-lean-black dark:text-gray-100 placeholder-text-subtle dark:placeholder-gray-600 resize-none focus:outline-none focus:border-navy dark:focus:border-navy/60 focus:ring-2 focus:ring-navy/15 dark:focus:ring-navy/20 transition-colors disabled:opacity-50"
             />

@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "lint:design": "bash scripts/lint-design.sh",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

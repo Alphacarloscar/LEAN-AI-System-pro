@@ -87,7 +87,7 @@ export function T12View({ onBack }: T12ViewProps) {
   }
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-warm-900">
+    <div className="min-h-full bg-surface dark:bg-warm-900">
 
       {/* ── Header sticky ── */}
       <ToolHeader
@@ -143,7 +143,7 @@ export function T12View({ onBack }: T12ViewProps) {
 
       {/* ── Toast de confirmación de import ── */}
       {importMsg && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-lean-black text-white text-xs font-medium shadow-lg animate-fade-in">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-lean-black text-white text-xs font-medium shadow-md animate-fade-in">
           {importMsg}
         </div>
       )}
@@ -187,7 +187,7 @@ export function T12View({ onBack }: T12ViewProps) {
                 {activeControls.filter((c) => c.status === 'aprobado').length} de {activeControls.length} controles aprobados
               </p>
             </div>
-            <Button variant="link" size="sm" onClick={() => setExpandAll((v) => !v)}>
+            <Button variant="link" size="sm" className="text-sm font-medium" onClick={() => setExpandAll((v) => !v)}>
               {expandAll ? 'Colapsar todos' : 'Expandir todos'}
             </Button>
           </div>

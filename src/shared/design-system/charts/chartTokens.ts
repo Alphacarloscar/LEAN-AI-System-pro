@@ -195,3 +195,22 @@ export function getHeroColor(score?: number): string {
   if (score < 60)   return '#C8860A'  // gold (ámbar)
   return '#2A7A52'                    // success verde oscuro
 }
+
+/**
+ * Escala monocromática warm para leyendas de 4+ categorías de estado
+ * (Activas / Validando / Backlog / Paradas, etc.)
+ * Orden: gold → warm-400 → warm-300 → warm-200
+ */
+export const MONO_STATUS_COLORS = [
+  '#C8860A',  // gold       — categoría 1 (activa / positiva)
+  '#9A9790',  // warm-400   — categoría 2
+  '#B8B4AB',  // warm-300   — categoría 3
+  '#D4D0C8',  // warm-200   — categoría 4
+] as const
+
+/** Colores de Rogers para DeptBar (3 segmentos de adopción) */
+export const DEPT_ADOPTION_COLORS = {
+  innovadores: '#C8860A',  // gold
+  early:       '#8A857C',  // warm-500
+  rezagados:   '#D4D0C8',  // warm-200
+} as const

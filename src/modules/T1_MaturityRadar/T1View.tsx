@@ -194,7 +194,7 @@ export function T1View({ onBack }: T1ViewProps) {
   )
 
   return (
-    <div className="min-h-screen bg-surface dark-page-bg">
+    <div className="min-h-full bg-surface dark-page-bg">
 
       {/* ── Header de herramienta ── */}
       <ToolHeader

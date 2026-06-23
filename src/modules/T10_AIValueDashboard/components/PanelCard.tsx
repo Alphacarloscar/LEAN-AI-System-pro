@@ -33,7 +33,7 @@ export function PanelCard({
         'border border-warm-200 dark:border-warm-600/30',
         expanded
           ? 'shadow-sm ring-1 ring-gold/40 dark:ring-gold/30'
-          : 'shadow-sm hover:shadow-md',
+          : 'shadow-sm hover:shadow-sm',
       ].join(' ')}
       style={{
         animationDelay:    `${animDelay}ms`,

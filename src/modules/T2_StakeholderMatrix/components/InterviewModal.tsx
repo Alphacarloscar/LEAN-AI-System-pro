@@ -295,15 +295,15 @@ function ResultPhase({
   const arc = ARCHETYPE_CONFIG[archetype]
 
   const scoreBars = [
-    { label: 'Adopción IA',  value: result.adoptionScore,  color: 'bg-success-dark' },
-    { label: 'Influencia',   value: result.influenceScore, color: 'bg-navy' },
-    { label: 'Apertura',     value: result.opennessScore,  color: 'bg-info-dark' },
+    { label: 'Adopción IA',  value: result.adoptionScore,  color: 'bg-gold' },
+    { label: 'Influencia',   value: result.influenceScore, color: 'bg-gold' },
+    { label: 'Apertura',     value: result.opennessScore,  color: 'bg-gold' },
   ]
 
   return (
     <div className="space-y-5">
       {/* Resultado automático */}
-      <div className="p-4 rounded-xl bg-gray-50 dark:bg-warm-700/50 border border-border space-y-3">
+      <div className="p-4 rounded-xl bg-warm-50 dark:bg-warm-700/50 border border-border space-y-3">
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
           Clasificación automática · {form.name}
         </p>
@@ -325,7 +325,7 @@ function ResultPhase({
           {scoreBars.map(({ label, value, color }) => (
             <div key={label} className="flex items-center gap-2">
               <span className="text-[10px] text-text-subtle w-20 shrink-0">{label}</span>
-              <div className="flex-1 h-1.5 bg-gray-200 dark:bg-warm-600 rounded-full overflow-hidden">
+              <div className="flex-1 h-1.5 bg-warm-200 dark:bg-warm-600 rounded-full overflow-hidden">
                 <div
                   className={`h-full ${color} rounded-full transition-all duration-500`}
                   style={{ width: `${(value / 4) * 100}%` }}

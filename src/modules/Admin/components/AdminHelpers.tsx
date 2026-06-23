@@ -63,7 +63,7 @@ export function DeleteConfirmModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={onCancel} />
-      <div className="relative bg-white rounded-xl shadow-lg border border-black/8 p-6 w-full max-w-sm">
+      <div className="relative bg-white rounded-xl shadow-md border border-black/8 p-6 w-full max-w-sm">
         <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
             <path d="M10 6v4M10 14h.01M19 10a9 9 0 11-18 0 9 9 0 0118 0z"

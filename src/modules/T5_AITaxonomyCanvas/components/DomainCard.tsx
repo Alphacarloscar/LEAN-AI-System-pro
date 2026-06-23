@@ -60,7 +60,7 @@ export function DomainCard({ assessment, onEdit }: DomainCardProps) {
       </div>
 
       {/* Recommendation + score */}
-      <Card variant="flat" padding="none" className="rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50 px-4 py-3">
+      <Card variant="flat" padding="none" className="rounded-xl border border-border bg-warm-50 dark:bg-warm-800/50 px-4 py-3">
         <div className="flex items-center justify-between mb-2">
           <Badge
             shape="pill"
@@ -89,7 +89,7 @@ export function DomainCard({ assessment, onEdit }: DomainCardProps) {
       </div>
 
       {/* Governance */}
-      <Card variant="flat" padding="none" className="rounded-xl border border-border bg-gray-50/50 dark:bg-gray-800/30 px-4 py-4 flex flex-col gap-3">
+      <Card variant="flat" padding="none" className="rounded-xl border border-border bg-warm-50/50 dark:bg-warm-800/30 px-4 py-4 flex flex-col gap-3">
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">Governance</p>
 
         <div className="flex flex-col gap-2.5">

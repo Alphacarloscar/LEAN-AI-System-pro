@@ -126,32 +126,6 @@ export function StakeholderQuadrantChart({
             <clipPath id="circle-clip">
               <circle cx={CX} cy={CY} r={CR} />
             </clipPath>
-
-            <radialGradient id="grad-adoptador"    cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
-              <stop offset="0%"   stopColor="#AFD7C5" />
-              <stop offset="52%"  stopColor="#5FAF8A" />
-              <stop offset="100%" stopColor="#437B61" />
-            </radialGradient>
-            <radialGradient id="grad-ambassador"   cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
-              <stop offset="0%"   stopColor="#B5C8E0" />
-              <stop offset="52%"  stopColor="#6A90C0" />
-              <stop offset="100%" stopColor="#4A6586" />
-            </radialGradient>
-            <radialGradient id="grad-decisor"      cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
-              <stop offset="0%"   stopColor="#6A6762" />
-              <stop offset="52%"  stopColor="#2A2822" />
-              <stop offset="100%" stopColor="#1C1A16" />
-            </radialGradient>
-            <radialGradient id="grad-critico"      cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
-              <stop offset="0%"   stopColor="#E0B0B0" />
-              <stop offset="52%"  stopColor="#C06060" />
-              <stop offset="100%" stopColor="#864343" />
-            </radialGradient>
-            <radialGradient id="grad-reticente" cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
-              <stop offset="0%"   stopColor="#EAD4AE" />
-              <stop offset="52%"  stopColor="#D4A85C" />
-              <stop offset="100%" stopColor="#947640" />
-            </radialGradient>
           </defs>
 
           <g clipPath="url(#circle-clip)">
@@ -208,24 +182,15 @@ export function StakeholderQuadrantChart({
                   <circle
                     cx={pos.cx} cy={pos.cy}
                     r={DOT_R}
-                    fill={`url(#grad-${s.archetype})`}
-                    stroke={isActive ? 'rgba(255,255,255,0.85)' : 'none'}
-                    strokeWidth={isActive ? 1.5 : 0}
-                  />
-
-                  <ellipse
-                    cx={pos.cx - DOT_R * 0.27}
-                    cy={pos.cy - DOT_R * 0.28}
-                    rx={DOT_R * 0.36}
-                    ry={DOT_R * 0.23}
-                    fill="rgba(255,255,255,0.50)"
-                    style={{ pointerEvents: 'none' }}
+                    fill={fill}
+                    stroke={isActive ? 'rgba(255,255,255,0.85)' : '#D4D0C8'}
+                    strokeWidth={2}
                   />
 
                   <text
                     x={pos.cx} y={pos.cy + 4}
                     textAnchor="middle" fontSize={9} fontWeight="700"
-                    fill="rgba(255,255,255,0.92)" fontFamily="Inter, sans-serif"
+                    fill={s.archetype === 'decisor' ? '#F7F4EE' : '#FFFFFF'} fontFamily="Inter, sans-serif"
                     style={{ pointerEvents: 'none', userSelect: 'none' }}
                   >
                     {ini}

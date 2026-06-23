@@ -121,7 +121,7 @@ export function T8View({ onBack }: T8ViewProps) {
   const isLLM         = !!generatedContent
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-warm-900">
+    <div className="min-h-full bg-surface dark:bg-warm-900">
 
       {/* ── Header ── */}
       <ToolHeader
@@ -134,19 +134,19 @@ export function T8View({ onBack }: T8ViewProps) {
         maxWidth="max-w-7xl"
         chips={
           <div className="flex items-center gap-3 flex-wrap">
-            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-warm-700 border border-border dark:border-white/6">
+            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-surface dark:bg-warm-700 border border-border dark:border-white/6">
               <p className="text-lg font-bold text-lean-black dark:text-warm-50 tabular-nums">{totalActions}</p>
               <p className="text-[10px] text-text-subtle uppercase tracking-wide">Acciones</p>
             </Card>
-            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-danger-light border border-danger-light">
-              <p className="text-lg font-bold text-danger-dark tabular-nums">{highPriority}</p>
-              <p className="text-[10px] text-danger-dark uppercase tracking-wide">Prioridad alta</p>
+            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-surface dark:bg-warm-700 border border-border dark:border-white/6">
+              <p className="text-lg font-bold text-lean-black dark:text-warm-50 tabular-nums">{highPriority}</p>
+              <p className="text-[10px] text-text-subtle uppercase tracking-wide">Prioridad alta</p>
             </Card>
-            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-indigo-50 border border-indigo-100">
-              <p className="text-lg font-bold text-indigo-700 tabular-nums">{goUseCases.length}</p>
-              <p className="text-[10px] text-indigo-600 uppercase tracking-wide">Casos go</p>
+            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-surface dark:bg-warm-700 border border-border dark:border-white/6">
+              <p className="text-lg font-bold text-lean-black dark:text-warm-50 tabular-nums">{goUseCases.length}</p>
+              <p className="text-[10px] text-text-subtle uppercase tracking-wide">Casos go</p>
             </Card>
-            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-warm-700 border border-border dark:border-white/6">
+            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-surface dark:bg-warm-700 border border-border dark:border-white/6">
               <p className="text-lg font-bold text-lean-black dark:text-warm-50 tabular-nums">{deptCount}</p>
               <p className="text-[10px] text-text-subtle uppercase tracking-wide">Dptos.</p>
             </Card>

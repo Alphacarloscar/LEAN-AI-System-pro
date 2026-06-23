@@ -30,3 +30,15 @@ Every change must be documented in the SAME commit/PR:
 2. Database models and schemas live in `docs/operations/DATABASES.md`.
 3. If you fix or introduce tech debt, log it instantly in `docs/architecture/TECH-DEBT.md`.
 4. For new standards, instantiate from template in `docs/decisions/`.
+
+
+## ADR-021 — Design System Enforcement
+- PROHIBIDO: bg-gray-*, text-gray-*, border-gray-* → usar equivalentes warm-*
+- PROHIBIDO: shadow-lg, shadow-xl, shadow-2xl → máximo shadow-md
+- PROHIBIDO: rounded-2xl, rounded-3xl → usar rounded-xl
+- PROHIBIDO: HEX hardcodeados en JSX → usar tokens del DS o chartTokens.ts
+- PROHIBIDO: strokeWidth={2} en iconos → usar {1.5}
+- PROHIBIDO: emoji en código TSX → usar Badge DS o iconos Lucide
+- OBLIGATORIO: Colores de gráficos vía chartTokens.ts, no inline
+- OBLIGATORIO: Todo icono semántico con texto o tooltip explicativo
+- Exentos: archivos *PDF*.tsx pueden usar style={{}} inline pero con valores del DS

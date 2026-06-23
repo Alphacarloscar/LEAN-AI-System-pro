@@ -41,18 +41,19 @@ export function PriorityMatrix({
         </defs>
 
         <g clipPath="url(#t4matrix-clip)">
-          <rect x={P}             y={P}             width={IN * 0.60} height={IN * 0.40} fill="#6A90C0" opacity={0.05} />
-          <rect x={P + IN * 0.60} y={P}             width={IN * 0.40} height={IN * 0.40} fill="#5FAF8A" opacity={0.07} />
-          <rect x={P}             y={P + IN * 0.40} width={IN * 0.60} height={IN * 0.60} fill="#E5E7EB" opacity={0.03} />
-          <rect x={P + IN * 0.60} y={P + IN * 0.40} width={IN * 0.40} height={IN * 0.60} fill="#9AAEC8" opacity={0.05} />
+          {/* Fondos de cuadrante — warm sutiles sin saturación cromática */}
+          <rect x={P}             y={P}             width={IN * 0.60} height={IN * 0.40} fill="#D4D0C8" opacity={0.06} />
+          <rect x={P + IN * 0.60} y={P}             width={IN * 0.40} height={IN * 0.40} fill="#C8860A" opacity={0.05} />
+          <rect x={P}             y={P + IN * 0.40} width={IN * 0.60} height={IN * 0.60} fill="#D4D0C8" opacity={0.03} />
+          <rect x={P + IN * 0.60} y={P + IN * 0.40} width={IN * 0.40} height={IN * 0.60} fill="#D4D0C8" opacity={0.04} />
         </g>
 
-        <rect x={P} y={P} width={IN} height={IN} rx={6} fill="none" stroke="#E5E7EB" strokeWidth={1} />
+        <rect x={P} y={P} width={IN} height={IN} rx={6} fill="none" stroke="#D4D0C8" strokeWidth={1} />
 
         <line x1={P + IN * 0.6} y1={P}        x2={P + IN * 0.6} y2={P + IN}
-          stroke="#E5E7EB" strokeWidth={0.8} strokeDasharray="3 3" />
+          stroke="#D4D0C8" strokeWidth={0.8} strokeDasharray="3 3" />
         <line x1={P}            y1={P + IN * 0.4} x2={P + IN} y2={P + IN * 0.4}
-          stroke="#E5E7EB" strokeWidth={0.8} strokeDasharray="3 3" />
+          stroke="#D4D0C8" strokeWidth={0.8} strokeDasharray="3 3" />
 
         {PRIORITY_QUADRANTS.map((q, i) => (
           <text
@@ -65,13 +66,13 @@ export function PriorityMatrix({
           </text>
         ))}
 
-        <text x={P + IN / 2} y={P + IN + 16} fontSize={8} fill="#9CA3AF"
+        <text x={P + IN / 2} y={P + IN + 16} fontSize={8} fill="#9A9790"
           fontFamily="ui-monospace,monospace" textAnchor="middle" letterSpacing="0.08em">
           FACILIDAD →
         </text>
         <text
           x={P - 16} y={P + IN / 2}
-          fontSize={8} fill="#9CA3AF"
+          fontSize={8} fill="#9A9790"
           fontFamily="ui-monospace,monospace"
           textAnchor="middle"
           letterSpacing="0.08em"
@@ -126,7 +127,7 @@ export function PriorityMatrix({
 
       {hovered && (
         <div
-          className="pointer-events-none absolute z-50 bg-white dark:bg-warm-800 border border-border dark:border-white/10 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[148px]"
+          className="pointer-events-none absolute z-50 bg-white dark:bg-warm-800 border border-border dark:border-white/10 rounded-lg shadow-md px-3 py-2 text-[11px] min-w-[148px]"
           style={{
             left:      `${hovered.leftPct}%`,
             top:       `${hovered.topPct}%`,

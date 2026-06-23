@@ -54,19 +54,21 @@ export function P1MaturityPanel({
                   <p className="text-xs text-text-muted dark:text-warm-300">IT (avg)</p>
                   <p className="text-xl font-semibold text-gold tabular-nums">{breakdown.itAvg}</p>
                 </div>
-                <div className="flex-1 relative mx-1">
+                <div className="flex-1 mx-1 space-y-1.5">
+                  {/* Barra IT — gold */}
                   <div className="h-1.5 bg-warm-200 dark:bg-warm-600/30 rounded-full overflow-hidden">
-                    <div className="absolute left-0 top-0 h-full rounded-full bg-gold"
+                    <div className="h-full rounded-full bg-gold"
                       style={{ width: `${(breakdown.itAvg / 4) * 100}%` }} />
                   </div>
-                  <div className="h-1.5 bg-warm-200 dark:bg-warm-600/30 rounded-full overflow-hidden mt-1">
-                    <div className="absolute left-0 top-0 h-full rounded-full bg-info"
+                  {/* Barra Negocio — warm-500 (excepción: comparación de dos valores) */}
+                  <div className="h-1.5 bg-warm-200 dark:bg-warm-600/30 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-warm-500"
                       style={{ width: `${(breakdown.bizAvg / 4) * 100}%` }} />
                   </div>
                 </div>
                 <div className="text-center">
                   <p className="text-xs text-text-muted dark:text-warm-300">Negocio (avg)</p>
-                  <p className="text-xl font-semibold text-info-dark dark:text-info tabular-nums">{breakdown.bizAvg}</p>
+                  <p className="text-xl font-semibold text-warm-600 dark:text-warm-400 tabular-nums">{breakdown.bizAvg}</p>
                 </div>
               </div>
               <p className="text-xs text-text-muted dark:text-warm-300 mb-2">

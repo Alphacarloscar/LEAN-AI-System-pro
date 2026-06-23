@@ -95,7 +95,7 @@ export function T2View({ onBack }: T2ViewProps) {
   }
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-warm-900">
+    <div className="min-h-full bg-surface dark:bg-warm-900">
 
       {/* ── Header ── */}
       <ToolHeader

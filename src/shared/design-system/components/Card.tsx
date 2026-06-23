@@ -27,7 +27,7 @@ const variantClasses: Record<CardVariant, string> = {
   ].join(' '),
 
   elevated: [
-    'bg-white border border-transparent shadow-lg',
+    'bg-white border border-transparent shadow-sm',
     'dark:bg-warm-800 dark:shadow-warm-card',
   ].join(' '),
 
@@ -57,7 +57,7 @@ export function Card({
   return (
     <div
       className={[
-        'rounded-lg border',
+        'rounded-xl border',
         variantClasses[variant],
         className,
       ].join(' ')}

@@ -130,7 +130,7 @@ export function T7View({ onBack }: T7ViewProps) {
   }
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-warm-900">
+    <div className="min-h-full bg-surface dark:bg-warm-900">
 
       {/* ── Header ── */}
       <ToolHeader
@@ -143,19 +143,19 @@ export function T7View({ onBack }: T7ViewProps) {
         maxWidth="max-w-7xl"
         chips={
           <div className="flex items-center gap-3 flex-wrap">
-            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-warm-700 border border-border dark:border-white/6">
+            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-surface dark:bg-warm-700 border border-border dark:border-white/6">
               <p className="text-lg font-bold text-lean-black dark:text-warm-50 tabular-nums">{stakeholders.length}</p>
               <p className="text-[10px] text-text-subtle uppercase tracking-wide">Stakeholders</p>
             </Card>
-            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-success-light border border-success-light">
-              <p className="text-lg font-bold text-success-dark tabular-nums">
+            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-surface dark:bg-warm-700 border border-border dark:border-white/6">
+              <p className="text-lg font-bold text-lean-black dark:text-warm-50 tabular-nums">
                 {(segCounts['early_adopters'] ?? 0) + (segCounts['early_majority'] ?? 0)}
               </p>
-              <p className="text-[10px] text-success-dark uppercase tracking-wide">Adoptantes</p>
+              <p className="text-[10px] text-text-subtle uppercase tracking-wide">Adoptantes</p>
             </Card>
-            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-danger-light border border-danger-light">
-              <p className="text-lg font-bold text-danger-dark tabular-nums">{laggardCount}</p>
-              <p className="text-[10px] text-danger-dark uppercase tracking-wide">Resistentes</p>
+            <Card variant="flat" padding="none" className="text-center px-3 py-2 rounded-lg bg-surface dark:bg-warm-700 border border-border dark:border-white/6">
+              <p className="text-lg font-bold text-lean-black dark:text-warm-50 tabular-nums">{laggardCount}</p>
+              <p className="text-[10px] text-text-subtle uppercase tracking-wide">Resistentes</p>
             </Card>
           </div>
         }

@@ -64,6 +64,7 @@ function SidebarPanel({ onNav }: { onNav: (path: string) => void }) {
         {/* ── Perfil de Empresa ── */}
         <button
           onClick={() => onNav('/company-profile')}
+          aria-current={isCompanyProfileActive ? 'page' : undefined}
           className={[
             'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors duration-100',
             isCompanyProfileActive
@@ -107,6 +108,7 @@ function SidebarPanel({ onNav }: { onNav: (path: string) => void }) {
               <button
                 key={tool.code}
                 onClick={() => onNav(tool.path)}
+                aria-current={isActive ? 'page' : undefined}
                 className={[
                   'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left',
                   'transition-all duration-100',
@@ -217,7 +219,7 @@ export function AppSidebar() {
           'fixed top-0 left-0 z-40 w-64',
           'h-[calc(100vh-var(--header-h,56px))]',
           'mt-[var(--header-h,56px)]',
-          'bg-white dark:bg-warm-900 border-r border-black/8 dark:border-warm-600/20 shadow-xl',
+          'bg-white dark:bg-warm-900 border-r border-black/8 dark:border-warm-600/20 shadow-md',
           'flex flex-col overflow-hidden',
           'transition-transform duration-250 ease-in-out',
           open ? 'translate-x-0' : '-translate-x-full',

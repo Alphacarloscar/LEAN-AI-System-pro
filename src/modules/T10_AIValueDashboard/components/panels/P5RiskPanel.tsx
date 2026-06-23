@@ -47,14 +47,14 @@ export function P5RiskPanel({ p5data, riskSegments, shadowAIPct, expanded, onTog
                 <span className="font-semibold text-danger-dark dark:text-danger">{p5data.risks.high}</span>
               </div>
               <div className="flex items-center gap-1.5 text-[10px]">
-                <span className="w-2 h-2 rounded-full flex-shrink-0 bg-warning" />
+                <span className="w-2 h-2 rounded-full flex-shrink-0 bg-warm-500" />
                 <span className="text-text-muted dark:text-warm-300 flex-1">Medio</span>
-                <span className="font-medium text-warning-dark dark:text-warning">{p5data.risks.medium}</span>
+                <span className="font-medium text-warm-600 dark:text-warm-400">{p5data.risks.medium}</span>
               </div>
               <div className="flex items-center gap-1.5 text-[10px]">
-                <span className="w-2 h-2 rounded-full flex-shrink-0 bg-success" />
+                <span className="w-2 h-2 rounded-full flex-shrink-0 bg-gold" />
                 <span className="text-text-muted dark:text-warm-300 flex-1">Bajo</span>
-                <span className="font-medium text-success-dark">{p5data.risks.low}</span>
+                <span className="font-medium text-gold">{p5data.risks.low}</span>
               </div>
             </div>
           </div>

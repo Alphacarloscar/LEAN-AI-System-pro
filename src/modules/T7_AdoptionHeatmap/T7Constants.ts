@@ -95,14 +95,14 @@ export interface DeptCfg {
 // danger-dark=#C06060   gold=#C8860A       silver=#C4C0B8
 export const DEPT_CFG: Record<string, DeptCfg> = {
   // ── Entradas canónicas (keys del store de datos) ───────────────
-  'Dirección General':     { fill: '#6A90C0', darkFill: '#9BB5D9', badgeBg: 'bg-info-light   dark:bg-info-light/10',    badgeText: 'text-info-dark'    },
-  'IT / Tecnología':       { fill: '#5FAF8A', darkFill: '#86C7A8', badgeBg: 'bg-success-light dark:bg-success-light/10', badgeText: 'text-success-dark' },
-  'Operaciones':           { fill: '#D4A85C', darkFill: '#E8C281', badgeBg: 'bg-warning-light dark:bg-warning-light/10', badgeText: 'text-warning-dark' },
+  'Dirección General':     { fill: '#5FAF8A', darkFill: '#86C7A8', badgeBg: 'bg-success-light dark:bg-success-light/10', badgeText: 'text-success-dark' },
+  'IT / Tecnología':       { fill: '#6A90C0', darkFill: '#9BB5D9', badgeBg: 'bg-info-light   dark:bg-info-light/10',    badgeText: 'text-info-dark'    },
+  'Operaciones':           { fill: '#8A857C', darkFill: '#B8B4AB', badgeBg: 'bg-surface       dark:bg-warm-800/60',      badgeText: 'text-text-muted'   },
   'Marketing & Comercial': { fill: '#C8860A', darkFill: '#D4940F', badgeBg: 'bg-warning-light dark:bg-warning-light/10', badgeText: 'text-gold'         },
   'RRHH':                  { fill: '#C06060', darkFill: '#D89090', badgeBg: 'bg-danger-light  dark:bg-danger-light/10',  badgeText: 'text-danger-dark'  },
   // ── Aliases cortos (datos importados de otros módulos) ─────────
-  'Dirección':             { fill: '#6A90C0', darkFill: '#9BB5D9', badgeBg: 'bg-info-light   dark:bg-info-light/10',    badgeText: 'text-info-dark'    },
-  'IT':                    { fill: '#5FAF8A', darkFill: '#86C7A8', badgeBg: 'bg-success-light dark:bg-success-light/10', badgeText: 'text-success-dark' },
+  'Dirección':             { fill: '#5FAF8A', darkFill: '#86C7A8', badgeBg: 'bg-success-light dark:bg-success-light/10', badgeText: 'text-success-dark' },
+  'IT':                    { fill: '#6A90C0', darkFill: '#9BB5D9', badgeBg: 'bg-info-light   dark:bg-info-light/10',    badgeText: 'text-info-dark'    },
   'Marketing':             { fill: '#C8860A', darkFill: '#D4940F', badgeBg: 'bg-warning-light dark:bg-warning-light/10', badgeText: 'text-gold'         },
 }
 

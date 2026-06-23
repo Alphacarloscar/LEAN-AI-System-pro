@@ -98,7 +98,7 @@ export function T3View({ onBack }: T3ViewProps) {
   }
 
   return (
-    <div className="flex flex-col bg-surface dark:bg-warm-950 min-h-screen">
+    <div className="flex flex-col bg-surface dark:bg-warm-950 min-h-full">
 
       {/* ── HEADER ── */}
       <ToolHeader

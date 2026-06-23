@@ -136,7 +136,7 @@ export function LoginView() {
       <div className="min-h-screen bg-surface flex items-center justify-center px-4">
         <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(to right, rgba(42,40,34,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(42,40,34,0.03) 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
         <div className="relative w-full max-w-sm">
-          <div className="bg-white rounded-xl border border-border shadow-xl shadow-warm-200/60 px-8 py-10 space-y-8">
+          <div className="bg-white rounded-xl border border-border shadow-md shadow-warm-200/60 px-8 py-10 space-y-8">
             <AlphaLogo size="lg" />
             {forgotSent ? (
               <div className="text-center space-y-3">
@@ -175,7 +175,7 @@ export function LoginView() {
       <div className="min-h-screen bg-surface flex items-center justify-center px-4">
         <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(to right, rgba(42,40,34,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(42,40,34,0.03) 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
         <div className="relative w-full max-w-sm">
-          <div className="bg-white rounded-xl border border-border shadow-xl shadow-warm-200/60 px-8 py-10 space-y-8">
+          <div className="bg-white rounded-xl border border-border shadow-md shadow-warm-200/60 px-8 py-10 space-y-8">
             <AlphaLogo size="lg" />
             {recOk ? (
               <div className="text-center space-y-2">

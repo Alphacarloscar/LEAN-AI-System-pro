@@ -156,10 +156,10 @@ export function averageStakeholderScores(
 // Umbral: 60 (equivale a 60/100)
 
 export const PRIORITY_QUADRANTS = [
-  { qx: 0.60, qy: 0.08, text: 'IMPLEMENTAR YA', color: '#5FAF8A' },
-  { qx: 0.03, qy: 0.08, text: 'PLANIFICAR',     color: '#6A90C0' },
-  { qx: 0.60, qy: 0.82, text: 'QUICK WIN',      color: '#9AAEC8' },
-  { qx: 0.03, qy: 0.82, text: 'REVISAR',        color: '#94A3B8' },
+  { qx: 0.60, qy: 0.08, text: 'IMPLEMENTAR YA', color: '#C8860A' },  // gold
+  { qx: 0.03, qy: 0.08, text: 'PLANIFICAR',     color: '#8A857C' },  // warm-500
+  { qx: 0.60, qy: 0.82, text: 'QUICK WIN',      color: '#B8B4AB' },  // warm-300
+  { qx: 0.03, qy: 0.82, text: 'REVISAR',        color: '#D4D0C8' },  // warm-200
 ] as const
 
 export const STATUS_ORDER: UseCaseStatus[] = [

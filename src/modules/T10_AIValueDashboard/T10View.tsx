@@ -167,7 +167,7 @@ export function T10View({ onNavigate }: T10ViewProps) {
     const activePercent = total > 0 ? Math.round(((innov + early) / total) * 100) : 0
     const deptMap: Record<string, { innovadores: number; early: number; rezagados: number; total: number }> = {}
     stakeholders.forEach(s => { if (!deptMap[s.department]) deptMap[s.department] = { innovadores: 0, early: 0, rezagados: 0, total: 0 }; const dept = deptMap[s.department]; dept.total++; if (s.archetype === 'adoptador') dept.innovadores++; else if (s.archetype === 'ambassador' || s.archetype === 'decisor') dept.early++; else dept.rezagados++ })
-    return { totalStakeholders: total, activeAdopters: innov + early, activePercent, rogersPhase: activePercent > 50 ? 'Early Majority' : 'Early Adopters', changeScore: 0, groups: [{ label: 'Innovadores', count: innov, pct: Math.round((innov / total) * 100), color: '#86C7A8' }, { label: 'Early Majority', count: early, pct: Math.round((early / total) * 100), color: '#9BB5D9' }, { label: 'Rezagados', count: rezag, pct: Math.round((rezag / total) * 100), color: '#C4C0B8' }], departments: Object.entries(deptMap).map(([label, data]) => ({ label, ...data })).sort((a, b) => b.total - a.total).slice(0, 4) }
+    return { totalStakeholders: total, activeAdopters: innov + early, activePercent, rogersPhase: activePercent > 50 ? 'Early Majority' : 'Early Adopters', changeScore: 0, groups: [{ label: 'Innovadores', count: innov, pct: Math.round((innov / total) * 100), color: '#C8860A' }, { label: 'Early Majority', count: early, pct: Math.round((early / total) * 100), color: '#8A857C' }, { label: 'Rezagados', count: rezag, pct: Math.round((rezag / total) * 100), color: '#D4D0C8' }], departments: Object.entries(deptMap).map(([label, data]) => ({ label, ...data })).sort((a, b) => b.total - a.total).slice(0, 4) }
   }, [stakeholders])
 
   const shadowAIPct = useMemo(() => {
@@ -255,7 +255,7 @@ export function T10View({ onNavigate }: T10ViewProps) {
   ] : [{ pct: 100, color: getThemeColor('warm-200') }]
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-warm-900">
+    <div className="min-h-full bg-surface dark:bg-warm-900">
 
       <DashboardHeader
         displayName={displayName} displaySector={displaySector} displayTamano={displayTamano}

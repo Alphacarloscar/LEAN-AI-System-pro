@@ -105,7 +105,7 @@ export function T11View({ onBack }: T11ViewProps) {
   }
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-warm-900">
+    <div className="min-h-full bg-surface dark:bg-warm-900">
 
       {/* ── Header ── */}
       <ToolHeader

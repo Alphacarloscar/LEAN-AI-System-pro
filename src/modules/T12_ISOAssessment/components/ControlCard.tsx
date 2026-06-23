@@ -96,6 +96,7 @@ export function ControlCard({ control, forceExpanded, onUpdate }: ControlCardPro
             <textarea
               value={control.evidence}
               onChange={(e) => onUpdate(control.id, { evidence: e.target.value })}
+              aria-label={`Evidencia del control ${control.code}`}
               placeholder="Documenta aquí la evidencia de implementación, referencias a documentos, responsables, fechas…"
               rows={3}
               className="w-full text-[11px] text-lean-black dark:text-gray-200 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg px-3 py-2 placeholder:text-text-subtle resize-none focus:outline-none focus:ring-1 focus:ring-navy/30"
@@ -110,6 +111,7 @@ export function ControlCard({ control, forceExpanded, onUpdate }: ControlCardPro
               <textarea
                 value={control.reviewNote}
                 onChange={(e) => onUpdate(control.id, { reviewNote: e.target.value })}
+                aria-label={`Nota del revisor para el control ${control.code}`}
                 placeholder="Observaciones para el revisor o notas de la aprobación…"
                 rows={2}
                 className="w-full text-[11px] text-lean-black dark:text-gray-200 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg px-3 py-2 placeholder:text-text-subtle resize-none focus:outline-none focus:ring-1 focus:ring-navy/30"

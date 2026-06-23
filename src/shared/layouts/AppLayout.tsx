@@ -18,6 +18,7 @@
 // ============================================================
 
 import { useEffect, useRef }                      from 'react'
+import { useLocation }                            from 'react-router-dom'
 import { Spinner }                                from '@shared/design-system/components'
 import { Outlet }                                 from 'react-router-dom'
 import type { AppLayoutContext }                  from './AppLayout.hooks'
@@ -173,7 +174,7 @@ function SessionRecoveryBanner({ state, onReLogin }: {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="w-full max-w-sm mx-4 bg-white dark:bg-warm-800 rounded-xl
-        border border-border shadow-2xl p-6 text-center space-y-4"
+        border border-border shadow-md p-6 text-center space-y-4"
       >
         <div className="h-12 w-12 rounded-full bg-amber-50 dark:bg-amber-900/30
           flex items-center justify-center mx-auto"
@@ -211,12 +212,19 @@ export function AppLayout() {
   const { user, sessionRecoveryState, clearSessionExpired } = useAuthStore()
   const { loadMyProjects }                      = useEngagementStore()
   const navigate                                = useNavigate()
+  const location                                = useLocation()
 
   // Cargar engagements del usuario en cuanto esté autenticado
   useEffect(() => {
     if (user) loadMyProjects()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
+
+  // Mover el foco al contenido principal al cambiar de ruta (accesibilidad teclado)
+  useEffect(() => {
+    const main = document.getElementById('main-content')
+    main?.focus()
+  }, [location.pathname])
 
   // ResizeObserver: mide la altura real del header y la expone como --header-h
   const headerRef = useRef<HTMLElement>(null)
@@ -286,11 +294,13 @@ export function AppLayout() {
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 focus:outline-none"
+          className="flex-1 flex flex-col focus:outline-none"
         >
-          <ErrorBoundary>
-            <Outlet context={{ dark } satisfies AppLayoutContext} />
-          </ErrorBoundary>
+          <div aria-live="polite" aria-atomic="false" className="flex flex-col flex-1">
+            <ErrorBoundary>
+              <Outlet context={{ dark } satisfies AppLayoutContext} />
+            </ErrorBoundary>
+          </div>
         </main>
 
         {/* ── Debug Panel — solo en desarrollo ── */}

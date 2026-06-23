@@ -9,13 +9,13 @@ import type { CommAction, CommPhase } from '../types'
 import { Card, Badge } from '@shared/design-system/components'
 
 const TYPE_ICON_MAP: Record<string, React.ReactElement> = {
-  megaphone:       <Megaphone    size={12} strokeWidth={1.5} />,
-  'graduation-cap':<GraduationCap size={12} strokeWidth={1.5} />,
-  'bar-chart-2':   <BarChart2    size={12} strokeWidth={1.5} />,
-  handshake:       <Handshake    size={12} strokeWidth={1.5} />,
-  zap:             <Zap          size={12} strokeWidth={1.5} />,
-  newspaper:       <Newspaper    size={12} strokeWidth={1.5} />,
-  'clipboard-list':<ClipboardList size={12} strokeWidth={1.5} />,
+  megaphone:       <Megaphone    size={16} strokeWidth={1.5} />,
+  'graduation-cap':<GraduationCap size={16} strokeWidth={1.5} />,
+  'bar-chart-2':   <BarChart2    size={16} strokeWidth={1.5} />,
+  handshake:       <Handshake    size={16} strokeWidth={1.5} />,
+  zap:             <Zap          size={16} strokeWidth={1.5} />,
+  newspaper:       <Newspaper    size={16} strokeWidth={1.5} />,
+  'clipboard-list':<ClipboardList size={16} strokeWidth={1.5} />,
 }
 const CHANNEL_ICON_MAP: Record<string, React.ReactElement> = {
   mail:            <Mail         size={12} strokeWidth={1.5} />,
@@ -86,7 +86,7 @@ export function TimelineTab({ actions }: { actions: CommAction[] }) {
                 return (
                   <Card key={action.id} variant="outlined" padding="none" className="rounded-xl p-5">
                     <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 dark:bg-slate-800/60 dark:border-slate-700 flex items-center justify-center text-text-subtle">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-surface border border-border dark:bg-warm-800 dark:border-white/10 flex items-center justify-center text-text-subtle">
                         {TYPE_ICON_MAP[typeCfg.icon] ?? <BarChart2 size={14} strokeWidth={1.5} />}
                       </div>
                       <div className="flex-1 min-w-0">

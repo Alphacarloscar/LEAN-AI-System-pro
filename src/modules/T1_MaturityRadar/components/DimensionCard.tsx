@@ -50,12 +50,12 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
   const def  = SUBDIMENSION_MAP[sub.code]
   const hasScore = sub.score !== null
 
-  // Color del badge de score activo
+  // Color del badge de score activo — escala monocromo warm con acento gold
   const scoreColor = (n: number) =>
-    n >= 3   ? 'bg-success-dark text-white' :
-    n >= 2   ? 'bg-info-dark text-white'    :
-    n >= 1   ? 'bg-warning-dark text-white' :
-               'bg-gray-400 text-white'
+    n >= 3   ? 'bg-gold text-white'         :
+    n >= 2   ? 'bg-warm-600 text-white'     :
+    n >= 1   ? 'bg-warm-500 text-white'     :
+               'bg-warm-400 text-warm-900'
 
   function setScore(n: number) {
     // Si ya está activo el mismo score, lo desmarca (null)
@@ -96,7 +96,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
                 'focus:outline-none focus:ring-2 focus:ring-navy/30',
                 sub.score === n
                   ? `${scoreColor(n)} shadow-sm scale-[1.08]`
-                  : 'bg-gray-100 dark:bg-warm-700 text-text-muted hover:bg-gray-200 dark:hover:bg-warm-600',
+                  : 'bg-warm-100 dark:bg-warm-700 text-text-muted hover:bg-warm-200 dark:hover:bg-warm-600',
               ].join(' ')}
             >
               {n}
@@ -107,7 +107,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
 
       {/* ── Score activo — descripción del nivel ── */}
       {hasScore && (
-        <div className="ml-11 mb-1 text-[11px] text-text-muted leading-snug px-2 py-1 bg-gray-50 dark:bg-warm-700/50 rounded-md">
+        <div className="ml-11 mb-1 text-[11px] text-text-muted leading-snug px-2 py-1 bg-warm-50 dark:bg-warm-700/50 rounded-md">
           <span className="font-medium text-lean-black dark:text-warm-200">
             {SCORE_LABELS[sub.score!]}:{' '}
           </span>
@@ -149,7 +149,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
 
       {/* ── Criterios expandidos ── */}
       {sub.showCriteria && def && (
-        <div className="ml-11 mb-2 rounded-lg border border-border/60 bg-gray-50 dark:bg-warm-700/40 divide-y divide-border/40 overflow-hidden">
+        <div className="ml-11 mb-2 rounded-lg border border-border/60 bg-warm-50 dark:bg-warm-700/40 divide-y divide-border/40 overflow-hidden">
           {([0, 1, 2, 3, 4] as const).map((n) => (
             <div
               key={n}
@@ -157,7 +157,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
                 'flex gap-2.5 px-3 py-1.5 text-[11px] cursor-pointer transition-colors',
                 sub.score === n
                   ? 'bg-navy/8 dark:bg-navy/20'
-                  : 'hover:bg-gray-100 dark:hover:bg-warm-600/50',
+                  : 'hover:bg-warm-100 dark:hover:bg-warm-600/50',
               ].join(' ')}
               onClick={() => setScore(n)}
             >
@@ -210,7 +210,7 @@ export function DimensionCard({ state, definition, onChange }: DimensionCardProp
       {/* ── Cabecera de dimensión ── */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-gray-50/50 dark:hover:bg-warm-700/50 transition-colors"
+        className="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-warm-50/50 dark:hover:bg-warm-700/50 transition-colors"
       >
         {/* Número D1-D6 */}
         <span className="shrink-0 px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[11px] font-mono font-bold text-navy dark:text-warm-100">

@@ -17,7 +17,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
   automatizacion_rpa: {
     label:       'Automatización RPA',
     shortLabel:  'RPA',
-    hex:         '#5FAF8A',
+    hex:         '#A0998F',
     tagline:     'Procesos repetitivos, cero intervención humana',
     description: 'Robots que replican tareas manuales estructuradas: entrada de datos, extracción y transferencia entre sistemas.',
     icon:        'settings',
@@ -131,28 +131,28 @@ export const T5_DIMENSION_CONFIG: Record<keyof T5DomainScores, {
     label:       'Valor de negocio',
     description: 'Impacto potencial en KPIs estratégicos. Mayor = más transformador.',
     direction:   'positive',
-    hex:         '#6A90C0',
+    hex:         '#C8860A',  // gold — barra de valor principal
     scaleLabels: ['Sin impacto', 'Marginal', 'Moderado', 'Alto', 'Transformador'],
   },
   technicalReady: {
     label:       'Madurez técnica',
     description: 'Disponibilidad de datos, infraestructura y skills técnicos.',
     direction:   'positive',
-    hex:         '#5FAF8A',
+    hex:         '#C8860A',  // gold — barra de valor principal
     scaleLabels: ['Sin datos ni infra', 'Básico', 'Parcial', 'Sólido', 'Completo'],
   },
   orgReadiness: {
     label:       'Preparación organizativa',
     description: 'Cultura IA, buy-in directivo y capacidad de cambio.',
     direction:   'positive',
-    hex:         '#D4A85C',
+    hex:         '#C8860A',  // gold — barra de valor principal
     scaleLabels: ['Muy resistente', 'Escéptica', 'Neutral', 'Favorable', 'Campeona'],
   },
   riskLevel: {
     label:       'Nivel de riesgo',
     description: 'Riesgo regulatorio, ético o de impacto negativo. Mayor = más riesgo.',
     direction:   'negative',
-    hex:         '#C06060',
+    hex:         '#C8860A',  // gold — barra de valor (riesgo se indica con dirección 'negative' en etiqueta)
     scaleLabels: ['Muy bajo', 'Bajo', 'Moderado', 'Alto', 'Crítico'],
   },
 }

@@ -72,7 +72,7 @@ export function DomainProjectsModal({ domainCode, onClose }: DomainProjectsModal
                   key={uc.id}
                   variant="flat"
                   padding="none"
-                  className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50"
+                  className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border bg-warm-50 dark:bg-warm-800/50"
                 >
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-lean-black dark:text-gray-200 truncate">{uc.name}</p>
@@ -109,7 +109,7 @@ export function DomainProjectsModal({ domainCode, onClose }: DomainProjectsModal
                   key={p.id}
                   variant="flat"
                   padding="none"
-                  className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50"
+                  className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border bg-warm-50 dark:bg-warm-800/50"
                 >
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-lean-black dark:text-gray-200 truncate">{p.name}</p>

@@ -89,6 +89,7 @@ export function FrictionCard({ index, friction, onUpdate, onRemove }: FrictionCa
             value={friction.notas}
             onChange={(e) => onUpdate({ notas: e.target.value })}
             rows={2}
+            aria-label={`Notas adicionales para la fricción ${index + 1}`}
             placeholder="Descripción adicional..."
             className="w-full px-3 py-2 rounded-lg text-xs bg-white dark:bg-gray-900 border border-border dark:border-white/8 text-lean-black dark:text-gray-200 placeholder-text-subtle dark:placeholder-gray-600 resize-none focus:outline-none focus:border-navy dark:focus:border-navy/60 focus:ring-2 focus:ring-navy/15 dark:focus:ring-navy/20 transition-colors"
           />

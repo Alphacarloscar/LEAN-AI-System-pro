@@ -184,7 +184,7 @@ export function UseCaseDetailPanel({
             { value: 'contexto',    label: 'Contexto T1/T2' },
             {
               value: 'regulatorio',
-              label: `⚖️ AI Act${useCase.aiActClassification
+              label: `AI Act${useCase.aiActClassification
                 ? ` · ${AIACT_RISK_CONFIG[useCase.aiActClassification.riskLevel].label}`
                 : ''}`,
             },
@@ -218,7 +218,7 @@ export function UseCaseDetailPanel({
           if (!cls) {
             return (
               <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
-                <span className="text-4xl">⚖️</span>
+                <AlertTriangle size={32} strokeWidth={1.5} className="text-text-subtle" />
                 <div>
                   <p className="text-sm font-semibold text-lean-black dark:text-warm-50 mb-1">
                     Sin clasificación AI Act

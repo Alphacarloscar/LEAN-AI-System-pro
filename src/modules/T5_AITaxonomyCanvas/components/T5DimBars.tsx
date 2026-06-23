@@ -18,21 +18,21 @@ export function T5DimBars({ scores }: { scores: T5DomainScores }) {
         return (
           <div key={key} className="flex items-center gap-3">
             <div className="w-36 shrink-0">
-              <p className="text-[10px] font-semibold text-lean-black dark:text-gray-200 leading-tight">
+              <p className="text-[10px] font-semibold text-lean-black dark:text-warm-200 leading-tight">
                 {cfg.label}
               </p>
               <p className="text-[9px] text-text-subtle mt-0.5">
                 {cfg.scaleLabels[lblIdx]}{isNeg ? ' ↑ riesgo' : ''}
               </p>
             </div>
-            <div className="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+            <div className="flex-1 h-1.5 rounded-full bg-warm-100 dark:bg-warm-800 overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-300"
                 style={{ width: `${val}%`, backgroundColor: cfg.hex, opacity: 0.85 }}
               />
             </div>
             <div className="shrink-0 w-8 text-right">
-              <span className="text-[10px] font-bold tabular-nums text-lean-black dark:text-gray-200">{val}</span>
+              <span className="text-[10px] font-bold tabular-nums text-lean-black dark:text-warm-200">{val}</span>
             </div>
           </div>
         )

@@ -164,7 +164,7 @@ export function T9View({ onBack }: T9ViewProps) {
   const MONTHS = MONTH_NAMES
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-warm-900">
+    <div className="min-h-full bg-surface dark:bg-warm-900">
 
       {/* ── Header ── */}
       <ToolHeader
