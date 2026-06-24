@@ -42,7 +42,8 @@ AI-Ready Repository System v2.1.0 | Última actualización: 2026-06-01
 
 | ID | Título | Estado | Fecha | Área |
 |----|--------|--------|-------|------|
-| *(primer FDR se creará con el siguiente cambio funcional significativo)* | | | | |
+| [FDR-001](functional/FDR-001-back-to-dashboard-canonical.md) | BackToDashboard como control canónico | ACCEPTED | 2026-06-05 | UX/Navegación |
+| [FDR-002](functional/FDR-002-package-navigation.md) | Navegación por paquetes de venta (Fase 1) | ACCEPTED | 2026-06-24 | Producto/Navegación |
 
 ---
 
@@ -56,4 +57,4 @@ Las decisiones estratégicas de producto/mercado se documentan en:
 ## Próximo número disponible
 
 - **ADR:** ADR-010
-- **FDR:** FDR-001
+- **FDR:** FDR-003
