@@ -1,8 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/lib/audit/auditClient', () => ({ fireAuditLog: vi.fn() }))
+vi.mock('@/lib/audit', () => ({ makeAuditable: <T>(s: T) => s }))
+
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     from: vi.fn(),
+    rpc:  vi.fn(),
   },
 }))
 
@@ -266,15 +270,13 @@ describe('upsertT1Score', () => {
 })
 
 // ── upsertAllScoresForInterviewee ─────────────────────────────
+// Usa supabase.rpc('bulk_upsert_t1_scores'), NO supabase.from()
 
 describe('upsertAllScoresForInterviewee', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('hace upsert con todas las subdimensiones de las dimensiones pasadas', async () => {
-    const mockChain = {
-      upsert: vi.fn().mockResolvedValue({ error: null }),
-    }
-    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+  it('llama a supabase.rpc("bulk_upsert_t1_scores") con 24 filas (6 dims × 4 subdims)', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never)
 
     const dimensions = buildBlankDimensions()
     await upsertAllScoresForInterviewee({
@@ -284,16 +286,35 @@ describe('upsertAllScoresForInterviewee', () => {
       dimensions,
     })
 
-    // 6 dimensiones × 4 subdimensiones = 24 filas
-    const rows = vi.mocked(mockChain.upsert).mock.calls[0][0] as unknown[]
+    expect(supabase.rpc).toHaveBeenCalledWith('bulk_upsert_t1_scores', expect.any(Object))
+    const callArgs = vi.mocked(supabase.rpc).mock.calls[0]
+    expect(callArgs[0]).toBe('bulk_upsert_t1_scores')
+    // 6 dimensiones × 4 subdimensiones = 24 filas en p_scores
+    const rows = (callArgs[1] as { p_scores: unknown[] }).p_scores
     expect(rows).toHaveLength(24)
   })
 
-  it('lanza error con prefijo [T1] si falla el upsert masivo', async () => {
-    const mockChain = {
-      upsert: vi.fn().mockResolvedValue({ error: { message: 'bulk insert failed' } }),
+  it('cada fila de p_scores incluye project_id, interviewee_id y dimension/subdimension codes', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never)
+
+    await upsertAllScoresForInterviewee({
+      engagementId: ENG_ID, intervieweeId: INTERVIEWEE_ID,
+      intervieweeName: 'Ana', intervieweeRole: 'CIO',
+      intervieweeType: 'it', intervieweeDepartment: 'IT',
+      dimensions: buildBlankDimensions(),
+    })
+
+    const rows = (vi.mocked(supabase.rpc).mock.calls[0][1] as { p_scores: Record<string, unknown>[] }).p_scores
+    for (const row of rows) {
+      expect(row.project_id).toBe(ENG_ID)
+      expect(row.interviewee_id).toBe(INTERVIEWEE_ID)
+      expect(typeof row.dimension_code).toBe('string')
+      expect(typeof row.subdimension_code).toBe('string')
     }
-    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+  })
+
+  it('lanza error con prefijo [T1] si falla el upsert masivo', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: { message: 'bulk insert failed' } } as never)
 
     await expect(upsertAllScoresForInterviewee({
       engagementId: ENG_ID, intervieweeId: INTERVIEWEE_ID,
@@ -341,5 +362,113 @@ describe('deleteIntervieweeScores', () => {
     await expect(deleteIntervieweeScores(ENG_ID, INTERVIEWEE_ID)).rejects.toThrow(
       '[T1] deleteIntervieweeScores:',
     )
+  })
+})
+
+// ── PGRST202 — error de contexto (schema cache miss) ──────────
+// PGRST202 ocurre cuando el schema cache de PostgREST no reconoce
+// la función RPC o la constraint, típicamente tras un deploy reciente.
+// El servicio NO debe silenciarlo: la UI necesita el error para lanzar Toast.
+
+describe('PGRST202 — propagación de error de contexto', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('upsertT1Score: PGRST202 se propaga con prefijo [T1] y no se silencia', async () => {
+    const pgrst202 = { code: 'PGRST202', message: 'Could not find a relationship between t1_dimension_scores and the constraint in the schema cache' }
+    const mockChain = { upsert: vi.fn().mockResolvedValue({ error: pgrst202 }) }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const promise = upsertT1Score({
+      engagementId: ENG_ID, intervieweeId: INTERVIEWEE_ID,
+      intervieweeName: 'Ana', intervieweeRole: 'CIO', intervieweeType: 'it',
+      intervieweeDepartment: 'IT', dimensionCode: 'strategy',
+      subdimensionCode: 'strategy-vision', score: 3, evidence: 'test',
+    })
+
+    await expect(promise).rejects.toThrow('[T1] upsertT1Score:')
+    await expect(promise).rejects.toThrow(pgrst202.message)
+  })
+
+  it('upsertAllScoresForInterviewee: PGRST202 (función RPC ausente) se propaga y no se silencia', async () => {
+    const pgrst202 = { code: 'PGRST202', message: 'Could not find the function bulk_upsert_t1_scores in the schema cache' }
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: pgrst202 } as never)
+
+    const promise = upsertAllScoresForInterviewee({
+      engagementId: ENG_ID, intervieweeId: INTERVIEWEE_ID,
+      intervieweeName: 'Ana', intervieweeRole: 'CIO', intervieweeType: 'it',
+      intervieweeDepartment: 'IT', dimensions: buildBlankDimensions(),
+    })
+
+    await expect(promise).rejects.toThrow('[T1] upsertAllScoresForInterviewee:')
+    await expect(promise).rejects.toThrow(pgrst202.message)
+  })
+
+  it('fetchT1Data: error de contexto (project_id ausente simulado) se propaga con prefijo [T1]', async () => {
+    const contextError = { code: 'PGRST202', message: 'Column project_id of relation t1_dimension_scores does not exist' }
+    const mockChain = {
+      select: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockResolvedValue({ data: null, error: contextError }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    await expect(fetchT1Data(ENG_ID)).rejects.toThrow('[T1] fetchT1Data:')
+  })
+})
+
+// ── Aislamiento de localStorage (sin side effects de persistencia) ──
+
+describe('Aislamiento de localStorage — todas las operaciones T1', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('fetchT1Data no lee localStorage', async () => {
+    const mockChain = {
+      select: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockResolvedValue({ data: [], error: null }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const spy = vi.spyOn(Storage.prototype, 'getItem')
+    await fetchT1Data(ENG_ID)
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('upsertT1Score no escribe localStorage', async () => {
+    const mockChain = { upsert: vi.fn().mockResolvedValue({ error: null }) }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const spy = vi.spyOn(Storage.prototype, 'setItem')
+    await upsertT1Score({
+      engagementId: ENG_ID, intervieweeId: INTERVIEWEE_ID,
+      intervieweeName: 'Ana', intervieweeRole: 'CIO', intervieweeType: 'it',
+      intervieweeDepartment: 'IT', dimensionCode: 'data',
+      subdimensionCode: 'data-quality', score: 2, evidence: '',
+    })
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('upsertAllScoresForInterviewee no escribe localStorage', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never)
+
+    const spy = vi.spyOn(Storage.prototype, 'setItem')
+    await upsertAllScoresForInterviewee({
+      engagementId: ENG_ID, intervieweeId: INTERVIEWEE_ID,
+      intervieweeName: 'Ana', intervieweeRole: 'CIO', intervieweeType: 'it',
+      intervieweeDepartment: 'IT', dimensions: buildBlankDimensions(),
+    })
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('deleteIntervieweeScores no escribe localStorage', async () => {
+    const mockChain = { delete: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis() }
+    mockChain.eq.mockReturnValueOnce(mockChain).mockResolvedValueOnce({ error: null })
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const spy = vi.spyOn(Storage.prototype, 'setItem')
+    await deleteIntervieweeScores(ENG_ID, INTERVIEWEE_ID)
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
   })
 })

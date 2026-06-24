@@ -6,10 +6,11 @@
 // ============================================================
 
 import { useState, useEffect, FormEvent } from 'react'
-import { useNavigate }                    from 'react-router-dom'
-import { useAuthStore }                   from './store'
-import { supabase }                       from '@/lib/supabase'
-import { AlphaLogo }                      from '@/shared/components/AlphaLogo'
+import { useNavigate }                          from 'react-router-dom'
+import { useAuthStore }                         from './store'
+import { subscribeToAuthChanges, resetPasswordForEmail, updateAuthUser } from '@services/auth.service'
+import { AlphaLogo }                            from '@/shared/components/AlphaLogo'
+import { Spinner }                        from '@shared/design-system/components'
 
 // ── Campo de formulario ───────────────────────────────────────
 function Field({
@@ -72,7 +73,7 @@ export function LoginView() {
 
   // Detectar evento PASSWORD_RECOVERY de Supabase (llega al abrir el enlace del email)
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = subscribeToAuthChanges((event) => {
       if (event === 'PASSWORD_RECOVERY') setIsRecovery(true)
     })
     return () => subscription.unsubscribe()
@@ -84,7 +85,7 @@ export function LoginView() {
     setLoading(true)
     setForgotError('')
     const redirectTo = `${window.location.origin}/reset-password`
-    const { error: err } = await supabase.auth.resetPasswordForEmail(forgotEmail, { redirectTo })
+    const { error: err } = await resetPasswordForEmail(forgotEmail, { redirectTo })
     setLoading(false)
     if (err) { setForgotError(err.message); return }
     setForgotSent(true)
@@ -97,12 +98,23 @@ export function LoginView() {
     setLoading(true)
     clearError()
 
-    const ok = await login(email, password)
-    if (ok) {
-      navigate('/', { replace: true })
+    try {
+      const ok = await login(email, password)
+      if (ok) {
+        navigate('/', { replace: true })
+        return
+      }
+    } catch (err) {
+      // login() rechazó inesperadamente (error de red, timeout de Supabase…).
+      // El store puede no haber seteado un mensaje — establecemos uno genérico.
+      // No llamamos reportError aquí porque store.login() ya lo hará.
+      if (!useAuthStore.getState().error) {
+        useAuthStore.setState({ error: 'Error de conexión. Inténtalo de nuevo.' })
+      }
+      console.error('[LoginView] handleSubmit unexpected rejection', err)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   async function handleUpdatePassword(e: FormEvent) {
@@ -111,7 +123,7 @@ export function LoginView() {
     if (newPass.length < 6) { setRecError('La contraseña debe tener al menos 6 caracteres.'); return }
     if (newPass !== newPass2) { setRecError('Las contraseñas no coinciden.'); return }
     setLoading(true)
-    const { error: err } = await supabase.auth.updateUser({ password: newPass })
+    const { error: err } = await updateAuthUser({ password: newPass })
     setLoading(false)
     if (err) { setRecError(err.message); return }
     setRecOk(true)
@@ -264,10 +276,7 @@ export function LoginView() {
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
+                  <Spinner size="sm" label="Accediendo…" />
                   Accediendo…
                 </span>
               ) : 'Acceder'}

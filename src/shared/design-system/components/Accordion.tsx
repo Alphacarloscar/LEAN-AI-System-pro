@@ -50,7 +50,7 @@ export function Accordion({
         const isOpen = open.has(item.id)
 
         return (
-          <div key={item.id} className="bg-white dark:bg-gray-900">
+          <div key={item.id} className="bg-white dark:bg-warm-800">
             {/* Trigger */}
             <button
               id={`accordion-trigger-${item.id}`}
@@ -60,8 +60,8 @@ export function Accordion({
               onClick={() => !item.disabled && toggle(item.id)}
               className={[
                 'flex w-full items-center justify-between gap-3 px-5 py-4',
-                'text-left text-sm font-medium text-lean-black dark:text-gray-100',
-                'hover:bg-surface dark:hover:bg-gray-800/50 transition-colors',
+                'text-left text-sm font-medium text-lean-black dark:text-warm-50',
+                'hover:bg-surface dark:hover:bg-warm-700/50 transition-colors',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-navy',
                 item.disabled ? 'opacity-40 pointer-events-none' : 'cursor-pointer',
               ].join(' ')}
@@ -90,7 +90,7 @@ export function Accordion({
                 id={`accordion-panel-${item.id}`}
                 role="region"
                 aria-labelledby={`accordion-trigger-${item.id}`}
-                className="px-5 pb-5 text-sm text-text-muted dark:text-gray-400 border-t border-border"
+                className="px-5 pb-5 text-sm text-text-muted dark:text-warm-300 border-t border-border"
               >
                 <div className="pt-4">{item.content}</div>
               </div>

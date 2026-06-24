@@ -7,7 +7,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed (2026-06-16 — feat/atomic-screen-independence)
+- [Screens] T1–T12 Views refactorizados para independencia atómica: cada módulo gestiona su propio estado de carga y persiste datos sin recargar el árbol global
+- [App] `App.tsx` y `AppSidebar.tsx` enrutados para activar cada pantalla de forma aislada
+- [E2E] `t2`, `t4`, `t5`, `t8` specs actualizados con nuevos selectores y flujos por pantalla
+
+### Added (v1.0 — Sistema de Auditoría)
+- [Audit] `src/lib/audit/` — librería de auditoría completa (ADR-017)
+  - `makeAuditable` — Proxy genérico que intercepta métodos async de cualquier servicio; registra args, response, duración, status y correlation_id sin bloquear al caller
+  - `auditClient` — escritor fire-and-forget que invoca la Edge Function `log-audit-event`; fallos de red nunca propagan al caller (aislados en IIFE async)
+  - `types.ts` — contratos `AuditLogInsert`, `AuditAIMetadata`, `AuditUserContext`
+  - `context.ts` — helper `getAuditUserContext()` para capturar sesión activa
+- [Audit] `supabase/functions/log-audit-event/` — Edge Function segura que añade contexto de usuario (user_id, email, rol) desde el JWT, bypasseando RLS con service_role_key
+- [Audit] `src/services/auditLogs.service.ts` — servicio de lectura de logs para el panel de superadmin
+- [DB] `supabase/migrations/20260615_003_audit_system.sql` — tablas `audit_logs` + `audit_logs_archive` + `audit_access_logs`, RLS, función de archivado pg_cron (ADR-018, ADR-019)
+- [DB] `supabase/migrations/20260615_007_perf_profiles_idx.sql` — índice de rendimiento en `profiles`
+- [DB] `supabase/migrations/20260616_004_audit_schema_drift.sql` — `ADD COLUMN IF NOT EXISTS` idempotente para `correlation_id`, `user_email_hash`, `ai_provider`, `ai_model`, `ai_total_tokens` en ambas tablas
+- [Services] Todos los servicios instrumentados con `makeAuditable`: auth, companies, company-profile, department, projects, T1–T8
+- [Tests] `src/__tests__/unit/audit/makeAuditable.test.ts` — 533 tests unitarios; cubre intercepción async, pass-through síncrono, truncación de payloads, correlation_id race-condition-safe, engagement_id desde localStorage
+- [Docs] `docs/architecture/audit-system.md`, ADR-017/018/019 documentados
+
 ### Fixed
+- [E2E] `t3.spec.ts` beforeEach: cambiado espera de texto "Value Stream Map" por selector `main` — evita timeouts en PRE cuando T3View tiene estado de carga inicial
+- [CI] `validate-docs.yml` A4: trim de whitespace antes de medir longitud del body + mensaje de error orientativo con ruta al PR template
 - [DB] tool_outputs: constraint tool_code_check ampliada a 14 tool codes — fix P0 silencioso donde persistence.saved=false para t1-t11 y t3_opportunities, forzando regenerar recomendaciones al navegar
 - [DB] ai_rate_limit_log: constraint tool_code_check ampliada a 14 tool codes (t1-t11 + t3_opportunities + t6_policy + t7_plan + t8_comms) — constraint anterior solo tenía 7 tool codes del Sprint 6, bloqueaba todas las llamadas nuevas
 - [Edge] ai-recommend: añadidos tool codes t1, t2, t4, t5, t6, t7, t8, t9, t10, t11 a LLM_TOOLS + TOOL_CONFIG — las recomendaciones IA fallaban en todas las herramientas con error 400 "tool no soportado"
@@ -15,11 +37,42 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - [Edge] ai-recommend: diagnóstico mejorado en rate_limit_check_failed — console.error expone code/details/hint del error Supabase; respuesta 500 incluye error_code, stage, tool, version
 - [Edge] ai-recommend: todas las respuestas de error ahora incluyen `version` para confirmar qué build está desplegado
 
-### Added
-- [UX] Componente canónico `BackToDashboard` (`src/shared/components/`) — control único "Volver al dashboard" inline icono+texto. Sustituye 13 variantes hand-rolled dispersas en T1–T9, T11, T12 y CompanyProfile (P1 Sprint 11)
+### Added (P1 — Refactor Sprint)
+- [Monitoring] Sentry `@sentry/react@10` integrado — error monitoring en DEV/PRE/PRO (ADR-010)
+  - `src/lib/sentry.ts` con `initSentry()` — desactivado localmente (`VITE_SENTRY_ENABLED=false`)
+  - `src/lib/reportError.ts` — wrapper `reportError(context, err)` → console.error + Sentry
+  - `.env.example` actualizado con todas las variables Sentry documentadas
+  - `vite.config.ts` — `sentryVitePlugin` condicional (solo PRO cuando `SENTRY_AUTH_TOKEN` presente)
+- [Services] Service layer T6/T7/T8 extraído de stores (ADR-011)
+  - `src/services/t6.service.ts` — `savePolicyOutput()`
+  - `src/services/t7.service.ts` — `saveChangePlanOutput()`
+  - `src/services/t8.service.ts` — `saveCommunicationOutput()`
+- [Tests] 12 nuevos tests — T6/T7/T8 services (4 cada uno, patrón `vi.mock + rpc`)
+- [UX] Componente canónico `BackToDashboard` (`src/shared/components/`) — control único "Volver al dashboard" inline icono+texto. Sustituye 13 variantes hand-rolled dispersas en T1–T9, T11, T12 y CompanyProfile
 
-### Changed
-- [UX] Normalizado el botón de vuelta al dashboard en 12 vistas: T3 y T4 pasan de botón redondo icon-only (área de click diminuta, AUDIT Sprint 4) a inline texto+icono; T5 y T6 "Volver" → "Volver al dashboard"; corregido casing "Dashboard" → "dashboard" en empty-states de T4 y CompanyProfile; unificados icono (16×16), tipografía (text-xs) y tokens de color
+### Changed (P1 — Refactor Sprint)
+- [T4] T4View.tsx descompuesto (2386 → ~220 líneas): 9 sub-componentes extraídos a `components/` (ADR-013)
+- [Deps] `xlsx@0.18.5` eliminado — CVE-2023-30533, zero imports en codebase (ADR-012)
+- [Stores] T6/T7/T8 stores: imports directos de Supabase reemplazados por llamadas a services
+- [UX] Normalizado el botón de vuelta al dashboard en 12 vistas: T3 y T4 pasan de botón redondo icon-only a inline texto+icono; T5 y T6 "Volver" → "Volver al dashboard"; unificados icono (16×16), tipografía (text-xs) y tokens de color
+
+### Added (P2 — Refactor Sprint)
+- [Hooks] `src/hooks/useEdgeFunctionInvoke.ts` — hook genérico para flujos LLM (ADR-014)
+  - `usePolicyGeneration`, `useT8Generation`, `useChangePlanGeneration` refactorizados (~50 líneas c/u)
+  - T6 gana timeout 90s que le faltaba (bug fix)
+- [Schemas] `src/lib/schemas/t4.schemas.ts` — Zod schemas para JSONB fields (ADR-015)
+  - `UseCaseScoresSchema`, `StakeholderScoresSchema`, `GoNoGoDecisionSchema`, `UseCaseEconomicsSchema`, `AIActClassificationSchema`
+  - `safeParseJsonField()` integrado en `t4.service.ts`  `rowToUseCase()`
+- [T3] T3View.tsx descompuesto (1202 → ~220 líneas): 5 sub-componentes extraídos (ADR-013)
+  - `T3Badges.tsx`, `HeroOpportunityMatrix.tsx`, `HeroCategoryDonut.tsx`, `DetailPositionMap.tsx`, `ProcessDetailPanel.tsx`
+
+### Changed (P2 — Refactor Sprint)
+- [Types] `PolicyPDF.tsx`: tipos locales `UseCase` y `Domain` reemplazados con imports de T4/T5 (ADR-011)
+- [Stores] T1/T4 stores: todos los `console.error` reemplazados con `reportError()` (ADR-010)
+- [ADRs] Documentadas 6 decisiones técnicas nuevas: ADR-010 a ADR-015
+- [CLAUDE.md] Reglas de diseño actualizadas con patrones P1+P2
+
+### Changed (P0 — Infrastructure)
 - [Infra] Entornos documentados con URLs y project refs reales: PRO (`gobytech-prod.vercel.app` + Supabase `vbpgsgxsslccctjhuegt`), PRE (`v0-lean-ai-system.vercel.app` + Supabase `mkypmakmkxpecuezofkk`), DEV (Supabase CLI local)
 - [Docs] Actualizado `.ai-config.yml`, `CLAUDE.md`, `ENVIRONMENTS.md`, `DATABASES.md`, `INFRASTRUCTURE.md` con valores reales — eliminados todos los `[COMPLETAR]` de infraestructura
 

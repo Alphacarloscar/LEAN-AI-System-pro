@@ -15,25 +15,11 @@ import {
   Page,
   View,
   Text,
-  StyleSheet,
   BlobProvider,
 } from '@react-pdf/renderer'
-
-// ── Types de los datos que necesita el PDF ──────────────────────
-
-interface UseCase {
-  id:     string
-  name:   string
-  department: string
-  status: string
-  aiActClassification?: { riskLevel: string } | null
-}
-
-interface Domain {
-  domainCode:     string
-  priorityScore:  number
-  suggestedOwner: string
-}
+import type { UseCase }            from '@/modules/T4_UseCasePriorityBoard/types'
+import type { T5DomainAssessment } from '@/modules/T5_AITaxonomyCanvas/types'
+import { s, RISK_LABEL } from './components/policyPdfStyles'
 
 export interface PolicyPDFData {
   companyName:      string
@@ -41,8 +27,8 @@ export interface PolicyPDFData {
   nextReviewStr:    string
   approvedCases:    UseCase[]
   highRiskCases:    UseCase[]
-  activeDomains:    Array<{ code: string; domain: Domain }>
-  ownerDomains:     Domain[]
+  activeDomains:    Array<{ code: string; domain: T5DomainAssessment }>
+  ownerDomains:     T5DomainAssessment[]
   /** Contenido narrativo generado por LLM (opcional — si no existe, se usa plantilla) */
   generatedPolicy?: {
     declaracion_opening:  string
@@ -52,287 +38,6 @@ export interface PolicyPDFData {
     contexto_sectorial:   string
     sector:               string
   } | null
-}
-
-// ── Paleta de colores del design system ────────────────────────
-
-const NAVY    = '#2A2822'   // warm charcoal (era #1B2A4E navy)
-const WHITE   = '#FFFFFF'
-const GRAY_50 = '#F7F4EE'   // warm ivory (era #F9FAFB)
-const GRAY_200= '#D4D0C8'   // warm border (era #E5E7EB)
-const GRAY_400= '#9A9790'   // warm muted (era #9CA3AF)
-const GRAY_600= '#6B6864'   // warm text-muted (era #4B5563)
-const ORANGE  = '#C8860A'   // gold accent (era orange #EA580C)
-
-// ── Estilos ────────────────────────────────────────────────────
-
-const s = StyleSheet.create({
-  page: {
-    fontFamily: 'Helvetica',
-    fontSize:   9,
-    color:      '#1C1A16',  // warm near-black (era #374151)
-    paddingTop: 0,
-    paddingBottom: 40,
-  },
-
-  // ── Header ──
-  header: {
-    backgroundColor: NAVY,
-    paddingHorizontal: 40,
-    paddingTop:   28,
-    paddingBottom: 24,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 0,
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  headerMono: {
-    fontSize:      7,
-    color:         'rgba(255,255,255,0.65)',
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginBottom:  6,
-  },
-  headerTitle: {
-    fontSize:   18,
-    fontFamily: 'Helvetica-Bold',
-    color:      WHITE,
-    marginBottom: 3,
-  },
-  headerSub: {
-    fontSize: 9,
-    color:    'rgba(255,255,255,0.7)',
-  },
-  headerBadge: {
-    fontSize:        8,
-    color:           WHITE,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: 8,
-    paddingVertical:   4,
-    borderRadius:     10,
-  },
-
-  // ── Body ──
-  body: {
-    paddingHorizontal: 40,
-    paddingTop: 28,
-  },
-
-  // ── Sección ──
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize:   11,
-    fontFamily: 'Helvetica-Bold',
-    color:      '#111827',
-    paddingBottom: 6,
-    borderBottomWidth: 0.5,
-    borderBottomColor: GRAY_200,
-    marginBottom: 8,
-  },
-  paragraph: {
-    fontSize:    9,
-    color:       GRAY_600,
-    lineHeight:  1.55,
-    marginBottom: 6,
-  },
-
-  // ── Domains box ──
-  domainsBox: {
-    backgroundColor: GRAY_50,
-    borderWidth:     0.5,
-    borderColor:     GRAY_200,
-    borderRadius:    6,
-    paddingHorizontal: 12,
-    paddingVertical:   8,
-    marginTop:       6,
-  },
-  domainsLabel: {
-    fontSize:      6.5,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    color:         GRAY_400,
-    marginBottom:  5,
-  },
-  domainItem: {
-    flexDirection: 'row',
-    alignItems:    'center',
-    marginBottom:  3,
-    gap:           5,
-  },
-  domainBullet: {
-    fontSize: 7,
-    color:    NAVY,
-    width:    8,
-  },
-  domainText: {
-    fontSize: 8,
-    color:    GRAY_600,
-    flex:     1,
-  },
-  domainBold: {
-    fontFamily: 'Helvetica-Bold',
-    color:      '#111827',
-  },
-
-  // ── Principios grid ──
-  principlesGrid: {
-    flexDirection:  'row',
-    flexWrap:       'wrap',
-    gap:            6,
-  },
-  principleCard: {
-    width:             '48%',
-    backgroundColor:   GRAY_50,
-    borderWidth:       0.5,
-    borderColor:       GRAY_200,
-    borderRadius:      5,
-    paddingHorizontal: 10,
-    paddingVertical:   7,
-    marginBottom:      2,
-  },
-  principleTitle: {
-    fontSize:     8,
-    fontFamily:   'Helvetica-Bold',
-    color:        '#111827',
-    marginBottom: 2,
-  },
-  principleDesc: {
-    fontSize:   7.5,
-    color:      GRAY_600,
-    lineHeight: 1.45,
-  },
-
-  // ── Table ──
-  tableHeader: {
-    flexDirection: 'row',
-    borderBottomWidth: 0.5,
-    borderBottomColor: GRAY_200,
-    paddingBottom:     5,
-    marginBottom:      3,
-  },
-  tableRow: {
-    flexDirection:   'row',
-    borderBottomWidth: 0.3,
-    borderBottomColor: GRAY_200,
-    paddingVertical:   4,
-    alignItems:       'center',
-  },
-  thCell: {
-    fontSize:      6.5,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    color:         GRAY_400,
-  },
-  tdCell: {
-    fontSize: 8.5,
-    color:    GRAY_600,
-  },
-  tdName: {
-    fontFamily: 'Helvetica-Bold',
-    color:      '#111827',
-    fontSize:   8.5,
-  },
-  col1: { flex: 3 },
-  col2: { flex: 2 },
-  col3: { flex: 2 },
-  col4: { flex: 1.5 },
-
-  // ── Risk badge ──
-  badge: {
-    paddingHorizontal: 5,
-    paddingVertical:   2,
-    borderRadius:      8,
-    fontSize:          7,
-    fontFamily:        'Helvetica-Bold',
-  },
-
-  // ── High risk card ──
-  highRiskCard: {
-    borderWidth:       0.5,
-    borderColor:       '#FED7AA',
-    backgroundColor:   '#FFF7ED',
-    borderRadius:      5,
-    paddingHorizontal: 12,
-    paddingVertical:   8,
-    marginBottom:      5,
-  },
-  highRiskTitle: {
-    fontSize:     8,
-    fontFamily:   'Helvetica-Bold',
-    color:        ORANGE,
-    marginBottom: 4,
-  },
-  highRiskItem: {
-    flexDirection: 'row',
-    marginBottom:  2,
-    gap:           4,
-  },
-  highRiskBullet: {
-    fontSize: 7,
-    color:    ORANGE,
-    width:    8,
-  },
-  highRiskText: {
-    fontSize:  7.5,
-    color:     '#9A3412',
-    flex:      1,
-    lineHeight: 1.4,
-  },
-
-  // ── Owner rows ──
-  ownerRow: {
-    flexDirection:   'row',
-    borderBottomWidth: 0.3,
-    borderBottomColor: GRAY_200,
-    paddingVertical:   5,
-    gap:              12,
-    alignItems:       'flex-start',
-  },
-  ownerLabel: {
-    fontSize:      7,
-    textTransform: 'uppercase',
-    color:         GRAY_400,
-    width:         48,
-    paddingTop:    1,
-  },
-  ownerName: {
-    fontSize:   8.5,
-    fontFamily: 'Helvetica-Bold',
-    color:      '#111827',
-  },
-  ownerDomain: {
-    fontSize: 7.5,
-    color:    GRAY_400,
-    marginTop: 1,
-  },
-
-  // ── Footer ──
-  footer: {
-    marginTop:   16,
-    paddingTop:  8,
-    borderTopWidth: 0.5,
-    borderTopColor: GRAY_200,
-  },
-  footerText: {
-    fontSize: 7,
-    color:    GRAY_400,
-    lineHeight: 1.5,
-  },
-})
-
-// ── Mapa de niveles de riesgo AI Act ───────────────────────────
-
-const RISK_LABEL: Record<string, { label: string; bg: string; color: string }> = {
-  prohibido:      { label: 'Prohibido',      bg: '#FEE2E2', color: '#991B1B' },
-  alto:           { label: 'Alto Riesgo',    bg: '#FEF3C7', color: '#92400E' },
-  limitado:       { label: 'Riesgo Limitado',bg: '#FFF7ED', color: '#9A3412' },
-  minimo:         { label: 'Riesgo Mínimo',  bg: '#F0FDF4', color: '#166534' },
-  sin_clasificar: { label: 'Sin clasificar', bg: '#F3F4F6', color: '#6B7280' },
 }
 
 function statusLabel(status: string): string {
@@ -351,7 +56,6 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
 
   const gp = generatedPolicy ?? null
   const hasGenerated = !!gp
-  // Si hay contexto sectorial generado, añade una sección extra
   const extraSection  = hasGenerated && gp.contexto_sectorial ? 1 : 0
   const sectionOffset = highRiskCases.length > 0 ? 1 : 0
 
@@ -436,7 +140,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
             </View>
           </View>
 
-          {/* 3b. Contexto regulatorio sectorial (solo si fue generado) */}
+          {/* 3b. Contexto regulatorio sectorial */}
           {hasGenerated && gp?.contexto_sectorial ? (
             <View style={s.section}>
               <Text style={s.sectionTitle}>4. Contexto Regulatorio Sectorial</Text>
@@ -452,7 +156,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
               pipeline de implementación de {companyName} a la fecha de emisión de esta política.
             </Text>
             {approvedCases.length === 0 ? (
-              <Text style={{ ...s.paragraph, fontStyle: 'italic', color: GRAY_400 }}>
+              <Text style={{ ...s.paragraph, fontStyle: 'italic', color: '#9A9790' }}>
                 Sin casos de uso aprobados. Completa el proceso Go/No-Go en T4.
               </Text>
             ) : (
@@ -485,7 +189,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
             )}
           </View>
 
-          {/* 5 (condicional). Controles de alto riesgo */}
+          {/* Controles de alto riesgo */}
           {highRiskCases.length > 0 && (
             <View style={s.section}>
               <Text style={s.sectionTitle}>5. Medidas de Control — Sistemas de Alto Riesgo</Text>

@@ -13,7 +13,7 @@ export interface TagProps {
 }
 
 const colorClasses: Record<string, string> = {
-  gray:    'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  gray:    'bg-gray-100 text-gray-700 dark:bg-warm-700 dark:text-warm-200',
   navy:    'bg-navy/10 text-navy dark:bg-navy/20 dark:text-blue-300',
   success: 'bg-success-light text-success-dark',
   warning: 'bg-warning-light text-warning-dark',

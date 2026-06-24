@@ -14,7 +14,7 @@ AI-Ready Repository System v2.1.0
 | Local dev | **DEV** | any | Supabase CLI local (127.0.0.1:54321) | localhost:5173 | Carlos (dev) |
 
 > DEV usa Supabase CLI local (`supabase start`) — base de datos propia en la máquina, desechable y sin datos reales.
-> PRE usa el proyecto remoto `mkypmakmkxpecuezofkk` con datos demo (`VITE_DEMO_ENABLED=true`).
+> PRE usa el proyecto remoto `mkypmakmkxpecuezofkk` con datos sintéticos.
 > PRO usa el proyecto remoto `vbpgsgxsslccctjhuegt` con datos reales de clientes.
 
 ---
@@ -29,7 +29,6 @@ Configurar en **Vercel Dashboard → Project → Settings → Environment Variab
 |----------|-------------|
 | `VITE_SUPABASE_URL` | URL del proyecto Supabase de producción |
 | `VITE_SUPABASE_ANON_KEY` | Clave anon del proyecto Supabase de producción |
-| `VITE_DEMO_ENABLED` | `false` — producción siempre con datos reales |
 
 Edge Functions (configurar en **Supabase Dashboard → Edge Functions → Secrets**):
 | Variable | Description |
@@ -44,7 +43,6 @@ Configurar en **Vercel Dashboard → Project → Settings → Environment Variab
 |----------|-------------|
 | `VITE_SUPABASE_URL` | URL del proyecto Supabase de desarrollo |
 | `VITE_SUPABASE_ANON_KEY` | Clave anon del proyecto Supabase de desarrollo |
-| `VITE_DEMO_ENABLED` | `true` — PRE siempre con datos demo |
 
 ---
 
@@ -56,15 +54,14 @@ Configurar en **Vercel Dashboard → Project → Settings → Environment Variab
 - Cualquier acceso directo al SQL Editor de PRO debe estar justificado (solo para migraciones validadas).
 - Backups: automáticos via Supabase (verificar frecuencia en Supabase Dashboard → Database → Backups).
 
-### PRE — datos sintéticos/demo
-- `VITE_DEMO_ENABLED=true` → carga escenarios demo de `src/data/demo/scenarios/`
+### PRE — datos sintéticos
+- Datos de prueba sintéticos contra el proyecto Supabase de desarrollo.
 - Puede resetearse en cualquier momento. No hay datos reales que proteger.
-- Usado para: QA antes de releases, demos a potenciales clientes con datos simulados.
+- Usado para: QA antes de releases.
 
 ### DEV — datos desechables
 - Mismo proyecto Supabase que PRE. Datos de prueba que pueden resetearse libremente.
 - Seed de datos de prueba: ejecutar SQL de `supabase/seed/` en Supabase SQL Editor (proyecto DEV).
-- El modo demo (`VITE_DEMO_ENABLED=true`) funciona igual que en PRE.
 
 ---
 
@@ -91,16 +88,6 @@ feature-*, refactor-*, fix-*
     main → PRO (Vercel deploy automático)
     https://gobytech-prod.vercel.app/ actualizado
 ```
-
----
-
-## VITE_DEMO_ENABLED — comportamiento detallado
-
-| Valor | Comportamiento |
-|-------|---------------|
-| `true` | Selector de empresa muestra "Proyecto Demo". Datos cargados desde `src/data/demo/scenarios/` (change-resistance, data-visibility, pilot-chaos, slow-decisions, vendor-sprawl). Sin acceso a BD para datos de engagement. |
-| `false` | Producción normal. Solo datos reales de la BD. Sin proyecto demo en el selector. |
-| *(no definida)* | Equivale a `false`. |
 
 ---
 

@@ -52,7 +52,6 @@ Editar `.env.local` con los valores del proyecto Supabase DEV (obtener de Carlos
 ```bash
 VITE_SUPABASE_URL=https://[tu-project-ref].supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
-VITE_DEMO_ENABLED=true
 ```
 
 > Los valores están en **Supabase Dashboard → proyecto DEV → Settings → API**
@@ -70,8 +69,7 @@ Abre http://localhost:5173
 
 - [ ] La app carga sin errores de consola
 - [ ] Login funciona con tu usuario en el proyecto DEV
-- [ ] El selector de empresa muestra "Proyecto Demo" (VITE_DEMO_ENABLED=true)
-- [ ] T1 carga y muestra datos demo
+- [ ] T1 carga y muestra datos del proyecto DEV
 
 ---
 
@@ -188,9 +186,6 @@ En `src/types/database.types.ts` (si se generó via `supabase gen types`) o tipa
 
 **¿Cómo añado datos de demo?**
 Editar `src/data/demo/scenarios/` — cada fichero es un escenario de demo completo.
-
-**¿Por qué hay `VITE_DEMO_ENABLED` en el .env.example?**
-Con `true`, el selector de empresa muestra "Proyecto Demo" con datos simulados de `src/data/demo/`. Con `false`, solo hay datos reales de la BD. Siempre `true` en DEV/PRE, siempre `false` en PRO.
 
 **¿Cómo funciona la autenticación?**
 Supabase GoTrue. Auth flow: login → Supabase genera JWT → `useSession` en `AuthStore` → RLS policies usan el user_id del JWT. Para usuarios invitados: `invite-user` Edge Function → email con link → `UpdatePasswordView` (aduana de primer acceso).

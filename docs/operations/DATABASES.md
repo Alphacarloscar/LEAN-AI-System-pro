@@ -1,4 +1,4 @@
-﻿# Databases — GOBY
+﻿﻿﻿﻿# Databases — GOBY
 
 Last updated: 2026-06-01
 AI-Ready Repository System v2.1.0
@@ -37,12 +37,16 @@ AI-Ready Repository System v2.1.0
 
 | Tabla | Propósito | Discriminador de tenant |
 |-------|----------|------------------------|
-| `profiles` | Usuarios (extiende auth.users) | `id` = user_id |
-| `engagements` | Proyectos de adopción IA | `company_id` |
-| `engagement_members` | Relación usuario ↔ engagement | `engagement_id` |
-| `company_profiles` | Perfil de empresa del cliente | `engagement_id` |
-| `snapshots` | Capturas longitudinales del estado | `engagement_id` |
-| `frictions` | Fricciones detectadas en T3 | `engagement_id` |
+| `companies` | Empresas cliente (tenants) | `id` |
+| `profiles` | Usuarios (extiende auth.users) | `company_id` |
+| `projects` | Proyectos de adopción IA | `company_id` |
+| `project_members` | Relación usuario ↔ proyecto | `project_id` |
+| `company_profiles` | Perfil de empresa del cliente | `project_id` |
+| `snapshots` | Capturas longitudinales del estado | `project_id` |
+| `frictions` | Fricciones detectadas en T3 | `project_id` |
+| `audit_logs` | Historial de auditoría (90 días) | `user_id` / `metadata.company_id` |
+| `audit_logs_archive` | Archivo de auditoría (5 años) | `user_id` / `metadata.company_id` |
+| `audit_access_logs` | Meta-auditoría de accesos al log | `user_id` |
 
 ### Tablas con payload JSONB (flexibles por herramienta)
 
@@ -69,18 +73,21 @@ AI-Ready Repository System v2.1.0
 
 | Fichero | Descripción | Estado |
 |---------|-------------|--------|
-| `001_foundation.sql` | Schema base: profiles, engagements, members, company_profiles, frictions, T1, stakeholders, value_streams, use_cases, t5_canvas, iso42001_controls | ✅ DEV + PRO |
+| `001_foundation.sql` | Schema base: profiles, projects, members, company_profiles, frictions, T1, stakeholders, value_streams, use_cases, t5_canvas, iso42001_controls | ✅ DEV + PRO |
 | `002_snapshots.sql` | Sistema de snapshots longitudinales | ✅ DEV + PRO |
 | `003_t1_multiinterviewee.sql` | T1 multi-entrevistado: interviewee_id + interviewee_type | ✅ DEV + PRO |
-| `004_companies_and_rename.sql` | Tabla company_profiles + renombrado de columnas | ✅ DEV + PRO |
+| `004_companies_and_rename.sql` | Tabla `companies` + renombrado de `engagements` a `projects` | ✅ DEV + PRO |
 | `005_company_wide_access.sql` | company_id en members + auto-add usuarios de empresa | ✅ DEV + PRO |
-| `006_performance_indexes.sql` | Índices en engagement_id, company_id, created_at | ✅ DEV + PRO |
+| `006_performance_indexes.sql` | Índices en project_id, company_id, created_at | ✅ DEV + PRO |
 | `007_stakeholder_unofficial_tools.sql` | Campo unofficial_tools en stakeholders (Shadow AI) | ✅ DEV + PRO |
 | `008_roles_four_tier.sql` | Sistema de 4 roles (ADR-008) | ✅ DEV + PRO |
 | `20260527_security_persistence.sql` | Persistencia de sesión y seguridad | ✅ DEV + PRO |
 | `20260527_security_persistence_v2.sql` | Fix: ajustes de persistencia | ✅ DEV + PRO |
 | `20260527_security_persistence_v3.sql` | Fix: ajustes finales de persistencia | ✅ DEV + PRO |
 | `20260527_security_persistence_v3_1.sql` | Hotfix: seguridad persistencia | ✅ DEV + PRO |
+| `20260615_003_audit_system.sql` | Migración consolidada del sistema de auditoría: tablas `audit_logs`, `audit_logs_archive`, `audit_access_logs` + índices + RLS + funciones de purga HMAC + jobs pg_cron + `get_audit_logs` SECURITY DEFINER (ADR-017, ADR-018, ADR-019) | ✅ DEV |
+| `20260615_007_perf_profiles_idx.sql` | Índice explícito en `profiles.id` para mejorar rendimiento de consultas de rol | ✅ DEV |
+| `20260616_004_audit_schema_drift.sql` | Drift fix: añade columnas faltantes en tablas preexistentes (`audit_logs.correlation_id`, `audit_logs_archive.correlation_id/user_email_hash/ai_provider/ai_model/ai_total_tokens`) | ✅ DEV |
 
 > **FASE2_verify_indexes.sql, FASE3_add_missing_indexes.sql** — scripts de verificación/mantenimiento, no migraciones de esquema.
 
@@ -96,9 +103,8 @@ AI-Ready Repository System v2.1.0
 - Claude no ejecuta queries directas en PRO. Proporciona SQL para que Carlos lo ejecute.
 
 ### PRE — Pre-production (datos sintéticos)
-- `VITE_DEMO_ENABLED=true` → datos demo de `src/data/demo/scenarios/`.
-- Puede resetearse libremente. Sin datos reales de clientes.
-- Para QA y demos a potenciales clientes.
+- Datos sintéticos de prueba. Puede resetearse libremente. Sin datos reales de clientes.
+- Para QA antes de releases.
 
 ### DEV — Local development (datos desechables)
 - Supabase CLI local (`supabase start`) — BD propia en la máquina de desarrollo.

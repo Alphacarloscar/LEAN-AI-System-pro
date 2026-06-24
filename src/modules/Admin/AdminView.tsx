@@ -20,7 +20,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate }                  from 'react-router-dom'
 import { useAuthStore }                 from '@/modules/Auth'
-import { Spinner }                      from '@/shared/components/Spinner'
+import { Spinner }                      from '@shared/design-system/components'
 import {
   listCompanies,
   createCompany,
@@ -536,8 +536,8 @@ function ProjectsTab({ companies }: ProjectsTabProps) {
     if (!name.trim()) return
     setCreating(true); setError(null)
     try {
-      const project = await createProject({ name: name.trim(), companyId: companyId || undefined })
-      setProjects((prev) => [project, ...prev])
+      const newProject = await createProject({ name: name.trim(), companyId: companyId || undefined })
+      setProjects((prev) => [newProject, ...prev])
       setName(''); setCompanyId('')
       setSuccess(true)
       setTimeout(() => setSuccess(false), 2000)
@@ -593,7 +593,7 @@ function ProjectsTab({ companies }: ProjectsTabProps) {
           <p className="text-sm text-gray-400">Sin proyectos todavía.</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {projects.map((p) => {
+            {projects.filter(Boolean).map((p) => {
               const company = companies.find((c) => c.id === p.company_id)
               return (
                 <div key={p.id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-gray-50 border border-gray-100">
@@ -631,7 +631,7 @@ export function AdminView() {
   // Redirigir si no es superadmin
   useEffect(() => {
     if (user && user.role !== 'superadmin') navigate('/', { replace: true })
-  }, [user])
+  }, [user, navigate])
 
   // Fetch único al montar: companies + users en paralelo
   useEffect(() => {

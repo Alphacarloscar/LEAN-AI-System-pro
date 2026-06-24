@@ -15,8 +15,9 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate }         from 'react-router-dom'
-import { supabase }            from '@/lib/supabase'
+import { getAuthSession, subscribeToAuthChanges, updateAuthUser } from '@services/auth.service'
 import { useAuthStore }        from './store'
+import { Spinner }             from '@shared/design-system/components'
 
 // ── Logo GOBY inline ──────────────────────────────────────────
 
@@ -59,12 +60,12 @@ export function ResetPasswordView() {
   // además de escuchar eventos futuros.
   useEffect(() => {
     // Comprobación inmediata — cubre el caso de token ya procesado
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getAuthSession().then(({ data: { session } }) => {
       if (session) setViewState('form')
     })
 
     // Listener para eventos que llegan mientras el componente ya está montado
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = subscribeToAuthChanges((event) => {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         setViewState('form')
       }
@@ -96,7 +97,7 @@ export function ResetPasswordView() {
 
     setSubmitting(true)
     // Actualiza contraseña Y borra el metadato needs_password_reset en auth.users
-    const { error: updateError } = await supabase.auth.updateUser({
+    const { error: updateError } = await updateAuthUser({
       password,
       data: { needs_password_reset: false },
     })
@@ -118,10 +119,7 @@ export function ResetPasswordView() {
   if (viewState === 'loading') return (
     <div className="min-h-screen flex items-center justify-center bg-[#F7F4EE]">
       <div className="text-center">
-        <svg className="animate-spin h-6 w-6 text-[#C8860A] mx-auto mb-3" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
+        <Spinner size="md" label="Verificando enlace…" className="text-[#C8860A] mx-auto mb-3" />
         <p className="text-sm text-gray-500">Verificando enlace…</p>
       </div>
     </div>

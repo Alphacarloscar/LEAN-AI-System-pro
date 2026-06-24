@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/lib/audit/auditClient', () => ({ fireAuditLog: vi.fn() }))
+vi.mock('@/lib/audit', () => ({ makeAuditable: <T>(s: T) => s }))
+
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     from: vi.fn(),
@@ -347,5 +350,69 @@ describe('bulkInsertValueStreams', () => {
     await expect(
       bulkInsertValueStreams([makeValueStream()], ENG_ID),
     ).rejects.toThrow('[T3] bulkInsertValueStreams:')
+  })
+})
+
+// ── Aislamiento de localStorage — mutaciones T3 ───────────────
+// Todas las mutaciones del servicio deben ir directamente a Supabase.
+// No deben generar persistencias paralelas en el almacenamiento local.
+
+describe('Aislamiento de localStorage — mutaciones T3', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('insertValueStream no escribe localStorage', async () => {
+    const mockChain = { insert: vi.fn().mockResolvedValue({ error: null }) }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const spy = vi.spyOn(Storage.prototype, 'setItem')
+    await insertValueStream(makeValueStream(), ENG_ID)
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('updateValueStreamInDb no escribe localStorage', async () => {
+    const mockChain = { update: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis() }
+    mockChain.eq.mockReturnValueOnce(mockChain).mockResolvedValueOnce({ error: null })
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const spy = vi.spyOn(Storage.prototype, 'setItem')
+    await updateValueStreamInDb('vs-001', ENG_ID, { phase: 'estandarizacion' })
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('deleteValueStreamFromDb no escribe localStorage', async () => {
+    const mockChain = { delete: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis() }
+    mockChain.eq.mockReturnValueOnce(mockChain).mockResolvedValueOnce({ error: null })
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const spy = vi.spyOn(Storage.prototype, 'setItem')
+    await deleteValueStreamFromDb('vs-001', ENG_ID)
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('bulkInsertValueStreams no escribe localStorage', async () => {
+    const mockChain = { insert: vi.fn().mockResolvedValue({ error: null }) }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const spy = vi.spyOn(Storage.prototype, 'setItem')
+    await bulkInsertValueStreams([makeValueStream(), makeValueStream({ id: 'vs-002', name: 'P2' })], ENG_ID)
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('fetchValueStreams no lee localStorage', async () => {
+    const mockChain = {
+      select: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockReturnThis(),
+      order:  vi.fn().mockResolvedValue({ data: [], error: null }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const spy = vi.spyOn(Storage.prototype, 'getItem')
+    await fetchValueStreams(ENG_ID)
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
   })
 })

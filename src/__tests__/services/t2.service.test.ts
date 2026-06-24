@@ -339,3 +339,142 @@ describe('bulkInsertStakeholders', () => {
     ).rejects.toThrow('[T2] bulkInsertStakeholders:')
   })
 })
+
+// ── T1 → T2 import census — deduplicación y mapeo ────────────
+// Valida que al importar entrevistados de T1 a la matriz T2:
+//   • los campos role y department se preservan sin truncar
+//   • entrevistados con mismo nombre pero distinto ID generan filas separadas
+//   • el formato correcto llega a stakeholderToInsert sin contaminar campos
+
+describe('T1 → T2 census import — deduplicación y mapeo', () => {
+  // Simula la forma de un T1IntervieweeContext tal como llega del service T1
+  function makeT1Interviewee(overrides: Partial<{
+    id: string; name: string; role: string; department: string; type: 'it' | 'business'
+  }> = {}) {
+    return {
+      id:         overrides.id         ?? 'int-import-001',
+      name:       overrides.name       ?? 'María García',
+      role:       overrides.role       ?? 'Directora de Operaciones',
+      department: overrides.department ?? 'Operaciones',
+      type:       overrides.type       ?? ('business' as const),
+      archetype:  'Líder de Negocio' as const,
+    }
+  }
+
+  it('stakeholderToInsert preserva role y department del entrevistado T1', () => {
+    const t1Person = makeT1Interviewee({ role: 'Head of Digital', department: 'IT / Tecnología' })
+    const stakeholder = makeStakeholder({ role: t1Person.role, department: t1Person.department })
+    const row = stakeholderToInsert(stakeholder, ENG_ID)
+
+    expect(row.role).toBe('Head of Digital')
+    expect(row.department).toBe('IT / Tecnología')
+  })
+
+  it('dos entrevistados T1 con mismo nombre pero distinto ID generan filas independientes', () => {
+    // En T1 el texto libre puede capturar el mismo nombre en sesiones distintas
+    const id1 = 'int-a'
+    const id2 = 'int-b'
+    const sharedName = 'Carlos Ruiz'
+
+    const s1 = makeStakeholder({ id: id1, name: sharedName, role: 'CIO', department: 'IT' })
+    const s2 = makeStakeholder({ id: id2, name: sharedName, role: 'CTO', department: 'IT' })
+
+    const row1 = stakeholderToInsert(s1, ENG_ID)
+    const row2 = stakeholderToInsert(s2, ENG_ID)
+
+    // Mismo nombre, IDs distintos → ambas filas son válidas, no colapsan
+    expect(row1.id).toBe(id1)
+    expect(row2.id).toBe(id2)
+    expect(row1.name).toBe(sharedName)
+    expect(row2.name).toBe(sharedName)
+    expect(row1.role).not.toBe(row2.role)
+  })
+
+  it('bulkInsertStakeholders con importación T1: envía exactamente las N filas sin duplicar', async () => {
+    const mockChain = { insert: vi.fn().mockResolvedValue({ error: null }) }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    // 3 entrevistados T1 distintos → 3 stakeholders T2
+    const imported = [
+      makeStakeholder({ id: 'i1', name: 'Ana López',   role: 'CEO',        department: 'Dirección' }),
+      makeStakeholder({ id: 'i2', name: 'Pepe Sanz',   role: 'CIO',        department: 'IT' }),
+      makeStakeholder({ id: 'i3', name: 'Ana López',   role: 'CFO',        department: 'Finanzas' }), // mismo nombre, distinto cargo
+    ]
+
+    await bulkInsertStakeholders(imported, ENG_ID)
+
+    const rows = vi.mocked(mockChain.insert).mock.calls[0][0] as { id: string; name: string }[]
+    expect(rows).toHaveLength(3)
+    const ids = rows.map((r) => r.id)
+    expect(new Set(ids).size).toBe(3)  // IDs únicos — no hubo colapso
+  })
+
+  it('stakeholderToInsert no produce campos undefined en el payload enviado a Supabase', () => {
+    const t1Person = makeT1Interviewee()
+    // Simulamos un entrevistado T1 sin entrevista completada aún
+    const s = makeStakeholder({
+      id:         t1Person.id,
+      name:       t1Person.name,
+      role:       t1Person.role,
+      department: t1Person.department,
+      notes:      undefined,
+      interview:  undefined,
+    })
+
+    const row = stakeholderToInsert(s, ENG_ID)
+
+    // Supabase rechaza campos undefined — deben llegar como null
+    expect(row.notes).toBeNull()
+    expect(row.interview).toBeNull()
+    expect(row.unofficial_tools).toBeNull()
+    expect(row.project_id).toBe(ENG_ID)
+  })
+})
+
+// ── Aislamiento de localStorage — mutaciones T2 ───────────────
+
+describe('Aislamiento de localStorage — mutaciones T2', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('insertStakeholder no escribe localStorage', async () => {
+    const mockChain = { insert: vi.fn().mockResolvedValue({ error: null }) }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const spy = vi.spyOn(Storage.prototype, 'setItem')
+    await insertStakeholder(makeStakeholder(), ENG_ID)
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('updateStakeholderInDb no escribe localStorage', async () => {
+    const mockChain = { update: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis() }
+    mockChain.eq.mockReturnValueOnce(mockChain).mockResolvedValueOnce({ error: null })
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const spy = vi.spyOn(Storage.prototype, 'setItem')
+    await updateStakeholderInDb('stk-001', ENG_ID, { resistance: 'baja' })
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('deleteStakeholderFromDb no escribe localStorage', async () => {
+    const mockChain = { delete: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis() }
+    mockChain.eq.mockReturnValueOnce(mockChain).mockResolvedValueOnce({ error: null })
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const spy = vi.spyOn(Storage.prototype, 'setItem')
+    await deleteStakeholderFromDb('stk-001', ENG_ID)
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('bulkInsertStakeholders no escribe localStorage', async () => {
+    const mockChain = { insert: vi.fn().mockResolvedValue({ error: null }) }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const spy = vi.spyOn(Storage.prototype, 'setItem')
+    await bulkInsertStakeholders([makeStakeholder()], ENG_ID)
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+})

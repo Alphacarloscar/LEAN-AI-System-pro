@@ -16,11 +16,19 @@
 // Entrevistados ya presentes en T2 (por nombre) → deshabilitados.
 // ============================================================
 
-import { useState, useEffect }  from 'react'
-import { useT1Store }           from '@/modules/T1_MaturityRadar/store'
-import { useT2Store }           from '../store'
-import { useEngagementStore }   from '@/modules/Engagement/store'
-import type { ArchetypeCode }   from '../types'
+import { useState }                       from 'react'
+import { useT1Store }                     from '@/modules/T1_MaturityRadar/store'
+import { useT2Store }                     from '../store'
+import { useEngagementStore }             from '@/modules/Engagement/store'
+import type { ArchetypeCode }             from '../types'
+import { Modal, Button, Badge }           from '@shared/design-system/components'
+import { reportError }                    from '@/lib/reportError'
+
+// Colores de categoría IT/Negocio (data-driven — inline style, sin variante DS)
+const TYPE_BADGE_STYLE: Record<'it' | 'business', React.CSSProperties> = {
+  it:       { backgroundColor: '#e0e7ff', color: '#3730a3' },
+  business: { backgroundColor: '#d1fae5', color: '#065f46' },
+}
 
 interface ImportFromT1ModalProps {
   onClose: () => void
@@ -28,16 +36,8 @@ interface ImportFromT1ModalProps {
 
 export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
   const interviewees              = useT1Store((s) => s.interviewees)
-  const isT1Loading               = useT1Store((s) => s.isLoading)
   const { stakeholders, addStakeholder } = useT2Store()
   const engagementId              = useEngagementStore((s) => s.activeEngagementId)
-
-  // Si T1 no fue visitado en esta sesión, el store puede estar vacío.
-  // Disparamos ensureLoaded al montar el modal para garantizar datos frescos.
-  useEffect(() => {
-    if (!engagementId) return
-    useT1Store.getState().ensureLoaded(engagementId, { reason: 'ImportFromT1Modal mount' })
-  }, [engagementId])
 
   const [selected, setSelected]   = useState<Set<string>>(new Set())
   const [importing, setImporting] = useState(false)
@@ -93,7 +93,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
           manualOverride: false,
         },
         engagementId,
-      ).catch((err) => console.error('[ImportFromT1] addStakeholder:', err))
+      ).catch((err) => reportError('[ImportFromT1] addStakeholder sync', err))
     })
 
     setImportCount(toImport.length)
@@ -107,247 +107,198 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
     return person ? !alreadyInT2(person.name, person.role) : false
   }).length
 
+  const footerEl = !done ? (
+    <div className="flex items-center justify-between gap-4">
+      <p className="text-xs text-text-subtle">
+        {selectedCount > 0
+          ? `${selectedCount} persona${selectedCount !== 1 ? 's' : ''} seleccionada${selectedCount !== 1 ? 's' : ''}`
+          : 'Ninguna seleccionada'}
+      </p>
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
+          disabled={selectedCount === 0 || importing}
+          onClick={handleImport}
+        >
+          {importing
+            ? 'Importando…'
+            : `Importar ${selectedCount > 0 ? selectedCount : ''} stakeholder${selectedCount !== 1 ? 's' : ''}`}
+        </Button>
+      </div>
+    </div>
+  ) : undefined
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+    <Modal
+      open={true}
+      onClose={onClose}
+      title="Importar entrevistados desde T1"
+      size="xl"
+      footer={footerEl}
     >
-      <div className="w-full max-w-2xl bg-white dark:bg-gray-950 rounded-3xl shadow-2xl
-        border border-border dark:border-white/10 flex flex-col max-h-[85vh] overflow-hidden">
+      {!done ? (
+        <div className="space-y-4">
+          {/* Descripción */}
+          <p className="text-xs text-text-muted leading-relaxed">
+            Las personas del Madurez Radar pasan como stakeholders. IT → arquetipo Reticente · Negocio → arquetipo Decisor. El departamento capturado en T1 se transfiere automáticamente.
+          </p>
 
-        {/* Header */}
-        <div className="flex items-center gap-4 px-7 py-5 border-b border-border dark:border-white/8">
-          <div className="flex-1">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-0.5">
-              T1 → T2
-            </p>
-            <h2 className="text-base font-semibold text-lean-black dark:text-gray-100">
-              Importar entrevistados desde T1
-            </h2>
-            <p className="text-xs text-text-muted mt-0.5">
-              Las personas del Madurez Radar pasan como stakeholders. IT → arquetipo Reticente · Negocio → arquetipo Decisor. El departamento capturado en T1 se transfiere automáticamente.
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="h-8 w-8 rounded-full flex items-center justify-center shrink-0
-              text-text-subtle hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            ✕
-          </button>
-        </div>
+          {/* Acciones rápidas */}
+          {availableCount > 0 && (
+            <div className="flex items-center gap-3 px-1">
+              <span className="text-[10px] text-text-subtle">
+                {availableCount} entrevistado{availableCount !== 1 ? 's' : ''} disponibles
+              </span>
+              <Button variant="link" className="text-[10px]" onClick={selectAll}>
+                Seleccionar todos
+              </Button>
+              {selected.size > 0 && (
+                <Button variant="link" className="text-[10px]" onClick={() => setSelected(new Set())}>
+                  Limpiar
+                </Button>
+              )}
+            </div>
+          )}
 
-        {/* Content */}
-        {!done ? (
-          <>
-            {/* Acciones rápidas */}
-            {availableCount > 0 && (
-              <div className="flex items-center gap-3 px-7 py-3 border-b border-border dark:border-white/8
-                bg-gray-50 dark:bg-gray-900/50">
-                <span className="text-[10px] text-text-subtle">
-                  {availableCount} entrevistado{availableCount !== 1 ? 's' : ''} disponibles
-                </span>
-                <button
-                  onClick={selectAll}
-                  className="text-[10px] font-semibold text-navy dark:text-warm-100 hover:underline"
-                >
-                  Seleccionar todos
-                </button>
-                {selected.size > 0 && (
-                  <button
-                    onClick={() => setSelected(new Set())}
-                    className="text-[10px] text-text-muted hover:text-text-default"
-                  >
-                    Limpiar
-                  </button>
-                )}
+          {/* Lista */}
+          <div className="flex flex-col gap-2.5">
+
+            {interviewees.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
+                <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
+                  flex items-center justify-center text-2xl">◎</div>
+                <p className="text-sm font-medium text-text-muted">Sin entrevistados en T1</p>
+                <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
+                  Añade entrevistados en el Madurez Radar (T1) primero para importarlos aquí.
+                </p>
               </div>
             )}
 
-            {/* Lista */}
-            <div className="flex-1 overflow-y-auto px-7 py-4 flex flex-col gap-2.5">
+            {/* Disponibles */}
+            {interviewees
+              .filter((i) => !alreadyInT2(i.name, i.role))
+              .map((person) => {
+                const isSelected  = selected.has(person.id)
+                const archetype   = person.type === 'it' ? 'Reticente' : 'Decisor'
+                const department  = person.department || (person.type === 'it' ? 'IT / Tecnología' : 'Sin asignar')
+                const typeLabel   = person.type === 'it' ? 'IT' : 'Negocio'
+                const typeStyle   = TYPE_BADGE_STYLE[person.type as 'it' | 'business'] ?? TYPE_BADGE_STYLE.business
 
-              {isT1Loading && interviewees.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-                  <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
-                    flex items-center justify-center">
-                    <svg className="animate-spin h-5 w-5 text-text-subtle" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                      <path className="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                    </svg>
-                  </div>
-                  <p className="text-xs text-text-subtle">Cargando entrevistados desde T1…</p>
-                </div>
-              )}
+                return (
+                  <button
+                    key={person.id}
+                    onClick={() => toggle(person.id)}
+                    className={[
+                      'w-full text-left rounded-2xl border px-4 py-3.5 transition-all duration-150',
+                      'flex items-start gap-3',
+                      isSelected
+                        ? 'border-navy/40 bg-navy/5 dark:bg-navy/10 ring-1 ring-navy/20'
+                        : 'border-border dark:border-white/8 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-white/14',
+                    ].join(' ')}
+                  >
+                    {/* Checkbox */}
+                    <div className={[
+                      'h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5',
+                      isSelected
+                        ? 'border-navy bg-navy'
+                        : 'border-gray-300 dark:border-gray-600',
+                    ].join(' ')}>
+                      {isSelected && (
+                        <svg viewBox="0 0 10 8" width={10} height={8} fill="none">
+                          <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5"
+                            strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </div>
 
-              {!isT1Loading && interviewees.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-                  <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
-                    flex items-center justify-center text-2xl">◎</div>
-                  <p className="text-sm font-medium text-text-muted">Sin entrevistados en T1</p>
-                  <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
-                    Añade entrevistados en el Madurez Radar (T1) primero para importarlos aquí.
-                  </p>
-                </div>
-              )}
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start gap-2 flex-wrap">
+                        <p className="text-xs font-bold text-lean-black dark:text-gray-200 leading-tight flex-1">
+                          {person.name}
+                        </p>
+                        <Badge
+                          shape="pill"
+                          size="sm"
+                          className="!text-[9px] !font-semibold shrink-0"
+                          style={typeStyle}
+                        >
+                          {typeLabel}
+                        </Badge>
+                      </div>
+                      <p className="text-[10px] text-text-subtle mt-0.5 mb-2">{person.role}</p>
+                      <div className="flex items-center gap-2 flex-wrap text-[9px] text-text-subtle">
+                        <span>→ Arquetipo: <strong className="text-text-muted">{archetype}</strong></span>
+                        <span>· Dept: <strong className="text-text-muted">{department}</strong></span>
+                        <span>· Resistencia: <strong className="text-text-muted">Media</strong></span>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
 
-              {/* Disponibles */}
-              {interviewees
-                .filter((i) => !alreadyInT2(i.name, i.role))
-                .map((person) => {
-                  const isSelected  = selected.has(person.id)
-                  const archetype   = person.type === 'it' ? 'Reticente' : 'Decisor'
-                  const department  = person.department || (person.type === 'it' ? 'IT / Tecnología' : 'Sin asignar')
-                  const typeLabel   = person.type === 'it' ? 'IT' : 'Negocio'
-                  const typeBg      = person.type === 'it'
-                    ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                    : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-
-                  return (
-                    <button
+            {/* Ya importados */}
+            {interviewees.filter((i) => alreadyInT2(i.name, i.role)).length > 0 && (
+              <>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle
+                  mt-4 mb-1 px-1">
+                  Ya en T2
+                </p>
+                {interviewees
+                  .filter((i) => alreadyInT2(i.name, i.role))
+                  .map((person) => (
+                    <div
                       key={person.id}
-                      onClick={() => toggle(person.id)}
-                      className={[
-                        'w-full text-left rounded-2xl border px-4 py-3.5 transition-all duration-150',
-                        'flex items-start gap-3',
-                        isSelected
-                          ? 'border-navy/40 bg-navy/5 dark:bg-navy/10 ring-1 ring-navy/20'
-                          : 'border-border dark:border-white/8 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-white/14',
-                      ].join(' ')}
+                      className="rounded-2xl border border-border dark:border-white/6
+                        px-4 py-3 opacity-40 flex items-center gap-3"
                     >
-                      {/* Checkbox */}
-                      <div className={[
-                        'h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5',
-                        isSelected
-                          ? 'border-navy bg-navy'
-                          : 'border-gray-300 dark:border-gray-600',
-                      ].join(' ')}>
-                        {isSelected && (
-                          <svg viewBox="0 0 10 8" width={10} height={8} fill="none">
-                            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5"
-                              strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
+                      <div className="h-4 w-4 rounded border-2 border-success-dark
+                        bg-success-dark flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 10 8" width={10} height={8} fill="none">
+                          <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5"
+                            strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                       </div>
-
-                      {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start gap-2 flex-wrap">
-                          <p className="text-xs font-bold text-lean-black dark:text-gray-200 leading-tight flex-1">
-                            {person.name}
-                          </p>
-                          <span className={`shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${typeBg}`}>
-                            {typeLabel}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-text-subtle mt-0.5 mb-2">{person.role}</p>
-                        <div className="flex items-center gap-2 flex-wrap text-[9px] text-text-subtle">
-                          <span>→ Arquetipo: <strong className="text-text-muted">{archetype}</strong></span>
-                          <span>· Dept: <strong className="text-text-muted">{department}</strong></span>
-                          <span>· Resistencia: <strong className="text-text-muted">Media</strong></span>
-                        </div>
+                        <p className="text-xs font-bold text-lean-black dark:text-gray-200 leading-tight">
+                          {person.name}
+                        </p>
+                        <p className="text-[10px] text-text-subtle">{person.role}</p>
                       </div>
-                    </button>
-                  )
-                })}
-
-              {/* Ya importados */}
-              {interviewees.filter((i) => alreadyInT2(i.name, i.role)).length > 0 && (
-                <>
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle
-                    mt-4 mb-1 px-1">
-                    Ya en T2
-                  </p>
-                  {interviewees
-                    .filter((i) => alreadyInT2(i.name, i.role))
-                    .map((person) => (
-                      <div
-                        key={person.id}
-                        className="rounded-2xl border border-border dark:border-white/6
-                          px-4 py-3 opacity-40 flex items-center gap-3"
-                      >
-                        <div className="h-4 w-4 rounded border-2 border-success-dark
-                          bg-success-dark flex items-center justify-center shrink-0">
-                          <svg viewBox="0 0 10 8" width={10} height={8} fill="none">
-                            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5"
-                              strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-lean-black dark:text-gray-200 leading-tight">
-                            {person.name}
-                          </p>
-                          <p className="text-[10px] text-text-subtle">{person.role}</p>
-                        </div>
-                        <span className="text-[9px] font-semibold text-success-dark shrink-0">
-                          Ya en T2 ✓
-                        </span>
-                      </div>
-                    ))}
-                </>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-between gap-4 px-7 py-4
-              border-t border-border dark:border-white/8">
-              <p className="text-xs text-text-subtle">
-                {selectedCount > 0
-                  ? `${selectedCount} persona${selectedCount !== 1 ? 's' : ''} seleccionada${selectedCount !== 1 ? 's' : ''}`
-                  : 'Ninguna seleccionada'}
-              </p>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={onClose}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-text-muted
-                    hover:text-text-default hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleImport}
-                  disabled={selectedCount === 0 || importing}
-                  className={[
-                    'px-5 py-2 rounded-xl text-xs font-semibold transition-all',
-                    selectedCount > 0 && !importing
-                      ? 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm'
-                      : 'bg-gray-200 dark:bg-gray-700 text-text-muted cursor-not-allowed',
-                  ].join(' ')}
-                >
-                  {importing
-                    ? 'Importando…'
-                    : `Importar ${selectedCount > 0 ? selectedCount : ''} stakeholder${selectedCount !== 1 ? 's' : ''}`}
-                </button>
-              </div>
-            </div>
-          </>
-        ) : (
-          /* Importación completada */
-          <div className="flex flex-col items-center justify-center py-16 px-8 text-center gap-5">
-            <div className="h-14 w-14 rounded-3xl bg-success-light flex items-center
-              justify-center text-2xl text-success-dark">
-              ✓
-            </div>
-            <div>
-              <p className="text-base font-semibold text-lean-black dark:text-gray-100 mb-1">
-                {importCount} stakeholder{importCount !== 1 ? 's' : ''} importado{importCount !== 1 ? 's' : ''}
-              </p>
-              <p className="text-xs text-text-muted leading-relaxed max-w-sm">
-                Aparecen en la matriz con arquetipo y resistencia por defecto.
-                Edita cada perfil para ajustar el arquetipo real y nivel de resistencia.
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-navy-metallic text-white
-                hover:bg-navy-metallic-hover transition-colors shadow-sm"
-            >
-              Ver la Stakeholder Matrix
-            </button>
+                      <span className="text-[9px] font-semibold text-success-dark shrink-0">
+                        Ya en T2 ✓
+                      </span>
+                    </div>
+                  ))}
+              </>
+            )}
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      ) : (
+        /* Importación completada */
+        <div className="flex flex-col items-center justify-center py-8 px-4 text-center gap-5">
+          <div className="h-14 w-14 rounded-3xl bg-success-light flex items-center
+            justify-center text-2xl text-success-dark">
+            ✓
+          </div>
+          <div>
+            <p className="text-base font-semibold text-lean-black dark:text-gray-100 mb-1">
+              {importCount} stakeholder{importCount !== 1 ? 's' : ''} importado{importCount !== 1 ? 's' : ''}
+            </p>
+            <p className="text-xs text-text-muted leading-relaxed max-w-sm">
+              Aparecen en la matriz con arquetipo y resistencia por defecto.
+              Edita cada perfil para ajustar el arquetipo real y nivel de resistencia.
+            </p>
+          </div>
+          <Button variant="primary" onClick={onClose}>
+            Ver la Stakeholder Matrix
+          </Button>
+        </div>
+      )}
+    </Modal>
   )
 }

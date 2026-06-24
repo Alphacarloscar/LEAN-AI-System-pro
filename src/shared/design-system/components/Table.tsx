@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react'
+import { Spinner } from './Spinner'
 
 // ─────────────────────────────────────────────────────────────
 // Table — tabla de datos accesible con soporte a ordenación
@@ -79,7 +80,7 @@ export function Table<T = Record<string, unknown>>({
     <div className={`overflow-x-auto rounded-lg border border-border ${className}`}>
       <table className="w-full text-sm">
         <thead className={[
-          'bg-surface dark:bg-gray-800 border-b border-border',
+          'bg-surface dark:bg-warm-700 border-b border-border',
           stickyHeader ? 'sticky top-0 z-10' : '',
         ].join(' ')}>
           <tr>
@@ -92,7 +93,7 @@ export function Table<T = Record<string, unknown>>({
                   alignClasses[col.align ?? 'left'],
                   col.width ?? '',
                   col.sortable && onSort
-                    ? 'cursor-pointer select-none hover:text-lean-black dark:hover:text-gray-100 transition-colors'
+                    ? 'cursor-pointer select-none hover:text-lean-black dark:hover:text-warm-50 transition-colors'
                     : '',
                 ].join(' ')}
                 onClick={col.sortable && onSort ? () => onSort(col.key) : undefined}
@@ -114,15 +115,12 @@ export function Table<T = Record<string, unknown>>({
           </tr>
         </thead>
 
-        <tbody className="divide-y divide-border bg-white dark:bg-gray-900">
+        <tbody className="divide-y divide-border bg-white dark:bg-warm-800">
           {loading ? (
             <tr>
               <td colSpan={columns.length} className="px-4 py-8 text-center text-text-muted">
                 <div className="flex items-center justify-center gap-2">
-                  <svg className="h-4 w-4 animate-spin text-navy dark:text-warm-100" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
+                  <Spinner size="md" className="text-navy dark:text-warm-100" />
                   Cargando…
                 </div>
               </td>
@@ -137,7 +135,7 @@ export function Table<T = Record<string, unknown>>({
             rows.map((row) => (
               <tr
                 key={keyExtractor(row)}
-                className="hover:bg-surface dark:hover:bg-gray-800/50 transition-colors"
+                className="hover:bg-surface dark:hover:bg-warm-700/50 transition-colors"
               >
                 {columns.map((col) => {
                   const rawValue = (row as Record<string, unknown>)[col.key]
@@ -151,7 +149,7 @@ export function Table<T = Record<string, unknown>>({
                     <td
                       key={col.key}
                       className={[
-                        'px-4 py-3 text-lean-black dark:text-gray-100',
+                        'px-4 py-3 text-lean-black dark:text-warm-50',
                         alignClasses[col.align ?? 'left'],
                       ].join(' ')}
                     >

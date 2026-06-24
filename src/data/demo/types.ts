@@ -9,7 +9,7 @@
 // Sprint 1 — creado para demos con prospects (Javier+Susana y cold leads)
 // ============================================================
 
-import type { LeanPhase }        from '@/shared/components/PhaseRoadmap'
+import type { PhaseRoadmapItem } from '@/shared/components/PhaseRoadmap'
 import type { RadarDimension }   from '@/shared/components/charts/LeanRadarChart'
 import type { MetricHeroProps }  from '@/shared/components/MetricHero'
 
@@ -176,9 +176,9 @@ export interface DemoScenario {
   /**
    * Fases del Metro Map con sus herramientas y estados.
    * Representa dónde está este cliente ficticio en su sprint L.E.A.N.
-   * Tipado como LeanPhase[] → se pasa directamente a <PhaseRoadmap />
+   * Tipado como PhaseRoadmapItem[] → se pasa directamente a <PhaseRoadmap />
    */
-  phases:         LeanPhase[]
+  phases:         PhaseRoadmapItem[]
 
   /** Narrativa de la demo para usar en presentación */
   narrative:      DemoNarrative

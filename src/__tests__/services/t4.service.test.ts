@@ -1,5 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { UseCaseRow } from '@/types/database.types'
+
+vi.mock('@/lib/audit/auditClient', () => ({ fireAuditLog: vi.fn() }))
+vi.mock('@/lib/audit', () => ({ makeAuditable: <T>(s: T) => s }))
 
 // Mock completo del cliente Supabase — debe ir antes de los imports del servicio
 vi.mock('@/lib/supabase', () => ({
@@ -14,6 +17,7 @@ import {
   useCaseToInsert,
   fetchUseCases,
   insertUseCase,
+  updateUseCaseInDb,
   deleteUseCaseFromDb,
 } from '@/services/t4.service'
 
@@ -198,5 +202,158 @@ describe('deleteUseCaseFromDb', () => {
 
     expect(supabase.from).toHaveBeenCalledWith('use_cases')
     expect(mockChain.delete).toHaveBeenCalledOnce()
+  })
+})
+
+// ── updateUseCaseInDb ─────────────────────────────────────────
+
+describe('updateUseCaseInDb', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('llama a update con id y project_id correctos', async () => {
+    const mockChain = {
+      update: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockReturnThis(),
+    }
+    mockChain.eq
+      .mockReturnValueOnce(mockChain)
+      .mockResolvedValueOnce({ error: null })
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    await updateUseCaseInDb('uc-001', PROJECT_ID, { name: 'Nuevo nombre' })
+
+    expect(supabase.from).toHaveBeenCalledWith('use_cases')
+    expect(mockChain.update).toHaveBeenCalledOnce()
+    expect(mockChain.eq).toHaveBeenCalledWith('id', 'uc-001')
+    expect(mockChain.eq).toHaveBeenCalledWith('project_id', PROJECT_ID)
+  })
+
+  it('lanza error con prefijo [T4] si Supabase falla', async () => {
+    const mockChain = {
+      update: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockReturnThis(),
+    }
+    mockChain.eq
+      .mockReturnValueOnce(mockChain)
+      .mockResolvedValueOnce({ error: { message: 'FK violation' } })
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    await expect(
+      updateUseCaseInDb('uc-001', PROJECT_ID, { name: 'X' })
+    ).rejects.toThrow('[T4] updateUseCaseInDb:')
+  })
+
+  it('no lee ni escribe en localStorage directamente (aislamiento total)', async () => {
+    const mockChain = {
+      update: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockReturnThis(),
+    }
+    mockChain.eq
+      .mockReturnValueOnce(mockChain)
+      .mockResolvedValueOnce({ error: null })
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const getSpy = vi.spyOn(Storage.prototype, 'getItem')
+    const setSpy = vi.spyOn(Storage.prototype, 'setItem')
+
+    await updateUseCaseInDb('uc-001', PROJECT_ID, { description: 'Dependencia crítica' })
+
+    expect(getSpy).not.toHaveBeenCalled()
+    expect(setSpy).not.toHaveBeenCalled()
+
+    getSpy.mockRestore()
+    setSpy.mockRestore()
+  })
+})
+
+// ── Debounce — protección contra ametralladora de llamadas ────
+
+describe('updateUseCaseInDb — debounce (ametralladora de llamadas)', () => {
+  // Timer map local que replica el patrón store T1/T5/T4
+  const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+  function fireDebounced(id: string, engId: string, description: string): void {
+    const key = `${engId}::${id}`
+    const existing = debounceTimers.get(key)
+    if (existing) clearTimeout(existing)
+    debounceTimers.set(key, setTimeout(() => {
+      updateUseCaseInDb(id, engId, { description }).catch(() => null)
+      debounceTimers.delete(key)
+    }, 500))
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.clearAllMocks()
+    debounceTimers.clear()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('acumula 5 pulsaciones y dispara UNA sola petición de red tras 500ms', async () => {
+    const mockChain = {
+      update: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockReturnThis(),
+    }
+    mockChain.eq
+      .mockReturnValueOnce(mockChain)
+      .mockResolvedValueOnce({ error: null })
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    // Simula usuario tecleando "Depen" carácter a carácter
+    for (const char of ['D', 'De', 'Dep', 'Depe', 'Depen']) {
+      fireDebounced('uc-001', PROJECT_ID, char)
+    }
+
+    // Antes de expirar el debounce — ninguna llamada de red
+    expect(supabase.from).not.toHaveBeenCalled()
+
+    // Avanzar 500ms: el timer del último keystroke dispara
+    await vi.advanceTimersByTimeAsync(500)
+
+    expect(supabase.from).toHaveBeenCalledTimes(1)
+    expect(supabase.from).toHaveBeenCalledWith('use_cases')
+  })
+
+  it('timers independientes por use-case: 2 IDs distintos → 2 peticiones de red', async () => {
+    const mockChain = {
+      update: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockReturnThis(),
+    }
+    mockChain.eq
+      .mockReturnValueOnce(mockChain).mockResolvedValueOnce({ error: null })
+      .mockReturnValueOnce(mockChain).mockResolvedValueOnce({ error: null })
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    fireDebounced('uc-001', PROJECT_ID, 'ROI: alto')
+    fireDebounced('uc-002', PROJECT_ID, 'ROI: medio')
+
+    await vi.advanceTimersByTimeAsync(500)
+
+    expect(supabase.from).toHaveBeenCalledTimes(2)
+  })
+
+  it('cancelar y reenviar antes de 500ms → solo la última versión llega a Supabase', async () => {
+    const mockChain = {
+      update: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockReturnThis(),
+    }
+    mockChain.eq
+      .mockReturnValueOnce(mockChain)
+      .mockResolvedValueOnce({ error: null })
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    fireDebounced('uc-001', PROJECT_ID, 'Vers 1')
+    await vi.advanceTimersByTimeAsync(200)   // avanzamos sin llegar a 500
+    fireDebounced('uc-001', PROJECT_ID, 'Vers 2 — final')  // resetea el timer
+    await vi.advanceTimersByTimeAsync(500)   // ahora sí expira el nuevo timer
+
+    expect(supabase.from).toHaveBeenCalledTimes(1)
+    // El update se llama con la versión final
+    expect(mockChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({ description: 'Vers 2 — final' })
+    )
   })
 })

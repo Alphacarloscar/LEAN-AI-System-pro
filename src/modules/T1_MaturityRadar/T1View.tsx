@@ -13,7 +13,9 @@
 //   — Gap IT/Negocio en T1ExecutiveOutput
 // ============================================================
 
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useParams }                    from 'react-router-dom'
+import { Button, ToolHeader } from '@/shared/design-system/components'
 import { RetryBanner }                          from '@/shared/components/RetryBanner'
 import { DIMENSION_DEFINITIONS, TOTAL_SUBDIMENSIONS } from './constants'
 import type { T1DimensionState } from './types'
@@ -21,9 +23,11 @@ import { countScoredSubdimensions, computeOverallScore } from './types'
 import { DimensionCard }                        from './components/DimensionCard'
 import { T1RadarPanel }                         from './components/T1RadarPanel'
 import { T1ExecutiveOutput }                    from './components/T1ExecutiveOutput'
+import { NewInterviewModal }                    from './components/NewInterviewModal'
+import { IntervieweeSelector }                  from './components/IntervieweeSelector'
 import { PhaseMiniMap }                         from '@/shared/components/PhaseMiniMap'
-import { BackToDashboard }                      from '@/shared/components/BackToDashboard'
 import type { IntervieweeAggregate }            from './components/T1ExecutiveOutput'
+import type { NewIntervieweeForm }              from './components/NewInterviewModal'
 import { useT1Store }                           from './store'
 import { useEngagementStore }                   from '@/modules/Engagement/store'
 import { useCompanyProfileStore }              from '@/modules/CompanyProfile/store'
@@ -31,260 +35,27 @@ import { useDepartmentStore }                  from '@/modules/CompanyProfile/us
 import { RecommendationPanel }                 from '@/components/RecommendationPanel'
 import { buildT1RecommendationContext }        from './t1ContextBuilder'
 import { usePermissions }                      from '@/modules/Auth'
-import { supabase }                            from '@/lib/supabase'
+import { getProjectCompanyId }                 from '@/services/projects.service'
 
 interface T1ViewProps {
   onBack: () => void
-}
-
-// ── Modal: nueva entrevista ───────────────────────────────────
-
-interface NewIntervieweeForm {
-  name:       string
-  role:       string
-  type:       'it' | 'business'
-  department: string
-}
-
-interface NewInterviewModalProps {
-  onClose:     () => void
-  onSubmit:    (form: NewIntervieweeForm) => Promise<void>
-  departments: { name: string }[]
-}
-
-function NewInterviewModal({ onClose, onSubmit, departments }: NewInterviewModalProps) {
-  const [form, setForm]         = useState<NewIntervieweeForm>({
-    name:       '',
-    role:       '',
-    type:       'business',
-    department: '',
-  })
-  const [submitting, setSubmitting] = useState(false)
-  const nameRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => { nameRef.current?.focus() }, [])
-
-  const canSubmit =
-    form.name.trim().length > 0 &&
-    form.role.trim().length > 0 &&
-    form.department.trim().length > 0
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!canSubmit || submitting) return
-    setSubmitting(true)
-    try {
-      await onSubmit(form)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  // Cerrar con Escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [onClose])
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
-
-      {/* Card del modal */}
-      <div className="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl border border-border shadow-2xl shadow-black/20">
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-border">
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="px-1.5 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase">
-                T1
-              </span>
-              <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100">
-                Nueva entrevista
-              </h3>
-            </div>
-            <p className="text-[11px] text-text-subtle">
-              Añade un nuevo entrevistado al assessment en curso
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="h-7 w-7 rounded-lg flex items-center justify-center text-text-subtle hover:text-lean-black dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M1 1l11 11M12 1L1 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-
-          {/* Nombre */}
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
-              Nombre
-            </label>
-            <input
-              ref={nameRef}
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="Ej. Javier Morales"
-              className={[
-                'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-gray-100',
-                'bg-gray-50 dark:bg-gray-800 border border-border',
-                'placeholder:text-text-subtle',
-                'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
-                'transition-all duration-150',
-              ].join(' ')}
-            />
-          </div>
-
-          {/* Cargo */}
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
-              Cargo
-            </label>
-            <input
-              type="text"
-              value={form.role}
-              onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-              placeholder="Ej. CIO, Head of Digital, COO…"
-              className={[
-                'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-gray-100',
-                'bg-gray-50 dark:bg-gray-800 border border-border',
-                'placeholder:text-text-subtle',
-                'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
-                'transition-all duration-150',
-              ].join(' ')}
-            />
-          </div>
-
-          {/* Tipo IT / Negocio */}
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
-              Perfil
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {(['it', 'business'] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setForm((f) => ({ ...f, type: t }))}
-                  className={[
-                    'py-2 rounded-lg text-xs font-semibold border transition-all duration-150',
-                    form.type === t
-                      ? t === 'it'
-                        ? 'bg-navy-metallic text-white border-navy shadow-sm'
-                        : 'bg-success-dark text-white border-success-dark shadow-sm'
-                      : 'bg-white dark:bg-gray-800 text-text-muted border-border hover:border-gray-300',
-                  ].join(' ')}
-                >
-                  {t === 'it' ? 'IT / Tecnología' : 'Negocio / Ops'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Departamento */}
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
-              Departamento <span className="text-danger-dark">*</span>
-            </label>
-            {departments.length > 0 ? (
-              <select
-                value={form.department}
-                onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
-                className={[
-                  'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-gray-100',
-                  'bg-gray-50 dark:bg-gray-800 border border-border',
-                  'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
-                  'transition-all duration-150',
-                ].join(' ')}
-              >
-                <option value="">Selecciona un departamento…</option>
-                {departments.map((d) => (
-                  <option key={d.name} value={d.name}>{d.name}</option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                value={form.department}
-                onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
-                placeholder="Ej. Finanzas, Tecnología, RRHH…"
-                className={[
-                  'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-gray-100',
-                  'bg-gray-50 dark:bg-gray-800 border border-border',
-                  'placeholder:text-text-subtle',
-                  'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
-                  'transition-all duration-150',
-                ].join(' ')}
-              />
-            )}
-          </div>
-
-          {/* Nota informativa */}
-          <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border/60">
-            Se crearán <span className="font-medium text-text-muted">{TOTAL_SUBDIMENSIONS} subdimensiones</span> en blanco para este entrevistado. Puntúalas en la sesión.
-          </p>
-
-          {/* Acciones */}
-          <div className="flex gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={submitting}
-              className="flex-1 py-2 rounded-lg text-xs font-medium text-text-muted border border-border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-40"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={!canSubmit || submitting}
-              className={[
-                'flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center justify-center gap-1.5',
-                canSubmit && !submitting
-                  ? 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm active:scale-[0.98]'
-                  : 'bg-gray-100 text-gray-300 cursor-not-allowed',
-              ].join(' ')}
-            >
-              {submitting ? (
-                <>
-                  <svg className="animate-spin h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M6 1a5 5 0 11-5 5" strokeLinecap="round" />
-                  </svg>
-                  Guardando...
-                </>
-              ) : 'Crear entrevista'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
 }
 
 // ── Componente principal ──────────────────────────────────────
 
 export function T1View({ onBack }: T1ViewProps) {
 
-  const [showNewModal,      setShowNewModal]      = useState(false)
-  const [showInterviewees,  setShowInterviewees]  = useState(false)
+  const [showNewModal, setShowNewModal] = useState(false)
 
   const { isReadOnly } = usePermissions()
 
   // ── Store T1 + engagement ────────────────────────────────────
-  const store          = useT1Store()
-  const engagementId   = useEngagementStore((s) => s.activeEngagementId)
+  const store                    = useT1Store()
+  const { engagementId: urlId }  = useParams<{ engagementId: string }>()
+  const storeId                  = useEngagementStore((s) => s.activeEngagementId)
+  const engagementId             = urlId ?? storeId
   const profile        = useCompanyProfileStore((s) => s.profile)
+  const loadProfile    = useCompanyProfileStore((s) => s.loadProfile)
 
   // ── Departamentos centralizados (para el modal de alta) ──────
   const { departments, fetchDepartments, reset: resetDepartments } = useDepartmentStore()
@@ -293,15 +64,10 @@ export function T1View({ onBack }: T1ViewProps) {
     if (!engagementId) return
     let cancelled = false
 
-    supabase
-      .from('projects')
-      .select('company_id')
-      .eq('id', engagementId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (cancelled || !data?.company_id) return
-        fetchDepartments(data.company_id)
-      })
+    getProjectCompanyId(engagementId).then((companyId) => {
+      if (cancelled || !companyId) return
+      fetchDepartments(companyId)
+    })
 
     return () => {
       cancelled = true
@@ -318,10 +84,10 @@ export function T1View({ onBack }: T1ViewProps) {
   const loadErrorT1       = store.loadError
 
   // Garantizar datos al montar la ruta (idempotente vía ensureLoaded).
-  // Si PRP ya cargó y los datos son frescos, esta llamada es no-op.
   useEffect(() => {
     if (engagementId) {
       store.ensureLoaded(engagementId, { reason: 'route_mount' })
+      void loadProfile(engagementId)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])
@@ -351,11 +117,13 @@ export function T1View({ onBack }: T1ViewProps) {
   }
 
   // Dimensiones activas del entrevistado seleccionado
-  const activeDimensions = intervieweeStates[activeId] ?? []
+  // useMemo: evita que `?? []` cree un nuevo array en cada render cuando la key no existe
+  const activeDimensions = useMemo(
+    () => intervieweeStates[activeId] ?? [],
+    [intervieweeStates, activeId],
+  )
 
   // Actualizar una dimensión del entrevistado activo.
-  // DimensionCard entrega el objeto completo; difamos para llamar
-  // la acción granular del store correcta.
   function updateDimension(updated: T1DimensionState) {
     const oldDim = (intervieweeStates[activeId] ?? []).find((d) => d.code === updated.code)
     if (!oldDim) return
@@ -401,10 +169,7 @@ export function T1View({ onBack }: T1ViewProps) {
   // CompanyProfile — contexto de empresa para el motor LLM
   const companyProfile = useCompanyProfileStore((s) => s.profile)
 
-  const activeInterviewee = liveInterviewees.find((i) => i.id === activeId)
-
   // Dimensiones agregadas: promedio de todos los entrevistados → para el QW1 Executive Output
-  // El score del header sigue siendo individual (el del entrevistado activo).
   const aggregateDimensions = useMemo((): T1DimensionState[] => {
     const allStates = Object.values(intervieweeStates)
     if (allStates.length === 0) return []
@@ -426,7 +191,7 @@ export function T1View({ onBack }: T1ViewProps) {
     }))
   }, [intervieweeStates])
 
-  // Contexto para el motor LLM — se recalcula cuando cambian las dimensiones o el perfil
+  // Contexto para el motor LLM
   const t1LLMContext = useMemo(
     () => buildT1RecommendationContext(aggregateDimensions, allIntervieweeAggregates, companyProfile),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -437,40 +202,16 @@ export function T1View({ onBack }: T1ViewProps) {
     <div className="min-h-screen bg-surface dark-page-bg">
 
       {/* ── Header de herramienta ── */}
-      <div className="sticky top-[57px] z-10 bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm border-b border-border px-8 py-4">
-        <div className="max-w-6xl mx-auto flex items-center gap-4">
-
-          {/* Back button */}
-          <BackToDashboard onClick={onBack} />
-
-          <span className="text-text-subtle">·</span>
-
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className="px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[10px] font-mono font-semibold text-navy dark:text-warm-100 uppercase tracking-wider">
-              T1
-            </span>
-            <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100 truncate">
-              AI Readiness Assessment
-            </h1>
-            <PhaseMiniMap phaseId="listen" toolCode="T1" />
-          </div>
-
-          {/* Nueva entrevista — acceso directo desde header (U-04) */}
-          {!isReadOnly && (
-            <button
-              onClick={() => setShowNewModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-navy-metallic text-white hover:bg-navy-metallic-hover transition-colors shadow-sm shrink-0"
-            >
-              <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                <path d="M8 2v12M2 8h12" />
-              </svg>
-              Nueva entrevista
-            </button>
-          )}
-
-          {/* Progreso + score */}
-          <div className="flex items-center gap-4 shrink-0">
+      <ToolHeader
+        sticky
+        onBack={onBack}
+        backLabel="Volver al dashboard"
+        toolCode="T1"
+        title="AI Readiness Assessment"
+        phaseMiniMap={<PhaseMiniMap phaseId="listen" toolCode="T1" />}
+        maxWidth="max-w-6xl"
+        chips={
+          <div className="flex items-center gap-4">
             <span className="text-xs text-text-subtle tabular-nums">
               <span className="font-semibold text-lean-black dark:text-gray-200">{scoredCount}</span>
               /{TOTAL_SUBDIMENSIONS} subdimensiones puntuadas
@@ -482,8 +223,21 @@ export function T1View({ onBack }: T1ViewProps) {
               <span className="text-sm font-light text-text-muted"> / 4</span>
             </div>
           </div>
-        </div>
-      </div>
+        }
+        cta={!isReadOnly ? (
+          <Button
+            size="sm"
+            onClick={() => setShowNewModal(true)}
+            icon={
+              <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <path d="M8 2v12M2 8h12" />
+              </svg>
+            }
+          >
+            Nueva entrevista
+          </Button>
+        ) : undefined}
+      />
 
       {/* ── Empresa + contexto ── */}
       <div className="max-w-6xl mx-auto px-8 pt-6 pb-2">
@@ -534,194 +288,84 @@ export function T1View({ onBack }: T1ViewProps) {
         />
       )}
 
-      {/* ── Contenido principal: visible en cuanto hay datos.
-              Si hay refetch en vuelo → datos permanecen visibles. ── */}
+      {/* ── Contenido principal ── */}
       <div className={!hasDataT1 ? 'hidden' : ''}>
 
-      {/* ── Indicador de actualización en background ── */}
-      {isLoadingT1 && (
-        <div className="max-w-6xl mx-auto px-8 pt-2">
-          <div className="flex items-center gap-1.5 text-[11px] text-text-subtle">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-            Actualizando datos…
+        {/* ── Indicador de actualización en background ── */}
+        {isLoadingT1 && (
+          <div className="max-w-6xl mx-auto px-8 pt-2">
+            <div className="flex items-center gap-1.5 text-[11px] text-text-subtle">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Actualizando datos…
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ── Error durante refetch: datos visibles + banner ── */}
-      {hasDataT1 && !isLoadingT1 && loadErrorT1 && (
-        <RetryBanner
-          message={loadErrorT1}
-          onRetry={() => { if (engagementId) store.load(engagementId) }}
+        {/* ── Error durante refetch ── */}
+        {hasDataT1 && !isLoadingT1 && loadErrorT1 && (
+          <RetryBanner
+            message={loadErrorT1}
+            onRetry={() => { if (engagementId) store.load(engagementId) }}
+          />
+        )}
+
+        {/* ── Selector de entrevistados ── */}
+        <IntervieweeSelector
+          interviewees={liveInterviewees}
+          activeId={activeId}
+          dimensionStates={intervieweeStates}
+          isReadOnly={isReadOnly}
+          onSelect={(id) => store.setActiveId(id)}
+          onDelete={deleteInterviewee}
         />
-      )}
 
-      {/* ── Selector de entrevistados — collapsible ── */}
-      <div className="max-w-6xl mx-auto px-8 py-3">
-        <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
+        {/* ── Layout two-column ── */}
+        <div className="max-w-6xl mx-auto px-8 pb-6">
+          <div className="flex gap-6 items-start">
 
-          {/* Toggle bar */}
-          <div className="flex items-center justify-between px-4 py-3 cursor-pointer
-            hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-            onClick={() => setShowInterviewees((v) => !v)}
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-                Entrevistado activo
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-navy/8 dark:bg-navy/15 text-[10px]
-                font-semibold text-navy dark:text-warm-100">
-                {liveInterviewees.length} entrevistados
-              </span>
-              <span className="text-[10px] text-text-subtle">
-                {liveInterviewees.filter((i) => i.type === 'it').length} IT ·{' '}
-                {liveInterviewees.filter((i) => i.type !== 'it').length} BIZ
-              </span>
-              {activeInterviewee && (
-                <span className="text-[10px] text-text-muted">
-                  Puntuando: <span className="font-semibold text-lean-black dark:text-gray-200">
-                    {activeInterviewee.name}
-                  </span>
-                </span>
-              )}
+            {/* Columna izquierda — 6 DimensionCards */}
+            <div className="flex-1 min-w-0 space-y-3">
+              {activeDimensions.map((dim) => {
+                const def = DIMENSION_DEFINITIONS.find((d) => d.code === dim.code)
+                if (!def) return null
+                return (
+                  <DimensionCard
+                    key={dim.code}
+                    state={dim}
+                    definition={def}
+                    onChange={updateDimension}
+                  />
+                )
+              })}
             </div>
-            <div className="flex items-center gap-3">
-              <svg
-                className={`h-3.5 w-3.5 text-text-subtle transition-transform duration-200 ${showInterviewees ? 'rotate-180' : ''}`}
-                viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-              >
-                <path d="M4 6l4 4 4-4" />
-              </svg>
+
+            {/* Columna derecha — RadarPanel sticky */}
+            <div className="w-72 xl:w-80 shrink-0 sticky top-20">
+              <T1RadarPanel dimensions={activeDimensions} />
             </div>
+
           </div>
 
-          {/* Expandido: lista de entrevistados */}
-          {showInterviewees && (
-            <div className="border-t border-border px-4 py-3">
-              <div className="flex gap-2 flex-wrap">
-                {liveInterviewees.map((person) => {
-                  const personDims   = intervieweeStates[person.id] ?? []
-                  const personScored = countScoredSubdimensions(personDims)
-                  const isActive     = person.id === activeId
-                  const isComplete   = personScored === TOTAL_SUBDIMENSIONS
-
-                  return (
-                    <div
-                      key={person.id}
-                      className={[
-                        'flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all duration-150 group',
-                        isActive
-                          ? 'bg-navy-metallic text-white border-navy shadow-sm'
-                          : 'bg-white dark:bg-gray-900 border-border hover:border-navy/30 hover:bg-gray-50 dark:hover:bg-gray-800',
-                      ].join(' ')}
-                    >
-                      {/* Selección del entrevistado */}
-                      <button
-                        onClick={() => store.setActiveId(person.id)}
-                        className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                      >
-                        <span className={[
-                          'text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0',
-                          isActive
-                            ? 'bg-white/20 text-white'
-                            : person.type === 'it'
-                              ? 'bg-navy/10 text-navy dark:bg-navy/20 dark:text-warm-100'
-                              : 'bg-warning-light text-warning-dark',
-                        ].join(' ')}>
-                          {person.type === 'it' ? 'IT' : 'BIZ'}
-                        </span>
-                        <div className="min-w-0">
-                          <p className={`text-xs font-semibold truncate ${isActive ? 'text-white' : 'text-lean-black dark:text-gray-100'}`}>
-                            {person.name}
-                          </p>
-                          <p className={`text-[10px] truncate ${isActive ? 'text-white/70' : 'text-text-muted'}`}>
-                            {person.role}
-                          </p>
-                        </div>
-                        <span className={`text-[10px] tabular-nums shrink-0 ${isActive ? 'text-white/70' : 'text-text-subtle'}`}>
-                          {isComplete ? (
-                            <svg className="h-3.5 w-3.5 text-current" viewBox="0 0 16 16" fill="currentColor">
-                              <path fillRule="evenodd" d="M8 1a7 7 0 100 14A7 7 0 008 1zm3.78 5.22a.75.75 0 010 1.06l-4 4a.75.75 0 01-1.06 0l-2-2a.75.75 0 011.06-1.06L7.25 9.69l3.47-3.47a.75.75 0 011.06 0z" />
-                            </svg>
-                          ) : (
-                            `${personScored}/${TOTAL_SUBDIMENSIONS}`
-                          )}
-                        </span>
-                      </button>
-
-                      {/* Botón eliminar (solo si hay más de un entrevistado) */}
-                      {!isReadOnly && liveInterviewees.length > 1 && (
-                        <button
-                          onClick={() => deleteInterviewee(person.id)}
-                          title="Eliminar entrevistado"
-                          className={[
-                            'shrink-0 h-5 w-5 rounded-md flex items-center justify-center transition-all duration-150 opacity-0 group-hover:opacity-100',
-                            isActive
-                              ? 'hover:bg-white/20 text-white/60 hover:text-white'
-                              : 'hover:bg-red-100 dark:hover:bg-red-900/30 text-text-subtle hover:text-red-500',
-                          ].join(' ')}
-                        >
-                          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                            <path d="M1 1l10 10M11 1L1 11" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Layout two-column ── */}
-      <div className="max-w-6xl mx-auto px-8 pb-6">
-        <div className="flex gap-6 items-start">
-
-          {/* Columna izquierda — 6 DimensionCards */}
-          <div className="flex-1 min-w-0 space-y-3">
-            {activeDimensions.map((dim) => {
-              const def = DIMENSION_DEFINITIONS.find((d) => d.code === dim.code)
-              if (!def) return null
-              return (
-                <DimensionCard
-                  key={dim.code}
-                  state={dim}
-                  definition={def}
-                  onChange={updateDimension}
-                />
-              )
-            })}
+          {/* ── Executive Output (QW1) ── */}
+          <div className="mt-8">
+            <T1ExecutiveOutput
+              dimensions={aggregateDimensions}
+              companyName={profile.engagementName}
+              allInterviewees={allIntervieweeAggregates}
+            />
           </div>
 
-          {/* Columna derecha — RadarPanel sticky */}
-          <div className="w-72 xl:w-80 shrink-0 sticky top-20">
-            <T1RadarPanel dimensions={activeDimensions} />
+          {/* ── Motor LLM — Recomendaciones dinámicas ── */}
+          <div className="mt-6 max-w-6xl">
+            <RecommendationPanel
+              tool="t1"
+              context={t1LLMContext}
+              engagementId={engagementId}
+              title="Recomendaciones IA — Madurez"
+              subtitle="Generadas por Claude · Específicas para este engagement"
+            />
           </div>
-
         </div>
-
-        {/* ── Executive Output (QW1) — usa el promedio de TODOS los entrevistados ── */}
-        <div className="mt-8">
-          <T1ExecutiveOutput
-            dimensions={aggregateDimensions}
-            companyName={profile.engagementName}
-            allInterviewees={allIntervieweeAggregates}
-          />
-        </div>
-
-        {/* ── Motor LLM — Recomendaciones dinámicas Sprint 6 ── */}
-        <div className="mt-6 max-w-6xl">
-          <RecommendationPanel
-            tool="t1"
-            context={t1LLMContext}
-            engagementId={engagementId}
-            title="Recomendaciones IA — Madurez"
-            subtitle="Generadas por Claude · Específicas para este engagement"
-          />
-        </div>
-      </div>
 
       </div> {/* fin contenido principal */}
 

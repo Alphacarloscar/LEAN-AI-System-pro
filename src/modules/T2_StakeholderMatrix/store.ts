@@ -17,7 +17,8 @@ import {
   updateStakeholderInDb,
   deleteStakeholderFromDb,
 } from '@/services/t2.service'
-import { logTrace } from '@/lib/loadTrace'
+import { logTrace }    from '@/lib/loadTrace'
+import { reportError } from '@/lib/reportError'
 
 const STALE_MS = 5 * 60_000
 
@@ -262,7 +263,7 @@ export const useT2Store = create<T2Store>()((set, get) => ({
     } catch (err) {
       if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
       const isTimeout = (err as Error)?.message === 'T2_LOAD_TIMEOUT'
-      console.error('[T2 Store] ERROR:', isTimeout ? 'timeout (>10s) — check Supabase connection' : err)
+      reportError('[T2Store] load', err)
       set({
         isLoading: false,
         lastError: isTimeout
@@ -292,7 +293,7 @@ export const useT2Store = create<T2Store>()((set, get) => ({
         set({ lastError: null })
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Error al guardar stakeholder'
-        console.error('[T2Store] addStakeholder sync:', err)
+        reportError('[T2Store] addStakeholder sync', err)
         set({ lastError: msg })
         // Rollback optimistic update
         set((state) => ({
@@ -317,7 +318,7 @@ export const useT2Store = create<T2Store>()((set, get) => ({
       try {
         await updateStakeholderInDb(id, engagementId, updates)
       } catch (err) {
-        console.error('[T2Store] updateStakeholder sync:', err)
+        reportError('[T2Store] updateStakeholder sync', err)
         // Rollback
         if (prev) {
           set((state) => ({
@@ -341,7 +342,7 @@ export const useT2Store = create<T2Store>()((set, get) => ({
       try {
         await deleteStakeholderFromDb(id, engagementId)
       } catch (err) {
-        console.error('[T2Store] removeStakeholder sync:', err)
+        reportError('[T2Store] removeStakeholder sync', err)
         // Rollback
         set({ stakeholders: prev })
       }

@@ -2,14 +2,15 @@
 // GOBY — App root (Sprint 10)
 //
 // Sprint 10: Erradicación nuclear de DemoContext.
-//   — DemoContext eliminado. VITE_DEMO_ENABLED=false en staging.
-//   — Cada View lee companyName directamente de CompanyProfileStore.
+//   — DemoContext eliminado. Cada View lee companyName directamente de CompanyProfileStore.
 //   — T10RouteView pasa solo onNavigate; T10View se autoabastece.
 //   — ProjectRuntimeProvider orquesta el contexto base de proyecto.
 // ============================================================
 
-import { useEffect }                            from 'react'
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { useEffect }                                        from 'react'
+import { Spinner }                                          from '@shared/design-system/components'
+import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useEngagementStore }                              from '@/modules/Engagement/store'
 import { AppLayout }                            from '@/shared/layouts/AppLayout'
 import { LoginView, ResetPasswordView, UpdatePasswordView, useAuthStore } from '@/modules/Auth'
 import { AdminView }                              from '@/modules/Admin'
@@ -34,10 +35,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   console.debug('[ROUTE] ProtectedRoute render — isInitializing:', isInitializing, 'isAuthenticated:', isAuthenticated)
   if (isInitializing) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <svg className="animate-spin h-6 w-6 text-navy" viewBox="0 0 24 24" fill="none">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+      <Spinner size="lg" label="Inicializando aplicación…" className="text-navy" />
     </div>
   )
   if (!isAuthenticated) return <Navigate to="/login" replace />
@@ -45,50 +43,75 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+// ── useEngagementSync — sincroniza el store con el param de la URL ──
+// Garantiza que el store global refleje siempre el engagement de la URL.
+// Es un hook interno de App; no se exporta ni se reutiliza fuera de aquí.
+function useEngagementSync() {
+  const { engagementId }  = useParams<{ engagementId: string }>()
+  const selectEngagement  = useEngagementStore((s) => s.selectEngagement)
+  const storeId           = useEngagementStore((s) => s.activeEngagementId)
+
+  useEffect(() => {
+    if (engagementId && engagementId !== storeId) {
+      selectEngagement(engagementId)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId])
+}
+
 // ── Route wrappers — sin DemoContext, sin companyName prop ────
-// Cada View lee companyName directamente de CompanyProfileStore.
+// Cada RouteView sincroniza el store desde la URL y delega al View.
 
 function T1RouteView() {
+  useEngagementSync()
   const navigate = useNavigate()
   return <T1View onBack={() => navigate('/')} />
 }
 
 function T2RouteView() {
+  useEngagementSync()
   const navigate = useNavigate()
   return <T2View onBack={() => navigate('/')} />
 }
 
 function T3RouteView() {
+  useEngagementSync()
   const navigate = useNavigate()
   return <T3View onBack={() => navigate('/')} />
 }
 
 function T4RouteView() {
+  useEngagementSync()
   const navigate = useNavigate()
   return <T4View onBack={() => navigate('/')} />
 }
 
 function T5RouteView() {
+  useEngagementSync()
   const navigate = useNavigate()
   return <T5View onBack={() => navigate('/')} />
 }
 
 function T6RouteView() {
+  useEngagementSync()
   const navigate = useNavigate()
   return <T6View onBack={() => navigate('/')} />
 }
 
 function T7RouteView() {
+  useEngagementSync()
   const navigate = useNavigate()
   return <T7View onBack={() => navigate('/')} />
 }
 
 function T8RouteView() {
+  useEngagementSync()
   const navigate = useNavigate()
   return <T8View onBack={() => navigate('/')} />
 }
 
 function T9RouteView() {
+  useEngagementSync()
   const navigate = useNavigate()
   return <T9View onBack={() => navigate('/')} />
 }
@@ -99,11 +122,13 @@ function T10RouteView() {
 }
 
 function T11RouteView() {
+  useEngagementSync()
   const navigate = useNavigate()
   return <T11View onBack={() => navigate('/')} />
 }
 
 function T12RouteView() {
+  useEngagementSync()
   const navigate = useNavigate()
   return <T12View onBack={() => navigate('/')} />
 }
@@ -131,17 +156,17 @@ export default function App() {
       >
         <Route index                  element={<T10RouteView />} />
         <Route path="company-profile" element={<CompanyProfileView />} />
-        <Route path="t1"              element={<T1RouteView />} />
-        <Route path="t2"              element={<T2RouteView />} />
-        <Route path="t3"              element={<T3RouteView />} />
-        <Route path="t4"              element={<T4RouteView />} />
-        <Route path="t5"              element={<T5RouteView />} />
-        <Route path="t6"              element={<T6RouteView />} />
-        <Route path="t7"              element={<T7RouteView />} />
-        <Route path="t8"              element={<T8RouteView />} />
-        <Route path="t9"              element={<T9RouteView />} />
-        <Route path="t11"             element={<T11RouteView />} />
-        <Route path="t12"             element={<T12RouteView />} />
+        <Route path="t1/:engagementId"  element={<T1RouteView />} />
+        <Route path="t2/:engagementId"  element={<T2RouteView />} />
+        <Route path="t3/:engagementId"  element={<T3RouteView />} />
+        <Route path="t4/:engagementId"  element={<T4RouteView />} />
+        <Route path="t5/:engagementId"  element={<T5RouteView />} />
+        <Route path="t6/:engagementId"  element={<T6RouteView />} />
+        <Route path="t7/:engagementId"  element={<T7RouteView />} />
+        <Route path="t8/:engagementId"  element={<T8RouteView />} />
+        <Route path="t9/:engagementId"  element={<T9RouteView />} />
+        <Route path="t11/:engagementId" element={<T11RouteView />} />
+        <Route path="t12/:engagementId" element={<T12RouteView />} />
         <Route path="admin"           element={<AdminView />} />
       </Route>
 

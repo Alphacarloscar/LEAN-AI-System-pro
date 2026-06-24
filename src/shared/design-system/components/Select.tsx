@@ -41,7 +41,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-label font-medium text-lean-black mb-1.5 dark:text-gray-200"
+            className="block text-label font-medium text-lean-black mb-1.5 dark:text-warm-100"
           >
             {label}
           </label>
@@ -59,11 +59,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
               'h-10 w-full pl-3 pr-8 text-sm text-lean-black bg-white',
               'border rounded transition-all duration-150 outline-none',
               'appearance-none cursor-pointer',
-              'dark:bg-gray-900 dark:text-gray-100',
+              'dark:bg-warm-800 dark:text-warm-50',
               hasError
                 ? 'border-danger focus:border-danger focus:ring-2 focus:ring-danger/20'
                 : 'border-border focus:border-navy focus:ring-2 focus:ring-navy/15',
-              disabled ? 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800' : '',
+              disabled ? 'opacity-50 cursor-not-allowed bg-surface dark:bg-warm-700' : '',
               className,
             ].join(' ')}
             {...props}

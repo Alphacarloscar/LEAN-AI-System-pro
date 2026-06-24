@@ -1,27 +1,7 @@
-// ============================================================
-// useT8Generation — Hook de generación LLM del Communication Map
-//
-// Llama a la Edge Function ai-recommend con tool='t8_comms'
-// y persiste el resultado en el store de T8.
-//
-// Diseño:
-//   - Trigger manual (botón "Generar con IA").
-//   - Sin auto-fetch: el consultor controla cuándo regenerar.
-//   - En caso de error devuelve mensaje descriptivo sin romper la UI.
-//   - El contenido generado persiste en localStorage via T8 store.
-// ============================================================
-
-import { useState, useCallback }    from 'react'
-import { supabase }                  from '@/lib/supabase'
-import { useT8Store }                from '@/modules/T8_CommunicationMap/store'
-import type { GeneratedT8Content }   from '@/modules/T8_CommunicationMap/types'
-
-interface EdgeFunctionPersistence {
-  saved: boolean
-  error?: string
-}
-
-// ── Return type ───────────────────────────────────────────────
+import { useCallback }                  from 'react'
+import { useT8Store }                    from '@/modules/T8_CommunicationMap/store'
+import type { GeneratedT8Content }       from '@/modules/T8_CommunicationMap/types'
+import { useEdgeFunctionInvoke }         from './useEdgeFunctionInvoke'
 
 interface UseT8GenerationReturn {
   generate:     (context: Record<string, unknown>, engagementId: string | null) => Promise<void>
@@ -30,77 +10,45 @@ interface UseT8GenerationReturn {
   clearError:   () => void
 }
 
-// ── Hook ─────────────────────────────────────────────────────
-
 export function useT8Generation(): UseT8GenerationReturn {
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [error,        setError]        = useState<string | null>(null)
-
   const { saveGeneratedContent, setPersistence } = useT8Store()
 
-  const generate = useCallback(async (
-    context:      Record<string, unknown>,
-    engagementId: string | null,
+  const onSuccess = useCallback((
+    content:      GeneratedT8Content,
+    engagementId: string,
   ) => {
-    if (!engagementId) {
-      setError('Necesitas un engagement activo para generar el plan de comunicación.')
-      return
-    }
+    saveGeneratedContent({ ...content, generatedAt: new Date().toISOString() }, engagementId)
+  }, [saveGeneratedContent])
 
-    setIsGenerating(true)
-    setError(null)
+  const onPersistence = useCallback((p: { saved: boolean; error?: string } | undefined) => {
+    if (p?.saved === false) setPersistence('error', p.error ?? 'Error desconocido al guardar en la nube.')
+    else setPersistence('saved')
+  }, [setPersistence])
 
-    try {
-      // 90s: Haiku responde en <10s pero dejamos margen para cold starts y picos de carga
-      const TIMEOUT_MS = 90_000
-
-      const invokePromise = supabase.functions.invoke(
-        'ai-recommend',
-        { body: { tool: 't8_comms', context, engagementId } },
-      )
-
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('La generación tardó demasiado (>90s). Inténtalo de nuevo.')), TIMEOUT_MS)
-      )
-
-      const { data: result, error: fnError } = await Promise.race([invokePromise, timeoutPromise])
-
-      if (fnError) {
-        throw new Error(fnError.message ?? 'Error al llamar a la Edge Function')
-      }
-
-      if (result?.error) {
-        throw new Error(result.error)
-      }
-
-      const content = result?.data as GeneratedT8Content | null
+  const { invoke, isGenerating, error, clearError } = useEdgeFunctionInvoke<
+    Record<string, unknown>,
+    GeneratedT8Content
+  >({
+    tool:                't8_comms',
+    timeoutMs:           90_000,
+    noEngagementMessage: 'Necesitas un engagement activo para generar el plan de comunicación.',
+    logPrefix:           '[useT8Generation]',
+    validate: (data) => {
+      const content = data as GeneratedT8Content | null
       if (!content || !Array.isArray(content.archetypeMessages) || content.archetypeMessages.length === 0) {
         throw new Error('La Edge Function no devolvió mensajes por arquetipo válidos.')
       }
+      return content
+    },
+    onSuccess,
+    onPersistence,
+  })
 
-      // Hidratar contenido en store (visible aunque falle el guardado)
-      saveGeneratedContent({
-        ...content,
-        generatedAt: new Date().toISOString(),
-      }, engagementId)
-
-      // Actualizar estado de persistencia según lo que reporta la Edge Function
-      const persistence = result?.persistence as EdgeFunctionPersistence | undefined
-      if (persistence?.saved === false) {
-        setPersistence('error', persistence.error ?? 'Error desconocido al guardar en la nube.')
-      } else {
-        setPersistence('saved')
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Error desconocido'
-      setError(msg)
-      console.error('[useT8Generation]', err)
-    } finally {
-      setIsGenerating(false)
-    }
-  }, [saveGeneratedContent])
-
-  const clearError = useCallback(() => setError(null), [])
+  const generate = useCallback(
+    (context: Record<string, unknown>, engagementId: string | null) =>
+      invoke(context, engagementId),
+    [invoke],
+  )
 
   return { generate, isGenerating, error, clearError }
 }

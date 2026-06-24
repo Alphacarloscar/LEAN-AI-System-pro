@@ -13,6 +13,8 @@ import {
   createProject,
   archiveProject,
   addProjectMember,
+  getProjectCompanyId,
+  getProjectWithCompany,
 } from '@/services/projects.service'
 import type { ProjectRow } from '@/types/database.types'
 
@@ -108,14 +110,14 @@ describe('createProject', () => {
     )
   })
 
-  it('usa companyId null si no se provee', async () => {
+  it('usa companyId undefined si no se provee', async () => {
     vi.mocked(supabase.rpc).mockResolvedValue({ data: [makeProject()], error: null } as never)
 
     await createProject({ name: 'Test' })
 
     expect(supabase.rpc).toHaveBeenCalledWith(
       'create_project',
-      expect.objectContaining({ p_company_id: null }),
+      expect.objectContaining({ p_company_id: undefined }),
     )
   })
 
@@ -133,7 +135,7 @@ describe('createProject', () => {
       error: { message: 'function not found' },
     } as never)
 
-    await expect(createProject({ name: 'Test' })).rejects.toThrow('[Projects] createProject:')
+    await expect(createProject({ name: 'Test' })).rejects.toThrow('[Projects] createProject RPC error:')
   })
 
   it('lanza error si data es array vacío', async () => {
@@ -192,5 +194,112 @@ describe('addProjectMember', () => {
       user_id:    'user-002',
       role:       'viewer',
     })
+  })
+})
+
+// ── getProjectCompanyId ───────────────────────────────────────────
+
+describe('getProjectCompanyId', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('retorna company_id cuando el proyecto tiene empresa asociada', async () => {
+    const mockChain = {
+      select:      vi.fn().mockReturnThis(),
+      eq:          vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: { company_id: 'company-abc' }, error: null }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const result = await getProjectCompanyId('proj-001')
+
+    expect(supabase.from).toHaveBeenCalledWith('projects')
+    expect(mockChain.select).toHaveBeenCalledWith('company_id')
+    expect(mockChain.eq).toHaveBeenCalledWith('id', 'proj-001')
+    expect(result).toBe('company-abc')
+  })
+
+  it('retorna null si el proyecto no tiene empresa asignada (company_id null)', async () => {
+    const mockChain = {
+      select:      vi.fn().mockReturnThis(),
+      eq:          vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: { company_id: null }, error: null }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const result = await getProjectCompanyId('proj-sin-empresa')
+    expect(result).toBeNull()
+  })
+
+  it('retorna null si maybeSingle no encuentra el proyecto', async () => {
+    const mockChain = {
+      select:      vi.fn().mockReturnThis(),
+      eq:          vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const result = await getProjectCompanyId('proj-inexistente')
+    expect(result).toBeNull()
+  })
+})
+
+// ── getProjectWithCompany ─────────────────────────────────────────
+
+describe('getProjectWithCompany', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('retorna datos de empresa mapeados correctamente', async () => {
+    const mockChain = {
+      select: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: {
+          company_id: 'company-abc',
+          companies:  { name: 'Acme Corp', sector: 'technology', company_size: '201-500' },
+        },
+        error: null,
+      }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const result = await getProjectWithCompany('proj-001')
+
+    expect(supabase.from).toHaveBeenCalledWith('projects')
+    expect(mockChain.select).toHaveBeenCalledWith('company_id, companies(name, sector, company_size)')
+    expect(mockChain.eq).toHaveBeenCalledWith('id', 'proj-001')
+    expect(result.company_id).toBe('company-abc')
+    expect(result.company_name).toBe('Acme Corp')
+    expect(result.sector).toBe('technology')
+    expect(result.company_size).toBe('201-500')
+  })
+
+  it('devuelve strings vacíos si companies es null (proyecto sin empresa)', async () => {
+    const mockChain = {
+      select: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { company_id: null, companies: null },
+        error: null,
+      }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const result = await getProjectWithCompany('proj-sin-empresa')
+
+    expect(result.company_id).toBeNull()
+    expect(result.company_name).toBe('')
+    expect(result.sector).toBe('')
+    expect(result.company_size).toBe('')
+  })
+
+  it('lanza error con prefijo [Projects] si Supabase falla', async () => {
+    const mockChain = {
+      select: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: { message: 'JWT expired' } }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    await expect(getProjectWithCompany('proj-001')).rejects.toThrow('[Projects] getProjectWithCompany:')
   })
 })

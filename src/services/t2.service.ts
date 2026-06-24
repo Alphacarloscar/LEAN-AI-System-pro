@@ -10,6 +10,7 @@
 // ============================================================
 
 import { supabase }       from '@/lib/supabase'
+import { makeAuditable }    from '@/lib/audit'
 import type { Json, StakeholderRow, StakeholderInsert } from '@/types/database.types'
 import type { Stakeholder } from '@/modules/T2_StakeholderMatrix/types'
 
@@ -35,7 +36,7 @@ export function rowToStakeholder(row: StakeholderRow): Stakeholder {
     resistance:      cast<Stakeholder['resistance']>(row.resistance),
     interview:       castOpt<Stakeholder['interview']>(row.interview),
     notes:           row.notes ?? undefined,
-    createdAt:       row.created_at,
+    createdAt:       row.created_at ?? '',
     manualOverride:  row.manual_override || undefined,
     unofficialTools: row.unofficial_tools ?? undefined,
   }
@@ -43,10 +44,10 @@ export function rowToStakeholder(row: StakeholderRow): Stakeholder {
 
 // ── Mapeo dominio → BD ───────────────────────────────────────
 
-export function stakeholderToInsert(s: Stakeholder, engagementId: string): StakeholderInsert {
+export function stakeholderToInsert(s: Stakeholder, projectId: string): StakeholderInsert {
   return {
     id:               s.id,
-    project_id:       engagementId,
+    project_id:       projectId,
     name:             s.name,
     role:             s.role,
     department:       s.department,
@@ -59,73 +60,87 @@ export function stakeholderToInsert(s: Stakeholder, engagementId: string): Stake
   }
 }
 
-// ── Operaciones CRUD ─────────────────────────────────────────
+// ── Implementación privada ───────────────────────────────────
 
-/** Carga todos los stakeholders de un engagement */
-export async function fetchStakeholders(engagementId: string): Promise<Stakeholder[]> {
-  const { data, error } = await supabase
-    .from('stakeholders')
-    .select('*')
-    .eq('project_id', engagementId)
-    .order('created_at', { ascending: true })
+const _impl = {
+  /** Carga todos los stakeholders de un engagement */
+  async fetchStakeholders(projectId: string): Promise<Stakeholder[]> {
+    const { data, error } = await supabase
+      .from('stakeholders')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: true })
 
-  if (error) throw new Error(`[T2] fetchStakeholders: ${error.message}`)
-  return (data ?? []).map(rowToStakeholder)
+    if (error) throw new Error(`[T2] fetchStakeholders: ${error.message}`)
+    return (data ?? []).map(rowToStakeholder)
+  },
+
+  /** Inserta un nuevo stakeholder */
+  async insertStakeholder(s: Stakeholder, projectId: string): Promise<void> {
+    const { error } = await supabase
+      .from('stakeholders')
+      .insert(stakeholderToInsert(s, projectId))
+
+    if (error) throw new Error(`[T2] insertStakeholder: ${error.message}`)
+  },
+
+  /** Actualiza un stakeholder existente */
+  async updateStakeholderInDb(
+    id: string,
+    projectId: string,
+    updates: Partial<Omit<Stakeholder, 'id' | 'createdAt'>>,
+  ): Promise<void> {
+    const patch: Partial<Omit<StakeholderRow, 'id' | 'project_id' | 'created_at'>> = {}
+
+    if (updates.name           !== undefined) patch.name = updates.name
+    if (updates.role           !== undefined) patch.role = updates.role
+    if (updates.department     !== undefined) patch.department = updates.department
+    if (updates.archetype      !== undefined) patch.archetype = updates.archetype
+    if (updates.resistance     !== undefined) patch.resistance = updates.resistance
+    if (updates.interview      !== undefined) patch.interview = toJson(updates.interview)
+    if (updates.notes           !== undefined) patch.notes = updates.notes ?? null
+    if (updates.manualOverride  !== undefined) patch.manual_override = updates.manualOverride ?? false
+    if (updates.unofficialTools !== undefined) patch.unofficial_tools = updates.unofficialTools ?? null
+
+    const { error } = await supabase
+      .from('stakeholders')
+      .update(patch)
+      .eq('id', id)
+      .eq('project_id', projectId)
+
+    if (error) throw new Error(`[T2] updateStakeholderInDb: ${error.message}`)
+  },
+
+  /** Elimina un stakeholder */
+  async deleteStakeholderFromDb(id: string, projectId: string): Promise<void> {
+    const { error } = await supabase
+      .from('stakeholders')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId)
+
+    if (error) throw new Error(`[T2] deleteStakeholderFromDb: ${error.message}`)
+  },
+
+  /** Inserta múltiples stakeholders de golpe (seed de demo data) */
+  async bulkInsertStakeholders(
+    stakeholders: Stakeholder[],
+    projectId: string,
+  ): Promise<void> {
+    const rows = stakeholders.map((s) => stakeholderToInsert(s, projectId))
+    const { error } = await supabase.from('stakeholders').insert(rows)
+    if (error) throw new Error(`[T2] bulkInsertStakeholders: ${error.message}`)
+  },
 }
 
-/** Inserta un nuevo stakeholder */
-export async function insertStakeholder(s: Stakeholder, engagementId: string): Promise<void> {
-  const { error } = await supabase
-    .from('stakeholders')
-    .insert(stakeholderToInsert(s, engagementId))
+// ── Punto de exportación auditado ────────────────────────────
 
-  if (error) throw new Error(`[T2] insertStakeholder: ${error.message}`)
-}
+const _service = makeAuditable(_impl, 'services.t2')
 
-/** Actualiza un stakeholder existente */
-export async function updateStakeholderInDb(
-  id: string,
-  engagementId: string,
-  updates: Partial<Omit<Stakeholder, 'id' | 'createdAt'>>,
-): Promise<void> {
-  const patch: Partial<Omit<StakeholderRow, 'id' | 'project_id' | 'created_at'>> = {}
-
-  if (updates.name           !== undefined) patch.name = updates.name
-  if (updates.role           !== undefined) patch.role = updates.role
-  if (updates.department     !== undefined) patch.department = updates.department
-  if (updates.archetype      !== undefined) patch.archetype = updates.archetype
-  if (updates.resistance     !== undefined) patch.resistance = updates.resistance
-  if (updates.interview      !== undefined) patch.interview = toJson(updates.interview)
-  if (updates.notes           !== undefined) patch.notes = updates.notes ?? null
-  if (updates.manualOverride  !== undefined) patch.manual_override = updates.manualOverride ?? false
-  if (updates.unofficialTools !== undefined) patch.unofficial_tools = updates.unofficialTools ?? null
-
-  const { error } = await supabase
-    .from('stakeholders')
-    .update(patch)
-    .eq('id', id)
-    .eq('project_id', engagementId)
-
-  if (error) throw new Error(`[T2] updateStakeholderInDb: ${error.message}`)
-}
-
-/** Elimina un stakeholder */
-export async function deleteStakeholderFromDb(id: string, engagementId: string): Promise<void> {
-  const { error } = await supabase
-    .from('stakeholders')
-    .delete()
-    .eq('id', id)
-    .eq('project_id', engagementId)
-
-  if (error) throw new Error(`[T2] deleteStakeholderFromDb: ${error.message}`)
-}
-
-/** Inserta múltiples stakeholders de golpe (seed de demo data) */
-export async function bulkInsertStakeholders(
-  stakeholders: Stakeholder[],
-  engagementId: string,
-): Promise<void> {
-  const rows = stakeholders.map((s) => stakeholderToInsert(s, engagementId))
-  const { error } = await supabase.from('stakeholders').insert(rows)
-  if (error) throw new Error(`[T2] bulkInsertStakeholders: ${error.message}`)
-}
+export const {
+  fetchStakeholders,
+  insertStakeholder,
+  updateStakeholderInDb,
+  deleteStakeholderFromDb,
+  bulkInsertStakeholders,
+} = _service
