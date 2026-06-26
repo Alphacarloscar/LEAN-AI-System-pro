@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T4 — ImportFromT3Modal
 //
 // Lista los procesos del store de T3 y permite seleccionar
@@ -15,6 +15,7 @@
 // ============================================================
 
 import { useState }                                      from 'react'
+import { Check }                                         from 'lucide-react'
 import { useT3Store }                                    from '../../T3_ValueStreamMap/store'
 import { useT4Store }                                    from '../store'
 import { AI_CATEGORY_CONFIG }                            from '../../T3_ValueStreamMap/constants'
@@ -160,7 +161,7 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
           {/* Acciones rápidas */}
           {availableProcesses.length > 0 && (
             <div className="flex items-center gap-3 mb-4 pb-3 border-b border-border dark:border-white/8
-              bg-gray-50 dark:bg-gray-900/50 -mx-6 px-6 -mt-2 pt-2">
+              bg-warm-50 dark:bg-warm-900/50 -mx-6 px-6 -mt-2 pt-2">
               <span className="text-[10px] text-text-subtle">
                 {availableProcesses.length} proceso{availableProcesses.length !== 1 ? 's' : ''} disponibles
               </span>
@@ -180,8 +181,9 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
 
             {processes.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-                <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
-                  flex items-center justify-center text-2xl">◎</div>
+                <div className="h-12 w-12 rounded-xl bg-warm-100 dark:bg-warm-800 flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg>
+                </div>
                 <p className="text-sm font-medium text-text-muted">Sin procesos en T3</p>
                 <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
                   Completa el Value Stream Map (T3) primero para poder importar procesos aquí.
@@ -203,11 +205,11 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
                   key={process.id}
                   onClick={() => toggle(process.id)}
                   className={[
-                    'w-full text-left rounded-2xl border px-4 py-3.5 transition-all duration-150',
+                    'w-full text-left rounded-xl border px-4 py-3.5 transition-all duration-150',
                     'flex items-start gap-3',
                     isSelected
                       ? 'border-navy/40 bg-navy/5 dark:bg-navy/10 ring-1 ring-navy/20'
-                      : 'border-border dark:border-white/8 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-white/14',
+                      : 'border-border dark:border-white/8 bg-white dark:bg-warm-900 hover:border-warm-300 dark:hover:border-white/14',
                   ].join(' ')}
                 >
                   {/* Checkbox */}
@@ -215,7 +217,7 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
                     'h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5',
                     isSelected
                       ? 'border-navy bg-navy'
-                      : 'border-gray-300 dark:border-gray-600',
+                      : 'border-warm-300 dark:border-warm-600',
                   ].join(' ')}>
                     {isSelected && (
                       <svg viewBox="0 0 10 8" width={10} height={8} fill="none">
@@ -228,7 +230,7 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
                   {/* Info del proceso */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-2">
-                      <p className="text-xs font-bold text-lean-black dark:text-gray-200
+                      <p className="text-xs font-bold text-lean-black dark:text-warm-100
                         leading-tight flex-1">
                         {process.name}
                       </p>
@@ -280,7 +282,7 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
                     return (
                       <div
                         key={process.id}
-                        className="rounded-2xl border border-border dark:border-white/6
+                        className="rounded-xl border border-border dark:border-white/6
                           px-4 py-3 opacity-40 flex items-center gap-3"
                       >
                         <div className="h-4 w-4 rounded border-2 border-success-dark
@@ -291,7 +293,7 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
                           </svg>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-lean-black dark:text-gray-200
+                          <p className="text-xs font-bold text-lean-black dark:text-warm-100
                             leading-tight">
                             {process.name}
                           </p>
@@ -299,8 +301,8 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
                             {process.department} · {catCfg.label}
                           </p>
                         </div>
-                        <span className="text-[9px] font-semibold text-success-dark shrink-0">
-                          Importado ✓
+                        <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-success-dark shrink-0">
+                          Importado <Check size={10} strokeWidth={1.5} />
                         </span>
                       </div>
                     )
@@ -312,12 +314,11 @@ export function ImportFromT3Modal({ onClose }: ImportFromT3ModalProps) {
       ) : (
         /* Estado: importación completada */
         <div className="flex flex-col items-center justify-center py-8 px-2 text-center gap-5">
-          <div className="h-14 w-14 rounded-3xl bg-success-light flex items-center
-            justify-center text-2xl text-success-dark">
-            ✓
+          <div className="h-14 w-14 rounded-xl bg-success-light flex items-center justify-center text-success-dark">
+            <Check size={28} strokeWidth={1.5} />
           </div>
           <div>
-            <p className="text-base font-semibold text-lean-black dark:text-gray-100 mb-1">
+            <p className="text-base font-semibold text-lean-black dark:text-warm-50 mb-1">
               {importCount} caso{importCount !== 1 ? 's' : ''} de uso importado{importCount !== 1 ? 's' : ''}
             </p>
             <p className="text-xs text-text-muted leading-relaxed max-w-sm">

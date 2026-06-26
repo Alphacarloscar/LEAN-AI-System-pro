@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T2 — AI Stakeholder Matrix
 //
 // Layout: header sticky + two-column (matrix izq | panel der)
@@ -99,7 +99,7 @@ export function T2View({ onBack }: T2ViewProps) {
   }
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-warm-900">
+    <div className="min-h-full bg-surface dark:bg-warm-900">
 
       {/* ── Header ── */}
       <ToolHeader
@@ -109,7 +109,7 @@ export function T2View({ onBack }: T2ViewProps) {
         toolCode="T2"
         title="AI Stakeholder Matrix"
         phaseMiniMap={<PhaseMiniMap phaseId="listen" toolCode="T2" />}
-        maxWidth="max-w-6xl"
+        maxWidth="max-w-7xl"
         cta={!isReadOnly ? (
           <>
             <Button
@@ -142,7 +142,7 @@ export function T2View({ onBack }: T2ViewProps) {
       />
 
       {/* ── Subheader: empresa ── */}
-      <div className="max-w-6xl mx-auto px-8 pt-5 pb-1">
+      <div className="max-w-7xl mx-auto px-8 pt-5 pb-1">
         <p className="text-sm font-semibold text-lean-black dark:text-warm-50">{companyName}</p>
         <p className="text-xs text-text-subtle mt-0.5">
           Haz clic en un stakeholder para ver su perfil y las intervenciones recomendadas.
@@ -173,7 +173,7 @@ export function T2View({ onBack }: T2ViewProps) {
       <div className={!hasDataT2 ? 'hidden' : ''}>
 
         {isLoadingT2 && (
-          <div className="max-w-6xl mx-auto px-8 pt-2">
+          <div className="max-w-7xl mx-auto px-8 pt-2">
             <div className="flex items-center gap-1.5 text-[11px] text-text-subtle">
               <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
               Actualizando datos…
@@ -182,7 +182,7 @@ export function T2View({ onBack }: T2ViewProps) {
         )}
 
         {/* ── Two-column layout ── */}
-        <div className="max-w-6xl mx-auto px-8 py-5">
+        <div className="max-w-7xl mx-auto px-8 py-5">
           <div className="flex gap-6 items-start">
 
             {/* Columna izquierda: gráfico + matrix */}
@@ -211,7 +211,7 @@ export function T2View({ onBack }: T2ViewProps) {
                   onStartInterview={(s) => setInterviewingExisting(s)}
                 />
               ) : (
-                <div className="rounded-xl border border-dashed border-border bg-white/50 dark:bg-gray-900/50 p-6 flex flex-col items-center justify-center text-center gap-2 min-h-[200px]">
+                <div className="rounded-xl border border-dashed border-border bg-white/50 dark:bg-warm-800/50 p-6 flex flex-col items-center justify-center text-center gap-2 min-h-[200px]">
                   <svg className="h-8 w-8 text-text-subtle" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" />
                   </svg>
@@ -223,7 +223,7 @@ export function T2View({ onBack }: T2ViewProps) {
         </div>
 
         {/* ── Recomendaciones IA ── */}
-        <div className="max-w-6xl mx-auto px-8 pb-10">
+        <div className="max-w-7xl mx-auto px-8 pb-10">
           <RecommendationPanel
             tool="t2"
             context={t2LLMContext}

@@ -53,11 +53,11 @@ export const ARCHETYPE_HEX: Record<ArchetypeCode, string> = {
 }
 
 export const ARCHETYPE_BG_HEX: Record<ArchetypeCode, string> = {
-  adoptador:    '#D4EDE3',
-  ambassador:   '#DDE8F5',
+  adoptador:    '#E8F5EE',
+  ambassador:   '#EBF2FA',
   decisor:      'rgba(42,40,34,0.10)',
-  critico:      '#F5DEDE',
-  reticente:    '#FAF0D7',
+  critico:      '#FDECEC',
+  reticente:    '#FEF6E8',
 }
 
 export const RESISTANCE_STROKE: Record<ResistanceLevel, { color: string; width: number; dasharray?: string }> = {

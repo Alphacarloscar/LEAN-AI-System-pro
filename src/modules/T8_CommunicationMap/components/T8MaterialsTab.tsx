@@ -1,9 +1,23 @@
 // ── T8 Tab 3: Materiales ──────────────────────────────────────
 
 import { useState } from 'react'
+import { Megaphone, GraduationCap, BarChart2, Flag } from 'lucide-react'
 import { CopyButton } from './T8CopyButton'
 import type { MaterialTemplate } from '../types'
 import { Card, Badge } from '@shared/design-system/components'
+
+const MATERIAL_ICON_MAP: Record<string, React.ReactElement> = {
+  megaphone:        <Megaphone      size={20} strokeWidth={1.5} />,
+  'graduation-cap': <GraduationCap  size={20} strokeWidth={1.5} />,
+  'bar-chart-2':    <BarChart2      size={20} strokeWidth={1.5} />,
+  flag:             <Flag           size={20} strokeWidth={1.5} />,
+}
+const MATERIAL_ICON_SM: Record<string, React.ReactElement> = {
+  megaphone:        <Megaphone      size={16} strokeWidth={1.5} />,
+  'graduation-cap': <GraduationCap  size={16} strokeWidth={1.5} />,
+  'bar-chart-2':    <BarChart2      size={16} strokeWidth={1.5} />,
+  flag:             <Flag           size={16} strokeWidth={1.5} />,
+}
 
 export function MaterialsTab({ materials }: { materials: MaterialTemplate[] }) {
   const [selected, setSelected] = useState(materials[0]?.id ?? null)
@@ -21,12 +35,12 @@ export function MaterialsTab({ materials }: { materials: MaterialTemplate[] }) {
               'w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all border',
               selected === m.id
                 ? 'bg-navy/8 dark:bg-navy/15 border-navy/30'
-                : 'border-border dark:border-white/6 hover:border-navy/20 bg-white dark:bg-gray-900',
+                : 'border-border dark:border-white/6 hover:border-navy/20 bg-white dark:bg-warm-900',
             ].join(' ')}
           >
-            <span className="text-lg flex-shrink-0 mt-0.5">{m.icon}</span>
+            <span className="flex-shrink-0 mt-0.5 text-text-subtle">{MATERIAL_ICON_SM[m.icon] ?? <BarChart2 size={16} strokeWidth={1.5} />}</span>
             <div className="min-w-0">
-              <p className={`text-xs font-semibold leading-tight ${selected === m.id ? 'text-navy dark:text-warm-100' : 'text-lean-black dark:text-gray-100'}`}>
+              <p className={`text-xs font-semibold leading-tight ${selected === m.id ? 'text-navy dark:text-warm-100' : 'text-lean-black dark:text-warm-50'}`}>
                 {m.title}
               </p>
               <p className="text-[10px] text-text-subtle mt-0.5 leading-tight">{m.subtitle}</p>
@@ -41,9 +55,9 @@ export function MaterialsTab({ materials }: { materials: MaterialTemplate[] }) {
           {/* Header */}
           <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-border dark:border-white/6">
             <div className="flex items-center gap-2.5">
-              <span className="text-xl">{mat.icon}</span>
+              <span className="text-text-subtle">{MATERIAL_ICON_MAP[mat.icon] ?? <BarChart2 size={20} strokeWidth={1.5} />}</span>
               <div>
-                <p className="font-semibold text-sm text-lean-black dark:text-gray-100">{mat.title}</p>
+                <p className="font-semibold text-sm text-lean-black dark:text-warm-50">{mat.title}</p>
                 <p className="text-xs text-text-muted">{mat.subtitle}</p>
               </div>
             </div>

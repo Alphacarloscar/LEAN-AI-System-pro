@@ -64,7 +64,7 @@ export function ControlCard({ control, forceExpanded, onUpdate }: ControlCardPro
             </p>
             <div className="flex items-center gap-1.5 shrink-0">
               {control.importedFromT6 && (
-                <span className="px-1.5 py-0.5 rounded text-[8px] font-mono bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800">
+                <span className="px-1.5 py-0.5 rounded text-[8px] font-mono bg-warm-100 dark:bg-warm-700/60 text-gold dark:text-gold border border-warm-200 dark:border-warm-600">
                   T6
                 </span>
               )}
@@ -90,29 +90,31 @@ export function ControlCard({ control, forceExpanded, onUpdate }: ControlCardPro
           <p className="text-[11px] text-text-muted leading-relaxed">{control.description}</p>
 
           <div>
-            <label className="block text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+            <label className="block text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1.5">
               Evidencia / Notas del consultor
             </label>
             <textarea
               value={control.evidence}
               onChange={(e) => onUpdate(control.id, { evidence: e.target.value })}
+              aria-label={`Evidencia del control ${control.code}`}
               placeholder="Documenta aquí la evidencia de implementación, referencias a documentos, responsables, fechas…"
               rows={3}
-              className="w-full text-[11px] text-lean-black dark:text-gray-200 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg px-3 py-2 placeholder:text-text-subtle resize-none focus:outline-none focus:ring-1 focus:ring-navy/30"
+              className="w-full text-[11px] text-lean-black dark:text-warm-100 bg-warm-100 dark:bg-warm-800 border border-border rounded-lg px-3 py-2 placeholder:text-text-subtle resize-none focus:outline-none focus:ring-1 focus:ring-navy/30"
             />
           </div>
 
           {(control.status === 'pendiente_revision' || control.status === 'aprobado') && (
             <div>
-              <label className="block text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+              <label className="block text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1.5">
                 {control.status === 'aprobado' ? 'Nota del revisor' : 'Nota para el revisor (opcional)'}
               </label>
               <textarea
                 value={control.reviewNote}
                 onChange={(e) => onUpdate(control.id, { reviewNote: e.target.value })}
+                aria-label={`Nota del revisor para el control ${control.code}`}
                 placeholder="Observaciones para el revisor o notas de la aprobación…"
                 rows={2}
-                className="w-full text-[11px] text-lean-black dark:text-gray-200 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg px-3 py-2 placeholder:text-text-subtle resize-none focus:outline-none focus:ring-1 focus:ring-navy/30"
+                className="w-full text-[11px] text-lean-black dark:text-warm-100 bg-warm-100 dark:bg-warm-800 border border-border rounded-lg px-3 py-2 placeholder:text-text-subtle resize-none focus:outline-none focus:ring-1 focus:ring-navy/30"
               />
             </div>
           )}
@@ -126,7 +128,7 @@ export function ControlCard({ control, forceExpanded, onUpdate }: ControlCardPro
                     const idx = order.indexOf(control.status)
                     if (idx > 0) onUpdate(control.id, { status: order[idx - 1] })
                   }}
-                  className="text-[10px] text-text-subtle hover:text-text-muted transition-colors px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="text-[10px] text-text-subtle hover:text-text-muted transition-colors px-2 py-1 rounded-md hover:bg-warm-100 dark:hover:bg-warm-800"
                 >
                   ← Retroceder
                 </button>

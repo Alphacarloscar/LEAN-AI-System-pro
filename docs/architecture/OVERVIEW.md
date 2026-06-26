@@ -1,6 +1,6 @@
 ﻿# Architecture Overview — GOBY
 
-Last updated: 2026-06-01
+Last updated: 2026-06-26
 AI-Ready Repository System v2.1.0
 
 > Este documento es una síntesis de arquitectura para orientación rápida.
@@ -23,10 +23,10 @@ AI-Ready Repository System v2.1.0
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | Frontend | React 18 + Vite 6 + TypeScript 5.7 | SPA — UI de las 13 herramientas |
-| Styles | Tailwind CSS 3 + Lucide React | Design system (tokens en tailwind.config.ts) |
+| Styles | Tailwind CSS 3 + Lucide React | Design system con tokens en CSS vars (ADR-021, ADR-023) |
 | State | Zustand 5 | Estado global por dominio (ADR-007) |
-| Charts | Recharts | Gráficos T1 (araña), T2 (burbujas), T7 (heatmap), T9 (Gantt), T10 |
-| Forms | React-Hook-Form + Zod | Formularios con validación tipada |
+| Charts | Recharts + chartTokens.ts | Gráficos T1 (araña), T2 (burbujas), T7 (heatmap), T9 (Gantt), T10; HEX centralizados en `src/shared/design-system/charts/chartTokens.ts` |
+| Forms | React-Hook-Form + Zod | Formularios con validación tipada (ADR-022) |
 | PDF | @react-pdf/renderer | Briefings ejecutivos QW1, exports T10 |
 | Excel | SheetJS + Papaparse | Importación de datos del cliente |
 | Backend | Supabase (PostgreSQL 15 + Auth + Storage + Realtime + Edge Functions) | BaaS completo (ADR-002) |
@@ -61,6 +61,7 @@ src/
 ├── stores/            # Estado global Zustand — un store por dominio
 ├── shared/            # Componentes, hooks, layouts, utils compartidos
 │   ├── design-system/ # Tokens, componentes base, iconos
+│   │   └── charts/    # chartTokens.ts (HEX para Recharts) + domainIcons.tsx (iconos IA)
 │   └── providers/     # Providers de contexto React
 ├── lib/               # Supabase client, PDF renderer, motor IA, utils
 └── types/             # Tipos de dominio + tipos generados desde Supabase
@@ -116,6 +117,51 @@ src/
 | ADR-007 | Zustand | Estado global ligero por dominio |
 | ADR-008 | 4 roles | superadmin/consultant/client_editor/client_viewer |
 | ADR-009 | Claude API vía Edge Functions | Recomendaciones IA server-side |
+| ADR-020 | Plan Maestro UX/UI | 4 fases de mejora de sistema de diseño (IN PROGRESS) |
+| ADR-021 | Design System Charter | Escala space-*, CSS vars, densidad configurable, prohibición gray-* |
+| ADR-022 | Formularios RHF+Zod | Estándar react-hook-form + zodResolver para todos los formularios |
+| ADR-023 | Visual System V2 | Migración warm-only palette, 340+ gray/rainbow eliminados, ESLint enforcement |
 
 → Índice completo: docs/decisions/README.md
 → Detalle de cada decisión: ARQUITECTURA.md sección 2
+
+---
+
+## Dark mode system
+
+**Last updated: 2026-06-25**
+
+GOBY implementa dark mode mediante clase `dark` en `<html>` (Tailwind `darkMode: 'class'`).
+
+### Jerarquía de tokens de color
+
+| Propósito | Light | Dark |
+|-----------|-------|------|
+| Fondo de app | `bg-surface` (#F7F4EE) | `dark:bg-warm-900` (#22201C) |
+| Fondo de pantallas auth | `bg-surface` | `dark:bg-warm-950` (#16140F) |
+| Superficie de card | `bg-white` | `dark:bg-warm-800` (#2A2822) |
+| Superficie input/select | `bg-warm-50` | `dark:bg-warm-700` (#333028) |
+| Superficie secundaria (FrictionCard, AddFreeItemForm) | `bg-warm-50` | `dark:bg-warm-800` |
+| Borde estándar | `border-border` | `dark:border-warm-600/30` |
+| Texto principal | `text-lean-black` | `dark:text-warm-50` |
+| Texto secundario | `text-text-muted` | `dark:text-warm-300` |
+| Texto sutil | `text-text-subtle` | `dark:text-warm-400` |
+| Placeholder | `placeholder:text-text-subtle` | `dark:placeholder:text-warm-400` |
+| Tooltip background | `bg-white` | `dark:bg-warm-800` |
+| Skeleton | `bg-warm-200` | `dark:bg-warm-700` |
+
+### Reglas ADR-021 aplicadas al dark mode
+
+- **Prohibido** `dark:bg-gray-*` / `dark:text-gray-*` — usar tokens `warm-*`
+- **Prohibido** `bg-gray-*` en light — usar `bg-warm-*` o `bg-surface`
+- **Prohibido** `border-gray-*` — usar `border-border` o `border-warm-*`
+- Colores inline via `style={{}}` se permiten con tokens CSS (`var(--color-gold)`) o hex dinámicos desde configuración (no hardcodeados en JSX estático)
+- El `index.css` contiene overrides de compatibilidad transitoria `html.dark .dark\:text-gray-*` → estos son **deuda técnica**, no usar en código nuevo
+
+### EngagementSelector
+
+Usa prop `dark: boolean` para cambiar clases JSX condicionalmente (el componente aparece tanto en navbar dark como en contextos light). Patrón correcto — no confundir con Tailwind `dark:`.
+
+### Gráficos Recharts
+
+Los tooltips usan clases Tailwind: `bg-white dark:bg-warm-800 shadow-sm`. Los ejes y colores de datos usan `getThemeColor()` de `chartTokens.ts` que lee CSS variables en tiempo de ejecución — respeta el modo activo automáticamente.

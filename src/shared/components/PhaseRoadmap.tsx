@@ -51,20 +51,20 @@ const phaseNodeCfg: Record<PhaseStatus, {
   complete: {
     node:  'bg-navy border-navy dark:bg-warm-600 dark:border-warm-300',
     icon:  'check',
-    label: 'text-lean-black dark:text-gray-100 font-semibold',
+    label: 'text-lean-black dark:text-warm-50 font-semibold',
   },
   active: {
-    node:  'bg-white border-navy dark:bg-gray-900 dark:border-warm-300',
+    node:  'bg-white border-navy dark:bg-warm-800 dark:border-warm-300',
     icon:  'play',
     label: 'text-navy dark:text-warm-100 font-bold',
   },
   upcoming: {
-    node:  'bg-white border-border dark:bg-gray-900 dark:border-gray-600',
+    node:  'bg-white border-border dark:bg-warm-800 dark:border-warm-600',
     icon:  'number',
     label: 'text-text-muted',
   },
   locked: {
-    node:  'bg-gray-100 border-border dark:bg-gray-800 dark:border-gray-700',
+    node:  'bg-warm-100 border-border dark:bg-warm-700 dark:border-warm-700',
     icon:  'lock',
     label: 'text-text-subtle',
   },
@@ -75,7 +75,7 @@ const phaseNodeCfg: Record<PhaseStatus, {
 const toolCfg: Record<ToolStatus, { dot: string; chip: string; label: string }> = {
   complete:    { dot: 'bg-success-dark',                     chip: 'bg-success-light  border-success/30  text-success-dark',              label: 'Completada' },
   in_progress: { dot: 'bg-warning-dark',                     chip: 'bg-warning-light  border-warning/30  text-warning-dark',              label: 'En curso'   },
-  pending:     { dot: 'bg-gray-300 dark:bg-gray-600',        chip: 'bg-surface        border-border       text-text-muted dark:bg-gray-800 dark:border-gray-700', label: 'Pendiente'  },
+  pending:     { dot: 'bg-warm-300 dark:bg-warm-600',         chip: 'bg-surface        border-border       text-text-muted dark:bg-warm-700 dark:border-warm-700', label: 'Pendiente'  },
   blocked:     { dot: 'bg-danger-dark',                      chip: 'bg-danger-light   border-danger/30   text-danger-dark',               label: 'Bloqueada'  },
 }
 
@@ -175,7 +175,7 @@ function Station({
       {selected && (
         <div
           aria-hidden="true"
-          className="absolute -bottom-[26px] left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-white dark:bg-gray-900 border-t border-l border-border dark:border-gray-700 shadow-sm"
+          className="absolute -bottom-[26px] left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-white dark:bg-warm-800 border-t border-l border-border dark:border-warm-600/40"
         />
       )}
     </div>
@@ -241,7 +241,7 @@ function PhaseDetail({
       {/* Header */}
       <div className="flex items-center justify-between gap-6 px-6 py-4 bg-surface dark-card-header card-divider-bottom">
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100">
+          <h3 className="text-sm font-semibold text-lean-black dark:text-warm-50">
             {phase.label}
           </h3>
           {phase.description && (
@@ -254,11 +254,11 @@ function PhaseDetail({
 
         {/* Progress */}
         <div className="shrink-0 flex flex-col items-end gap-1.5">
-          <span className="text-xs font-semibold text-lean-black dark:text-gray-100">
+          <span className="text-xs font-semibold text-lean-black dark:text-warm-50">
             {done}
             <span className="font-normal text-text-muted">/{total} herramientas</span>
           </span>
-          <div className="w-36 h-1.5 rounded-full bg-border dark:bg-gray-700 overflow-hidden">
+          <div className="w-36 h-1.5 rounded-full bg-border dark:bg-warm-700 overflow-hidden">
             <div
               className="h-full rounded-full bg-navy dark:bg-warm-600 transition-all duration-700 ease-out"
               style={{ width: `${pct}%` }}
@@ -399,17 +399,17 @@ export function PhaseRoadmapSkeleton() {
   return (
     <div className="space-y-8 animate-pulse">
       <div className="relative px-10 pt-2 pb-10">
-        <div className="absolute left-14 right-14 h-0.5 bg-border dark:bg-gray-700 rounded-full" style={{ top: '22px' }} />
+        <div className="absolute left-14 right-14 h-0.5 bg-border dark:bg-warm-700 rounded-full" style={{ top: '22px' }} />
         <div className="relative flex items-start justify-between">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="flex flex-col items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700" />
-              <div className="h-3 w-14 rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="h-10 w-10 rounded-full bg-warm-200 dark:bg-warm-700" />
+              <div className="h-3 w-14 rounded bg-warm-200 dark:bg-warm-700" />
             </div>
           ))}
         </div>
       </div>
-      <div className="rounded-xl border border-border h-40 bg-surface dark:bg-gray-800" />
+      <div className="rounded-xl border border-border h-40 bg-surface dark:bg-warm-700" />
     </div>
   )
 }

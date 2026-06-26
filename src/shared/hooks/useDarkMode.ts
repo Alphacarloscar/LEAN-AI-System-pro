@@ -39,3 +39,16 @@ export function useDarkMode() {
 
   return { dark, toggle: () => setDark((v) => !v) }
 }
+
+/** Read-only: true when html.dark is active. Observes class changes reactively. */
+export function useIsDark(): boolean {
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'))
+  useEffect(() => {
+    const obs = new MutationObserver(() =>
+      setIsDark(document.documentElement.classList.contains('dark'))
+    )
+    obs.observe(document.documentElement, { attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+  return isDark
+}

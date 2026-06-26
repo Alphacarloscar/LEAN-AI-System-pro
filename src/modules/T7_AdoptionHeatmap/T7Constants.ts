@@ -4,6 +4,7 @@
 
 import type { ResistanceLevel, Stakeholder } from '@/modules/T2_StakeholderMatrix/types'
 import type { RogersSegment, DotPosition } from './types'
+import { DEPT_COLORS } from '@shared/design-system/charts/chartTokens'
 
 // ── Orden de segmentos ────────────────────────────────────────
 
@@ -74,11 +75,11 @@ export const BELL_FILL   = buildBellFillPath()
 export const BELL_STROKE = buildBellStrokePath()
 
 export const SEG_LABELS: Record<RogersSegment, { label: string; pct: string; bg: string; darkBg: string }> = {
-  innovators:     { label: 'Innovadores',    pct: '2.5%',  bg: '#EFF6FF', darkBg: 'rgba(59,130,246,0.07)'  },
-  early_adopters: { label: 'Early Adopters', pct: '13.5%', bg: '#F0FDF4', darkBg: 'rgba(34,197,94,0.07)'   },
-  early_majority: { label: 'Mayoría Temp.',  pct: '34%',   bg: '#FEFCE8', darkBg: 'rgba(234,179,8,0.07)'   },
-  late_majority:  { label: 'Mayoría Tardía', pct: '34%',   bg: '#FFF7ED', darkBg: 'rgba(249,115,22,0.07)'  },
-  laggards:       { label: 'Rezagados',      pct: '16%',   bg: '#F9FAFB', darkBg: 'rgba(148,163,184,0.05)' },
+  innovators:     { label: 'Innovadores',    pct: '2.5%',  bg: '#F7F4EE', darkBg: 'rgba(196,192,184,0.04)' },
+  early_adopters: { label: 'Early Adopters', pct: '13.5%', bg: '#F7F4EE', darkBg: 'rgba(196,192,184,0.04)' },
+  early_majority: { label: 'Mayoría Temp.',  pct: '34%',   bg: '#F7F4EE', darkBg: 'rgba(196,192,184,0.04)' },
+  late_majority:  { label: 'Mayoría Tardía', pct: '34%',   bg: '#F7F4EE', darkBg: 'rgba(196,192,184,0.04)' },
+  laggards:       { label: 'Rezagados',      pct: '16%',   bg: '#F7F4EE', darkBg: 'rgba(196,192,184,0.04)' },
 }
 
 // ── Departamentos ─────────────────────────────────────────────
@@ -91,14 +92,24 @@ export interface DeptCfg {
 }
 
 export const DEPT_CFG: Record<string, DeptCfg> = {
-  'Dirección General':     { fill: '#2A2822', darkFill: '#7BA7D4', badgeBg: 'bg-slate-100  dark:bg-slate-800', badgeText: 'text-slate-700  dark:text-slate-300' },
-  'IT / Tecnología':       { fill: '#6366F1', darkFill: '#818CF8', badgeBg: 'bg-indigo-100 dark:bg-indigo-900/40', badgeText: 'text-indigo-700 dark:text-indigo-300' },
-  'Operaciones':           { fill: '#F97316', darkFill: '#FB923C', badgeBg: 'bg-orange-100 dark:bg-orange-900/40', badgeText: 'text-orange-700 dark:text-orange-300' },
-  'Marketing & Comercial': { fill: '#10B981', darkFill: '#34D399', badgeBg: 'bg-emerald-100 dark:bg-emerald-900/40', badgeText: 'text-emerald-700 dark:text-emerald-300' },
+  // ── Entradas canónicas ─────────────────────────────────────────
+  'Dirección General':     { fill: DEPT_COLORS.direction, darkFill: '#D4A83A', badgeBg: 'bg-warning-light dark:bg-warning-light/10', badgeText: 'text-gold'         },
+  'IT / Tecnología':       { fill: DEPT_COLORS.it,        darkFill: '#6AAFAF', badgeBg: 'bg-info-light   dark:bg-info-light/10',    badgeText: 'text-info-dark'    },
+  'Operaciones':           { fill: DEPT_COLORS.ops,       darkFill: '#D89090', badgeBg: 'bg-danger-light  dark:bg-danger-light/10',  badgeText: 'text-danger-dark'  },
+  'Marketing & Comercial': { fill: DEPT_COLORS.marketing, darkFill: '#7AAC8A', badgeBg: 'bg-success-light dark:bg-success-light/10', badgeText: 'text-success-dark' },
+  'RRHH':                  { fill: DEPT_COLORS.hr,        darkFill: '#C090B0', badgeBg: 'bg-surface       dark:bg-warm-800/60',      badgeText: 'text-text-muted'   },
+  'Finanzas':              { fill: DEPT_COLORS.finance,   darkFill: '#A08C70', badgeBg: 'bg-surface       dark:bg-warm-800/60',      badgeText: 'text-text-muted'   },
+  'Legal':                 { fill: DEPT_COLORS.legal,     darkFill: '#8A9A70', badgeBg: 'bg-surface       dark:bg-warm-800/60',      badgeText: 'text-text-muted'   },
+  'Logística':             { fill: DEPT_COLORS.logistics,  darkFill: '#9A90CB', badgeBg: 'bg-surface       dark:bg-warm-800/60',      badgeText: 'text-text-muted'   },
+  'Compras':               { fill: DEPT_COLORS.purchasing, darkFill: '#7098B0', badgeBg: 'bg-surface       dark:bg-warm-800/60',      badgeText: 'text-text-muted'   },
+  // ── Aliases cortos ─────────────────────────────────────────────
+  'Dirección':             { fill: DEPT_COLORS.direction, darkFill: '#D4A83A', badgeBg: 'bg-warning-light dark:bg-warning-light/10', badgeText: 'text-gold'         },
+  'IT':                    { fill: DEPT_COLORS.it,        darkFill: '#6AAFAF', badgeBg: 'bg-info-light   dark:bg-info-light/10',    badgeText: 'text-info-dark'    },
+  'Marketing':             { fill: DEPT_COLORS.marketing, darkFill: '#7AAC8A', badgeBg: 'bg-success-light dark:bg-success-light/10', badgeText: 'text-success-dark' },
 }
 
 export function deptCfg(dept: string): DeptCfg {
-  return DEPT_CFG[dept] ?? { fill: '#94A3B8', darkFill: '#CBD5E1', badgeBg: 'bg-gray-100', badgeText: 'text-gray-700' }
+  return DEPT_CFG[dept] ?? { fill: DEPT_COLORS.fallback, darkFill: '#9A9790', badgeBg: 'bg-surface', badgeText: 'text-text-muted' }
 }
 
 export function deptFill(dept: string, dark: boolean): string {
@@ -116,7 +127,7 @@ export const RES_CFG: Record<ResistanceLevel, { label: string; color: string }> 
 
 // ── Posicionamiento de dots ───────────────────────────────────
 
-export const DOT_R      = 11   // radio normal
+export const DOT_R      = 14   // radio normal — mismo que T2 (estilo unificado)
 export const DOT_OFFSET = DOT_R + 6   // distancia perpendicular a la curva
 
 export function computeDotPositions(stakeholders: Stakeholder[]): DotPosition[] {

@@ -6,6 +6,7 @@
 import { Badge, type BadgeVariant } from '@shared/design-system/components'
 import { ARCHETYPE_CONFIG } from '../constants'
 import type { ArchetypeCode, ResistanceLevel } from '../types'
+import { useIsDark } from '@/shared/hooks/useDarkMode'
 
 // ── Mapeo de dominio T2 → variant de Badge ────────────────────
 // Los colores semánticos en ARCHETYPE_CONFIG coinciden con los tokens
@@ -24,10 +25,8 @@ const RESISTANCE_VARIANT: Record<ResistanceLevel, BadgeVariant> = {
   alta:  'danger',
 }
 
-// decisor: data-driven bg + text explícito (mismo patrón que CategoryBadge / IT-Negocio).
-// bg-navy-metallic es un background-image gradient — no sobrescribible via bg-*/className.
-// Inline style garantiza bg sólido + texto claro con ratio de contraste ≈ 12.8:1 (WCAG AAA).
-const DECISOR_STYLE: React.CSSProperties = { backgroundColor: '#2A2822', color: '#F0EDE8' }
+const DECISOR_STYLE_LIGHT: React.CSSProperties = { backgroundColor: '#2A2822', color: '#F0EDE8' }
+const DECISOR_STYLE_DARK:  React.CSSProperties = { backgroundColor: 'rgba(200,134,10,0.20)', color: '#C8860A' }
 
 // ─────────────────────────────────────────────────────────────
 
@@ -44,6 +43,7 @@ export function ArchetypeDot({
 }
 
 export function ArchetypeBadge({ archetype }: { archetype: ArchetypeCode }) {
+  const isDark  = useIsDark()
   const cfg     = ARCHETYPE_CONFIG[archetype]
   const variant = ARCHETYPE_VARIANT[archetype] ?? 'default'
   return (
@@ -51,7 +51,7 @@ export function ArchetypeBadge({ archetype }: { archetype: ArchetypeCode }) {
       variant={variant}
       shape="pill"
       size="xs"
-      style={archetype === 'decisor' ? DECISOR_STYLE : undefined}
+      style={archetype === 'decisor' ? (isDark ? DECISOR_STYLE_DARK : DECISOR_STYLE_LIGHT) : undefined}
     >
       {cfg.label}
     </Badge>

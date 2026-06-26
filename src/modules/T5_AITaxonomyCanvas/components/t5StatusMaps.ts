@@ -13,7 +13,7 @@ export const UC_STATUS_STYLE: Record<string, { bg: string; text: string }> = {
   go:         { bg: 'bg-success-light', text: 'text-success-dark' },
   en_piloto:  { bg: 'bg-warning-light', text: 'text-warning-dark' },
   priorizado: { bg: 'bg-info-light',    text: 'text-info-dark' },
-  candidato:  { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-500' },
+  candidato:  { bg: 'bg-warm-100 dark:bg-warm-800', text: 'text-warm-500' },
   no_go:      { bg: 'bg-danger-light',  text: 'text-danger-dark' },
   completado: { bg: 'bg-navy/10',       text: 'text-navy' },
 }

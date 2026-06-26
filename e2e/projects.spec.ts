@@ -89,7 +89,7 @@ test.describe('Proyectos', () => {
     const nameInput = page.getByPlaceholder('Nombre del proyecto...')
     await expect(nameInput).toBeVisible({ timeout: 3_000 })
 
-    const testName = `E2E ${Date.now()}`
+    const testName = `GOBY_TEST_${Date.now()}`
     await nameInput.fill(testName)
 
     // Para superadmin: seleccionar empresa con el native setter de React

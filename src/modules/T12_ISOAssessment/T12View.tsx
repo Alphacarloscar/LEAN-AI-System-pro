@@ -99,7 +99,7 @@ export function T12View({ onBack }: T12ViewProps) {
   }
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-warm-900">
+    <div className="min-h-full bg-surface dark:bg-warm-900">
 
       {/* ── Header sticky ── */}
       <ToolHeader
@@ -131,41 +131,47 @@ export function T12View({ onBack }: T12ViewProps) {
             </Button>
           </>
         }
-        below={
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex">
-              {(['aprobado', 'pendiente_revision', 'en_progreso'] as T12Status[]).map((s) => {
-                const pct = (controls.filter((c) => c.status === s).length / total) * 100
-                if (pct === 0) return null
-                return (
-                  <div
-                    key={s}
-                    style={{ width: `${pct}%`, backgroundColor: T12_STATUS_CONFIG[s].hex }}
-                    className="h-full transition-all duration-700"
-                  />
-                )
-              })}
-            </div>
-            <span className="text-[10px] font-mono text-text-subtle shrink-0">
-              {globalPct}% · {approved}/{total} aprobados · {pending} en revisión
-            </span>
-          </div>
-        }
       />
 
       {/* ── Toast de confirmación de import ── */}
       {importMsg && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-lean-black text-white text-xs font-medium shadow-lg animate-fade-in">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-lean-black text-white text-xs font-medium shadow-md animate-fade-in">
           {importMsg}
         </div>
       )}
 
-      {/* ── Subheader: empresa ── */}
-      <div className="max-w-7xl mx-auto px-8 pt-4 pb-1">
-        <p className="text-sm font-semibold text-lean-black dark:text-warm-50">{companyName}</p>
-        <p className="text-xs text-text-subtle mt-0.5">
-          Evaluación de cumplimiento ISO 42001:2023 · Selecciona una cláusula y gestiona el avance control por control.
-        </p>
+      {/* ── Subheader: descripción + barra de progreso global ── */}
+      <div className="max-w-7xl mx-auto px-8 pt-5 pb-2">
+        <div className="flex items-end justify-between gap-6 mb-3">
+          <div>
+            <p className="text-xs font-mono uppercase tracking-widest text-text-muted mb-0.5">
+              ISO 42001:2023 — Evaluación de cumplimiento
+            </p>
+            <p className="text-sm text-text-subtle">
+              Selecciona una cláusula en el panel izquierdo y gestiona el avance control por control.
+            </p>
+          </div>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <span className="text-[11px] font-mono text-text-subtle">{approved}/{total} aprobados</span>
+            {pending > 0 && (
+              <span className="text-[11px] font-mono text-text-subtle">· {pending} en revisión</span>
+            )}
+            <span className="text-sm font-bold text-lean-black dark:text-warm-100 tabular-nums">{globalPct}%</span>
+          </div>
+        </div>
+        <div className="h-1.5 rounded-full overflow-hidden bg-warm-100 dark:bg-warm-800 flex">
+          {(['aprobado', 'pendiente_revision', 'en_progreso'] as T12Status[]).map((s) => {
+            const pct = (controls.filter((c) => c.status === s).length / total) * 100
+            if (pct === 0) return null
+            return (
+              <div
+                key={s}
+                style={{ width: `${pct}%`, backgroundColor: T12_STATUS_CONFIG[s].hex }}
+                className="h-full transition-all duration-700"
+              />
+            )
+          })}
+        </div>
       </div>
 
       {/* ── Layout principal ── */}
@@ -191,7 +197,7 @@ export function T12View({ onBack }: T12ViewProps) {
                 >
                   Cláusula {T12_CLAUSE_CONFIG[activeClause].number}
                 </span>
-                <h2 className="text-sm font-semibold text-lean-black dark:text-warm-50">
+                <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50">
                   {T12_CLAUSE_CONFIG[activeClause].label}
                 </h2>
               </div>
@@ -199,7 +205,7 @@ export function T12View({ onBack }: T12ViewProps) {
                 {activeControls.filter((c) => c.status === 'aprobado').length} de {activeControls.length} controles aprobados
               </p>
             </div>
-            <Button variant="link" size="sm" onClick={() => setExpandAll((v) => !v)}>
+            <Button variant="link" size="sm" className="text-sm font-medium" onClick={() => setExpandAll((v) => !v)}>
               {expandAll ? 'Colapsar todos' : 'Expandir todos'}
             </Button>
           </div>

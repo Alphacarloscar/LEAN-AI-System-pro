@@ -1,9 +1,30 @@
 // ── T8 Tab 1: Timeline ────────────────────────────────────────
 
 import { useState } from 'react'
+import { Megaphone, GraduationCap, BarChart2, Handshake, Zap, Newspaper, ClipboardList,
+  Mail, Building2, MessageSquare, Monitor, Video, FileText,
+  Users, Target, User } from 'lucide-react'
 import { PHASE_CFG, TYPE_CFG, CHANNEL_CFG, PRIORITY_CFG } from '../T8Generators'
 import type { CommAction, CommPhase } from '../types'
 import { Card, Badge } from '@shared/design-system/components'
+
+const TYPE_ICON_MAP: Record<string, React.ReactElement> = {
+  megaphone:       <Megaphone    size={16} strokeWidth={1.5} />,
+  'graduation-cap':<GraduationCap size={16} strokeWidth={1.5} />,
+  'bar-chart-2':   <BarChart2    size={16} strokeWidth={1.5} />,
+  handshake:       <Handshake    size={16} strokeWidth={1.5} />,
+  zap:             <Zap          size={16} strokeWidth={1.5} />,
+  newspaper:       <Newspaper    size={16} strokeWidth={1.5} />,
+  'clipboard-list':<ClipboardList size={16} strokeWidth={1.5} />,
+}
+const CHANNEL_ICON_MAP: Record<string, React.ReactElement> = {
+  mail:            <Mail         size={12} strokeWidth={1.5} />,
+  building:        <Building2    size={12} strokeWidth={1.5} />,
+  'message-square':<MessageSquare size={12} strokeWidth={1.5} />,
+  monitor:         <Monitor      size={12} strokeWidth={1.5} />,
+  video:           <Video        size={12} strokeWidth={1.5} />,
+  'file-text':     <FileText     size={12} strokeWidth={1.5} />,
+}
 
 export function TimelineTab({ actions }: { actions: CommAction[] }) {
   const [activePhase, setActivePhase] = useState<CommPhase | 'all'>('all')
@@ -19,7 +40,7 @@ export function TimelineTab({ actions }: { actions: CommAction[] }) {
         <button
           onClick={() => setActivePhase('all')}
           className={['px-3 py-1 rounded-full text-xs font-medium border transition-all',
-            activePhase === 'all' ? 'bg-navy-metallic text-white border-navy' : 'border-border text-text-muted hover:border-navy/30'
+            activePhase === 'all' ? 'bg-navy-metallic dark:bg-gold-metallic text-white dark:text-lean-black border-navy dark:border-gold' : 'border-border text-text-muted hover:border-navy/30 dark:hover:border-gold/30'
           ].join(' ')}
         >
           Todas
@@ -65,13 +86,13 @@ export function TimelineTab({ actions }: { actions: CommAction[] }) {
                 return (
                   <Card key={action.id} variant="outlined" padding="none" className="rounded-xl p-5">
                     <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-base">
-                        {typeCfg.icon}
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-surface border border-border dark:bg-warm-800 dark:border-white/10 flex items-center justify-center text-text-subtle">
+                        {TYPE_ICON_MAP[typeCfg.icon] ?? <BarChart2 size={14} strokeWidth={1.5} />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-3 flex-wrap mb-1.5">
                           <div>
-                            <p className="font-semibold text-sm text-lean-black dark:text-gray-100">{action.title}</p>
+                            <p className="font-semibold text-sm text-lean-black dark:text-warm-50">{action.title}</p>
                             <p className="text-[10px] font-mono text-text-subtle mt-0.5">{action.week}</p>
                           </div>
                           <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${priCfg.color}`}>
@@ -82,10 +103,10 @@ export function TimelineTab({ actions }: { actions: CommAction[] }) {
                         <p className="text-xs text-text-muted leading-relaxed mb-3">{action.message}</p>
 
                         <div className="flex flex-wrap gap-2">
-                          <Badge variant="default" shape="pill" size="xs">👥 {action.audience}</Badge>
-                          <Badge variant="default" shape="pill" size="xs">{channelCfg.icon} {channelCfg.label}</Badge>
-                          <Badge variant="default" shape="pill" size="xs">🎯 {typeCfg.label}</Badge>
-                          <Badge variant="default" shape="pill" size="xs">👤 {action.owner}</Badge>
+                          <Badge variant="default" shape="pill" size="xs"><span className="inline-flex items-center gap-1"><Users size={10} strokeWidth={1.5} />{action.audience}</span></Badge>
+                          <Badge variant="default" shape="pill" size="xs"><span className="inline-flex items-center gap-1">{CHANNEL_ICON_MAP[channelCfg.icon] ?? <Mail size={10} strokeWidth={1.5} />}{channelCfg.label}</span></Badge>
+                          <Badge variant="default" shape="pill" size="xs"><span className="inline-flex items-center gap-1"><Target size={10} strokeWidth={1.5} />{typeCfg.label}</span></Badge>
+                          <Badge variant="default" shape="pill" size="xs"><span className="inline-flex items-center gap-1"><User size={10} strokeWidth={1.5} />{action.owner}</span></Badge>
                         </div>
 
                         {action.materials && action.materials.length > 0 && (

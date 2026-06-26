@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T2 — InterviewModal
 //
 // Flujo de 5 preguntas paso a paso → auto-asignación de
@@ -10,7 +10,9 @@
 //   3. Resultado: arquetipo + resistencia + opción de ajuste manual
 // ============================================================
 
-import { useState, useEffect, useRef }   from 'react'
+import { useState, useEffect }           from 'react'
+import { useForm, Controller }           from 'react-hook-form'
+import { zodResolver }                   from '@hookform/resolvers/zod'
 import {
   INTERVIEW_QUESTIONS,
   ARCHETYPE_CONFIG,
@@ -23,6 +25,7 @@ import type {
   NewStakeholderForm,
   Stakeholder,
 } from '../types'
+import { stakeholderFormSchema, type StakeholderFormValues } from '@/lib/schemas/t2.schemas'
 import { useDepartmentStore }            from '@/modules/CompanyProfile/useDepartmentStore'
 import { Select }                        from '@/shared/design-system/components/Select'
 import type { SelectOption }             from '@/shared/design-system/components/Select'
@@ -50,7 +53,7 @@ type Phase = 'form' | 'interview' | 'result'
 function ProgressBar({ current, total }: { current: number; total: number }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+      <div className="flex-1 h-1 bg-warm-100 dark:bg-warm-700 rounded-full overflow-hidden">
         <div
           className="h-full bg-navy rounded-full transition-all duration-300"
           style={{ width: `${(current / total) * 100}%` }}
@@ -72,48 +75,48 @@ function StakeholderFormPhase({
   onNext:         (form: NewStakeholderForm) => void
   initialValues?: NewStakeholderForm
 }) {
-  const [form, setForm] = useState<NewStakeholderForm>(
-    initialValues ?? { name: '', role: '', department: '', unofficialTools: '' }
-  )
-  const nameRef = useRef<HTMLInputElement>(null)
-
-  // Departamentos del store centralizado
   const { departments, isLoading: isLoadingDepts } = useDepartmentStore()
   const deptOptions: SelectOption[] = departments.map((d) => ({ value: d.name, label: d.name }))
   const hasDepts = deptOptions.length > 0
 
-  // Foco en nombre al abrir (si es formulario en blanco)
+  const {
+    register,
+    handleSubmit,
+    control,
+    setFocus,
+    formState: { errors, isSubmitting },
+  } = useForm<StakeholderFormValues>({
+    resolver: zodResolver(stakeholderFormSchema),
+    defaultValues: initialValues ?? { name: '', role: '', department: '', unofficialTools: '' },
+  })
+
   useEffect(() => {
-    if (!initialValues?.name) nameRef.current?.focus()
+    if (!initialValues?.name) setFocus('name')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const canContinue = form.name.trim() && form.role.trim() && form.department.trim()
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (canContinue) onNext(form)
+  function onValid(data: StakeholderFormValues) {
+    onNext(data)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onValid)} className="space-y-4">
       <FormField
         id="stakeholder-name"
-        ref={nameRef}
         label="Nombre"
         type="text"
-        value={form.name}
-        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
         placeholder="Ej. Javier Morales"
+        error={errors.name?.message}
+        {...register('name')}
       />
 
       <FormField
         id="stakeholder-role"
         label="Cargo"
         type="text"
-        value={form.role}
-        onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
         placeholder="Ej. CIO, Head of Digital, CFO…"
+        error={errors.role?.message}
+        {...register('role')}
       />
 
       {/* Shadow AI — campo empático, opcional */}
@@ -122,34 +125,40 @@ function StakeholderFormPhase({
         label="Herramientas externas (opcional)"
         multiline
         rows={2}
-        value={form.unofficialTools ?? ''}
-        onChange={(e) => setForm((f) => ({ ...f, unofficialTools: e.target.value }))}
         placeholder="Herramientas externas (IA o digitales) que empleas por tu cuenta para agilizar cuellos de botella diarios"
         hint="Ej. ChatGPT, Notion AI, Zapier… Su uso no implica incumplimiento; nos ayuda a entender el flujo real de trabajo."
+        {...register('unofficialTools')}
       />
 
       {/* Departamento — Select centralizado desde company_departments */}
-      <Select
-        label="Departamento"
-        options={deptOptions}
-        value={form.department}
-        onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
-        disabled={!hasDepts || isLoadingDepts}
-        placeholder={
-          isLoadingDepts
-            ? 'Cargando departamentos...'
-            : hasDepts
-            ? 'Selecciona un departamento'
-            : 'Configura los departamentos en el Perfil de Empresa primero'
-        }
-        helperText={
-          !hasDepts && !isLoadingDepts
-            ? 'Ve a Perfil de Empresa → Departamentos para configurarlos.'
-            : undefined
-        }
+      <Controller
+        name="department"
+        control={control}
+        render={({ field }) => (
+          <Select
+            label="Departamento"
+            options={deptOptions}
+            value={field.value}
+            onChange={(e) => field.onChange(e.target.value)}
+            disabled={!hasDepts || isLoadingDepts}
+            errorText={errors.department?.message}
+            placeholder={
+              isLoadingDepts
+                ? 'Cargando departamentos...'
+                : hasDepts
+                ? 'Selecciona un departamento'
+                : 'Configura los departamentos en el Perfil de Empresa primero'
+            }
+            helperText={
+              !hasDepts && !isLoadingDepts
+                ? 'Ve a Perfil de Empresa → Departamentos para configurarlos.'
+                : undefined
+            }
+          />
+        )}
       />
 
-      <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border/60">
+      <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-warm-50 dark:bg-warm-700/50 border border-border/60">
         A continuación, 5 preguntas que determinarán el arquetipo y el nivel de resistencia automáticamente.
       </p>
 
@@ -158,7 +167,8 @@ function StakeholderFormPhase({
         variant="primary"
         size="sm"
         fullWidth
-        disabled={!canContinue}
+        disabled={isSubmitting}
+        loading={isSubmitting}
       >
         Iniciar entrevista →
       </Button>
@@ -207,7 +217,7 @@ function InterviewPhase({
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
           Pregunta {current + 1} de {INTERVIEW_QUESTIONS.length}
         </p>
-        <p className="text-sm font-semibold text-lean-black dark:text-gray-100 leading-snug">
+        <p className="text-sm font-semibold text-lean-black dark:text-warm-50 leading-snug">
           {question.text}
         </p>
         {question.hint && (
@@ -226,7 +236,7 @@ function InterviewPhase({
                 'w-full text-left px-4 py-3 rounded-xl border text-xs font-medium transition-all duration-150',
                 isSelected
                   ? answerColors[answer.code]
-                  : 'border-border bg-white dark:bg-gray-800 text-text-muted hover:border-navy/30 hover:bg-gray-50 dark:hover:bg-gray-700',
+                  : 'border-border bg-white dark:bg-warm-700 text-text-muted hover:border-navy/30 hover:bg-warm-50 dark:hover:bg-warm-600',
               ].join(' ')}
             >
               <span className="font-bold mr-2 opacity-50">{answer.code})</span>
@@ -252,18 +262,18 @@ function InterviewPhase({
 // ── Color de dominio para los selectores de ajuste manual ─────
 // Hex equivalentes de los tokens Tailwind en ARCHETYPE_CONFIG/RESISTANCE_CONFIG.
 const ARCHETYPE_ACTIVE_COLOR: Record<string, string> = {
-  adoptador:    '#D4EDE3',  // success-light
-  ambassador:   '#DDE8F5',  // info-light
+  adoptador:    '#E8F5EE',  // success-light
+  ambassador:   '#EBF2FA',  // info-light
   decisor:      'rgba(42,40,34,0.1)',  // navy/10
-  critico:      '#F5DEDE',  // danger-light
-  reticente:    '#FAF0D7',  // warning-light
-  especialista: '#FAF0D7',  // backward-compat alias → mismo que reticente
+  critico:      '#FDECEC',  // danger-light
+  reticente:    '#FEF6E8',  // warning-light
+  especialista: '#FEF6E8',  // backward-compat alias → mismo que reticente
 }
 
 const RESISTANCE_ACTIVE_COLOR: Record<string, string> = {
-  baja:  '#D4EDE3',  // success-light
-  media: '#FAF0D7',  // warning-light
-  alta:  '#F5DEDE',  // danger-light
+  baja:  '#E8F5EE',  // success-light
+  media: '#FEF6E8',  // warning-light
+  alta:  '#FDECEC',  // danger-light
 }
 
 // ── Fase 3: resultado ─────────────────────────────────────────
@@ -285,15 +295,15 @@ function ResultPhase({
   const arc = ARCHETYPE_CONFIG[archetype]
 
   const scoreBars = [
-    { label: 'Adopción IA',  value: result.adoptionScore,  color: 'bg-success-dark' },
-    { label: 'Influencia',   value: result.influenceScore, color: 'bg-navy' },
-    { label: 'Apertura',     value: result.opennessScore,  color: 'bg-info-dark' },
+    { label: 'Adopción IA',  value: result.adoptionScore,  color: 'bg-gold' },
+    { label: 'Influencia',   value: result.influenceScore, color: 'bg-gold' },
+    { label: 'Apertura',     value: result.opennessScore,  color: 'bg-gold' },
   ]
 
   return (
     <div className="space-y-5">
       {/* Resultado automático */}
-      <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-border space-y-3">
+      <div className="p-4 rounded-xl bg-warm-50 dark:bg-warm-700/50 border border-border space-y-3">
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
           Clasificación automática · {form.name}
         </p>
@@ -315,7 +325,7 @@ function ResultPhase({
           {scoreBars.map(({ label, value, color }) => (
             <div key={label} className="flex items-center gap-2">
               <span className="text-[10px] text-text-subtle w-20 shrink-0">{label}</span>
-              <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="flex-1 h-1.5 bg-warm-200 dark:bg-warm-600 rounded-full overflow-hidden">
                 <div
                   className={`h-full ${color} rounded-full transition-all duration-500`}
                   style={{ width: `${(value / 4) * 100}%` }}

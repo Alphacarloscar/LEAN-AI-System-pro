@@ -7,9 +7,9 @@ import { HeroMetric }      from '../HeroMetric'
 import { PanelCard }       from '../PanelCard'
 
 const EVENT_LEVEL_COLOR: Record<string, string> = {
-  direction: '#C8860A',
-  program:   '#9BB5D9',
-  team:      '#86C7A8',
+  direction: 'var(--color-gold)',
+  program:   'var(--color-info)',
+  team:      'var(--color-success)',
 }
 
 interface P6Props {
@@ -31,7 +31,7 @@ export function P6GovernancePanel({ p6data, risksHigh, expanded, onToggle, onNav
   return (
     <PanelCard
       id="p6" expanded={expanded} onClick={onToggle}
-      tag="T8 · T9 · T11 · Gobierno" tagColor="amber"
+      tag="T8 · T9 · T11 · Gobierno"
       title="Gobierno activo"
       subtitle={p6data.hasData
         ? `${p6data.casosEnGO} en GO · ${p6data.upcomingEvents.length} hitos próximos`
@@ -39,8 +39,8 @@ export function P6GovernancePanel({ p6data, risksHigh, expanded, onToggle, onNav
       animDelay={400}
       heroSlot={<HeroMetric
         label="Gobierno activo"
-        value={p6data.gobiernoActivoPct > 0 ? `${p6data.gobiernoActivoPct}%` : '—'}
-        colorScore={p6data.gobiernoActivoPct > 0 ? p6data.gobiernoActivoPct : undefined}
+        value={p6data.hasData ? `${p6data.gobiernoActivoPct}%` : '—'}
+        colorScore={p6data.hasData ? p6data.gobiernoActivoPct : undefined}
       />}
     >
       {p6data.hasData ? (
@@ -56,10 +56,10 @@ export function P6GovernancePanel({ p6data, risksHigh, expanded, onToggle, onNav
             ))}
           </div>
           <div className="flex gap-1.5 mt-3">
-            <MetricChip label="Casos en GO"  value={String(p6data.casosEnGO)}   valueColor="#C8860A" />
+            <MetricChip label="Casos en GO"  value={String(p6data.casosEnGO)}   valueColor="var(--color-gold)" />
             <MetricChip label="Candidatos"   value={String(p6data.libres)} />
             <MetricChip label="Completados"  value={String(p6data.completados)} />
-            <MetricChip label="Riesgo alto"  value={String(risksHigh)} valueColor="#C06060" />
+            <MetricChip label="Riesgo alto"  value={String(risksHigh)} valueColor="var(--color-danger-dark, #C06060)" />
           </div>
         </>
       ) : (

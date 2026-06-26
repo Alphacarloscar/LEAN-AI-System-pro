@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T4 — RoadmapTabContent
 // ============================================================
 
@@ -29,8 +29,8 @@ export function RoadmapTabContent({ useCase, onUpdateRoadmap }: RoadmapTabProps)
                   className={[
                     'px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all',
                     isActive
-                      ? 'bg-navy text-white border-navy shadow-sm'
-                      : 'border-border dark:border-white/10 text-text-muted hover:border-navy/40 hover:text-lean-black dark:hover:text-gray-200',
+                      ? 'bg-navy text-white border-navy dark:bg-gold dark:text-lean-black dark:border-gold shadow-sm'
+                      : 'border-border dark:border-warm-500/50 text-text-muted dark:text-warm-200 hover:border-navy/40 hover:text-lean-black dark:hover:border-gold/50 dark:hover:text-gold',
                   ].join(' ')}
                 >
                   {q}
@@ -51,7 +51,7 @@ export function RoadmapTabContent({ useCase, onUpdateRoadmap }: RoadmapTabProps)
         <FormField id="rm-next-steps" label="Próximos pasos" multiline rows={4} value={rm.nextSteps ?? ''} onChange={(e) => onUpdateRoadmap({ nextSteps: e.target.value || undefined })} placeholder="Acciones concretas para arrancar este caso de uso…" />
         <FormField id="rm-dependencies" label="Dependencias" multiline rows={3} value={rm.dependencies ?? ''} onChange={(e) => onUpdateRoadmap({ dependencies: e.target.value || undefined })} placeholder="Dependencias con otros casos de uso, sistemas o equipos…" />
         {useCase.notes && (
-          <Card variant="flat" padding="none" className="rounded-2xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
+          <Card variant="flat" padding="none" className="rounded-xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
             <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">Notas del consultor</p>
             <p className="text-xs text-text-muted leading-relaxed italic">{useCase.notes}</p>
           </Card>

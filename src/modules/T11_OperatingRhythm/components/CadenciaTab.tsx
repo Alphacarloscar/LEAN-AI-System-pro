@@ -28,24 +28,24 @@ function EventCard({ event }: { event: T11Event }) {
                   {event.title}
                 </p>
                 {event.isCritical && (
-                  <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                  <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-warning-dark dark:bg-warning-dark/40 text-lean-white dark:text-warm-50">
                     CRÍTICO
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-text-subtle mt-0.5 leading-snug">{event.subtitle}</p>
+              <p className="text-[10px] text-text-subtle dark:text-warm-300 mt-0.5 leading-snug">{event.subtitle}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[10px] text-text-muted font-mono">{event.duration}</span>
+              <span className="text-[10px] text-text-muted dark:text-warm-200 font-mono">{event.duration}</span>
               <svg
-                className={`h-3 w-3 text-text-subtle transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+                className={`h-3 w-3 text-text-subtle dark:text-warm-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
                 viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
               >
                 <path d="M2 4l4 4 4-4" />
               </svg>
             </div>
           </div>
-          <p className="text-[10px] text-text-subtle mt-1">
+          <p className="text-[10px] text-text-subtle dark:text-warm-300 mt-1">
             <span className="font-medium text-text-muted dark:text-warm-200">Owner:</span> {event.owner}
           </p>
         </div>
@@ -58,10 +58,10 @@ function EventCard({ event }: { event: T11Event }) {
           </p>
 
           <div>
-            <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">Participantes</p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1.5">Participantes</p>
             <div className="flex flex-wrap gap-1.5">
               {event.participants.map((p) => (
-                <span key={p} className="px-2 py-0.5 rounded-full text-[10px] bg-gray-100 dark:bg-warm-700 text-text-muted dark:text-warm-100">
+                <span key={p} className="px-2 py-0.5 rounded-full text-[10px] bg-warm-100 dark:bg-warm-600 border border-border dark:border-warm-500 text-text-muted dark:text-warm-50">
                   {p}
                 </span>
               ))}
@@ -69,7 +69,7 @@ function EventCard({ event }: { event: T11Event }) {
           </div>
 
           <div>
-            <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">Datos a revisar</p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1.5">Datos a revisar</p>
             <ul className="space-y-1">
               {event.dataInputs.map((d) => (
                 <li key={d} className="flex items-start gap-1.5 text-[11px] text-text-muted dark:text-warm-200">
@@ -82,7 +82,7 @@ function EventCard({ event }: { event: T11Event }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">Agenda tipo</p>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1.5">Agenda tipo</p>
               <ol className="space-y-1 list-decimal list-inside">
                 {event.agendaItems.map((a) => (
                   <li key={a} className="text-[11px] text-text-muted dark:text-warm-200 leading-snug">{a}</li>
@@ -90,7 +90,7 @@ function EventCard({ event }: { event: T11Event }) {
               </ol>
             </div>
             <div>
-              <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">KPIs que se revisan</p>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1.5">KPIs que se revisan</p>
               <ul className="space-y-1">
                 {event.kpisReviewed.map((k) => (
                   <li key={k} className="flex items-start gap-1.5 text-[11px] text-text-muted dark:text-warm-200">
@@ -126,7 +126,7 @@ export function CadenciaTab({ events }: { events: T11Event[] }) {
               <div className={`px-3 py-1 rounded-full text-[10px] font-semibold ${lcfg.badge} ${lcfg.badgeText}`}>
                 {lcfg.label}
               </div>
-              <p className="text-[10px] text-text-subtle">{lcfg.sublabel}</p>
+              <p className="text-[10px] text-text-subtle dark:text-warm-300">{lcfg.sublabel}</p>
               <div className="h-px flex-1" style={{ backgroundColor: lcfg.hex + '40' }} />
             </div>
             <div className="grid grid-cols-1 gap-3">

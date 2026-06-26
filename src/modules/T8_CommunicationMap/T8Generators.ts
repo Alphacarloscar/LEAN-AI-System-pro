@@ -33,28 +33,28 @@ export function getSegment(archetype: ArchetypeCode, resistance: ResistanceLevel
 // ── Colores / labels ──────────────────────────────────────────
 
 export const PHASE_CFG: Record<CommPhase, { label: string; period: string; color: string; bg: string; border: string }> = {
-  phase1: { label: 'Fase 1', period: 'Mes 1–2', color: 'text-indigo-700', bg: 'bg-indigo-50',  border: 'border-indigo-200' },
-  phase2: { label: 'Fase 2', period: 'Mes 3–4', color: 'text-amber-700',  bg: 'bg-amber-50',   border: 'border-amber-200'  },
-  phase3: { label: 'Fase 3', period: 'Mes 5–6', color: 'text-emerald-700',bg: 'bg-emerald-50', border: 'border-emerald-200'},
+  phase1: { label: 'Fase 1', period: 'Mes 1–2', color: 'text-info-dark',    bg: 'bg-info-light',    border: 'border-info-dark/20'    },
+  phase2: { label: 'Fase 2', period: 'Mes 3–4', color: 'text-gold',         bg: 'bg-gold/10',       border: 'border-gold/20'         },
+  phase3: { label: 'Fase 3', period: 'Mes 5–6', color: 'text-success-dark', bg: 'bg-success-light', border: 'border-success-dark/20' },
 }
 
 export const TYPE_CFG: Record<CommType, { label: string; icon: string }> = {
-  anuncio:                 { label: 'Anuncio',          icon: '📢' },
-  formacion:               { label: 'Formación',         icon: '🎓' },
-  actualizacion:           { label: 'Actualización',     icon: '📊' },
-  sesion_bilateral:        { label: 'Sesión bilateral',  icon: '🤝' },
-  workshop:                { label: 'Workshop',           icon: '⚡' },
-  newsletter:              { label: 'Newsletter',         icon: '📰' },
-  presentacion_ejecutiva:  { label: 'Pres. ejecutiva',   icon: '📋' },
+  anuncio:                 { label: 'Anuncio',          icon: 'megaphone' },
+  formacion:               { label: 'Formación',         icon: 'graduation-cap' },
+  actualizacion:           { label: 'Actualización',     icon: 'bar-chart-2' },
+  sesion_bilateral:        { label: 'Sesión bilateral',  icon: 'handshake' },
+  workshop:                { label: 'Workshop',           icon: 'zap' },
+  newsletter:              { label: 'Newsletter',         icon: 'newspaper' },
+  presentacion_ejecutiva:  { label: 'Pres. ejecutiva',   icon: 'clipboard-list' },
 }
 
 export const CHANNEL_CFG: Record<CommChannel, { label: string; icon: string }> = {
-  email:              { label: 'Email',             icon: '✉️' },
-  reunion_presencial: { label: 'Reunión',           icon: '🏢' },
-  teams_slack:        { label: 'Teams / Slack',     icon: '💬' },
-  presentacion:       { label: 'Presentación',      icon: '🖥️' },
-  video:              { label: 'Video',              icon: '🎬' },
-  documento:          { label: 'Documento',          icon: '📄' },
+  email:              { label: 'Email',             icon: 'mail' },
+  reunion_presencial: { label: 'Reunión',           icon: 'building' },
+  teams_slack:        { label: 'Teams / Slack',     icon: 'message-square' },
+  presentacion:       { label: 'Presentación',      icon: 'monitor' },
+  video:              { label: 'Video',              icon: 'video' },
+  documento:          { label: 'Documento',          icon: 'file-text' },
 }
 
 export const PRIORITY_CFG = {
@@ -324,7 +324,7 @@ export function generateMaterials(companyName: string, goUseCases: string[]): Ma
       id: 'email-launch',
       title: 'Email lanzamiento CEO',
       subtitle: 'Anuncio inicial a toda la organización — Semana 3',
-      icon: '📢',
+      icon: 'megaphone',
       tags: ['Fase 1', 'Email', 'Alta prioridad'],
       content: `Asunto: Iniciamos nuestro camino hacia la adopción de Inteligencia Artificial
 
@@ -385,7 +385,7 @@ Para cualquier duda adicional: [nombre ambassador] — [email/canal interno]`,
       id: 'training-agenda',
       title: 'Agenda formación inicial 2h',
       subtitle: 'Para mandos intermedios y responsables de área — Semana 4-6',
-      icon: '🎓',
+      icon: 'graduation-cap',
       tags: ['Fase 1', 'Formación', 'Mandos intermedios'],
       content: `AGENDA — Sesión de formación inicial: "IA en ${companyName}: qué es, qué no es, y qué viene"
 
@@ -433,7 +433,7 @@ Audiencia: Mandos intermedios y responsables de área
       id: 'monthly-update',
       title: 'Plantilla update mensual (Mes 3-4)',
       subtitle: 'Newsletter interno — firmado por ambassador, no por el consultor',
-      icon: '📊',
+      icon: 'bar-chart-2',
       tags: ['Fase 2', 'Email', 'Toda la organización'],
       content: `Asunto: Actualización del programa IA — [Mes X]: lo que hemos aprendido
 
@@ -441,19 +441,19 @@ Equipo,
 
 Han pasado [X] semanas desde que arrancamos el programa de adopción IA. Os cuento, sin filtros, cómo va.
 
-✅ LO QUE ESTÁ FUNCIONANDO
+✓ LO QUE ESTÁ FUNCIONANDO
 [Resultado 1 concreto con dato: ej. "Hemos reducido el tiempo de triaje de incidencias de 4h a 45min en el equipo de IT."]
 [Resultado 2 concreto con dato]
 
-⚠️ LO QUE TUVIMOS QUE AJUSTAR
+! LO QUE TUVIMOS QUE AJUSTAR
 [Obstáculo honesto: ej. "La integración con el sistema de RRHH tardó 2 semanas más de lo previsto. Ya está resuelta."]
 [Cómo lo resolvimos]
 
-📅 PRÓXIMO HITO
+→ PRÓXIMO HITO
 [Hito concreto con fecha: ej. "El 15 de [mes] presentamos los resultados del piloto al Comité de Dirección."]
 [Lo que significa para vosotros]
 
-💬 VUESTRA OPINIÓN NOS IMPORTA
+→ VUESTRA OPINIÓN NOS IMPORTA
 Si tenéis preguntas, observaciones o algo que no cuadra con lo que veis en vuestro día a día — escribidme directamente. No hace falta que sea formal.
 
 [Nombre Ambassador]
@@ -463,7 +463,7 @@ Si tenéis preguntas, observaciones o algo que no cuadra con lo que veis en vues
       id: 'results-email',
       title: 'Email de resultados finales',
       subtitle: 'Comunicación de cierre del sprint — Semana 24',
-      icon: '🏁',
+      icon: 'flag',
       tags: ['Fase 3', 'Email', 'Alta prioridad'],
       content: `Asunto: 6 meses después: resultados del programa IA en ${companyName}
 

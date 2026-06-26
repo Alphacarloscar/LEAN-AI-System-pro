@@ -28,17 +28,17 @@ interface P2Props {
 export function P2PortfolioPanel({ t4data, segments, expanded, onToggle, onNavigate }: P2Props) {
   return (
     <PanelCard
-      id="p2" featured expanded={expanded} onClick={onToggle}
-      tag="T4 · Portfolio IA  ★" tagColor="success"
+      id="p2" expanded={expanded} onClick={onToggle}
+      tag="T4 · Portfolio IA  ★"
       title="Iniciativas activas" subtitle={`${t4data.totalInitiatives} iniciativas · ${t4data.statuses.active} activas`}
       animDelay={80}
       heroSlot={<HeroMetric label="Inversión total" value={t4data.totalInvestment > 0 ? `€${(t4data.totalInvestment / 1000).toFixed(0)}K` : '—'} />}
     >
       <StatusBar segments={segments} />
       <div className="flex gap-2 mt-3">
-        <MetricChip label="Ahorro anual est." value={t4data.ahorroAnual > 0 ? `€${(t4data.ahorroAnual / 1000).toFixed(0)}K` : '—'} valueColor="#5FAF8A" />
+        <MetricChip label="Ahorro anual est." value={t4data.ahorroAnual > 0 ? `€${(t4data.ahorroAnual / 1000).toFixed(0)}K` : '—'} valueColor="var(--color-success)" />
         <MetricChip label="Payback promedio"  value={t4data.paybackMeses > 0 ? `${t4data.paybackMeses} meses` : '—'} />
-        <MetricChip label="ROI 3 años"        value={t4data.roi3years > 0 ? `${t4data.roi3years}%` : '—'} valueColor="#C8860A" />
+        <MetricChip label="ROI 3 años"        value={t4data.roi3years > 0 ? `${t4data.roi3years}%` : '—'} valueColor="var(--color-gold)" />
       </div>
 
       {expanded && (

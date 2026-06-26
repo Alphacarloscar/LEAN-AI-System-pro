@@ -1,4 +1,4 @@
-import { computeROIFromEconomics } from '../constants'
+﻿import { computeROIFromEconomics } from '../constants'
 import { fmtEur } from './T4Badges.constants'
 import { Card } from '@shared/design-system/components'
 import type { UseCase } from '../types'
@@ -28,29 +28,29 @@ export function ExecDashboard({ useCases }: ExecDashboardProps) {
       label:    'Casos aprobados (GO)',
       value:    String(totalGo),
       subtext:  `de ${useCases.length} totales`,
-      color:    'text-success-dark',
-      dotColor: 'bg-success-dark',
+      color:    'text-lean-black dark:text-warm-50',
+      dotColor: 'bg-gold',
     },
     {
       label:    'Ahorro anual estimado',
       value:    fmtEur(totalAnnualSaving),
       subtext:  `${roisWithData.length} casos con datos económicos`,
-      color:    'text-lean-black dark:text-gray-100',
-      dotColor: 'bg-navy',
+      color:    'text-lean-black dark:text-warm-50',
+      dotColor: 'bg-warm-500',
     },
     {
       label:    'Payback promedio',
       value:    avgPayback !== null ? `${avgPayback.toFixed(1)} meses` : '—',
       subtext:  'recuperación de inversión',
-      color:    'text-lean-black dark:text-gray-100',
-      dotColor: 'bg-info-dark',
+      color:    'text-lean-black dark:text-warm-50',
+      dotColor: 'bg-warm-400',
     },
     {
       label:    'Pendientes de decisión',
       value:    String(pending),
       subtext:  'candidatos + priorizados',
       color:    pending > 0 ? 'text-warning-dark' : 'text-text-muted',
-      dotColor: pending > 0 ? 'bg-warning-dark' : 'bg-gray-400',
+      dotColor: pending > 0 ? 'bg-warning-dark' : 'bg-warm-300',
     },
   ]
 
@@ -61,7 +61,7 @@ export function ExecDashboard({ useCases }: ExecDashboardProps) {
           key={kpi.label}
           variant="outlined"
           padding="none"
-          className="rounded-2xl px-5 py-4 flex flex-col gap-1.5"
+          className="rounded-xl px-5 py-4 flex flex-col gap-1.5"
         >
           <div className="flex items-center gap-2">
             <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${kpi.dotColor}`} />

@@ -2,6 +2,7 @@
 // PolicyTab — Tab 1 of T6View: Corporate AI Policy document
 // ============================================================
 
+import { AlertTriangle, Check, RefreshCw, Ban, AlertCircle, CheckCircle, Circle } from 'lucide-react'
 import { useT4Store }        from '@/modules/T4_UseCasePriorityBoard'
 import { useT5Store }        from '@/modules/T5_AITaxonomyCanvas'
 import { useT6Store }        from '../store'
@@ -12,7 +13,15 @@ import { usePolicyGeneration } from '@/hooks/usePolicyGeneration'
 import type { PolicyGenerationContext } from '@/hooks/usePolicyGeneration'
 import { PolicyDownloadButton } from '../PolicyPDF'
 import { PersistenceBanner } from '@/shared/components/PersistenceBanner'
-import { Badge, Spinner } from '@shared/design-system/components'
+import { Badge, StreamingIndicator } from '@shared/design-system/components'
+
+const RISK_ICON_SM = {
+  ban:              <Ban           size={12} strokeWidth={1.5} />,
+  'alert-circle':   <AlertCircle  size={12} strokeWidth={1.5} />,
+  'alert-triangle': <AlertTriangle size={12} strokeWidth={1.5} />,
+  'check-circle':   <CheckCircle  size={12} strokeWidth={1.5} />,
+  circle:           <Circle       size={12} strokeWidth={1.5} />,
+} as const
 
 interface PolicyTabProps {
   companyName:  string
@@ -25,7 +34,8 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
   const { canvas }     = useT5Store()
   const { generatedPolicy, clearGeneratedPolicy, persistenceStatus, persistenceError, retrySave } = useT6Store()
   const profile        = useCompanyProfileStore((s) => s.profile)
-  const { generate, isGenerating, error: genError, clearError } = usePolicyGeneration()
+  const { generate, status: genStatus, error: genError, clearError } = usePolicyGeneration()
+  const isPending = genStatus === 'pending'
   const now            = new Date()
   const dateStr        = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
   const nextReviewStr  = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
@@ -109,7 +119,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
               </Badge>
               <button
                 onClick={clearGeneratedPolicy}
-                className="text-[10px] text-text-subtle hover:text-red-500 transition-colors"
+                className="text-[10px] text-text-subtle hover:text-danger transition-colors"
               >
                 Volver a plantilla
               </button>
@@ -120,8 +130,8 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
             </p>
           )}
           {genError && (
-            <p className="text-[11px] text-red-500 flex items-center gap-1">
-              ⚠ {genError}
+            <p className="text-[11px] text-danger flex items-center gap-1">
+              <AlertTriangle size={12} strokeWidth={1.5} className="shrink-0" /> {genError}
               <button onClick={clearError} className="underline hover:no-underline ml-1">Cerrar</button>
             </p>
           )}
@@ -137,32 +147,33 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
           {!isReadOnly && (
             <button
               onClick={() => generate(policyGenContext, engagementId)}
-              disabled={isGenerating}
+              disabled={isPending}
               className={[
                 'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150',
-                isGenerating
-                  ? 'border-border text-text-subtle bg-gray-50 dark:bg-gray-800 cursor-not-allowed'
-                  : 'border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40',
+                isPending
+                  ? 'border-border text-text-subtle bg-warm-50 dark:bg-warm-800 cursor-not-allowed'
+                  : 'border-warning dark:border-warning-dark text-warning-dark dark:text-warning bg-warning-light dark:bg-warning/10 hover:bg-warning/20 dark:hover:bg-warning/20',
               ].join(' ')}
             >
-              {isGenerating ? (
-                <>
-                  <Spinner size="sm" label="Generando…" />
-                  Generando…
-                </>
-              ) : (
-                <>✦ {generatedPolicy ? 'Regenerar con IA' : 'Generar política con IA'}</>
-              )}
+              {isPending
+                ? 'Generando…'
+                : <>✦ {generatedPolicy ? 'Regenerar con IA' : 'Generar política con IA'}</>
+              }
             </button>
           )}
           <PolicyDownloadButton data={pdfData} />
         </div>
       </div>
 
+      {/* Streaming indicator — visible while LLM call is in flight */}
+      {isPending && (
+        <StreamingIndicator label="Generando política con IA…" variant="card-full" />
+      )}
+
       {/* Documento */}
       <div
         id="lean-policy-document"
-        className="rounded-2xl border border-border bg-white dark:bg-gray-900 overflow-hidden print:border-none print:shadow-none"
+        className="rounded-xl border border-border bg-white dark:bg-warm-900 overflow-hidden print:border-none print:shadow-none"
       >
         {/* Portada */}
         <div className="px-10 py-8 border-b border-border dark:border-white/6 bg-navy text-white print:bg-navy">
@@ -186,7 +197,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
 
           {/* 1. Declaración */}
           <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+            <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
               1. Declaración de Política
             </h2>
             <p className="text-sm text-text-muted leading-relaxed">
@@ -196,7 +207,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
             </p>
             {!generatedPolicy && objetivo && (
               <p className="text-sm text-text-muted leading-relaxed mt-3">
-                El objetivo estratégico principal de adopción IA de {companyName} es <strong className="text-lean-black dark:text-gray-200">{objetivo.toLowerCase()}</strong>
+                El objetivo estratégico principal de adopción IA de {companyName} es <strong className="text-lean-black dark:text-warm-200">{objetivo.toLowerCase()}</strong>
                 {horizonte ? `, con un horizonte de generación de valor esperado de ${horizonte.toLowerCase()}` : ''}.
                 Esta política enmarca y habilita dicha transformación dentro de los requisitos regulatorios aplicables.
               </p>
@@ -210,7 +221,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
 
           {/* 2. Alcance */}
           <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+            <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
               2. Alcance
             </h2>
             <p className="text-sm text-text-muted leading-relaxed mb-3">
@@ -219,7 +230,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
               )}
             </p>
             {(ecosistema || restricciones) && (
-              <div className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/50 px-4 py-3 mb-3 flex flex-col gap-2">
+              <div className="rounded-xl border border-border dark:border-white/6 bg-warm-50 dark:bg-warm-800/50 px-4 py-3 mb-3 flex flex-col gap-2">
                 {ecosistema && (
                   <div>
                     <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Ecosistema tecnológico base</p>
@@ -235,7 +246,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
               </div>
             )}
             {activeDomains.length > 0 && (
-              <div className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/50 px-4 py-3">
+              <div className="rounded-xl border border-border dark:border-white/6 bg-warm-50 dark:bg-warm-800/50 px-4 py-3">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
                   Dominios IA activos en el scope actual
                 </p>
@@ -245,7 +256,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
                     return (
                       <li key={code} className="text-xs text-text-muted flex items-center gap-2">
                         <span className="text-navy">▶</span>
-                        <strong className="text-lean-black dark:text-gray-200">
+                        <strong className="text-lean-black dark:text-warm-200">
                           {code.replace(/_/g, ' ').replace('agéntica', 'Agéntica')}
                         </strong>
                         {' '}— Prioridad {d.priorityScore}/100
@@ -259,13 +270,13 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
 
           {/* 3. Principios */}
           <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+            <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
               3. Principios de IA Responsable
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {principios.map(({ title, desc }) => (
-                <div key={title} className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/30 px-4 py-3">
-                  <p className="text-xs font-bold text-lean-black dark:text-gray-100 mb-1">{title}</p>
+                <div key={title} className="rounded-xl border border-border dark:border-white/6 bg-warm-50 dark:bg-warm-800/30 px-4 py-3">
+                  <p className="text-xs font-bold text-lean-black dark:text-warm-100 mb-1">{title}</p>
                   <p className="text-[11px] text-text-muted leading-relaxed">{desc}</p>
                 </div>
               ))}
@@ -275,7 +286,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
           {/* 3b. Contexto regulatorio sectorial (solo si fue generado por LLM) */}
           {generatedPolicy?.contexto_sectorial && (
             <section>
-              <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+              <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
                 4. Contexto Regulatorio Sectorial
               </h2>
               <p className="text-sm text-text-muted leading-relaxed">
@@ -286,7 +297,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
 
           {/* 4/5. Catálogo de IA aprobada */}
           <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+            <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
               4. Catálogo de IA Aprobada
             </h2>
             <p className="text-sm text-text-muted leading-relaxed mb-4">
@@ -313,16 +324,19 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
                       return (
                         <tr key={uc.id} className="border-b border-border/40 dark:border-white/4">
                           <td className="py-2 pr-4">
-                            <p className="text-xs font-medium text-lean-black dark:text-gray-200">{uc.name}</p>
+                            <p className="text-xs font-medium text-lean-black dark:text-warm-200">{uc.name}</p>
                           </td>
                           <td className="py-2 px-3 text-xs text-text-muted">{uc.department}</td>
                           <td className="py-2 px-3">
                             <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-semibold ${riskCfg.badgeBg} ${riskCfg.badgeText}`}>
-                              {riskCfg.icon} {riskCfg.shortLabel}
+                              <span className="inline-flex items-center gap-1">{RISK_ICON_SM[riskCfg.icon as keyof typeof RISK_ICON_SM]} {riskCfg.shortLabel}</span>
                             </span>
                           </td>
                           <td className="py-2 pl-3 text-[10px] text-success-dark font-semibold">
-                            {uc.status === 'go' ? '✓ Aprobado' : '⟳ En piloto'}
+                            {uc.status === 'go'
+                              ? <span className="inline-flex items-center gap-1"><Check size={10} strokeWidth={1.5} /> Aprobado</span>
+                              : <span className="inline-flex items-center gap-1"><RefreshCw size={10} strokeWidth={1.5} /> En piloto</span>
+                            }
                           </td>
                         </tr>
                       )
@@ -336,7 +350,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
           {/* 5. Controles de alto riesgo */}
           {highRiskCases.length > 0 && (
             <section>
-              <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+              <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
                 5. Medidas de Control — Sistemas de Alto Riesgo
               </h2>
               <p className="text-sm text-text-muted leading-relaxed mb-4">
@@ -345,11 +359,11 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
               </p>
               <div className="flex flex-col gap-3">
                 {highRiskCases.map((uc) => (
-                  <div key={uc.id} className="rounded-xl border border-orange-200 dark:border-orange-800/40 bg-orange-50 dark:bg-orange-900/10 px-4 py-3">
-                    <p className="text-xs font-bold text-orange-700 dark:text-orange-300 mb-1">{uc.name} — {uc.department}</p>
+                  <div key={uc.id} className="rounded-xl border border-border bg-surface dark:bg-warm-800/40 border-l-2 border-l-warning px-4 py-3">
+                    <p className="text-xs font-bold text-warning-dark dark:text-warning mb-1">{uc.name} — {uc.department}</p>
                     <ul className="flex flex-col gap-1 mt-2">
                       {['Evaluación de conformidad documentada', 'Sistema de gestión de riesgos operativo', 'Supervisión humana definida y comunicada al equipo', 'Registro en base de datos EU de sistemas IA de alto riesgo'].map((m) => (
-                        <li key={m} className="text-[11px] text-orange-600 dark:text-orange-400 flex items-start gap-1.5">
+                        <li key={m} className="text-[11px] text-warning-dark dark:text-warning flex items-start gap-1.5">
                           <span>▶</span><span>{m}</span>
                         </li>
                       ))}
@@ -362,7 +376,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
 
           {/* Roles y responsabilidades */}
           <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+            <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
               {highRiskCases.length > 0 ? '6.' : '5.'} Roles y Responsabilidades
             </h2>
             <div className="flex flex-col gap-2">
@@ -370,7 +384,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
                 <div key={d.domainCode} className="flex items-start gap-3 py-2 border-b border-border/40 dark:border-white/4">
                   <span className="text-[9px] font-mono text-text-subtle uppercase w-32 shrink-0 pt-0.5">AI Owner</span>
                   <div>
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200">{d.suggestedOwner}</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-200">{d.suggestedOwner}</p>
                     <p className="text-[10px] text-text-subtle">
                       Responsable del dominio: {d.domainCode.replace(/_/g, ' ')}
                     </p>
@@ -382,14 +396,14 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
 
           {/* Revisión */}
           <section>
-            <h2 className="text-base font-bold text-lean-black dark:text-gray-100 mb-3 pb-2 border-b border-border dark:border-white/6">
+            <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-3 pb-2 border-b border-border dark:border-white/6">
               {highRiskCases.length > 0 ? '7.' : '6.'} Revisión y Vigencia
             </h2>
             <p className="text-sm text-text-muted leading-relaxed">
               Esta política será revisada anualmente o ante cambios regulatorios significativos
               (nuevas disposiciones del AI Act, actualizaciones del RGPD o cambios en el catálogo
               de sistemas IA de {companyName}). La siguiente revisión programada es{' '}
-              <strong className="text-lean-black dark:text-gray-200">
+              <strong className="text-lean-black dark:text-warm-200">
                 {new Date(now.getFullYear() + 1, now.getMonth(), now.getDate()).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })}
               </strong>.
             </p>

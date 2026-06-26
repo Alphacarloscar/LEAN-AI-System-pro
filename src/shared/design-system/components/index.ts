@@ -58,9 +58,11 @@ export type { ModalProps, ModalSize } from './Modal'
 export { Drawer }              from './Drawer'
 export type { DrawerProps, DrawerSide } from './Drawer'
 
-export { ToastContainer } from './Toast'
-export { useToast } from './Toast.hooks'
-export type { ToastItem, ToastVariant } from './Toast'
+export { ToastContainer, ToastProvider, useToast } from './Toast'
+export type { ToastItem, ToastVariant, ShowToastOptions } from './Toast'
+
+export { ServiceErrorToast } from './ServiceErrorToast'
+export type { ServiceErrorToastProps } from './ServiceErrorToast'
 
 export { Table }               from './Table'
 export type { TableProps, TableColumn, SortDirection } from './Table'
@@ -83,6 +85,9 @@ export type { SegmentedControlProps, SegmentedControlOption } from './SegmentedC
 // ── Grupo C — Layout / feedback ──
 export { Spinner }             from './Spinner'
 export type { SpinnerProps, SpinnerSize } from './Spinner'
+
+export { StreamingIndicator }  from './StreamingIndicator'
+export type { StreamingIndicatorProps } from './StreamingIndicator'
 
 export { ToolHeader }          from './ToolHeader'
 export type { ToolHeaderProps } from './ToolHeader'

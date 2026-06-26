@@ -24,14 +24,16 @@ import { useEngagementStore }             from '@/modules/Engagement/store'
 import { PhaseMiniMap }                   from '@/shared/components/PhaseMiniMap'
 import { RecommendationPanel }            from '@/components/RecommendationPanel'
 import { buildT9RecommendationContext }   from './t9ContextBuilder'
-import { usePermissions }                 from '@/modules/Auth'
+import { usePermissions, useAuthStore }   from '@/modules/Auth'
 import { ViewerEmptyState }               from '@/shared/components/ViewerEmptyState'
 import { GanttRowItem }                   from './components/GanttRowItem'
 import { AddFreeItemForm }                from './components/AddFreeItemForm'
 import { computeDefaultOverride, MONTH_NAMES } from './t9GanttHelpers'
-import { DS }                             from './components/GanttRowItem.constants'
+import { DS, DS_DARK }                    from './components/GanttRowItem.constants'
 import type { AIGanttRow, FreeGanttRow, GanttRow } from './components/GanttRowItem'
-import type { AddFreeForm } from './types'
+import type { AddFreeItemFormValues } from '@/lib/schemas/t9.schemas'
+import { createSnapshot }                 from '@/services/t9.service'
+import { reportError }                    from '@/lib/reportError'
 
 // ── Props ─────────────────────────────────────────────────────
 
@@ -47,11 +49,18 @@ export function T9View({ onBack }: T9ViewProps) {
   const { useCases, engagementId: t4EngagementId, loadEngagement: loadT4 } = useT4Store()
   const { overrides, freeItems, setOverride, addFreeItem, updateFreeItem, syncEngagement: syncT9 } = useT9Store()
   const { profile: companyProfile }                     = useCompanyProfileStore()
-  const companyName                                     = companyProfile.engagementName
   const loadProfile                                     = useCompanyProfileStore((s) => s.loadProfile)
   const { engagementId: urlId }                         = useParams<{ engagementId: string }>()
   const storeId                                         = useEngagementStore((s) => s.activeEngagementId)
   const engagementId                                    = urlId ?? storeId
+  const { user }                                        = useAuthStore()
+  const [snapshotLoading, setSnapshotLoading]           = useState(false)
+  const [dark, setDark] = useState(() => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'))
+  useEffect(() => {
+    const observer = new MutationObserver(() => setDark(document.documentElement.classList.contains('dark')))
+    observer.observe(document.documentElement, { attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
 
   // Scoping: si cambia el engagement, limpia overrides y freeItems del cliente anterior
   // stable Zustand action — mount-only: sincronizar al cambiar engagement
@@ -141,32 +150,32 @@ export function T9View({ onBack }: T9ViewProps) {
     setEditingId(null)
   }
 
+  // ── Crear snapshot ────────────────────────────────────────────
+  async function handleCreateSnapshot() {
+    if (!engagementId || !user?.id) return
+    setSnapshotLoading(true)
+    try {
+      const label = `Roadmap ${selectedYear} — ${new Date().toLocaleDateString('es-ES')}`
+      await createSnapshot({ engagementId, createdBy: user.id, label, type: 'roadmap' })
+    } catch (err) {
+      reportError('T9.createSnapshot', err)
+    } finally {
+      setSnapshotLoading(false)
+    }
+  }
+
   // ── Formulario añadir libre ───────────────────────────────────
   const [showAddForm, setShowAddForm] = useState(false)
-  const [addForm, setAddForm] = useState<AddFreeForm>({
-    name:        '',
-    department:  '',
-    responsible: '',
-    startMonth:  0,
-    endMonth:    1,
-    riskLevel:   'bajo',
-    status:      'pendiente',
-  })
 
-  function handleAddFree() {
-    if (!addForm.name.trim()) return
-    addFreeItem(addForm)
-    setAddForm({
-      name: '', department: '', responsible: '',
-      startMonth: 0, endMonth: 1, riskLevel: 'bajo', status: 'pendiente',
-    })
+  function handleAddFree(data: AddFreeItemFormValues) {
+    addFreeItem(data)
     setShowAddForm(false)
   }
 
   const MONTHS = MONTH_NAMES
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-warm-900">
+    <div className="min-h-full bg-surface dark:bg-warm-900">
 
       {/* ── Header ── */}
       <ToolHeader
@@ -174,15 +183,14 @@ export function T9View({ onBack }: T9ViewProps) {
         backLabel="Volver al dashboard"
         toolCode="T9"
         title="Roadmap IA — 6 meses"
-        subtitle={`${companyName} · Sprint L.E.A.N.`}
         phaseMiniMap={<PhaseMiniMap phaseId="activate" toolCode="T9" />}
-        maxWidth="max-w-6xl"
+        maxWidth="max-w-7xl"
         cta={
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-0.5 border border-border dark:border-white/10 rounded-lg px-2 py-1 bg-white dark:bg-gray-900">
+            <div className="flex items-center gap-0.5 border border-border dark:border-white/10 rounded-lg px-2 py-1 bg-white dark:bg-warm-800">
               <button
                 onClick={() => setSelectedYear((y) => y - 1)}
-                className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-lean-black dark:hover:text-gray-100 transition-colors rounded"
+                className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-lean-black dark:hover:text-warm-50 transition-colors rounded"
                 aria-label="Año anterior"
               >
                 ‹
@@ -192,7 +200,7 @@ export function T9View({ onBack }: T9ViewProps) {
               </span>
               <button
                 onClick={() => setSelectedYear((y) => y + 1)}
-                className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-lean-black dark:hover:text-gray-100 transition-colors rounded"
+                className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-lean-black dark:hover:text-warm-50 transition-colors rounded"
                 aria-label="Año siguiente"
               >
                 ›
@@ -200,7 +208,9 @@ export function T9View({ onBack }: T9ViewProps) {
             </div>
             {!isReadOnly && (
               <>
-                <Button variant="primary" size="sm">Crear snapshot</Button>
+                <Button variant="primary" size="sm" onClick={handleCreateSnapshot} disabled={snapshotLoading}>
+                  {snapshotLoading ? 'Guardando…' : 'Crear snapshot'}
+                </Button>
                 <Button variant="primary" size="sm" onClick={() => { setShowAddForm(true) }}>
                   + Añadir iniciativa
                 </Button>
@@ -210,7 +220,7 @@ export function T9View({ onBack }: T9ViewProps) {
         }
       />
 
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
 
       {/* ── Stats ── */}
       <div className="grid grid-cols-4 gap-4">
@@ -228,22 +238,22 @@ export function T9View({ onBack }: T9ViewProps) {
       </div>
 
       {/* ── Gantt ── */}
-      <Card variant="outlined" padding="none" className="rounded-2xl overflow-hidden">
+      <Card variant="outlined" padding="none" className="rounded-xl overflow-hidden">
 
         {/* Cabecera */}
         <div className="grid border-b border-border dark:border-white/6" style={{ gridTemplateColumns: '260px 1fr' }}>
-          <div className="px-4 py-2.5 text-[10px] font-medium uppercase tracking-widest text-text-subtle">
+          <div className="px-4 py-2.5 text-[10px] font-medium uppercase tracking-widest text-text-muted">
             Iniciativa / responsable
           </div>
           <div className="border-l border-border dark:border-white/6">
             {/* Trimestres */}
             <div className="grid border-b border-border dark:border-white/6" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
               {([
-                { q: 'Q1', months: 'Ene–Mar', bg: DS.infoLight,    color: DS.infoDark    },
-                { q: 'Q2', months: 'Abr–Jun', bg: DS.successLight,  color: DS.successDark },
-                { q: 'Q3', months: 'Jul–Sep', bg: DS.warningLight,  color: DS.warningDark },
-                { q: 'Q4', months: 'Oct–Dic', bg: DS.dangerLight,   color: DS.dangerDark  },
-              ] as const).map(({ q, months, bg, color }, i) => (
+                { q: 'Q1', months: 'Ene–Mar', bg: dark ? DS_DARK.infoLight    : DS.infoLight,    color: DS.infoDark    },
+                { q: 'Q2', months: 'Abr–Jun', bg: dark ? DS_DARK.successLight : DS.successLight, color: DS.successDark },
+                { q: 'Q3', months: 'Jul–Sep', bg: dark ? DS_DARK.warningLight : DS.warningLight, color: DS.warningDark },
+                { q: 'Q4', months: 'Oct–Dic', bg: dark ? DS_DARK.dangerLight  : DS.dangerLight,  color: DS.dangerDark  },
+              ]).map(({ q, months, bg, color }, i) => (
                 <div
                   key={q}
                   className={['py-1.5 text-center text-[10px] font-medium uppercase tracking-widest', i < 3 ? 'border-r border-border dark:border-white/6' : ''].join(' ')}
@@ -258,7 +268,7 @@ export function T9View({ onBack }: T9ViewProps) {
               {MONTHS.map((m, i) => (
                 <div
                   key={m}
-                  className={['py-1.5 text-center text-[11px] text-text-subtle', i < 11 ? 'border-r border-border dark:border-white/6' : ''].join(' ')}
+                  className={['py-1.5 text-center text-[11px] text-text-muted', i < 11 ? 'border-r border-border dark:border-white/6' : ''].join(' ')}
                 >
                   {m}
                 </div>
@@ -296,6 +306,9 @@ export function T9View({ onBack }: T9ViewProps) {
               row={row}
               isEditing={editingId === rowId}
               editValue={editValue}
+              isDirty={editingId === rowId && editValue !== (
+                row.kind === 'ai' ? row.override.responsible : row.item.responsible
+              )}
               onEditStart={(current) => handleEditStart(rowId, current)}
               onEditChange={setEditValue}
               onEditSave={() => handleEditSave(rowId)}
@@ -305,8 +318,6 @@ export function T9View({ onBack }: T9ViewProps) {
 
         {showAddForm && (
           <AddFreeItemForm
-            form={addForm}
-            onChange={(updates) => setAddForm((prev) => ({ ...prev, ...updates }))}
             onSave={handleAddFree}
             onCancel={() => setShowAddForm(false)}
           />

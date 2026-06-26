@@ -1,47 +1,46 @@
-// ============================================================
+﻿// ============================================================
 // NewInterviewModal — Modal to add a new interviewee to T1
 // ============================================================
 
-import { useState } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Modal, Button, FormField, SegmentedControl } from '@/shared/design-system/components'
 import { TOTAL_SUBDIMENSIONS } from '../constants'
+import { useUnsavedGuard } from '@/shared/hooks/useUnsavedGuard'
+import { newIntervieweeSchema, type NewIntervieweeFormValues } from './NewInterviewModal.schema'
 
-export interface NewIntervieweeForm {
-  name:       string
-  role:       string
-  type:       'it' | 'business'
-  department: string
-}
+// Re-export for backwards compatibility with T1View's onSubmit signature
+export type { NewIntervieweeFormValues as NewIntervieweeForm }
 
 interface NewInterviewModalProps {
   onClose:     () => void
-  onSubmit:    (form: NewIntervieweeForm) => Promise<void>
+  onSubmit:    (form: NewIntervieweeFormValues) => Promise<void>
   departments: { name: string }[]
 }
 
 export function NewInterviewModal({ onClose, onSubmit, departments }: NewInterviewModalProps) {
-  const [form, setForm]             = useState<NewIntervieweeForm>({
-    name:       '',
-    role:       '',
-    type:       'business',
-    department: '',
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isDirty, isSubmitting },
+  } = useForm<NewIntervieweeFormValues>({
+    resolver:      zodResolver(newIntervieweeSchema),
+    defaultValues: {
+      name:       '',
+      role:       '',
+      type:       'business',
+      department: '',
+    },
   })
-  const [submitting, setSubmitting] = useState(false)
 
-  const canSubmit =
-    form.name.trim().length > 0 &&
-    form.role.trim().length > 0 &&
-    form.department.trim().length > 0
+  // Protege los datos introducidos si el usuario intenta cerrar el modal
+  // navegando fuera del engagement (isDirty = hay texto en algún campo)
+  useUnsavedGuard(isDirty, 'T1_NewInterview')
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!canSubmit || submitting) return
-    setSubmitting(true)
-    try {
-      await onSubmit(form)
-    } finally {
-      setSubmitting(false)
-    }
+  async function onValid(values: NewIntervieweeFormValues) {
+    // La lógica de persistencia (upsertAllScoresForInterviewee) queda intacta en el padre
+    await onSubmit(values)
   }
 
   return (
@@ -49,42 +48,53 @@ export function NewInterviewModal({ onClose, onSubmit, departments }: NewIntervi
       <p className="text-[11px] text-text-subtle -mt-1 mb-3">
         Añade un nuevo entrevistado al assessment en curso
       </p>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onValid)} noValidate className="space-y-4">
 
         <FormField
           id="new-interviewee-name"
           label="Nombre"
           type="text"
-          value={form.name}
-          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          {...register('name')}
           placeholder="Ej. Javier Morales"
           required
+          error={errors.name?.message}
         />
 
         <FormField
           id="new-interviewee-role"
           label="Cargo"
           type="text"
-          value={form.role}
-          onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+          {...register('role')}
           placeholder="Ej. CIO, Head of Digital, COO…"
           required
+          error={errors.role?.message}
         />
 
-        {/* Tipo IT / Negocio */}
+        {/* Tipo IT / Negocio — controlado porque SegmentedControl no es un input nativo */}
         <div className="space-y-1.5">
           <span className="block text-[10px] font-semibold uppercase tracking-widest text-text-subtle">
             Perfil
           </span>
-          <SegmentedControl
-            aria-label="Perfil del entrevistado"
-            value={form.type}
-            onChange={(v) => setForm((f) => ({ ...f, type: v as 'it' | 'business' }))}
-            options={[
-              { value: 'it',       label: 'IT / Tecnología', activeColor: '#2A2822' },
-              { value: 'business', label: 'Negocio / Ops',   activeColor: '#5FAF8A' },
-            ]}
+          <Controller
+            control={control}
+            name="type"
+            render={({ field }) => (
+              <SegmentedControl
+                aria-label="Perfil del entrevistado"
+                value={field.value}
+                onChange={(v) => field.onChange(v as 'it' | 'business')}
+                options={[
+                  { value: 'it',       label: 'IT / Tecnología', activeColor: '#2A2822' },
+                  { value: 'business', label: 'Negocio / Ops',   activeColor: '#5FAF8A' },
+                ]}
+              />
+            )}
           />
+          {errors.type && (
+            <p className="text-xs text-danger dark:text-danger-soft" role="alert">
+              {errors.type.message}
+            </p>
+          )}
         </div>
 
         {/* Departamento */}
@@ -98,13 +108,15 @@ export function NewInterviewModal({ onClose, onSubmit, departments }: NewIntervi
             </label>
             <select
               id="new-interviewee-dept"
-              value={form.department}
-              onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+              {...register('department')}
+              aria-invalid={!!errors.department}
+              aria-describedby={errors.department ? 'dept-error' : undefined}
               className={[
-                'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-gray-100',
-                'bg-gray-50 dark:bg-gray-800 border border-border',
-                'focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
-                'transition-all duration-150',
+                'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-warm-50',
+                'bg-gray-50 dark:bg-warm-700 border transition-all duration-150',
+                errors.department
+                  ? 'border-danger focus:outline-none focus:ring-2 focus:ring-danger/20'
+                  : 'border-border focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
               ].join(' ')}
             >
               <option value="">Selecciona un departamento…</option>
@@ -112,20 +124,25 @@ export function NewInterviewModal({ onClose, onSubmit, departments }: NewIntervi
                 <option key={d.name} value={d.name}>{d.name}</option>
               ))}
             </select>
+            {errors.department && (
+              <p id="dept-error" role="alert" className="text-xs text-danger dark:text-danger-soft">
+                {errors.department.message}
+              </p>
+            )}
           </div>
         ) : (
           <FormField
             id="new-interviewee-dept"
             label="Departamento"
             type="text"
-            value={form.department}
-            onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+            {...register('department')}
             placeholder="Ej. Finanzas, Tecnología, RRHH…"
             required
+            error={errors.department?.message}
           />
         )}
 
-        <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border/60">
+        <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-warm-700/50 border border-border/60">
           Se crearán <span className="font-medium text-text-muted">{TOTAL_SUBDIMENSIONS} subdimensiones</span> en blanco para este entrevistado. Puntúalas en la sesión.
         </p>
 
@@ -134,7 +151,7 @@ export function NewInterviewModal({ onClose, onSubmit, departments }: NewIntervi
             type="button"
             variant="ghost"
             onClick={onClose}
-            disabled={submitting}
+            disabled={isSubmitting}
             className="flex-1"
           >
             Cancelar
@@ -142,8 +159,7 @@ export function NewInterviewModal({ onClose, onSubmit, departments }: NewIntervi
           <Button
             type="submit"
             variant="primary"
-            disabled={!canSubmit}
-            loading={submitting}
+            loading={isSubmitting}
             className="flex-1"
           >
             Crear entrevista

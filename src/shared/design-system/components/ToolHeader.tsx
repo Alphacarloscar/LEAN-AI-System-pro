@@ -21,7 +21,7 @@ export interface ToolHeaderProps {
   cta?:          ReactNode
   /** Right-side status pills (count badges, alert chips…). Rendered between title block and cta. */
   chips?:        ReactNode
-  /** Sticky at top-[57px] z-10 with backdrop-blur */
+  /** Sticky below the main header (top = var(--header-h, 64px)) with backdrop-blur */
   sticky?:       boolean
   /** Extra row rendered below the main header row (e.g. progress bar in T1, global progress in T12) */
   below?:        ReactNode
@@ -64,13 +64,14 @@ export function ToolHeader({
       className={[
         'bg-[rgba(247,244,238,0.95)] dark:bg-warm-900/95 backdrop-blur-sm',
         'border-b border-border dark:border-white/6',
-        'px-8 py-3',
-        sticky ? 'sticky top-[57px] z-10' : '',
+        'px-8 shrink-0',
+        sticky ? 'sticky z-[15]' : '',
         className,
       ].filter(Boolean).join(' ')}
+      style={sticky ? { top: 'var(--header-h, 64px)' } : undefined}
     >
       {/* ── Main row ── */}
-      <div className={`flex items-center gap-3 ${maxWidth} mx-auto`}>
+      <div className={`flex items-center gap-3 h-12 ${maxWidth} mx-auto`}>
 
         {/* Back button */}
         {onBack && (
@@ -97,7 +98,7 @@ export function ToolHeader({
                 {toolCode}
               </Badge>
             )}
-            <h1 className="text-sm font-semibold text-lean-black dark:text-warm-50 truncate">
+            <h1 className="text-xl font-semibold text-lean-black dark:text-warm-50 truncate">
               {title}
             </h1>
             {phaseMiniMap}

@@ -45,7 +45,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       // Estado error
       hasError
         ? 'border-danger focus:border-danger focus:ring-2 focus:ring-danger/20'
-        : 'border-border focus:border-navy focus:ring-2 focus:ring-navy/15',
+        : 'border-border hover:border-navy/40 focus:border-gold focus:ring-2 focus:ring-gold/20',
       // Disabled
       disabled
         ? 'opacity-50 cursor-not-allowed bg-surface dark:bg-warm-700'

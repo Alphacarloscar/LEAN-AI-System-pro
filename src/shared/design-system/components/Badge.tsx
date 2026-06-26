@@ -32,8 +32,8 @@ const variantClasses: Record<BadgeVariant, string> = {
   warning: 'bg-warning-light text-warning-dark dark:bg-warning/20 dark:text-warning',
   danger:  'bg-danger-light  text-danger-dark  dark:bg-danger/20  dark:text-danger',
   info:    'bg-info-light    text-info-dark    dark:bg-info/20    dark:text-info',
-  navy:         'bg-navy-metallic text-white',
-  'navy-ghost': 'bg-navy/10 dark:bg-navy/20 text-navy dark:text-warm-100',
+  navy:         'bg-navy-metallic dark:bg-gold-metallic text-white dark:text-lean-black',
+  'navy-ghost': 'bg-navy/10 dark:bg-warm-600 text-navy dark:text-warm-50 dark:border dark:border-warm-500',
   gold:         'bg-gold/10 text-gold dark:bg-gold/20 dark:text-gold-hover',
 }
 

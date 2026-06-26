@@ -13,7 +13,7 @@ import type {
 export const PHASE_CONFIG: Record<ProcessPhase, {
   label: string; badgeBg: string; badgeText: string; order: number
 }> = {
-  idea:            { label: 'Idea',            badgeBg: 'bg-gray-100 dark:bg-gray-800', badgeText: 'text-gray-500', order: 0 },
+  idea:            { label: 'Idea',            badgeBg: 'bg-warm-100 dark:bg-warm-700', badgeText: 'text-warm-500', order: 0 },
   validacion:      { label: 'Validación',      badgeBg: 'bg-warning-light',             badgeText: 'text-warning-dark', order: 1 },
   piloto:          { label: 'Piloto',          badgeBg: 'bg-info-light',                badgeText: 'text-info-dark', order: 2 },
   estandarizacion: { label: 'Estandarización', badgeBg: 'bg-success-light',             badgeText: 'text-success-dark', order: 3 },
@@ -168,10 +168,10 @@ export const AI_CATEGORY_CONFIG: Record<AICategoryCode, AICategoryConfig> = {
     label:       'IA Agéntica',
     tagline:     'Agentes autónomos de múltiples pasos. El futuro operativo ya disponible.',
     description: 'Proceso complejo que requiere razonamiento multi-paso, planificación y ejecución autónoma de tareas encadenadas. Los agentes IA actúan de forma independiente, usan herramientas y se adaptan al contexto sin intervención humana en cada paso.',
-    badgeBg:     'bg-purple-100 dark:bg-purple-900/30',
-    badgeText:   'text-purple-700 dark:text-purple-300',
-    dotBg:       'bg-purple-600',
-    hex:         '#7C3AED',
+    badgeBg:     'bg-danger-light dark:bg-danger/20',
+    badgeText:   'text-danger-dark dark:text-danger',
+    dotBg:       'bg-danger-dark',
+    hex:         '#C06060',
     opportunityTemplates: [
       {
         title:       'Agente de investigación y síntesis',
@@ -205,7 +205,7 @@ export const READINESS_CONFIG: Record<OrgReadinessLevel, {
 export const OPPORTUNITY_CONFIG: Record<OpportunityLevel, {
   label: string; badgeBg: string; badgeText: string
 }> = {
-  baja:   { label: 'Oportunidad Baja',   badgeBg: 'bg-gray-100 dark:bg-gray-800', badgeText: 'text-gray-500' },
+  baja:   { label: 'Oportunidad Baja',   badgeBg: 'bg-warm-100 dark:bg-warm-700', badgeText: 'text-warm-500' },
   media:  { label: 'Oportunidad Media',  badgeBg: 'bg-warning-light',  badgeText: 'text-warning-dark' },
   alta:   { label: 'Oportunidad Alta',   badgeBg: 'bg-info-light',     badgeText: 'text-info-dark' },
   critica:{ label: 'Oportunidad Crítica',badgeBg: 'bg-navy/10 dark:bg-navy/20', badgeText: 'text-navy dark:text-warm-100' },

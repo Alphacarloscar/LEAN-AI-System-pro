@@ -12,6 +12,7 @@ import type { InterviewAnswerCode, AICategoryCode, OrgReadinessLevel, NewValueSt
 import { Select }  from '@/shared/design-system/components/Select'
 import { Button, Badge } from '@shared/design-system/components'
 import { CategoryBadge } from './T3Badges'
+import { T3_QUADRANT_COLORS } from '@shared/design-system/charts/chartTokens'
 
 interface ResultPhaseProps {
   formData:  NewValueStreamForm
@@ -39,11 +40,11 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
   const ALL_READINESS: OrgReadinessLevel[] = ['alta', 'media', 'baja']
 
   const scoreBars = [
-    { label: 'AUTOMATIZACIÓN', value: result.automationScore, hex: '#6A90C0', light: '#B8D0E8' },
-    { label: 'DATOS',          value: result.dataScore,       hex: '#5FAF8A', light: '#B4E4CF' },
-    { label: 'VOLUMEN',        value: result.volumeScore,     hex: '#9AAEC8', light: '#C8DAE8' },
-    { label: 'IMPACTO',        value: result.impactScore,     hex: '#D4A85C', light: '#E8D0A0' },
-    { label: 'READINESS',      value: result.readinessScore,  hex: '#C06060', light: '#DDA8A8' },
+    { label: 'AUTOMATIZACIÓN', value: result.automationScore, hex: '#6A90C0',                          light: '#B8D0E8' },
+    { label: 'DATOS',          value: result.dataScore,       hex: T3_QUADRANT_COLORS.pilotarYa,       light: '#B4E4CF' },
+    { label: 'VOLUMEN',        value: result.volumeScore,     hex: T3_QUADRANT_COLORS.quickWins,       light: '#C8DAE8' },
+    { label: 'IMPACTO',        value: result.impactScore,     hex: T3_QUADRANT_COLORS.prepararTerreno, light: '#E8D0A0' },
+    { label: 'READINESS',      value: result.readinessScore,  hex: '#C06060',                          light: '#DDA8A8' },
   ]
 
   const MAX = 4
@@ -58,26 +59,26 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
         <p className="text-xs font-mono uppercase tracking-widest text-text-subtle mb-1">
           Paso 3 de 3 · Resultado del análisis
         </p>
-        <h3 className="text-base font-semibold text-lean-black dark:text-gray-100">
+        <h3 className="text-base font-semibold text-lean-black dark:text-warm-100">
           Categoría IA asignada
         </h3>
       </div>
 
       {/* Proceso identificado */}
-      <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 px-4 py-3 border border-border dark:border-white/6">
+      <div className="rounded-xl bg-warm-50 dark:bg-warm-800/50 px-4 py-3 border border-border dark:border-white/6">
         <p className="text-xs font-medium text-text-muted">{formData.department}</p>
-        <p className="text-sm font-semibold text-lean-black dark:text-gray-100">{formData.name}</p>
+        <p className="text-sm font-semibold text-lean-black dark:text-warm-100">{formData.name}</p>
         {formData.owner && (
           <p className="text-xs text-text-subtle mt-0.5">{formData.owner} · {formData.ownerRole}</p>
         )}
       </div>
 
       {/* Categoría auto-asignada */}
-      <div className="rounded-2xl border border-border dark:border-white/10 overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
+      <div className="rounded-xl border border-border dark:border-white/10 overflow-hidden">
+        <div className="px-4 py-3 bg-warm-50 dark:bg-warm-800/50 flex items-center gap-2">
           <CategoryBadge category={result.aiCategory} />
           <span className="text-[11px] text-text-subtle">
-            Score oportunidad: <strong className="text-lean-black dark:text-gray-200">{result.opportunityScore.toFixed(2)}</strong>/4.00
+            Score oportunidad: <strong className="text-lean-black dark:text-warm-200">{result.opportunityScore.toFixed(2)}</strong>/4.00
           </span>
           {manualOverride && (
             <Badge variant="warning" shape="pill" size="xs" className="ml-auto">
@@ -86,7 +87,7 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
           )}
         </div>
         <div className="px-4 py-3">
-          <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-0.5">{cfg.tagline}</p>
+          <p className="text-xs font-semibold text-lean-black dark:text-warm-200 mb-0.5">{cfg.tagline}</p>
           <p className="text-xs text-text-muted leading-relaxed">{cfg.description}</p>
         </div>
       </div>
@@ -121,7 +122,7 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
             const cy    = i * ROW_H + ROW_H / 2 + 3
             return (
               <g key={label}>
-                <text x={0} y={cy + 3} fontSize={7} fill="#64748B"
+                <text x={0} y={cy + 3} fontSize={7} fill={T3_QUADRANT_COLORS.axisLabel}
                   fontFamily="ui-monospace,monospace" letterSpacing="0.05em">
                   {label}
                 </text>
@@ -130,7 +131,7 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
                 <rect x={TX} y={cy - 1.5} width={fillW} height={3} fill={`url(#ri-bar-${i})`} rx={1.5} />
                 <rect x={TX + fillW * 0.08} y={cy - 2} width={fillW * 0.45} height={0.7}
                   fill={light} opacity={0.60} rx={0.35} />
-                <text x={TX + TRACK_W + G2} y={cy + 3} fontSize={8} fontWeight="600" fill="#94A3B8"
+                <text x={TX + TRACK_W + G2} y={cy + 3} fontSize={8} fontWeight="600" fill={T3_QUADRANT_COLORS.evaluar}
                   fontFamily="ui-monospace,monospace">
                   {value.toFixed(1)}<tspan fontSize={6.5} opacity={0.5}>/4</tspan>
                 </text>
@@ -141,7 +142,7 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
       </div>
 
       {/* Ajuste manual */}
-      <div className="rounded-2xl border border-border dark:border-white/10 px-4 py-3">
+      <div className="rounded-xl border border-border dark:border-white/10 px-4 py-3">
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
           Ajuste del consultor (opcional)
         </p>
@@ -172,7 +173,7 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
           className="flex-[2]"
           onClick={() => onConfirm(aiCategory, orgReadiness, manualOverride)}
         >
-          Añadir proceso al mapa ✓
+          Añadir proceso al mapa
         </Button>
       </div>
     </div>

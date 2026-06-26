@@ -8,16 +8,16 @@ import {
   BELL_FILL, BELL_STROKE,
   SEG_BOUNDS, SEGMENT_ORDER, SEG_LABELS,
   DOT_R,
-  computeDotPositions, deptFill, getSegment, gradId,
+  computeDotPositions, deptFill, getSegment,
 } from '../T7Constants'
 import { Card } from '@shared/design-system/components'
 import { CondensedCard } from './T7CondensedCard'
 import { MomentumCard } from './T7MomentumCard'
 
 export function BellCurveTab({ stakeholders, dark }: { stakeholders: Stakeholder[]; dark: boolean }) {
-  // Spotlight: null = todos visibles; string = solo ese dept visible
   const [focusDept, setFocusDept] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [hoverId,    setHoverId]    = useState<string | null>(null)
 
   const depts = useMemo(
     () => [...new Set(stakeholders.map(s => s.department))],
@@ -106,52 +106,38 @@ export function BellCurveTab({ stakeholders, dark }: { stakeholders: Stakeholder
             style={{ height: 'auto' }}
             aria-label="Curva de difusión de Rogers — distribución de stakeholders"
           >
-            <defs>
-              {/* Gradientes 3D por departamento */}
-              {depts.map(dept => {
-                const fill = deptFill(dept, dark)
-                return (
-                  <radialGradient key={dept} id={gradId(dept)} cx="35%" cy="28%" r="65%">
-                    <stop offset="0%"   stopColor="white" stopOpacity={0.45}/>
-                    <stop offset="100%" stopColor={fill}  stopOpacity={1}/>
-                  </radialGradient>
-                )
-              })}
-              {/* Gradiente seleccionado (más brillante) */}
-              {depts.map(dept => {
-                const fill = deptFill(dept, dark)
-                return (
-                  <radialGradient key={`sel-${dept}`} id={`${gradId(dept)}-sel`} cx="35%" cy="28%" r="65%">
-                    <stop offset="0%"   stopColor="white" stopOpacity={0.7}/>
-                    <stop offset="100%" stopColor={fill}  stopOpacity={1}/>
-                  </radialGradient>
-                )
-              })}
-            </defs>
+            <defs />
 
-            {/* Fondos de segmento */}
-            {SEGMENT_ORDER.map(seg => {
-              const { x1, x2 } = SEG_BOUNDS[seg]
-              const cfg = SEG_LABELS[seg]
-              return (
-                <rect
-                  key={seg}
-                  x={x1} y={0}
-                  width={x2 - x1} height={BASELINE}
-                  fill={dark ? cfg.darkBg : cfg.bg}
-                  opacity={0.85}
-                />
-              )
-            })}
+            {/* Fondos de segmento — color plano por zona Rogers */}
+            {(() => {
+              const zoneColor: Record<string, string> = {
+                innovators:     dark ? 'rgba(212,208,200,0.18)' : 'rgba(212,208,200,0.52)',
+                early_adopters: dark ? 'rgba(184,180,171,0.24)' : 'rgba(184,180,171,0.62)',
+                early_majority: dark ? 'rgba(200,134,10,0.18)'  : 'rgba(200,134,10,0.22)',
+                late_majority:  dark ? 'rgba(184,180,171,0.20)' : 'rgba(184,180,171,0.55)',
+                laggards:       dark ? 'rgba(212,208,200,0.14)' : 'rgba(212,208,200,0.42)',
+              }
+              return SEGMENT_ORDER.map(seg => {
+                const { x1, x2 } = SEG_BOUNDS[seg]
+                return (
+                  <rect
+                    key={seg}
+                    x={x1} y={0}
+                    width={x2 - x1} height={BASELINE}
+                    fill={zoneColor[seg]}
+                  />
+                )
+              })
+            })()}
 
             {/* Divisores de segmento */}
             {dividers.map(x => (
               <line
                 key={x}
                 x1={x} y1={0} x2={x} y2={BASELINE}
-                stroke={dark ? 'rgba(255,255,255,0.1)' : '#CBD5E1'}
+                stroke={dark ? 'rgba(212,208,200,0.18)' : '#D4D0C8'}
                 strokeWidth={1}
-                strokeDasharray="4 3"
+                strokeDasharray="4 4"
               />
             ))}
 
@@ -162,12 +148,12 @@ export function BellCurveTab({ stakeholders, dark }: { stakeholders: Stakeholder
             <path
               d={BELL_STROKE}
               fill="none"
-              stroke={dark ? '#64748B' : '#475569'}
-              strokeWidth={2}
+              stroke={dark ? '#8A857C' : '#6B6864'}
+              strokeWidth={1.5}
             />
 
             {/* Baseline */}
-            <line x1={0} y1={BASELINE} x2={W} y2={BASELINE} stroke={dark ? 'rgba(255,255,255,0.1)' : '#CBD5E1'} strokeWidth={1} />
+            <line x1={0} y1={BASELINE} x2={W} y2={BASELINE} stroke={dark ? 'rgba(255,255,255,0.1)' : '#D4D0C8'} strokeWidth={1} />
 
             {/* Etiquetas de segmento */}
             {SEGMENT_ORDER.map(seg => {
@@ -175,9 +161,9 @@ export function BellCurveTab({ stakeholders, dark }: { stakeholders: Stakeholder
               const cx    = (x1 + x2) / 2
               const cfg   = SEG_LABELS[seg]
               const count = countBySeg[seg]
-              const labelFill  = dark ? '#94A3B8' : '#475569'
-              const pctFill    = dark ? '#64748B' : '#94A3B8'
-              const countFill  = dark ? '#64748B' : '#64748B'
+              const labelFill  = dark ? '#9A9790' : '#9A9790'
+              const pctFill    = dark ? '#6B6864' : '#B8B4AB'
+              const countFill  = dark ? '#6B6864' : '#6B6864'
               return (
                 <g key={seg}>
                   <text
@@ -214,63 +200,53 @@ export function BellCurveTab({ stakeholders, dark }: { stakeholders: Stakeholder
               )
             })}
 
-            {/* Dots con efecto 3D */}
+            {/* Dots — badge base: halo, cuerpo plano, 2 iniciales */}
             {allDots.map(dot => {
               const sh = stakeholders.find(s => s.id === dot.stakeholderId)
               if (!sh) return null
 
-              const isVisible  = focusDept === null || sh.department === focusDept
-              const isSelected = selectedId === sh.id
-              const dept       = sh.department
-              const r          = isSelected ? DOT_R + 3 : DOT_R
-              const fillUrl    = isSelected ? `url(#${gradId(dept)}-sel)` : `url(#${gradId(dept)})`
-              const initials   = sh.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+              const isVisible = focusDept === null || sh.department === focusDept
+              const isActive  = selectedId === sh.id
+              const isHover   = hoverId    === sh.id
+              const fill      = deptFill(sh.department, dark)
+              const ini       = sh.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
 
               return (
                 <g
                   key={dot.stakeholderId}
-                  onClick={() => setSelectedId(isSelected ? null : sh.id)}
                   style={{ cursor: 'pointer' }}
+                  onClick={() => setSelectedId(isActive ? null : sh.id)}
+                  onMouseEnter={() => setHoverId(sh.id)}
+                  onMouseLeave={() => setHoverId(null)}
                   opacity={isVisible ? 1 : 0.08}
                 >
-                  {/* Sombra */}
+                  {/* Halo en active o hover */}
+                  {(isActive || isHover) && (
+                    <>
+                      <circle cx={dot.cx} cy={dot.cy} r={DOT_R + 14} fill={fill} opacity={0.06} />
+                      <circle cx={dot.cx} cy={dot.cy} r={DOT_R + 10} fill={fill} opacity={0.10} />
+                      <circle cx={dot.cx} cy={dot.cy} r={DOT_R + 6}  fill={fill} opacity={0.16} />
+                    </>
+                  )}
+
+                  {/* Cuerpo plano */}
                   <circle
-                    cx={dot.cx + 1}
-                    cy={dot.cy + 1.5}
-                    r={r}
-                    fill="rgba(0,0,0,0.18)"
+                    cx={dot.cx} cy={dot.cy}
+                    r={DOT_R}
+                    fill={fill}
+                    fillOpacity="0.85"
+                    stroke={isActive ? 'rgba(255,255,255,0.85)' : 'var(--color-warm-300)'}
+                    strokeWidth="1.5"
                   />
-                  {/* Cuerpo con gradiente 3D */}
-                  <circle
-                    cx={dot.cx}
-                    cy={dot.cy}
-                    r={r}
-                    fill={fillUrl}
-                    stroke={isSelected ? 'white' : 'rgba(255,255,255,0.7)'}
-                    strokeWidth={isSelected ? 2 : 1.2}
-                    style={{ transition: 'r 0.15s' }}
-                  />
-                  {/* Brillo superior */}
-                  <ellipse
-                    cx={dot.cx - r * 0.2}
-                    cy={dot.cy - r * 0.28}
-                    rx={r * 0.38}
-                    ry={r * 0.22}
-                    fill="rgba(255,255,255,0.35)"
-                    style={{ pointerEvents: 'none' }}
-                  />
-                  {/* Iniciales */}
+
+                  {/* Iniciales — igual que T2: siempre 2 chars, y+4, fontSize 9 */}
                   <text
-                    x={dot.cx}
-                    y={dot.cy + 3.5}
-                    textAnchor="middle"
-                    fontSize={7.5}
-                    fontWeight="700"
-                    fill="white"
-                    fontFamily="sans-serif"
+                    x={dot.cx} y={dot.cy + 4}
+                    textAnchor="middle" fontSize={9} fontWeight="700"
+                    fill="#FFFFFF" fontFamily="Inter, sans-serif"
                     style={{ pointerEvents: 'none', userSelect: 'none' }}
                   >
-                    {initials}
+                    {ini}
                   </text>
                 </g>
               )

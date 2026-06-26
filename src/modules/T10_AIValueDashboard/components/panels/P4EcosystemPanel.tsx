@@ -26,7 +26,7 @@ export function P4EcosystemPanel({ t3data, expanded, onToggle, onNavigate }: P4P
   return (
     <PanelCard
       id="p4" expanded={expanded} onClick={onToggle}
-      tag="T3 · Ecosistema IA" tagColor="purple"
+      tag="T3 · Ecosistema IA"
       title="Ecosistema IA"
       subtitle={t3data
         ? `${t3data.processesTotal} procesos · ${t3data.aiTypes.length} tipos IA`
@@ -51,14 +51,14 @@ export function P4EcosystemPanel({ t3data, expanded, onToggle, onNavigate }: P4P
                   <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: t.color }} />
                   <span className="text-text-muted dark:text-warm-300 flex-1 truncate">{t.label}</span>
                   <span className="font-medium text-lean-black dark:text-warm-100">{t.count}</span>
-                  <span className="text-text-subtle dark:text-warm-400">{t.pct}%</span>
+                  <span className="text-text-muted dark:text-warm-400">{t.pct}%</span>
                 </div>
               ))}
             </div>
           </div>
-          <div className="rounded-md px-2.5 py-1.5 mt-2" style={{ background: 'rgba(127, 119, 221, 0.08)' }}>
-            <p className="text-[10px] text-[#534AB7] dark:text-[#AFA9EC]">
-              Mayor espera: <span className="font-semibold truncate">{t3data.bottleneck}</span>
+          <div className="rounded-md px-2.5 py-1.5 mt-2 border-l-4 border-l-gold bg-card dark:bg-warm-700">
+            <p className="text-[10px] text-text-muted dark:text-warm-300">
+              Mayor espera: <span className="font-semibold text-lean-black dark:text-warm-100 truncate">{t3data.bottleneck}</span>
             </p>
           </div>
         </>
@@ -73,8 +73,8 @@ export function P4EcosystemPanel({ t3data, expanded, onToggle, onNavigate }: P4P
           {t3data ? (
             <div className="flex gap-2 mb-3">
               <MetricChip label="Mapeados"   value={`${t3data.processesMapped}/${t3data.processesTotal}`} />
-              <MetricChip label="Opp crítica" value={String(t3data.oppCritica)} valueColor="#C06060" />
-              <MetricChip label="Opp alta"    value={String(t3data.oppAlta)}    valueColor="#D4A85C" />
+              <MetricChip label="Opp crítica" value={String(t3data.oppCritica)} valueColor="var(--color-danger-dark, #C06060)" />
+              <MetricChip label="Opp alta"    value={String(t3data.oppAlta)}    valueColor="var(--color-warning-dark, #D4A85C)" />
             </div>
           ) : null}
           <NavButton label="Abrir T3 Procesos" onClick={() => onNavigate('/t3')} />

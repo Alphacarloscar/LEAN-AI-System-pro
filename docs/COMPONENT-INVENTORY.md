@@ -175,7 +175,7 @@ T8_CommunicationMap/components/
 T10_AIValueDashboard/components/
   DimBar.tsx    StatusBar.tsx   DonutChart.tsx   MetricChip.tsx
   DeptBar.tsx   NavButton.tsx   ExpandedSection.tsx  HeroMetric.tsx
-  PanelCard.tsx EmptyStates.tsx DashboardHeader.tsx
+  PanelCard.tsx EmptyStates.tsx
   panels/
     P1MaturityPanel.tsx  P2PortfolioPanel.tsx  P3AdoptionPanel.tsx
     P4EcosystemPanel.tsx P5RiskPanel.tsx       P6GovernancePanel.tsx
@@ -287,7 +287,7 @@ T12_ISOAssessment/components/
 | T7 | — | `max-w-5xl` | 3 stat cards | — | — | ✅ |
 | T8 | — | `max-w-5xl` | 4 stat cards | IA generation row | — | ✅ |
 | T9 | — | `max-w-6xl` | — | year selector + botones | — | ✅ |
-| T10 | — | n/a | n/a | n/a | n/a | ⛔ DashboardHeader (patrón distinto) |
+| T10 | — | `max-w-7xl` | 6 paneles KPI | RecommendationPanel (LLM) | — | ✅ (header inlineado en T10View) |
 | T11 | ✅ | `max-w-5xl` | — | Exportar modelo | — | ✅ |
 | T12 | ✅ | `max-w-7xl` | — | Importar T6 / Exportar | progress bar | ✅ |
 
@@ -1001,7 +1001,6 @@ T10 es el "Wow Moment" dashboard — una pantalla de 6 paneles de datos. Sus com
 | `PanelCard.tsx` | Tag chip `${TAG_CLASSES[tagColor]}` | `purple` = `bg-[#EEEDFE] text-[#3C3489]` — sin DS BadgeVariant. Migración parcial rompería coherencia visual. |
 | `EmptyStates.tsx` | CTA gold `style={{ background: '#C8860A' }}` | DS Button primary = navy-metallic. El gold es intencional como color de marca de T10. |
 | `P1-P6 panels` | `NavButton` (gold link) | Usan NavButton ya extraído. No ad-hoc inline. |
-| `DashboardHeader.tsx` | Read-only banner + sprint badge | Solo texto/spans. Sin buttons. |
 | `HeroMetric.tsx` | Display puro | Sin interacción. |
 
 **Conclusión**: T10 no tiene patrones migrables a los 7 DS components sin cambio visual semántico. El color gold es el design token de identidad de T10 — no se sustituye por navy.
@@ -1217,7 +1216,6 @@ El badge de fuente original usaba `text-[9px] font-bold`. DS Badge `size="xs"` =
 | `P3AdoptionPanel.tsx` | Shadow AI callout div | `style={{ backgroundColor: rgba(200,134,10,0.04), borderColor: rgba(200,134,10,0.25) }}` — gold identity data-driven. |
 | `P4EcosystemPanel.tsx` | Bottleneck callout | `style={{ background: rgba(127,119,221,0.08) }}` purple ecosystem identity. |
 | `P4-P6` | DonutChart, DimBar, StatusBar, MetricChip, DeptBar | Visualizaciones de datos. Excluidas por reglas. |
-| `DashboardHeader.tsx` | Todo | Solo texto/spans. Sin botones ni containers migrables. |
 
 #### Hardcodes ad-hoc residuales en T10
 

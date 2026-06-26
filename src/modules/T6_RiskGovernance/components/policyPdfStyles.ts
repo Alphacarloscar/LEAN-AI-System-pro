@@ -13,13 +13,14 @@ export const GRAY_200= '#D4D0C8'   // warm border
 export const GRAY_400= '#9A9790'   // warm muted
 export const GRAY_600= '#6B6864'   // warm text-muted
 export const ORANGE  = '#C8860A'   // gold accent
+export const GREEN   = '#166534'   // success-dark (minimo risk / approved status)
 
 export const RISK_LABEL: Record<string, { label: string; bg: string; color: string }> = {
   prohibido:      { label: 'Prohibido',      bg: '#FEE2E2', color: '#991B1B' },
   alto:           { label: 'Alto Riesgo',    bg: '#FEF3C7', color: '#92400E' },
   limitado:       { label: 'Riesgo Limitado',bg: '#FFF7ED', color: '#9A3412' },
   minimo:         { label: 'Riesgo Mínimo',  bg: '#F0FDF4', color: '#166534' },
-  sin_clasificar: { label: 'Sin clasificar', bg: '#F3F4F6', color: '#6B7280' },
+  sin_clasificar: { label: 'Sin clasificar', bg: '#F0EDE8', color: '#8A857C' },
 }
 
 export const s = StyleSheet.create({

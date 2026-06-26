@@ -52,9 +52,9 @@ export function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) 
     <Card variant="outlined" padding="none" className="w-52 flex-shrink-0 rounded-xl p-4 space-y-4">
       {/* Momentum score */}
       <div>
-        <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">Momentum</p>
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-2">Momentum</p>
         <div className="flex items-end gap-1.5 mb-1.5">
-          <span className="text-2xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
+          <span className="text-2xl font-bold text-lean-black dark:text-warm-50 tabular-nums leading-none">
             {momentumPct}%
           </span>
           <Badge variant={momentumVariant} size="xs" className="mb-0.5">
@@ -62,7 +62,7 @@ export function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) 
           </Badge>
         </div>
         {/* Barra de progreso */}
-        <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+        <div className="h-1.5 rounded-full bg-warm-100 dark:bg-warm-700 overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
@@ -80,7 +80,7 @@ export function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) 
 
       {/* Riesgo */}
       <div>
-        <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">Riesgo principal</p>
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-2">Riesgo principal</p>
         <div className="flex gap-2 items-start">
           <div className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full bg-danger-light flex items-center justify-center">
             <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
@@ -96,7 +96,7 @@ export function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) 
 
       {/* Oportunidad */}
       <div>
-        <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">Oportunidad</p>
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-2">Oportunidad</p>
         <div className="flex gap-2 items-start">
           <div className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full bg-success-light flex items-center justify-center">
             <svg width="8" height="8" viewBox="0 0 8 8" fill="none">

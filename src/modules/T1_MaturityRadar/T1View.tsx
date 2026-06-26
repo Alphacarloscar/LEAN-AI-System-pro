@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T1 — Vista completa (AI Readiness Assessment)
 //
 // Layout: header sticky (breadcrumb + progreso + score)
@@ -199,7 +199,7 @@ export function T1View({ onBack }: T1ViewProps) {
   )
 
   return (
-    <div className="min-h-screen bg-surface dark-page-bg">
+    <div className="min-h-full bg-surface dark-page-bg">
 
       {/* ── Header de herramienta ── */}
       <ToolHeader
@@ -209,15 +209,15 @@ export function T1View({ onBack }: T1ViewProps) {
         toolCode="T1"
         title="AI Readiness Assessment"
         phaseMiniMap={<PhaseMiniMap phaseId="listen" toolCode="T1" />}
-        maxWidth="max-w-6xl"
+        maxWidth="max-w-7xl"
         chips={
           <div className="flex items-center gap-4">
-            <span className="text-xs text-text-subtle tabular-nums">
-              <span className="font-semibold text-lean-black dark:text-gray-200">{scoredCount}</span>
+            <span className="text-xs text-text-muted tabular-nums">
+              <span className="font-semibold text-lean-black dark:text-warm-100">{scoredCount}</span>
               /{TOTAL_SUBDIMENSIONS} subdimensiones puntuadas
             </span>
             <div className="text-right">
-              <span className="text-xl font-bold tabular-nums text-lean-black dark:text-gray-100">
+              <span className="text-xl font-bold tabular-nums text-lean-black dark:text-warm-50">
                 {overallScore.toFixed(1)}
               </span>
               <span className="text-sm font-light text-text-muted"> / 4</span>
@@ -240,10 +240,10 @@ export function T1View({ onBack }: T1ViewProps) {
       />
 
       {/* ── Empresa + contexto ── */}
-      <div className="max-w-6xl mx-auto px-8 pt-6 pb-2">
+      <div className="max-w-7xl mx-auto px-8 pt-6 pb-2">
         <div className="flex items-center gap-3 flex-wrap">
           {profile.engagementName && (
-            <p className="text-sm font-semibold text-lean-black dark:text-gray-100">
+            <p className="text-sm font-semibold text-lean-black dark:text-warm-50">
               {profile.engagementName}
             </p>
           )}
@@ -260,7 +260,7 @@ export function T1View({ onBack }: T1ViewProps) {
             </>
           )}
         </div>
-        <p className="text-xs text-text-subtle mt-1 max-w-xl">
+        <p className="text-xs text-text-muted mt-1 max-w-xl">
           Selecciona el entrevistado y ajusta los scores en tiempo real. El informe ejecutivo se genera automáticamente.
         </p>
       </div>
@@ -293,8 +293,8 @@ export function T1View({ onBack }: T1ViewProps) {
 
         {/* ── Indicador de actualización en background ── */}
         {isLoadingT1 && (
-          <div className="max-w-6xl mx-auto px-8 pt-2">
-            <div className="flex items-center gap-1.5 text-[11px] text-text-subtle">
+          <div className="max-w-7xl mx-auto px-8 pt-2">
+            <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
               <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
               Actualizando datos…
             </div>
@@ -320,7 +320,7 @@ export function T1View({ onBack }: T1ViewProps) {
         />
 
         {/* ── Layout two-column ── */}
-        <div className="max-w-6xl mx-auto px-8 pb-6">
+        <div className="max-w-7xl mx-auto px-8 pb-6">
           <div className="flex gap-6 items-start">
 
             {/* Columna izquierda — 6 DimensionCards */}
@@ -356,7 +356,7 @@ export function T1View({ onBack }: T1ViewProps) {
           </div>
 
           {/* ── Motor LLM — Recomendaciones dinámicas ── */}
-          <div className="mt-6 max-w-6xl">
+          <div className="mt-6 max-w-7xl">
             <RecommendationPanel
               tool="t1"
               context={t1LLMContext}

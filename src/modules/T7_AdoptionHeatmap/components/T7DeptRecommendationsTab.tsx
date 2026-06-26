@@ -58,7 +58,7 @@ export function DeptRecommendationsTab({ stakeholders, dark }: { stakeholders: S
               <div className="flex items-center gap-2.5">
                 <span className="w-3.5 h-3.5 rounded-full flex-shrink-0 mt-0.5" style={{ backgroundColor: fill }} />
                 <div>
-                  <p className="font-semibold text-sm text-lean-black dark:text-gray-100">{dept}</p>
+                  <p className="font-semibold text-sm text-lean-black dark:text-warm-50">{dept}</p>
                   <p className="text-xs text-text-muted">{deptShs.length} stakeholders</p>
                 </div>
               </div>
@@ -72,9 +72,9 @@ export function DeptRecommendationsTab({ stakeholders, dark }: { stakeholders: S
                 const arcCfg = ARCHETYPE_CONFIG[sh.archetype] ?? ARCHETYPE_CONFIG.adoptador
                 const seg    = SEG_LABELS[getSegment(sh.archetype, sh.resistance)]?.label ?? '—'
                 return (
-                  <div key={sh.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-50 dark:bg-gray-800 border border-border dark:border-white/6">
+                  <div key={sh.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-surface dark:bg-warm-800 border border-border dark:border-white/6">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: fill }} />
-                    <span className="text-xs font-medium text-lean-black dark:text-gray-200">{sh.name}</span>
+                    <span className="text-xs font-medium text-lean-black dark:text-warm-100">{sh.name}</span>
                     <span className={`text-[10px] px-1.5 rounded-full ${arcCfg.badgeBg} ${arcCfg.badgeText}`}>{arcCfg.label}</span>
                     <span className="text-[10px] text-text-subtle font-mono">{seg}</span>
                   </div>
