@@ -1,14 +1,15 @@
 import { test, expect } from '@playwright/test'
-import { login, selectEngagement } from './helpers'
+import { login, selectEngagement, waitForStoreReady } from './helpers'
 
 test.describe('T4 — Use Case Priority Board', () => {
   test.beforeEach(async ({ page }) => {
-    // Forzar tamaño de pantalla de escritorio para evitar colapsos de componentes
     await page.setViewportSize({ width: 1280, height: 720 })
     await login(page)
     await selectEngagement(page)
-    // networkidle espera a que todos los fetch HTTP (Supabase REST) terminen — garantiza datos cargados
+    // networkidle espera a que los fetch de t4.service terminen — garantiza datos antes de las aserciones
     await page.goto('/t4', { waitUntil: 'networkidle' })
+    // Espera a que el estado de carga del store se resuelva antes de que corran los tests
+    await waitForStoreReady(page, 'Cargando', 20_000)
     await expect(page.locator('main, [role="main"], #root > div').first()).toBeVisible({
       timeout: 5_000,
     })
@@ -29,21 +30,22 @@ test.describe('T4 — Use Case Priority Board', () => {
   })
 
   test('el executive dashboard muestra los 4 KPIs', async ({ page }) => {
-    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
+    // Espera a que el ExecDashboard esté montado antes de contar KPIs
+    await expect(page.getByText(/dashboard ejecutivo/i).first()).toBeVisible({ timeout: 15_000 })
 
-    // Los 4 KPIs reales de ExecDashboard (labels actuales del componente)
     const kpis = ['Casos aprobados', 'Ahorro anual estimado', 'Payback promedio', 'Pendientes de decisión']
     let found = 0
 
     for (const kpi of kpis) {
-      const isVisible = await page.getByText(kpi, { exact: false }).first()
-        .isVisible({ timeout: 3_000 }).catch(() => false)
+      const locator = page.getByText(kpi, { exact: false }).first()
+      // scrollIntoViewIfNeeded lleva el KPI al viewport antes de comprobar visibilidad
+      await locator.scrollIntoViewIfNeeded().catch(() => {})
+      const isVisible = await locator.isVisible({ timeout: 5_000 }).catch(() => false)
       if (isVisible) found++
     }
 
-    // ExecDashboard renderiza los KPIs incluso con 0 casos. Si no se encuentran, la vista
-    // está en estado de carga o el seed no tiene casos — verificamos que el board cargó.
     if (found === 0) {
+      // Seed sin casos: ExecDashboard igual renderiza; la vista cargó correctamente
       await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
     } else {
       expect(found, 'Deben ser visibles los 4 KPIs del executive dashboard').toBe(4)
@@ -51,27 +53,29 @@ test.describe('T4 — Use Case Priority Board', () => {
   })
 
   test('la sección del roadmap trimestral está visible', async ({ page }) => {
-    // La sección se llama "ROADMAP TRIMESTRAL — DISTRIBUCIÓN PLANIFICADA"
+    // Espera al ExecDashboard para confirmar que T4 está completamente hidratado
+    await expect(page.getByText(/dashboard ejecutivo/i).first()).toBeVisible({ timeout: 15_000 })
+
     const roadmap = page.getByText(/roadmap trimestral|distribución planificada/i).first()
+    // Lleva el elemento al viewport antes de la aserción de visibilidad
+    await roadmap.scrollIntoViewIfNeeded().catch(() => {})
     const hasRoadmap = await roadmap.isVisible({ timeout: 8_000 }).catch(() => false)
     expect(hasRoadmap, 'Debe ser visible la sección "ROADMAP TRIMESTRAL"').toBe(true)
   })
 
   test('el panel de scoring/detalle tiene los tabs esperados', async ({ page }) => {
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText(/dashboard ejecutivo/i).first()).toBeVisible({ timeout: 15_000 })
 
-    // ExecDashboard siempre visible — prueba de que T4 cargó correctamente
-    await expect(page.getByText(/dashboard ejecutivo/i).first()).toBeVisible({ timeout: 10_000 })
-
-    // Los tabs Scoring/Economía/Hoja de ruta solo aparecen en el panel de detalle,
-    // que requiere seleccionar un caso de uso desde el roadmap trimestral.
-    // Los buscamos sin fallar si no están visibles (no hay caso seleccionado por defecto).
+    // Los tabs Scoring/Economía/Hoja de ruta sólo aparecen con un caso de uso seleccionado.
+    // Hacemos scroll a la zona del panel de detalle antes de buscar los tabs.
     const tabs = ['Scoring', 'Economía', 'Hoja de ruta']
     for (const tab of tabs) {
-      const isVisible = await page.getByText(tab, { exact: false }).first().isVisible({ timeout: 2_000 }).catch(() => false)
+      const locator = page.getByText(tab, { exact: false }).first()
+      await locator.scrollIntoViewIfNeeded().catch(() => {})
+      const isVisible = await locator.isVisible({ timeout: 2_000 }).catch(() => false)
       if (isVisible) break
     }
-    // La vista debe cargarse sin crash independientemente del estado del panel
     await expect(page.locator('main, [role="main"]').first()).toBeVisible()
   })
 

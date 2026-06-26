@@ -3,6 +3,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect }   from 'react'
+import { useParams }                      from 'react-router-dom'
 import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
 import { RecommendationPanel }            from '@/components/RecommendationPanel'
@@ -33,10 +34,18 @@ export function T5View({
   const loadT3                          = useT3Store(s => s.load)
   const initT3Demo                      = useT3Store(s => s.initDemo)
   const { profile: companyProfile }     = useCompanyProfileStore()
-  const engagementId                    = useEngagementStore((s) => s.activeEngagementId)
+  const companyName                     = companyProfile.engagementName
+  const loadProfile                     = useCompanyProfileStore((s) => s.loadProfile)
+  const { engagementId: urlId }         = useParams<{ engagementId: string }>()
+  const storeId                         = useEngagementStore((s) => s.activeEngagementId)
+  const engagementId                    = urlId ?? storeId
 
   // Hidratar canvas desde Supabase al montar o cambiar de engagement
-  useEffect(() => { void loadT5(engagementId) }, [engagementId, loadT5])
+  useEffect(() => {
+    void loadT5(engagementId)
+    if (engagementId) void loadProfile(engagementId)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engagementId, loadT5])
 
   // Carga T3 si no hay procesos
   useEffect(() => {
@@ -57,20 +66,21 @@ export function T5View({
   )
 
   return (
-    <div className="min-h-full bg-surface dark:bg-warm-900">
+    <div className="min-h-screen bg-surface dark:bg-warm-900">
 
       {/* ── Header ── */}
       <ToolHeader
         onBack={onBack}
-        backLabel="Volver al dashboard"
+        backLabel="Volver"
         toolCode="T5"
         title="AI Domain Architecture Canvas"
+        subtitle={companyName}
         phaseMiniMap={<PhaseMiniMap phaseId="evaluate" toolCode="T5" />}
         cta={<MaturityBadge level={canvas.maturityLevel} />}
-        maxWidth="max-w-7xl"
+        maxWidth="max-w-[1200px]"
       />
 
-      <div className="max-w-7xl mx-auto space-y-5 px-8 py-8">
+      <div className="max-w-[1200px] mx-auto space-y-5 px-8 py-8">
 
       {/* ── Main grid ── */}
       <div className="grid grid-cols-12 gap-5 items-start">

@@ -233,9 +233,18 @@ export function T10View({ onNavigate }: T10ViewProps) {
 
   function toggle(id: PanelId) { setExpanded(prev => prev === id ? null : id) }
 
+  // Enriquece los paths /tN con el engagementId para que los panels
+  // generen URLs completas y compartibles. Rutas no-tool (p.ej. '/') pasan sin cambio.
+  function navigateWithId(path: string) {
+    const enriched = engagementId && /^\/t\d+$/.test(path)
+      ? `${path}/${engagementId}`
+      : path
+    onNavigate(enriched)
+  }
+
   // ── Guards ───────────────────────────────────────────────────
   if (!engagementId) return <EmptyNoProject />
-  if (engagementId && !isT1Loading && liveT1Radar.length === 0) return <EmptyNoData onNavigate={onNavigate} />
+  if (engagementId && !isT1Loading && liveT1Radar.length === 0) return <EmptyNoData onNavigate={navigateWithId} />
 
   // ── Segmentos precalculados para barras ──────────────────────
   const t4n = liveT4.totalInitiatives; const t4s = liveT4.statuses
@@ -302,32 +311,32 @@ export function T10View({ onNavigate }: T10ViewProps) {
           <P1MaturityPanel
             radar={liveT1Radar} avg={avg} tier={tier} weakest={weakest}
             breakdown={liveT1Breakdown} expanded={expanded === 'p1'}
-            onToggle={() => toggle('p1')} onNavigate={onNavigate}
+            onToggle={() => toggle('p1')} onNavigate={navigateWithId}
           />
 
           <P2PortfolioPanel
             t4data={liveT4} segments={t4Segments} expanded={expanded === 'p2'}
-            onToggle={() => toggle('p2')} onNavigate={onNavigate}
+            onToggle={() => toggle('p2')} onNavigate={navigateWithId}
           />
 
           <P3AdoptionPanel
             t2data={liveT2} shadowAIPct={shadowAIPct} expanded={expanded === 'p3'}
-            onToggle={() => toggle('p3')} onNavigate={onNavigate}
+            onToggle={() => toggle('p3')} onNavigate={navigateWithId}
           />
 
           <P4EcosystemPanel
             t3data={liveT3} expanded={expanded === 'p4'}
-            onToggle={() => toggle('p4')} onNavigate={onNavigate}
+            onToggle={() => toggle('p4')} onNavigate={navigateWithId}
           />
 
           <P5RiskPanel
             p5data={liveP5} riskSegments={riskSegments} shadowAIPct={shadowAIPct}
-            expanded={expanded === 'p5'} onToggle={() => toggle('p5')} onNavigate={onNavigate}
+            expanded={expanded === 'p5'} onToggle={() => toggle('p5')} onNavigate={navigateWithId}
           />
 
           <P6GovernancePanel
             p6data={liveP6} risksHigh={liveP5.risks.high} expanded={expanded === 'p6'}
-            onToggle={() => toggle('p6')} onNavigate={onNavigate}
+            onToggle={() => toggle('p6')} onNavigate={navigateWithId}
           />
 
         </div>

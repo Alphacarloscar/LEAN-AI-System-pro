@@ -14,7 +14,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect, useRef }  from 'react'
-import { useNavigate }                   from 'react-router-dom'
+import { useNavigate, useParams }               from 'react-router-dom'
 import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
 import { useT4Store }                   from '@/modules/T4_UseCasePriorityBoard/store'
 import { PhaseMiniMap }                 from '@/shared/components/PhaseMiniMap'
@@ -48,9 +48,13 @@ export function T8View({ onBack }: T8ViewProps) {
   const isLoadingT2                 = useT2Store(s => s.isLoading)
   const t2Error                     = useT2Store(s => s.lastError)
   const useCases                    = useT4Store(s => s.useCases)
+  const ensureLoadedT4              = useT4Store(s => s.ensureLoaded)
   const { profile: companyProfile } = useCompanyProfileStore()
   const companyName                 = companyProfile.engagementName
-  const engagementId                = useEngagementStore((s) => s.activeEngagementId)
+  const loadProfile                 = useCompanyProfileStore(s => s.loadProfile)
+  const { engagementId: urlId }     = useParams<{ engagementId: string }>()
+  const storeId                     = useEngagementStore((s) => s.activeEngagementId)
+  const engagementId                = urlId ?? storeId
   const [activeTab, setActiveTab]  = useState<'timeline' | 'messages' | 'materials' | 'dept'>('timeline')
 
   // Cargar T2 al montar T8 (por si el usuario llega directamente sin pasar por T2).
@@ -58,7 +62,11 @@ export function T8View({ onBack }: T8ViewProps) {
   // stable Zustand action (loadT2); stakeholders.length omitida intencionalmente para evitar
   // re-fetch en cada actualización de la lista — el guard `=== 0` cubre la lógica necesaria
   useEffect(() => {
-    if (engagementId && stakeholders.length === 0) loadT2(engagementId)
+    if (!engagementId) return
+    if (stakeholders.length === 0) loadT2(engagementId)
+    // Garantiza casos de uso reales aunque el usuario no haya pasado por T4
+    void ensureLoadedT4(engagementId, { reason: 't8-mount' })
+    void loadProfile(engagementId)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])
 
@@ -249,7 +257,7 @@ export function T8View({ onBack }: T8ViewProps) {
           }
           title="Sin stakeholders registrados"
           description="Completa T2 — AI Stakeholder Matrix para mapear al equipo antes de construir el plan de comunicación."
-          action={<Button variant="ghost" size="sm" onClick={() => navigate('/t2')}>Ir a T2</Button>}
+          action={<Button variant="ghost" size="sm" onClick={() => navigate(engagementId ? `/t2/${engagementId}` : '/t2')}>Ir a T2</Button>}
           className="py-12"
         />
       ) : (

@@ -15,7 +15,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect }  from 'react'
-import { useNavigate }                   from 'react-router-dom'
+import { useNavigate, useParams }        from 'react-router-dom'
 import { Button, ToolHeader }            from '@shared/design-system/components'
 import { useT2Store }                    from './store'
 import { useEngagementStore }            from '@/modules/Engagement/store'
@@ -43,8 +43,11 @@ interface T2ViewProps {
 
 export function T2View({ onBack }: T2ViewProps) {
   const { stakeholders, addStakeholder, updateStakeholder, initDemo, ensureLoaded, lastError, isLoading: isLoadingT2, hasData: hasDataT2 } = useT2Store()
-  const engagementId   = useEngagementStore((s) => s.activeEngagementId)
+  const { engagementId: urlId } = useParams<{ engagementId: string }>()
+  const storeId                 = useEngagementStore((s) => s.activeEngagementId)
+  const engagementId            = urlId ?? storeId
   const companyProfile = useCompanyProfileStore((s) => s.profile)
+  const loadProfile    = useCompanyProfileStore((s) => s.loadProfile)
   const companyName    = companyProfile.engagementName
   const navigate       = useNavigate()
 
@@ -55,6 +58,7 @@ export function T2View({ onBack }: T2ViewProps) {
   useEffect(() => {
     if (engagementId) {
       ensureLoaded(engagementId, { reason: 'route_mount' })
+      void loadProfile(engagementId)
     } else if (isDemoEnabled) {
       initDemo()
     }

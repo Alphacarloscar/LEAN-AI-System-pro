@@ -14,7 +14,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect } from 'react'
-import { useNavigate }                  from 'react-router-dom'
+import { useNavigate, useParams }       from 'react-router-dom'
 import { useT12Store }                  from './store'
 import { useT6Store }                   from '@/modules/T6_RiskGovernance/store'
 import { useEngagementStore }           from '@/modules/Engagement/store'
@@ -42,12 +42,20 @@ export function T12View({ onBack }: T12ViewProps) {
   const { isReadOnly } = usePermissions()
   const { controls, updateControl, importFromT6, syncEngagement: syncT12 } = useT12Store()
   const t6Controls                  = useT6Store((s) => s.controls)
-  const engagementId                = useEngagementStore((s) => s.activeEngagementId)
+  const syncT6                      = useT6Store((s) => s.syncEngagement)
+  const loadPolicyFromDb            = useT6Store((s) => s.loadPolicyFromDb)
+  const { engagementId: urlId }     = useParams<{ engagementId: string }>()
+  const storeId                     = useEngagementStore((s) => s.activeEngagementId)
+  const engagementId                = urlId ?? storeId
   const companyName                 = useCompanyProfileStore((s) => s.profile.engagementName)
+  const loadProfile                 = useCompanyProfileStore((s) => s.loadProfile)
 
   // stable Zustand action — mount-only: sincronizar al cambiar engagement
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { syncT12(engagementId) }, [engagementId])
+  useEffect(() => {
+    syncT12(engagementId)
+    if (engagementId) void loadProfile(engagementId)
+  }, [engagementId])
 
   const [activeClause, setActiveClause] = useState<T12Clause>('context')
   const [importMsg, setImportMsg]       = useState<string | null>(null)
@@ -63,7 +71,11 @@ export function T12View({ onBack }: T12ViewProps) {
   const pending   = controls.filter((c) => c.status === 'pendiente_revision').length
   const globalPct = Math.round((approved / total) * 100)
 
-  function handleImportFromT6() {
+  async function handleImportFromT6() {
+    if (engagementId) {
+      syncT6(engagementId)
+      await loadPolicyFromDb(engagementId)
+    }
     const count = importFromT6(
       t6Controls.map((c) => ({ id: c.id, status: c.status, notes: c.notes }))
     )

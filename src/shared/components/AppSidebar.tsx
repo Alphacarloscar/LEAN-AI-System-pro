@@ -17,6 +17,7 @@ import { useUnsavedChanges }          from '@/shared/hooks/useUnsavedChanges'
 import { useSidebar }                 from '@/shared/hooks/useSidebar'
 import { UnsavedChangesModal }        from '@/shared/components/UnsavedChangesModal'
 import { useState }                   from 'react'
+import { useEngagementStore }         from '@/modules/Engagement/store'
 
 // ── Registro estático del producto ───────────────────────────
 
@@ -26,7 +27,9 @@ interface ToolNavItem {
   path:  string
 }
 
-const TOOL_NAVIGATION: ToolNavItem[] = [
+// Códigos base de navegación — la ruta final se construye dinámicamente
+// con el engagementId activo en AppSidebar.
+const TOOL_NAVIGATION_BASE: ToolNavItem[] = [
   { code: 'T1',  label: 'AI Readiness Assessment',   path: '/t1'  },
   { code: 'T2',  label: 'Stakeholder Matrix',         path: '/t2'  },
   { code: 'T3',  label: 'Value Stream Map',           path: '/t3'  },
@@ -42,8 +45,17 @@ const TOOL_NAVIGATION: ToolNavItem[] = [
 ]
 
 // ── Panel interior ────────────────────────────────────────────
-function SidebarPanel({ onNav }: { onNav: (path: string) => void }) {
+function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; engagementId: string | null }) {
   const location = useLocation()
+
+  // Construye la ruta final: T1–T12 incluyen el engagementId en la URL.
+  // T10 (path '/') no lleva engagementId porque es el dashboard raíz.
+  const TOOL_NAVIGATION = TOOL_NAVIGATION_BASE.map((tool) =>
+    tool.path !== '/' && engagementId
+      ? { ...tool, path: `${tool.path}/${engagementId}` }
+      : tool
+  )
+
   const isCompanyProfileActive = location.pathname === '/company-profile'
 
   return (
@@ -158,6 +170,7 @@ export function AppSidebar() {
   const navigate                      = useNavigate()
   const { isDirty, clearDirty }       = useUnsavedChanges()
   const { open, toggle, setOpen }     = useSidebar()
+  const engagementId                  = useEngagementStore((s) => s.activeEngagementId)
 
   function goTo(path: string) {
     // Cierra el sidebar inmediatamente al seleccionar
@@ -226,7 +239,7 @@ export function AppSidebar() {
           open ? 'translate-x-0' : '-translate-x-full',
         ].join(' ')}
       >
-        <SidebarPanel onNav={goTo} />
+        <SidebarPanel onNav={goTo} engagementId={engagementId} />
       </aside>
 
       <UnsavedChangesModal
