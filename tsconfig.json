@@ -21,7 +21,7 @@
     "noFallthroughCasesInSwitch": true,
 
     /* Path aliases */
-    //"baseUrl": ".",
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@shared/*": ["./src/shared/*"],
@@ -30,6 +30,5 @@
       "@types/*": ["./src/types/*"]
     }
   },
-  "include": ["src", "vite.config.ts"],
-  "exclude": ["src/__tests__", "src/index.ts"]
+  "include": ["src", "vite.config.ts"]
 }

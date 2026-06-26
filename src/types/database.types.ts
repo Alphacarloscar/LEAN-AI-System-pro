@@ -1,17 +1,3 @@
-// ============================================================
-// GOBY — Tipos de base de datos (Supabase)
-//
-// ⚠ Este archivo es FUENTE DE VERDAD para los tipos de BD.
-//   No editar manualmente — regenerar con:
-//   npx supabase gen types typescript --project-id <id> > src/types/database.types.ts
-//
-// IMPORTANT: All Row types MUST be `type`, not `interface`.
-// TypeScript interfaces do not satisfy Record<string, unknown>
-// in conditional type checks (Supabase GenericSchema constraint),
-// causing Schema=never and all .data types to collapse to never.
-// ============================================================
-
-
 export type Json =
   | string
   | number
@@ -897,7 +883,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      bulk_upsert_t1_scores: { Args: { p_scores: Json }; Returns: undefined }
       can_write_project: { Args: { pid: string }; Returns: boolean }
       check_and_log_ai_call: {
         Args: { p_project_id: string; p_tool_code: string; p_user_id: string }
@@ -1097,10 +1082,6 @@ export type LeanPhase     = 'listen' | 'evaluate' | 'activate' | 'normalize' | '
 export type ISO42001Status = 'no_iniciado' | 'en_progreso' | 'implementado'
 export type UseCaseStatus = 'candidato' | 'priorizado' | 'go' | 'no_go' | 'en_piloto' | 'completado'
 
-// ── Friction enums ────────────────────────────────────────────
-export type FrictionFrequency = 'Baja' | 'Media' | 'Alta'
-export type FrictionImpact    = 'Bajo' | 'Medio' | 'Alto'
-
 // ── Row types ───────────────────────────────────────────────────
 export type CompanyRow           = Database['public']['Tables']['companies']['Row']
 export type CompanyDepartmentRow = Database['public']['Tables']['company_departments']['Row']
@@ -1115,11 +1096,9 @@ export type ValueStreamRow       = Database['public']['Tables']['value_streams']
 export type UseCaseRow           = Database['public']['Tables']['use_cases']['Row']
 export type T5CanvasRow          = Database['public']['Tables']['t5_canvas']['Row']
 export type ISO42001ControlRow   = Database['public']['Tables']['iso42001_controls']['Row']
-export type ToolOutputRow        = Database['public']['Tables']['tool_outputs']['Row']
 
 // ── Insert types ────────────────────────────────────────────────
 export type CompanyInsert          = Database['public']['Tables']['companies']['Insert']
-export type CompanyDepartmentInsert= Database['public']['Tables']['company_departments']['Insert']
 export type ProjectInsert          = Database['public']['Tables']['projects']['Insert']
 export type CompanyProfileInsert   = Database['public']['Tables']['company_profiles']['Insert']
 export type FrictionInsert         = Database['public']['Tables']['frictions']['Insert']
@@ -1129,7 +1108,6 @@ export type ValueStreamInsert      = Database['public']['Tables']['value_streams
 export type UseCaseInsert          = Database['public']['Tables']['use_cases']['Insert']
 export type T5CanvasInsert         = Database['public']['Tables']['t5_canvas']['Insert']
 export type ISO42001ControlInsert  = Database['public']['Tables']['iso42001_controls']['Insert']
-export type ToolOutputInsert       = Database['public']['Tables']['tool_outputs']['Insert']
 
 // ── Deprecated aliases (compatibilidad) ─────────────────────────
 /** @deprecated Usar ProjectRow */

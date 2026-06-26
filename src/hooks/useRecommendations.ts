@@ -15,8 +15,8 @@
 // ============================================================
 
 import { useState, useCallback, useEffect } from 'react'
+import { supabase }                         from '@/lib/supabase'
 import { useRecommendationCacheStore }      from '@/stores/recommendationCache.store'
-import { useEdgeFunctionInvoke }            from './useEdgeFunctionInvoke'
 
 // ── Tipos de respuesta ───────────────────────────────────────
 
@@ -35,19 +35,6 @@ export interface T1RecommendationResult {
 
 // Genérico para otros tools futuros
 export type RecommendationResult = T1RecommendationResult
-
-// ── Validación ───────────────────────────────────────────────
-
-function validateRecommendationResult(raw: unknown): RecommendationResult {
-  if (
-    !raw ||
-    typeof raw !== 'object' ||
-    !Array.isArray((raw as RecommendationResult).recommendations)
-  ) {
-    throw new Error('Respuesta inesperada de la Edge Function')
-  }
-  return raw as RecommendationResult
-}
 
 // ── Hook ─────────────────────────────────────────────────────
 
@@ -68,7 +55,9 @@ export function useRecommendations(
   // Inicializar desde caché si existe (sobrevive la navegación entre tools)
   const cached = engagementId ? getCache(engagementId, tool) : null
 
-  const [data, setData] = useState<RecommendationResult | null>(cached)
+  const [data,      setData]      = useState<RecommendationResult | null>(cached)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error,     setError]     = useState<string | null>(null)
 
   // Si el engagementId cambia, restaurar el caché correspondiente
   useEffect(() => {
@@ -82,25 +71,53 @@ export function useRecommendations(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId, tool])
 
-  const handleSuccess = useCallback((result: RecommendationResult, eid: string) => {
-    setData(result)
-    setCache(eid, tool, result)
-  }, [setCache, tool])
+  const refetch = useCallback(async () => {
+    if (!context || !engagementId) {
+      setError('Necesitas un engagement activo para generar recomendaciones.')
+      return
+    }
 
-  const { invoke, isGenerating, error } = useEdgeFunctionInvoke<unknown, RecommendationResult>({
-    tool,
-    // T4 con 7+ casos de uso + datos económicos puede tardar hasta 2 min; supera el default de 90s
-    timeoutMs:           120_000,
-    noEngagementMessage: 'Necesitas un engagement activo para generar recomendaciones.',
-    validate:            validateRecommendationResult,
-    onSuccess:           handleSuccess,
-    logPrefix:           `[useRecommendations:${tool}]`,
-  })
+    setIsLoading(true)
+    setError(null)
 
-  const refetch = useCallback(
-    () => invoke(context, engagementId),
-    [invoke, context, engagementId],
-  )
+    // Timeout de 120s: cold start Edge Function (~3s) + llamada Claude API (hasta 90s
+    // en prompts complejos con portfolio grande). 90s era demasiado justo para T4
+    // con 7+ casos de uso con datos económicos.
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error('La generación tardó demasiado (>2 min). Inténtalo de nuevo — puede ser pico de carga en la API.')),
+        120_000,
+      )
+    )
 
-  return { data, isLoading: isGenerating, error, refetch }
+    try {
+      const { data: result, error: fnError } = await Promise.race([
+        supabase.functions.invoke('ai-recommend', { body: { tool, context, engagementId } }),
+        timeoutPromise,
+      ])
+
+      if (fnError) {
+        throw new Error(fnError.message ?? 'Error al llamar a la Edge Function')
+      }
+
+      if (result?.error) {
+        throw new Error(result.error)
+      }
+
+      const resultData = result?.data ?? null
+      setData(resultData)
+      // Guardar en caché para que sobreviva la navegación entre tools
+      if (resultData && engagementId) {
+        setCache(engagementId, tool, resultData)
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error desconocido'
+      setError(msg)
+      console.error(`[useRecommendations:${tool}]`, err)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [tool, context, engagementId])
+
+  return { data, isLoading, error, refetch }
 }

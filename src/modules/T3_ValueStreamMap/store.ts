@@ -22,7 +22,6 @@ import {
   deleteValueStreamFromDb,
 } from '@/services/t3.service'
 import { logTrace }                       from '@/lib/loadTrace'
-import { reportError }                    from '@/lib/reportError'
 
 // ── Constantes de frescura ─────────────────────────────────────
 const STALE_MS = 5 * 60_000  // 5 minutos
@@ -286,7 +285,7 @@ export const useT3Store = create<T3Store>()((set, get) => ({
       if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
       const isTimeout = (err as Error)?.message === 'T3_LOAD_TIMEOUT'
       const errMsg    = isTimeout ? 'timeout' : String(err)
-      reportError('[T3Store] load', err)
+      console.error('[T3Store] load:', isTimeout ? 'timeout (>10s) — check Supabase connection' : err)
       set({ isLoading: false, loadError: errMsg })
       logTrace({ resourceName: 'T3', projectId: engagementId, requestId, status: 'error', durationMs: Date.now() - t0, error: errMsg })
     }
@@ -309,7 +308,7 @@ export const useT3Store = create<T3Store>()((set, get) => ({
       try {
         await insertValueStream(newProcess, engagementId)
       } catch (err) {
-        reportError('[T3Store] addProcess sync', err)
+        console.error('[T3Store] addProcess sync:', err)
         set((state) => ({ processes: state.processes.filter((p) => p.id !== newProcess.id) }))
       }
     }
@@ -327,7 +326,7 @@ export const useT3Store = create<T3Store>()((set, get) => ({
       try {
         await updateValueStreamInDb(id, engagementId, updates)
       } catch (err) {
-        reportError('[T3Store] updateProcess sync', err)
+        console.error('[T3Store] updateProcess sync:', err)
         if (prev) set((state) => ({ processes: state.processes.map((p) => p.id === id ? prev : p) }))
       }
     }
@@ -343,7 +342,7 @@ export const useT3Store = create<T3Store>()((set, get) => ({
       try {
         await deleteValueStreamFromDb(id, engagementId)
       } catch (err) {
-        reportError('[T3Store] removeProcess sync', err)
+        console.error('[T3Store] removeProcess sync:', err)
         set({ processes: prev })
       }
     }
@@ -370,7 +369,7 @@ export const useT3Store = create<T3Store>()((set, get) => ({
       try {
         await updateValueStreamInDb(processId, engagementId, { stages: updatedStages })
       } catch (err) {
-        reportError('[T3Store] addStage sync', err)
+        console.error('[T3Store] addStage sync:', err)
       }
     }
   },
@@ -391,7 +390,7 @@ export const useT3Store = create<T3Store>()((set, get) => ({
       try {
         await updateValueStreamInDb(processId, engagementId, { stages: updatedStages })
       } catch (err) {
-        reportError('[T3Store] updateStage sync', err)
+        console.error('[T3Store] updateStage sync:', err)
       }
     }
   },
@@ -412,7 +411,7 @@ export const useT3Store = create<T3Store>()((set, get) => ({
       try {
         await updateValueStreamInDb(processId, engagementId, { stages: updatedStages })
       } catch (err) {
-        reportError('[T3Store] removeStage sync', err)
+        console.error('[T3Store] removeStage sync:', err)
       }
     }
   },

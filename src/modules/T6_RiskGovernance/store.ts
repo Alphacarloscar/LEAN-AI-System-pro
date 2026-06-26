@@ -11,14 +11,17 @@
 
 import { create }    from 'zustand'
 import { persist }   from 'zustand/middleware'
-import { savePolicyOutput, fetchPolicyFromDb } from '@/services/t6.service'
-import { reportError } from '@/lib/reportError'
+import { supabase }  from '@/lib/supabase'
 import type { ISO42001Control, ISO42001Status, GeneratedPolicyContent } from './types'
 import { ISO42001_BASE_CONTROLS } from './constants'
 
 // ── Tipos ─────────────────────────────────────────────────────
 
 export type PersistenceStatus = 'idle' | 'saving' | 'saved' | 'error'
+
+const TOOL_CODE      = 't6_policy'
+const PAYLOAD_VERSION = 1
+const STALE_DAYS     = 90
 
 // ── Helpers de inicialización ─────────────────────────────────
 
@@ -28,6 +31,12 @@ function buildInitialControls(): ISO42001Control[] {
     status:       'no_iniciado' as ISO42001Status,
     autoInferred: false,
   }))
+}
+
+function staleAfterISO(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + STALE_DAYS)
+  return d.toISOString()
 }
 
 // ── Store ─────────────────────────────────────────────────────
@@ -46,8 +55,6 @@ interface T6Store {
   saveGeneratedPolicy: (policy: GeneratedPolicyContent) => void
   clearGeneratedPolicy: () => void
   setPolicyGenerating: (value: boolean) => void
-  // Carga inicial desde Supabase (cache-first fallback tras F5 o primer acceso)
-  loadPolicyFromDb:    (projectId: string) => Promise<void>
   // Persistencia en Supabase
   persistenceStatus:   PersistenceStatus
   persistenceError:    string | null
@@ -100,17 +107,6 @@ export const useT6Store = create<T6Store>()(
       setPolicyGenerating: (value) =>
         set({ isPolicyGenerating: value }),
 
-      // ── Carga inicial desde DB ──
-      loadPolicyFromDb: async (projectId) => {
-        if (get().generatedPolicy !== null) return
-        try {
-          const policy = await fetchPolicyFromDb(projectId)
-          if (policy) set({ generatedPolicy: policy })
-        } catch (err) {
-          reportError('[T6Store] loadPolicyFromDb', err)
-        }
-      },
-
       // ── Persistencia ──
       persistenceStatus: 'idle',
       persistenceError:  null,
@@ -124,12 +120,18 @@ export const useT6Store = create<T6Store>()(
 
         set({ persistenceStatus: 'saving', persistenceError: null })
 
-        try {
-          await savePolicyOutput(projectId, generatedPolicy)
+        const { error } = await supabase.rpc('save_tool_output', {
+          p_project_id:      projectId,
+          p_tool_code:       TOOL_CODE,
+          p_payload:         generatedPolicy as unknown as Record<string, unknown>,
+          p_stale_after:     staleAfterISO(),
+          p_payload_version: PAYLOAD_VERSION,
+        })
+
+        if (error) {
+          set({ persistenceStatus: 'error', persistenceError: error.message })
+        } else {
           set({ persistenceStatus: 'saved', persistenceError: null })
-        } catch (err) {
-          reportError('[T6Store] retrySave', err)
-          set({ persistenceStatus: 'error', persistenceError: (err as Error).message })
         }
       },
     }),

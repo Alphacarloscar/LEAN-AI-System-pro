@@ -8,15 +8,24 @@
 // engagement activo, el contenido se limpia automáticamente.
 // ============================================================
 
-import { create }  from 'zustand'
-import { persist } from 'zustand/middleware'
-import { saveCommunicationOutput } from '@/services/t8.service'
-import { reportError } from '@/lib/reportError'
+import { create }   from 'zustand'
+import { persist }  from 'zustand/middleware'
+import { supabase } from '@/lib/supabase'
 import type { GeneratedT8Content } from './types'
 
 // ── Tipos ─────────────────────────────────────────────────────
 
 export type PersistenceStatus = 'idle' | 'saving' | 'saved' | 'error'
+
+const TOOL_CODE       = 't8_comms'
+const PAYLOAD_VERSION = 1
+const STALE_DAYS      = 90
+
+function staleAfterISO(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + STALE_DAYS)
+  return d.toISOString()
+}
 
 // ── Store ─────────────────────────────────────────────────────
 
@@ -66,12 +75,18 @@ export const useT8Store = create<T8Store>()(
 
         set({ persistenceStatus: 'saving', persistenceError: null })
 
-        try {
-          await saveCommunicationOutput(projectId, generatedContent)
+        const { error } = await supabase.rpc('save_tool_output', {
+          p_project_id:      projectId,
+          p_tool_code:       TOOL_CODE,
+          p_payload:         generatedContent as unknown as Record<string, unknown>,
+          p_stale_after:     staleAfterISO(),
+          p_payload_version: PAYLOAD_VERSION,
+        })
+
+        if (error) {
+          set({ persistenceStatus: 'error', persistenceError: error.message })
+        } else {
           set({ persistenceStatus: 'saved', persistenceError: null })
-        } catch (err) {
-          reportError('[T8Store] retrySave', err)
-          set({ persistenceStatus: 'error', persistenceError: (err as Error).message })
         }
       },
     }),

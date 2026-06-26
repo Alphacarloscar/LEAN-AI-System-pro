@@ -75,7 +75,7 @@ export function Switch({
       {track}
       <div className="min-w-0">
         {label && (
-          <p className={`text-sm font-medium ${disabled ? 'opacity-50' : 'text-lean-black dark:text-warm-100'}`}>
+          <p className={`text-sm font-medium ${disabled ? 'opacity-50' : 'text-lean-black dark:text-gray-200'}`}>
             {label}
           </p>
         )}

@@ -20,40 +20,36 @@ export const T11_LEVEL_CONFIG: Record<T11Level, {
   border:    string
   badge:     string
   badgeText: string
-  bgText:    string
   icon:      string
 }> = {
   team: {
     label:     'Nivel Equipo',
     sublabel:  'Cadencia de Sprint (2 semanas)',
     hex:       '#5FAF8A',
-    bg:        'bg-success-light dark:bg-success-dark/15',
-    border:    'border-success dark:border-success-dark/40',
-    badge:     'bg-success-dark dark:bg-success-dark/40',
-    badgeText: 'text-lean-white dark:text-warm-50',
-    bgText:    'text-success-dark dark:text-success',
+    bg:        'bg-emerald-50 dark:bg-emerald-900/15',
+    border:    'border-emerald-200 dark:border-emerald-800/40',
+    badge:     'bg-emerald-100 dark:bg-emerald-900/30',
+    badgeText: 'text-emerald-700 dark:text-emerald-400',
     icon:      'team',
   },
   program: {
     label:     'Nivel Programa',
     sublabel:  'Cadencia mensual de gestión',
     hex:       '#6A90C0',
-    bg:        'bg-info-light dark:bg-info-dark/15',
-    border:    'border-info dark:border-info-dark/40',
-    badge:     'bg-info-dark dark:bg-info-dark/40',
-    badgeText: 'text-lean-white dark:text-warm-50',
-    bgText:    'text-info-dark dark:text-info',
+    bg:        'bg-blue-50 dark:bg-blue-900/15',
+    border:    'border-blue-200 dark:border-blue-800/40',
+    badge:     'bg-blue-100 dark:bg-blue-900/30',
+    badgeText: 'text-blue-700 dark:text-blue-400',
     icon:      'program',
   },
   direction: {
     label:     'Nivel Dirección',
     sublabel:  'Cadencia trimestral estratégica',
     hex:       '#C8860A',
-    bg:        'bg-warning-light dark:bg-warning-dark/15',
-    border:    'border-warning dark:border-warning-dark/40',
-    badge:     'bg-warning-dark dark:bg-warning-dark/40',
-    badgeText: 'text-lean-white dark:text-warm-50',
-    bgText:    'text-warning-dark dark:text-warning',
+    bg:        'bg-amber-50 dark:bg-amber-900/15',
+    border:    'border-amber-200 dark:border-amber-800/40',
+    badge:     'bg-amber-100 dark:bg-amber-900/30',
+    badgeText: 'text-amber-700 dark:text-amber-400',
     icon:      'direction',
   },
 }

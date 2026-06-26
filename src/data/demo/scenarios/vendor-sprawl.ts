@@ -1,5 +1,5 @@
-﻿// ============================================================
-// GOBY — Escenario demo: Vendor Sprawl
+// ============================================================
+// LEAN AI System — Escenario demo: Vendor Sprawl
 //
 // Patrón: cada departamento compra IA independientemente.
 // Capacidades duplicadas, riesgo de seguridad no gestionado,

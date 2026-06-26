@@ -1,12 +1,12 @@
 // ============================================================
-// T5 — Zustand store (volatile — fuente de verdad: Supabase)
+// T5 — Zustand store con persist
 //
-// persist() eliminado: localStorage era un falso positivo de
-// persistencia que rompía la sincronización multi-cliente.
-// Estado en memoria; se hidrata con load(projectId) al montar.
+// Demo data: Industrias Nexus S.A. — 6 dominios evaluados.
+// Sprint 3+: leer/escribir desde Supabase.
 // ============================================================
 
-import { create }  from 'zustand'
+import { create }   from 'zustand'
+import { persist }  from 'zustand/middleware'
 import type { T5Canvas, T5DomainAssessment, T5DomainCode, T5DomainScores } from './types'
 import {
   computeT5DomainScore,
@@ -14,22 +14,7 @@ import {
   computeMaturityLevel,
   computeActivationSequence,
 } from './constants'
-import { isDemoEnabled }             from '@/lib/config'
-import { getT5Canvas, upsertT5Canvas } from '@/services/t5.service'
-import { reportError }               from '@/lib/reportError'
-
-// ── Debounce helper ──────────────────────────────────────────
-
-const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>()
-
-function debounce(key: string, fn: () => void, ms: number) {
-  const existing = debounceTimers.get(key)
-  if (existing) clearTimeout(existing)
-  debounceTimers.set(key, setTimeout(() => {
-    fn()
-    debounceTimers.delete(key)
-  }, ms))
-}
+import { isDemoEnabled } from '@/lib/config'
 
 // ── Helper ────────────────────────────────────────────────────
 
@@ -168,6 +153,7 @@ function buildDemoCanvas(): T5Canvas {
   }
 }
 
+// Canvas vacío para modo producción (sin datos demo)
 function emptyDomain(domainCode: T5DomainCode): T5DomainAssessment {
   return {
     domainCode,
@@ -207,86 +193,55 @@ function buildEmptyCanvas(): T5Canvas {
 // ── Store ─────────────────────────────────────────────────────
 
 interface T5Store {
-  canvas:       T5Canvas
-  engagementId: string | null
-  isLoading:    boolean
-  loadError:    string | null
-
-  /** Carga el canvas desde Supabase para el proyecto dado.
-   *  Con null, hidrata con datos de demo o canvas vacío según config. */
-  load:               (projectId: string | null) => Promise<void>
+  canvas:             T5Canvas
+  engagementId:       string | null
   updateDomainScores: (code: T5DomainCode, scores: T5DomainScores) => void
   resetCanvas:        () => void
+  /** Llama al montar T5View con el engagementId activo.
+   *  Si difiere del guardado, limpia el canvas (era de otro cliente). */
+  syncEngagement:     (id: string | null) => void
 }
 
-export const useT5Store = create<T5Store>()((set, get) => ({
-  canvas:       isDemoEnabled ? buildDemoCanvas() : buildEmptyCanvas(),
-  engagementId: null,
-  isLoading:    false,
-  loadError:    null,
+export const useT5Store = create<T5Store>()(
+  persist(
+    (set, get) => ({
+      canvas:       isDemoEnabled ? buildDemoCanvas() : buildEmptyCanvas(),
+      engagementId: null,
 
-  // ── load ───────────────────────────────────────────────────
-  load: async (projectId) => {
-    if (!projectId) {
-      set({
-        canvas:       isDemoEnabled ? buildDemoCanvas() : buildEmptyCanvas(),
-        engagementId: null,
-        isLoading:    false,
-        loadError:    null,
-      })
-      return
-    }
+      syncEngagement: (id) => {
+        if (get().engagementId !== id) {
+          set({
+            engagementId: id,
+            canvas:       isDemoEnabled ? buildDemoCanvas() : buildEmptyCanvas(),
+          })
+        }
+      },
 
-    // Evitar recarga si ya tenemos datos frescos de este proyecto
-    const state = get()
-    if (state.engagementId === projectId && !state.isLoading && state.canvas.id !== '') return
-
-    set({ isLoading: true, loadError: null, engagementId: projectId })
-
-    try {
-      const canvas = await getT5Canvas(projectId)
-      set({ canvas: canvas ?? buildEmptyCanvas(), isLoading: false })
-    } catch (err) {
-      reportError('T5Store.load', err)
-      set({ isLoading: false, loadError: String(err) })
-    }
-  },
-
-  // ── updateDomainScores ─────────────────────────────────────
-  updateDomainScores: (code, scores) => {
-    set((state) => {
-      const updatedDomains = {
-        ...state.canvas.domains,
-        [code]: {
-          ...state.canvas.domains[code],
-          scores,
-          priorityScore:  computeT5DomainScore(scores),
-          recommendation: computeT5Recommendation(scores),
-          assessedAt:     new Date().toISOString(),
-        },
-      }
-      const updatedCanvas: T5Canvas = {
-        ...state.canvas,
-        domains:            updatedDomains,
-        maturityLevel:      computeMaturityLevel(updatedDomains),
-        activationSequence: computeActivationSequence(updatedDomains),
-        updatedAt:          new Date().toISOString(),
-      }
-
-      const { engagementId } = state
-      if (engagementId) {
-        debounce(`t5-upsert-${engagementId}`, async () => {
-          try {
-            await upsertT5Canvas(engagementId, get().canvas)
-          } catch (err) {
-            reportError('T5Store.upsert', err)
+      updateDomainScores: (code, scores) =>
+        set((state) => {
+          const updatedDomains = {
+            ...state.canvas.domains,
+            [code]: {
+              ...state.canvas.domains[code],
+              scores,
+              priorityScore:  computeT5DomainScore(scores),
+              recommendation: computeT5Recommendation(scores),
+              assessedAt:     new Date().toISOString(),
+            },
           }
-        }, 500)
-      }
+          return {
+            canvas: {
+              ...state.canvas,
+              domains:            updatedDomains,
+              maturityLevel:      computeMaturityLevel(updatedDomains),
+              activationSequence: computeActivationSequence(updatedDomains),
+              updatedAt:          new Date().toISOString(),
+            },
+          }
+        }),
 
-      return { canvas: updatedCanvas }
-    })
-  },
-
-  resetCanvas: () => set({ canvas: isDemoEnabled ? buildDemoCanvas() : buildEmptyCanvas() }),
-}))
+      resetCanvas: () => set({ canvas: isDemoEnabled ? buildDemoCanvas() : buildEmptyCanvas() }),
+    }),
+    { name: 'lean-t5-canvas', version: 4 },  // bumped: añadido engagementId + syncEngagement (F-02)
+  ),
+)

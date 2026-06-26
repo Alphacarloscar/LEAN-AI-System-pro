@@ -1,168 +1,123 @@
-import { useCallback, useId, useRef, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
-// ─── Types ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Tabs — navegación por pestañas (horizontal)
+//
+// Uso controlado (externo):
+//   <Tabs activeTab={tab} onChange={setTab} tabs={[...]} />
+//
+// Uso no controlado (autogestión):
+//   <Tabs tabs={[{ id:'t1', label:'Overview', content:<div/> }]} />
+// ─────────────────────────────────────────────────────────────
 
 export interface TabItem {
-  value:     string
-  label:     string
-  icon?:     ReactNode
-  badge?:    string | number
+  id:       string
+  label:    ReactNode
+  content?: ReactNode     // usado en modo autogestionado
   disabled?: boolean
-  content?:  ReactNode   // self-contained mode: panel content per tab
+  badge?:   string | number
 }
 
 export interface TabsProps {
-  tabs:           TabItem[]
-  /** Controlled: currently selected tab value */
-  value:          string
-  onChange:       (value: string) => void
-  variant?:       'pill' | 'underline'
-  /** Required for role="tablist" aria-label */
-  'aria-label':   string
-  className?:     string
-  /** External panel content (controlled mode — renders below the tablist) */
-  children?:      ReactNode
+  tabs:        TabItem[]
+  activeTab?:  string          // controlado externamente
+  onChange?:   (id: string) => void
+  defaultTab?: string          // solo para modo no controlado
+  children?:   ReactNode       // contenido externo (modo controlado)
+  variant?:    'underline' | 'pill'
+  className?:  string
 }
-
-// ─── Style constants (pill = the GOBY pill-tab pattern) ────────
-
-const PILL_BASE =
-  'px-4 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 flex items-center gap-1.5'
-const PILL_ACTIVE   = 'border-navy/50 bg-navy/8 dark:bg-gold/20 dark:border-gold/60 text-navy dark:text-gold shadow-sm'
-const PILL_INACTIVE =
-  'border-border dark:border-white/10 text-text-muted hover:border-navy/30 hover:text-navy/70 dark:hover:border-gold/30 dark:hover:text-gold/70'
-
-const UNDERLINE_BASE    = 'px-4 py-3 text-xs font-medium border-b-2 transition-colors'
-const UNDERLINE_ACTIVE  = 'border-navy dark:border-gold text-lean-black dark:text-gold'
-const UNDERLINE_INACTIVE = 'border-transparent text-text-muted hover:text-text-default'
-
-// ─── Component ─────────────────────────────────────────────────
 
 export function Tabs({
   tabs,
-  value,
+  activeTab: activeTabProp,
   onChange,
-  variant   = 'pill',
-  'aria-label': ariaLabel,
-  className = '',
+  defaultTab,
   children,
+  variant   = 'underline',
+  className = '',
 }: TabsProps) {
-  const uid      = useId()
-  const tabRefs  = useRef<(HTMLButtonElement | null)[]>([])
-
-  const enabledTabs = tabs.filter((t) => !t.disabled)
-
-  // Stable id helpers — scoped to this Tabs instance via useId()
-  const tabId   = (v: string) => `${uid}-tab-${v}`
-  const panelId = (v: string) => `${uid}-panel-${v}`
-
-  // ── Keyboard navigation ──────────────────────────────────────
-  // Implements ARIA Tabs pattern: automatic activation on Arrow keys.
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
-      const currentTab   = tabs[index]
-      const curEnabledIdx = enabledTabs.findIndex((t) => t.value === currentTab.value)
-      let nextEnabledIdx  = -1
-
-      switch (e.key) {
-        case 'ArrowRight':
-        case 'ArrowDown':
-          e.preventDefault()
-          nextEnabledIdx = (curEnabledIdx + 1) % enabledTabs.length
-          break
-        case 'ArrowLeft':
-        case 'ArrowUp':
-          e.preventDefault()
-          nextEnabledIdx = (curEnabledIdx - 1 + enabledTabs.length) % enabledTabs.length
-          break
-        case 'Home':
-          e.preventDefault()
-          nextEnabledIdx = 0
-          break
-        case 'End':
-          e.preventDefault()
-          nextEnabledIdx = enabledTabs.length - 1
-          break
-        default:
-          return
-      }
-
-      const targetValue = enabledTabs[nextEnabledIdx].value
-      onChange(targetValue)
-      const targetIndex = tabs.findIndex((t) => t.value === targetValue)
-      requestAnimationFrame(() => tabRefs.current[targetIndex]?.focus())
-    },
-    [tabs, enabledTabs, onChange],
+  const [internalTab, setInternalTab] = useState<string>(
+    defaultTab ?? tabs.find((t) => !t.disabled)?.id ?? ''
   )
 
-  // ── Tab button class ─────────────────────────────────────────
-  function tabClass(tab: TabItem): string {
-    const isActive = tab.value === value
-    const focusRing =
-      variant === 'pill'
-        ? 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/50 dark:focus-visible:ring-gold/50'
-        : 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy dark:focus-visible:ring-gold rounded-sm'
-    const disabledCls = tab.disabled ? 'opacity-40 pointer-events-none' : 'cursor-pointer'
+  const isControlled = activeTabProp !== undefined
+  const activeTab    = isControlled ? activeTabProp : internalTab
 
-    if (variant === 'underline') {
-      return [UNDERLINE_BASE, focusRing, isActive ? UNDERLINE_ACTIVE : UNDERLINE_INACTIVE, disabledCls].join(' ')
-    }
-    return [PILL_BASE, focusRing, isActive ? PILL_ACTIVE : PILL_INACTIVE, disabledCls].join(' ')
+  function handleSelect(id: string) {
+    if (!isControlled) setInternalTab(id)
+    onChange?.(id)
   }
 
-  // ── Nav container class ──────────────────────────────────────
-  // underline: consumer's wrapper provides the border-b (so it spans full width incl. padding)
-  const navClass =
-    variant === 'underline'
-      ? 'flex gap-0'
-      : 'flex gap-2 flex-wrap'
+  const activeContent = tabs.find((t) => t.id === activeTab)?.content
 
-  const activeContent = tabs.find((t) => t.value === value)?.content
+  // ── Estilos por variante ──
+  const navClass = variant === 'underline'
+    ? 'flex border-b border-border gap-0'
+    : 'flex bg-surface dark:bg-gray-800 rounded-lg p-1 gap-1'
+
+  function tabClass(tab: TabItem) {
+    const base = 'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy rounded-sm'
+    const isActive = tab.id === activeTab
+
+    if (variant === 'underline') {
+      return [
+        base,
+        'px-4 py-2.5 text-sm font-medium -mb-px border-b-2',
+        isActive
+          ? 'border-navy text-navy dark:border-warm-300 dark:text-warm-100'
+          : 'border-transparent text-text-muted hover:text-lean-black dark:hover:text-gray-100',
+        tab.disabled ? 'opacity-40 pointer-events-none' : 'cursor-pointer',
+      ].join(' ')
+    }
+
+    // pill
+    return [
+      base,
+      'px-4 py-1.5 text-sm font-medium rounded-md',
+      isActive
+        ? 'bg-white dark:bg-gray-900 text-lean-black dark:text-gray-100 shadow-sm'
+        : 'text-text-muted hover:text-lean-black dark:hover:text-gray-100',
+      tab.disabled ? 'opacity-40 pointer-events-none' : 'cursor-pointer',
+    ].join(' ')
+  }
 
   return (
     <div className={className}>
-      {/* Tablist */}
-      <div role="tablist" aria-label={ariaLabel} className={navClass}>
-        {tabs.map((tab, index) => (
+      {/* Nav */}
+      <nav role="tablist" aria-label="Pestañas" className={navClass}>
+        {tabs.map((tab) => (
           <button
-            key={tab.value}
-            ref={(el) => { tabRefs.current[index] = el }}
+            key={tab.id}
             role="tab"
-            id={tabId(tab.value)}
-            aria-selected={tab.value === value}
-            aria-controls={panelId(tab.value)}
-            tabIndex={tab.value === value ? 0 : -1}
+            aria-selected={tab.id === activeTab}
+            aria-controls={`tabpanel-${tab.id}`}
+            id={`tab-${tab.id}`}
             disabled={tab.disabled}
-            onClick={() => !tab.disabled && onChange(tab.value)}
-            onKeyDown={(e) => !tab.disabled && handleKeyDown(e, index)}
+            onClick={() => !tab.disabled && handleSelect(tab.id)}
             className={tabClass(tab)}
           >
-            {tab.icon && <span aria-hidden="true">{tab.icon}</span>}
-            <span>{tab.label}</span>
-            {tab.badge !== undefined && (
-              <span
-                aria-label={`(${tab.badge})`}
-                className="inline-flex items-center justify-center h-4 min-w-[1rem] px-1
-                  rounded-full bg-navy/15 dark:bg-gold/20 text-navy dark:text-gold
-                  text-[9px] font-bold"
-              >
-                {tab.badge}
-              </span>
-            )}
+            <span className="flex items-center gap-1.5">
+              {tab.label}
+              {tab.badge !== undefined && (
+                <span className="inline-flex items-center justify-center h-4 min-w-[1rem] px-1 rounded-full bg-navy/10 text-navy text-[10px] font-semibold dark:bg-warm-600/20 dark:text-warm-100">
+                  {tab.badge}
+                </span>
+              )}
+            </span>
           </button>
         ))}
-      </div>
+      </nav>
 
-      {/* Panel — renders when content is available */}
-      {(children != null || activeContent != null) && (
-        <div
-          role="tabpanel"
-          id={panelId(value)}
-          aria-labelledby={tabId(value)}
-        >
-          {children ?? activeContent}
-        </div>
-      )}
+      {/* Panel */}
+      <div
+        role="tabpanel"
+        id={`tabpanel-${activeTab}`}
+        aria-labelledby={`tab-${activeTab}`}
+        className="mt-4"
+      >
+        {children ?? activeContent}
+      </div>
     </div>
   )
 }

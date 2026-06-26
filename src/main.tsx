@@ -1,5 +1,5 @@
-﻿﻿// ============================================================
-// GOBY — Entry point
+// ============================================================
+// LEAN AI System — Entry point
 // ============================================================
 // Orden de imports importa:
 // 1. Polyfills / CSS base primero
@@ -36,10 +36,6 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import { logBuildInfo } from '@/lib/buildInfo'
-import { initSentry } from '@/lib/sentry'
-
-// Error monitoring — no-op when VITE_SENTRY_ENABLED != 'true' or DSN is absent
-initSentry()
 
 // Verifica versión desplegada, commit SHA, env y config en consola del navegador
 logBuildInfo()

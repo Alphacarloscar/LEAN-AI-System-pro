@@ -41,14 +41,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       'h-10 w-full px-3 text-sm text-lean-black bg-white',
       'border rounded transition-all duration-150 outline-none',
       'placeholder:text-text-subtle',
-      'dark:bg-warm-800 dark:text-warm-50 dark:placeholder:text-warm-400',
+      'dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-600',
       // Estado error
       hasError
         ? 'border-danger focus:border-danger focus:ring-2 focus:ring-danger/20'
-        : 'border-border hover:border-navy/40 focus:border-gold focus:ring-2 focus:ring-gold/20',
+        : 'border-border focus:border-navy focus:ring-2 focus:ring-navy/15',
       // Disabled
       disabled
-        ? 'opacity-50 cursor-not-allowed bg-surface dark:bg-warm-700'
+        ? 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
         : '',
       // Padding con iconos
       iconLeft  ? 'pl-9'  : '',
@@ -61,7 +61,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-label font-medium text-lean-black mb-1.5 dark:text-warm-100"
+            className="block text-label font-medium text-lean-black mb-1.5 dark:text-gray-200"
           >
             {label}
           </label>
