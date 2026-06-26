@@ -37,15 +37,15 @@
 -- PRERREQUISITOS (verificar ANTES de ejecutar):
 --   1. pg_cron HABILITADO en el proyecto:
 --        Dashboard → Database → Extensions → pg_cron → Enable
---   2. Secreto Vault configurado en el proyecto:
---        a) Generar valor:
+--   2. Secreto audit_pepper en el Vault del proyecto:
+--        a) Generar valor (SQL Editor):
 --             SELECT encode(gen_random_bytes(32), 'hex');
 --        b) Guardar en Vault:
 --             Dashboard → Project Settings → Vault → New Secret
 --             Name: audit_pepper  /  Value: <hex 64 chars>
---        c) Activar como parámetro de sesión:
---             ALTER DATABASE postgres SET app.audit_pepper = '<valor>';
---        (hacer esto por separado para cada proyecto: PRE y PRO)
+--        (repetir a/b para cada proyecto: PRE y PRO por separado)
+--        NOTA: el script lee el pepper directamente del Vault en runtime.
+--              No es necesario set_config() ni ALTER DATABASE.
 --   3. Edge Function log-audit-event desplegada en el proyecto.
 --        (si aún no está: Dashboard → Edge Functions → Deploy)
 --
@@ -79,10 +79,9 @@
 -- │  b) Guardar en Vault:                                       │
 -- │       Dashboard → Project Settings → Vault → New Secret     │
 -- │       Name: audit_pepper  /  Value: <hex 64 chars>         │
--- │  c) Activar como parámetro de BD (ejecutar en SQL Editor):  │
--- │       ALTER DATABASE postgres                               │
--- │         SET app.audit_pepper = '<valor hex>';               │
--- │  (repetir a/b/c para cada proyecto: PRE y PRO por separado) │
+-- │  El script lee el pepper desde vault.decrypted_secrets      │
+-- │  en runtime — no requiere set_config() ni ALTER DATABASE.   │
+-- │  (repetir a/b para cada proyecto: PRE y PRO por separado)   │
 -- ├─────────────────────────────────────────────────────────────┤
 -- │  PRERREQUISITO 3 — Edge Function log-audit-event desplegada │
 -- │  Si falta: Dashboard → Edge Functions → Deploy              │
@@ -103,23 +102,26 @@ BEGIN
   END IF;
 END $$;
 
--- CHECK 2: audit_pepper configurado y no vacío
+-- CHECK 2: audit_pepper presente en vault.decrypted_secrets
 DO $$
 DECLARE
   v_pepper text;
 BEGIN
-  v_pepper := current_setting('app.audit_pepper', true);
+  SELECT decrypted_secret INTO v_pepper
+  FROM vault.decrypted_secrets
+  WHERE name = 'audit_pepper'
+  LIMIT 1;
+
   IF v_pepper IS NULL OR trim(v_pepper) = '' THEN
     RAISE EXCEPTION
-      E'PRERREQUISITO FALTANTE: app.audit_pepper no está configurado.\n'
+      E'PRERREQUISITO FALTANTE: secret "audit_pepper" no encontrado en el Vault.\n'
       'Pasos:\n'
       '  1. Generar valor:  SELECT encode(gen_random_bytes(32), ''hex'');\n'
       '  2. Guardar en Vault: Dashboard → Project Settings → Vault → New Secret\n'
       '     Name: audit_pepper  /  Value: <hex 64 chars>\n'
-      '  3. Activar:  ALTER DATABASE postgres SET app.audit_pepper = ''<valor>'';\n'
       'Después volver a ejecutar este script.';
   END IF;
-  RAISE NOTICE 'CHECK 2 OK: app.audit_pepper está configurado (longitud: % chars).', length(v_pepper);
+  RAISE NOTICE 'CHECK 2 OK: audit_pepper encontrado en Vault (longitud: % chars).', length(v_pepper);
 END $$;
 
 -- CHECK 3 (informativo): Edge Function log-audit-event
@@ -412,15 +414,20 @@ CREATE OR REPLACE FUNCTION public.hmac_email_hash(p_email text)
 RETURNS text
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, vault, extensions
 AS $$
 DECLARE
   v_pepper text;
 BEGIN
-  v_pepper := current_setting('app.audit_pepper', true);
+  SELECT decrypted_secret INTO v_pepper
+  FROM vault.decrypted_secrets
+  WHERE name = 'audit_pepper'
+  LIMIT 1;
+
   IF v_pepper IS NULL OR v_pepper = '' THEN
-    RETURN NULL;  -- Sin pepper configurado: no generar hash (fallo silencioso)
+    RAISE EXCEPTION 'hmac_email_hash: secret "audit_pepper" no encontrado en Vault.';
   END IF;
+
   RETURN encode(
     hmac(p_email::bytea, v_pepper::bytea, 'sha256'),
     'hex'
@@ -599,6 +606,8 @@ GRANT  EXECUTE ON FUNCTION public.purge_old_audit_logs() TO service_role;
 --
 -- Elimina entradas del archivo histórico con más de 5 años.
 -- Ejecutada mensualmente por pg_cron (día 1 a 03:00 UTC).
+
+DROP FUNCTION IF EXISTS public.purge_old_audit_archive();
 
 CREATE OR REPLACE FUNCTION public.purge_old_audit_archive()
 RETURNS integer
