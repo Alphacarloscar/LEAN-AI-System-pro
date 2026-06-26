@@ -12,6 +12,7 @@
 // ============================================================
 
 import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { reportError } from '@/lib/reportError'
 
 interface Props {
   children: ReactNode
@@ -33,8 +34,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('[ErrorBoundary] Render crash:', error)
-    console.error('[ErrorBoundary] Component stack:', info.componentStack)
+    reportError('[ErrorBoundary] Render crash', error)
+    reportError('[ErrorBoundary] Component stack', info.componentStack)
   }
 
   render() {
@@ -52,7 +53,7 @@ export class ErrorBoundary extends Component<Props, State> {
           fontFamily:   'ui-monospace, monospace',
         }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: '#C06060', marginBottom: 12 }}>
-            ❌ Error de renderizado — GOBY
+            Error de renderizado — GOBY
           </p>
           <p style={{ fontSize: 12, color: '#333', marginBottom: 16, whiteSpace: 'pre-wrap' }}>
             {msg}

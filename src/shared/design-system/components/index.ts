@@ -1,5 +1,5 @@
-// ─────────────────────────────────────────────────────────────
-// LEAN AI System — Design System Components
+﻿// ─────────────────────────────────────────────────────────────
+// GOBY — Design System Components
 // Barrel de exportación — importa desde aquí, no de archivos individuales
 //
 // Uso: import { Button, Card, Badge } from '@shared/design-system/components'
@@ -8,6 +8,9 @@
 // ── Grupo A — Primitivos ──
 export { Button }              from './Button'
 export type { ButtonProps, ButtonVariant, ButtonSize } from './Button'
+
+export { FormField }           from './FormField'
+export type { FormFieldProps } from './FormField'
 
 export { Input }               from './Input'
 export type { InputProps }     from './Input'
@@ -55,8 +58,11 @@ export type { ModalProps, ModalSize } from './Modal'
 export { Drawer }              from './Drawer'
 export type { DrawerProps, DrawerSide } from './Drawer'
 
-export { ToastContainer, useToast } from './Toast'
-export type { ToastItem, ToastVariant } from './Toast'
+export { ToastContainer, ToastProvider, useToast } from './Toast'
+export type { ToastItem, ToastVariant, ShowToastOptions } from './Toast'
+
+export { ServiceErrorToast } from './ServiceErrorToast'
+export type { ServiceErrorToastProps } from './ServiceErrorToast'
 
 export { Table }               from './Table'
 export type { TableProps, TableColumn, SortDirection } from './Table'
@@ -72,3 +78,19 @@ export type { BreadcrumbProps, BreadcrumbItem } from './Breadcrumb'
 
 export { Stepper }             from './Stepper'
 export type { StepperProps, StepItem, StepStatus } from './Stepper'
+
+export { SegmentedControl }    from './SegmentedControl'
+export type { SegmentedControlProps, SegmentedControlOption } from './SegmentedControl'
+
+// ── Grupo C — Layout / feedback ──
+export { Spinner }             from './Spinner'
+export type { SpinnerProps, SpinnerSize } from './Spinner'
+
+export { StreamingIndicator }  from './StreamingIndicator'
+export type { StreamingIndicatorProps } from './StreamingIndicator'
+
+export { ToolHeader }          from './ToolHeader'
+export type { ToolHeaderProps } from './ToolHeader'
+
+export { EmptyState }          from './EmptyState'
+export type { EmptyStateProps } from './EmptyState'

@@ -1,5 +1,5 @@
-// ============================================================
-// LEAN AI System — useDarkMode hook
+﻿// ============================================================
+// GOBY — useDarkMode hook
 // Persistido en localStorage para sobrevivir recargas.
 // Modo por defecto: LIGHT (Sprint 4 Rev2 — paleta Obsidian Amber)
 //
@@ -38,4 +38,17 @@ export function useDarkMode() {
   }, [dark])
 
   return { dark, toggle: () => setDark((v) => !v) }
+}
+
+/** Read-only: true when html.dark is active. Observes class changes reactively. */
+export function useIsDark(): boolean {
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'))
+  useEffect(() => {
+    const obs = new MutationObserver(() =>
+      setIsDark(document.documentElement.classList.contains('dark'))
+    )
+    obs.observe(document.documentElement, { attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+  return isDark
 }

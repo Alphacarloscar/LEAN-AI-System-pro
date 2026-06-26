@@ -1,4 +1,4 @@
-# L.E.A.N. AI System Enterprise
+﻿# GOBY
 
 Metodología propietaria de adopción de IA para empresas B2B medianas y grandes.
 Desarrollado por **Alpha Consulting Solutions S.L.**

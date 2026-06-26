@@ -46,7 +46,7 @@ function StepIcon({ status, number }: { status: StepStatus; number: number }) {
 
   if (status === 'active') {
     return (
-      <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-navy dark:border-warm-300 bg-white dark:bg-gray-900">
+      <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-navy dark:border-warm-300 bg-white dark:bg-warm-800">
         <span className="text-xs font-semibold text-navy dark:text-warm-100">{number}</span>
       </span>
     )
@@ -54,7 +54,7 @@ function StepIcon({ status, number }: { status: StepStatus; number: number }) {
 
   // upcoming
   return (
-    <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-border bg-white dark:bg-gray-900 dark:border-gray-700">
+    <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-border bg-white dark:bg-warm-800 dark:border-warm-600/30">
       <span className="text-xs font-medium text-text-subtle">{number}</span>
     </span>
   )
@@ -64,7 +64,7 @@ function StepIcon({ status, number }: { status: StepStatus; number: number }) {
 function Connector({ complete, vertical }: { complete: boolean; vertical?: boolean }) {
   const base = complete
     ? 'bg-navy dark:bg-warm-600'
-    : 'bg-border dark:bg-gray-700'
+    : 'bg-border dark:bg-warm-600'
 
   if (vertical) {
     return <div className={`w-0.5 h-8 mx-auto ${base}`} />
@@ -104,7 +104,7 @@ function HorizontalStepper({ steps, activeStep, onStepClick }: StepperProps) {
                     status === 'active'
                       ? 'text-navy dark:text-warm-100'
                       : status === 'complete'
-                        ? 'text-lean-black dark:text-gray-100'
+                        ? 'text-lean-black dark:text-warm-50'
                         : 'text-text-muted'
                   }`}>
                     {step.label}
@@ -164,7 +164,7 @@ function VerticalStepper({ steps, activeStep, onStepClick }: StepperProps) {
                     status === 'active'
                       ? 'text-navy dark:text-warm-100'
                       : status === 'complete'
-                        ? 'text-lean-black dark:text-gray-100'
+                        ? 'text-lean-black dark:text-warm-50'
                         : 'text-text-muted'
                   }`}>
                     {step.label}

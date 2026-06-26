@@ -15,8 +15,9 @@
 import { create }                         from 'zustand'
 import { persist }                        from 'zustand/middleware'
 import { listMyProjects, createProject }  from '@/services/projects.service'
-import { supabase }                       from '@/lib/supabase'
+import { getAuthUserCompanyId }          from '@/services/auth.service'
 import { resetAllEngagementStores } from '@/lib/resetEngagementStores'
+import { reportError }               from '@/lib/reportError'
 import type { ProjectRow }                from '@/types/database.types'
 
 interface EngagementStore {
@@ -49,7 +50,7 @@ export const useEngagementStore = create<EngagementStore>()(
         const timeout = setTimeout(() => {
           const { isLoading } = get()
           if (isLoading) {
-            console.warn('[EngagementStore] loadMyEngagements timeout — resetting isLoading')
+            reportError('[EngagementStore] loadMyEngagements timeout', new Error('isLoading safety timeout exceeded'))
             set({ isLoading: false })
           }
         }, 10_000)
@@ -72,7 +73,7 @@ export const useEngagementStore = create<EngagementStore>()(
           }
         } catch (err) {
           clearTimeout(timeout)
-          console.error('[EngagementStore] loadMyProjects:', err)
+          reportError('[EngagementStore] loadMyProjects', err)
           set({ isLoading: false })
         }
       },
@@ -84,16 +85,8 @@ export const useEngagementStore = create<EngagementStore>()(
         // no resetear ni disparar carga. Evita recargas innecesarias al
         // re-abrir el selector o al hacer click en el proyecto ya activo.
         if (id === activeEngagementId) {
-          console.debug('[ENGAGEMENT] selectEngagement — sameProject=true, action=noop', { projectId: id?.slice(0, 8) })
           return
         }
-
-        console.debug('[ENGAGEMENT] selectEngagement', {
-          previousProjectId: activeEngagementId?.slice(0, 8) ?? null,
-          nextProjectId:     id?.slice(0, 8) ?? null,
-          sameProject:       false,
-          action:            'update',
-        })
 
         // Hard Reset: limpiar stores T1-T12 ANTES de cambiar activeEngagementId.
         // Garantiza cero stale data entre proyectos.
@@ -110,15 +103,7 @@ export const useEngagementStore = create<EngagementStore>()(
           // lo usamos directamente. Si no (client_editor), lo inferimos del perfil.
           let resolvedCompanyId = companyId
           if (!resolvedCompanyId) {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (user) {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('company_id')
-                .eq('id', user.id)
-                .single()
-              resolvedCompanyId = profile?.company_id ?? undefined
-            }
+            resolvedCompanyId = await getAuthUserCompanyId()
           }
 
           const project = await createProject({ name, companyId: resolvedCompanyId })

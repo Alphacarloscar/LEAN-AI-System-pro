@@ -15,8 +15,9 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate }         from 'react-router-dom'
-import { supabase }            from '@/lib/supabase'
+import { getAuthSession, subscribeToAuthChanges, updateAuthUser } from '@services/auth.service'
 import { useAuthStore }        from './store'
+import { Spinner }             from '@shared/design-system/components'
 
 // ── Logo GOBY inline ──────────────────────────────────────────
 
@@ -30,7 +31,7 @@ function GobyLogo() {
           fill="white"
         />
       </svg>
-      <span style={{ fontFamily: 'system-ui, sans-serif', fontWeight: 700, fontSize: '1.25rem', color: '#2A2822', letterSpacing: '-0.01em' }}>
+      <span className="text-lean-black dark:text-warm-50" style={{ fontFamily: 'system-ui, sans-serif', fontWeight: 700, fontSize: '1.25rem', letterSpacing: '-0.01em' }}>
         GOBY
       </span>
     </div>
@@ -59,12 +60,12 @@ export function ResetPasswordView() {
   // además de escuchar eventos futuros.
   useEffect(() => {
     // Comprobación inmediata — cubre el caso de token ya procesado
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getAuthSession().then(({ data: { session } }) => {
       if (session) setViewState('form')
     })
 
     // Listener para eventos que llegan mientras el componente ya está montado
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = subscribeToAuthChanges((event) => {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         setViewState('form')
       }
@@ -96,7 +97,7 @@ export function ResetPasswordView() {
 
     setSubmitting(true)
     // Actualiza contraseña Y borra el metadato needs_password_reset en auth.users
-    const { error: updateError } = await supabase.auth.updateUser({
+    const { error: updateError } = await updateAuthUser({
       password,
       data: { needs_password_reset: false },
     })
@@ -116,33 +117,30 @@ export function ResetPasswordView() {
   // ── Estados de la vista ───────────────────────────────────────
 
   if (viewState === 'loading') return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F7F4EE]">
+    <div className="min-h-screen flex items-center justify-center bg-surface dark:bg-warm-950">
       <div className="text-center">
-        <svg className="animate-spin h-6 w-6 text-[#C8860A] mx-auto mb-3" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-        <p className="text-sm text-gray-500">Verificando enlace…</p>
+        <Spinner size="md" label="Verificando enlace…" className="text-gold mx-auto mb-3" />
+        <p className="text-sm text-text-muted dark:text-warm-200">Verificando enlace…</p>
       </div>
     </div>
   )
 
   if (viewState === 'error_no_session') return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F7F4EE] px-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-black/8 p-8 w-full max-w-sm text-center">
+    <div className="min-h-screen flex items-center justify-center bg-surface dark:bg-warm-950 px-4">
+      <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm border border-border dark:border-warm-600/30 p-8 w-full max-w-sm text-center">
         <GobyLogo />
         <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M10 6v4M10 14h.01M19 10a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <h2 className="text-base font-semibold text-[#2A2822] mb-2">Enlace inválido o expirado</h2>
-        <p className="text-sm text-gray-500 mb-6">
+        <h2 className="text-base font-semibold text-lean-black dark:text-warm-50 mb-2">Enlace inválido o expirado</h2>
+        <p className="text-sm text-text-muted dark:text-warm-200 mb-6">
           El enlace de recuperación ha caducado. Solicita uno nuevo desde la pantalla de acceso.
         </p>
         <button
           onClick={() => navigate('/login', { replace: true })}
-          className="w-full h-10 rounded-lg bg-[#C8860A] text-white text-sm font-medium hover:bg-[#B57609] transition-colors"
+          className="w-full h-10 rounded-lg bg-gold text-white text-sm font-medium hover:opacity-90 transition-colors"
         >
           Volver al acceso
         </button>
@@ -151,16 +149,16 @@ export function ResetPasswordView() {
   )
 
   if (viewState === 'success') return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F7F4EE] px-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-black/8 p-8 w-full max-w-sm text-center">
+    <div className="min-h-screen flex items-center justify-center bg-surface dark:bg-warm-950 px-4">
+      <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm border border-border dark:border-warm-600/30 p-8 w-full max-w-sm text-center">
         <GobyLogo />
         <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M7 10l2 2 4-4M19 10a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <h2 className="text-base font-semibold text-[#2A2822] mb-2">Contraseña actualizada</h2>
-        <p className="text-sm text-gray-500">Redirigiendo a la plataforma…</p>
+        <h2 className="text-base font-semibold text-lean-black dark:text-warm-50 mb-2">Contraseña actualizada</h2>
+        <p className="text-sm text-text-muted dark:text-warm-200">Redirigiendo a la plataforma…</p>
       </div>
     </div>
   )
@@ -168,20 +166,20 @@ export function ResetPasswordView() {
   // ── Formulario principal ──────────────────────────────────────
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F7F4EE] px-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-black/8 p-8 w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-surface dark:bg-warm-950 px-4">
+      <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm border border-border dark:border-warm-600/30 p-8 w-full max-w-sm">
         <GobyLogo />
 
-        <h1 className="text-lg font-semibold text-[#2A2822] mb-1">
+        <h1 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-1">
           Establece tu contraseña
         </h1>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-text-muted dark:text-warm-200 mb-6">
           Elige una contraseña segura para tu cuenta GOBY.
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-gray-600">Nueva contraseña</label>
+            <label className="text-xs font-medium text-text-muted dark:text-warm-200">Nueva contraseña</label>
             <input
               type="password"
               value={password}
@@ -189,14 +187,14 @@ export function ResetPasswordView() {
               placeholder="Mínimo 8 caracteres"
               autoComplete="new-password"
               required
-              className="h-10 px-3 rounded-lg border border-gray-200 text-sm text-gray-800
-                         bg-gray-50 outline-none focus:border-[#C8860A]/60 focus:bg-white
-                         transition-colors placeholder:text-gray-400"
+              className="h-10 px-3 rounded-lg border border-border dark:border-warm-600/40 text-sm text-lean-black dark:text-warm-50
+                         bg-warm-50 dark:bg-warm-700 outline-none focus:border-gold/60 dark:focus:border-gold/60 focus:bg-white dark:focus:bg-warm-700
+                         transition-colors placeholder:text-text-subtle dark:placeholder:text-warm-400"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-gray-600">Confirmar contraseña</label>
+            <label className="text-xs font-medium text-text-muted dark:text-warm-200">Confirmar contraseña</label>
             <input
               type="password"
               value={confirm}
@@ -204,21 +202,21 @@ export function ResetPasswordView() {
               placeholder="Repite la contraseña"
               autoComplete="new-password"
               required
-              className="h-10 px-3 rounded-lg border border-gray-200 text-sm text-gray-800
-                         bg-gray-50 outline-none focus:border-[#C8860A]/60 focus:bg-white
-                         transition-colors placeholder:text-gray-400"
+              className="h-10 px-3 rounded-lg border border-border dark:border-warm-600/40 text-sm text-lean-black dark:text-warm-50
+                         bg-warm-50 dark:bg-warm-700 outline-none focus:border-gold/60 dark:focus:border-gold/60 focus:bg-white dark:focus:bg-warm-700
+                         transition-colors placeholder:text-text-subtle dark:placeholder:text-warm-400"
             />
           </div>
 
           {error && (
-            <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+            <p className="text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={submitting || !password || !confirm}
-            className="h-10 rounded-lg bg-[#C8860A] text-white text-sm font-medium
-                       hover:bg-[#B57609] disabled:opacity-40 transition-colors mt-1"
+            className="h-10 rounded-lg bg-gold text-white text-sm font-medium
+                       hover:opacity-90 disabled:opacity-40 transition-colors mt-1"
           >
             {submitting ? 'Guardando…' : 'Guardar contraseña'}
           </button>

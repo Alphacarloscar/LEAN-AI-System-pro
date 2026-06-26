@@ -6,6 +6,26 @@ dist/
 .DS_Store
 .vscode/
 *.log
-
+ 
+# Logs de conversaciones (no son documentación)
+conversacion-completa-*.md
+ 
+# Configuración local de Claude Code (IDE)
+.claude/
+ 
+test-results/
+ 
 # Local database backups
 backups/
+ 
+# Documentación comercial interna — NO subir a GitHub (leads, precios, pipeline)
+Informe_Feedback_Leads_GOBY_*.md
+METODO_TRABAJO_GOBY.md
+PROMPT_GPT_Auditor.md
+PROMPT_GEMINI_Estrategia.md
+TARIFARIO_GOBY.md
+notas_transcripciones*.md
+ 
+# Propuestas comerciales a leads (datos de cliente, precios) — NO subir a GitHub
+Propuesta_*.pptx
+Propuesta_*.pdf.env.e2e

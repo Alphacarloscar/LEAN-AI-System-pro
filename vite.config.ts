@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 import path from 'path'
 import { execSync } from 'child_process'
 
@@ -21,7 +22,21 @@ export default defineConfig({
     __GIT_COMMIT__:   JSON.stringify(getGitCommit()),
     __BUILD_TIME__:   JSON.stringify(new Date().toISOString()),
   },
-  plugins: [react()],
+  plugins: [
+    react(),
+    // Upload sourcemaps to Sentry on production builds.
+    // Requires SENTRY_AUTH_TOKEN + SENTRY_ORG + SENTRY_PROJECT env vars in Vercel.
+    // No-op when SENTRY_AUTH_TOKEN is absent (local and PRE builds are safe).
+    ...(process.env.SENTRY_AUTH_TOKEN
+      ? [
+          sentryVitePlugin({
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            org:       process.env.SENTRY_ORG,
+            project:   process.env.SENTRY_PROJECT,
+          }),
+        ]
+      : []),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -34,7 +49,16 @@ export default defineConfig({
     port: 5173,
     open: true,
   },
+  esbuild: {
+    target: 'es2022',
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'es2022',
+    },
+  },
   build: {
+    target: 'es2022',
     outDir: 'dist',
     sourcemap: true,
     chunkSizeWarningLimit: 600,   // Recharts es ~540KB minificado — expected
@@ -43,7 +67,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          supabase: ['@supabase/supabase-js', '@supabase/auth-helpers-react'],
+          supabase: ['@supabase/supabase-js'],
           charts: ['recharts'],
           ui: ['lucide-react'],
           forms: ['react-hook-form', 'zod'],

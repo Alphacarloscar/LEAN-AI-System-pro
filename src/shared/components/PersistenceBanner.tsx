@@ -11,6 +11,8 @@
 // Paleta: Obsidian Amber
 // ============================================================
 
+import { Spinner } from '@shared/design-system/components'
+
 interface PersistenceBannerProps {
   /** Mensaje de error técnico de save_tool_output (para diagnóstico) */
   error:      string | null
@@ -67,13 +69,7 @@ export function PersistenceBanner({ error, isRetrying, onRetry }: PersistenceBan
       >
         {isRetrying ? (
           <>
-            <svg
-              width="11" height="11" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-              className="animate-spin"
-            >
-              <path d="M21 12a9 9 0 11-6.219-8.56" />
-            </svg>
+            <Spinner size="sm" label="Guardando…" className="text-white" />
             Guardando…
           </>
         ) : (

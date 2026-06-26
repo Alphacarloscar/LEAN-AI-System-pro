@@ -20,6 +20,7 @@ import {
   fetchCompanyProfile,
   upsertCompanyProfile,
 }                             from '@/services/company-profile.service'
+import { reportError } from '@/lib/reportError'
 
 // ── Generador de UUID — compatible con Supabase (columna tipo uuid) ──
 function genId(): string {
@@ -81,7 +82,7 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
         // Al expirar, conservamos los datos que ya había en el store.
         const timeout = setTimeout(() => {
           if (get().isLoadingData) {
-            console.warn('[CompanyProfileStore] loadProfile timeout — datos anteriores conservados')
+            reportError('[CompanyProfileStore] loadProfile timeout', new Error('isLoadingData safety timeout exceeded'))
             set({ isLoadingData: false, isLoading: get().isSaving })
           }
         }, 10_000)
@@ -107,7 +108,7 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
           }
         } catch (err) {
           clearTimeout(timeout)
-          console.error('[CompanyProfileStore] loadProfile error — datos anteriores conservados:', err)
+          reportError('[CompanyProfileStore] loadProfile', err)
           // No limpiar el perfil en caso de error: mejor mostrar datos stale que pantalla vacía
           set({ isLoadingData: false, isLoading: get().isSaving })
         }
@@ -150,7 +151,7 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
           set({ isSaving: false, isLoading: get().isLoadingData })
         } catch (err) {
           const msg = err instanceof Error ? err.message : 'Error desconocido al guardar'
-          console.error('[CompanyProfileStore] saveProfile:', err)
+          reportError('[CompanyProfileStore] saveProfile', err)
           set({ isSaving: false, isLoading: get().isLoadingData, saveError: msg, isDirty: true })
         }
       },
