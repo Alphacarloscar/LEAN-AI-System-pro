@@ -1,5 +1,5 @@
-// ============================================================
-// LEAN AI System — Escenario demo: Gestión de pilotos y PoC
+﻿// ============================================================
+// GOBY — Escenario demo: Gestión de pilotos y PoC
 //
 // Patrón: la empresa experimenta con IA activamente pero cada piloto
 // es una expedición solitaria. Nada escala a producción, los aprendizajes

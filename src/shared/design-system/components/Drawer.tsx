@@ -51,7 +51,7 @@ export function Drawer({
       <div
         className={[
           'absolute top-0 bottom-0 flex flex-col',
-          'bg-white shadow-xl dark:bg-gray-900',
+          'bg-white shadow-xl dark:bg-warm-800',
           width,
           slideClass,
         ].join(' ')}
@@ -59,12 +59,12 @@ export function Drawer({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 shadow-line-bottom shrink-0">
           {title ? (
-            <h2 className="text-base font-semibold text-lean-black dark:text-gray-100">{title}</h2>
+            <h2 className="text-base font-semibold text-lean-black dark:text-warm-50">{title}</h2>
           ) : <div />}
           <button
             onClick={onClose}
             aria-label="Cerrar panel"
-            className="p-1 rounded text-text-muted hover:text-lean-black hover:bg-gray-100 transition-colors dark:hover:bg-gray-800 dark:hover:text-gray-200"
+            className="p-1 rounded text-text-muted hover:text-lean-black hover:bg-surface transition-colors dark:hover:bg-warm-700 dark:hover:text-warm-100"
           >
             <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
@@ -79,7 +79,7 @@ export function Drawer({
 
         {/* Footer */}
         {footer && (
-          <div className="px-6 py-4 shadow-line-top bg-surface dark:bg-gray-800/50 shrink-0">
+          <div className="px-6 py-4 shadow-line-top bg-surface dark:bg-warm-700/50 shrink-0">
             {footer}
           </div>
         )}

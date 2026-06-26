@@ -58,7 +58,7 @@ function resolveTrend(delta?: number, trend?: MetricTrend, invertTrend?: boolean
 const trendColors: Record<MetricTrend, string> = {
   up:      'text-success-dark bg-success-light',
   down:    'text-danger-dark  bg-danger-light',
-  neutral: 'text-text-muted   bg-surface dark:bg-gray-800',
+  neutral: 'text-text-muted   bg-surface dark:bg-warm-700',
 }
 
 function TrendArrow({ trend }: { trend: MetricTrend }) {
@@ -86,11 +86,11 @@ function MetricHeroSkeleton({ size }: { size: MetricSize }) {
   const s = sizeMap[size]
   return (
     <div className="animate-pulse space-y-2">
-      <div className={`h-8 w-24 rounded bg-gray-200 dark:bg-gray-700 ${
+      <div className={`h-8 w-24 rounded bg-warm-200 dark:bg-warm-700 ${
         size === 'xl' ? 'h-16 w-40' : size === 'lg' ? 'h-12 w-32' : 'h-10 w-24'
       }`} />
-      <div className="h-3 w-20 rounded bg-gray-200 dark:bg-gray-700" />
-      {s.delta && <div className="h-5 w-16 rounded-full bg-gray-200 dark:bg-gray-700" />}
+      <div className="h-3 w-20 rounded bg-warm-200 dark:bg-warm-700" />
+      {s.delta && <div className="h-5 w-16 rounded-full bg-warm-200 dark:bg-warm-700" />}
     </div>
   )
 }
@@ -133,7 +133,7 @@ export function MetricHero({
             {unit}
           </span>
         )}
-        <span className={`${s.value} font-bold tracking-tight text-lean-black dark:text-gray-50 tabular-nums`}>
+        <span className={`${s.value} font-bold tracking-tight text-lean-black dark:text-warm-50 tabular-nums`}>
           {typeof value === 'number' ? value.toLocaleString('es-ES') : value}
         </span>
         {suffix && (

@@ -1,5 +1,5 @@
-// ============================================================
-// LEAN AI System — Barrel del módulo de datos demo
+﻿// ============================================================
+// GOBY — Barrel del módulo de datos demo
 //
 // Exporta todos los escenarios y utilidades para el modo demo.
 // Uso:

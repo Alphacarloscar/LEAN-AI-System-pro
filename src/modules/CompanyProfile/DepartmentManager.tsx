@@ -11,6 +11,8 @@
 import { useState }          from 'react'
 import { useDepartmentStore } from './useDepartmentStore'
 import { usePermissions }     from '@/modules/Auth'
+import { Spinner }            from '@shared/design-system/components'
+import { reportError }        from '@/lib/reportError'
 
 // ── Props ─────────────────────────────────────────────────────
 
@@ -48,7 +50,7 @@ export function DepartmentManager({ companyId }: Props) {
     } catch (err) {
       // Captura errores inesperados que escapen del store
       const msg = err instanceof Error ? err.message : 'Error inesperado al añadir departamento'
-      console.error('[DepartmentManager] handleAdd:', err)
+      reportError('[DepartmentManager] handleAdd', err)
       setLocalError(msg)
     } finally {
       // Siempre apaga el spinner, pase lo que pase
@@ -82,14 +84,8 @@ export function DepartmentManager({ companyId }: Props) {
       {/* ── Lista de departamentos ── */}
       {isLoading ? (
         <div className="flex items-center gap-2 py-1">
-          <svg
-            className="animate-spin h-3.5 w-3.5 text-text-subtle dark:text-gray-600"
-            viewBox="0 0 24 24" fill="none"
-          >
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-          <span className="text-xs text-text-subtle dark:text-gray-600 font-mono">
+          <Spinner size="sm" label="Cargando departamentos…" className="text-text-subtle dark:text-warm-400" />
+          <span className="text-xs text-text-subtle dark:text-warm-400 font-mono">
             Cargando departamentos...
           </span>
         </div>
@@ -119,7 +115,7 @@ export function DepartmentManager({ companyId }: Props) {
         </div>
 
       ) : (
-        <p className="text-xs text-text-subtle dark:text-gray-600 italic py-1">
+        <p className="text-xs text-text-subtle dark:text-warm-400 italic py-1">
           Sin departamentos configurados. Añade los departamentos de esta empresa para que estén disponibles en T2, T3, T4 y T8.
         </p>
       )}
@@ -139,9 +135,9 @@ export function DepartmentManager({ companyId }: Props) {
             disabled={isAdding}
             className={[
               'flex-1 px-4 py-2 rounded-lg text-sm transition-colors duration-150',
-              'bg-white dark:bg-gray-900',
+              'bg-white dark:bg-warm-800',
               'border border-border dark:border-white/8',
-              'text-lean-black dark:text-gray-100 placeholder-text-subtle dark:placeholder-gray-600',
+              'text-lean-black dark:text-warm-50 placeholder-text-subtle dark:placeholder-warm-400',
               'focus:outline-none focus:border-[#C8860A]/60 focus:ring-2 focus:ring-[#C8860A]/15',
               'disabled:opacity-50 disabled:cursor-not-allowed',
             ].join(' ')}
@@ -155,13 +151,11 @@ export function DepartmentManager({ companyId }: Props) {
               'shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
               inputValue.trim() && !isAdding
                 ? 'bg-[#C8860A] text-white hover:bg-[#B07709] shadow-sm'
-                : 'bg-gray-100 dark:bg-gray-800 text-text-subtle dark:text-gray-600 cursor-not-allowed',
+                : 'bg-warm-100 dark:bg-warm-700 text-text-subtle dark:text-warm-400 cursor-not-allowed',
             ].join(' ')}
           >
             {isAdding ? (
-              <svg className="animate-spin h-3 w-3" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M7 1a6 6 0 11-6 6" strokeLinecap="round" />
-              </svg>
+              <Spinner size="sm" label="Añadiendo…" />
             ) : (
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M7 2v10M2 7h10" />

@@ -153,3 +153,26 @@ export function countScoredSubdimensions(dimensions: T1DimensionState[]): number
     0
   )
 }
+
+/**
+ * Progresión cromática 0→4: silver-warm (#9A9790) → gold (#C8860A)
+ * Misma escala que el gradiente de fases LEAN en ObjetivosTab.
+ * score=null devuelve el tono neutro (silver-warm).
+ */
+export function maturityHex(score: number | null): string {
+  if (score === null) return '#9A9790'
+  const t = Math.max(0, Math.min(score, 4)) / 4
+  const r = Math.round(154 + (200 - 154) * t)
+  const g = Math.round(151 + (134 - 151) * t)
+  const b = Math.round(144 + ( 10 - 144) * t)
+  return `rgb(${r},${g},${b})`
+}
+
+/**
+ * Texto sobre el color maturityHex: negro cálido para scores bajos/medios,
+ * blanco para score alto (>= 3.5) donde el dorado es suficientemente oscuro.
+ */
+export function maturityTextOnBg(score: number | null): string {
+  if (score !== null && score >= 3.5) return '#FFFFFF'
+  return '#1C1A16'
+}

@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_FEATURE_DARK_MODE: string
   readonly VITE_FEATURE_PDF_EXPORT: string
   readonly VITE_FEATURE_AI_ENGINE: string
+  readonly VITE_PACKAGE_NAV_ENABLED?: string
 }
 
 interface ImportMeta {

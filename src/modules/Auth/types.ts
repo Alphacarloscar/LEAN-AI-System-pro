@@ -2,16 +2,17 @@
 // Auth — Tipos
 //
 // Sprint 3: integración completa con Supabase Auth.
-// Los roles se alinean con database.types.ts → UserRole.
+// UserRole: fuente única en database.types.ts (ADR-D10)
 // ============================================================
 
-export type AuthUserRole = 'superadmin' | 'consultant' | 'client_editor' | 'client_viewer'
+import type { UserRole } from '@/types/database.types'
+export type { UserRole }
 
 export interface AuthUser {
   id:    string   // Supabase auth.users UUID
   email: string
   name:  string
-  role:  AuthUserRole
+  role:  UserRole
 }
 
 export interface AuthState {
