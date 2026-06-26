@@ -57,6 +57,9 @@ const TEST_INTERVIEWEE = {
   name:       'E2E-AuditBot',
   role:       'QA Automation',
   department: 'IT',
+  // type se usa como referencia semántica del perfil esperado; el selector
+  // en fillAndSubmitNewIntervieweeModal usa /IT/i directamente por ser más robusto.
+  // IMPORTANTE: el nombre debe coincidir exactamente con TEST_INTERVIEWEE en global-teardown.ts
   type:       'it' as const,
 } as const
 
@@ -156,14 +159,11 @@ test.describe('Audit Trail — integración E2E', () => {
     await goToT1AndWait(page)
   })
 
-  // ── afterEach: cleanup del entrevistado de prueba ──────────────────────
-  // Limpia las filas de t1_dimension_scores del entrevistado E2E-AuditBot
-  // para que los tests sean idempotentes y no acumulen basura en el seed.
-  // Lo hacemos via localStorage → no hay acceso directo a Supabase aquí.
-  // En entornos con acceso SQL (psql local), el seed.sql se puede re-ejecutar.
-  // La limpieza UI es suficiente para que las aserciones del modal no colisionen.
+  // ── afterEach: reset del store entre tests ────────────────────────────
+  // Navega fuera de T1 para que Zustand descarte el estado cargado.
+  // La limpieza real de filas E2E-AuditBot en t1_dimension_scores
+  // ocurre en global-teardown.ts al finalizar toda la suite.
   test.afterEach(async ({ page }) => {
-    // Navegar fuera de T1 para resetear el store antes del próximo test
     await page.goto('/').catch(() => { /* ignorar errores de navegación en afterEach */ })
   })
 

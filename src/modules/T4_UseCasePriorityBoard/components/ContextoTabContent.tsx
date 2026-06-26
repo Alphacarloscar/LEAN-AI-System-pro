@@ -4,6 +4,7 @@
 
 import { Check } from 'lucide-react'
 import { Badge, Card } from '@shared/design-system/components'
+import { AI_CATEGORY_LABELS } from '../constants'
 import type { UseCase } from '../types'
 import type { Stakeholder } from '@/modules/T2_StakeholderMatrix/types'
 
@@ -30,7 +31,7 @@ export function ContextoTabContent({ useCase, catHex, autoT1Context, autoT2Conte
                 <p className="text-[10px] font-mono text-text-subtle mb-1.5">Dimensiones relevantes</p>
                 <div className="flex flex-wrap gap-1.5">
                   {useCase.t1Context.relevantDimensions.map((d) => (
-                    <Badge key={d} shape="pill" size="xs" style={{ backgroundColor: 'rgba(42,40,34,0.08)', color: '#2A2822' }}>{d}</Badge>
+                    <Badge key={d} shape="pill" size="xs" className="bg-warm-100 dark:bg-warm-700 text-warm-700 dark:text-warm-200 border border-warm-200 dark:border-warm-600/40">{d}</Badge>
                   ))}
                 </div>
               </div>
@@ -51,7 +52,7 @@ export function ContextoTabContent({ useCase, catHex, autoT1Context, autoT2Conte
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-success-dark flex items-center gap-1"><Check size={12} strokeWidth={2} /> Madurez IA suficiente en todas las dimensiones</p>
+              <p className="text-xs text-success-dark flex items-center gap-1"><Check size={12} strokeWidth={1.5} /> Madurez IA suficiente en todas las dimensiones</p>
             )}
           </>
         ) : (
@@ -70,7 +71,7 @@ export function ContextoTabContent({ useCase, catHex, autoT1Context, autoT2Conte
             {useCase.t2Context.championArchetype && (
               <div>
                 <p className="text-[10px] font-mono text-text-subtle mb-0.5">Champion</p>
-                <p className="text-xs font-medium text-success-dark flex items-center gap-1"><Check size={12} strokeWidth={2} /> {useCase.t2Context.championArchetype}</p>
+                <p className="text-xs font-medium text-success-dark flex items-center gap-1"><Check size={12} strokeWidth={1.5} /> {useCase.t2Context.championArchetype}</p>
               </div>
             )}
             {useCase.t2Context.blockerArchetypes?.length ? (
@@ -90,7 +91,7 @@ export function ContextoTabContent({ useCase, catHex, autoT1Context, autoT2Conte
             {autoT2Context.champions.length > 0 && (
               <div>
                 <p className="text-[10px] font-mono text-success-dark mb-1">Champions potenciales</p>
-                {autoT2Context.champions.map((s) => <p key={s.id} className="text-xs font-medium text-success-dark flex items-center gap-1"><Check size={12} strokeWidth={2} /> {s.name} · {s.role}</p>)}
+                {autoT2Context.champions.map((s) => <p key={s.id} className="text-xs font-medium text-success-dark flex items-center gap-1"><Check size={12} strokeWidth={1.5} /> {s.name} · {s.role}</p>)}
               </div>
             )}
             {autoT2Context.blockers.length > 0 && (
@@ -114,7 +115,7 @@ export function ContextoTabContent({ useCase, catHex, autoT1Context, autoT2Conte
           <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: catHex }} />
           <p className="text-xs font-semibold text-lean-black dark:text-warm-100">Categoría IA</p>
         </div>
-        <p className="text-sm font-semibold mb-1" style={{ color: catHex }}>{useCase.aiCategory}</p>
+        <p className="text-sm font-semibold mb-1" style={{ color: catHex }}>{AI_CATEGORY_LABELS[useCase.aiCategory] ?? useCase.aiCategory}</p>
         {useCase.importedFromT3 && (
           <div className="mt-2">
             <p className="text-[10px] font-mono text-text-subtle mb-0.5">Proceso origen (T3)</p>

@@ -19,7 +19,24 @@ import {
 } from '@react-pdf/renderer'
 import type { UseCase }            from '@/modules/T4_UseCasePriorityBoard/types'
 import type { T5DomainAssessment } from '@/modules/T5_AITaxonomyCanvas/types'
-import { s, RISK_LABEL, ORANGE, GRAY_400, GREEN } from './components/policyPdfStyles'
+import { s, RISK_LABEL } from './components/policyPdfStyles'
+
+// Paleta PDF centralizada — html2canvas/react-pdf no resuelve CSS vars.
+// Mantener sincronizados con tailwind.config.ts + index.css tokens.
+const PDF_PALETTE = {
+  gold:         '#C8860A',
+  goldText:     '#9B6408',
+  ink:          '#1C1A16',
+  inkMuted:     '#6B6864',
+  inkSubtle:    '#9A9790',
+  surface:      '#F7F4EE',
+  surfaceWhite: '#FFFFFF',
+  border:       '#D4D0C8',
+  successDark:  '#5FAF8A',
+  warningDark:  '#D4A85C',
+  dangerDark:   '#C06060',
+  infoDark:     '#6A90C0',
+} as const
 
 export interface PolicyPDFData {
   companyName:      string
@@ -99,7 +116,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
               {gp?.declaracion_mandate ?? `Todo sistema de IA operativo en ${companyName} debe ser identificado, evaluado en términos de riesgo regulatorio y documentado en el catálogo corporativo de IA antes de su despliegue en producción.`}
             </Text>
             {hasGenerated && (
-              <Text style={{ fontSize: 7, color: ORANGE, marginTop: 4 }}>
+              <Text style={{ fontSize: 7, color: PDF_PALETTE.gold, marginTop: 4 }}>
                 ✦ Contenido generado con IA · Sector: {gp?.sector}
               </Text>
             )}
@@ -156,7 +173,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
               pipeline de implementación de {companyName} a la fecha de emisión de esta política.
             </Text>
             {approvedCases.length === 0 ? (
-              <Text style={{ ...s.paragraph, fontStyle: 'italic', color: GRAY_400 }}>
+              <Text style={{ ...s.paragraph, fontStyle: 'italic', color: PDF_PALETTE.inkSubtle }}>
                 Sin casos de uso aprobados. Completa el proceso Go/No-Go en T4.
               </Text>
             ) : (
@@ -179,7 +196,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
                           <Text style={{ color: rCfg.color }}>{rCfg.label}</Text>
                         </View>
                       </View>
-                      <Text style={[s.tdCell, s.col4, { color: GREEN, fontFamily: 'Helvetica-Bold', fontSize: 7.5 }]}>
+                      <Text style={[s.tdCell, s.col4, { color: PDF_PALETTE.successDark, fontFamily: 'Helvetica-Bold', fontSize: 7.5 }]}>
                         {statusLabel(uc.status)}
                       </Text>
                     </View>
@@ -280,7 +297,7 @@ export function PolicyDownloadButton({ data }: PolicyDownloadButtonProps) {
             disabled={loading || !!error}
             className={[
               'flex items-center gap-2 px-4 py-2 rounded-xl text-white text-xs font-semibold transition-colors',
-              error   ? 'bg-red-600 cursor-not-allowed opacity-70'
+              error   ? 'bg-danger-dark cursor-not-allowed opacity-70'
               : loading ? 'bg-navy/50 cursor-wait'
               : 'bg-navy-metallic hover:bg-navy-metallic-hover shadow-sm',
             ].join(' ')}

@@ -1,7 +1,8 @@
 import { Badge, type BadgeVariant } from '@shared/design-system/components'
 import { AI_CATEGORY_CONFIG, PHASE_CONFIG } from '../constants'
 import type { AICategoryCode, OrgReadinessLevel, ProcessPhase } from '../types'
-import { CAT_HEX } from './T3Badges.constants'
+import { useIsDark } from '@/shared/hooks/useDarkMode'
+import { DOMAIN_ICONS, DOMAIN_LABELS, type DomainIconCode } from '@shared/design-system/charts/domainIcons'
 
 // ── Mapeos de dominio T3 → variant de Badge ───────────────────
 
@@ -19,21 +20,33 @@ const PHASE_VARIANT: Record<ProcessPhase, BadgeVariant> = {
   escalado:        'default',  // inline style below — misma razón que T2 decisor
 }
 
-// escalado: bg-navy/10 text-navy — requiere inline style (background-image conflict en variant navy).
-const ESCALADO_STYLE: React.CSSProperties = { backgroundColor: 'rgba(42,40,34,0.1)', color: '#2A2822' }
+const ESCALADO_STYLE_LIGHT: React.CSSProperties = { backgroundColor: 'rgba(42,40,34,0.1)',    color: '#2A2822' }
+const ESCALADO_STYLE_DARK:  React.CSSProperties = { backgroundColor: 'rgba(240,237,232,0.12)', color: '#C4C0B8' }
 
 // ─────────────────────────────────────────────────────────────
 
 export function CategoryBadge({ category }: { category: AICategoryCode }) {
-  const hex = CAT_HEX[category]
+  const icon  = DOMAIN_ICONS[category as DomainIconCode]
+  const label = DOMAIN_LABELS[category as DomainIconCode] ?? AI_CATEGORY_CONFIG[category]?.label ?? category
   return (
-    <Badge
-      shape="pill"
-      size="xs"
-      style={{ backgroundColor: `${hex}22`, color: hex }}
-    >
-      {AI_CATEGORY_CONFIG[category].label}
+    <Badge shape="pill" size="xs" className="gap-1 bg-warm-100 dark:bg-warm-700 text-warm-700 dark:text-warm-200 border-0">
+      <span className="text-warm-600 dark:text-warm-300 shrink-0">{icon}</span>
+      {label}
     </Badge>
+  )
+}
+
+export function CategoryIcon({ category }: { category: AICategoryCode }) {
+  const icon  = DOMAIN_ICONS[category as DomainIconCode]
+  const label = DOMAIN_LABELS[category as DomainIconCode] ?? AI_CATEGORY_CONFIG[category]?.label ?? category
+  return (
+    <span
+      title={label}
+      className="inline-flex items-center justify-center w-5 h-5 rounded-full
+        bg-warm-100 dark:bg-warm-700 text-warm-600 dark:text-warm-300"
+    >
+      {icon}
+    </span>
   )
 }
 
@@ -47,13 +60,14 @@ export function ReadinessBadge({ level }: { level: OrgReadinessLevel }) {
 }
 
 export function PhaseBadge({ phase }: { phase: ProcessPhase }) {
+  const isDark = useIsDark()
   const cfg = PHASE_CONFIG[phase]
   return (
     <Badge
       variant={PHASE_VARIANT[phase]}
       shape="pill"
       size="xs"
-      style={phase === 'escalado' ? ESCALADO_STYLE : undefined}
+      style={phase === 'escalado' ? (isDark ? ESCALADO_STYLE_DARK : ESCALADO_STYLE_LIGHT) : undefined}
     >
       {cfg.label}
     </Badge>

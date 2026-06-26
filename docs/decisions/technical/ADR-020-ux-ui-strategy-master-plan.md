@@ -1,6 +1,6 @@
 # ADR-020: Plan Maestro de Estrategia UX/UI y Sistema de Diseño
 
-**Status:** PROPOSED
+**Status:** IN PROGRESS
 **Date:** 2026-06-16
 **Proposed by:** Carlos Sánchez - Alpha Consulting
 **Approved by:** —
@@ -30,7 +30,7 @@ Implementar un plan de mejora UX/UI en 4 fases:
 | 1 | Design System Charter: escala space, tokens CSS vars, densidad | ADR-021 | ACCEPTED |
 | 2 | AppLayout piloto: sidebar, header, responsive grid | FDR-002 (reservado) | PENDING |
 | 3 | Estándar de formularios: RHF + Zod + FormField unificado | ADR-022 | ACCEPTED |
-| 4 | Accesibilidad transversal: WCAG 2.1 AA en charts, nav, modals | — | EN CURSO |
+| 4 | Accesibilidad transversal + Visual System V2: warm-only palette, ESLint enforcement | ADR-023 | IN PROGRESS |
 
 ---
 
@@ -83,3 +83,14 @@ Origen del backlog: `docs/sessions/2026-06-16_ux-ui-prompts-ia-code.md`.
 | 9 — FDR-003 T4 estados vs tabs | `refactor/ux-ui-adr020-consolidation` | ✅ Commiteado | — |
 
 **Resumen:** 9 de 9 prompts ejecutados y commiteados. ✅ Sesión completa.
+
+---
+
+## Sesión 2026-06-22/23 — Visual System V2 (ADR-023)
+
+| Fecha | Acción | Rama | Notas |
+|-------|--------|------|-------|
+| 2026-06-22 | Fase 1 Visual: chartTokens.ts creado — fuente única de HEX para Recharts | `refactor/ux-ui-adr020-consolidation` | 9 paletas + 4 funciones exportadas. T10 refactorizado. |
+| 2026-06-22 | Fase 2 Visual: auditoría T1-T12 completa — 340+ gray-*/rainbow eliminados en 38 archivos | `refactor/ux-ui-adr020-consolidation` | ADR-023 creado. |
+| 2026-06-22 | Fase 3 Visual: ESLint enforcement activo — no-restricted-syntax para clases prohibidas | `refactor/ux-ui-adr020-consolidation` | eslint.config.js actualizado. Override para *PDF*.tsx y chartTokens.ts. |
+| 2026-06-23 | Refactor post-ADR-021: domainIcons.tsx creado, T10 layout max-w-7xl, tipografía normalizada | `refactor/ux-ui-adr020-consolidation` | DashboardHeader.tsx eliminado (inlineado en T10View — ADR-013). |

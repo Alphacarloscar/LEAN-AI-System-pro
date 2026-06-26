@@ -23,7 +23,7 @@ import {
 import { logTrace }     from '@/lib/loadTrace'
 import { reportError }  from '@/lib/reportError'
 
-const STALE_MS = 5 * 60_000
+const STALE_MS = 60_000
 import type {
   T1IntervieweeContext,
   T1DimensionState,

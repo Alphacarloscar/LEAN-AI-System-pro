@@ -79,16 +79,36 @@ export function HeroOpportunityMatrix({
           const hex      = CAT_HEX[p.aiCategory]
           const catLabel = AI_CATEGORY_CONFIG[p.aiCategory]?.label ?? p.aiCategory
 
+          const isHover = hovered?.name === p.name
+
           return (
             <g key={p.id} style={{ cursor: 'pointer' }}
               onClick={() => onSelect(p.id)}
               onMouseEnter={() => setHovered({ leftPct: (dx / S) * 100, topPct: (dy / S) * 100, name: p.name, hex, catLabel, opportunity: score, readiness: ready })}
               onMouseLeave={() => setHovered(null)}
             >
-              <circle cx={dx} cy={dy} r={r} fill={hex}
-                opacity={isActive ? 1 : 0.82}
-                stroke={isActive ? '#fff' : 'rgba(255,255,255,0.6)'}
-                strokeWidth={isActive ? 2 : 1} />
+              {/* Halo — estilo T2 base */}
+              {(isActive || isHover) && (
+                <>
+                  <circle cx={dx} cy={dy} r={r + 14} fill={hex} opacity={0.06} />
+                  <circle cx={dx} cy={dy} r={r + 10} fill={hex} opacity={0.10} />
+                  <circle cx={dx} cy={dy} r={r + 6}  fill={hex} opacity={0.16} />
+                </>
+              )}
+              {/* Cuerpo — estilo T2 base */}
+              <circle
+                cx={dx} cy={dy} r={r}
+                fill={hex}
+                fillOpacity="0.85"
+                stroke={isActive ? 'rgba(255,255,255,0.85)' : 'var(--color-warm-300)'}
+                strokeWidth="1.5"
+              />
+              {/* Inicial categoría — y+4, fontSize 9, fontWeight 700 */}
+              <text x={dx} y={dy + 4} textAnchor="middle" fontSize={9} fontWeight="700"
+                fill="#FFFFFF" fontFamily="Inter, sans-serif"
+                style={{ pointerEvents: 'none', userSelect: 'none' }}>
+                {catLabel.trim().charAt(0).toUpperCase()}
+              </text>
             </g>
           )
         })}
@@ -101,7 +121,7 @@ export function HeroOpportunityMatrix({
             top:       `${hovered.topPct}%`,
             transform: `translate(${hovered.leftPct > 65 ? 'calc(-100% - 10px)' : '10px'}, -50%)`,
           }}>
-          <p className="font-semibold text-lean-black dark:text-gray-100 mb-1 leading-tight truncate max-w-[160px]">{hovered.name}</p>
+          <p className="font-semibold text-lean-black dark:text-warm-100 mb-1 leading-tight truncate max-w-[160px]">{hovered.name}</p>
           <div className="flex items-center gap-1.5 mb-1.5">
             <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: hovered.hex }} />
             <span className="text-text-muted">{hovered.catLabel}</span>
@@ -109,11 +129,11 @@ export function HeroOpportunityMatrix({
           <div className="space-y-0.5 text-text-muted">
             <div className="flex justify-between gap-4">
               <span>Oportunidad</span>
-              <span className="font-medium text-lean-black dark:text-gray-200">{hovered.opportunity}/4</span>
+              <span className="font-medium text-lean-black dark:text-warm-200">{hovered.opportunity}/4</span>
             </div>
             <div className="flex justify-between gap-4">
               <span>Readiness</span>
-              <span className="font-medium text-lean-black dark:text-gray-200">{hovered.readiness}/4</span>
+              <span className="font-medium text-lean-black dark:text-warm-200">{hovered.readiness}/4</span>
             </div>
           </div>
         </div>

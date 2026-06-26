@@ -145,7 +145,7 @@ export function T11View({ onBack }: T11ViewProps) {
             </div>
             <div className="space-y-2">
               <MaturityPill tier={maturityTier} avg={maturityAvg} />
-              <p className="text-[11px] text-text-subtle dark:text-warm-300 max-w-xs">{matCfg.description}</p>
+              <p className="text-[11px] text-text-muted dark:text-warm-100 max-w-xs">{matCfg.description}</p>
               <AdaptiveModeBadge mode={adaptiveMode} />
             </div>
           </div>
@@ -169,7 +169,7 @@ export function T11View({ onBack }: T11ViewProps) {
 
         {/* How it works */}
         <Card variant="flat" padding="none" className="rounded-xl border border-border dark:border-warm-500 bg-white dark:bg-warm-700 px-6 py-5">
-          <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle dark:text-warm-300 mb-3">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted dark:text-warm-300 mb-3">
             ¿Cómo funciona este modelo?
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

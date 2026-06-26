@@ -41,7 +41,7 @@ export function BackToDashboard({
     <button
       type="button"
       onClick={onClick ?? (() => navigate('/'))}
-      className={`flex items-center gap-1.5 text-xs font-medium text-text-muted hover:text-lean-black dark:text-gray-400 dark:hover:text-gray-200 transition-colors ${className}`.trim()}
+      className={`flex items-center gap-1.5 text-xs font-medium text-text-muted hover:text-lean-black dark:text-warm-300 dark:hover:text-warm-100 transition-colors ${className}`.trim()}
     >
       <svg
         className="h-3.5 w-3.5"

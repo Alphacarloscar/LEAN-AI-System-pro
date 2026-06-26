@@ -2,7 +2,7 @@
 // T4 — Use Case Priority Board
 // ============================================================
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useNavigate }            from 'react-router-dom'
 import { useT4Store }             from './store'
 import { useT1Store }             from '@/modules/T1_MaturityRadar/store'
@@ -10,7 +10,9 @@ import { useT2Store }             from '@/modules/T2_StakeholderMatrix/store'
 import { useCompanyProfileStore } from '@/modules/CompanyProfile/store'
 import { useEngagementStore }     from '@/modules/Engagement/store'
 import { useAuthStore }           from '@/modules/Auth'
-import { Button, Spinner, ToolHeader }        from '@shared/design-system/components'
+import { useUnsavedChanges }      from '@/shared/hooks/useUnsavedChanges'
+import { Button, Spinner, ToolHeader } from '@shared/design-system/components'
+import { UnsavedChangesModal }    from '@/shared/components/UnsavedChangesModal'
 import { RecommendationPanel }    from '@/components/RecommendationPanel'
 import { buildT4RecommendationContext } from './t4ContextBuilder'
 import { ImportFromT3Modal }      from './components/ImportFromT3Modal'
@@ -43,8 +45,42 @@ export function T4View({ onBack }: T4ViewProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])
 
-  const [activeId, setActiveId]     = useState<string | null>(null)
-  const [showImport, setShowImport] = useState(false)
+  const [activeId, setActiveId]         = useState<string | null>(null)
+  const [showImport, setShowImport]     = useState(false)
+  const [pendingRoadmapId, setPendingRoadmapId] = useState<string | null>(null)
+  const [isDetailEditing, setIsDetailEditing]   = useState(false)
+
+  // Pending actions intercepted while editing is open
+  type PendingAction = 'back' | 'import'
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
+
+  const isDirtyGlobal = useUnsavedChanges((s) => s.isDirty)
+
+  const handleEditingChange = useCallback((editing: boolean) => {
+    setIsDetailEditing(editing)
+  }, [])
+
+  function requestAction(action: PendingAction) {
+    if (isDetailEditing) {
+      setPendingAction(action)
+    } else {
+      executeAction(action)
+    }
+  }
+
+  function executeAction(action: PendingAction) {
+    if (action === 'back') {
+      onBack ? onBack() : navigate('/')
+    } else if (action === 'import') {
+      setShowImport(true)
+    }
+  }
+
+  function handleActionDiscard() {
+    const action = pendingAction
+    setPendingAction(null)
+    if (action) executeAction(action)
+  }
 
   const activeUseCase = useMemo(
     () => useCases.find((uc) => uc.id === activeId) ?? null,
@@ -90,6 +126,18 @@ export function T4View({ onBack }: T4ViewProps) {
 
   function handleSelectUseCase(id: string) {
     setActiveId((prev) => (prev === id ? null : id))
+  }
+
+  function handleGuardedSelectUseCase(id: string) {
+    if (isDirtyGlobal && activeId && id !== activeId) {
+      setPendingRoadmapId(id)
+    } else {
+      handleSelectUseCase(id)
+    }
+  }
+
+  function handleRoadmapSelect(id: string) {
+    handleGuardedSelectUseCase(id)
   }
 
   // Guard 1: primera carga sin datos previos → spinner bloqueante
@@ -138,24 +186,13 @@ export function T4View({ onBack }: T4ViewProps) {
       {/* HEADER */}
       <ToolHeader
         sticky
-        onBack={() => onBack ? onBack() : navigate('/')}
+        onBack={() => requestAction('back')}
         backLabel="Volver al dashboard"
         toolCode="T4"
         title="Use Case Priority Board"
-        subtitle={
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">{companyName}</span>
-            {isLoading && isLoaded && (
-              <span className="flex items-center gap-1 text-[10px] text-text-subtle">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse inline-block" />
-                Actualizando…
-              </span>
-            )}
-          </div>
-        }
         phaseMiniMap={<PhaseMiniMap phaseId="evaluate" toolCode="T4" />}
         cta={
-          <Button variant="primary" size="sm" onClick={() => setShowImport(true)}>
+          <Button variant="primary" size="sm" onClick={() => requestAction('import')}>
             ↓ Importar desde T3
           </Button>
         }
@@ -174,7 +211,7 @@ export function T4View({ onBack }: T4ViewProps) {
           <QuarterlyRoadmap
             useCases={useCases}
             activeId={activeId}
-            onSelect={handleSelectUseCase}
+            onSelect={handleRoadmapSelect}
           />
         </div>
 
@@ -196,6 +233,9 @@ export function T4View({ onBack }: T4ViewProps) {
             useCase={activeUseCase}
             allUseCases={useCases}
             onSelect={handleSelectUseCase}
+            pendingNavigateTo={pendingRoadmapId}
+            onClearPendingNavigate={() => setPendingRoadmapId(null)}
+            onEditingChange={handleEditingChange}
             autoT1Context={autoT1Context}
             autoT2Context={autoT2Context}
           />
@@ -216,6 +256,18 @@ export function T4View({ onBack }: T4ViewProps) {
       )}
 
       {showImport && <ImportFromT3Modal onClose={() => setShowImport(false)} />}
+
+      <UnsavedChangesModal
+        open={pendingAction !== null}
+        onCancel={() => setPendingAction(null)}
+        onDiscard={handleActionDiscard}
+        message={
+          pendingAction === 'import'
+            ? 'Si importas datos ahora, los cambios en curso se perderán.'
+            : 'Si navegas ahora, los cambios en curso se perderán.'
+        }
+      />
     </div>
   )
 }
+

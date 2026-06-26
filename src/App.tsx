@@ -33,7 +33,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isInitializing, needsPasswordUpdate } = useAuthStore()
   console.debug('[ROUTE] ProtectedRoute render — isInitializing:', isInitializing, 'isAuthenticated:', isAuthenticated)
   if (isInitializing) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-surface dark:bg-warm-950">
       <Spinner size="lg" label="Inicializando aplicación…" className="text-navy" />
     </div>
   )

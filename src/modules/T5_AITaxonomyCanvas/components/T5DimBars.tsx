@@ -21,7 +21,7 @@ export function T5DimBars({ scores }: { scores: T5DomainScores }) {
               <p className="text-[10px] font-semibold text-lean-black dark:text-warm-200 leading-tight">
                 {cfg.label}
               </p>
-              <p className="text-[9px] text-text-subtle mt-0.5">
+              <p className="text-[10px] text-text-muted mt-0.5">
                 {cfg.scaleLabels[lblIdx]}{isNeg ? ' ↑ riesgo' : ''}
               </p>
             </div>

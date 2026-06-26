@@ -16,11 +16,11 @@ import { PersistenceBanner } from '@/shared/components/PersistenceBanner'
 import { Badge, StreamingIndicator } from '@shared/design-system/components'
 
 const RISK_ICON_SM = {
-  ban:              <Ban           size={12} strokeWidth={2} />,
-  'alert-circle':   <AlertCircle  size={12} strokeWidth={2} />,
-  'alert-triangle': <AlertTriangle size={12} strokeWidth={2} />,
-  'check-circle':   <CheckCircle  size={12} strokeWidth={2} />,
-  circle:           <Circle       size={12} strokeWidth={2} />,
+  ban:              <Ban           size={12} strokeWidth={1.5} />,
+  'alert-circle':   <AlertCircle  size={12} strokeWidth={1.5} />,
+  'alert-triangle': <AlertTriangle size={12} strokeWidth={1.5} />,
+  'check-circle':   <CheckCircle  size={12} strokeWidth={1.5} />,
+  circle:           <Circle       size={12} strokeWidth={1.5} />,
 } as const
 
 interface PolicyTabProps {
@@ -131,7 +131,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
           )}
           {genError && (
             <p className="text-[11px] text-danger flex items-center gap-1">
-              <AlertTriangle size={12} strokeWidth={2} className="shrink-0" /> {genError}
+              <AlertTriangle size={12} strokeWidth={1.5} className="shrink-0" /> {genError}
               <button onClick={clearError} className="underline hover:no-underline ml-1">Cerrar</button>
             </p>
           )}
@@ -151,7 +151,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
               className={[
                 'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150',
                 isPending
-                  ? 'border-border text-text-subtle bg-gray-50 dark:bg-gray-800 cursor-not-allowed'
+                  ? 'border-border text-text-subtle bg-warm-50 dark:bg-warm-800 cursor-not-allowed'
                   : 'border-warning dark:border-warning-dark text-warning-dark dark:text-warning bg-warning-light dark:bg-warning/10 hover:bg-warning/20 dark:hover:bg-warning/20',
               ].join(' ')}
             >
@@ -173,7 +173,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
       {/* Documento */}
       <div
         id="lean-policy-document"
-        className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden print:border-none print:shadow-none"
+        className="rounded-xl border border-border bg-white dark:bg-warm-900 overflow-hidden print:border-none print:shadow-none"
       >
         {/* Portada */}
         <div className="px-10 py-8 border-b border-border dark:border-white/6 bg-navy text-white print:bg-navy">
@@ -207,7 +207,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
             </p>
             {!generatedPolicy && objetivo && (
               <p className="text-sm text-text-muted leading-relaxed mt-3">
-                El objetivo estratégico principal de adopción IA de {companyName} es <strong className="text-lean-black dark:text-gray-200">{objetivo.toLowerCase()}</strong>
+                El objetivo estratégico principal de adopción IA de {companyName} es <strong className="text-lean-black dark:text-warm-200">{objetivo.toLowerCase()}</strong>
                 {horizonte ? `, con un horizonte de generación de valor esperado de ${horizonte.toLowerCase()}` : ''}.
                 Esta política enmarca y habilita dicha transformación dentro de los requisitos regulatorios aplicables.
               </p>
@@ -230,7 +230,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
               )}
             </p>
             {(ecosistema || restricciones) && (
-              <div className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/50 px-4 py-3 mb-3 flex flex-col gap-2">
+              <div className="rounded-xl border border-border dark:border-white/6 bg-warm-50 dark:bg-warm-800/50 px-4 py-3 mb-3 flex flex-col gap-2">
                 {ecosistema && (
                   <div>
                     <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Ecosistema tecnológico base</p>
@@ -246,7 +246,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
               </div>
             )}
             {activeDomains.length > 0 && (
-              <div className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/50 px-4 py-3">
+              <div className="rounded-xl border border-border dark:border-white/6 bg-warm-50 dark:bg-warm-800/50 px-4 py-3">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
                   Dominios IA activos en el scope actual
                 </p>
@@ -256,7 +256,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
                     return (
                       <li key={code} className="text-xs text-text-muted flex items-center gap-2">
                         <span className="text-navy">▶</span>
-                        <strong className="text-lean-black dark:text-gray-200">
+                        <strong className="text-lean-black dark:text-warm-200">
                           {code.replace(/_/g, ' ').replace('agéntica', 'Agéntica')}
                         </strong>
                         {' '}— Prioridad {d.priorityScore}/100
@@ -275,8 +275,8 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {principios.map(({ title, desc }) => (
-                <div key={title} className="rounded-xl border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/30 px-4 py-3">
-                  <p className="text-xs font-bold text-lean-black dark:text-gray-100 mb-1">{title}</p>
+                <div key={title} className="rounded-xl border border-border dark:border-white/6 bg-warm-50 dark:bg-warm-800/30 px-4 py-3">
+                  <p className="text-xs font-bold text-lean-black dark:text-warm-100 mb-1">{title}</p>
                   <p className="text-[11px] text-text-muted leading-relaxed">{desc}</p>
                 </div>
               ))}
@@ -324,7 +324,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
                       return (
                         <tr key={uc.id} className="border-b border-border/40 dark:border-white/4">
                           <td className="py-2 pr-4">
-                            <p className="text-xs font-medium text-lean-black dark:text-gray-200">{uc.name}</p>
+                            <p className="text-xs font-medium text-lean-black dark:text-warm-200">{uc.name}</p>
                           </td>
                           <td className="py-2 px-3 text-xs text-text-muted">{uc.department}</td>
                           <td className="py-2 px-3">
@@ -334,8 +334,8 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
                           </td>
                           <td className="py-2 pl-3 text-[10px] text-success-dark font-semibold">
                             {uc.status === 'go'
-                              ? <span className="inline-flex items-center gap-1"><Check size={10} strokeWidth={2} /> Aprobado</span>
-                              : <span className="inline-flex items-center gap-1"><RefreshCw size={10} strokeWidth={2} /> En piloto</span>
+                              ? <span className="inline-flex items-center gap-1"><Check size={10} strokeWidth={1.5} /> Aprobado</span>
+                              : <span className="inline-flex items-center gap-1"><RefreshCw size={10} strokeWidth={1.5} /> En piloto</span>
                             }
                           </td>
                         </tr>
@@ -359,7 +359,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
               </p>
               <div className="flex flex-col gap-3">
                 {highRiskCases.map((uc) => (
-                  <div key={uc.id} className="rounded-xl border border-border bg-surface dark:bg-gray-800/40 border-l-2 border-l-warning px-4 py-3">
+                  <div key={uc.id} className="rounded-xl border border-border bg-surface dark:bg-warm-800/40 border-l-2 border-l-warning px-4 py-3">
                     <p className="text-xs font-bold text-warning-dark dark:text-warning mb-1">{uc.name} — {uc.department}</p>
                     <ul className="flex flex-col gap-1 mt-2">
                       {['Evaluación de conformidad documentada', 'Sistema de gestión de riesgos operativo', 'Supervisión humana definida y comunicada al equipo', 'Registro en base de datos EU de sistemas IA de alto riesgo'].map((m) => (
@@ -384,7 +384,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
                 <div key={d.domainCode} className="flex items-start gap-3 py-2 border-b border-border/40 dark:border-white/4">
                   <span className="text-[9px] font-mono text-text-subtle uppercase w-32 shrink-0 pt-0.5">AI Owner</span>
                   <div>
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200">{d.suggestedOwner}</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-200">{d.suggestedOwner}</p>
                     <p className="text-[10px] text-text-subtle">
                       Responsable del dominio: {d.domainCode.replace(/_/g, ' ')}
                     </p>
@@ -403,7 +403,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
               Esta política será revisada anualmente o ante cambios regulatorios significativos
               (nuevas disposiciones del AI Act, actualizaciones del RGPD o cambios en el catálogo
               de sistemas IA de {companyName}). La siguiente revisión programada es{' '}
-              <strong className="text-lean-black dark:text-gray-200">
+              <strong className="text-lean-black dark:text-warm-200">
                 {new Date(now.getFullYear() + 1, now.getMonth(), now.getDate()).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })}
               </strong>.
             </p>

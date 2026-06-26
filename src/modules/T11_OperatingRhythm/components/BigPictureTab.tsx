@@ -24,7 +24,7 @@ export function BigPictureTab({
       {/* Legend */}
       <div className="flex items-center gap-4 px-1 mb-3 flex-wrap">
         <div className="flex items-center gap-1.5 text-[10px] text-text-subtle">
-          <svg className="h-3 w-3 text-amber-500" viewBox="0 0 12 12" fill="currentColor">
+          <svg className="h-3 w-3 text-warning" viewBox="0 0 12 12" fill="currentColor">
             <path d="M6 1l1.5 3L11 4.5 8.5 7l.5 3.5L6 9 3 10.5 3.5 7 1 4.5 4.5 4z"/>
           </svg>
           Evento crítico

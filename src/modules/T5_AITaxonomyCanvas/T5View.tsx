@@ -33,7 +33,6 @@ export function T5View({
   const loadT3                          = useT3Store(s => s.load)
   const initT3Demo                      = useT3Store(s => s.initDemo)
   const { profile: companyProfile }     = useCompanyProfileStore()
-  const companyName                     = companyProfile.engagementName
   const engagementId                    = useEngagementStore((s) => s.activeEngagementId)
 
   // Hidratar canvas desde Supabase al montar o cambiar de engagement
@@ -66,7 +65,6 @@ export function T5View({
         backLabel="Volver al dashboard"
         toolCode="T5"
         title="AI Domain Architecture Canvas"
-        subtitle={companyName}
         phaseMiniMap={<PhaseMiniMap phaseId="evaluate" toolCode="T5" />}
         cta={<MaturityBadge level={canvas.maturityLevel} />}
         maxWidth="max-w-7xl"

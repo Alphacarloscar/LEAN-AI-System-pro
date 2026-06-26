@@ -38,7 +38,7 @@ export function ProjectsTab({ companies }: ProjectsTabProps) {
     }
   }
 
-  const inputClass = "flex-1 h-9 px-3 rounded-lg border border-gray-200 text-sm bg-gray-50 outline-none focus:border-[#C8860A]/60 focus:bg-white placeholder:text-gray-400"
+  const inputClass = "flex-1 h-9 px-3 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60 focus:bg-white placeholder:text-text-subtle"
 
   return (
     <div className="flex flex-col gap-6">
@@ -46,32 +46,32 @@ export function ProjectsTab({ companies }: ProjectsTabProps) {
         <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-4">Crear proyecto</h2>
         <form onSubmit={handleCreate} className="flex gap-3 max-w-xl">
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del proyecto (ej: Diagnóstico IA Q3 2026)" required className={inputClass} />
-          <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} className="h-9 px-3 rounded-lg border border-gray-200 text-sm bg-gray-50 outline-none focus:border-[#C8860A]/60">
+          <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} aria-label="Seleccionar empresa para el proyecto" className="h-9 px-3 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60">
             <option value="">Sin empresa</option>
             {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <button type="submit" disabled={creating || !name.trim()}
-            className="h-9 px-4 rounded-lg bg-[#C8860A] text-white text-sm font-medium disabled:opacity-40 hover:bg-[#B57609] transition-colors flex items-center gap-2 whitespace-nowrap">
+            className="h-9 px-4 rounded-lg bg-gold text-white text-sm font-medium disabled:opacity-40 hover:bg-gold-hover transition-colors flex items-center gap-2 whitespace-nowrap">
             {creating ? <Spinner /> : success ? <CheckIcon /> : null}
             Crear
           </button>
         </form>
-        {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+        {error && <p className="text-xs text-danger-dark mt-2">{error}</p>}
       </div>
 
       <div>
         <h4 className="text-xs font-mono uppercase tracking-widest text-warm-400 mb-3">Proyectos activos ({projects.length})</h4>
         {projects.length === 0 ? (
-          <p className="text-sm text-gray-400">Sin proyectos todavía.</p>
+          <p className="text-sm text-text-subtle">Sin proyectos todavía.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {projects.map((p) => {
               const company = companies.find((c) => c.id === p.company_id)
               return (
-                <div key={p.id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-gray-50 border border-gray-100">
+                <div key={p.id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-warm-50 border border-border">
                   <div>
-                    <p className="text-sm font-medium text-[#2A2822]">{p.name}</p>
-                    <p className="text-xs font-mono text-gray-400">{company ? company.name : 'Sin empresa'} · {p.current_phase}</p>
+                    <p className="text-sm font-medium text-lean-black dark:text-warm-50">{p.name}</p>
+                    <p className="text-xs font-mono text-text-subtle">{company ? company.name : 'Sin empresa'} · {p.current_phase}</p>
                   </div>
                 </div>
               )

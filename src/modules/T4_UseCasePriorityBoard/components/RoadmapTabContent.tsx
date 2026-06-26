@@ -29,8 +29,8 @@ export function RoadmapTabContent({ useCase, onUpdateRoadmap }: RoadmapTabProps)
                   className={[
                     'px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all',
                     isActive
-                      ? 'bg-navy text-white border-navy shadow-sm'
-                      : 'border-border dark:border-white/10 text-text-muted hover:border-navy/40 hover:text-lean-black dark:hover:text-warm-100',
+                      ? 'bg-navy text-white border-navy dark:bg-gold dark:text-lean-black dark:border-gold shadow-sm'
+                      : 'border-border dark:border-warm-500/50 text-text-muted dark:text-warm-200 hover:border-navy/40 hover:text-lean-black dark:hover:border-gold/50 dark:hover:text-gold',
                   ].join(' ')}
                 >
                   {q}

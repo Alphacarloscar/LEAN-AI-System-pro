@@ -45,7 +45,6 @@ export function T7View({ onBack }: T7ViewProps) {
   const loadT2                      = useT2Store(s => s.load)
   const isLoadingT2                 = useT2Store(s => s.isLoading)
   const t2Error                     = useT2Store(s => s.lastError)
-  const companyName                 = useCompanyProfileStore(s => s.profile.engagementName)
   const { dark }                    = useDarkMode()
   const { profile: companyProfile } = useCompanyProfileStore()
   const engagementId                = useEngagementStore((s) => s.activeEngagementId)
@@ -138,7 +137,6 @@ export function T7View({ onBack }: T7ViewProps) {
         backLabel="Volver al dashboard"
         toolCode="T7"
         title="Adoption Heatmap"
-        subtitle={<p className="text-xs text-text-muted">{companyName} · Curva de difusión Rogers</p>}
         phaseMiniMap={<PhaseMiniMap phaseId="activate" toolCode="T7" />}
         maxWidth="max-w-7xl"
         chips={
@@ -183,7 +181,7 @@ export function T7View({ onBack }: T7ViewProps) {
           {!isLoadingT2 && engagementId && (
             <button
               onClick={() => loadT2(engagementId)}
-              className="shrink-0 text-[11px] font-medium text-amber-700 dark:text-amber-300 hover:underline"
+              className="shrink-0 text-[11px] font-medium text-gold dark:text-amber-300 hover:underline"
             >
               Reintentar
             </button>

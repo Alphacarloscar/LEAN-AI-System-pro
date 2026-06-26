@@ -50,9 +50,9 @@ function ShadowAICard() {
     'Riesgo bajo'
 
   const riskColor =
-    pct >= 60 ? '#C8860A' :
-    pct >= 30 ? '#b07a00' :
-    '#6b7280'
+    pct >= 60 ? 'var(--color-gold)' :
+    pct >= 30 ? 'var(--color-warning-dark)' :
+    'var(--color-text-subtle)'
 
   return (
     <div
@@ -62,10 +62,10 @@ function ShadowAICard() {
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-2.5">
           <span className="p-1.5 bg-warning-light border-l-2 border-warning rounded-md shrink-0">
-            <AT size={20} strokeWidth={1.5} style={{ color: '#C8860A' }} />
+            <AT size={20} strokeWidth={1.5} style={{ color: 'var(--color-gold)' }} />
           </span>
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: '#C8860A' }}>
+            <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: 'var(--color-gold)' }}>
               Riesgo de Shadow AI
             </p>
             <p className="text-xs text-text-muted mt-0.5">
@@ -75,7 +75,7 @@ function ShadowAICard() {
         </div>
 
         <div className="shrink-0 text-right">
-          <p className="text-3xl font-bold tabular-nums leading-none" style={{ color: '#C8860A' }}>
+          <p className="text-3xl font-bold tabular-nums leading-none" style={{ color: 'var(--color-gold)' }}>
             {total === 0 ? '—' : `${pct}%`}
           </p>
           <p className="text-[10px] font-semibold mt-0.5" style={{ color: riskColor }}>
@@ -88,12 +88,12 @@ function ShadowAICard() {
         <div className="mt-3">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] text-text-subtle">{withTools} de {total} perfiles declaran herramientas externas</span>
-            <span className="text-[10px] font-semibold tabular-nums" style={{ color: '#C8860A' }}>{pct}%</span>
+            <span className="text-[10px] font-semibold tabular-nums" style={{ color: 'var(--color-gold)' }}>{pct}%</span>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+          <div className="w-full h-1.5 rounded-full bg-warm-100 dark:bg-warm-700 overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${pct}%`, backgroundColor: '#C8860A' }}
+              style={{ width: `${pct}%`, backgroundColor: 'var(--color-gold)' }}
             />
           </div>
         </div>
@@ -152,15 +152,15 @@ export function RiskDashboardTab() {
               key={level}
               onClick={() => setSelectedLevel(isActive ? null : level)}
               className={[
-                'rounded-xl border px-4 py-4 text-left transition-all duration-150',
+                'rounded-xl border-2 px-4 py-4 text-left transition-all duration-150',
                 isActive
-                  ? `${cfg.badgeBg} border-2`
-                  : 'border-border bg-white dark:bg-gray-900 hover:border-navy/30',
+                  ? cfg.badgeBg
+                  : 'border-border dark:border-warm-600 bg-white dark:bg-warm-700 hover:border-navy/30 dark:hover:border-warm-500',
               ].join(' ')}
               style={{ borderColor: isActive ? cfg.hex : undefined }}
             >
               <span className="block mb-1" style={{ color: cfg.hex }}>{RISK_ICON_MAP[cfg.icon as keyof typeof RISK_ICON_MAP]}</span>
-              <p className="text-2xl font-bold tabular-nums text-lean-black dark:text-gray-100">{count}</p>
+              <p className="text-2xl font-bold tabular-nums text-lean-black dark:text-warm-100">{count}</p>
               <p className={`text-[10px] font-semibold ${isActive ? cfg.badgeText : 'text-text-muted'}`}>
                 {cfg.shortLabel}
               </p>
@@ -175,16 +175,16 @@ export function RiskDashboardTab() {
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
             Cobertura de clasificación AI Act
           </p>
-          <span className="text-sm font-bold text-lean-black dark:text-gray-100 tabular-nums">
+          <span className="text-sm font-bold text-lean-black dark:text-warm-100 tabular-nums">
             {summary.classified}/{summary.total} casos ({summary.coveragePercent}%)
           </span>
         </div>
-        <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+        <div className="w-full h-2 rounded-full bg-warm-100 dark:bg-warm-700 overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
               width:           `${summary.coveragePercent}%`,
-              backgroundColor: summary.coveragePercent === 100 ? '#16A34A' : summary.coveragePercent >= 50 ? '#D97706' : '#EA580C',
+              backgroundColor: summary.coveragePercent === 100 ? 'var(--color-success-dark)' : summary.coveragePercent >= 50 ? 'var(--color-warning-dark)' : 'var(--color-danger-dark)',
             }}
           />
         </div>
@@ -200,7 +200,7 @@ export function RiskDashboardTab() {
         <div className="px-5 py-3 border-b border-border dark:border-white/6 flex items-center justify-between">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
             {selectedLevel ? `Casos — ${AIACT_RISK_CONFIG[selectedLevel].label}` : 'Todos los casos de uso'}
-            <span className="ml-2 font-bold text-lean-black dark:text-gray-200">({filteredCases.length})</span>
+            <span className="ml-2 font-bold text-lean-black dark:text-warm-200">({filteredCases.length})</span>
           </p>
           {selectedLevel && (
             <Button variant="link" size="xs" onClick={() => setSelectedLevel(null)}>
@@ -208,7 +208,7 @@ export function RiskDashboardTab() {
             </Button>
           )}
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[200px]">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border dark:border-white/6">
@@ -224,9 +224,9 @@ export function RiskDashboardTab() {
                 const riskLevel = uc.aiActClassification?.riskLevel ?? 'sin_clasificar'
                 const riskCfg   = AIACT_RISK_CONFIG[riskLevel]
                 return (
-                  <tr key={uc.id} className="border-b border-border/40 dark:border-white/4 hover:bg-gray-50 dark:hover:bg-gray-800/40">
+                  <tr key={uc.id} className="border-b border-border/40 dark:border-white/4 hover:bg-warm-50 dark:hover:bg-warm-800/40">
                     <td className="py-2.5 px-5">
-                      <p className="text-xs font-medium text-lean-black dark:text-gray-200 leading-tight">{uc.name}</p>
+                      <p className="text-xs font-medium text-lean-black dark:text-warm-200 leading-tight">{uc.name}</p>
                     </td>
                     <td className="py-2.5 px-3 text-[11px] text-text-muted">{uc.department}</td>
                     <td className="py-2.5 px-3 text-[11px] text-text-muted capitalize">{uc.aiCategory.replace(/_/g, ' ')}</td>

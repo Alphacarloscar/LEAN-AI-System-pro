@@ -3,6 +3,7 @@
 // ============================================================
 
 import type { T5DomainCode, T5Recommendation, T5DomainScores, T5MaturityLevel } from './types'
+import { DOMAIN_COLORS } from '@shared/design-system/charts/chartTokens'
 
 // ── Configuración de los 6 dominios IA ───────────────────────
 
@@ -17,7 +18,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
   automatizacion_rpa: {
     label:       'Automatización RPA',
     shortLabel:  'RPA',
-    hex:         '#A0998F',
+    hex:         DOMAIN_COLORS.automatizacion_rpa,
     tagline:     'Procesos repetitivos, cero intervención humana',
     description: 'Robots que replican tareas manuales estructuradas: entrada de datos, extracción y transferencia entre sistemas.',
     icon:        'settings',
@@ -25,7 +26,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
   automatizacion_inteligente: {
     label:       'Automatización Inteligente',
     shortLabel:  'Auto-IA',
-    hex:         '#6A90C0',
+    hex:         DOMAIN_COLORS.automatizacion_inteligente,
     tagline:     'RPA + comprensión contextual mediante IA',
     description: 'Combina automatización con capacidades cognitivas: clasificación, extracción de documentos no estructurados, decisiones contextuales.',
     icon:        'cpu',
@@ -33,7 +34,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
   analitica_predictiva: {
     label:       'Analítica Predictiva',
     shortLabel:  'Predictiva',
-    hex:         '#8B6A30',  // gold-muted token — ámbar oscuro diferenciado de warning-dark
+    hex:         DOMAIN_COLORS.analitica_predictiva,
     tagline:     'Anticipar para decidir mejor y más rápido',
     description: 'Modelos que predicen demanda, riesgo, fallos o comportamientos a partir de datos históricos y señales en tiempo real.',
     icon:        'trending-up',
@@ -41,7 +42,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
   asistente_ia: {
     label:       'Asistente IA',
     shortLabel:  'Asistente',
-    hex:         '#D4A85C',
+    hex:         DOMAIN_COLORS.asistente_ia,
     tagline:     'Copilot para equipos — amplifica, no reemplaza',
     description: 'Interfaces conversacionales y copilotos que asisten en redacción, búsqueda, síntesis y toma de decisiones operativas.',
     icon:        'message-square',
@@ -49,7 +50,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
   optimizacion_proceso: {
     label:       'Optimización de Proceso',
     shortLabel:  'Optimiz.',
-    hex:         '#C06060',
+    hex:         DOMAIN_COLORS.optimizacion_proceso,
     tagline:     'Reducir ineficiencias de forma continua y adaptativa',
     description: 'Algoritmos que detectan cuellos de botella, optimizan flujos de trabajo y asignación de recursos de forma dinámica.',
     icon:        'refresh-cw',
@@ -57,7 +58,7 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
   'agéntica': {
     label:       'Agéntica IA',
     shortLabel:  'Agéntica',
-    hex:         '#C8860A',  // gold token — máximo contraste, único token de marca sin asignar
+    hex:         DOMAIN_COLORS['agéntica'],
     tagline:     'Agentes autónomos que ejecutan tareas complejas',
     description: 'Sistemas de múltiples agentes que planifican, deciden y ejecutan cadenas de pasos complejos de forma autónoma sin supervisión constante.',
     icon:        'network',
@@ -168,9 +169,9 @@ export const T5_MATURITY_CONFIG: Record<T5MaturityLevel, {
 }> = {
   inicial: {
     label:       'Inicial',
-    badgeBg:     'bg-gray-100 dark:bg-gray-800',
-    badgeText:   'text-gray-500',
-    hex:         '#94A3B8',
+    badgeBg:     'bg-warm-100 dark:bg-warm-800',
+    badgeText:   'text-warm-500',
+    hex:         '#8A857C',
     description: 'La organización está en las primeras etapas. Foundations aún por construir.',
   },
   emergente: {

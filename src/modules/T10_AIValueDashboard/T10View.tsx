@@ -21,9 +21,8 @@ import { useT12Store }                   from '@/modules/T12_ISOAssessment/store
 import { useT9Store }                    from '@/modules/T9_AIRoadmap/store'
 import { usePermissions }                from '@/modules/Auth'
 
-import { getThemeColor }               from '@shared/design-system/charts/chartTokens'
+import { getThemeColor, CHART_SERIES_COLORS } from '@shared/design-system/charts/chartTokens'
 import { EmptyNoProject, EmptyNoData } from './components/EmptyStates'
-import { DashboardHeader }             from './components/DashboardHeader'
 import { P1MaturityPanel }             from './components/panels/P1MaturityPanel'
 import { P2PortfolioPanel }            from './components/panels/P2PortfolioPanel'
 import { P3AdoptionPanel }             from './components/panels/P3AdoptionPanel'
@@ -41,11 +40,13 @@ export interface T10ViewProps {
 
 // ── Constantes de módulo ─────────────────────────────────────
 
-const AI_CAT_META: Record<string, { label: string; color: string }> = {
-  automatizacion_inteligente: { label: 'Automatización Inteligente', color: getThemeColor('success') },
-  analitica_predictiva:       { label: 'Analítica Predictiva',       color: getThemeColor('info') },
-  automatizacion_rpa:         { label: 'RPA',                        color: getThemeColor('warning') },
-  asistente_ia:               { label: 'Asistente IA',               color: getThemeColor('gold') },
+const AI_CAT_META: Record<string, { label: string }> = {
+  automatizacion_inteligente: { label: 'Automatización Inteligente' },
+  analitica_predictiva:       { label: 'Analítica Predictiva' },
+  automatizacion_rpa:         { label: 'RPA' },
+  asistente_ia:               { label: 'Asistente IA' },
+  optimizacion_proceso:       { label: 'Optimización de Proceso' },
+  'agéntica':                 { label: 'IA Agéntica' },
 }
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -118,9 +119,7 @@ export function T10View({ onNavigate }: T10ViewProps) {
   const tier    = maturityLabel(avg)
 
   const activeProject = projects.find(p => p.id === engagementId)
-  const displayName   = activeProject?.name ?? ''
-  const displaySector = companyProfile?.sector ?? ''
-  const displayTamano = companyProfile?.tamanoEmpresa ?? ''
+  const displayName = activeProject?.name ?? ''
 
   const t10LLMContext = useMemo(
     () => companyProfile
@@ -167,7 +166,7 @@ export function T10View({ onNavigate }: T10ViewProps) {
     const activePercent = total > 0 ? Math.round(((innov + early) / total) * 100) : 0
     const deptMap: Record<string, { innovadores: number; early: number; rezagados: number; total: number }> = {}
     stakeholders.forEach(s => { if (!deptMap[s.department]) deptMap[s.department] = { innovadores: 0, early: 0, rezagados: 0, total: 0 }; const dept = deptMap[s.department]; dept.total++; if (s.archetype === 'adoptador') dept.innovadores++; else if (s.archetype === 'ambassador' || s.archetype === 'decisor') dept.early++; else dept.rezagados++ })
-    return { totalStakeholders: total, activeAdopters: innov + early, activePercent, rogersPhase: activePercent > 50 ? 'Early Majority' : 'Early Adopters', changeScore: 0, groups: [{ label: 'Innovadores', count: innov, pct: Math.round((innov / total) * 100), color: '#C8860A' }, { label: 'Early Majority', count: early, pct: Math.round((early / total) * 100), color: '#8A857C' }, { label: 'Rezagados', count: rezag, pct: Math.round((rezag / total) * 100), color: '#D4D0C8' }], departments: Object.entries(deptMap).map(([label, data]) => ({ label, ...data })).sort((a, b) => b.total - a.total).slice(0, 4) }
+    return { totalStakeholders: total, activeAdopters: innov + early, activePercent, rogersPhase: activePercent > 50 ? 'Early Majority' : 'Early Adopters', changeScore: 0, groups: [{ label: 'Innovadores', count: innov, pct: Math.round((innov / total) * 100), color: CHART_SERIES_COLORS[0] }, { label: 'Early Majority', count: early, pct: Math.round((early / total) * 100), color: CHART_SERIES_COLORS[1] }, { label: 'Rezagados', count: rezag, pct: Math.round((rezag / total) * 100), color: CHART_SERIES_COLORS[2] }], departments: Object.entries(deptMap).map(([label, data]) => ({ label, ...data })).sort((a, b) => b.total - a.total).slice(0, 4) }
   }, [stakeholders])
 
   const shadowAIPct = useMemo(() => {
@@ -196,7 +195,7 @@ export function T10View({ onNavigate }: T10ViewProps) {
     const catCounts: Record<string, number> = {}
     processes.forEach(p => { const c = p.aiCategory ?? 'sin_categoria'; catCounts[c] = (catCounts[c] ?? 0) + 1 })
     const total    = processes.length
-    const aiTypes  = Object.entries(catCounts).map(([cat, count]) => ({ label: AI_CAT_META[cat]?.label ?? cat, color: AI_CAT_META[cat]?.color ?? '#C4C0B8', count, pct: Math.round((count / total) * 100) })).sort((a, b) => b.count - a.count)
+    const aiTypes  = Object.entries(catCounts).map(([cat, count]) => ({ label: AI_CAT_META[cat]?.label ?? cat, count, pct: Math.round((count / total) * 100) })).sort((a, b) => b.count - a.count).map((t, i) => ({ ...t, color: CHART_SERIES_COLORS[i % CHART_SERIES_COLORS.length] }))
     const oppCritica = processes.filter(p => p.opportunityLevel === 'critica').length
     const oppAlta    = processes.filter(p => p.opportunityLevel === 'alta').length
     const processesMapped = processes.filter(p => p.stages && p.stages.length > 0).length
@@ -241,26 +240,61 @@ export function T10View({ onNavigate }: T10ViewProps) {
   // ── Segmentos precalculados para barras ──────────────────────
   const t4n = liveT4.totalInitiatives; const t4s = liveT4.statuses
   const t4Segments = t4n > 0 ? [
-    { pct: Math.round((t4s.active     / t4n) * 100), color: getThemeColor('success'),      label: `Activas ${t4s.active}` },
-    { pct: Math.round((t4s.validating / t4n) * 100), color: getThemeColor('warning'),      label: `Validando ${t4s.validating}` },
-    { pct: Math.round((t4s.backlog    / t4n) * 100), color: getThemeColor('info'),         label: `Backlog ${t4s.backlog}` },
-    { pct: Math.round((t4s.stopped   / t4n) * 100), color: getThemeColor('warm-300'),     label: `Paradas ${t4s.stopped}` },
+    { pct: Math.round((t4s.active     / t4n) * 100), color: CHART_SERIES_COLORS[0], label: `Activas ${t4s.active}` },
+    { pct: Math.round((t4s.validating / t4n) * 100), color: CHART_SERIES_COLORS[1], label: `Validando ${t4s.validating}` },
+    { pct: Math.round((t4s.backlog    / t4n) * 100), color: CHART_SERIES_COLORS[2], label: `Backlog ${t4s.backlog}` },
+    { pct: Math.round((t4s.stopped   / t4n) * 100), color: CHART_SERIES_COLORS[9], label: `Paradas ${t4s.stopped}` },
   ] : [{ pct: 100, color: getThemeColor('warm-200'), label: 'Sin datos' }]
 
   const rTotal = liveP5.risks.total
   const riskSegments = rTotal > 0 ? [
-    { pct: Math.round((liveP5.risks.high   / rTotal) * 100), color: getThemeColor('danger') },
-    { pct: Math.round((liveP5.risks.medium / rTotal) * 100), color: getThemeColor('warning') },
-    { pct: Math.round((liveP5.risks.low    / rTotal) * 100), color: getThemeColor('success') },
+    { pct: Math.round((liveP5.risks.high   / rTotal) * 100), color: CHART_SERIES_COLORS[0] },
+    { pct: Math.round((liveP5.risks.medium / rTotal) * 100), color: CHART_SERIES_COLORS[1] },
+    { pct: Math.round((liveP5.risks.low    / rTotal) * 100), color: CHART_SERIES_COLORS[2] },
   ] : [{ pct: 100, color: getThemeColor('warm-200') }]
 
   return (
     <div className="min-h-full bg-surface dark:bg-warm-900">
 
-      <DashboardHeader
-        displayName={displayName} displaySector={displaySector} displayTamano={displayTamano}
-        aiDisplay={aiDisplay} tier={tier} isReadOnly={isReadOnlyProject}
-      />
+      {/* Header especial T10 — fondo navy, índice IA centrado */}
+      <header
+        className="bg-lean-black dark:bg-warm-950 border-b border-white/6 sticky z-[15] px-8"
+        style={{ top: 'var(--header-h, 56px)' }}
+      >
+        <div className="max-w-7xl mx-auto h-12 flex items-center justify-center relative">
+          {/* Nombre del proyecto — izquierda */}
+          <p className="absolute left-0 text-base font-semibold uppercase tracking-wide text-warm-100 truncate max-w-[300px]">
+            {displayName}
+          </p>
+
+          {/* Índice IA — centro */}
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-[10px] font-mono font-semibold uppercase tracking-widest text-warm-200 mr-2">
+              Índice IA
+            </span>
+            <span className="text-2xl font-semibold tabular-nums tracking-tight text-gold leading-none">
+              {aiDisplay.toFixed(1)}
+            </span>
+            <span className="text-sm font-medium text-warm-200 leading-none">/ 4.0</span>
+            <span className="ml-1 text-[10px] font-mono font-semibold uppercase tracking-widest text-warm-200 leading-none">
+              · {tier}
+            </span>
+          </div>
+
+          {/* Read-only — derecha */}
+          {isReadOnlyProject && (
+            <div className="absolute right-0 flex items-center gap-1.5">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="var(--color-info)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="7" width="10" height="7" rx="1.5" />
+                <path d="M5 7V5a3 3 0 016 0v2" />
+              </svg>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-info-dark dark:text-info">
+                Solo lectura
+              </span>
+            </div>
+          )}
+        </div>
+      </header>
 
       <div className="max-w-7xl mx-auto px-8 py-7">
         <div className="grid grid-cols-3 gap-5">

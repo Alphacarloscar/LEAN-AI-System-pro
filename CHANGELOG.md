@@ -5,7 +5,44 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased]
+## v2.2.0 — Visual System V2 + Design System (Obsidian Editorial) — 2026-06-26
+
+### Added
+- [DS] `src/shared/design-system/charts/chartTokens.ts` — fuente única de HEX para Recharts (ADR-021 §4): 9 paletas exportadas (`QUADRANT_COLORS`, `T3_QUADRANT_COLORS`, `T3_VALUE_BAR_COLORS`, `T3_VALUE_ACTIVE_BG`, `ROGERS_SEGMENT_COLORS`, `DOMAIN_COLORS`, `DEPT_COLORS`, `DEPT_ADOPTION_COLORS`, `MONO_STATUS_COLORS`, `CHART_SERIES_COLORS`) + 4 funciones (`getThemeColor`, `getHeroColor`, `getGoldRgb`, `getNavyRgb`)
+- [DS] `src/shared/design-system/charts/domainIcons.tsx` — mapa canónico Lucide por dominio IA: `DOMAIN_ICONS` + `DOMAIN_LABELS`; fuente única para T3, T4, T5
+- [DS] `src/shared/components/UnsavedChangesModal.tsx` — modal "Cambios sin guardar" con tres acciones: seguir editando / descartar / guardar-y-continuar; consumido por `AppSidebar` y `EngagementSelector`
+- [DS] `StreamingIndicator` — indicador inline para estados de invocación LLM (`variant: 'inline' | 'card'`); `role="status"` + `aria-live="polite"` (DEBT-027 parte 2)
+- [DS] `ToastProvider` con cola FIFO limitada (MAX=3), duraciones por variante (`success 3s / info 4s / warning 6s / error 8s`), `persistent`, posicionamiento responsive (DEBT-027 partes 1+3)
+- [DS] `ServiceErrorToast` + `useServiceError` — toast de error estructurado con panel debug expandible (DEBT-027 parte 3)
+- [DS] `useMediaQuery` hook — breakpoint reactivo para sidebar responsive
+- [DS] `useUnsavedGuard` — hook de integración que sincroniza `isDirty` local con el store global `useUnsavedChanges`
+- [DS] `Table`: props `columnPriority` y `mobileView="cards"` para adaptación responsive (DEBT-026)
+- [Hooks] `useEdgeFunctionInvoke` extendido con fase observable `'idle' | 'pending' | 'success' | 'error'`
+- [Forms] `src/lib/schemas/t2.schemas.ts` — Zod schema para T2 StakeholderMatrix (ADR-022)
+- [Forms] `src/lib/schemas/t3.schemas.ts` — Zod schema para T3 ValueStreamMap (ADR-022)
+- [UX] FDR-003: T4 `UseCaseDetailPanel` — separación visual estado vs tabs mediante `SegmentedControl` + `Tabs variant="underline"`
+- [Docs] `docs/decisions/technical/ADR-023-visual-system-v2.md` — registra decisión de migración Visual System V2
+- [Docs] `docs/architecture/VISUAL-SYSTEM-V2.md` — guía operativa con tabla de equivalencias y configuración ESLint
+
+### Changed
+- [Design] **T1–T12 + Auth + Admin + CompanyProfile**: migración completa warm-only palette — eliminados 340+ usos de `gray-*`/`slate-*` y colores rainbow hardcodeados en 38 archivos (ADR-023)
+- [Design] **T2 StakeholderMatrix**: burbujas quadrant → estilo plano con `fillOpacity="0.85"` y `stroke var(--color-warm-300)`; gray→warm en modales; `strokeWidth={2}→{1.5}` en iconos Check
+- [Design] **T3 ValueStreamMap**: dominio `agéntica` migrado de violet a danger; rings slate → `var(--color-warm-200/300)`; slate→warm en 6 componentes
+- [Design] **T6 RiskGovernance**: `AIACT_RISK_CONFIG` rainbow → tokens DS; `PDF_PALETTE` centraliza HEX para react-pdf; `strokeWidth={2}→{1.5}` en 10 iconos
+- [Design] **Admin (AdminView, UsersTab, ProjectsTab)**: HEX inline → tokens `gold`/`gold-hover`; gray→warm; `aria-label` en `<select>` bare
+- [DS] `AppSidebar`: responsive — sidebar inline en ≥lg; toggle+backdrop en <lg (DEBT-026)
+- [DS] `AppLayout`: margen `ml-64` condicional cuando `isLg`; altura sidebar con `calc(100vh - var(--header-h))`
+- [DS] `ChartWrapper`: `ariaLabel: string` obligatoria + `dataTable?: ReactNode` alternativa tabular (DEBT-025)
+- [ESLint] **Enforcement ADR-021**: `no-restricted-syntax` activo — bloquea en CI: clases Tailwind frías, `shadow-lg/xl/2xl`, `rounded-2xl/3xl`, `strokeWidth={2}`; overrides para `*PDF*.tsx` y `chartTokens.ts`
+- [Docs] ADR-020 estado actualizado a IN PROGRESS; tabla de fases actualizada con ADR-023
+- [Docs] `docs/decisions/README.md` — añadidos ADR-022, ADR-023, FDR-001, FDR-003
+
+### Removed
+- [T10] `DashboardHeader.tsx` — eliminado e inlineado en T10View para cumplir ADR-013 (max 400 líneas)
+
+---
+
+## v2.1.0 — Sistema de Auditoría y Estabilización — 2026-06-17
 
 ### Added (v1.0 — Sistema de Auditoría)
 - [Audit] `src/lib/audit/` — librería de auditoría completa (ADR-017)

@@ -6,12 +6,13 @@
 // ============================================================
 
 import type { ArchetypeCode } from '../types'
-import { ARCHETYPE_HEX as ARCH_HEX } from './quadrantChartHelpers'
+import { ARCHETYPE_HEX as ARCH_HEX, initials } from './quadrantChartHelpers'
 
 interface MiniPositionMapProps {
   adoptionScore:  number
   influenceScore: number
   archetype:      ArchetypeCode
+  name?:          string
   size?:          number
 }
 
@@ -19,6 +20,7 @@ export function MiniPositionMap({
   adoptionScore,
   influenceScore,
   archetype,
+  name,
   size = 56,
 }: MiniPositionMapProps) {
   const S   = size
@@ -30,11 +32,10 @@ export function MiniPositionMap({
   const hex = ARCH_HEX[archetype]
   const MID = P + IN / 2
 
-  const dotR    = S * 0.040
-  const glow1R  = S * 0.110
-  const glow2R  = S * 0.065
-  const lblSize = Math.max(S * 0.080, 5)
+  const dotR   = Math.round(S * 0.055)
+  const lblSize = Math.max(dotR * 0.8, 5)
   const strokeW = Math.max(S * 0.006, 0.35)
+  const initial = name ? initials(name) : ''
 
   return (
     <svg viewBox={`0 0 ${S} ${S}`} width={S} height={S} style={{ display: 'block' }}>
@@ -46,23 +47,33 @@ export function MiniPositionMap({
       {/* Grid border */}
       <rect x={P} y={P} width={IN} height={IN} fill="none" stroke="var(--color-border)" strokeWidth={0.5} rx={2} />
       {/* Crosshair */}
-      <line x1={MID} y1={P}   x2={MID} y2={P+IN} stroke="var(--color-warm-100)" strokeWidth={strokeW} opacity={0.22} />
-      <line x1={P}   y1={MID} x2={P+IN} y2={MID} stroke="var(--color-warm-100)" strokeWidth={strokeW} opacity={0.22} />
+      <line x1={MID} y1={P}   x2={MID} y2={P+IN} stroke="var(--color-warm-300)" strokeWidth={strokeW} opacity={0.35} />
+      <line x1={P}   y1={MID} x2={P+IN} y2={MID} stroke="var(--color-warm-300)" strokeWidth={strokeW} opacity={0.35} />
       {/* Axis labels */}
       <text x={MID} y={S - P * 0.3} textAnchor="middle" fontSize={lblSize}
-        fill="var(--color-warm-100)" fontFamily="ui-monospace,monospace">adopción</text>
+        fill="var(--color-warm-400)" fontFamily="ui-monospace,monospace">adopción</text>
       <text x={P * 0.35} y={MID + 1} textAnchor="middle" fontSize={lblSize}
-        fill="var(--color-warm-100)" fontFamily="ui-monospace,monospace"
+        fill="var(--color-warm-400)" fontFamily="ui-monospace,monospace"
         transform={`rotate(-90,${P * 0.35},${MID})`}>influencia</text>
-      {/* Glow halos */}
-      <circle cx={dx} cy={dy} r={glow1R} fill={hex} opacity={0.08} />
-      <circle cx={dx} cy={dy} r={glow2R} fill={hex} opacity={0.20} />
-      {/* Main dot */}
-      <circle cx={dx} cy={dy} r={dotR} fill={hex} opacity={0.92} />
-      {/* Shine */}
-      <ellipse cx={dx - dotR * 0.32} cy={dy - dotR * 0.32}
-        rx={dotR * 0.38} ry={dotR * 0.24}
-        fill="rgba(255,255,255,0.60)" />
+      {/* Main dot — estilo T2 base */}
+      <circle
+        cx={dx} cy={dy} r={dotR}
+        fill={hex}
+        fillOpacity="0.85"
+        stroke="var(--color-warm-300)"
+        strokeWidth="1.5"
+      />
+      {/* Iniciales — estilo T2 base */}
+      {initial && (
+        <text
+          x={dx} y={dy + 4}
+          textAnchor="middle" fontSize={9} fontWeight="700"
+          fill="#FFFFFF" fontFamily="Inter, sans-serif"
+          style={{ pointerEvents: 'none', userSelect: 'none' }}
+        >
+          {initial}
+        </text>
+      )}
     </svg>
   )
 }

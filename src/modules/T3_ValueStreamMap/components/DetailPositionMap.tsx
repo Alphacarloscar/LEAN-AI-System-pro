@@ -1,6 +1,8 @@
-import { CAT_HEX } from './T3Badges.constants'
+import { DOMAIN_ICONS, DOMAIN_LABELS, type DomainIconCode } from '@shared/design-system/charts/domainIcons'
 import { T3_QUADRANT_COLORS } from '@shared/design-system/charts/chartTokens'
 import type { AICategoryCode } from '../types'
+
+const NEUTRAL_HEX = '#8A857C'  // warm-500 — color neutro DS
 
 const QUAD_LABELS = [
   { qx: 0.52, qy: 0.06, text: 'Pilotar ya',  color: T3_QUADRANT_COLORS.pilotarYa       },
@@ -20,13 +22,15 @@ export function DetailPositionMap({
   category:         AICategoryCode
   size?:            number
 }) {
-  const S = size, P = Math.round(S * 0.10), IN = S - P * 2
-  const dx  = P + (readinessScore   / 4) * IN
-  const dy  = P + (1 - opportunityScore / 4) * IN
-  const hex = CAT_HEX[category]
-  const r   = S * 0.048
+  const S    = size, P = Math.round(S * 0.10), IN = S - P * 2
+  const dx   = P + (readinessScore   / 4) * IN
+  const dy   = P + (1 - opportunityScore / 4) * IN
+  const r    = S * 0.048
+  const icon = DOMAIN_ICONS[category as DomainIconCode]
+  const label = DOMAIN_LABELS[category as DomainIconCode] ?? category
 
   return (
+    <>
     <svg viewBox={`0 0 ${S} ${S}`} width={S} height={S} style={{ display: 'block' }}>
       <defs>
         <clipPath id="detail-map-clip">
@@ -53,9 +57,27 @@ export function DetailPositionMap({
         </text>
       ))}
 
-      <circle cx={dx} cy={dy} r={r} fill={hex} stroke="#fff" strokeWidth={1.5} />
-      <line x1={P} y1={dy} x2={dx - r} y2={dy} stroke={hex} strokeWidth={0.5} strokeDasharray="2 2" opacity={0.4} />
-      <line x1={dx} y1={P + IN} x2={dx} y2={dy + r} stroke={hex} strokeWidth={0.5} strokeDasharray="2 2" opacity={0.4} />
+      <circle
+        cx={dx} cy={dy} r={r}
+        fill={NEUTRAL_HEX}
+        fillOpacity="0.85"
+        stroke="var(--color-warm-300)"
+        strokeWidth="1.5"
+      />
+      {icon && (
+        <foreignObject x={dx - r} y={dy - r} width={r * 2} height={r * 2} style={{ pointerEvents: 'none', overflow: 'visible' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: r * 2, height: r * 2, color: '#fff' }}>
+            {icon}
+          </div>
+        </foreignObject>
+      )}
+      <line x1={P} y1={dy} x2={dx - r} y2={dy} stroke={NEUTRAL_HEX} strokeWidth={0.5} strokeDasharray="2 2" opacity={0.4} />
+      <line x1={dx} y1={P + IN} x2={dx} y2={dy + r} stroke={NEUTRAL_HEX} strokeWidth={0.5} strokeDasharray="2 2" opacity={0.4} />
     </svg>
+    <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-warm-100 dark:bg-warm-700 mt-1">
+      <span className="text-warm-600 dark:text-warm-300 flex items-center">{icon}</span>
+      <span className="text-[10px] font-medium text-warm-700 dark:text-warm-200">{label}</span>
+    </div>
+    </>
   )
 }

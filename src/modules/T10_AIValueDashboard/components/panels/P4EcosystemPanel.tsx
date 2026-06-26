@@ -26,7 +26,7 @@ export function P4EcosystemPanel({ t3data, expanded, onToggle, onNavigate }: P4P
   return (
     <PanelCard
       id="p4" expanded={expanded} onClick={onToggle}
-      tag="T3 · Ecosistema IA" tagColor="purple"
+      tag="T3 · Ecosistema IA"
       title="Ecosistema IA"
       subtitle={t3data
         ? `${t3data.processesTotal} procesos · ${t3data.aiTypes.length} tipos IA`
@@ -56,7 +56,7 @@ export function P4EcosystemPanel({ t3data, expanded, onToggle, onNavigate }: P4P
               ))}
             </div>
           </div>
-          <div className="rounded-md px-2.5 py-1.5 mt-2 border-l-4 border-l-[#7F77DD] bg-card dark:bg-warm-700">
+          <div className="rounded-md px-2.5 py-1.5 mt-2 border-l-4 border-l-gold bg-card dark:bg-warm-700">
             <p className="text-[10px] text-text-muted dark:text-warm-300">
               Mayor espera: <span className="font-semibold text-lean-black dark:text-warm-100 truncate">{t3data.bottleneck}</span>
             </p>

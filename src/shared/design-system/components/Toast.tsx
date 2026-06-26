@@ -225,7 +225,7 @@ export function ToastContainer({
         // Desktop: bottom-right
         'sm:top-auto sm:bottom-4 sm:left-auto sm:right-4 sm:translate-x-0 sm:items-end',
       ].join(' ')}
-      style={{ top: 'calc(var(--header-h, 56px) + 8px)' }}
+      style={{ top: 'calc(var(--header-h, 64px) + 8px)' }}
     >
       {toasts.map((t) => (
         <div key={t.id} className="pointer-events-auto">

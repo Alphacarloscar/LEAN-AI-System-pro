@@ -162,7 +162,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
             <span className="inline-block w-3 h-1.5 rounded-sm bg-warm-200 dark:bg-warm-700" />
             Espera
           </span>
-          <Button variant="primary" size="xs" onClick={() => setModalStage('new')}>
+          <Button variant="primary" size="sm" onClick={() => setModalStage('new')}>
             + Etapa
           </Button>
         </div>
@@ -206,7 +206,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         {isBottleneck && (
-                          <Flame size={16} strokeWidth={2} aria-label="Cuello de botella — mayor tiempo de espera" className="text-danger-dark shrink-0" />
+                          <Flame size={16} strokeWidth={1.5} aria-label="Cuello de botella — mayor tiempo de espera" className="text-danger-dark shrink-0" />
                         )}
                         <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${cfg.chipBg} ${cfg.chipText}`}>
                           {cfg.label}
@@ -218,13 +218,13 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
                       <div className="space-y-0.5">
                         {stage.responsible && (
                           <p className="text-[10px] text-text-muted truncate leading-none flex items-center gap-1 min-w-0">
-                            <User size={10} strokeWidth={2} className="shrink-0" />
+                            <User size={10} strokeWidth={1.5} className="shrink-0" />
                             <span className="truncate">{stage.responsible}</span>
                           </p>
                         )}
                         {stage.system && (
                           <p className="text-[10px] text-text-muted truncate leading-none flex items-center gap-1 min-w-0">
-                            <Settings size={10} strokeWidth={2} className="shrink-0" />
+                            <Settings size={10} strokeWidth={1.5} className="shrink-0" />
                             <span className="truncate">{stage.system}</span>
                           </p>
                         )}
@@ -280,7 +280,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
       {/* ── Bottleneck callout ─────────────────────────────────── */}
       {bottleneck && bottleneck.waitTimeHours > 0 && (
         <div className="mt-4 rounded-xl bg-danger-light border border-red-100 dark:border-red-900/20 px-4 py-3 flex items-start gap-3">
-          <Flame size={20} strokeWidth={2} className="text-danger-dark shrink-0 mt-0.5" />
+          <Flame size={20} strokeWidth={1.5} className="text-danger-dark shrink-0 mt-0.5" />
           <div>
             <p className="text-xs font-semibold text-danger-dark mb-0.5">
               Cuello de botella detectado — {bottleneck.name}

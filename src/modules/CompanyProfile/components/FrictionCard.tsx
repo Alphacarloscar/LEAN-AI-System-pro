@@ -16,17 +16,17 @@ interface FrictionCardProps {
 
 export function FrictionCard({ index, friction, onUpdate, onRemove }: FrictionCardProps) {
   return (
-    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-border dark:border-white/6 p-5 space-y-4">
+    <div className="rounded-xl bg-warm-50 dark:bg-warm-800 border border-border dark:border-white/6 p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-6 w-6 rounded-full bg-navy/10 dark:bg-navy/20 border border-navy/20 dark:border-navy/30 flex items-center justify-center">
             <span className="text-[10px] font-bold text-navy dark:text-warm-100">{index + 1}</span>
           </div>
-          <span className="text-xs font-semibold text-lean-black dark:text-gray-300">Fricción / Oportunidad</span>
+          <span className="text-xs font-semibold text-lean-black dark:text-warm-100">Fricción / Oportunidad</span>
         </div>
         <button
           onClick={onRemove}
-          className="h-6 w-6 rounded flex items-center justify-center text-text-subtle dark:text-gray-600 hover:text-danger-dark hover:bg-danger-light/20 transition-colors"
+          className="h-6 w-6 rounded flex items-center justify-center text-text-subtle dark:text-warm-400 hover:text-danger-dark hover:bg-danger-light/20 transition-colors"
           aria-label="Eliminar fricción"
         >
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
@@ -91,7 +91,7 @@ export function FrictionCard({ index, friction, onUpdate, onRemove }: FrictionCa
             rows={2}
             aria-label={`Notas adicionales para la fricción ${index + 1}`}
             placeholder="Descripción adicional..."
-            className="w-full px-3 py-2 rounded-lg text-xs bg-white dark:bg-gray-900 border border-border dark:border-white/8 text-lean-black dark:text-gray-200 placeholder-text-subtle dark:placeholder-gray-600 resize-none focus:outline-none focus:border-navy dark:focus:border-navy/60 focus:ring-2 focus:ring-navy/15 dark:focus:ring-navy/20 transition-colors"
+            className="w-full px-3 py-2 rounded-lg text-xs bg-white dark:bg-warm-700 border border-border dark:border-warm-600/40 text-lean-black dark:text-warm-50 placeholder:text-text-subtle dark:placeholder:text-warm-400 resize-none focus:outline-none focus:border-navy dark:focus:border-navy/60 focus:ring-2 focus:ring-navy/15 dark:focus:ring-navy/20 transition-colors"
           />
         </div>
       </div>

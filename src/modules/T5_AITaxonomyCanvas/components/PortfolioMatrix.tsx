@@ -6,7 +6,8 @@
 // Incluye tabla de adopción por departamento.
 // ============================================================
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
+import { useIsDark } from '@/shared/hooks/useDarkMode'
 import { Settings, Cpu, TrendingUp, MessageSquare, RefreshCw, Network } from 'lucide-react'
 import {
   T5_DOMAIN_CONFIG,
@@ -15,6 +16,7 @@ import {
 import { Card } from '@shared/design-system/components'
 import type { T5Canvas, T5DomainCode } from '../types'
 import { DeptCategoryModal } from './DeptCategoryModal'
+import { deptCfg } from '@/modules/T7_AdoptionHeatmap/T7Constants'
 
 const DOMAIN_ICON_MAP: Record<string, React.ReactElement> = {
   settings:        <Settings      size={14} strokeWidth={1.5} />,
@@ -83,24 +85,6 @@ function resolveChipCollisions(chips: ChipPos[]): ChipPos[] {
   return result
 }
 
-// ── Department dot palette — tokens from tailwind.config.ts ──
-// Mirrors T7 DEPT_CFG. Hex sourced exclusively from the token registry:
-// info-dark=#6A90C0  success-dark=#5FAF8A  warning-dark=#D4A85C
-// gold=#C8860A       danger-dark=#C06060   silver=#C4C0B8
-const DEPT_DOT: Record<string, string> = {
-  'Dirección General':     '#6A90C0',  // info-dark
-  'Dirección':             '#6A90C0',  // info-dark
-  'IT / Tecnología':       '#5FAF8A',  // success-dark
-  'IT':                    '#5FAF8A',  // success-dark
-  'Operaciones':           '#D4A85C',  // warning-dark
-  'Marketing & Comercial': '#C8860A',  // gold
-  'Marketing':             '#C8860A',  // gold
-  'RRHH':                  '#C06060',  // danger-dark
-}
-
-function deptDotColor(dept: string): string {
-  return DEPT_DOT[dept] ?? '#C4C0B8'  // silver fallback
-}
 
 // ── All domain codes constant ─────────────────────────────────
 
@@ -143,9 +127,8 @@ function DepartmentAdoptionChart({
                 <th className="text-left pb-3 pr-3 font-medium text-text-muted w-32" />
                 {ALL_DOMAIN_CODES.map(code => {
                   const domCfg = T5_DOMAIN_CONFIG[code]
-                  const recCfg = T5_RECOMMENDATION_CONFIG[canvas.domains[code].recommendation]
                   return (
-                    <th key={code} className="text-center pb-3 px-1">
+                    <th key={code} className="text-center pb-3 px-1 align-top">
                       <button
                         onClick={() => onSelectDomain(code)}
                         title={domCfg.label}
@@ -153,17 +136,14 @@ function DepartmentAdoptionChart({
                           transition-all duration-150 hover:scale-105 focus:outline-none"
                       >
                         <span
-                          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                          style={{
-                            border:          `2px solid ${recCfg.hex}`,
-                            backgroundColor: recCfg.hex + '22',
-                            color:           recCfg.hex,
-                          }}
+                          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0
+                            border-2 border-warm-200 dark:border-warm-600 bg-warm-100 dark:bg-warm-700
+                            text-warm-600 dark:text-warm-300"
                         >
                           {DOMAIN_ICON_MAP[domCfg.icon] ?? <Settings size={14} strokeWidth={1.5} />}
                         </span>
-                        <span className="text-[11px] font-medium tracking-tight text-warm-600 dark:text-warm-400 whitespace-nowrap">
-                          {domCfg.shortLabel}
+                        <span className="text-[10px] font-medium tracking-tight text-warm-600 dark:text-warm-400 text-center leading-tight" style={{ maxWidth: 72, minHeight: '2.5em' }}>
+                          {domCfg.label}
                         </span>
                       </button>
                     </th>
@@ -178,10 +158,10 @@ function DepartmentAdoptionChart({
                     <span className="flex items-center gap-1.5 min-w-0">
                       <span
                         className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: deptDotColor(dept) }}
+                        style={{ backgroundColor: deptCfg(dept).fill }}
                         aria-hidden="true"
                       />
-                      <span className="truncate font-medium text-lean-black dark:text-gray-200">
+                      <span className="truncate font-medium text-lean-black dark:text-warm-100">
                         {dept.split('/')[0].trim()}
                       </span>
                     </span>
@@ -202,7 +182,7 @@ function DepartmentAdoptionChart({
                               : 'w-3 h-3 hover:scale-110 opacity-50 hover:opacity-80',
                           ].join(' ')}
                           style={{
-                            backgroundColor: active ? domCfg.hex : 'transparent',
+                            backgroundColor: active ? deptCfg(dept).fill : 'transparent',
                             border:          active ? 'none' : '1.5px solid #CBD5E1',
                             cursor:          'pointer',
                           }}
@@ -215,7 +195,7 @@ function DepartmentAdoptionChart({
             </tbody>
           </table>
         </div>
-        <p className="text-[9px] text-text-muted/60 mt-2">
+        <p className="text-xs text-text-muted mt-2">
           Haz clic en cualquier punto para ver los proyectos del departamento en ese dominio
         </p>
       </div>
@@ -247,7 +227,11 @@ export function PortfolioMatrix({
   selectedDomain,
   onSelectDomain,
 }: PortfolioMatrixProps) {
+  const isDark  = useIsDark()
   const domains = Object.values(canvas.domains)
+  const [hoveredCode, setHoveredCode] = useState<T5DomainCode | null>(null)
+  const handleMouseEnter = useCallback((code: T5DomainCode) => setHoveredCode(code), [])
+  const handleMouseLeave = useCallback(() => setHoveredCode(null), [])
 
   const resolvedPositions = useMemo((): ChipPos[] => {
     const chips: ChipPos[] = domains.map(d => ({
@@ -287,29 +271,29 @@ export function PortfolioMatrix({
         <div className="flex-1 flex flex-col gap-1.5 min-w-0">
           {/* Chart area */}
           <div
-            className="relative rounded-xl overflow-hidden border border-border/60"
+            className="relative rounded-xl border border-border/60"
             style={{ height: COLL_H }}
           >
             {/* Quadrant backgrounds */}
             <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 pointer-events-none">
               <div className="bg-warning-light/45 dark:bg-warm-800/40 border-r border-b border-border/30" />
               <div className="bg-success-light/45 dark:bg-warm-800/30 border-b border-border/30" />
-              <div className="bg-gray-100/80 dark:bg-gray-700/35 border-r border-border/30" />
-              <div className="bg-info-light/20 dark:bg-warm-800/20" />
+              <div className="bg-info-light/25 dark:bg-warm-700/35 border-r border-border/30" />
+              <div className="bg-danger-light/20 dark:bg-warm-800/20" />
             </div>
 
             {/* Quadrant labels */}
-            <span className="absolute top-2 left-3 text-[9px] font-semibold text-warning-dark/75 pointer-events-none select-none">
+            <span className="absolute top-2 left-3 text-[11px] font-semibold text-warning-dark/80 pointer-events-none select-none">
               Pilotar 90 días
             </span>
-            <span className="absolute top-2 right-3 text-[9px] font-semibold text-success-dark/75 pointer-events-none select-none">
+            <span className="absolute top-2 right-3 text-[11px] font-semibold text-success-dark/80 pointer-events-none select-none">
               Activar ahora
             </span>
-            <span className="absolute bottom-2 left-3 text-[9px] font-semibold text-gray-400/80 pointer-events-none select-none">
+            <span className="absolute bottom-2 left-3 text-[11px] font-semibold text-info-dark/70 pointer-events-none select-none">
               Preparar foundations
             </span>
-            <span className="absolute bottom-2 right-3 text-[9px] font-semibold text-info-dark/60 pointer-events-none select-none">
-              Evaluar viabilidad
+            <span className="absolute bottom-2 right-3 text-[11px] font-semibold text-danger-dark/70 pointer-events-none select-none">
+              Gobernar antes de expandir
             </span>
 
             {/* Domain chips */}
@@ -320,53 +304,83 @@ export function PortfolioMatrix({
               const recCfg     = T5_RECOMMENDATION_CONFIG[d.recommendation]
               const isSelected = selectedDomain === d.domainCode
 
+              const isHovered = hoveredCode === d.domainCode
               return (
                 <button
                   key={d.domainCode}
                   title={`${domCfg.label} — ${recCfg.label}`}
                   onClick={() => onSelectDomain(d.domainCode)}
-                  className="absolute group"
+                  onMouseEnter={() => handleMouseEnter(d.domainCode)}
+                  onMouseLeave={handleMouseLeave}
+                  className="absolute"
                   style={{
                     left:      pos.xPx,
                     top:       pos.yPx,
                     width:     pos.size,
                     height:    pos.size,
                     transform: 'translate(-50%, -50%)',
-                    zIndex:    isSelected ? 10 : 5,
+                    zIndex:    isHovered ? 30 : isSelected ? 10 : 5,
                   }}
                 >
                   <div
-                    className={`w-full h-full rounded-full flex flex-col items-center justify-center
-                      transition-all duration-200 ${isSelected ? 'scale-110' : 'hover:scale-105'}`}
+                    className="w-full h-full rounded-full flex flex-col items-center justify-center transition-all duration-200"
                     style={{
-                      border:          `2.5px solid ${recCfg.hex}`,
-                      backgroundColor: recCfg.hex + (isSelected ? '38' : '20'),
+                      transform:       isSelected ? 'scale(1.12)' : isHovered ? 'scale(1.05)' : 'scale(1)',
+                      border:          isSelected
+                        ? '2.5px solid #C8860A'
+                        : isHovered
+                          ? '2.5px solid rgba(138,133,124,0.7)'
+                          : '2px solid rgba(138,133,124,0.35)',
+                      backgroundColor: isSelected
+                        ? (isDark ? 'rgba(200,134,10,0.18)' : 'rgba(200,134,10,0.10)')
+                        : (isDark ? 'rgba(42,40,34,0.55)'   : 'rgba(247,244,238,0.80)'),
                       boxShadow: isSelected
-                        ? `0 0 0 4px ${recCfg.hex}35, 0 6px 20px ${recCfg.hex}45`
-                        : `0 2px 8px ${recCfg.hex}25`,
-                      color: recCfg.hex,
+                        ? '0 0 0 3px rgba(200,134,10,0.18), 0 6px 20px rgba(200,134,10,0.20)'
+                        : isHovered
+                          ? '0 4px 12px rgba(138,133,124,0.20)'
+                          : '0 1px 4px rgba(138,133,124,0.12)',
+                      color: isSelected ? '#C8860A' : isDark ? '#9A9790' : '#6B6864',
                     }}
                   >
                     <span className="leading-none select-none">{DOMAIN_ICON_MAP[domCfg.icon] ?? <Settings size={14} strokeWidth={1.5} />}</span>
                     <span
-                      className="text-[8px] font-bold leading-tight text-center text-lean-black dark:text-gray-200 select-none"
-                      style={{ maxWidth: pos.size - 10, wordBreak: 'break-word', padding: '0 3px' }}
+                      className="text-[8px] font-bold leading-tight text-center select-none"
+                      style={{
+                        maxWidth:  pos.size - 10,
+                        wordBreak: 'break-word',
+                        padding:   '0 3px',
+                        color:     isSelected ? '#C8860A' : isDark ? '#C4C0B8' : '#2A2822',
+                      }}
                     >
                       {domCfg.shortLabel}
                     </span>
-                    <span className="text-[8px] tabular-nums text-text-muted select-none">
+                    <span
+                      className="text-[8px] tabular-nums select-none"
+                      style={{ color: isSelected ? 'rgba(200,134,10,0.75)' : isDark ? '#6B6864' : '#9A9790' }}
+                    >
                       {d.priorityScore}
                     </span>
                   </div>
 
-                  {/* Hover tooltip */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-20 whitespace-nowrap">
-                    <div className="bg-lean-black text-white text-[10px] rounded-lg px-3 py-1.5 shadow-sm">
-                      <p className="font-semibold">{domCfg.label}</p>
-                      <p style={{ color: recCfg.hex }}>{recCfg.label}</p>
-                    </div>
-                    <div className="w-2 h-2 bg-lean-black rotate-45 mx-auto -mt-1" />
-                  </div>
+                  {/* Tooltip — visible cuando isHovered, encima de todo por z-index del padre */}
+                  {isHovered && (() => {
+                    const above = pos.yPx > COLL_H / 2
+                    return (
+                      <div className={[
+                        'absolute left-1/2 -translate-x-1/2 pointer-events-none flex flex-col items-center',
+                        'whitespace-nowrap',
+                        above ? 'bottom-full mb-1.5 flex-col' : 'top-full mt-1.5 flex-col-reverse',
+                      ].join(' ')}>
+                        <div className="bg-lean-black text-white text-[10px] rounded-lg px-3 py-2 shadow-md">
+                          <p className="font-semibold mb-1.5 text-warm-200">{domCfg.label}</p>
+                          <p className="text-white/60">Valor de negocio: <span className="text-white font-medium">{d.scores.businessValue}</span></p>
+                          <p className="text-white/60">Madurez técnica: <span className="text-white font-medium">{d.scores.technicalReady}</span></p>
+                          <p className="text-white/60">Casos de uso: <span className="text-white font-medium">{d.useCaseCount}</span></p>
+                        </div>
+                        <div className="w-2 h-2 bg-lean-black rotate-45 shrink-0" style={{ marginTop: above ? -4 : 0, marginBottom: above ? 0 : -4 }} />
+                      </div>
+                    )
+                  })()}
                 </button>
               )
             })}
@@ -380,18 +394,6 @@ export function PortfolioMatrix({
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-border/50">
-        {(['activar_ahora', 'pilotar_90d', 'preparar_foundations', 'gobernar_primero'] as const).map(rec => {
-          const cfg = T5_RECOMMENDATION_CONFIG[rec]
-          return (
-            <div key={rec} className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cfg.hex }} />
-              <span className="text-[10px] text-text-muted">{cfg.label}</span>
-            </div>
-          )
-        })}
-      </div>
 
       {/* Department adoption chart */}
       <DepartmentAdoptionChart

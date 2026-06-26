@@ -16,9 +16,9 @@ export function EmptyNoProject() {
           <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-1.5">
             Selecciona un proyecto
           </h2>
-          <p className="text-xs text-text-muted dark:text-gray-500 leading-relaxed">
+          <p className="text-xs text-text-muted dark:text-warm-400 leading-relaxed">
             El dashboard de adopción IA está vinculado al proyecto activo.
-            Usa el selector <span className="font-semibold text-lean-black dark:text-gray-300">▾ Proyecto</span> en la barra superior para seleccionar uno existente o crear uno nuevo.
+            Usa el selector <span className="font-semibold text-lean-black dark:text-warm-100">▾ Proyecto</span> en la barra superior para seleccionar uno existente o crear uno nuevo.
           </p>
         </div>
       </div>
@@ -44,14 +44,14 @@ export function EmptyNoData({ onNavigate }: { onNavigate: (path: string) => void
           <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-2">
             No hay datos suficientes para calcular el valor
           </h2>
-          <p className="text-xs text-text-muted dark:text-gray-500 leading-relaxed">
+          <p className="text-xs text-text-muted dark:text-warm-400 leading-relaxed">
             El dashboard se construye a partir de las herramientas del programa GOBY.
-            Comienza completando el <span className="font-semibold text-lean-black dark:text-gray-300">Radar de Madurez (T1)</span> para que el sistema pueda calcular los indicadores de adopción IA de tu empresa.
+            Comienza completando el <span className="font-semibold text-lean-black dark:text-warm-100">Radar de Madurez (T1)</span> para que el sistema pueda calcular los indicadores de adopción IA de tu empresa.
           </p>
         </div>
         {/* Progress de herramientas completadas */}
         <div className="rounded-xl px-4 py-3 text-left space-y-1.5 border-l-4 border-l-gold bg-card dark:bg-warm-700">
-          <p className="text-xs font-mono uppercase tracking-widest mb-2 text-gold">
+          <p className="text-xs font-sans uppercase tracking-widest mb-2 text-gold">
             Ruta de activación recomendada
           </p>
           {[
@@ -70,7 +70,7 @@ export function EmptyNoData({ onNavigate }: { onNavigate: (path: string) => void
               >
                 {i + 1}
               </div>
-              <span className={`text-xs ${step.active ? 'font-semibold text-lean-black dark:text-gray-100' : 'text-text-muted dark:text-gray-500'}`}>
+              <span className={`text-xs ${step.active ? 'font-semibold text-lean-black dark:text-warm-50' : 'text-text-muted dark:text-warm-400'}`}>
                 {step.code} · {step.label}
               </span>
             </div>

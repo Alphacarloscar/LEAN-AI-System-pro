@@ -4,9 +4,10 @@
 
 import { Check, X } from 'lucide-react'
 import { Button, Card } from '@shared/design-system/components'
-import { DIMENSION_CONFIG, STATUS_CONFIG, STATUS_ORDER } from '../constants'
+import { DIMENSION_CONFIG, AI_CATEGORY_LABELS } from '../constants'
 import type { UseCase, UseCaseScores } from '../types'
 import { PriorityMatrix }            from './PriorityMatrix'
+import { DOMAIN_ICONS, DOMAIN_LABELS, type DomainIconCode } from '@shared/design-system/charts/domainIcons'
 import { T4ScoreBars, ScoreInput }   from './T4ScoreEditors'
 import { LowScoreRecommendations }   from './LowScoreRecommendations'
 import { priorityScoreColor }        from './T4Badges.constants'
@@ -37,13 +38,20 @@ export function ScoringTabContent({
           Posición en la matriz de prioridad
         </p>
         <PriorityMatrix useCases={allUseCases} activeId={useCase.id} onSelect={onSelect} />
-        <div className="flex flex-wrap gap-3">
-          {STATUS_ORDER.filter((st) => allUseCases.some((uc) => uc.status === st)).map((st) => (
-            <div key={st} className="flex items-center gap-1.5">
-              <span className={`h-2 w-2 rounded-full ${STATUS_CONFIG[st].dotBg}`} />
-              <span className="text-[9px] text-text-subtle">{STATUS_CONFIG[st].label}</span>
-            </div>
-          ))}
+        {/* Leyenda: categoría IA — icono DS neutro + label */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+          {Array.from(new Set(allUseCases.map((uc) => uc.aiCategory))).map((cat) => {
+            const icon  = DOMAIN_ICONS[cat as DomainIconCode]
+            const label = DOMAIN_LABELS[cat as DomainIconCode] ?? AI_CATEGORY_LABELS[cat] ?? cat
+            return (
+              <div key={cat} className="flex items-center gap-1.5">
+                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-warm-100 dark:bg-warm-700 text-warm-600 dark:text-warm-300 shrink-0">
+                  {icon}
+                </span>
+                <span className="text-[9px] text-text-subtle">{label}</span>
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -131,9 +139,9 @@ export function ScoringTabContent({
             <div className="flex items-center gap-2 mb-1.5">
               <span className={`inline-flex items-center gap-1 text-xs font-bold ${useCase.goNoGo.decision === 'go' ? 'text-success-dark' : useCase.goNoGo.decision === 'no_go' ? 'text-danger-dark' : 'text-warning-dark'}`}>
                 {useCase.goNoGo.decision === 'go'
-                  ? <><Check size={14} strokeWidth={2} /> GO</>
+                  ? <><Check size={14} strokeWidth={1.5} /> GO</>
                   : useCase.goNoGo.decision === 'no_go'
-                  ? <><X size={14} strokeWidth={2} /> NO-GO</>
+                  ? <><X size={14} strokeWidth={1.5} /> NO-GO</>
                   : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg> PENDIENTE</>
                 }
               </span>

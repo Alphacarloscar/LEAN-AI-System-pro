@@ -8,6 +8,12 @@ import {
   ROGERS_SEGMENT_COLORS,
   DOMAIN_COLORS,
   T3_QUADRANT_COLORS,
+  MONO_STATUS_COLORS,
+  CHART_SERIES_COLORS,
+  T3_VALUE_BAR_COLORS,
+  T3_VALUE_ACTIVE_BG,
+  DEPT_ADOPTION_COLORS,
+  DEPT_COLORS,
   type ChartTokenName,
 } from '@shared/design-system/charts/chartTokens'
 
@@ -34,27 +40,36 @@ function isNotColdColor(hex: string): boolean {
 
 // ── getHeroColor ─────────────────────────────────────────────────────────────
 
-describe('getHeroColor — semáforo ADR-021 warm palette', () => {
+describe('getHeroColor — interpolación RGB warm→gold (ADR-021)', () => {
   it('devuelve gold (#C8860A) cuando score es undefined (neutro)', () => {
     expect(getHeroColor(undefined)).toBe('#C8860A')
   })
 
-  it('devuelve danger-dark (#C05035) cuando score < 30 (rojo)', () => {
-    expect(getHeroColor(0)).toBe('#C05035')
-    expect(getHeroColor(10)).toBe('#C05035')
-    expect(getHeroColor(29)).toBe('#C05035')
+  it('score=0 devuelve rgb de partida (warm-neutral)', () => {
+    expect(getHeroColor(0)).toBe('rgb(154,151,144)')
   })
 
-  it('devuelve gold (#C8860A) cuando score está en rango 30–59 (ámbar)', () => {
-    expect(getHeroColor(30)).toBe('#C8860A')
-    expect(getHeroColor(50)).toBe('#C8860A')
-    expect(getHeroColor(59)).toBe('#C8860A')
+  it('score=100 devuelve rgb de gold', () => {
+    expect(getHeroColor(100)).toBe('rgb(200,134,10)')
   })
 
-  it('devuelve success verde (#2A7A52) cuando score >= 60', () => {
-    expect(getHeroColor(60)).toBe('#2A7A52')
-    expect(getHeroColor(80)).toBe('#2A7A52')
-    expect(getHeroColor(100)).toBe('#2A7A52')
+  it('score=50 devuelve valor intermedio (no es ningún extremo)', () => {
+    const color = getHeroColor(50)
+    expect(color).toMatch(/^rgb\(\d+,\d+,\d+\)$/)
+    expect(color).not.toBe('rgb(154,151,144)')
+    expect(color).not.toBe('rgb(200,134,10)')
+  })
+
+  it('clampea hacia abajo: score=-10 === score=0', () => {
+    expect(getHeroColor(-10 as unknown as number)).toBe(getHeroColor(0))
+  })
+
+  it('clampea hacia arriba: score=150 === score=100', () => {
+    expect(getHeroColor(150 as unknown as number)).toBe(getHeroColor(100))
+  })
+
+  it('acepta parámetros _dangerBelow/_warningBelow sin error (firma completa)', () => {
+    expect(() => getHeroColor(50, 30, 60)).not.toThrow()
   })
 
   it('ningún valor devuelto pertenece a la paleta fría prohibida por ADR-021', () => {
@@ -144,8 +159,8 @@ describe('ROGERS_SEGMENT_COLORS — sin colores fríos prohibidos', () => {
 })
 
 describe('DOMAIN_COLORS — dominios IA con paleta warm', () => {
-  it('automatizacion usa gold (#C8860A)', () => {
-    expect(DOMAIN_COLORS.automatizacion).toBe('#C8860A')
+  it('automatizacion_inteligente usa gold (#C8860A)', () => {
+    expect(DOMAIN_COLORS.automatizacion_inteligente).toBe('#C8860A')
   })
 
   it('todos los valores son hex no vacíos y no cold-gray', () => {
@@ -165,5 +180,110 @@ describe('T3_QUADRANT_COLORS — oportunity matrix sin paleta fría', () => {
   it('axisLabel usa warm-500 (#9A9790), no cold (#9CA3AF)', () => {
     expect(T3_QUADRANT_COLORS.axisLabel).toBe('#9A9790')
     expect(T3_QUADRANT_COLORS.axisLabel).not.toBe('#9CA3AF')
+  })
+})
+
+// ── Paletas adicionales ADR-021 ───────────────────────────────────────────────
+
+describe('MONO_STATUS_COLORS — escala monocromática warm (4 categorías)', () => {
+  it('tiene exactamente 4 valores', () => {
+    expect(MONO_STATUS_COLORS).toHaveLength(4)
+  })
+
+  it('todos son hex no vacíos sin paleta fría', () => {
+    for (const hex of MONO_STATUS_COLORS) {
+      expect(hex).toBeTruthy()
+      expect(isNotColdColor(hex), `color frío prohibido: ${hex}`).toBe(true)
+    }
+  })
+
+  it('primer valor es gold (#C8860A) — categoría positiva', () => {
+    expect(MONO_STATUS_COLORS[0]).toBe('#C8860A')
+  })
+})
+
+describe('CHART_SERIES_COLORS — 10 colores para series multi-chart', () => {
+  it('tiene exactamente 10 colores', () => {
+    expect(CHART_SERIES_COLORS).toHaveLength(10)
+  })
+
+  it('todos son strings no vacíos', () => {
+    for (const hex of CHART_SERIES_COLORS) {
+      expect(typeof hex).toBe('string')
+      expect(hex).toBeTruthy()
+    }
+  })
+})
+
+describe('T3_VALUE_BAR_COLORS — barras de value contribution', () => {
+  it('tiene las 4 categorías esperadas', () => {
+    expect(T3_VALUE_BAR_COLORS).toHaveProperty('alta')
+    expect(T3_VALUE_BAR_COLORS).toHaveProperty('media')
+    expect(T3_VALUE_BAR_COLORS).toHaveProperty('baja')
+    expect(T3_VALUE_BAR_COLORS).toHaveProperty('nula')
+  })
+
+  it('todos son hex no vacíos sin paleta fría', () => {
+    for (const [k, hex] of Object.entries(T3_VALUE_BAR_COLORS)) {
+      expect(hex, `${k} vacío`).toBeTruthy()
+      expect(isNotColdColor(hex), `${k}: color frío prohibido ${hex}`).toBe(true)
+    }
+  })
+})
+
+describe('T3_VALUE_ACTIVE_BG — fondos activos de barras value contribution', () => {
+  it('tiene las 4 categorías esperadas', () => {
+    expect(T3_VALUE_ACTIVE_BG).toHaveProperty('alta')
+    expect(T3_VALUE_ACTIVE_BG).toHaveProperty('media')
+    expect(T3_VALUE_ACTIVE_BG).toHaveProperty('baja')
+    expect(T3_VALUE_ACTIVE_BG).toHaveProperty('nula')
+  })
+
+  it('todos son strings no vacíos', () => {
+    for (const [k, val] of Object.entries(T3_VALUE_ACTIVE_BG)) {
+      expect(val, `${k} vacío`).toBeTruthy()
+    }
+  })
+})
+
+describe('DEPT_ADOPTION_COLORS — 3 segmentos Rogers (DeptBar)', () => {
+  it('tiene exactamente innovadores, early, rezagados', () => {
+    expect(DEPT_ADOPTION_COLORS).toHaveProperty('innovadores')
+    expect(DEPT_ADOPTION_COLORS).toHaveProperty('early')
+    expect(DEPT_ADOPTION_COLORS).toHaveProperty('rezagados')
+  })
+
+  it('ninguno es color frío prohibido', () => {
+    for (const [k, hex] of Object.entries(DEPT_ADOPTION_COLORS)) {
+      expect(isNotColdColor(hex), `${k}: color frío prohibido ${hex}`).toBe(true)
+    }
+  })
+
+  it('innovadores usa gold (#C8860A) — acento de adopción temprana', () => {
+    expect(DEPT_ADOPTION_COLORS.innovadores).toBe('#C8860A')
+  })
+})
+
+describe('DEPT_COLORS — colores por departamento cross-módulo (T5, T7, T8, T10)', () => {
+  const EXPECTED_DEPTS = [
+    'direction', 'it', 'ops', 'marketing', 'hr',
+    'finance', 'legal', 'logistics', 'purchasing', 'fallback',
+  ] as const
+
+  it('contiene todos los departamentos esperados', () => {
+    for (const dept of EXPECTED_DEPTS) {
+      expect(DEPT_COLORS).toHaveProperty(dept)
+    }
+  })
+
+  it('todos son hex no vacíos', () => {
+    for (const [k, hex] of Object.entries(DEPT_COLORS)) {
+      expect(typeof hex, `${k} no es string`).toBe('string')
+      expect(hex, `${k} vacío`).toBeTruthy()
+    }
+  })
+
+  it('direction es gold (#C8860A) — acento de marca', () => {
+    expect(DEPT_COLORS.direction).toBe('#C8860A')
   })
 })

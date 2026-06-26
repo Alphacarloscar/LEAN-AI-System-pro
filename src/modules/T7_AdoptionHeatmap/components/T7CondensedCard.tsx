@@ -29,7 +29,7 @@ export function CondensedCard({
       <button
         onClick={onClose}
         aria-label="Cerrar"
-        className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full text-text-muted hover:text-text-base hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-lg leading-none"
+        className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full text-text-muted hover:text-text-base hover:bg-warm-100 dark:hover:bg-warm-700 transition-colors text-lg leading-none"
       >
         ×
       </button>
@@ -45,10 +45,10 @@ export function CondensedCard({
         <div className="flex-1 min-w-0 pr-6">
           <div className="flex items-start justify-between gap-2 flex-wrap">
             <div>
-              <p className="font-semibold text-lean-black dark:text-gray-100 text-sm leading-tight">{sh.name}</p>
+              <p className="font-semibold text-lean-black dark:text-warm-50 text-sm leading-tight">{sh.name}</p>
               <p className="text-xs text-text-muted mt-0.5">{sh.role}</p>
             </div>
-            <span className="text-[10px] font-mono uppercase tracking-wide text-text-subtle bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full whitespace-nowrap">
+            <span className="text-[10px] font-mono uppercase tracking-wide text-text-subtle bg-warm-100 dark:bg-warm-700 px-2 py-0.5 rounded-full whitespace-nowrap">
               {segLabel}
             </span>
           </div>

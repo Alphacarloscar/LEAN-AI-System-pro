@@ -29,7 +29,7 @@ import { ViewerEmptyState }               from '@/shared/components/ViewerEmptyS
 import { GanttRowItem }                   from './components/GanttRowItem'
 import { AddFreeItemForm }                from './components/AddFreeItemForm'
 import { computeDefaultOverride, MONTH_NAMES } from './t9GanttHelpers'
-import { DS }                             from './components/GanttRowItem.constants'
+import { DS, DS_DARK }                    from './components/GanttRowItem.constants'
 import type { AIGanttRow, FreeGanttRow, GanttRow } from './components/GanttRowItem'
 import type { AddFreeItemFormValues } from '@/lib/schemas/t9.schemas'
 import { createSnapshot }                 from '@/services/t9.service'
@@ -49,10 +49,15 @@ export function T9View({ onBack }: T9ViewProps) {
   const { useCases, engagementId: t4EngagementId, loadEngagement: loadT4 } = useT4Store()
   const { overrides, freeItems, setOverride, addFreeItem, updateFreeItem, syncEngagement: syncT9 } = useT9Store()
   const { profile: companyProfile }                     = useCompanyProfileStore()
-  const companyName                                     = companyProfile.engagementName
   const engagementId                                    = useEngagementStore((s) => s.activeEngagementId)
   const { user }                                        = useAuthStore()
   const [snapshotLoading, setSnapshotLoading]           = useState(false)
+  const [dark, setDark] = useState(() => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'))
+  useEffect(() => {
+    const observer = new MutationObserver(() => setDark(document.documentElement.classList.contains('dark')))
+    observer.observe(document.documentElement, { attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
 
   // Scoping: si cambia el engagement, limpia overrides y freeItems del cliente anterior
   // stable Zustand action — mount-only: sincronizar al cambiar engagement
@@ -172,15 +177,14 @@ export function T9View({ onBack }: T9ViewProps) {
         backLabel="Volver al dashboard"
         toolCode="T9"
         title="Roadmap IA — 6 meses"
-        subtitle={`${companyName} · Sprint L.E.A.N.`}
         phaseMiniMap={<PhaseMiniMap phaseId="activate" toolCode="T9" />}
         maxWidth="max-w-7xl"
         cta={
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-0.5 border border-border dark:border-white/10 rounded-lg px-2 py-1 bg-white dark:bg-gray-900">
+            <div className="flex items-center gap-0.5 border border-border dark:border-white/10 rounded-lg px-2 py-1 bg-white dark:bg-warm-800">
               <button
                 onClick={() => setSelectedYear((y) => y - 1)}
-                className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-lean-black dark:hover:text-gray-100 transition-colors rounded"
+                className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-lean-black dark:hover:text-warm-50 transition-colors rounded"
                 aria-label="Año anterior"
               >
                 ‹
@@ -190,7 +194,7 @@ export function T9View({ onBack }: T9ViewProps) {
               </span>
               <button
                 onClick={() => setSelectedYear((y) => y + 1)}
-                className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-lean-black dark:hover:text-gray-100 transition-colors rounded"
+                className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-lean-black dark:hover:text-warm-50 transition-colors rounded"
                 aria-label="Año siguiente"
               >
                 ›
@@ -239,11 +243,11 @@ export function T9View({ onBack }: T9ViewProps) {
             {/* Trimestres */}
             <div className="grid border-b border-border dark:border-white/6" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
               {([
-                { q: 'Q1', months: 'Ene–Mar', bg: DS.infoLight,    color: DS.infoDark    },
-                { q: 'Q2', months: 'Abr–Jun', bg: DS.successLight,  color: DS.successDark },
-                { q: 'Q3', months: 'Jul–Sep', bg: DS.warningLight,  color: DS.warningDark },
-                { q: 'Q4', months: 'Oct–Dic', bg: DS.dangerLight,   color: DS.dangerDark  },
-              ] as const).map(({ q, months, bg, color }, i) => (
+                { q: 'Q1', months: 'Ene–Mar', bg: dark ? DS_DARK.infoLight    : DS.infoLight,    color: DS.infoDark    },
+                { q: 'Q2', months: 'Abr–Jun', bg: dark ? DS_DARK.successLight : DS.successLight, color: DS.successDark },
+                { q: 'Q3', months: 'Jul–Sep', bg: dark ? DS_DARK.warningLight : DS.warningLight, color: DS.warningDark },
+                { q: 'Q4', months: 'Oct–Dic', bg: dark ? DS_DARK.dangerLight  : DS.dangerLight,  color: DS.dangerDark  },
+              ]).map(({ q, months, bg, color }, i) => (
                 <div
                   key={q}
                   className={['py-1.5 text-center text-[10px] font-medium uppercase tracking-widest', i < 3 ? 'border-r border-border dark:border-white/6' : ''].join(' ')}

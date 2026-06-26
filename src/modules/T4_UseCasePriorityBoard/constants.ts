@@ -7,6 +7,7 @@
 // ============================================================
 
 import type { UseCaseStatus, UseCaseScores, UseCaseEconomics, HourlyRatePreset } from './types'
+import { DOMAIN_COLORS } from '@shared/design-system/charts/chartTokens'
 
 // ── Configuración de estados ──────────────────────────────────
 
@@ -156,9 +157,9 @@ export function averageStakeholderScores(
 // Umbral: 60 (equivale a 60/100)
 
 export const PRIORITY_QUADRANTS = [
-  { qx: 0.60, qy: 0.08, text: 'IMPLEMENTAR YA', color: '#C8860A' },  // gold
+  { qx: 0.52, qy: 0.08, text: 'IMPLEMENTAR YA', color: '#C8860A' },  // gold
   { qx: 0.03, qy: 0.08, text: 'PLANIFICAR',     color: '#8A857C' },  // warm-500
-  { qx: 0.60, qy: 0.82, text: 'QUICK WIN',      color: '#B8B4AB' },  // warm-300
+  { qx: 0.52, qy: 0.82, text: 'QUICK WIN',      color: '#B8B4AB' },  // warm-300
   { qx: 0.03, qy: 0.82, text: 'REVISAR',        color: '#D4D0C8' },  // warm-200
 ] as const
 
@@ -185,12 +186,12 @@ export const AI_CATEGORY_LABELS: Record<string, string> = {
 }
 
 export const AI_CATEGORY_HEX: Record<string, string> = {
-  automatizacion_inteligente: '#6A90C0',
-  automatizacion_rpa:         '#5FAF8A',
-  analitica_predictiva:       '#2A2822',
-  asistente_ia:               '#D4A85C',
-  optimizacion_proceso:       '#C06060',
-  agéntica:                   '#7C3AED',
+  automatizacion_rpa:         DOMAIN_COLORS.automatizacion_rpa,
+  automatizacion_inteligente: DOMAIN_COLORS.automatizacion_inteligente,
+  analitica_predictiva:       DOMAIN_COLORS.analitica_predictiva,
+  asistente_ia:               DOMAIN_COLORS.asistente_ia,
+  optimizacion_proceso:       DOMAIN_COLORS.optimizacion_proceso,
+  agéntica:                   DOMAIN_COLORS['agéntica'],
 }
 
 // ── Benchmarks de coste de implementación por categoría IA ───

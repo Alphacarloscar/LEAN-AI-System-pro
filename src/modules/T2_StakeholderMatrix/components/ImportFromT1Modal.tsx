@@ -170,7 +170,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
 
             {interviewees.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gray-100 dark:bg-warm-700 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg></div>
+                <div className="h-12 w-12 rounded-xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg></div>
                 <p className="text-sm font-medium text-text-muted">Sin entrevistados en T1</p>
                 <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
                   Añade entrevistados en el Madurez Radar (T1) primero para importarlos aquí.
@@ -197,7 +197,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
                       'flex items-start gap-3',
                       isSelected
                         ? 'border-navy/40 bg-navy/5 dark:bg-navy/10 ring-1 ring-navy/20'
-                        : 'border-border dark:border-white/8 bg-white dark:bg-warm-800 hover:border-gray-300 dark:hover:border-white/14',
+                        : 'border-border dark:border-white/8 bg-white dark:bg-warm-800 hover:border-warm-300 dark:hover:border-white/14',
                     ].join(' ')}
                   >
                     {/* Checkbox */}
@@ -205,7 +205,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
                       'h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5',
                       isSelected
                         ? 'border-navy bg-navy'
-                        : 'border-gray-300 dark:border-warm-500',
+                        : 'border-warm-300 dark:border-warm-500',
                     ].join(' ')}>
                       {isSelected && (
                         <svg viewBox="0 0 10 8" width={10} height={8} fill="none">
@@ -270,7 +270,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
                         <p className="text-[10px] text-text-subtle">{person.role}</p>
                       </div>
                       <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-success-dark shrink-0">
-                        Ya en T2 <Check size={10} strokeWidth={2} />
+                        Ya en T2 <Check size={10} strokeWidth={1.5} />
                       </span>
                     </div>
                   ))}
@@ -282,7 +282,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
         /* Importación completada */
         <div className="flex flex-col items-center justify-center py-8 px-4 text-center gap-5">
           <div className="h-14 w-14 rounded-xl bg-success-light flex items-center justify-center text-success-dark">
-            <Check size={28} strokeWidth={2} />
+            <Check size={28} strokeWidth={1.5} />
           </div>
           <div>
             <p className="text-base font-semibold text-lean-black dark:text-warm-50 mb-1">

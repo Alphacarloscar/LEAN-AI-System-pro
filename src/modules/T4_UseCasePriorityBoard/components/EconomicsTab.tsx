@@ -32,7 +32,17 @@ function toFormValues(econ: UseCaseEconomics): EconomicsFormValues {
   }
 }
 
-export function EconomicsTab({ useCase }: { useCase: UseCase }) {
+export function EconomicsTab({
+  useCase,
+  onEditingChange,
+  saveRequested,
+  onSaveRequestHandled,
+}: {
+  useCase: UseCase
+  onEditingChange?: (editing: boolean, isDirty: boolean) => void
+  saveRequested?: boolean
+  onSaveRequestHandled?: () => void
+}) {
   const { updateUseCase } = useT4Store()
   const { isReadOnly }    = usePermissions()
   const [editing, setEditing] = useState(false)
@@ -68,7 +78,21 @@ export function EconomicsTab({ useCase }: { useCase: UseCase }) {
 
   // isDirty de RHF es la fuente de verdad real — solo hay cambios si el usuario
   // modificó algo respecto al snapshot inicial, independientemente del modo edición
-  useUnsavedGuard(editing && isDirty, 'T4_Economics')
+  useUnsavedGuard(editing, 'T4_Economics')
+
+  // Notifica al panel padre sobre el estado de edición
+  useEffect(() => {
+    onEditingChange?.(editing, isDirty)
+  }, [editing, isDirty, onEditingChange])
+
+  // El padre solicita guardar (al confirmar el modal de cambio de caso de uso)
+  useEffect(() => {
+    if (saveRequested) {
+      handleSubmit(onSubmit)()
+      onSaveRequestHandled?.()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saveRequested])
 
   // Sincroniza hourlyRate al cambiar preset para que el preview ROI sea correcto
   const watchedPreset  = useWatch({ control, name: 'hourlyRatePreset' })

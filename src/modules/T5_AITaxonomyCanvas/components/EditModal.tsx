@@ -90,7 +90,7 @@ export function EditModal({ domainCode, assessment, onSave, onCancel }: EditModa
             return (
               <div key={key}>
                 <div className="flex justify-between items-baseline mb-2">
-                  <span className="text-xs font-semibold text-lean-black dark:text-gray-200">{cfg.label}</span>
+                  <span className="text-xs font-semibold text-lean-black dark:text-warm-100">{cfg.label}</span>
                   <span className="text-xs font-bold tabular-nums" style={{ color: cfg.hex }}>
                     {val} — {cfg.scaleLabels[lblIdx]}
                   </span>
@@ -104,7 +104,7 @@ export function EditModal({ domainCode, assessment, onSave, onCancel }: EditModa
                   style={{ accentColor: cfg.hex }}
                   {...register(key, { valueAsNumber: true })}
                 />
-                <p className="text-[9px] text-text-subtle mt-1">{cfg.description}</p>
+                <p className="text-[10px] text-text-muted mt-1">{cfg.description}</p>
               </div>
             )
           })}
@@ -112,8 +112,8 @@ export function EditModal({ domainCode, assessment, onSave, onCancel }: EditModa
       </form>
 
       {/* Preview */}
-      <Card variant="flat" padding="none" className="rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50 px-4 py-2.5">
-        <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-1.5">
+      <Card variant="flat" padding="none" className="rounded-xl border border-border bg-warm-50 dark:bg-warm-800/50 px-4 py-2.5">
+        <p className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-1.5">
           Recomendación resultante
         </p>
         <Badge

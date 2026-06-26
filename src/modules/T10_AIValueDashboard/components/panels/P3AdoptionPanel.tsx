@@ -26,17 +26,17 @@ export function P3AdoptionPanel({ t2data, shadowAIPct, expanded, onToggle, onNav
   return (
     <PanelCard
       id="p3" expanded={expanded} onClick={onToggle}
-      tag="T2 + T7 · Adopción" tagColor="info"
+      tag="T2 + T7 · Adopción"
       title="Velocidad de adopción" subtitle={`${t2data.totalStakeholders} stakeholders · ${t2data.activePercent}% activos`}
       animDelay={160}
       heroSlot={<HeroMetric label="Adopción activa" value={`${t2data.activePercent}%`} colorScore={t2data.activePercent} />}
     >
       <div className="mb-2">
-        <p className="text-[9px] font-mono uppercase tracking-widest text-text-muted dark:text-warm-400 mb-1.5">
+        <p className="text-[9px] font-sans uppercase tracking-widest text-text-muted dark:text-warm-400 mb-1.5">
           Composición por departamento
         </p>
         {t2data.departments.length > 0
-          ? t2data.departments.map((dept, i) => <DeptBar key={i} {...dept} />)
+          ? t2data.departments.map((dept, i) => <DeptBar key={i} {...dept} colors={[t2data.groups[0]?.color ?? '#C8860A', t2data.groups[1]?.color ?? '#B07840', t2data.groups[2]?.color ?? '#9A9790']} />)
           : <p className="text-[10px] text-text-muted dark:text-warm-300">Sin stakeholders registrados aún</p>
         }
         {t2data.groups.length > 0 && (
@@ -67,8 +67,8 @@ export function P3AdoptionPanel({ t2data, shadowAIPct, expanded, onToggle, onNav
             <div className="rounded-r-xl border-l-4 border-l-gold bg-card dark:bg-warm-700 px-3 py-2.5 mb-3">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1.5">
-                  <AlertTriangle size={14} strokeWidth={2} className="text-gold" />
-                  <p className="text-[9px] font-mono uppercase tracking-widest text-gold">
+                  <AlertTriangle size={14} strokeWidth={1.5} className="text-gold" />
+                  <p className="text-[9px] font-sans uppercase tracking-widest text-gold">
                     Riesgo de Shadow AI
                   </p>
                 </div>

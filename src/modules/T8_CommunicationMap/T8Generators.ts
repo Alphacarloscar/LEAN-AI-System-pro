@@ -33,9 +33,9 @@ export function getSegment(archetype: ArchetypeCode, resistance: ResistanceLevel
 // ── Colores / labels ──────────────────────────────────────────
 
 export const PHASE_CFG: Record<CommPhase, { label: string; period: string; color: string; bg: string; border: string }> = {
-  phase1: { label: 'Fase 1', period: 'Mes 1–2', color: 'text-indigo-700', bg: 'bg-indigo-50',  border: 'border-indigo-200' },
-  phase2: { label: 'Fase 2', period: 'Mes 3–4', color: 'text-amber-700',  bg: 'bg-amber-50',   border: 'border-amber-200'  },
-  phase3: { label: 'Fase 3', period: 'Mes 5–6', color: 'text-emerald-700',bg: 'bg-emerald-50', border: 'border-emerald-200'},
+  phase1: { label: 'Fase 1', period: 'Mes 1–2', color: 'text-info-dark',    bg: 'bg-info-light',    border: 'border-info-dark/20'    },
+  phase2: { label: 'Fase 2', period: 'Mes 3–4', color: 'text-gold',         bg: 'bg-gold/10',       border: 'border-gold/20'         },
+  phase3: { label: 'Fase 3', period: 'Mes 5–6', color: 'text-success-dark', bg: 'bg-success-light', border: 'border-success-dark/20' },
 }
 
 export const TYPE_CFG: Record<CommType, { label: string; icon: string }> = {

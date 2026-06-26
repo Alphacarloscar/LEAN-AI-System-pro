@@ -9,19 +9,11 @@
 // ============================================================
 
 import { useState } from 'react'
-import { Badge, Button, FormField, type BadgeVariant } from '@/shared/design-system/components'
+import { Button, FormField } from '@/shared/design-system/components'
 import type { T1DimensionState, T1SubdimensionState } from '../types'
-import { computeDimensionScore }                      from '../types'
+import { computeDimensionScore, maturityHex, maturityTextOnBg } from '../types'
 import type { DimensionDefinition }                    from '../constants'
 import { SUBDIMENSION_MAP }                            from '../constants'
-
-function dimScoreVariant(score: number | null): BadgeVariant {
-  if (score === null) return 'default'
-  if (score >= 3)     return 'success'
-  if (score >= 2)     return 'info'
-  if (score >= 1)     return 'warning'
-  return 'danger'
-}
 
 interface DimensionCardProps {
   state:      T1DimensionState
@@ -50,12 +42,15 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
   const def  = SUBDIMENSION_MAP[sub.code]
   const hasScore = sub.score !== null
 
-  // Color del badge de score activo — escala monocromo warm con acento gold
-  const scoreColor = (n: number) =>
-    n >= 3   ? 'bg-gold text-white'         :
-    n >= 2   ? 'bg-warm-600 text-white'     :
-    n >= 1   ? 'bg-warm-500 text-white'     :
-               'bg-warm-400 text-warm-900'
+  // Gradiente warm-700→gold: 0 = #4A4740 (track barra progreso), 4 = #C8860A (gold)
+  const scoreActiveBg = (n: number): string => {
+    const t = n / 4
+    const r = Math.round(74  + (200 - 74)  * t)
+    const g = Math.round(71  + (134 - 71)  * t)
+    const b = Math.round(64  + (10  - 64)  * t)
+    return `rgb(${r},${g},${b})`
+  }
+  const scoreActiveText = () => '#FFFFFF'
 
   function setScore(n: number) {
     // Si ya está activo el mismo score, lo desmarca (null)
@@ -93,11 +88,12 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
               title={SCORE_LABELS[n]}
               className={[
                 'h-7 w-7 rounded-md text-xs font-semibold transition-all duration-150',
-                'focus:outline-none focus:ring-2 focus:ring-navy/30',
+                'focus:outline-none focus:ring-2 focus:ring-gold/40',
                 sub.score === n
-                  ? `${scoreColor(n)} shadow-sm scale-[1.08]`
+                  ? 'shadow-sm scale-[1.08]'
                   : 'bg-warm-100 dark:bg-warm-700 text-text-muted hover:bg-warm-200 dark:hover:bg-warm-600',
               ].join(' ')}
+              style={sub.score === n ? { backgroundColor: scoreActiveBg(n), color: scoreActiveText() } : undefined}
             >
               {n}
             </button>
@@ -232,9 +228,12 @@ export function DimensionCard({ state, definition, onChange }: DimensionCardProp
           <span className="text-[10px] text-text-muted tabular-nums">
             {scoredCount}/4
           </span>
-          <Badge variant={dimScoreVariant(dimScore)} shape="pill" className="!font-semibold tabular-nums">
+          <span
+            className="px-2.5 py-0.5 rounded-full text-xs font-semibold tabular-nums"
+            style={{ backgroundColor: maturityHex(dimScore), color: maturityTextOnBg(dimScore) }}
+          >
             {dimScore !== null ? dimScore.toFixed(1) : '—'}
-          </Badge>
+          </span>
           <svg
             className={`h-3.5 w-3.5 text-text-subtle transition-transform duration-150 ${isCollapsed ? '-rotate-90' : ''}`}
             viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"

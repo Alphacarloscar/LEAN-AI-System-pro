@@ -59,15 +59,15 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
         <p className="text-xs font-mono uppercase tracking-widest text-text-subtle mb-1">
           Paso 3 de 3 · Resultado del análisis
         </p>
-        <h3 className="text-base font-semibold text-lean-black dark:text-gray-100">
+        <h3 className="text-base font-semibold text-lean-black dark:text-warm-100">
           Categoría IA asignada
         </h3>
       </div>
 
       {/* Proceso identificado */}
-      <div className="rounded-xl bg-gray-50 dark:bg-gray-800/50 px-4 py-3 border border-border dark:border-white/6">
+      <div className="rounded-xl bg-warm-50 dark:bg-warm-800/50 px-4 py-3 border border-border dark:border-white/6">
         <p className="text-xs font-medium text-text-muted">{formData.department}</p>
-        <p className="text-sm font-semibold text-lean-black dark:text-gray-100">{formData.name}</p>
+        <p className="text-sm font-semibold text-lean-black dark:text-warm-100">{formData.name}</p>
         {formData.owner && (
           <p className="text-xs text-text-subtle mt-0.5">{formData.owner} · {formData.ownerRole}</p>
         )}
@@ -75,10 +75,10 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
 
       {/* Categoría auto-asignada */}
       <div className="rounded-xl border border-border dark:border-white/10 overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
+        <div className="px-4 py-3 bg-warm-50 dark:bg-warm-800/50 flex items-center gap-2">
           <CategoryBadge category={result.aiCategory} />
           <span className="text-[11px] text-text-subtle">
-            Score oportunidad: <strong className="text-lean-black dark:text-gray-200">{result.opportunityScore.toFixed(2)}</strong>/4.00
+            Score oportunidad: <strong className="text-lean-black dark:text-warm-200">{result.opportunityScore.toFixed(2)}</strong>/4.00
           </span>
           {manualOverride && (
             <Badge variant="warning" shape="pill" size="xs" className="ml-auto">
@@ -87,7 +87,7 @@ export function ResultPhase({ formData, answers, onConfirm, onBack }: ResultPhas
           )}
         </div>
         <div className="px-4 py-3">
-          <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-0.5">{cfg.tagline}</p>
+          <p className="text-xs font-semibold text-lean-black dark:text-warm-200 mb-0.5">{cfg.tagline}</p>
           <p className="text-xs text-text-muted leading-relaxed">{cfg.description}</p>
         </div>
       </div>

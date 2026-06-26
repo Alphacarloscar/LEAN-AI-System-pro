@@ -21,10 +21,14 @@
   :root {
     --color-gold-rgb: 200 134 10;
     --color-navy-rgb: 42 40 34;
+    --font-sans: Inter, ui-sans-serif, system-ui, -apple-system,
+                 'Segoe UI', Roboto, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, 'Roboto Mono',
+                 Menlo, monospace;
   }
 
-  html {
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  html, body, input, textarea, select, button {
+    font-family: var(--font-sans);
     font-feature-settings: 'cv11', 'ss01';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -90,25 +94,22 @@
     border: 1px solid rgba(28, 26, 22, 0.20);
   }
   html.dark .card-border {
-    border: 1px solid rgba(240, 237, 232, 0.10);
-    box-shadow:
-      0 0 0 0.5px rgba(240, 237, 232, 0.06),
-      inset 0 1px 0 rgba(240, 237, 232, 0.08),
-      0 4px 24px rgba(22, 20, 15, 0.4);
+    border: 0.5px solid rgba(240, 237, 232, 0.07);
+    box-shadow: 0 4px 24px rgba(22, 20, 15, 0.35);
   }
 
   .card-divider-bottom {
     border-bottom: 1px solid rgba(28, 26, 22, 0.12);
   }
   html.dark .card-divider-bottom {
-    border-bottom: 1px solid rgba(240, 237, 232, 0.08);
+    border-bottom: 0.5px solid rgba(240, 237, 232, 0.06);
   }
 
   .header-border-bottom {
     border-bottom: 1px solid rgba(28, 26, 22, 0.15);
   }
   html.dark .header-border-bottom {
-    border-bottom: 1px solid rgba(200, 134, 10, 0.15); /* toque ámbar en header dark */
+    border-bottom: 0.5px solid rgba(200, 134, 10, 0.20);
   }
 
   /* ── Fondo de cabecera ── */
@@ -120,6 +121,27 @@
   }
 
 }
+
+/* ============================================================
+   DARK MODE — Overrides globales de colores semánticos
+   bg-*-light en dark → fondos oscuros equivalentes
+   text-*-dark en dark → versión más clara para contraste
+   ============================================================ */
+
+html.dark .bg-success-light { background-color: #1A3328; }
+html.dark .bg-warning-light { background-color: #3A2A10; }
+html.dark .bg-danger-light  { background-color: #3A1A1A; }
+html.dark .bg-info-light    { background-color: #1A2840; }
+
+html.dark .text-success-dark { color: #5FAF8A; }
+html.dark .text-warning-dark { color: #D4A85C; }
+html.dark .text-danger-dark  { color: #C06060; }
+html.dark .text-info-dark    { color: #6A90C0; }
+
+html.dark .border-success-dark { border-color: rgba(95, 175, 138, 0.25); }
+html.dark .border-warning-dark { border-color: rgba(212, 168, 92,  0.25); }
+html.dark .border-danger-dark  { border-color: rgba(192, 96,  96,  0.25); }
+html.dark .border-info-dark    { border-color: rgba(106, 144, 192, 0.25); }
 
 /* ============================================================
    WARM DARK MODE — Overrides globales de escala gray
@@ -189,6 +211,45 @@ html.dark .dark\:hover\:border-white\/14:hover { border-color: rgba(240, 237, 23
 html.dark .dark\:border-white\/20 { border-color: rgba(240, 237, 232, 0.20); }
 
 /* ============================================================
+   DARK MODE — Overrides globales de bordes y resalto
+   En dark: bordes genéricos más finos; color de resalto = gold
+   ============================================================ */
+
+/* border-border y border-warm-600/30 → más finos en dark */
+html.dark .dark\:border-warm-600\/30 { border-color: rgba(240, 237, 232, 0.07) !important; }
+html.dark .dark\:border-white\/6     { border-color: rgba(240, 237, 232, 0.06) !important; }
+html.dark .dark\:border-white\/8     { border-color: rgba(240, 237, 232, 0.07) !important; }
+html.dark .dark\:border-white\/10    { border-color: rgba(240, 237, 232, 0.07) !important; }
+
+/* Resalto activo: navy → gold en dark */
+html.dark .dark\:border-gold         { border-color: #C8860A; }
+html.dark .dark\:text-gold           { color: #C8860A; }
+
+/* ============================================================
+   DARK MODE — Overrides globales de tokens de texto
+   text-lean-black / text-text-muted / text-text-subtle no tienen
+   variante dark nativa → se redirigen aquí globalmente.
+   Escala warm-*: los tonos bajos (300-600) son oscuros en light
+   pero quedan ilegibles en dark → se invierten a tonos altos.
+   ============================================================ */
+
+html.dark .text-lean-black   { color: #F0EDE8; } /* warm-50  — texto primario dark */
+html.dark .text-text-muted   { color: #9A9790; } /* warm-200 — texto muted dark   */
+html.dark .text-text-subtle  { color: #6B6864; } /* warm-300 — texto sutil dark   */
+
+/* Escala warm — inversión para dark mode */
+html.dark .text-warm-600     { color: #C4C0B8; } /* → warm-100 */
+html.dark .text-warm-500     { color: #B8B4AB; } /* → warm-300 */
+html.dark .text-warm-400     { color: #9A9790; } /* → warm-200 */
+html.dark .text-warm-300     { color: #9A9790; } /* → warm-200 */
+
+/* fill-* warm para SVG (recharts, labels) */
+html.dark .fill-warm-600     { fill: #C4C0B8; }
+html.dark .fill-warm-500     { fill: #B8B4AB; }
+html.dark .fill-warm-400     { fill: #9A9790; }
+html.dark .fill-warm-300     { fill: #9A9790; }
+
+/* ============================================================
    ADR-021 TRANSITORIO — Eliminar cuando la migración gray→warm esté completa
    Redirige clases bg-gray-* / text-gray-* / border-gray-* → escala warm en light mode
    ============================================================ */
@@ -237,6 +298,11 @@ html.dark .dark\:border-white\/20 { border-color: rgba(240, 237, 232, 0.20); }
   --color-info:       #9BB5D9;
   --color-info-light:    #EBF2FA;
   --color-info-dark:     #6A90C0;
+  --color-gold-hover: #D4940F;
+  --color-gold-muted: #8B6A30;
+  --color-gold-faint: rgba(200,134,10,0.08);
+  --color-gold-text:  #9B6408;
+  --color-gold-ring:  rgba(200,134,10,0.20);
 }
 
 html.dark {
@@ -250,4 +316,14 @@ html.dark {
   --color-warning-dark:  #D4A85C;
   --color-info-light:    #1A2840;
   --color-info-dark:     #6A90C0;
+}
+
+@layer base {
+  svg text {
+    font-family: var(--font-sans);
+  }
+  svg text[font-family*="mono"],
+  svg text.font-mono {
+    font-family: var(--font-mono);
+  }
 }

@@ -18,6 +18,7 @@
 // ============================================================
 
 import { useState, useEffect, useMemo } from 'react'
+import { useIsDark } from '@/shared/hooks/useDarkMode'
 import { useNavigate }                  from 'react-router-dom'
 import { Check, Trash2, AlertCircle }   from 'lucide-react'
 import { useAuthStore }                 from '@/modules/Auth'
@@ -66,19 +67,20 @@ type ProjectsTabProps = SharedProps
 // ── Utilidades visuales ───────────────────────────────────────
 
 // Badge de rol con color por nivel
-const ROLE_META: Record<UserRole, { label: string; color: string; bg: string }> = {
-  superadmin:    { label: 'Superadmin',      color: '#C8860A', bg: 'rgba(200,134,10,0.10)' },
-  consultant:    { label: 'Consultor Alpha',  color: '#2563EB', bg: '#EFF6FF'               },
-  client_editor: { label: 'Cliente editor',   color: '#059669', bg: '#ECFDF5'               },
-  client_viewer: { label: 'Cliente viewer',   color: '#6B7280', bg: '#F3F4F6'               },
+const ROLE_META: Record<UserRole, { label: string; color: string; bg: string; bgDark: string }> = {
+  superadmin:    { label: 'Superadmin',      color: '#C8860A', bg: 'rgba(200,134,10,0.10)', bgDark: 'rgba(200,134,10,0.20)' },
+  consultant:    { label: 'Consultor Alpha',  color: '#6A90C0', bg: '#EBF2FA',               bgDark: '#1A2840'                },
+  client_editor: { label: 'Cliente editor',   color: '#5FAF8A', bg: '#E8F5EE',               bgDark: '#1A3328'                },
+  client_viewer: { label: 'Cliente viewer',   color: '#9A9790', bg: '#F0EDE8',               bgDark: 'rgba(240,237,232,0.08)' },
 }
 
 function RoleBadge({ role }: { role: UserRole }) {
-  const meta = ROLE_META[role] ?? ROLE_META.client_viewer
+  const isDark = useIsDark()
+  const meta   = ROLE_META[role] ?? ROLE_META.client_viewer
   return (
     <span
       className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
-      style={{ color: meta.color, backgroundColor: meta.bg }}
+      style={{ color: meta.color, backgroundColor: isDark ? meta.bgDark : meta.bg }}
     >
       {meta.label}
     </span>
@@ -107,8 +109,8 @@ function DeleteConfirmModal({
       {/* Card */}
       <div className="relative bg-white rounded-xl shadow-md border border-black/8 p-6 w-full max-w-sm">
         {/* Icono de advertencia */}
-        <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-          <AlertCircle size={18} stroke="#DC2626" strokeWidth={1.5} />
+        <div className="w-10 h-10 rounded-full bg-danger-light flex items-center justify-center mx-auto mb-4">
+          <AlertCircle size={18} stroke="var(--color-danger-dark)" strokeWidth={1.5} />
         </div>
         <h2 className="text-base font-semibold text-lean-black dark:text-warm-50 text-center mb-1">
           ¿Revocar acceso?
@@ -122,7 +124,7 @@ function DeleteConfirmModal({
         <p className="text-xs font-mono text-text-subtle text-center truncate mb-4">
           {user.email}
         </p>
-        <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg text-center mb-6">
+        <p className="text-xs text-danger-dark bg-danger-light px-3 py-2 rounded-lg text-center mb-6">
           Esta acción eliminará al usuario de la plataforma. No se puede deshacer.
         </p>
         <div className="flex gap-3">
@@ -136,7 +138,7 @@ function DeleteConfirmModal({
           <button
             onClick={onConfirm}
             disabled={deleting}
-            className="flex-1 h-9 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
+            className="flex-1 h-9 rounded-lg bg-danger-dark text-white text-sm font-medium hover:bg-danger disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
           >
             {deleting ? <><Spinner /> Eliminando…</> : 'Revocar acceso'}
           </button>
@@ -204,11 +206,11 @@ function CompaniesTab({ companies, onCompanyAdd }: SharedProps) {
             disabled={creating || !name.trim()}
             className="h-9 px-4 rounded-lg bg-gold text-white text-sm font-medium disabled:opacity-40 hover:bg-gold-hover transition-colors flex items-center gap-2"
           >
-            {creating ? <Spinner /> : success ? <Check size={14} strokeWidth={2} /> : null}
+            {creating ? <Spinner /> : success ? <Check size={14} strokeWidth={1.5} /> : null}
             Crear
           </button>
         </form>
-        {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+        {error && <p className="text-xs text-danger-dark mt-2">{error}</p>}
       </div>
 
       <div>
@@ -386,7 +388,7 @@ function UsersTab({ companies, users, currentUserId, onUserAdded, onUserDelete }
                 className={[
                   'flex items-start gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors',
                   role === opt.value
-                    ? 'border-gold/40 bg-amber-50'
+                    ? 'border-gold/40 bg-warning-light'
                     : 'border-border bg-warm-50 hover:bg-surface',
                 ].join(' ')}
               >
@@ -406,10 +408,10 @@ function UsersTab({ companies, users, currentUserId, onUserAdded, onUserDelete }
             ))}
           </div>
 
-          {error && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+          {error && <p className="text-xs text-danger-dark bg-danger-light px-3 py-2 rounded-lg">{error}</p>}
           {success && (
-            <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg">
-              <Check size={14} strokeWidth={2} /> Invitación enviada correctamente.
+            <div className="flex items-center gap-2 text-xs text-success-dark bg-success-light px-3 py-2 rounded-lg">
+              <Check size={14} strokeWidth={1.5} /> Invitación enviada correctamente.
             </div>
           )}
 
@@ -457,7 +459,7 @@ function UsersTab({ companies, users, currentUserId, onUserAdded, onUserDelete }
         </div>
 
         {deleteError && (
-          <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-3">{deleteError}</p>
+          <p className="text-xs text-danger-dark bg-danger-light px-3 py-2 rounded-lg mb-3">{deleteError}</p>
         )}
 
         {users.length === 0 ? (
@@ -487,7 +489,7 @@ function UsersTab({ companies, users, currentUserId, onUserAdded, onUserDelete }
                     <button
                       onClick={() => setUserToDelete(u)}
                       title="Revocar acceso"
-                      className="p-1.5 rounded-lg text-warm-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      className="p-1.5 rounded-lg text-warm-300 hover:text-danger-dark hover:bg-danger-light transition-colors"
                     >
                       <Trash2 size={14} strokeWidth={1.5} />
                     </button>
@@ -563,11 +565,11 @@ function ProjectsTab({ companies }: ProjectsTabProps) {
             disabled={creating || !name.trim()}
             className="h-9 px-4 rounded-lg bg-gold text-white text-sm font-medium disabled:opacity-40 hover:bg-gold-hover transition-colors flex items-center gap-2 whitespace-nowrap"
           >
-            {creating ? <Spinner /> : success ? <Check size={14} strokeWidth={2} /> : null}
+            {creating ? <Spinner /> : success ? <Check size={14} strokeWidth={1.5} /> : null}
             Crear
           </button>
         </form>
-        {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+        {error && <p className="text-xs text-danger-dark mt-2">{error}</p>}
       </div>
 
       <div>
@@ -641,7 +643,7 @@ export function AdminView() {
   if (loadError) {
     return (
       <div className="max-w-4xl mx-auto px-6 py-8">
-        <p className="text-sm text-red-500 bg-red-50 px-4 py-3 rounded-xl">
+        <p className="text-sm text-danger-dark bg-danger-light px-4 py-3 rounded-xl">
           Error al cargar el panel: {loadError}
         </p>
       </div>

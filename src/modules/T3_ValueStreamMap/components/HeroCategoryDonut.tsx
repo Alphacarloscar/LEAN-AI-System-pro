@@ -77,12 +77,12 @@ export function HeroCategoryDonut({
     <div className="relative w-full">
       <svg viewBox={`0 0 ${VB} ${VB}`} width="100%"
         style={{ display: 'block', overflow: 'visible' }}
-        className="text-lean-black dark:text-gray-100">
+        className="text-lean-black dark:text-warm-100">
 
-        <circle cx={CX} cy={CY} r={R_OUTER} fill="none" stroke="rgba(148,163,184,0.28)" strokeWidth={1} />
-        <circle cx={CX} cy={CY} r={R_INNER} fill="none" stroke="rgba(148,163,184,0.18)" strokeWidth={0.6} />
+        <circle cx={CX} cy={CY} r={R_OUTER} fill="none" stroke="var(--color-warm-300)" strokeWidth={1} opacity={0.35} />
+        <circle cx={CX} cy={CY} r={R_INNER} fill="none" stroke="var(--color-warm-200)" strokeWidth={0.6} opacity={0.50} />
         {[75, 100, 126].map((r) => (
-          <circle key={r} cx={CX} cy={CY} r={r} fill="none" stroke="rgba(148,163,184,0.18)" strokeWidth={0.6} />
+          <circle key={r} cx={CX} cy={CY} r={r} fill="none" stroke="var(--color-warm-200)" strokeWidth={0.6} opacity={0.50} />
         ))}
 
         {arcs.map(({ cat, count, procs, startAngle, endAngle, midAngle }) => {
@@ -112,7 +112,8 @@ export function HeroCategoryDonut({
               <path d={arcPath(startAngle, endAngle, R_OUTER, R_INNER)} fill="none" stroke={hex} strokeWidth={1} opacity={0.55} />
 
               {dots.map((dot) => {
-                const isActive = dot.id === activeId
+                const isActive  = dot.id === activeId
+                const r         = isActive ? 11 : 9
                 return (
                   <g key={dot.id} style={{ cursor: 'pointer' }}
                     onClick={() => onSelect(dot.id)}
@@ -121,15 +122,17 @@ export function HeroCategoryDonut({
                   >
                     {isActive && (
                       <>
-                        <circle cx={dot.cx} cy={dot.cy} r={18} fill={dot.hex} opacity={0.10} />
-                        <circle cx={dot.cx} cy={dot.cy} r={13} fill={dot.hex} opacity={0.18} />
+                        <circle cx={dot.cx} cy={dot.cy} r={r + 9} fill={dot.hex} opacity={0.10} />
+                        <circle cx={dot.cx} cy={dot.cy} r={r + 5} fill={dot.hex} opacity={0.16} />
                       </>
                     )}
-                    <circle cx={dot.cx} cy={dot.cy} r={isActive ? 12 : 10} fill={dot.hex} opacity={isActive ? 0.28 : 0.15} />
-                    <circle cx={dot.cx} cy={dot.cy} r={isActive ? 9 : 7} fill={dot.hex} opacity={0.92}
-                      stroke={isActive ? 'rgba(255,255,255,0.90)' : 'rgba(255,255,255,0.50)'}
-                      strokeWidth={isActive ? 2 : 0.8} />
-                    <ellipse cx={dot.cx - 2} cy={dot.cy - 2} rx={2.5} ry={1.5} fill="rgba(255,255,255,0.55)" />
+                    <circle
+                      cx={dot.cx} cy={dot.cy} r={r}
+                      fill={dot.hex}
+                      opacity={0.85}
+                      stroke={isActive ? 'rgba(255,255,255,0.90)' : '#D4D0C8'}
+                      strokeWidth={1.5}
+                    />
                   </g>
                 )
               })}
@@ -175,7 +178,7 @@ export function HeroCategoryDonut({
             top:       `${donutHovered.topPct}%`,
             transform: `translate(${donutHovered.leftPct > 60 ? 'calc(-100% - 8px)' : '10px'}, -50%)`,
           }}>
-          <p className="font-semibold text-lean-black dark:text-gray-100 mb-1 leading-tight truncate max-w-[160px]">{donutHovered.name}</p>
+          <p className="font-semibold text-lean-black dark:text-warm-100 mb-1 leading-tight truncate max-w-[160px]">{donutHovered.name}</p>
           <div className="flex items-center gap-1.5 mb-1.5">
             <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: donutHovered.hex }} />
             <span className="text-text-muted">{donutHovered.catLabel}</span>
@@ -183,11 +186,11 @@ export function HeroCategoryDonut({
           <div className="space-y-0.5 text-text-muted">
             <div className="flex justify-between gap-4">
               <span>Oportunidad</span>
-              <span className="font-medium text-lean-black dark:text-gray-200">{donutHovered.opportunity}/4</span>
+              <span className="font-medium text-lean-black dark:text-warm-200">{donutHovered.opportunity}/4</span>
             </div>
             <div className="flex justify-between gap-4">
               <span>Readiness</span>
-              <span className="font-medium text-lean-black dark:text-gray-200">{donutHovered.readiness}/4</span>
+              <span className="font-medium text-lean-black dark:text-warm-200">{donutHovered.readiness}/4</span>
             </div>
           </div>
         </div>

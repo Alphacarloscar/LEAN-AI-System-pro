@@ -255,12 +255,12 @@ export function AIActClassificationModal({
               Clasificación resultante
             </p>
             <div className="flex items-center gap-2" style={{ color: riskCfg.hex }}>
-              {(() => { const Icon = AIACT_ICON_MAP[riskCfg.icon] ?? AlertTriangle; return <Icon size={20} strokeWidth={2} /> })()}
+              {(() => { const Icon = AIACT_ICON_MAP[riskCfg.icon] ?? AlertTriangle; return <Icon size={20} strokeWidth={1.5} /> })()}
               <span className="text-sm font-bold">{riskCfg.label}</span>
             </div>
             {previewRisk === 'prohibido' && (
               <p className="text-[10px] mt-1.5 text-red-600 dark:text-red-400 leading-relaxed flex items-start gap-1.5">
-                <AlertTriangle size={12} strokeWidth={2} className="shrink-0 mt-0.5" />
+                <AlertTriangle size={12} strokeWidth={1.5} className="shrink-0 mt-0.5" />
                 Este sistema puede caer en la categoría de uso prohibido por el AI Act (Art. 5). Revisa con el equipo legal antes de proceder.
               </p>
             )}

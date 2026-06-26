@@ -14,13 +14,13 @@ export type GanttRow     = AIGanttRow | FreeGanttRow
 
 export const DS = {
   navy:           '#2A2822',
-  successLight:   '#D4EDE3',
+  successLight:   '#E8F5EE',
   successDark:    '#5FAF8A',
-  warningLight:   '#FAF0D7',
+  warningLight:   '#FEF6E8',
   warningDark:    '#D4A85C',
-  dangerLight:    '#F5DEDE',
+  dangerLight:    '#FDECEC',
   dangerDark:     '#C06060',
-  infoLight:      '#DDE8F5',
+  infoLight:      '#EBF2FA',
   infoDark:       '#6A90C0',
   surface:        '#F7F4EE',
   textMuted:      '#6B6864',
@@ -30,6 +30,23 @@ export const DS = {
   freeSourceColor:'#444441',
   white:          '#FFFFFF',
 } as const
+
+// Variantes dark para fondos que usan style={{ background }}
+export const DS_DARK = {
+  successLight:  'rgba(95,175,138,0.12)',
+  warningLight:  'rgba(212,168,92,0.12)',
+  dangerLight:   'rgba(192,96,96,0.12)',
+  infoLight:     'rgba(106,144,192,0.12)',
+  surface:       '#333028',
+} as const
+
+export function isDarkMode(): boolean {
+  return typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+}
+
+export function resolveLight(light: string, dark: string): string {
+  return isDarkMode() ? dark : light
+}
 
 // ── Helpers de riesgo ─────────────────────────────────────────
 

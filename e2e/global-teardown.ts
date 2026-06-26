@@ -1,14 +1,19 @@
 // ============================================================
-// E2E Global Teardown — GOBY_TEST_ project cleanup
+// E2E Global Teardown — test data cleanup
 //
 // Runs ONCE after the entire Playwright suite completes.
-// Deletes every project whose name starts with "GOBY_TEST_"
-// using a direct Supabase admin client (service_role key),
+// Uses a direct Supabase admin client (service_role key),
 // bypassing RLS so it works regardless of who created them.
 //
-// Safety rule: the WHERE clause is `name ILIKE 'GOBY_TEST_%'`
-// — this guard is the ONLY deletion criterion; no wildcard,
-// no "all active" sweeps. Real projects are never touched.
+// Cleans up two kinds of test data:
+//   1. Projects whose name starts with "GOBY_TEST_"
+//   2. t1_dimension_scores rows for interviewee "E2E-AuditBot"
+//      in the LAB seed project (Toy Story) created by audit.spec.ts
+//
+// Safety rules:
+//   — Projects: WHERE name ILIKE 'GOBY_TEST_%' (never touches real projects)
+//   — Interviewees: WHERE interviewee_name = 'E2E-AuditBot'
+//                   AND project_id = LAB_PROJECT_ID (scoped to seed project)
 //
 // Requires env vars (already defined in .env.local / CI secrets):
 //   VITE_SUPABASE_URL
@@ -17,7 +22,10 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-const TEST_PREFIX = 'GOBY_TEST_'
+const TEST_PREFIX      = 'GOBY_TEST_'
+const LAB_PROJECT_ID   = 'e2058bff-9759-465d-ae4d-df79fdf23815'
+// IMPORTANTE: debe coincidir exactamente con TEST_INTERVIEWEE.name en audit.spec.ts
+const TEST_INTERVIEWEE = 'E2E-AuditBot'
 
 export default async function globalTeardown(): Promise<void> {
   const supabaseUrl = process.env.VITE_SUPABASE_URL
@@ -25,7 +33,7 @@ export default async function globalTeardown(): Promise<void> {
 
   if (!supabaseUrl || !serviceKey) {
     console.warn(
-      '[teardown] Skipping GOBY_TEST_ cleanup: ' +
+      '[teardown] Skipping cleanup: ' +
       'VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set.',
     )
     return
@@ -35,7 +43,13 @@ export default async function globalTeardown(): Promise<void> {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-  // ── 1. Find all test projects ────────────────────────────────
+  await cleanupTestProjects(admin)
+  await cleanupAuditBotInterviewee(admin)
+}
+
+// ── 1. Delete GOBY_TEST_ projects ───────────────────────────────────────────
+
+async function cleanupTestProjects(admin: ReturnType<typeof createClient>): Promise<void> {
   const { data: testProjects, error: listErr } = await admin
     .from('projects')
     .select('id, name')
@@ -56,13 +70,11 @@ export default async function globalTeardown(): Promise<void> {
     testProjects.map((p) => `${p.name} (${p.id})`).join(', '),
   )
 
-  // ── 2. Delete in dependency order ───────────────────────────
-  // Child rows are protected by ON DELETE CASCADE in the schema,
-  // but we log cascade targets explicitly for auditability.
   const ids = testProjects.map((p) => p.id as string)
 
-  // Guard: never delete if a project id appears to be a production UUID
-  // that slipped through (belt-and-suspenders check on names again).
+  // Seguridad conservadora: si cualquier proyecto no tiene el prefijo esperado,
+  // aborta TODAS las eliminaciones para proteger datos de producción.
+  // Comportamiento intencional: fallo ruidoso > eliminación parcial silenciosa.
   for (const project of testProjects) {
     if (!(project.name as string).startsWith(TEST_PREFIX)) {
       console.error(
@@ -77,7 +89,7 @@ export default async function globalTeardown(): Promise<void> {
     .from('projects')
     .delete()
     .in('id', ids)
-    .ilike('name', `${TEST_PREFIX}%`) // double-bind: both id AND name must match
+    .ilike('name', `${TEST_PREFIX}%`)
 
   if (deleteErr) {
     console.error('[teardown] Failed to delete GOBY_TEST_ projects:', deleteErr.message)
@@ -85,4 +97,25 @@ export default async function globalTeardown(): Promise<void> {
   }
 
   console.log(`[teardown] ✓ Deleted ${ids.length} GOBY_TEST_ project(s) successfully.`)
+}
+
+// ── 2. Delete E2E-AuditBot interviewee scores from seed project ─────────────
+
+async function cleanupAuditBotInterviewee(admin: ReturnType<typeof createClient>): Promise<void> {
+  const { error, count } = await admin
+    .from('t1_dimension_scores')
+    .delete({ count: 'exact' })
+    .eq('project_id', LAB_PROJECT_ID)
+    .eq('interviewee_name', TEST_INTERVIEWEE)
+
+  if (error) {
+    console.error('[teardown] Failed to delete E2E-AuditBot scores:', error.message)
+    return
+  }
+
+  if ((count ?? 0) === 0) {
+    console.log('[teardown] No E2E-AuditBot scores found — nothing to clean up.')
+  } else {
+    console.log(`[teardown] ✓ Deleted ${count} E2E-AuditBot score row(s) from seed project.`)
+  }
 }

@@ -39,16 +39,16 @@ export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
             </div>
 
             {/* Concern + Approach */}
-            <div className="space-y-2.5">
-              <div className="flex gap-2 items-start p-3 rounded-lg bg-warning-light/40 border border-warning-light">
-                <AlertTriangle size={14} strokeWidth={2} className="text-warning-dark flex-shrink-0 mt-0.5" />
+            <div className="space-y-2.5 mt-1">
+              <div className="flex gap-2 items-start p-3 rounded-lg bg-warning-light/40 dark:bg-warning-dark/10 border border-warning-light dark:border-warning-dark/30">
+                <AlertTriangle size={14} strokeWidth={1.5} className="text-warning-dark flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[10px] font-mono uppercase tracking-widest text-warning-dark mb-0.5">Preocupación principal</p>
-                  <p className="text-xs text-warning-dark leading-relaxed">{kit.mainConcern}</p>
+                  <p className="text-xs text-warning-dark dark:text-warning leading-relaxed">{kit.mainConcern}</p>
                 </div>
               </div>
 
-              <Card variant="flat" padding="none" className="p-3 rounded-lg border border-border dark:border-white/6 bg-surface dark:bg-warm-800/50">
+              <Card variant="flat" padding="none" className="p-3 rounded-lg border border-border dark:border-warm-600 bg-surface dark:bg-warm-700">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Enfoque comunicativo</p>
                 <p className="text-xs text-text-muted leading-relaxed">{kit.approach}</p>
               </Card>
@@ -67,8 +67,8 @@ export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
             )}
 
             {/* Acciones */}
-            <div>
-              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">Acciones concretas</p>
+            <div className="mt-2 border-t border-border dark:border-warm-600 -mx-5 px-5 pt-4 space-y-3">
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-2">Acciones concretas</p>
               <div className="space-y-2">
                 {kit.actions.map((action, i) => (
                   <div key={i} className="flex gap-2 items-start">
@@ -82,14 +82,14 @@ export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
                   </div>
                 ))}
               </div>
-            </div>
 
-            {/* Canal recomendado */}
-            <div className="flex items-center gap-2 pt-2 border-t border-border dark:border-white/6">
-              <span className="text-[10px] font-mono text-text-subtle">Canal principal:</span>
-              <span className="text-[10px] font-medium text-text-muted inline-flex items-center gap-1">
-                {CHANNEL_ICON_MAP[channelCfg.icon] ?? null} {channelCfg.label}
-              </span>
+              {/* Canal recomendado */}
+              <div className="flex items-center gap-2 pt-2 border-t border-border dark:border-white/6">
+                <span className="text-[10px] font-mono text-text-subtle">Canal principal:</span>
+                <span className="text-[10px] font-medium text-text-muted inline-flex items-center gap-1">
+                  {CHANNEL_ICON_MAP[channelCfg.icon] ?? null} {channelCfg.label}
+                </span>
+              </div>
             </div>
           </Card>
         )

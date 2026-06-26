@@ -20,7 +20,7 @@ export const RISK_LABEL: Record<string, { label: string; bg: string; color: stri
   alto:           { label: 'Alto Riesgo',    bg: '#FEF3C7', color: '#92400E' },
   limitado:       { label: 'Riesgo Limitado',bg: '#FFF7ED', color: '#9A3412' },
   minimo:         { label: 'Riesgo Mínimo',  bg: '#F0FDF4', color: '#166534' },
-  sin_clasificar: { label: 'Sin clasificar', bg: '#F3F4F6', color: '#6B7280' },
+  sin_clasificar: { label: 'Sin clasificar', bg: '#F0EDE8', color: '#8A857C' },
 }
 
 export const s = StyleSheet.create({

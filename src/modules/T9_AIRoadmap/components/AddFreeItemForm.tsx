@@ -15,7 +15,7 @@ import { MONTH_NAMES }                 from '../t9GanttHelpers'
 const MONTH_OPTIONS = MONTH_NAMES.map((name, i) => ({ value: i, label: name }))
 
 const SELECT_CLS =
-  'w-full text-xs border border-border dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-lean-black dark:text-warm-50 outline-none focus:ring-1 focus:ring-gold/20 focus:border-gold'
+  'w-full text-xs border border-border dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-warm-700 text-lean-black dark:text-warm-50 outline-none focus:ring-1 focus:ring-gold/20 focus:border-gold'
 
 interface AddFormProps {
   onSave:   (data: AddFreeItemFormValues) => void
@@ -42,7 +42,7 @@ export function AddFreeItemForm({ onSave, onCancel }: AddFormProps) {
   const startMonth = watch('startMonth')
 
   return (
-    <Card variant="flat" padding="none" className="border-t border-border dark:border-white/6 px-5 py-4 bg-gray-50 dark:bg-gray-800/30">
+    <Card variant="flat" padding="none" className="border-t border-border dark:border-white/6 px-5 py-4 bg-warm-50 dark:bg-warm-800/60">
       <p className="text-xs font-medium text-lean-black dark:text-warm-50 mb-3">
         Nueva iniciativa libre
       </p>

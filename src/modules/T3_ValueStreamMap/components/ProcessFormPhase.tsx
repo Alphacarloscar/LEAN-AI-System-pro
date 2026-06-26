@@ -16,10 +16,10 @@ import { Button, FormField, SegmentedControl } from '@shared/design-system/compo
 // ── Colores hex de fases para SegmentedControl activeColor ────
 
 const PHASE_ACTIVE_COLOR: Record<ProcessPhase, string> = {
-  idea:            '#F3F4F6',
-  validacion:      '#FAF0D7',
-  piloto:          '#DDE8F5',
-  estandarizacion: '#D4EDE3',
+  idea:            '#F0EDE8',
+  validacion:      '#FEF6E8',
+  piloto:          '#EBF2FA',
+  estandarizacion: '#E8F5EE',
   escalado:        'rgba(42,40,34,0.1)',
 }
 
@@ -72,7 +72,7 @@ export function ProcessFormPhase({ onNext }: ProcessFormPhaseProps) {
         <p className="text-xs font-mono uppercase tracking-widest text-text-subtle mb-1">
           Paso 1 de 3
         </p>
-        <h3 className="text-base font-semibold text-lean-black dark:text-gray-100">
+        <h3 className="text-base font-semibold text-lean-black dark:text-warm-100">
           Datos del proceso
         </h3>
         <p className="text-xs text-text-muted mt-1">

@@ -1,6 +1,6 @@
 ﻿# Decision Log — GOBY
 
-AI-Ready Repository System v2.1.0 | Última actualización: 2026-06-01
+AI-Ready Repository System v2.1.0 | Última actualización: 2026-06-26
 
 > Este directorio contiene el registro completo de decisiones técnicas (ADR) y funcionales (FDR)
 > del proyecto. Toda decisión arquitectónica o de producto con impacto duradero debe tener un
@@ -39,8 +39,10 @@ AI-Ready Repository System v2.1.0 | Última actualización: 2026-06-01
 | [ADR-017](technical/ADR-017-audit-logging-proxy.md) | Sistema de Audit Logging transversal mediante patrón Proxy | ACCEPTED | 2026-06-15 | Infraestructura |
 | [ADR-018](technical/ADR-018-audit-log-retention-pg-cron.md) | Política de retención de audit_logs: 90 días activos + 5 años archivo via pg_cron | ACCEPTED | 2026-06-15 | Infraestructura |
 | [ADR-019](technical/ADR-019-audit-logs-read-security-definer.md) | Acceso a audit_logs exclusivamente vía función SECURITY DEFINER | ACCEPTED | 2026-06-15 | Seguridad |
-| [ADR-020](technical/ADR-020-ux-ui-strategy-master-plan.md) | Plan Maestro de Estrategia UX/UI y Sistema de Diseño | PROPOSED | 2026-06-16 | UX/UI · Stack |
+| [ADR-020](technical/ADR-020-ux-ui-strategy-master-plan.md) | Plan Maestro de Estrategia UX/UI y Sistema de Diseño | IN PROGRESS | 2026-06-16 | UX/UI · Stack |
 | [ADR-021](technical/ADR-021-design-system-charter.md) | Design System Charter — escala space, tokens CSS vars, densidad configurable | ACCEPTED | 2026-06-16 | UX/UI · Stack |
+| [ADR-022](technical/ADR-022-forms-rhf-zod-standard.md) | Estándar de formularios: react-hook-form + Zod | ACCEPTED | 2026-06-16 | Stack · UX/UI |
+| [ADR-023](technical/ADR-023-visual-system-v2.md) | Visual System V2 — Obsidian Editorial warm-only palette | ACCEPTED | 2026-06-23 | UX/UI · Design System |
 
 ---
 
@@ -48,7 +50,8 @@ AI-Ready Repository System v2.1.0 | Última actualización: 2026-06-01
 
 | ID | Título | Estado | Fecha | Área |
 |----|--------|--------|-------|------|
-| *(primer FDR se creará con el siguiente cambio funcional significativo)* | | | | |
+| [FDR-001](functional/FDR-001-back-to-dashboard-canonical.md) | BackToDashboard — control canónico de vuelta al dashboard | ACCEPTED | 2026-06-05 | UX |
+| [FDR-003](functional/FDR-003-t4-states-vs-tabs.md) | T4 — Separación visual entre estado del caso y tabs de navegación | ACCEPTED | 2026-06-16 | UX · T4 |
 
 ---
 
@@ -61,5 +64,5 @@ Las decisiones estratégicas de producto/mercado se documentan en:
 
 ## Próximo número disponible
 
-- **ADR:** ADR-022 (reservado por ADR-020 Fase 3 #5 — Estándar de formularios RHF+Zod)
+- **ADR:** ADR-024
 - **FDR:** FDR-002 (reservado por ADR-020 Fase 2 — pantalla piloto AppLayout)

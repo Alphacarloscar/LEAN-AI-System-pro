@@ -129,7 +129,6 @@ export function T8View({ onBack }: T8ViewProps) {
         backLabel="Volver al dashboard"
         toolCode="T8"
         title="Communication Map"
-        subtitle={<p className="text-xs text-text-muted">{companyName} · Plan de comunicación</p>}
         phaseMiniMap={<PhaseMiniMap phaseId="activate" toolCode="T8" />}
         maxWidth="max-w-7xl"
         chips={

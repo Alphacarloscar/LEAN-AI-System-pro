@@ -75,7 +75,7 @@ export function DomainProjectsModal({ domainCode, onClose }: DomainProjectsModal
                   className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border bg-warm-50 dark:bg-warm-800/50"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200 truncate">{uc.name}</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-100 truncate">{uc.name}</p>
                     <p className="text-[10px] text-text-subtle mt-0.5">{uc.department}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -87,7 +87,7 @@ export function DomainProjectsModal({ domainCode, onClose }: DomainProjectsModal
                     >
                       {UC_STATUS_LABEL[uc.status] ?? uc.status}
                     </Badge>
-                    <span className="text-[10px] font-bold tabular-nums text-lean-black dark:text-gray-200 w-8 text-right">
+                    <span className="text-[10px] font-bold tabular-nums text-lean-black dark:text-warm-100 w-8 text-right">
                       {uc.priorityScore}
                     </span>
                   </div>
@@ -112,7 +112,7 @@ export function DomainProjectsModal({ domainCode, onClose }: DomainProjectsModal
                   className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border bg-warm-50 dark:bg-warm-800/50"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200 truncate">{p.name}</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-100 truncate">{p.name}</p>
                     <p className="text-[10px] text-text-subtle mt-0.5">{p.department}</p>
                   </div>
                   <span className="text-[10px] text-text-subtle shrink-0 capitalize">
@@ -126,7 +126,7 @@ export function DomainProjectsModal({ domainCode, onClose }: DomainProjectsModal
 
         {domainUCs.length === 0 && domainProcs.length === 0 && (
           <div className="text-center py-8">
-            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 mb-3">
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-warm-100 dark:bg-warm-800 mb-3">
               <svg className="w-5 h-5 text-text-subtle" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="9" cy="9" r="6" />
                 <path d="M15 15l3 3" />

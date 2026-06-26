@@ -15,7 +15,7 @@
 import { useNavigate, useLocation }   from 'react-router-dom'
 import { useUnsavedChanges }          from '@/shared/hooks/useUnsavedChanges'
 import { useSidebar }                 from '@/shared/hooks/useSidebar'
-import { Modal, Button }              from '@shared/design-system/components'
+import { UnsavedChangesModal }        from '@/shared/components/UnsavedChangesModal'
 import { useState }                   from 'react'
 
 // ── Registro estático del producto ───────────────────────────
@@ -86,7 +86,7 @@ function SidebarPanel({ onNav }: { onNav: (path: string) => void }) {
             </svg>
           </div>
           <div className="min-w-0 flex-1">
-            <p className={`text-xs font-semibold truncate ${isCompanyProfileActive ? 'text-navy dark:text-warm-100' : 'text-black/70 dark:text-gray-300'}`}>
+            <p className={`text-xs font-semibold truncate ${isCompanyProfileActive ? 'text-navy dark:text-warm-100' : 'text-warm-700 dark:text-warm-100'}`}>
               Perfil de Empresa
             </p>
             <p className="text-[10px] text-black/30 dark:text-white/25 font-mono mt-0.5">
@@ -102,7 +102,7 @@ function SidebarPanel({ onNav }: { onNav: (path: string) => void }) {
         <div className="px-3 space-y-0.5">
           {TOOL_NAVIGATION.map((tool) => {
             const isActive = location.pathname === tool.path ||
-                             (tool.path !== '/' && location.pathname.startsWith(tool.path))
+                             (tool.path !== '/' && location.pathname.startsWith(tool.path + '/'))
 
             return (
               <button
@@ -112,6 +112,7 @@ function SidebarPanel({ onNav }: { onNav: (path: string) => void }) {
                 className={[
                   'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left',
                   'transition-all duration-100',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold',
                   isActive
                     ? 'bg-gold/10 dark:bg-gold/15'
                     : 'hover:bg-black/3 dark:hover:bg-white/4',
@@ -120,7 +121,7 @@ function SidebarPanel({ onNav }: { onNav: (path: string) => void }) {
                 <span
                   className={[
                     'font-mono text-[10px] shrink-0 w-7 text-center',
-                    isActive ? 'text-gold' : 'text-gray-400',
+                    isActive ? 'text-gold' : 'text-warm-400',
                   ].join(' ')}
                 >
                   {tool.code}
@@ -129,8 +130,8 @@ function SidebarPanel({ onNav }: { onNav: (path: string) => void }) {
                   className={[
                     'text-xs truncate',
                     isActive
-                      ? 'font-semibold text-gold dark:text-amber-400'
-                      : 'text-black/65 dark:text-gray-300',
+                      ? 'font-semibold text-gold dark:text-gold-hover'
+                      : 'text-warm-700 dark:text-warm-100',
                   ].join(' ')}
                 >
                   {tool.label}
@@ -182,21 +183,21 @@ export function AppSidebar() {
         onClick={toggle}
         aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
         aria-expanded={open}
-        style={{ top: 'calc(var(--header-h, 56px) + 8px)' }}
+        style={{ top: 'var(--header-h, 64px)', height: '48px' }}
         className={[
           'fixed left-0 z-40',
           'flex items-center justify-center',
-          'h-10 w-10 rounded-r-xl',
+          'w-10 rounded-r-xl',
           'bg-white dark:bg-warm-800 border border-l-0 border-black/10 dark:border-warm-600/30 shadow-sm',
           'hover:bg-[#F0EDE8] dark:hover:bg-warm-700 transition-colors duration-150',
         ].join(' ')}
       >
         {open ? (
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#3E3B35" strokeWidth="1.8" strokeLinecap="round" className="dark:stroke-warm-100">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="var(--color-warm-700)" strokeWidth="1.8" strokeLinecap="round" className="dark:stroke-warm-100">
             <path d="M2 2l10 10M12 2L2 12" />
           </svg>
         ) : (
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#3E3B35" strokeWidth="1.8" strokeLinecap="round" className="dark:stroke-warm-100">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="var(--color-warm-700)" strokeWidth="1.8" strokeLinecap="round" className="dark:stroke-warm-100">
             <path d="M2 4h10M2 7h10M2 10h10" />
           </svg>
         )}
@@ -217,8 +218,8 @@ export function AppSidebar() {
         aria-hidden={!open}
         className={[
           'fixed top-0 left-0 z-40 w-64',
-          'h-[calc(100vh-var(--header-h,56px))]',
-          'mt-[var(--header-h,56px)]',
+          'h-[calc(100vh-var(--header-h,64px))]',
+          'mt-[var(--header-h,64px)]',
           'bg-white dark:bg-warm-900 border-r border-black/8 dark:border-warm-600/20 shadow-md',
           'flex flex-col overflow-hidden',
           'transition-transform duration-250 ease-in-out',
@@ -230,33 +231,10 @@ export function AppSidebar() {
 
       <UnsavedChangesModal
         open={pendingPath !== null}
-        onCancel={() => { setPendingPath(null) }}
+        onCancel={() => setPendingPath(null)}
         onDiscard={confirmDiscard}
+        message="Si cambias de herramienta ahora, los cambios en curso se perderán."
       />
     </>
-  )
-}
-
-// ── Modal de cambios sin guardar ──────────────────────────────
-function UnsavedChangesModal({
-  open, onCancel, onDiscard,
-}: { open: boolean; onCancel: () => void; onDiscard: () => void }) {
-  return (
-    <Modal
-      open={open}
-      onClose={onCancel}
-      title="Cambios sin guardar"
-      size="sm"
-      footer={
-        <div className="flex justify-end gap-2">
-          <Button variant="ghost" onClick={onCancel}>Cancelar</Button>
-          <Button variant="danger" onClick={onDiscard}>Descartar y continuar</Button>
-        </div>
-      }
-    >
-      <p className="text-sm text-text-muted">
-        Tienes cambios sin guardar. ¿Deseas descartarlos y continuar navegando?
-      </p>
-    </Modal>
   )
 }

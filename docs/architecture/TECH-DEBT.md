@@ -1,6 +1,6 @@
 ﻿# Technical Debt Register — GOBY
 
-Last updated: 2026-06-17
+Last updated: 2026-06-26
 AI-Ready Repository System v2.1.0
 
 > Registro activo de deuda técnica conocida. Cada item tiene severidad, impacto y plan de acción.
@@ -34,7 +34,7 @@ Los workflows `.github/workflows/ci.yml` y `validate-docs.yml` están creados y 
 
 ---
 
-### DEBT-003 — Cabeceras de herramienta (ToolHeader) duplicadas en T1–T12
+### DEBT-031 — Cabeceras de herramienta (ToolHeader) duplicadas en T1–T12
 **Severidad:** 🟡 Media
 **Detectado:** 2026-06-05 (Sprint 11, durante P1 — normalización de "Volver al dashboard")
 **Área:** src/modules/T*/T*View.tsx (cabeceras), src/modules/CompanyProfile/CompanyProfileView.tsx
@@ -59,7 +59,65 @@ Cada herramienta T1–T12 reescribe a mano su cabecera: badge `T[N]`, título, `
 
 ---
 
+### DEBT-013 — Overrides CSS transitoria gray→warm en index.css
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-25 (dark mode audit)
+**Área:** `src/index.css` líneas ~152–270
+**Estado:** Pendiente
+
+**Descripción:**
+`index.css` contiene bloques de overrides que redirigen clases Tailwind `gray-*` a tokens `warm-*` para dark mode:
+```css
+html.dark .dark\:bg-gray-900  { background-color: #22201C; }
+html.dark .dark\:text-gray-100 { color: #F0EDE8; }
+/* etc. */
+```
+Estos overrides existen como red de seguridad para código migrado que pueda tener ocurrencias dispersas no revisadas.
+
+**Impacto:** Deuda semántica — puede crear inconsistencias si el override no cubre un token específico.
+
+**Plan de acción:**
+1. Ejecutar `grep -r "dark:.*gray-" src/ --include="*.tsx"` periódicamente.
+2. Cuando el grep retorne 0 resultados, eliminar los bloques de override en `index.css`.
+
+---
+
+### DEBT-014 — Tokens semánticos text-muted/text-subtle/surface sin variante dark automática en tailwind.config.ts
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-25 (dark mode audit)
+**Área:** `tailwind.config.ts`
+**Estado:** Pendiente
+
+**Descripción:**
+Los tokens `text-muted`, `text-subtle`, `surface`, `border` están definidos en `tailwind.config.ts` como strings planos. El dark mode de estos tokens se gestiona mediante overrides CSS globales en `index.css`. El resultado es correcto pero frágil: si alguien añade `dark:text-text-muted` esperando comportamiento Tailwind nativo, no funcionará.
+
+**Plan de acción (diferido):**
+Convertir tokens a `'text-muted': 'var(--color-text-muted)'` coordinando con ADR-021.
+
+---
+
+### DEBT-030 — Fuzz testing de schemas Zod (T2, T3, T4) — diferido post-merge
+**Severidad:** 🟢 Baja
+**Detectado:** 2026-06-26
+**Área:** `src/lib/schemas/t2.schemas.ts`, `t3.schemas.ts`, `t4.schemas.ts`
+**Estado:** Pendiente — PR dedicada post-merge
+
+**Descripción:**
+Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (`useCaseFormSchema`) son candidatos ideales para property-based testing con `fast-check`. Generando inputs aleatorios se detectarían edge cases de validación (strings muy largos, valores numéricos en límite, campos opcionales undefined vs null) que los tests deterministas no cubren.
+
+**Plan de acción:**
+1. `npm install --save-dev fast-check`
+2. Crear `src/__tests__/schemas/fuzz-t2-t3-t4.test.ts` con `fc.assert` + `fc.property`
+3. Conectar al pipeline CI existente (`npm run test`)
+
+**Requiere ADR:** No.
+**Relacionado:** ADR-022, DEBT-024.
+
+---
+
 ## Items Resueltos
+
+> Los items tachados están completamente resueltos y se mantienen como registro histórico.
 
 ### ~~DEBT-001~~ — Tests automatizados ✅ (Resuelto parcialmente — 2026-06-02)
 - **Vitest** configurado y funcionando: **507+ tests en 33 ficheros pasando** (medido 2026-06-11)
@@ -119,8 +177,6 @@ en los cuatro ficheros. Añadida regla ESLint `no-restricted-imports` para imped
 **Estado:** Resuelto (2026-06-09)
 
 Creado `src/services/department.service.ts` con `fetchDepartments`, `addDepartment`, `deleteDepartment`. Eliminado import `{ supabase }` de `useDepartmentStore`. Comportamiento observable idéntico.
-
-## Items Activos
 
 ### ~~DEBT-013~~ — Auth y Engagement stores importaban supabase directamente (ADR-011) ✅ (Resuelto — 2026-06-11)
 **Severidad:** 🔴 Alta

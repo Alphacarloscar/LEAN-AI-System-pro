@@ -31,7 +31,7 @@ export function P6GovernancePanel({ p6data, risksHigh, expanded, onToggle, onNav
   return (
     <PanelCard
       id="p6" expanded={expanded} onClick={onToggle}
-      tag="T8 · T9 · T11 · Gobierno" tagColor="amber"
+      tag="T8 · T9 · T11 · Gobierno"
       title="Gobierno activo"
       subtitle={p6data.hasData
         ? `${p6data.casosEnGO} en GO · ${p6data.upcomingEvents.length} hitos próximos`
@@ -39,8 +39,8 @@ export function P6GovernancePanel({ p6data, risksHigh, expanded, onToggle, onNav
       animDelay={400}
       heroSlot={<HeroMetric
         label="Gobierno activo"
-        value={p6data.gobiernoActivoPct > 0 ? `${p6data.gobiernoActivoPct}%` : '—'}
-        colorScore={p6data.gobiernoActivoPct > 0 ? p6data.gobiernoActivoPct : undefined}
+        value={p6data.hasData ? `${p6data.gobiernoActivoPct}%` : '—'}
+        colorScore={p6data.hasData ? p6data.gobiernoActivoPct : undefined}
       />}
     >
       {p6data.hasData ? (

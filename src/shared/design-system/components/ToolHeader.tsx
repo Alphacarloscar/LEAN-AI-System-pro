@@ -21,7 +21,7 @@ export interface ToolHeaderProps {
   cta?:          ReactNode
   /** Right-side status pills (count badges, alert chips…). Rendered between title block and cta. */
   chips?:        ReactNode
-  /** Sticky below the main header (top = var(--header-h, 56px)) with backdrop-blur */
+  /** Sticky below the main header (top = var(--header-h, 64px)) with backdrop-blur */
   sticky?:       boolean
   /** Extra row rendered below the main header row (e.g. progress bar in T1, global progress in T12) */
   below?:        ReactNode
@@ -68,7 +68,7 @@ export function ToolHeader({
         sticky ? 'sticky z-[15]' : '',
         className,
       ].filter(Boolean).join(' ')}
-      style={sticky ? { top: 'var(--header-h, 56px)' } : undefined}
+      style={sticky ? { top: 'var(--header-h, 64px)' } : undefined}
     >
       {/* ── Main row ── */}
       <div className={`flex items-center gap-3 h-12 ${maxWidth} mx-auto`}>

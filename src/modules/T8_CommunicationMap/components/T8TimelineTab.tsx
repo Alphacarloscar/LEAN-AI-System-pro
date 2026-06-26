@@ -40,7 +40,7 @@ export function TimelineTab({ actions }: { actions: CommAction[] }) {
         <button
           onClick={() => setActivePhase('all')}
           className={['px-3 py-1 rounded-full text-xs font-medium border transition-all',
-            activePhase === 'all' ? 'bg-navy-metallic text-white border-navy' : 'border-border text-text-muted hover:border-navy/30'
+            activePhase === 'all' ? 'bg-navy-metallic dark:bg-gold-metallic text-white dark:text-lean-black border-navy dark:border-gold' : 'border-border text-text-muted hover:border-navy/30 dark:hover:border-gold/30'
           ].join(' ')}
         >
           Todas
@@ -92,7 +92,7 @@ export function TimelineTab({ actions }: { actions: CommAction[] }) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-3 flex-wrap mb-1.5">
                           <div>
-                            <p className="font-semibold text-sm text-lean-black dark:text-gray-100">{action.title}</p>
+                            <p className="font-semibold text-sm text-lean-black dark:text-warm-50">{action.title}</p>
                             <p className="text-[10px] font-mono text-text-subtle mt-0.5">{action.week}</p>
                           </div>
                           <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${priCfg.color}`}>

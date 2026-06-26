@@ -52,7 +52,7 @@ export function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) 
     <Card variant="outlined" padding="none" className="w-52 flex-shrink-0 rounded-xl p-4 space-y-4">
       {/* Momentum score */}
       <div>
-        <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">Momentum</p>
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-2">Momentum</p>
         <div className="flex items-end gap-1.5 mb-1.5">
           <span className="text-2xl font-bold text-lean-black dark:text-warm-50 tabular-nums leading-none">
             {momentumPct}%
@@ -80,7 +80,7 @@ export function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) 
 
       {/* Riesgo */}
       <div>
-        <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">Riesgo principal</p>
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-2">Riesgo principal</p>
         <div className="flex gap-2 items-start">
           <div className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full bg-danger-light flex items-center justify-center">
             <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
@@ -96,7 +96,7 @@ export function MomentumCard({ stakeholders }: { stakeholders: Stakeholder[] }) 
 
       {/* Oportunidad */}
       <div>
-        <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">Oportunidad</p>
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-2">Oportunidad</p>
         <div className="flex gap-2 items-start">
           <div className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full bg-success-light flex items-center justify-center">
             <svg width="8" height="8" viewBox="0 0 8 8" fill="none">

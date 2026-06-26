@@ -14,7 +14,7 @@
 // ============================================================
 
 import { useState, useRef, useEffect }  from 'react'
-import { Spinner, Modal, Button }       from '@shared/design-system/components'
+import { Spinner }                      from '@shared/design-system/components'
 import { useEngagementStore }           from '@/modules/Engagement/store'
 import { useAuthStore }                 from '@/modules/Auth'
 import { listCompanies }                from '@/services/companies.service'
@@ -22,6 +22,7 @@ import { isDemoEnabled }                from '@/lib/config'
 import { reportError }                  from '@/lib/reportError'
 import type { CompanyRow }              from '@/types/database.types'
 import { useUnsavedChanges }            from '@/shared/hooks/useUnsavedChanges'
+import { UnsavedChangesModal }          from '@/shared/components/UnsavedChangesModal'
 
 // ── Iconos ────────────────────────────────────────────────────
 
@@ -160,15 +161,15 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
   const inlineInputClass = [
     'flex-1 text-xs px-2.5 py-1.5 rounded-lg border outline-none',
     dark
-      ? 'bg-white/8 border-white/12 text-white placeholder:text-gray-500 focus:border-amber-500/50'
-      : 'bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-[#C8860A]/50',
+      ? 'bg-white/8 border-white/12 text-white placeholder:text-warm-400 focus:border-gold/50'
+      : 'bg-warm-50 border-border text-lean-black placeholder:text-text-subtle focus:border-gold/50',
   ].join(' ')
 
   const inlineSelectClass = [
     'w-full text-xs px-2.5 py-1.5 rounded-lg border outline-none',
     dark
-      ? 'bg-white/8 border-white/12 text-white focus:border-amber-500/50'
-      : 'bg-gray-50 border-gray-200 text-gray-800 focus:border-[#C8860A]/50',
+      ? 'bg-white/8 border-white/12 text-white focus:border-gold/50'
+      : 'bg-warm-50 border-border text-lean-black focus:border-gold/50',
   ].join(' ')
 
   return (
@@ -177,16 +178,18 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
       {/* Trigger */}
       <button
         onClick={() => setOpen((o) => !o)}
+        title="Cambiar proyecto activo"
+        aria-label="Selector de proyecto"
         className={[
           'flex items-center gap-1.5 h-8 px-3 rounded-full',
           'text-[10px] font-mono uppercase tracking-wide transition-colors duration-200',
           open
             ? dark
-              ? 'bg-white/12 text-white/80'
-              : 'bg-black/8 text-black/70'
+              ? 'bg-white/12 text-white/90'
+              : 'bg-black/8 text-black/80'
             : dark
-              ? 'text-white/40 hover:text-white/70 hover:bg-white/8'
-              : 'text-black/30 hover:text-black/60 hover:bg-black/6',
+              ? 'text-white/65 hover:text-white/90 hover:bg-white/8'
+              : 'text-black/55 hover:text-black/80 hover:bg-black/6',
         ].join(' ')}
       >
         {isLoading ? (
@@ -198,7 +201,19 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
             <path d="M4 3V2a1 1 0 012 0v1M8 3V2a1 1 0 012 0v1" />
           </svg>
         )}
-        <span className="max-w-[140px] truncate">{label}</span>
+        <span
+          className="shrink-0"
+          style={{ opacity: 0.6 }}
+        >
+          Proyecto
+        </span>
+        <span
+          className="shrink-0"
+          style={{ opacity: open ? 0.7 : 0.45 }}
+        >
+          /
+        </span>
+        <span className="max-w-[120px] truncate font-semibold">{label}</span>
         <ChevronIcon open={open} />
       </button>
 
@@ -227,8 +242,8 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                         ? 'bg-amber-900/30 text-amber-300 font-medium'
                         : 'bg-amber-50 text-[#C8860A] font-medium'
                       : dark
-                        ? 'text-gray-300 hover:bg-white/6'
-                        : 'text-gray-700 hover:bg-gray-50',
+                        ? 'text-warm-200 hover:bg-white/6'
+                        : 'text-lean-black hover:bg-warm-50',
                   ].join(' ')}
                 >
                   <div className="flex items-center gap-2">
@@ -280,7 +295,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                       {!isOwn && (
                         <span className={[
                           'flex-shrink-0 text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded',
-                          dark ? 'bg-white/10 text-white/40' : 'bg-gray-100 text-gray-400',
+                          dark ? 'bg-white/10 text-white/40' : 'bg-warm-100 text-text-muted',
                         ].join(' ')}>
                           Vista
                         </span>
@@ -378,8 +393,8 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                   className={[
                     'w-full flex items-center gap-2 px-4 py-2.5 text-xs transition-colors',
                     dark
-                      ? 'text-gray-400 hover:bg-white/6 hover:text-gray-200'
-                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700',
+                      ? 'text-warm-300 hover:bg-white/6 hover:text-warm-100'
+                      : 'text-text-muted hover:bg-warm-50 hover:text-lean-black',
                   ].join(' ')}
                 >
                   <PlusIcon />
@@ -391,29 +406,17 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
         </div>
       )}
 
-      <Modal
+      <UnsavedChangesModal
         open={pendingId !== undefined}
-        onClose={() => setPendingId(undefined)}
-        title="Cambios sin guardar"
-        size="sm"
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setPendingId(undefined)}>Cancelar</Button>
-            <Button variant="danger" onClick={() => {
-              clearDirty()
-              selectEngagement(pendingId ?? null)
-              setPendingId(undefined)
-              setOpen(false)
-            }}>
-              Descartar y continuar
-            </Button>
-          </div>
-        }
-      >
-        <p className="text-sm text-text-muted">
-          Tienes cambios sin guardar. ¿Deseas descartarlos y cambiar de proyecto?
-        </p>
-      </Modal>
+        onCancel={() => setPendingId(undefined)}
+        onDiscard={() => {
+          clearDirty()
+          selectEngagement(pendingId ?? null)
+          setPendingId(undefined)
+          setOpen(false)
+        }}
+        message="Si cambias de proyecto ahora, los cambios en curso se perderán."
+      />
     </div>
   )
 }

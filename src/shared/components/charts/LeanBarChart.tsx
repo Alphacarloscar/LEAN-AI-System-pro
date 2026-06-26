@@ -63,15 +63,15 @@ function CustomTooltip({
   if (!active || !payload?.length) return null
 
   return (
-    <div className="rounded-lg border border-border bg-white dark:bg-gray-900 shadow-lg px-3 py-2 text-xs">
-      <p className="font-semibold text-lean-black dark:text-gray-100 mb-1">{label}</p>
+    <div className="rounded-lg border border-border bg-white dark:bg-warm-800 shadow-sm px-3 py-2 text-xs">
+      <p className="font-semibold text-lean-black dark:text-warm-50 mb-1">{label}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-sm" style={{ background: entry.color }} />
           {payload.length > 1 && (
-            <span className="text-text-muted">{entry.name}:</span>
+            <span className="text-text-muted dark:text-warm-300">{entry.name}:</span>
           )}
-          <span className="font-semibold text-lean-black dark:text-gray-100">
+          <span className="font-semibold text-lean-black dark:text-warm-50">
             {entry.value?.toLocaleString('es-ES')}{unit}
           </span>
         </div>

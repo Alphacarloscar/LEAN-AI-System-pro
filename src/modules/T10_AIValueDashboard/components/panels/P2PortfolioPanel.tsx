@@ -28,8 +28,8 @@ interface P2Props {
 export function P2PortfolioPanel({ t4data, segments, expanded, onToggle, onNavigate }: P2Props) {
   return (
     <PanelCard
-      id="p2" featured expanded={expanded} onClick={onToggle}
-      tag="T4 · Portfolio IA  ★" tagColor="success"
+      id="p2" expanded={expanded} onClick={onToggle}
+      tag="T4 · Portfolio IA  ★"
       title="Iniciativas activas" subtitle={`${t4data.totalInitiatives} iniciativas · ${t4data.statuses.active} activas`}
       animDelay={80}
       heroSlot={<HeroMetric label="Inversión total" value={t4data.totalInvestment > 0 ? `€${(t4data.totalInvestment / 1000).toFixed(0)}K` : '—'} />}

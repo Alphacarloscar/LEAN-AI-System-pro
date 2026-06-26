@@ -62,16 +62,16 @@ const FALLBACKS: Record<ChartTokenName, string> = {
   'border':        '#D4D0C8',
   'success':       '#86C7A8',
   'success-dark':  '#5FAF8A',
-  'success-light': '#D4EDE3',
+  'success-light': '#E8F5EE',
   'warning':       '#E8C281',
-  'warning-dark':  '#C9973A',
-  'warning-light': '#F8EDD3',
+  'warning-dark':  '#D4A85C',
+  'warning-light': '#FEF6E8',
   'danger':        '#D89090',
-  'danger-dark':   '#B85C5C',
-  'danger-light':  '#F5DEDE',
+  'danger-dark':   '#C06060',
+  'danger-light':  '#FDECEC',
   'info':          '#9BB5D9',
-  'info-dark':     '#5A87C5',
-  'info-light':    '#D6E4F5',
+  'info-dark':     '#6A90C0',
+  'info-light':    '#EBF2FA',
   'text-muted':    '#6B6864',
   'text-subtle':   '#9A9790',
 }
@@ -136,10 +136,10 @@ export function getNavyRgb(opacity = 1): string {
 
 /** Colores por cuadrante de influencia/adopción (T2 StakeholderMatrix) */
 export const QUADRANT_COLORS = {
-  critico:   { fill: '#C06060', bg: '#F5DEDE', bgDark: 'rgba(192,96,96,0.28)'   },
+  critico:   { fill: '#C06060', bg: '#FDECEC', bgDark: 'rgba(192,96,96,0.28)'   },
   decisor:   { fill: '#2A2822', bg: 'rgba(42,40,34,0.10)', bgDark: 'rgba(196,192,184,0.18)' },
-  reticente: { fill: '#D4A85C', bg: '#FAF0D7', bgDark: 'rgba(212,168,92,0.28)'  },
-  adoptador: { fill: '#5FAF8A', bg: '#D4EDE3', bgDark: 'rgba(95,175,138,0.28)'  },
+  reticente: { fill: '#D4A85C', bg: '#FEF6E8', bgDark: 'rgba(212,168,92,0.28)'  },
+  adoptador: { fill: '#5FAF8A', bg: '#E8F5EE', bgDark: 'rgba(95,175,138,0.28)'  },
 } as const
 
 /** Colores por cuadrante de la Opportunity Matrix (T3 ValueStreamMap) */
@@ -162,10 +162,10 @@ export const T3_VALUE_BAR_COLORS: Record<'alta' | 'media' | 'baja' | 'nula', str
 
 /** bg tint activo por valueContribution (T3 StageModal selector) */
 export const T3_VALUE_ACTIVE_BG: Record<'alta' | 'media' | 'baja' | 'nula', string> = {
-  alta:  '#D4EDE3',  // success-light
-  media: '#DDE8F5',  // info-light
-  baja:  '#FAF0D7',  // warning-light
-  nula:  '#F5DEDE',  // danger-light
+  alta:  '#E8F5EE',  // success-light
+  media: '#EBF2FA',  // info-light
+  baja:  '#FEF6E8',  // warning-light
+  nula:  '#FDECEC',  // danger-light
 } as const
 
 /** Segmentos de la curva de Rogers (T7 AdoptionHeatmap, T10 AIValueDashboard) */
@@ -175,25 +175,48 @@ export const ROGERS_SEGMENT_COLORS = {
   rezagados:     '#C4C0B8',  // warm-100     — rezagados / neutro
 } as const
 
-/** Dominios funcionales de IA (T5 AITaxonomyCanvas) */
+/** Dominios funcionales de IA — fuente de verdad única para T3, T4, T5, T10 */
 export const DOMAIN_COLORS = {
-  automatizacion: '#C8860A',  // gold    — procesos automatizados
-  augmentation:   '#6A90C0',  // info-dark — herramientas de apoyo a personas
-  analytics:      '#5FAF8A',  // success-dark — análisis y predicción
-  generative:     '#D4A85C',  // warning-dark — IA generativa
+  automatizacion_rpa:         '#6A90C0',  // info-dark       — azul DS cálido
+  automatizacion_inteligente: '#C8860A',  // gold            — acento de marca
+  analitica_predictiva:       '#5FAF8A',  // success-dark    — verde DS
+  asistente_ia:               '#7890B0',  // slate-blue cálido — diferenciado de gold/teal
+  optimizacion_proceso:       '#C06060',  // danger-dark     — coral DS
+  'agéntica':                 '#7A6FAB',  // purple-warm     — diferenciado de gold/ámbar
 } as const
 
 /**
- * Devuelve un color hex según un score 0–100 (semáforo rojo/ámbar/verde).
- * Uso: componentes de métricas tipo HeroMetric (T10) y badges de estado.
- *
- * @param score - Valor 0–100, o undefined para color neutro (gold)
+ * Paleta de 10 colores para gráficos multi-serie (donuts, barras apiladas, leyendas).
+ * Derivados del DS warm — sin colisionar con los 4 colores de fase
+ * (warning-dark, info-dark, success-dark, navy).
+ * Índice estable: usar siempre por posición para consistencia cross-panel.
  */
-export function getHeroColor(score?: number): string {
-  if (score == null) return '#C8860A'  // gold neutro
-  if (score < 30)   return '#C05035'  // danger-dark (rojo)
-  if (score < 60)   return '#C8860A'  // gold (ámbar)
-  return '#2A7A52'                    // success verde oscuro
+export const CHART_SERIES_COLORS = [
+  '#D4973A',  // 0  gold-pastel    — acento de marca, cálido
+  '#C47E7E',  // 1  coral-pastel   — rojo suavizado
+  '#8F85C2',  // 2  lavender-warm  — violeta pastel
+  '#B08A6A',  // 3  sand-warm      — terracota clara
+  '#5FA8A8',  // 4  teal-pastel    — azul-verde suave
+  '#B87EA0',  // 5  mauve-pastel   — rosa-lila
+  '#8AA06A',  // 6  sage-warm      — verde salvia
+  '#C49B58',  // 7  amber-pastel   — ámbar medio
+  '#7A9AB0',  // 8  slate-pastel   — azul grisáceo
+  '#A8A49C',  // 9  warm-neutral   — gris cálido
+] as const
+
+/**
+ * Progresión cromática 0→100: silver-warm (#9A9790) → gold (#C8860A).
+ * Misma escala que maturityHex() de T1, adaptada a 0-100.
+ * score=undefined devuelve gold (valor máximo — métrica sin umbral).
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function getHeroColor(score?: number, _dangerBelow = 30, _warningBelow = 60): string {
+  if (score == null) return '#C8860A'
+  const t = Math.max(0, Math.min(score, 100)) / 100
+  const r = Math.round(154 + (200 - 154) * t)
+  const g = Math.round(151 + (134 - 151) * t)
+  const b = Math.round(144 + ( 10 - 144) * t)
+  return `rgb(${r},${g},${b})`
 }
 
 /**
@@ -213,4 +236,18 @@ export const DEPT_ADOPTION_COLORS = {
   innovadores: '#C8860A',  // gold
   early:       '#8A857C',  // warm-500
   rezagados:   '#D4D0C8',  // warm-200
+} as const
+
+/** Colores por departamento — fuente única cross-módulo (T5, T7, T8, T10) */
+export const DEPT_COLORS = {
+  direction:  '#C8860A',  // Dirección General — gold (acento de marca)
+  it:         '#4A8A8A',  // IT / Tecnología   — teal-warm
+  ops:        '#C06060',  // Operaciones       — coral
+  marketing:  '#5A8C6A',  // Marketing         — pine-green cálido (H≈140°, contrasta con gold direction)
+  hr:         '#A06090',  // RRHH              — mauve-warm
+  finance:    '#8A6C50',  // Finanzas          — warm-brown
+  legal:      '#6A7A50',  // Legal             — olive-warm
+  logistics:  '#7A6FAB',  // Logística         — purple-warm
+  purchasing: '#507890',  // Compras           — slate-warm
+  fallback:   '#C4C0B8',  // Otros             — warm-neutral
 } as const

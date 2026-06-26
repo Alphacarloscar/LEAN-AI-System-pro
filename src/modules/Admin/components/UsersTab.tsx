@@ -76,7 +76,7 @@ export function UsersTab({ companies, users, currentUserId, onUserAdded, onUserD
     })
   }, [users, filterRole, filterCompany])
 
-  const inputClass = "w-full h-9 px-3 rounded-lg border border-gray-200 text-sm bg-gray-50 outline-none focus:border-[#C8860A]/60 focus:bg-white placeholder:text-gray-400"
+  const inputClass = "w-full h-9 px-3 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60 focus:bg-white placeholder:text-text-subtle"
 
   return (
     <div className="flex flex-col gap-8">
@@ -92,36 +92,36 @@ export function UsersTab({ companies, users, currentUserId, onUserAdded, onUserD
       {/* Formulario de invitación */}
       <div className="max-w-md">
         <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-1">Invitar usuario</h2>
-        <p className="text-xs text-gray-500 mb-4">El usuario recibirá un email para crear su propia contraseña.</p>
+        <p className="text-xs text-text-muted mb-4">El usuario recibirá un email para crear su propia contraseña.</p>
         <form onSubmit={handleInvite} className="flex flex-col gap-3">
           <input value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Nombre completo" required className={inputClass} />
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email corporativo" required className={inputClass} />
-          <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} required className={inputClass}>
+          <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} required aria-label="Seleccionar empresa" className={inputClass}>
             <option value="">Seleccionar empresa…</option>
             {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
 
           <div className="flex flex-col gap-2">
-            <p className="text-xs font-medium text-gray-600">Rol del usuario</p>
+            <p className="text-xs font-medium text-warm-600">Rol del usuario</p>
             {ROLE_OPTIONS.map((opt) => (
               <label
                 key={opt.value}
-                className={['flex items-start gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors', role === opt.value ? 'border-[#C8860A]/40 bg-amber-50' : 'border-gray-200 bg-gray-50 hover:bg-gray-100'].join(' ')}
+                className={['flex items-start gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors', role === opt.value ? 'border-gold/40 bg-warning-light' : 'border-border bg-warm-50 hover:bg-warm-100'].join(' ')}
               >
-                <input type="radio" name="role" value={opt.value} checked={role === opt.value} onChange={() => setRole(opt.value)} className="mt-0.5 accent-[#C8860A]" />
+                <input type="radio" name="role" value={opt.value} checked={role === opt.value} onChange={() => setRole(opt.value)} className="mt-0.5 accent-gold" />
                 <div>
-                  <p className="text-sm font-medium text-[#2A2822]">{opt.label}</p>
-                  <p className="text-xs text-gray-500">{opt.description}</p>
+                  <p className="text-sm font-medium text-lean-black dark:text-warm-50">{opt.label}</p>
+                  <p className="text-xs text-text-muted">{opt.description}</p>
                 </div>
               </label>
             ))}
           </div>
 
-          {error && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
-          {success && <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg"><CheckIcon /> Invitación enviada correctamente.</div>}
+          {error && <p className="text-xs text-danger-dark bg-danger-light px-3 py-2 rounded-lg">{error}</p>}
+          {success && <div className="flex items-center gap-2 text-xs text-success-dark bg-success-light px-3 py-2 rounded-lg"><CheckIcon /> Invitación enviada correctamente.</div>}
 
           <button type="submit" disabled={inviting || !email || !userName || !companyId}
-            className="h-9 px-4 rounded-lg bg-[#C8860A] text-white text-sm font-medium disabled:opacity-40 hover:bg-[#B57609] transition-colors flex items-center justify-center gap-2">
+            className="h-9 px-4 rounded-lg bg-gold text-white text-sm font-medium disabled:opacity-40 hover:bg-gold-hover transition-colors flex items-center justify-center gap-2">
             {inviting ? <><Spinner /> Enviando…</> : 'Enviar invitación'}
           </button>
         </form>
@@ -134,40 +134,40 @@ export function UsersTab({ companies, users, currentUserId, onUserAdded, onUserD
             Usuarios registrados ({filteredUsers.length}{filteredUsers.length !== users.length ? ` de ${users.length}` : ''})
           </h4>
           <div className="flex gap-2">
-            <select value={filterRole} onChange={(e) => setFilterRole(e.target.value as UserRole | '')} className="h-7 px-2 rounded-lg border border-gray-200 text-xs bg-gray-50 outline-none focus:border-[#C8860A]/60">
+            <select value={filterRole} onChange={(e) => setFilterRole(e.target.value as UserRole | '')} aria-label="Filtrar por rol" className="h-7 px-2 rounded-lg border border-border text-xs bg-warm-50 outline-none focus:border-gold/60">
               <option value="">Todos los roles</option>
               {ROLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
-            <select value={filterCompany} onChange={(e) => setFilterCompany(e.target.value)} className="h-7 px-2 rounded-lg border border-gray-200 text-xs bg-gray-50 outline-none focus:border-[#C8860A]/60">
+            <select value={filterCompany} onChange={(e) => setFilterCompany(e.target.value)} aria-label="Filtrar por empresa" className="h-7 px-2 rounded-lg border border-border text-xs bg-warm-50 outline-none focus:border-gold/60">
               <option value="">Todas las empresas</option>
               {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
         </div>
 
-        {deleteError && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-3">{deleteError}</p>}
+        {deleteError && <p className="text-xs text-danger-dark bg-danger-light px-3 py-2 rounded-lg mb-3">{deleteError}</p>}
 
         {users.length === 0 ? (
-          <p className="text-sm text-gray-400">Sin usuarios registrados.</p>
+          <p className="text-sm text-text-subtle">Sin usuarios registrados.</p>
         ) : filteredUsers.length === 0 ? (
-          <p className="text-sm text-gray-400">Sin usuarios que coincidan con los filtros.</p>
+          <p className="text-sm text-text-subtle">Sin usuarios que coincidan con los filtros.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {filteredUsers.map((u) => (
-              <div key={u.id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-gray-50 border border-gray-100">
+              <div key={u.id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-warm-50 border border-border">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-[#2A2822] truncate">{u.name}</p>
-                  <p className="text-xs font-mono text-gray-400 truncate">{u.email}</p>
+                  <p className="text-sm font-medium text-lean-black dark:text-warm-50 truncate">{u.name}</p>
+                  <p className="text-xs font-mono text-text-subtle truncate">{u.email}</p>
                 </div>
                 <div className="flex items-center gap-3 ml-4 shrink-0">
                   <div className="flex flex-col items-end gap-1">
                     <RoleBadge role={u.role} />
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-text-subtle">
                       {u.company_id ? (companyMap[u.company_id] ?? 'Empresa desconocida') : 'Sin empresa'}
                     </p>
                   </div>
                   {u.id !== currentUserId && (
-                    <button onClick={() => setUserToDelete(u)} title="Revocar acceso" className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors">
+                    <button onClick={() => setUserToDelete(u)} title="Revocar acceso" className="p-1.5 rounded-lg text-warm-300 hover:text-danger-dark hover:bg-danger-light transition-colors">
                       <TrashIcon />
                     </button>
                   )}

@@ -31,10 +31,10 @@ export function P1MaturityPanel({
   return (
     <PanelCard
       id="p1" expanded={expanded} onClick={onToggle}
-      tag="T1 · Readiness" tagColor="warning"
+      tag="T1 · Readiness"
       title="Madurez IA" subtitle={`${radar.length} dimensiones · Score ${avg}/4`}
       animDelay={0}
-      heroSlot={<HeroMetric label="Madurez IA" value={avg.toFixed(1)} colorScore={(avg / 4) * 100} />}
+      heroSlot={<HeroMetric label="Madurez IA" value={avg.toFixed(1)} colorScore={(avg / 4) * 100} dangerBelow={38} warningBelow={63} />}
     >
       <div className="space-y-[5px]">
         {radar.slice(0, 4).map(dim => (

@@ -11,7 +11,8 @@
 
 import type { T1DimensionState }                          from '../types'
 import { computeDimensionScore, computeOverallScore,
-         resolveMaturityTier, MATURITY_TIER_CONFIG }      from '../types'
+         resolveMaturityTier, MATURITY_TIER_CONFIG,
+         maturityHex }                                    from '../types'
 import { DIMENSION_MAP }                                  from '../constants'
 import { ITBizGapSection }                               from './ITBizGapSection'
 
@@ -33,27 +34,20 @@ interface T1ExecutiveOutputProps {
 
 // ── Helpers ───────────────────────────────────────────────────
 
-function scoreColor(s: number | null) {
-  if (s === null) return 'text-text-subtle'
-  if (s >= 3)     return 'text-success-dark'
-  if (s >= 2)     return 'text-info-dark'
-  if (s >= 1)     return 'text-warning-dark'
-  return 'text-danger-dark'
+function scoreColor(s: number | null): string {
+  return maturityHex(s)
 }
 
-function miniBarFill(score: number): string {
-  if (score >= 3) return 'bg-success-dark'
-  if (score >= 2) return 'bg-info-dark'
-  if (score >= 1) return 'bg-warning-dark'
-  return 'bg-danger-dark'
+function miniBarHex(score: number): string {
+  return maturityHex(score)
 }
 
 function miniBar(score: number, max = 4) {
   return (
-    <div className="flex-1 h-1.5 bg-gray-100 dark:bg-warm-600 rounded-full overflow-hidden">
+    <div className="flex-1 h-1.5 bg-warm-100 dark:bg-warm-600 rounded-full overflow-hidden">
       <div
-        className={`h-full ${miniBarFill(score)} rounded-full transition-all duration-300`}
-        style={{ width: `${(score / max) * 100}%` }}
+        className="h-full rounded-full transition-all duration-300"
+        style={{ width: `${(score / max) * 100}%`, backgroundColor: miniBarHex(score) }}
       />
     </div>
   )
@@ -146,7 +140,7 @@ export function T1ExecutiveOutput({
               {strengths.length > 0 ? strengths.map((d) => (
                 <div key={d.code} className="flex items-center justify-between gap-2">
                   <span className="text-sm text-lean-black dark:text-warm-100">{d.label}</span>
-                  <span className={`text-sm font-bold tabular-nums ${scoreColor(d.score)}`}>{d.score.toFixed(1)}</span>
+                  <span className="text-sm font-bold tabular-nums" style={{ color: scoreColor(d.score) }}>{d.score.toFixed(1)}</span>
                 </div>
               )) : (
                 <p className="text-xs text-text-muted">Puntúa subdimensiones para ver fortalezas.</p>
@@ -161,7 +155,7 @@ export function T1ExecutiveOutput({
                 <div key={d.code} className="flex items-center justify-between gap-2">
                   <span className="text-sm text-lean-black dark:text-warm-100">{d.label}</span>
                   <div className="flex items-center gap-1.5">
-                    <span className={`text-sm font-bold tabular-nums ${scoreColor(d.score)}`}>{d.score.toFixed(1)}</span>
+                    <span className="text-sm font-bold tabular-nums" style={{ color: scoreColor(d.score) }}>{d.score.toFixed(1)}</span>
                     <span className="text-[10px] text-text-muted">→ {TARGET.toFixed(1)}</span>
                   </div>
                 </div>
@@ -180,7 +174,7 @@ export function T1ExecutiveOutput({
                   <div key={d.code} className="flex items-center gap-2">
                     {miniBar(s ?? 0)}
                     <span className="text-[11px] text-text-muted w-16 truncate">{d.label}</span>
-                    <span className={`text-[11px] font-semibold tabular-nums w-6 text-right ${scoreColor(s)}`}>
+                    <span className="text-[11px] font-semibold tabular-nums w-6 text-right" style={{ color: scoreColor(s) }}>
                       {s !== null ? s.toFixed(1) : '—'}
                     </span>
                   </div>
@@ -207,8 +201,8 @@ export function T1ExecutiveOutput({
             </p>
             <div className="space-y-3">
               {priorityActions.map((item, i) => (
-                <div key={i} className="flex gap-3 p-3 rounded-lg bg-gray-50 dark:bg-warm-700/50">
-                  <span className="flex-shrink-0 h-5 w-5 rounded-full bg-navy text-white text-[10px] font-bold flex items-center justify-center">
+                <div key={i} className="flex gap-3 p-3 rounded-lg bg-warm-50 dark:bg-warm-800 border border-border/40 dark:border-warm-500/40">
+                  <span className="flex-shrink-0 h-5 w-5 rounded-full bg-navy dark:bg-gold text-white dark:text-lean-black text-[10px] font-bold flex items-center justify-center">
                     {i + 1}
                   </span>
                   <div>

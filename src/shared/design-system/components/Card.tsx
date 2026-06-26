@@ -7,7 +7,7 @@ import { type HTMLAttributes, type ReactNode } from 'react'
  * elevated — sombra sin borde; para modales secundarios y paneles flotantes
  * outlined — borde visible sin sombra; variante de superficie estándar
  */
-export type CardVariant = 'flat' | 'elevated' | 'outlined'
+export type CardVariant = 'flat' | 'elevated' | 'outlined' | 'featured'
 export type CardPadding = 'none' | 'sm' | 'md' | 'lg'
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
@@ -32,6 +32,11 @@ const variantClasses: Record<CardVariant, string> = {
   ].join(' '),
 
   flat: 'bg-transparent border-transparent',
+
+  featured: [
+    'bg-white border border-warm-200 border-t-2 border-t-gold shadow-sm',
+    'dark:bg-warm-800 dark:border-warm-600/30 dark:border-t-gold',
+  ].join(' '),
 }
 
 const paddingClasses: Record<CardPadding, string> = {

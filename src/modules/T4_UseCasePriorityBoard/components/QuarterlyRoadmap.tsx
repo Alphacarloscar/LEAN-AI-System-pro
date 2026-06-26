@@ -57,7 +57,7 @@ export function QuarterlyRoadmap({
                   {quarter.split(' ')[1]}
                 </p>
                 {!isEmpty && (
-                  <p className="text-[9px] font-mono text-text-subtle mt-0.5">
+                  <p className="text-[10px] font-mono text-text-muted mt-0.5">
                     {cases.length} caso{cases.length !== 1 ? 's' : ''}
                   </p>
                 )}
@@ -138,12 +138,12 @@ export function QuarterlyRoadmap({
                   onClick={() => onSelect(uc.id)}
                   className="shrink-0 text-left rounded-xl border border-dashed border-border
                     dark:border-white/8 bg-warm-50 dark:bg-warm-900/50 px-3 py-2 transition-all
-                    hover:border-gray-400 hover:opacity-100"
+                    hover:border-warm-400 hover:opacity-100"
                 >
                   <p className="text-[10px] font-semibold text-text-muted truncate max-w-[160px]">
                     {uc.name}
                   </p>
-                  <p className="text-[9px] text-text-subtle">{uc.department}</p>
+                  <p className="text-[10px] text-text-muted">{uc.department}</p>
                 </button>
               ))}
             </div>

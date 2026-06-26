@@ -12,6 +12,8 @@
 //   subtitle     — subtítulo opcional
 // ============================================================
 
+import { useState }            from 'react'
+import { Sparkles, ArrowRight } from 'lucide-react'
 import { useRecommendations }  from '@/hooks/useRecommendations'
 import type { T1Recommendation } from '@/hooks/useRecommendations'
 import { EmptyState as DSEmptyState } from '@shared/design-system/components'
@@ -60,10 +62,10 @@ function LoadingState() {
           />
         ))}
       </div>
-      <p className="text-xs text-text-muted dark:text-gray-400">
+      <p className="text-xs text-text-muted dark:text-warm-300">
         Analizando datos del cliente…
       </p>
-      <p className="text-[10px] text-text-subtle dark:text-gray-500 text-center max-w-[220px] leading-relaxed">
+      <p className="text-[10px] text-text-subtle dark:text-warm-400 text-center max-w-[220px] leading-relaxed">
         Puede tardar hasta 1–2 minutos según la complejidad del portfolio.
       </p>
     </div>
@@ -78,7 +80,7 @@ function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) 
       </p>
       <button
         onClick={onRetry}
-        className="flex items-center gap-1.5 text-xs text-text-muted hover:text-lean-black dark:hover:text-gray-200 transition-colors"
+        className="flex items-center gap-1.5 text-xs text-text-muted hover:text-lean-black dark:hover:text-warm-100 transition-colors"
       >
         <RefreshIcon />
         Reintentar
@@ -91,7 +93,7 @@ function RecommendationCard({ rec, index }: { rec: T1Recommendation; index: numb
   const effort = EFFORT_CONFIG[rec.effort as keyof typeof EFFORT_CONFIG] ?? EFFORT_CONFIG.medio
 
   return (
-    <div className="flex gap-3 p-4 rounded-xl bg-white dark:bg-gray-900/60 border border-border dark:border-white/6 hover:border-amber-300 dark:hover:border-amber-700/50 transition-colors">
+    <div className="flex gap-3 p-4 rounded-xl bg-white dark:bg-warm-800/60 border border-border dark:border-white/6 hover:border-amber-300 dark:hover:border-amber-700/50 transition-colors">
       {/* Número */}
       <div className="shrink-0 w-6 h-6 rounded-lg bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/40 flex items-center justify-center">
         <span className="text-[10px] font-bold text-[#C8860A]">{index + 1}</span>
@@ -99,10 +101,10 @@ function RecommendationCard({ rec, index }: { rec: T1Recommendation; index: numb
 
       {/* Contenido */}
       <div className="flex-1 min-w-0 space-y-1.5">
-        <p className="text-xs font-semibold text-lean-black dark:text-gray-100 leading-snug">
+        <p className="text-xs font-semibold text-lean-black dark:text-warm-50 leading-snug">
           {rec.title}
         </p>
-        <p className="text-[11px] text-text-muted dark:text-gray-400 leading-relaxed">
+        <p className="text-[11px] text-text-muted dark:text-warm-300 leading-relaxed">
           {rec.rationale}
         </p>
 
@@ -112,7 +114,7 @@ function RecommendationCard({ rec, index }: { rec: T1Recommendation; index: numb
             <span className={['w-1.5 h-1.5 rounded-full', effort.dot].join(' ')} />
             {effort.label}
           </span>
-          <span className="text-[10px] text-text-subtle dark:text-gray-500 font-mono">
+          <span className="text-[10px] text-text-subtle dark:text-warm-400 font-mono">
             {rec.horizon}
           </span>
         </div>
@@ -143,19 +145,64 @@ export function RecommendationPanel({
   const hasData     = !!data && data.recommendations.length > 0
   const isDisabled  = !engagementId
 
+  // hasGenerated: true si ya hay datos cacheados o el usuario ha iniciado la generación
+  const [hasGenerated, setHasGenerated] = useState<boolean>(() => hasData)
+
+  function handleGenerate() {
+    setHasGenerated(true)
+    refetch()
+  }
+
+  // Banner compacto — solo si no hay datos y no se ha iniciado generación
+  if (!hasGenerated && !hasData && !isLoading && !error) {
+    return (
+      <div className="rounded-xl border border-gold/30 bg-amber-50/60 dark:bg-amber-900/15 px-5 py-3
+                      flex items-center gap-4">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="h-8 w-8 rounded-lg bg-gold/10 border border-gold/20
+                          flex items-center justify-center shrink-0">
+            <Sparkles size={16} strokeWidth={1.5} className="text-gold" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-lean-black dark:text-warm-50 truncate">
+              {title}
+            </p>
+            <p className="text-[11px] text-text-muted dark:text-warm-300 truncate">
+              {subtitle}
+            </p>
+          </div>
+        </div>
+        <div className="flex-1 flex justify-center">
+          <button
+            onClick={handleGenerate}
+            disabled={isDisabled}
+            style={{ backgroundColor: 'var(--color-gold)', color: '#fff' }}
+            className="inline-flex items-center gap-1.5 h-8 px-3 text-label font-medium rounded
+                       transition-all duration-150 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed
+                       active:scale-[0.98] hover:opacity-90"
+          >
+            Generar
+            <ArrowRight size={14} strokeWidth={1.5} />
+          </button>
+        </div>
+        <div className="flex-1" />
+      </div>
+    )
+  }
+
   return (
     <div className="rounded-xl bg-surface dark:bg-warm-900/40 border border-border dark:border-white/6 overflow-hidden">
 
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border dark:border-white/6">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gold/30 dark:border-white/6 bg-amber-50/60 dark:bg-amber-900/15">
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 rounded-lg bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/30 flex items-center justify-center text-[#C8860A]">
             <SparkleIcon />
           </div>
           <div>
-            <p className="text-xs font-semibold text-lean-black dark:text-gray-100">{title}</p>
+            <p className="text-xs font-semibold text-lean-black dark:text-warm-50">{title}</p>
             {subtitle && (
-              <p className="text-[10px] text-text-subtle dark:text-gray-500">{subtitle}</p>
+              <p className="text-[10px] text-text-subtle dark:text-warm-400">{subtitle}</p>
             )}
           </div>
         </div>
@@ -165,7 +212,7 @@ export function RecommendationPanel({
           <button
             onClick={refetch}
             disabled={isDisabled}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-medium text-text-muted dark:text-gray-400 hover:text-lean-black dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-medium text-text-muted dark:text-warm-300 hover:text-lean-black dark:hover:text-warm-100 hover:bg-warm-100 dark:hover:bg-warm-700 transition-colors"
           >
             <RefreshIcon />
             Regenerar
@@ -207,18 +254,16 @@ export function RecommendationPanel({
                 <button
                   onClick={refetch}
                   disabled={isDisabled}
-                  className={[
-                    'flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150',
-                    isDisabled
-                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                      : 'bg-[#C8860A] hover:bg-[#B57609] text-white shadow-sm hover:shadow',
-                  ].join(' ')}
+                  style={{ backgroundColor: 'var(--color-gold)', color: '#fff' }}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 text-label font-medium rounded
+                             transition-all duration-150 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed
+                             active:scale-[0.98] hover:opacity-90"
                 >
                   <SparkleIcon />
-                  Generar análisis
+                  Generar
                 </button>
                 {isDisabled && (
-                  <p className="text-[10px] text-text-subtle dark:text-gray-500">
+                  <p className="text-[10px] text-text-subtle dark:text-warm-400">
                     Selecciona un engagement activo para generar recomendaciones.
                   </p>
                 )}

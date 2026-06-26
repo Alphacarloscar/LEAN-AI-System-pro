@@ -53,7 +53,7 @@ type Phase = 'form' | 'interview' | 'result'
 function ProgressBar({ current, total }: { current: number; total: number }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 h-1 bg-gray-100 dark:bg-warm-700 rounded-full overflow-hidden">
+      <div className="flex-1 h-1 bg-warm-100 dark:bg-warm-700 rounded-full overflow-hidden">
         <div
           className="h-full bg-navy rounded-full transition-all duration-300"
           style={{ width: `${(current / total) * 100}%` }}
@@ -158,7 +158,7 @@ function StakeholderFormPhase({
         )}
       />
 
-      <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-warm-700/50 border border-border/60">
+      <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-warm-50 dark:bg-warm-700/50 border border-border/60">
         A continuación, 5 preguntas que determinarán el arquetipo y el nivel de resistencia automáticamente.
       </p>
 
@@ -236,7 +236,7 @@ function InterviewPhase({
                 'w-full text-left px-4 py-3 rounded-xl border text-xs font-medium transition-all duration-150',
                 isSelected
                   ? answerColors[answer.code]
-                  : 'border-border bg-white dark:bg-warm-700 text-text-muted hover:border-navy/30 hover:bg-gray-50 dark:hover:bg-warm-600',
+                  : 'border-border bg-white dark:bg-warm-700 text-text-muted hover:border-navy/30 hover:bg-warm-50 dark:hover:bg-warm-600',
               ].join(' ')}
             >
               <span className="font-bold mr-2 opacity-50">{answer.code})</span>
@@ -262,18 +262,18 @@ function InterviewPhase({
 // ── Color de dominio para los selectores de ajuste manual ─────
 // Hex equivalentes de los tokens Tailwind en ARCHETYPE_CONFIG/RESISTANCE_CONFIG.
 const ARCHETYPE_ACTIVE_COLOR: Record<string, string> = {
-  adoptador:    '#D4EDE3',  // success-light
-  ambassador:   '#DDE8F5',  // info-light
+  adoptador:    '#E8F5EE',  // success-light
+  ambassador:   '#EBF2FA',  // info-light
   decisor:      'rgba(42,40,34,0.1)',  // navy/10
-  critico:      '#F5DEDE',  // danger-light
-  reticente:    '#FAF0D7',  // warning-light
-  especialista: '#FAF0D7',  // backward-compat alias → mismo que reticente
+  critico:      '#FDECEC',  // danger-light
+  reticente:    '#FEF6E8',  // warning-light
+  especialista: '#FEF6E8',  // backward-compat alias → mismo que reticente
 }
 
 const RESISTANCE_ACTIVE_COLOR: Record<string, string> = {
-  baja:  '#D4EDE3',  // success-light
-  media: '#FAF0D7',  // warning-light
-  alta:  '#F5DEDE',  // danger-light
+  baja:  '#E8F5EE',  // success-light
+  media: '#FEF6E8',  // warning-light
+  alta:  '#FDECEC',  // danger-light
 }
 
 // ── Fase 3: resultado ─────────────────────────────────────────

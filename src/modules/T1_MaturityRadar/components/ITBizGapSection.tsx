@@ -123,14 +123,14 @@ export function ITBizGapSection({ dimensions, itInterviewees, bizInterviewees }:
   const msg = getGapMessage(itOverall, bizOverall)
 
   const severityStyles: Record<GapSeverity, string> = {
-    ok:     'bg-success-light border-success-dark/20 text-success-dark',
-    low:    'bg-info-light border-info-dark/20 text-info-dark',
-    medium: 'bg-warning-light border-warning-dark/20 text-warning-dark',
+    ok:     'bg-warning-light border-gold/30 text-warning-dark',
+    low:    'bg-surface border-border text-text-muted',
+    medium: 'bg-warning-light border-warning/40 text-warning-dark',
     high:   'bg-danger-light border-danger-dark/20 text-danger-dark',
   }
   const dotStyles: Record<GapSeverity, string> = {
-    ok:     'bg-success-dark',
-    low:    'bg-info-dark',
+    ok:     'bg-gold',
+    low:    'bg-silver',
     medium: 'bg-warning-dark',
     high:   'bg-danger-dark',
   }

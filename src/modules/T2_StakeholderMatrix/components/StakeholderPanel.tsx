@@ -35,7 +35,7 @@ export function StakeholderPanel({
     <div className="rounded-xl border border-border bg-white dark:bg-warm-800 overflow-hidden">
 
       {/* ── HEADER: identidad izquierda | notas derecha ── */}
-      <div className={`border-b border-border ${isHighRisk ? 'bg-danger-light dark:bg-danger-dark/20' : 'bg-gray-50 dark:bg-warm-700/50'}`}>
+      <div className={`border-b border-border ${isHighRisk ? 'bg-danger-light dark:bg-[#3A1A1A]' : 'bg-warm-50 dark:bg-warm-900/60'}`}>
         <div className="flex divide-x divide-border/40">
 
           {/* Identidad */}
@@ -71,7 +71,7 @@ export function StakeholderPanel({
           {/* Notas de sesión — en el header, columna derecha */}
           {stakeholder.notes && (
             <div className="w-[168px] shrink-0 px-3 py-3">
-              <p className="text-[8px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1.5">
                 Notas de sesión
               </p>
               <p className="text-[10px] text-text-muted leading-relaxed italic line-clamp-4">
@@ -102,11 +102,11 @@ export function StakeholderPanel({
 
           {/* Perfil arquetipo */}
           <div>
-            <p className="text-[8px] font-mono uppercase tracking-widest text-lean-black dark:text-warm-100 mb-1">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-lean-black dark:text-warm-100 mb-1">
               Perfil — {cfg.label}
             </p>
             <p className="text-[10px] text-text-muted leading-relaxed">{cfg.description}</p>
-            <p className="text-[9px] italic text-text-subtle mt-1">"{cfg.tagline}"</p>
+            <p className="text-[10px] italic text-text-muted mt-1">"{cfg.tagline}"</p>
           </div>
 
           {/* Mapa de posición — protagonista visual a ancho completo */}
@@ -116,6 +116,7 @@ export function StakeholderPanel({
                 adoptionScore={stakeholder.interview.adoptionScore}
                 influenceScore={stakeholder.interview.influenceScore}
                 archetype={stakeholder.archetype}
+                name={stakeholder.name}
                 size={160}
               /></div>
           ) : (
@@ -125,7 +126,7 @@ export function StakeholderPanel({
                   <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
-              <p className="text-[9px] text-text-subtle text-center leading-snug opacity-50">Sin entrevista</p>
+              <p className="text-[10px] text-text-muted text-center leading-snug">Sin entrevista</p>
               <Button
                 variant="primary"
                 size="xs"
@@ -144,13 +145,13 @@ export function StakeholderPanel({
 
         {/* RIGHT — intervenciones */}
         <div className="flex-1 min-w-0 px-4 py-4">
-          <p className="text-[8px] font-mono font-bold uppercase tracking-widest text-lean-black dark:text-warm-100 mb-3">
+          <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-lean-black dark:text-warm-100 mb-3">
             Intervenciones · {res.label}
           </p>
           <ol className="space-y-3">
             {interventions.map((item, i) => (
               <li key={i} className="flex gap-2.5">
-                <span className="flex-shrink-0 h-[15px] w-[15px] rounded-full bg-navy text-white text-[8px] font-bold flex items-center justify-center mt-0.5">
+                <span className="flex-shrink-0 h-[15px] w-[15px] rounded-full bg-navy dark:bg-gold text-white dark:text-lean-black text-[8px] font-bold flex items-center justify-center mt-0.5">
                   {i + 1}
                 </span>
                 <p className="text-[11px] text-text-muted leading-relaxed">{item}</p>
@@ -163,7 +164,7 @@ export function StakeholderPanel({
       {/* ── FOOTER: barras de scores a ancho completo ── */}
       {stakeholder.interview && (
         <div className="border-t border-border/40 px-5 py-4">
-          <p className="text-[8px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">
+          <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-muted mb-3">
             Scores de entrevista
           </p>
           <MetallicScoreBars

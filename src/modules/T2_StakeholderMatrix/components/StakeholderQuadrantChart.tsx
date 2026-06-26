@@ -87,7 +87,6 @@ export function StakeholderQuadrantChart({
   }))
   const jittered = applyJitter(basePositions)
 
-  const archetypesPresent = [...new Set(stakeholders.map((s) => s.archetype))]
 
   return (
     <div className="rounded-xl border border-border bg-white dark:bg-warm-800 overflow-hidden">
@@ -101,17 +100,6 @@ export function StakeholderQuadrantChart({
           <p className="text-xs text-text-muted mt-0.5">
             Adopción IA × Influencia organizacional
           </p>
-        </div>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 justify-end">
-          {archetypesPresent.map((code) => (
-            <div key={code} className="flex items-center gap-1.5">
-              <span
-                className="h-2.5 w-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: ARCHETYPE_HEX[code] }}
-              />
-              <span className="text-[10px] text-text-subtle">{(ARCHETYPE_CONFIG[code] ?? ARCHETYPE_CONFIG.adoptador).label}</span>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -183,8 +171,9 @@ export function StakeholderQuadrantChart({
                     cx={pos.cx} cy={pos.cy}
                     r={DOT_R}
                     fill={fill}
-                    stroke={isActive ? 'rgba(255,255,255,0.85)' : '#D4D0C8'}
-                    strokeWidth={2}
+                    fillOpacity="0.85"
+                    stroke={isActive ? 'rgba(255,255,255,0.85)' : 'var(--color-warm-300)'}
+                    strokeWidth="1.5"
                   />
 
                   <text
@@ -226,7 +215,6 @@ export function StakeholderQuadrantChart({
               toSvgX(s.interview!.adoptionScore),
               toSvgY(s.interview!.influenceScore),
             )
-            const fill = ARCHETYPE_HEX[s.archetype]
             const ttW  = 155
             const ttH  = 38
             const showAbove = pos.cy - DOT_R - 10 > ttH + 6
@@ -236,8 +224,8 @@ export function StakeholderQuadrantChart({
             return (
               <g key={`tt-${s.id}`} style={{ pointerEvents: 'none' }}>
                 <rect x={ttX} y={ttY} width={ttW} height={ttH} rx={6} fill="var(--color-warm-950)" opacity={0.88} />
-                <text x={ttX + ttW / 2} y={ttY + 14} textAnchor="middle" fontSize={10.5} fontWeight="600" fill="var(--color-surface)" fontFamily="Inter, sans-serif">{s.name}</text>
-                <text x={ttX + ttW / 2} y={ttY + 27} textAnchor="middle" fontSize={9.5} fill={fill} fontFamily="Inter, sans-serif">
+                <text x={ttX + ttW / 2} y={ttY + 14} textAnchor="middle" fontSize={10.5} fontWeight="600" fill="#FFFFFF" fontFamily="Inter, sans-serif">{s.name}</text>
+                <text x={ttX + ttW / 2} y={ttY + 27} textAnchor="middle" fontSize={9.5} fill="rgba(255,255,255,0.65)" fontFamily="Inter, sans-serif">
                   {(ARCHETYPE_CONFIG[s.archetype] ?? ARCHETYPE_CONFIG.adoptador).label} · {RESISTANCE_CONFIG[s.resistance].label}
                 </text>
               </g>

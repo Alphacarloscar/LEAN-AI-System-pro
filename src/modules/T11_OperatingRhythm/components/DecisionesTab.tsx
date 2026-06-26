@@ -14,14 +14,14 @@ function DecisionCard({ node }: { node: T11DecisionNode }) {
     <div className={`rounded-xl border ${lcfg.border} bg-white dark:bg-warm-600 overflow-hidden`}>
       <div className={`px-4 py-3 ${lcfg.bg}`}>
         <div className="flex items-start gap-2">
-          <span className={`text-[9px] font-mono font-bold shrink-0 mt-0.5 ${lcfg.badgeText}`}>TRIGGER</span>
+          <span className={`text-[9px] font-mono font-bold shrink-0 mt-0.5 ${lcfg.bgText}`}>TRIGGER</span>
           <p className="text-xs font-semibold text-lean-black dark:text-warm-50 leading-snug">{node.trigger}</p>
         </div>
       </div>
 
       <div className="px-4 py-3 space-y-2.5">
         <div>
-          <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-0.5">Decisión</p>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-0.5">Decisión</p>
           <p className="text-[11px] text-lean-black dark:text-warm-100">{node.decision}</p>
         </div>
 
@@ -32,7 +32,7 @@ function DecisionCard({ node }: { node: T11DecisionNode }) {
             { label: 'Escala a', value: node.escalateTo },
           ].map((item) => (
             <div key={item.label}>
-              <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-0.5">{item.label}</p>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-0.5">{item.label}</p>
               <p className="text-[11px] text-text-muted dark:text-warm-200">{item.value}</p>
             </div>
           ))}

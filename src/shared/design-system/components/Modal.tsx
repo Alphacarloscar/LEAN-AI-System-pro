@@ -128,7 +128,7 @@ export function Modal({
         tabIndex={-1}
         onKeyDown={handleKeyDown}
         className={[
-          'relative w-full rounded-lg bg-white shadow-xl outline-none animate-fade-in',
+          'relative w-full rounded-lg bg-white shadow-md outline-none animate-fade-in',
           'dark:bg-warm-800',
           sizeClasses[size],
         ].join(' ')}

@@ -11,7 +11,7 @@ import type { InterviewAnswerCode } from '../types'
 function ProgressBar({ current, total }: { current: number; total: number }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+      <div className="flex-1 h-1 bg-warm-100 dark:bg-warm-700 rounded-full overflow-hidden">
         <div
           className="h-full bg-navy rounded-full transition-all duration-300"
           style={{ width: `${(current / total) * 100}%` }}
@@ -60,18 +60,18 @@ export function InterviewPhase({ onComplete }: InterviewPhaseProps) {
         <p className="text-xs font-mono uppercase tracking-widest text-text-subtle mb-1">
           Paso 2 de 3 · Diagnóstico del proceso
         </p>
-        <h3 className="text-base font-semibold text-lean-black dark:text-gray-100 mb-3">
+        <h3 className="text-base font-semibold text-lean-black dark:text-warm-100 mb-3">
           Entrevista estructurada
         </h3>
         <ProgressBar current={currentQ + 1} total={total} />
       </div>
 
       {/* Pregunta */}
-      <div className="rounded-xl bg-gray-50 dark:bg-gray-800/50 px-5 py-4 border border-border dark:border-white/6">
+      <div className="rounded-xl bg-warm-50 dark:bg-warm-800/50 px-5 py-4 border border-border dark:border-white/6">
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">
           Pregunta {String(currentQ + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
         </p>
-        <p className="text-sm font-semibold text-lean-black dark:text-gray-100 leading-relaxed">
+        <p className="text-sm font-semibold text-lean-black dark:text-warm-100 leading-relaxed">
           {q.text}
         </p>
         {q.hint && (
@@ -92,10 +92,10 @@ export function InterviewPhase({ onComplete }: InterviewPhaseProps) {
               className={[
                 'w-full text-left px-4 py-3 rounded-xl border text-sm transition-all duration-200',
                 isSelected
-                  ? 'border-navy bg-navy/5 dark:bg-navy/20 text-lean-black dark:text-gray-100 font-medium'
+                  ? 'border-navy bg-navy/5 dark:bg-navy/20 text-lean-black dark:text-warm-100 font-medium'
                   : isOther
                   ? 'border-border dark:border-white/6 opacity-40 text-text-muted'
-                  : 'border-border dark:border-white/10 text-text-muted hover:border-navy/40 hover:bg-gray-50 dark:hover:bg-gray-800/50',
+                  : 'border-border dark:border-white/10 text-text-muted hover:border-navy/40 hover:bg-warm-50 dark:hover:bg-warm-800/50',
               ].join(' ')}
             >
               <span className="inline-flex items-center gap-3">
@@ -103,7 +103,7 @@ export function InterviewPhase({ onComplete }: InterviewPhaseProps) {
                   'shrink-0 w-5 h-5 rounded-full border text-[10px] font-bold flex items-center justify-center',
                   isSelected
                     ? 'border-navy bg-navy text-white'
-                    : 'border-gray-300 dark:border-gray-600 text-text-subtle',
+                    : 'border-warm-300 dark:border-warm-600 text-text-subtle',
                 ].join(' ')}>
                   {opt.code}
                 </span>

@@ -71,20 +71,20 @@ export function MetallicScoreBars({
               {label}
             </text>
 
-            <rect x={TX} y={cy - 0.4} width={TRACK_W} height={0.8}
-              fill={hex} opacity={0.08} rx={0.4} />
+            <rect x={TX} y={cy - 1} width={TRACK_W} height={2}
+              fill={hex} opacity={0.12} rx={1} />
 
+            <rect x={TX} y={cy - 5} width={fillW} height={10}
+              fill={hex} opacity={0.10} rx={5} />
             <rect x={TX} y={cy - 3} width={fillW} height={6}
               fill={hex} opacity={0.10} rx={3} />
-            <rect x={TX} y={cy - 1.5} width={fillW} height={3}
-              fill={hex} opacity={0.10} rx={1.5} />
 
-            <rect x={TX} y={cy - 1.5} width={fillW} height={3}
-              fill={`url(#mb-${key})`} rx={1.5} />
+            <rect x={TX} y={cy - 3} width={fillW} height={6}
+              fill={`url(#mb-${key})`} rx={3} />
 
-            <rect x={TX + fillW * 0.08} y={cy - 2}
-              width={fillW * 0.45} height={0.7}
-              fill={light} opacity={0.60} rx={0.35} />
+            <rect x={TX + fillW * 0.08} y={cy - 3.5}
+              width={fillW * 0.45} height={1.2}
+              fill={light} opacity={0.60} rx={0.6} />
 
             <text
               x={TX + TRACK_W + G2} y={cy + 4}

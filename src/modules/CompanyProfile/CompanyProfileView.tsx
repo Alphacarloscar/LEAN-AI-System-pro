@@ -128,7 +128,7 @@ export function CompanyProfileView() {
       <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Spinner size="md" label="Cargando perfil…" className="text-navy dark:text-warm-200" />
-          <p className="text-xs text-text-subtle dark:text-gray-500 font-mono">Cargando perfil...</p>
+          <p className="text-xs text-text-subtle dark:text-warm-400 font-mono">Cargando perfil...</p>
         </div>
       </div>
     )
@@ -145,9 +145,9 @@ export function CompanyProfileView() {
             </svg>
           </div>
           <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50">Selecciona un proyecto</h2>
-          <p className="text-xs text-text-muted dark:text-gray-500 leading-relaxed">
+          <p className="text-xs text-text-muted dark:text-warm-400 leading-relaxed">
             El perfil de empresa está vinculado al proyecto activo.
-            Usa el selector <span className="font-semibold text-lean-black dark:text-gray-300">▾ Proyecto</span> en la barra superior.
+            Usa el selector <span className="font-semibold text-lean-black dark:text-warm-100">▾ Proyecto</span> en la barra superior.
           </p>
           <button onClick={() => navigate('/')} className="mt-2 text-xs font-medium text-navy dark:text-warm-200 hover:underline">
             Volver al Dashboard
@@ -168,14 +168,14 @@ export function CompanyProfileView() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/')}
-              className="flex items-center gap-1.5 text-xs font-medium text-text-muted dark:text-gray-400 hover:text-lean-black dark:hover:text-gray-200 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-medium text-text-muted dark:text-warm-300 hover:text-lean-black dark:hover:text-warm-100 transition-colors"
             >
               <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10 12L6 8l4-4" />
               </svg>
               Volver al dashboard
             </button>
-            <span className="text-text-subtle dark:text-gray-600">·</span>
+            <span className="text-text-subtle dark:text-warm-400">·</span>
             <div className="flex items-center gap-2">
               <div className="h-7 w-7 rounded-lg bg-navy/10 dark:bg-navy/20 border border-navy/20 dark:border-navy/30 flex items-center justify-center">
                 <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#2A2822" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="dark:stroke-warm-100">
@@ -184,7 +184,7 @@ export function CompanyProfileView() {
                 </svg>
               </div>
               <div>
-                <h1 className="text-sm font-semibold text-lean-black dark:text-gray-100">Perfil de Empresa</h1>
+                <h1 className="text-sm font-semibold text-lean-black dark:text-warm-50">Perfil de Empresa</h1>
                 {companyName && <p className="text-[11px] text-[#C8860A] font-medium mt-0.5">{companyName}</p>}
               </div>
             </div>
@@ -195,7 +195,7 @@ export function CompanyProfileView() {
             {activeTab === 'proyecto' && (
               <>
                 {saveError && <span className="text-[10px] text-red-500 font-mono max-w-[280px] truncate" title={saveError}>{saveError}</span>}
-                {savedDate && !isDirty && !saveError && <span className="text-[10px] text-text-subtle dark:text-gray-600 font-mono">Guardado {savedDate}</span>}
+                {savedDate && !isDirty && !saveError && <span className="text-[10px] text-text-subtle dark:text-warm-400 font-mono">Guardado {savedDate}</span>}
                 {isDirty && !isSaving && <span className="text-[10px] text-warning-dark font-mono animate-pulse">Cambios sin guardar</span>}
               </>
             )}
@@ -210,9 +210,9 @@ export function CompanyProfileView() {
                 className={[
                   'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
                   isCompanySaving || !companyId
-                    ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+                    ? 'bg-gray-300 dark:bg-warm-700 text-gray-500 cursor-not-allowed'
                     : companySaveFlash ? 'bg-success-dark text-white'
-                    : 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm',
+                    : 'bg-navy-metallic dark:bg-gold-metallic text-white dark:text-lean-black hover:bg-navy-metallic-hover dark:hover:bg-gold-metallic-hover shadow-sm',
                 ].join(' ')}
               >
                 {isCompanySaving ? (<><Spinner size="sm" label="Guardando…" />Guardando...</>)
@@ -227,9 +227,9 @@ export function CompanyProfileView() {
                 disabled={isSaving}
                 className={[
                   'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
-                  isSaving ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+                  isSaving ? 'bg-gray-300 dark:bg-warm-700 text-gray-500 cursor-not-allowed'
                     : savedFlash ? 'bg-success-dark text-white'
-                    : 'bg-navy-metallic text-white hover:bg-navy-metallic-hover shadow-sm',
+                    : 'bg-navy-metallic dark:bg-gold-metallic text-white dark:text-lean-black hover:bg-navy-metallic-hover dark:hover:bg-gold-metallic-hover shadow-sm',
                 ].join(' ')}
               >
                 {isSaving ? (<><Spinner size="sm" label="Guardando…" />Guardando...</>)
@@ -253,7 +253,7 @@ export function CompanyProfileView() {
                 'px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-150',
                 activeTab === tab.id
                   ? 'bg-navy text-white shadow-sm'
-                  : 'text-text-muted dark:text-gray-400 hover:text-lean-black dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800',
+                  : 'text-text-muted dark:text-warm-300 hover:text-lean-black dark:hover:text-warm-100 hover:bg-warm-100 dark:hover:bg-warm-700',
               ].join(' ')}
             >
               {tab.label}

@@ -1,6 +1,7 @@
-﻿import { useState, useEffect } from 'react'
+﻿import { useState, useEffect, useMemo } from 'react'
 import { useT4Store } from '../store'
 import { usePermissions } from '@/modules/Auth'
+import { useUnsavedGuard } from '@/shared/hooks/useUnsavedGuard'
 import {
   computePriorityScore,
   getGoNoGoRecommendation,
@@ -13,6 +14,7 @@ import type { UseCase, UseCaseStatus, UseCaseScores, AIActClassification } from 
 import type { Stakeholder } from '@/modules/T2_StakeholderMatrix/types'
 import { AlertTriangle, Check, X, Ban } from 'lucide-react'
 import { Button, Badge, Card, Tabs, SegmentedControl } from '@shared/design-system/components'
+import { UnsavedChangesModal }       from '@/shared/components/UnsavedChangesModal'
 import { StatusBadge, CategoryBadge } from './T4Badges'
 import { EconomicsTab }              from './EconomicsTab'
 import { AIActClassificationModal } from './AIActClassificationModal'
@@ -27,12 +29,18 @@ export function UseCaseDetailPanel({
   useCase,
   allUseCases,
   onSelect,
+  pendingNavigateTo,
+  onClearPendingNavigate,
+  onEditingChange,
   autoT1Context,
   autoT2Context,
 }: {
-  useCase:        UseCase
-  allUseCases:    UseCase[]
-  onSelect:       (id: string) => void
+  useCase:                  UseCase
+  allUseCases:              UseCase[]
+  onSelect:                 (id: string) => void
+  pendingNavigateTo?:       string | null
+  onClearPendingNavigate?:  () => void
+  onEditingChange?:         (isEditing: boolean) => void
   autoT1Context?: { weakDimensions: string[]; total: number } | null
   autoT2Context?: { champions: Stakeholder[]; blockers: Stakeholder[] } | null
 }) {
@@ -41,8 +49,40 @@ export function UseCaseDetailPanel({
   const [tab, setTab]                   = useState<DetailTab>('scoring')
   const [editingScore, setEditingScore] = useState(false)
   const [localScores, setLocalScores]   = useState<UseCaseScores>(useCase.scores)
-  const [pendingStatus, setPendingStatus]   = useState<UseCaseStatus | null>(null)
-  const [showAIActModal, setShowAIActModal] = useState(false)
+  const [pendingStatus, setPendingStatus]       = useState<UseCaseStatus | null>(null)
+  const [showAIActModal, setShowAIActModal]     = useState(false)
+  const [localPendingSelectId, setLocalPendingSelectId] = useState<string | null>(null)
+  const [pendingTab, setPendingTab]             = useState<DetailTab | null>(null)
+  const [isSavingScores, setIsSavingScores]     = useState(false)
+  const [editingEconomics, setEditingEconomics] = useState(false)
+  const [economicsIsDirty, setEconomicsIsDirty] = useState(false)
+  const [economicsSaveRequested, setEconomicsSaveRequested] = useState(false)
+
+  const pendingSelectId = localPendingSelectId ?? pendingNavigateTo ?? null
+  const showUnsavedModal = pendingSelectId !== null || pendingTab !== null
+
+  const isEditingAny = editingScore || editingEconomics
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (editingScore) {
+      const s = useCase.scores
+      return (
+        localScores.kpiImpact      !== s.kpiImpact      ||
+        localScores.feasibility    !== s.feasibility    ||
+        localScores.aiRisk         !== s.aiRisk         ||
+        localScores.dataDependency !== s.dataDependency
+      )
+    }
+    if (editingEconomics) return economicsIsDirty
+    return false
+  }, [editingScore, localScores, useCase.scores, editingEconomics, economicsIsDirty])
+
+  // Notifica al padre cuando el estado de edición cambia (para guardar back/import).
+  useEffect(() => { onEditingChange?.(isEditingAny) }, [isEditingAny, onEditingChange])
+
+  // Guard triggers whenever scoring editor is open, not just when values changed.
+  // This prevents switching use cases mid-edit without user confirmation.
+  useUnsavedGuard(editingScore, 'T4_Scoring')
 
   // Sincroniza localScores cuando cambia el caso activo o cuando el store
   // recibe los scores reales de Supabase. Se omite durante la edición para
@@ -64,6 +104,77 @@ export function UseCaseDetailPanel({
 
   function handleScoreChange(dim: keyof UseCaseScores, v: number) {
     setLocalScores((prev) => ({ ...prev, [dim]: v }))
+  }
+
+  function handleGuardedSelect(id: string) {
+    if (isEditingAny) {
+      setLocalPendingSelectId(id)
+    } else {
+      onSelect(id)
+    }
+  }
+
+  function handleGuardedTabChange(newTab: DetailTab) {
+    if (isEditingAny && newTab !== tab) {
+      setPendingTab(newTab)
+    } else {
+      setTab(newTab)
+    }
+  }
+
+  async function handleModalSaveAndContinue() {
+    if (editingScore) {
+      setIsSavingScores(true)
+      try {
+        updateUseCase(useCase.id, { scores: localScores })
+        recalcScore(useCase.id)
+        setEditingScore(false)
+      } finally {
+        setIsSavingScores(false)
+      }
+    } else if (editingEconomics) {
+      setEconomicsSaveRequested(true)
+      // La navegación se completa en handleEconomicsSaveHandled
+      return
+    }
+    const targetSelect = pendingSelectId
+    const targetTab    = pendingTab
+    setLocalPendingSelectId(null)
+    setPendingTab(null)
+    onClearPendingNavigate?.()
+    if (targetSelect) onSelect(targetSelect)
+    if (targetTab)    setTab(targetTab)
+  }
+
+  function handleEconomicsSaveHandled() {
+    setEconomicsSaveRequested(false)
+    const targetSelect = pendingSelectId
+    const targetTab    = pendingTab
+    setLocalPendingSelectId(null)
+    setPendingTab(null)
+    onClearPendingNavigate?.()
+    if (targetSelect) onSelect(targetSelect)
+    if (targetTab)    setTab(targetTab)
+  }
+
+  function handleModalDiscard() {
+    setLocalScores(useCase.scores)
+    setEditingScore(false)
+    setEditingEconomics(false)
+    setEconomicsIsDirty(false)
+    const targetSelect = pendingSelectId
+    const targetTab    = pendingTab
+    setLocalPendingSelectId(null)
+    setPendingTab(null)
+    onClearPendingNavigate?.()
+    if (targetSelect) onSelect(targetSelect)
+    if (targetTab)    setTab(targetTab)
+  }
+
+  function handleModalCancel() {
+    setLocalPendingSelectId(null)
+    setPendingTab(null)
+    onClearPendingNavigate?.()
   }
 
   function handleStatusChange(newStatus: UseCaseStatus) {
@@ -104,7 +215,7 @@ export function UseCaseDetailPanel({
             <StatusBadge status={useCase.status} />
             <CategoryBadge category={useCase.aiCategory} />
             {useCase.roadmap?.quarter && (
-              <Badge shape="pill" size="xs" style={{ backgroundColor: 'rgba(42,40,34,0.08)', color: '#2A2822' }}>
+              <Badge shape="pill" size="xs" className="bg-warm-100 text-warm-700 dark:bg-gold/20 dark:text-gold border border-warm-200 dark:border-gold/30">
                 {useCase.roadmap.quarter}
               </Badge>
             )}
@@ -113,13 +224,13 @@ export function UseCaseDetailPanel({
               const cfg  = AIACT_RISK_CONFIG[risk]
               return (
                 <button
-                  onClick={() => setTab('regulatorio')}
+                  onClick={() => handleGuardedTabChange('regulatorio')}
                   title="Ver clasificación AI Act"
                   className="hover:opacity-80 transition-opacity"
                 >
                   <Badge shape="pill" size="xs" style={{ backgroundColor: `${cfg.hex}22`, color: cfg.hex }}>
                     <span className="inline-flex items-center gap-1">
-                      {(() => { const Icon = AIACT_ICON_MAP[cfg.icon] ?? AlertTriangle; return <Icon size={11} strokeWidth={2} /> })()}
+                      {(() => { const Icon = AIACT_ICON_MAP[cfg.icon] ?? AlertTriangle; return <Icon size={11} strokeWidth={1.5} /> })()}
                       {cfg.label}
                     </span>
                   </Badge>
@@ -156,7 +267,7 @@ export function UseCaseDetailPanel({
 
         {/* Score hero */}
         <div className="shrink-0 text-center">
-          <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-0.5">Score</p>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-0.5">Score</p>
           <p className={`text-4xl font-bold tabular-nums leading-none ${priorityScoreColor(useCase.priorityScore)}`}>
             {useCase.priorityScore.toFixed(0)}
           </p>
@@ -176,7 +287,7 @@ export function UseCaseDetailPanel({
           aria-label="Secciones del caso de uso"
           variant="underline"
           value={tab}
-          onChange={(v) => setTab(v as DetailTab)}
+          onChange={(v) => handleGuardedTabChange(v as DetailTab)}
           tabs={[
             { value: 'scoring',     label: 'Scoring' },
             { value: 'economia',    label: 'Economía' },
@@ -200,7 +311,7 @@ export function UseCaseDetailPanel({
           <ScoringTabContent
             useCase={useCase}
             allUseCases={allUseCases}
-            onSelect={onSelect}
+            onSelect={handleGuardedSelect}
             isReadOnly={isReadOnly}
             editingScore={editingScore}
             localScores={localScores}
@@ -248,7 +359,7 @@ export function UseCaseDetailPanel({
                 </p>
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3" style={{ color: riskCfg.hex }}>
-                    {(() => { const Icon = AIACT_ICON_MAP[riskCfg.icon] ?? AlertTriangle; return <Icon size={32} strokeWidth={2} /> })()}
+                    {(() => { const Icon = AIACT_ICON_MAP[riskCfg.icon] ?? AlertTriangle; return <Icon size={32} strokeWidth={1.5} /> })()}
                     <div>
                       <p className="text-lg font-bold" style={{ color: riskCfg.hex }}>{riskCfg.label}</p>
                       <p className="text-[10px] text-text-subtle mt-0.5">
@@ -268,11 +379,11 @@ export function UseCaseDetailPanel({
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P1 · Ámbito</p>
+                    <p className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-0.5">P1 · Ámbito</p>
                     <p className="text-xs font-medium text-lean-black dark:text-warm-100 leading-tight">{scopeLabel}</p>
                   </div>
                   <div>
-                    <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P2 · Impacto en personas</p>
+                    <p className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-0.5">P2 · Impacto en personas</p>
                     <p className="text-xs font-medium text-lean-black dark:text-warm-100">
                       {cls.personImpact === 'no'           ? 'No afecta a personas físicas'
                       : cls.personImpact === 'human_review' ? 'Sí, con revisión humana'
@@ -280,20 +391,20 @@ export function UseCaseDetailPanel({
                     </p>
                   </div>
                   <div>
-                    <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P3 · Datos sensibles</p>
+                    <p className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-0.5">P3 · Datos sensibles</p>
                     <p className="text-xs font-medium text-lean-black dark:text-warm-100">
                       {cls.sensitiveData
-                        ? <span className="inline-flex items-center gap-1"><AlertTriangle size={12} strokeWidth={2} className="text-warning-dark" /> Sí — datos RGPD Art. 9</span>
-                        : <span className="inline-flex items-center gap-1"><Check size={12} strokeWidth={2} className="text-success-dark" /> No</span>
+                        ? <span className="inline-flex items-center gap-1"><AlertTriangle size={12} strokeWidth={1.5} className="text-warning-dark" /> Sí — datos RGPD Art. 9</span>
+                        : <span className="inline-flex items-center gap-1"><Check size={12} strokeWidth={1.5} className="text-success-dark" /> No</span>
                       }
                     </p>
                   </div>
                   <div>
-                    <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P4 · Explicabilidad</p>
+                    <p className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-0.5">P4 · Explicabilidad</p>
                     <p className="text-xs font-medium text-lean-black dark:text-warm-100">
                       {cls.explainability === 'yes'
-                        ? <span className="inline-flex items-center gap-1"><Check size={12} strokeWidth={2} className="text-success-dark" /> Sistema explicable / trazable</span>
-                        : <span className="inline-flex items-center gap-1"><X size={12} strokeWidth={2} className="text-danger-dark" /> Output opaco</span>
+                        ? <span className="inline-flex items-center gap-1"><Check size={12} strokeWidth={1.5} className="text-success-dark" /> Sistema explicable / trazable</span>
+                        : <span className="inline-flex items-center gap-1"><X size={12} strokeWidth={1.5} className="text-danger-dark" /> Output opaco</span>
                       }
                     </p>
                   </div>
@@ -307,7 +418,7 @@ export function UseCaseDetailPanel({
                 {cls.riskLevel === 'prohibido' && (
                   <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3">
                     <p className="text-xs font-semibold text-red-700 dark:text-red-300 mb-1 flex items-center gap-1.5">
-                      <Ban size={14} strokeWidth={2} className="shrink-0" />
+                      <Ban size={14} strokeWidth={1.5} className="shrink-0" />
                       Sistema potencialmente prohibido — Art. 5 AI Act
                     </p>
                     <p className="text-[10px] text-red-600 dark:text-red-400 leading-relaxed">
@@ -348,7 +459,7 @@ export function UseCaseDetailPanel({
                 )}
                 {cls.riskLevel === 'minimo' && (
                   <p className="text-xs text-success-dark leading-relaxed flex items-start gap-1.5">
-                    <Check size={14} strokeWidth={2} className="shrink-0 mt-0.5" />
+                    <Check size={14} strokeWidth={1.5} className="shrink-0 mt-0.5" />
                     Sin obligaciones regulatorias específicas del AI Act. Se recomienda documentar el uso en el catálogo corporativo de IA como buena práctica de gobernanza.
                   </p>
                 )}
@@ -358,7 +469,17 @@ export function UseCaseDetailPanel({
         })()}
 
         {/* ── TAB: ECONOMÍA ──────────────────────────────────── */}
-        {tab === 'economia' && <EconomicsTab useCase={useCase} />}
+        {tab === 'economia' && (
+          <EconomicsTab
+            useCase={useCase}
+            onEditingChange={(editing, dirty) => {
+              setEditingEconomics(editing)
+              setEconomicsIsDirty(dirty)
+            }}
+            saveRequested={economicsSaveRequested}
+            onSaveRequestHandled={handleEconomicsSaveHandled}
+          />
+        )}
 
         {/* ── TAB: HOJA DE RUTA ──────────────────────────────── */}
         {tab === 'roadmap' && (
@@ -389,6 +510,17 @@ export function UseCaseDetailPanel({
           onCancel={() => { setShowAIActModal(false); setPendingStatus(null) }}
         />
       )}
+
+      <UnsavedChangesModal
+        open={showUnsavedModal}
+        onCancel={handleModalCancel}
+        onDiscard={handleModalDiscard}
+        message={
+          `Tienes abierta la edición de ${editingEconomics ? 'datos económicos' : 'scoring'} de "${useCase.name}".`
+        }
+        onSave={hasUnsavedChanges ? handleModalSaveAndContinue : undefined}
+        isSaving={isSavingScores}
+      />
     </div>
   )
 }

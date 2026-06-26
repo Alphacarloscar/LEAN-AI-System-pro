@@ -40,18 +40,18 @@ export function CompaniesTab({ companies, onCompanyAdd }: SharedProps) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Nombre de la empresa (ej: Nexus Industrial S.A.)"
-            className="flex-1 h-9 px-3 rounded-lg border border-gray-200 text-sm bg-gray-50 outline-none focus:border-[#C8860A]/60 focus:bg-white placeholder:text-gray-400"
+            className="flex-1 h-9 px-3 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60 focus:bg-white placeholder:text-text-subtle"
           />
           <button
             type="submit"
             disabled={creating || !name.trim()}
-            className="h-9 px-4 rounded-lg bg-[#C8860A] text-white text-sm font-medium disabled:opacity-40 hover:bg-[#B57609] transition-colors flex items-center gap-2"
+            className="h-9 px-4 rounded-lg bg-gold text-white text-sm font-medium disabled:opacity-40 hover:bg-gold-hover transition-colors flex items-center gap-2"
           >
             {creating ? <Spinner /> : success ? <CheckIcon /> : null}
             Crear
           </button>
         </form>
-        {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+        {error && <p className="text-xs text-danger-dark mt-2">{error}</p>}
       </div>
 
       <div>
@@ -59,14 +59,14 @@ export function CompaniesTab({ companies, onCompanyAdd }: SharedProps) {
           Empresas registradas ({companies.length})
         </h4>
         {companies.length === 0 ? (
-          <p className="text-sm text-gray-400">Sin empresas todavía.</p>
+          <p className="text-sm text-text-subtle">Sin empresas todavía.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {companies.map((c) => (
-              <div key={c.id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-gray-50 border border-gray-100">
+              <div key={c.id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-warm-50 border border-border">
                 <div>
-                  <p className="text-sm font-medium text-[#2A2822]">{c.name}</p>
-                  <p className="text-xs font-mono text-gray-400">{c.slug ?? '—'}</p>
+                  <p className="text-sm font-medium text-lean-black dark:text-warm-50">{c.name}</p>
+                  <p className="text-xs font-mono text-text-subtle">{c.slug ?? '—'}</p>
                 </div>
               </div>
             ))}

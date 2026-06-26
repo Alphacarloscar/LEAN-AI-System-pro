@@ -12,7 +12,6 @@ import { useNavigate }                     from 'react-router-dom'
 import { Button, Badge, Card, ToolHeader } from '@shared/design-system/components'
 import { useT3Store }                      from './store'
 import { useEngagementStore }              from '@/modules/Engagement/store'
-import { useCompanyProfileStore }          from '@/modules/CompanyProfile/store'
 import { useDepartmentStore }              from '@/modules/CompanyProfile/useDepartmentStore'
 import { getProjectCompanyId }             from '@/services/projects.service'
 import { PHASE_CONFIG, OPPORTUNITY_CONFIG, AI_CATEGORY_CONFIG } from './constants'
@@ -42,7 +41,6 @@ export function T3View({ onBack }: T3ViewProps) {
   } = useT3Store()
   const engagementId = useEngagementStore((s) => s.activeEngagementId)
   const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
-  const companyName  = useCompanyProfileStore((s) => s.profile.engagementName)
   const { isReadOnly } = usePermissions()
 
   useEffect(() => {
@@ -107,7 +105,6 @@ export function T3View({ onBack }: T3ViewProps) {
         backLabel="Volver al dashboard"
         toolCode="T3"
         title="Value Stream Map"
-        subtitle={companyName}
         phaseMiniMap={<PhaseMiniMap phaseId="listen" toolCode="T3" />}
         chips={
           <div className="hidden md:flex items-center gap-5">
@@ -197,14 +194,14 @@ export function T3View({ onBack }: T3ViewProps) {
         <div className="flex-1 max-w-7xl mx-auto w-full px-8">
 
           {/* ZONA 1: HERO CHARTS */}
-          <div className="py-8">
+          <div className="py-2">
             <div className="grid grid-cols-2 gap-6 items-stretch">
-              <Card variant="outlined" padding="none" className="rounded-xl p-6 flex flex-col">
-                <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">Matriz de oportunidad</p>
+              <Card variant="outlined" padding="none" className="rounded-xl px-5 pt-4 pb-3 flex flex-col">
+                <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-2">Matriz de oportunidad</p>
                 <div className="flex-1 flex items-center justify-center">
                   <HeroOpportunityMatrix processes={filtered} activeId={activeId} onSelect={handleSelectProcess} />
                 </div>
-                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
                   {CAT_ORDER.filter((c) => processes.some((p) => p.aiCategory === c)).map((c) => {
                     const cfg = AI_CATEGORY_CONFIG[c]
                     return (
@@ -217,12 +214,12 @@ export function T3View({ onBack }: T3ViewProps) {
                 </div>
               </Card>
 
-              <Card variant="outlined" padding="none" className="rounded-xl p-6 flex flex-col">
-                <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-3">Distribución por categoría IA</p>
+              <Card variant="outlined" padding="none" className="rounded-xl px-5 pt-4 pb-3 flex flex-col">
+                <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-subtle mb-2">Distribución por categoría IA</p>
                 <div className="flex-1 flex items-center justify-center">
                   <HeroCategoryDonut processes={processes} activeId={activeId} onSelect={handleSelectProcess} />
                 </div>
-                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
                   {CAT_ORDER.filter((c) => processes.some((p) => p.aiCategory === c)).map((c) => {
                     const cfg = AI_CATEGORY_CONFIG[c]
                     return (
@@ -253,7 +250,7 @@ export function T3View({ onBack }: T3ViewProps) {
                         'flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border transition-all',
                         filterPhase === ph
                           ? `${cfg.badgeBg} ${cfg.badgeText} border-transparent`
-                          : 'bg-transparent border-border dark:border-white/10 text-text-muted hover:border-gray-300',
+                          : 'bg-transparent border-border dark:border-white/10 text-text-muted hover:border-warm-300',
                       ].join(' ')}>
                       <span className="tabular-nums font-bold">{cnt}</span>
                       <span>{cfg.label}</span>
@@ -288,12 +285,12 @@ export function T3View({ onBack }: T3ViewProps) {
                         'w-full text-left rounded-xl px-4 py-3 transition-all duration-150 border flex flex-col gap-2',
                         isActive
                           ? 'border-navy/40 bg-navy/5 dark:bg-navy/10 shadow-sm ring-1 ring-navy/20'
-                          : 'border-border dark:border-white/6 bg-white dark:bg-warm-800 hover:border-gray-300 dark:hover:border-white/14 hover:shadow-sm',
+                          : 'border-border dark:border-white/6 bg-white dark:bg-warm-800 hover:border-warm-300 dark:hover:border-white/14 hover:shadow-sm',
                       ].join(' ')}>
                       <div className="flex items-start gap-2.5">
                         <div className="shrink-0 w-1 h-6 rounded-full mt-0.5"
                           style={{ backgroundColor: CAT_HEX[p.aiCategory], opacity: isActive ? 1 : 0.6 }} />
-                        <p className="flex-1 text-xs font-bold text-lean-black dark:text-gray-200 leading-tight line-clamp-2">{p.name}</p>
+                        <p className="flex-1 text-xs font-bold text-lean-black dark:text-warm-200 leading-tight line-clamp-2">{p.name}</p>
                         <span className={`shrink-0 text-text-subtle text-[10px] transition-transform duration-200 ${isActive ? 'rotate-180' : ''}`}>↓</span>
                       </div>
                       <p className="text-[10px] text-text-subtle truncate pl-3.5">{p.department}</p>
