@@ -73,23 +73,40 @@ AI-Ready Repository System v2.1.0
 
 | Fichero | Descripción | Estado |
 |---------|-------------|--------|
-| `001_foundation.sql` | Schema base: profiles, projects, members, company_profiles, frictions, T1, stakeholders, value_streams, use_cases, t5_canvas, iso42001_controls | ✅ DEV + PRO |
-| `002_snapshots.sql` | Sistema de snapshots longitudinales | ✅ DEV + PRO |
-| `003_t1_multiinterviewee.sql` | T1 multi-entrevistado: interviewee_id + interviewee_type | ✅ DEV + PRO |
-| `004_companies_and_rename.sql` | Tabla `companies` + renombrado de `engagements` a `projects` | ✅ DEV + PRO |
-| `005_company_wide_access.sql` | company_id en members + auto-add usuarios de empresa | ✅ DEV + PRO |
-| `006_performance_indexes.sql` | Índices en project_id, company_id, created_at | ✅ DEV + PRO |
-| `007_stakeholder_unofficial_tools.sql` | Campo unofficial_tools en stakeholders (Shadow AI) | ✅ DEV + PRO |
-| `008_roles_four_tier.sql` | Sistema de 4 roles (ADR-008) | ✅ DEV + PRO |
-| `20260527_security_persistence.sql` | Persistencia de sesión y seguridad | ✅ DEV + PRO |
-| `20260527_security_persistence_v2.sql` | Fix: ajustes de persistencia | ✅ DEV + PRO |
-| `20260527_security_persistence_v3.sql` | Fix: ajustes finales de persistencia | ✅ DEV + PRO |
-| `20260527_security_persistence_v3_1.sql` | Hotfix: seguridad persistencia | ✅ DEV + PRO |
-| `20260615_003_audit_system.sql` | Migración consolidada del sistema de auditoría: tablas `audit_logs`, `audit_logs_archive`, `audit_access_logs` + índices + RLS + funciones de purga HMAC + jobs pg_cron + `get_audit_logs` SECURITY DEFINER (ADR-017, ADR-018, ADR-019) | ✅ DEV |
-| `20260615_007_perf_profiles_idx.sql` | Índice explícito en `profiles.id` para mejorar rendimiento de consultas de rol | ✅ DEV |
-| `20260616_004_audit_schema_drift.sql` | Drift fix: añade columnas faltantes en tablas preexistentes (`audit_logs.correlation_id`, `audit_logs_archive.correlation_id/user_email_hash/ai_provider/ai_model/ai_total_tokens`) | ✅ DEV |
+| `001_foundation.sql` | Schema base: profiles, projects, members, company_profiles, frictions, T1, stakeholders, value_streams, use_cases, t5_canvas, iso42001_controls | ✅ DEV + PRE + PRO |
+| `002_snapshots.sql` | Sistema de snapshots longitudinales | ✅ DEV + PRE + PRO |
+| `003_t1_multiinterviewee.sql` | T1 multi-entrevistado: interviewee_id + interviewee_type | ✅ DEV + PRE + PRO |
+| `004_companies_and_rename.sql` | Tabla `companies` + renombrado de `engagements` a `projects` | ✅ DEV + PRE + PRO |
+| `005_company_wide_access.sql` | company_id en members + auto-add usuarios de empresa | ✅ DEV + PRE + PRO |
+| `006_performance_indexes.sql` | Índices en project_id, company_id, created_at | ✅ DEV + PRE + PRO |
+| `007_stakeholder_unofficial_tools.sql` | Campo unofficial_tools en stakeholders (Shadow AI) | ✅ DEV + PRE + PRO |
+| `008_roles_four_tier.sql` | Sistema de 4 roles (ADR-008) | ✅ DEV + PRE + PRO |
+| `20260527_security_persistence.sql` | Persistencia de sesión y seguridad | ✅ DEV + PRE + PRO |
+| `20260527_security_persistence_v2.sql` | Fix: ajustes de persistencia | ✅ DEV + PRE + PRO |
+| `20260527_security_persistence_v3.sql` | Fix: ajustes finales de persistencia | ✅ DEV + PRE + PRO |
+| `20260527_security_persistence_v3_1.sql` | Hotfix: seguridad persistencia | ✅ DEV + PRE + PRO |
+| `20260615_003_audit_system.sql` | Migración consolidada del sistema de auditoría: tablas `audit_logs`, `audit_logs_archive`, `audit_access_logs` + índices + RLS + funciones de purga HMAC + jobs pg_cron + `get_audit_logs` SECURITY DEFINER (ADR-017, ADR-018, ADR-019) | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260615_007_perf_profiles_idx.sql` | Índice explícito en `profiles.id` para mejorar rendimiento de consultas de rol | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260616_004_audit_schema_drift.sql` | Drift fix: añade columnas faltantes en tablas preexistentes (`audit_logs.correlation_id`, `audit_logs_archive.correlation_id/user_email_hash/ai_provider/ai_model/ai_total_tokens`) | ✅ DEV — ⏳ PRE + PRO pendiente |
+
+> Las migraciones marcadas ⏳ se aplican juntas via `supabase/releases/release-v2.2.0-pre-pro.sql` (único script idempotente).
 
 > **FASE2_verify_indexes.sql, FASE3_add_missing_indexes.sql** — scripts de verificación/mantenimiento, no migraciones de esquema.
+
+---
+
+## Releases Pendientes de Aplicar
+
+| Archivo release | Cubre | Ejecutar en | Estado |
+|-----------------|-------|-------------|--------|
+| `supabase/releases/release-v2.2.0-pre-pro.sql` | Sistema auditoría completo: 003+007+004 consolidados + fix search_path | PRE → PRO (en ese orden) | ⏳ Pendiente |
+
+**Protocolo:**
+1. Verificar prerrequisitos: pg_cron habilitado + Vault `audit_pepper` configurado en el proyecto destino.
+2. Copiar contenido de `release-v2.2.0-pre-pro.sql` en Supabase SQL Editor (proyecto PRE).
+3. Ejecutar y verificar con los bloques §V del propio script.
+4. Repetir en PRO solo tras confirmación de PRE.
+5. Actualizar esta tabla con ✅ + fecha de ejecución.
 
 ---
 
