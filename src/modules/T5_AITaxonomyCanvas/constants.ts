@@ -3,7 +3,6 @@
 // ============================================================
 
 import type { T5DomainCode, T5Recommendation, T5DomainScores, T5MaturityLevel } from './types'
-import { DOMAIN_COLORS } from '@shared/design-system/charts/chartTokens'
 
 // ── Configuración de los 6 dominios IA ───────────────────────
 
@@ -18,50 +17,50 @@ export const T5_DOMAIN_CONFIG: Record<T5DomainCode, {
   automatizacion_rpa: {
     label:       'Automatización RPA',
     shortLabel:  'RPA',
-    hex:         DOMAIN_COLORS.automatizacion_rpa,
+    hex:         '#5FAF8A',
     tagline:     'Procesos repetitivos, cero intervención humana',
     description: 'Robots que replican tareas manuales estructuradas: entrada de datos, extracción y transferencia entre sistemas.',
-    icon:        'settings',
+    icon:        '⚙️',
   },
   automatizacion_inteligente: {
     label:       'Automatización Inteligente',
     shortLabel:  'Auto-IA',
-    hex:         DOMAIN_COLORS.automatizacion_inteligente,
+    hex:         '#6A90C0',
     tagline:     'RPA + comprensión contextual mediante IA',
     description: 'Combina automatización con capacidades cognitivas: clasificación, extracción de documentos no estructurados, decisiones contextuales.',
-    icon:        'cpu',
+    icon:        '🤖',
   },
   analitica_predictiva: {
     label:       'Analítica Predictiva',
     shortLabel:  'Predictiva',
-    hex:         DOMAIN_COLORS.analitica_predictiva,
+    hex:         '#2A2822',  // warm charcoal (era navy #1B2A4E)
     tagline:     'Anticipar para decidir mejor y más rápido',
     description: 'Modelos que predicen demanda, riesgo, fallos o comportamientos a partir de datos históricos y señales en tiempo real.',
-    icon:        'trending-up',
+    icon:        '📊',
   },
   asistente_ia: {
     label:       'Asistente IA',
     shortLabel:  'Asistente',
-    hex:         DOMAIN_COLORS.asistente_ia,
+    hex:         '#D4A85C',
     tagline:     'Copilot para equipos — amplifica, no reemplaza',
     description: 'Interfaces conversacionales y copilotos que asisten en redacción, búsqueda, síntesis y toma de decisiones operativas.',
-    icon:        'message-square',
+    icon:        '💬',
   },
   optimizacion_proceso: {
     label:       'Optimización de Proceso',
     shortLabel:  'Optimiz.',
-    hex:         DOMAIN_COLORS.optimizacion_proceso,
+    hex:         '#C06060',
     tagline:     'Reducir ineficiencias de forma continua y adaptativa',
     description: 'Algoritmos que detectan cuellos de botella, optimizan flujos de trabajo y asignación de recursos de forma dinámica.',
-    icon:        'refresh-cw',
+    icon:        '🔄',
   },
   'agéntica': {
     label:       'Agéntica IA',
     shortLabel:  'Agéntica',
-    hex:         DOMAIN_COLORS['agéntica'],
+    hex:         '#7C3AED',
     tagline:     'Agentes autónomos que ejecutan tareas complejas',
     description: 'Sistemas de múltiples agentes que planifican, deciden y ejecutan cadenas de pasos complejos de forma autónoma sin supervisión constante.',
-    icon:        'network',
+    icon:        '🧠',
   },
 }
 
@@ -132,28 +131,28 @@ export const T5_DIMENSION_CONFIG: Record<keyof T5DomainScores, {
     label:       'Valor de negocio',
     description: 'Impacto potencial en KPIs estratégicos. Mayor = más transformador.',
     direction:   'positive',
-    hex:         '#C8860A',  // gold — barra de valor principal
+    hex:         '#6A90C0',
     scaleLabels: ['Sin impacto', 'Marginal', 'Moderado', 'Alto', 'Transformador'],
   },
   technicalReady: {
     label:       'Madurez técnica',
     description: 'Disponibilidad de datos, infraestructura y skills técnicos.',
     direction:   'positive',
-    hex:         '#C8860A',  // gold — barra de valor principal
+    hex:         '#5FAF8A',
     scaleLabels: ['Sin datos ni infra', 'Básico', 'Parcial', 'Sólido', 'Completo'],
   },
   orgReadiness: {
     label:       'Preparación organizativa',
     description: 'Cultura IA, buy-in directivo y capacidad de cambio.',
     direction:   'positive',
-    hex:         '#C8860A',  // gold — barra de valor principal
+    hex:         '#D4A85C',
     scaleLabels: ['Muy resistente', 'Escéptica', 'Neutral', 'Favorable', 'Campeona'],
   },
   riskLevel: {
     label:       'Nivel de riesgo',
     description: 'Riesgo regulatorio, ético o de impacto negativo. Mayor = más riesgo.',
     direction:   'negative',
-    hex:         '#C8860A',  // gold — barra de valor (riesgo se indica con dirección 'negative' en etiqueta)
+    hex:         '#C06060',
     scaleLabels: ['Muy bajo', 'Bajo', 'Moderado', 'Alto', 'Crítico'],
   },
 }
@@ -169,9 +168,9 @@ export const T5_MATURITY_CONFIG: Record<T5MaturityLevel, {
 }> = {
   inicial: {
     label:       'Inicial',
-    badgeBg:     'bg-warm-100 dark:bg-warm-800',
-    badgeText:   'text-warm-500',
-    hex:         '#8A857C',
+    badgeBg:     'bg-gray-100 dark:bg-gray-800',
+    badgeText:   'text-gray-500',
+    hex:         '#94A3B8',
     description: 'La organización está en las primeras etapas. Foundations aún por construir.',
   },
   emergente: {

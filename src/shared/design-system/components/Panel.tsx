@@ -24,7 +24,7 @@ export function Panel({
   return (
     <section
       className={[
-        'rounded-lg border border-border bg-white dark:bg-warm-800 dark:border-warm-600/30',
+        'rounded-lg border border-border bg-white dark:bg-gray-900 dark:border-gray-700',
         className,
       ].join(' ')}
       {...props}
@@ -34,7 +34,7 @@ export function Panel({
         <div className="flex items-start justify-between gap-4 px-6 py-4 shadow-line-bottom">
           <div className="min-w-0">
             {title && (
-              <h3 className="text-sm font-semibold text-lean-black dark:text-warm-50 truncate">
+              <h3 className="text-sm font-semibold text-lean-black dark:text-gray-100 truncate">
                 {title}
               </h3>
             )}

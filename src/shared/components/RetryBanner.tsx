@@ -22,7 +22,7 @@ export function RetryBanner({ message, onRetry, retryLabel = 'Reintentar' }: Ret
     <div className="flex flex-col items-center justify-center min-h-[320px] gap-5 px-6">
       {/* Icono de alerta */}
       <div
-        className="flex items-center justify-center w-14 h-14 rounded-xl"
+        className="flex items-center justify-center w-14 h-14 rounded-2xl"
         style={{ background: 'rgba(200,134,10,0.10)' }}
       >
         <svg

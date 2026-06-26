@@ -1,5 +1,5 @@
-﻿// ============================================================
-// GOBY — Escenario demo: Toma de decisión lenta
+// ============================================================
+// LEAN AI System — Escenario demo: Toma de decisión lenta
 //
 // Patrón: la empresa quiere adoptar IA pero el proceso de aprobación
 // dura meses. Para cuando aprueban, la tecnología ha cambiado.

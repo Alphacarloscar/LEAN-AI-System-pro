@@ -21,20 +21,7 @@ import {
   updateUseCaseInDb,
   deleteUseCaseFromDb,
 } from '@/services/t4.service'
-import { logTrace }    from '@/lib/loadTrace'
-import { reportError } from '@/lib/reportError'
-
-// ── Debounce helper (protección contra ametralladora de llamadas) ─
-const updateTimers = new Map<string, ReturnType<typeof setTimeout>>()
-
-function debounceUpdate(key: string, fn: () => void, ms: number): void {
-  const existing = updateTimers.get(key)
-  if (existing) clearTimeout(existing)
-  updateTimers.set(key, setTimeout(() => {
-    fn()
-    updateTimers.delete(key)
-  }, ms))
-}
+import { logTrace } from '@/lib/loadTrace'
 
 const STALE_MS = 5 * 60_000
 
@@ -131,7 +118,8 @@ export const useT4Store = create<T4Store>()(
           set({ useCases, isLoading: false, isLoaded: true, lastLoadedAt: Date.now() })
         } catch (err) {
           if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
-          reportError('[T4Store] load', err)
+          const isTimeout = (err as Error)?.message === 'T4_LOAD_TIMEOUT'
+          console.error('[T4 Store] ERROR:', isTimeout ? 'timeout (>10s) — check Supabase connection' : err)
           set({ isLoading: false, isLoaded: false })
         }
       },
@@ -147,7 +135,7 @@ export const useT4Store = create<T4Store>()(
         const { engagementId } = get()
         if (engagementId) {
           insertUseCase(full, engagementId).catch((err) =>
-            reportError('[T4Store] addUseCase sync', err)
+            console.error('[T4] addUseCase sync:', err)
           )
         }
         return id
@@ -163,12 +151,9 @@ export const useT4Store = create<T4Store>()(
 
         const { engagementId } = get()
         if (engagementId) {
-          const key = `t4::${engagementId}::${id}`
-          debounceUpdate(key, () => {
-            updateUseCaseInDb(id, engagementId, updates).catch((err) =>
-              reportError('[T4Store] updateUseCase sync', err)
-            )
-          }, 500)
+          updateUseCaseInDb(id, engagementId, updates).catch((err) =>
+            console.error('[T4] updateUseCase sync:', err)
+          )
         }
       },
 
@@ -181,7 +166,7 @@ export const useT4Store = create<T4Store>()(
         const { engagementId } = get()
         if (engagementId) {
           deleteUseCaseFromDb(id, engagementId).catch((err) =>
-            reportError('[T4Store] removeUseCase sync', err)
+            console.error('[T4] removeUseCase sync:', err)
           )
         }
       },
@@ -200,7 +185,7 @@ export const useT4Store = create<T4Store>()(
         const { engagementId } = get()
         if (engagementId) {
           updateUseCaseInDb(id, engagementId, { priorityScore: newScore }).catch((err) =>
-            reportError('[T4Store] recalcScore sync', err)
+            console.error('[T4] recalcScore sync:', err)
           )
         }
       },
@@ -216,7 +201,7 @@ export const useT4Store = create<T4Store>()(
         const { engagementId } = get()
         if (engagementId) {
           updateUseCaseInDb(id, engagementId, { aiActClassification: classification }).catch((err) =>
-            reportError('[T4Store] updateAIAct sync', err)
+            console.error('[T4] updateAIAct sync:', err)
           )
         }
       },

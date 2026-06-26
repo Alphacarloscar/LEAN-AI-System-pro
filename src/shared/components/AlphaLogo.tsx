@@ -1,11 +1,16 @@
 // ============================================================
 // AlphaLogo — Logo oficial de Alpha Consulting Solutions
 //
-// En light mode: PNG negro con mix-blend-mode:multiply
-//   → el blanco desaparece ópticamente sobre cualquier fondo claro.
-// En dark mode: PNG con filtro invert(1) para invertir a blanco.
+// Usa los archivos PNG originales del logo:
+//   · /logos/logo-alpha-light.png  → AC negro sobre blanco (light mode)
+//   · /logos/logo-alpha-dark.png   → AC blanco sobre negro (dark mode)
 //
-// Para actualizar el logo: sustituir /public/logos/logo-alpha-light.png.
+// Para actualizar el logo: sustituir solo los PNG en public/logos/.
+// Todas las pantallas se actualizan automáticamente.
+//
+// Usado en:
+//   · AppLayout (header sticky)  → size="sm"
+//   · LoginView (hero centrado)  → size="lg"
 // ============================================================
 
 interface AlphaLogoProps {
@@ -14,36 +19,35 @@ interface AlphaLogoProps {
 }
 
 export function AlphaLogo({ size = 'sm', dark = false }: AlphaLogoProps) {
-  const width  = size === 'sm' ? 52 : 160
-  const filter = dark ? 'invert(1)' : 'none'
-
-  const imgStyle: React.CSSProperties = {
-    width,
-    height:     'auto',
-    display:    'block',
-    flexShrink: 0,
-    filter,
-    // Elimina el blanco del PNG en light mode fundiéndolo con el fondo
-    mixBlendMode: dark ? 'normal' : 'multiply',
-  }
+  const src = dark ? '/logos/logo-alpha-dark.png' : '/logos/logo-alpha-light.png'
 
   if (size === 'sm') {
     return (
       <img
-        src="/logos/logo-alpha-light.png"
+        src={src}
         alt="Alpha Consulting Solutions"
         title="Alpha Consulting Solutions"
-        style={imgStyle}
+        style={{
+          width:      48,
+          height:     'auto',
+          flexShrink: 0,
+          display:    'block',
+        }}
       />
     )
   }
 
+  // Login hero — logo grande + nombre del producto
   return (
     <div className="flex flex-col items-center select-none" style={{ gap: 16 }}>
       <img
-        src="/logos/logo-alpha-light.png"
+        src={src}
         alt="Alpha Consulting Solutions"
-        style={imgStyle}
+        style={{
+          width:   160,
+          height:  'auto',
+          display: 'block',
+        }}
       />
 
       <div className="text-center" style={{ lineHeight: 1 }}>
@@ -52,7 +56,7 @@ export function AlphaLogo({ size = 'sm', dark = false }: AlphaLogoProps) {
             fontSize:      20,
             fontWeight:    600,
             letterSpacing: '-0.02em',
-            color:         dark ? '#F0EDE8' : '#1C1A16',
+            color:         dark ? '#F0EDE8' : '#1C1A16',  // warm-50 / warm near-black
             marginBottom:  4,
           }}
         >

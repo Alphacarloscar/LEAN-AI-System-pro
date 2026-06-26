@@ -10,43 +10,31 @@ import { ResponsiveContainer } from 'recharts'
 // - Estado vacío
 // - Título / subtítulo opcionales
 // - Paleta de colores derivada de los design tokens D9
-// - Accesibilidad: role="img" + ariaLabel (WCAG 1.1.1, DEBT-025)
-// - Tabla alternativa opcional expandible para lectores de pantalla
 //
 // Uso:
-//   <ChartWrapper
-//     title="Madurez IA"
-//     ariaLabel="Radar de madurez IA en 6 dimensiones para Acme Corp"
-//     height={320}
-//     loading={isLoading}
-//     dataTable={<Table columns={cols} rows={data} keyExtractor={r => r.id} />}
-//   >
+//   <ChartWrapper title="Madurez IA" height={320} loading={isLoading}>
 //     <RadarChart data={...} />
 //   </ChartWrapper>
 // ─────────────────────────────────────────────────────────────
 
 // ── Paleta de colores — valores hex que espeja tailwind.config.ts ──
-// ADR-021: Recharts resuelve colores en construcción del SVG y no soporta
-// CSS vars en props de presentación (stroke, fill). Por tanto este objeto
-// hex estático es la fuente de verdad para componentes Recharts.
-// Para componentes no-chart usar token() de design-system/tokens.ts.
-// Al actualizar tailwind.config.ts actualizar también este objeto.
+// Recharts no puede leer CSS variables, necesita hex directos.
 export const CHART_PALETTE = {
   navy:         '#2A2822',   // warm charcoal (era #1B2A4E)
   navyDark:     '#16140F',   // warm-950 (era #0A1530)
   silver:       '#C4C0B8',   // warm silver (era #C0C0C5)
   success:      '#86C7A8',
-  successLight: '#E8F5EE',
+  successLight: '#D4EDE3',
   successDark:  '#5FAF8A',
   warning:      '#E8C281',
-  warningLight: '#FEF6E8',
-  warningDark:  '#D4A85C',
+  warningLight: '#F8EDD3',
+  warningDark:  '#C9973A',
   danger:       '#D89090',
-  dangerLight:  '#FDECEC',
-  dangerDark:   '#C06060',
+  dangerLight:  '#F5DEDE',
+  dangerDark:   '#B85C5C',
   info:         '#9BB5D9',
-  infoLight:    '#EBF2FA',
-  infoDark:     '#6A90C0',
+  infoLight:    '#D6E4F5',
+  infoDark:     '#5A87C5',
   border:       '#D4D0C8',   // warm border (era #E5E7EB)
   muted:        '#6B6864',   // warm text-muted (era #6B7280)
   subtle:       '#9A9790',   // warm text-subtle (era #9CA3AF)
@@ -70,14 +58,14 @@ export const CHART_SERIES_COLORS = [
 function ChartSkeleton({ height }: { height: number }) {
   return (
     <div
-      className="w-full animate-pulse rounded-lg bg-surface dark:bg-warm-800"
+      className="w-full animate-pulse rounded-lg bg-surface dark:bg-gray-800"
       style={{ height }}
     >
       <div className="h-full flex items-end justify-around px-6 pb-6 pt-10 gap-3">
         {Array.from({ length: 7 }).map((_, i) => (
           <div
             key={i}
-            className="flex-1 rounded-t bg-warm-200 dark:bg-warm-700"
+            className="flex-1 rounded-t bg-gray-200 dark:bg-gray-700"
             style={{ height: `${30 + Math.sin(i * 1.2) * 40 + 30}%` }}
           />
         ))}
@@ -105,27 +93,21 @@ function ChartEmpty({ message }: { message: string }) {
 // ── Props ─────────────────────────────────────────────────────
 
 export interface ChartWrapperProps {
-  children:      ReactNode
-  /** Descripción concisa del gráfico para lectores de pantalla (WCAG 1.1.1). Obligatoria. */
-  ariaLabel:     string
-  /** Tabla semántica con el desglose de datos, mostrada en un <details> accesible. Obligatoria. */
-  dataTable:     ReactNode
-  height?:       number
-  title?:        string
-  subtitle?:     string
-  loading?:      boolean
-  empty?:        boolean
+  children:     ReactNode
+  height?:      number
+  title?:       string
+  subtitle?:    string
+  loading?:     boolean
+  empty?:       boolean
   emptyMessage?: string
-  className?:    string
-  action?:       ReactNode    // botón o link en esquina superior derecha
+  className?:   string
+  action?:      ReactNode    // botón o link en esquina superior derecha
 }
 
 // ── Componente ────────────────────────────────────────────────
 
 export function ChartWrapper({
   children,
-  ariaLabel,
-  dataTable,
   height       = 300,
   title,
   subtitle,
@@ -143,7 +125,7 @@ export function ChartWrapper({
         <div className="flex items-start justify-between gap-4 px-5 py-4 dark-card-header card-divider-bottom">
           <div className="min-w-0">
             {title && (
-              <h4 className="text-sm font-semibold text-lean-black dark:text-warm-50 truncate">
+              <h4 className="text-sm font-semibold text-lean-black dark:text-gray-100 truncate">
                 {title}
               </h4>
             )}
@@ -164,22 +146,10 @@ export function ChartWrapper({
             <ChartEmpty message={emptyMessage} />
           </div>
         ) : (
-          <div role="img" aria-label={ariaLabel}>
-            <ResponsiveContainer width="100%" height={height}>
-              {children as React.ReactElement}
-            </ResponsiveContainer>
-          </div>
+          <ResponsiveContainer width="100%" height={height}>
+            {children as React.ReactElement}
+          </ResponsiveContainer>
         )}
-
-        {/* Tabla de datos accesible — scroll independiente para no desplazar el layout */}
-        <details className="mt-4 border-t border-border/50 pt-2 text-xs text-text-muted select-none">
-          <summary className="cursor-pointer hover:text-text-muted/80 transition-colors">
-            Ver datos como tabla
-          </summary>
-          <div className="mt-2 max-h-56 overflow-y-auto overscroll-contain">
-            {dataTable}
-          </div>
-        </details>
       </div>
     </div>
   )

@@ -1,50 +1,23 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  useMemo,
-  type ReactNode,
-} from 'react'
-import { createPortal } from 'react-dom'
+import { useEffect, useState, useCallback, type ReactNode } from 'react'
 
 // ─────────────────────────────────────────────────────────────
-// Toast — notificación efímera con cola FIFO (máx. 3)
+// Toast — notificación efímera en esquina de pantalla
 //
-// Uso básico (mensaje string):
-//   const { toast } = useToast()
+// Uso:
+//   const { toasts, toast } = useToast()
 //   toast.success('Guardado correctamente')
-//   toast.error('Algo salió mal')         // persistente por defecto
-//
-// Uso avanzado (nodo JSX custom — p.ej. ServiceErrorToast):
-//   const { addNode } = useToast()
-//   addNode(<ServiceErrorToast ... />, { persistent: true })
-//
-// Los toasts 'error' son siempre persistent: true (requieren cierre manual).
+//   toast.error('Error al conectar')
+//   <ToastContainer toasts={toasts} onRemove={remove} />
 // ─────────────────────────────────────────────────────────────
 
 export type ToastVariant = 'success' | 'error' | 'warning' | 'info'
 
 export interface ToastItem {
-  id:          string
-  variant:     ToastVariant
-  message:     string
-  duration?:   number
-  persistent?: boolean
-  /** Nodo JSX custom. Si está presente, reemplaza el layout estándar. */
-  node?:       ReactNode
+  id:       string
+  variant:  ToastVariant
+  message:  string
+  duration?: number
 }
-
-// Duraciones por defecto por variante (ms)
-const DEFAULT_DURATIONS: Record<ToastVariant, number> = {
-  success: 3000,
-  info:    4000,
-  warning: 6000,
-  error:   8000,
-}
-
-const MAX_TOASTS = 3
 
 // ── Iconos por variante ──
 const icons: Record<ToastVariant, ReactNode> = {
@@ -71,124 +44,31 @@ const icons: Record<ToastVariant, ReactNode> = {
 }
 
 const bgClasses: Record<ToastVariant, string> = {
-  success: 'border-l-4 border-success bg-white dark:bg-warm-800',
-  error:   'border-l-4 border-danger  bg-white dark:bg-warm-800',
-  warning: 'border-l-4 border-warning bg-white dark:bg-warm-800',
-  info:    'border-l-4 border-info    bg-white dark:bg-warm-800',
-}
-
-// ── Opciones de showToast ──
-export interface ShowToastOptions {
-  duration?:   number
-  persistent?: boolean
-}
-
-// ── Contexto ──
-interface ToastContextValue {
-  toasts:  ToastItem[]
-  remove:  (id: string) => void
-  toast: {
-    success: (msg: string, opts?: ShowToastOptions) => void
-    error:   (msg: string, opts?: ShowToastOptions) => void
-    warning: (msg: string, opts?: ShowToastOptions) => void
-    info:    (msg: string, opts?: ShowToastOptions) => void
-  }
-  /** Añade un toast con nodo JSX custom (p.ej. ServiceErrorToast). Retorna el id del toast creado. */
-  addNode: (node: ReactNode, opts?: ShowToastOptions) => string
-}
-
-const ToastContext = createContext<ToastContextValue | null>(null)
-
-// ── Provider ──
-export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toasts, setToasts] = useState<ToastItem[]>([])
-
-  const remove = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id))
-  }, [])
-
-  const add = useCallback((
-    variant: ToastVariant,
-    message: string,
-    opts: ShowToastOptions = {},
-    node?: ReactNode,
-  ): string => {
-    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`
-    // error siempre persistente — requiere cierre manual explícito
-    const isPersistent = opts.persistent ?? (variant === 'error')
-    const duration = isPersistent
-      ? undefined
-      : (opts.duration ?? DEFAULT_DURATIONS[variant])
-
-    setToasts((prev) => {
-      const next = [...prev, { id, variant, message, duration, persistent: isPersistent, node }]
-      // Cola FIFO: si supera MAX_TOASTS, descarta el más antiguo
-      return next.length > MAX_TOASTS ? next.slice(next.length - MAX_TOASTS) : next
-    })
-    return id
-  }, [])
-
-  const addNode = useCallback((node: ReactNode, opts: ShowToastOptions = {}): string => {
-    return add('error', '', { persistent: true, ...opts }, node)
-  }, [add])
-
-  const toast = useMemo(() => ({
-    success: (msg: string, opts?: ShowToastOptions) => add('success', msg, opts),
-    error:   (msg: string, opts?: ShowToastOptions) => add('error',   msg, opts),
-    warning: (msg: string, opts?: ShowToastOptions) => add('warning', msg, opts),
-    info:    (msg: string, opts?: ShowToastOptions) => add('info',    msg, opts),
-  }), [add])
-
-  return (
-    <ToastContext.Provider value={{ toasts, remove, toast, addNode }}>
-      {children}
-      <ToastContainer toasts={toasts} onRemove={remove} />
-    </ToastContext.Provider>
-  )
-}
-
-// ── Hook público ──
-// eslint-disable-next-line react-refresh/only-export-components
-export function useToast(): ToastContextValue {
-  const ctx = useContext(ToastContext)
-  if (!ctx) {
-    throw new Error('useToast must be used inside <ToastProvider>')
-  }
-  return ctx
+  success: 'border-l-4 border-success bg-white dark:bg-gray-900',
+  error:   'border-l-4 border-danger  bg-white dark:bg-gray-900',
+  warning: 'border-l-4 border-warning bg-white dark:bg-gray-900',
+  info:    'border-l-4 border-info    bg-white dark:bg-gray-900',
 }
 
 // ── Componente individual ──
-function ToastItemComponent({
-  item,
-  onRemove,
-}: {
-  item:     ToastItem
-  onRemove: (id: string) => void
-}) {
+function ToastItem({ item, onRemove }: { item: ToastItem; onRemove: (id: string) => void }) {
   useEffect(() => {
-    if (item.persistent || item.duration == null) return
-    const t = setTimeout(() => onRemove(item.id), item.duration)
+    const t = setTimeout(() => onRemove(item.id), item.duration ?? 4000)
     return () => clearTimeout(t)
   }, [item, onRemove])
-
-  // Nodo custom (ServiceErrorToast u otros): renderiza directo
-  if (item.node) {
-    return <div className="animate-fade-in">{item.node}</div>
-  }
 
   return (
     <div
       role="alert"
       aria-live="polite"
       className={[
-        'flex items-start gap-3 p-4 rounded-lg shadow-lg',
-        'w-[calc(100vw-32px)] sm:min-w-[280px] sm:w-auto sm:max-w-sm',
+        'flex items-start gap-3 p-4 rounded-lg shadow-lg min-w-[280px] max-w-sm',
         'animate-fade-in',
         bgClasses[item.variant],
       ].join(' ')}
     >
       <span className="shrink-0 mt-0.5" aria-hidden="true">{icons[item.variant]}</span>
-      <p className="flex-1 text-sm text-lean-black dark:text-warm-50">{item.message}</p>
+      <p className="flex-1 text-sm text-lean-black dark:text-gray-100">{item.message}</p>
       <button
         onClick={() => onRemove(item.id)}
         aria-label="Cerrar"
@@ -202,11 +82,7 @@ function ToastItemComponent({
   )
 }
 
-// ── Contenedor de toasts — Portal + responsive ──
-// Renderiza fuera del árbol de stacking contexts via Portal para evitar
-// conflictos con z-index del chasis.
-// Mobile: top justo bajo el header (respeta --header-h), centrado.
-// Desktop (>= sm): fixed bottom-right.
+// ── Contenedor de toasts ──
 export function ToastContainer({
   toasts,
   onRemove,
@@ -216,24 +92,34 @@ export function ToastContainer({
 }) {
   if (toasts.length === 0) return null
 
-  const container = (
-    <div
-      className={[
-        'fixed z-toast flex flex-col gap-2 pointer-events-none',
-        // Mobile: centrado bajo el header
-        'left-1/2 -translate-x-1/2 items-center',
-        // Desktop: bottom-right
-        'sm:top-auto sm:bottom-4 sm:left-auto sm:right-4 sm:translate-x-0 sm:items-end',
-      ].join(' ')}
-      style={{ top: 'calc(var(--header-h, 64px) + 8px)' }}
-    >
+  return (
+    <div className="fixed bottom-4 right-4 z-toast flex flex-col gap-2">
       {toasts.map((t) => (
-        <div key={t.id} className="pointer-events-auto">
-          <ToastItemComponent item={t} onRemove={onRemove} />
-        </div>
+        <ToastItem key={t.id} item={t} onRemove={onRemove} />
       ))}
     </div>
   )
+}
 
-  return createPortal(container, document.body)
+// ── Hook useToast ──
+export function useToast() {
+  const [toasts, setToasts] = useState<ToastItem[]>([])
+
+  const remove = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id))
+  }, [])
+
+  const add = useCallback((variant: ToastVariant, message: string, duration?: number) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    setToasts((prev) => [...prev, { id, variant, message, duration }])
+  }, [])
+
+  const toast = {
+    success: (msg: string, dur?: number) => add('success', msg, dur),
+    error:   (msg: string, dur?: number) => add('error',   msg, dur),
+    warning: (msg: string, dur?: number) => add('warning', msg, dur),
+    info:    (msg: string, dur?: number) => add('info',    msg, dur),
+  }
+
+  return { toasts, toast, remove }
 }

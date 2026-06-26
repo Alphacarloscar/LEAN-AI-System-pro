@@ -1,5 +1,5 @@
-﻿// ============================================================
-// GOBY — Escenario demo: Visibilidad del dato
+// ============================================================
+// LEAN AI System — Escenario demo: Visibilidad del dato
 //
 // Patrón: la empresa tiene IA funcionando en múltiples equipos
 // pero nadie sabe qué está produciendo ni cuánto cuesta.

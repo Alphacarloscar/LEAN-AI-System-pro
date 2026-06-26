@@ -1,5 +1,5 @@
 -- ============================================================
--- GOBY — Migración 001: Schema Foundation
+-- LEAN AI System Enterprise — Migración 001: Schema Foundation
 --
 -- INSTRUCCIONES PARA EJECUTAR:
 --   1. Abre Supabase Dashboard → SQL Editor
