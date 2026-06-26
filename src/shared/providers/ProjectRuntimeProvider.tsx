@@ -20,11 +20,28 @@
 // Expone useProjectRuntime() como hook para todos los Views.
 // ============================================================
 
-import { useEffect }                              from 'react'
-import { useEngagementStore }                     from '@/modules/Engagement/store'
-import { usePermissions }                         from '@/modules/Auth'
-import { ProjectRuntimeContext }                  from './ProjectRuntimeProvider.context'
-import type { ProjectRuntime }                    from './ProjectRuntimeProvider.context'
+import { createContext, useContext, useEffect } from 'react'
+import { useEngagementStore }                   from '@/modules/Engagement/store'
+import { usePermissions }                       from '@/modules/Auth'
+
+// ── Tipo del contexto ─────────────────────────────────────────
+
+export interface ProjectRuntime {
+  /** ID del proyecto activo — null si no hay ninguno seleccionado */
+  projectId: string | null
+  /** El usuario puede leer datos de este proyecto */
+  canRead:   boolean
+  /** El usuario puede editar datos de este proyecto */
+  canEdit:   boolean
+}
+
+const DEFAULT_RUNTIME: ProjectRuntime = {
+  projectId: null,
+  canRead:   false,
+  canEdit:   false,
+}
+
+const ProjectRuntimeContext = createContext<ProjectRuntime>(DEFAULT_RUNTIME)
 
 // ── Flags de diagnóstico ──────────────────────────────────────
 //
@@ -83,4 +100,10 @@ export function ProjectRuntimeProvider({ children }: { children: React.ReactNode
       {children}
     </ProjectRuntimeContext.Provider>
   )
+}
+
+// ── Hook de consumo ───────────────────────────────────────────
+
+export function useProjectRuntime(): ProjectRuntime {
+  return useContext(ProjectRuntimeContext)
 }

@@ -1,9 +1,9 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ============================================================
-   GOBY — CSS base global
+   LEAN AI System — CSS base global
    Paleta: Obsidian Amber + Grises Metálicos (Sprint 4 Rev2)
    Modo por defecto: LIGHT (ivory cálido)
    ============================================================ */
@@ -17,18 +17,8 @@
     box-sizing: border-box;
   }
 
-  /* Tokens RGB para Recharts — consumir con rgb(var(--color-gold-rgb) / 0.8) */
-  :root {
-    --color-gold-rgb: 200 134 10;
-    --color-navy-rgb: 42 40 34;
-    --font-sans: Inter, ui-sans-serif, system-ui, -apple-system,
-                 'Segoe UI', Roboto, sans-serif;
-    --font-mono: ui-monospace, SFMono-Regular, 'Roboto Mono',
-                 Menlo, monospace;
-  }
-
-  html, body, input, textarea, select, button {
-    font-family: var(--font-sans);
+  html {
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-feature-settings: 'cv11', 'ss01';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -94,22 +84,25 @@
     border: 1px solid rgba(28, 26, 22, 0.20);
   }
   html.dark .card-border {
-    border: 0.5px solid rgba(240, 237, 232, 0.07);
-    box-shadow: 0 4px 24px rgba(22, 20, 15, 0.35);
+    border: 1px solid rgba(240, 237, 232, 0.10);
+    box-shadow:
+      0 0 0 0.5px rgba(240, 237, 232, 0.06),
+      inset 0 1px 0 rgba(240, 237, 232, 0.08),
+      0 4px 24px rgba(22, 20, 15, 0.4);
   }
 
   .card-divider-bottom {
     border-bottom: 1px solid rgba(28, 26, 22, 0.12);
   }
   html.dark .card-divider-bottom {
-    border-bottom: 0.5px solid rgba(240, 237, 232, 0.06);
+    border-bottom: 1px solid rgba(240, 237, 232, 0.08);
   }
 
   .header-border-bottom {
     border-bottom: 1px solid rgba(28, 26, 22, 0.15);
   }
   html.dark .header-border-bottom {
-    border-bottom: 0.5px solid rgba(200, 134, 10, 0.20);
+    border-bottom: 1px solid rgba(200, 134, 10, 0.15); /* toque ámbar en header dark */
   }
 
   /* ── Fondo de cabecera ── */
@@ -121,27 +114,6 @@
   }
 
 }
-
-/* ============================================================
-   DARK MODE — Overrides globales de colores semánticos
-   bg-*-light en dark → fondos oscuros equivalentes
-   text-*-dark en dark → versión más clara para contraste
-   ============================================================ */
-
-html.dark .bg-success-light { background-color: #1A3328; }
-html.dark .bg-warning-light { background-color: #3A2A10; }
-html.dark .bg-danger-light  { background-color: #3A1A1A; }
-html.dark .bg-info-light    { background-color: #1A2840; }
-
-html.dark .text-success-dark { color: #5FAF8A; }
-html.dark .text-warning-dark { color: #D4A85C; }
-html.dark .text-danger-dark  { color: #C06060; }
-html.dark .text-info-dark    { color: #6A90C0; }
-
-html.dark .border-success-dark { border-color: rgba(95, 175, 138, 0.25); }
-html.dark .border-warning-dark { border-color: rgba(212, 168, 92,  0.25); }
-html.dark .border-danger-dark  { border-color: rgba(192, 96,  96,  0.25); }
-html.dark .border-info-dark    { border-color: rgba(106, 144, 192, 0.25); }
 
 /* ============================================================
    WARM DARK MODE — Overrides globales de escala gray
@@ -209,121 +181,3 @@ html.dark .dark\:bg-gray-900\/80 { background-color: rgba(34, 32, 28, 0.80); }
 html.dark .dark\:border-white\/14 { border-color: rgba(240, 237, 232, 0.14); }
 html.dark .dark\:hover\:border-white\/14:hover { border-color: rgba(240, 237, 232, 0.14); }
 html.dark .dark\:border-white\/20 { border-color: rgba(240, 237, 232, 0.20); }
-
-/* ============================================================
-   DARK MODE — Overrides globales de bordes y resalto
-   En dark: bordes genéricos más finos; color de resalto = gold
-   ============================================================ */
-
-/* border-border y border-warm-600/30 → más finos en dark */
-html.dark .dark\:border-warm-600\/30 { border-color: rgba(240, 237, 232, 0.07) !important; }
-html.dark .dark\:border-white\/6     { border-color: rgba(240, 237, 232, 0.06) !important; }
-html.dark .dark\:border-white\/8     { border-color: rgba(240, 237, 232, 0.07) !important; }
-html.dark .dark\:border-white\/10    { border-color: rgba(240, 237, 232, 0.07) !important; }
-
-/* Resalto activo: navy → gold en dark */
-html.dark .dark\:border-gold         { border-color: #C8860A; }
-html.dark .dark\:text-gold           { color: #C8860A; }
-
-/* ============================================================
-   DARK MODE — Overrides globales de tokens de texto
-   text-lean-black / text-text-muted / text-text-subtle no tienen
-   variante dark nativa → se redirigen aquí globalmente.
-   Escala warm-*: los tonos bajos (300-600) son oscuros en light
-   pero quedan ilegibles en dark → se invierten a tonos altos.
-   ============================================================ */
-
-html.dark .text-lean-black   { color: #F0EDE8; } /* warm-50  — texto primario dark */
-html.dark .text-text-muted   { color: #9A9790; } /* warm-200 — texto muted dark   */
-html.dark .text-text-subtle  { color: #6B6864; } /* warm-300 — texto sutil dark   */
-
-/* Escala warm — inversión para dark mode */
-html.dark .text-warm-600     { color: #C4C0B8; } /* → warm-100 */
-html.dark .text-warm-500     { color: #B8B4AB; } /* → warm-300 */
-html.dark .text-warm-400     { color: #9A9790; } /* → warm-200 */
-html.dark .text-warm-300     { color: #9A9790; } /* → warm-200 */
-
-/* fill-* warm para SVG (recharts, labels) */
-html.dark .fill-warm-600     { fill: #C4C0B8; }
-html.dark .fill-warm-500     { fill: #B8B4AB; }
-html.dark .fill-warm-400     { fill: #9A9790; }
-html.dark .fill-warm-300     { fill: #9A9790; }
-
-/* ============================================================
-   ADR-021 TRANSITORIO — Eliminar cuando la migración gray→warm esté completa
-   Redirige clases bg-gray-* / text-gray-* / border-gray-* → escala warm en light mode
-   ============================================================ */
-
-.bg-gray-50    { background-color: var(--color-warm-50, #F7F4EE) !important; }
-.bg-gray-100   { background-color: #F0EDE8 !important; }
-.bg-gray-200   { background-color: var(--color-warm-200) !important; }
-.text-gray-400 { color: var(--color-warm-400) !important; }
-.text-gray-500 { color: var(--color-warm-500) !important; }
-.text-gray-600 { color: var(--color-warm-600) !important; }
-.text-gray-700 { color: var(--color-warm-700) !important; }
-.border-gray-200 { border-color: var(--color-warm-200) !important; }
-.border-gray-300 { border-color: var(--color-warm-300) !important; }
-
-/* ============================================================
-   ADR-021 — Design System Charter: tokens de color como CSS vars
-   Equivalencia 1:1 con tailwind.config.ts.
-   Usar token() helper (src/shared/design-system/tokens.ts) para
-   leer estos valores desde JS/TSX (componentes no-chart).
-   ============================================================ */
-
-:root {
-  --color-gold:       #C8860A;
-  --color-navy:       #2A2822;
-  --color-warm-950:   #16140F;
-  --color-warm-900:   #22201C;
-  --color-warm-800:   #2A2822;
-  --color-warm-700:   #4A4740;
-  --color-warm-600:   #6B6864;
-  --color-warm-500:   #8A857C;
-  --color-warm-400:   #9A9790;
-  --color-warm-300:   #B8B4AB;
-  --color-warm-200:   #D4D0C8;
-  --color-warm-100:   #C4C0B8;
-  --color-surface:    #F7F4EE;
-  --color-border:     #D4D0C8;
-  --color-success:    #86C7A8;
-  --color-success-light: #E8F5EE;
-  --color-success-dark:  #5FAF8A;
-  --color-danger:     #D89090;
-  --color-danger-light:  #FDECEC;
-  --color-danger-dark:   #C06060;
-  --color-warning:    #E8C281;
-  --color-warning-light: #FEF6E8;
-  --color-warning-dark:  #D4A85C;
-  --color-info:       #9BB5D9;
-  --color-info-light:    #EBF2FA;
-  --color-info-dark:     #6A90C0;
-  --color-gold-hover: #D4940F;
-  --color-gold-muted: #8B6A30;
-  --color-gold-faint: rgba(200,134,10,0.08);
-  --color-gold-text:  #9B6408;
-  --color-gold-ring:  rgba(200,134,10,0.20);
-}
-
-html.dark {
-  --color-surface:    #22201C;
-  --color-border:     #3E3B35;
-  --color-success-light: #1A3328;
-  --color-success-dark:  #5FAF8A;
-  --color-danger-light:  #3A1A1A;
-  --color-danger-dark:   #C06060;
-  --color-warning-light: #3A2A10;
-  --color-warning-dark:  #D4A85C;
-  --color-info-light:    #1A2840;
-  --color-info-dark:     #6A90C0;
-}
-
-@layer base {
-  svg text {
-    font-family: var(--font-sans);
-  }
-  svg text[font-family*="mono"],
-  svg text.font-mono {
-    font-family: var(--font-mono);
-  }
-}

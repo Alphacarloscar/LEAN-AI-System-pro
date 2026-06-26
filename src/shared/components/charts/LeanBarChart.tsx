@@ -1,4 +1,3 @@
-import { type ReactNode } from 'react'
 import {
   BarChart,
   Bar,
@@ -11,9 +10,7 @@ import {
   ReferenceLine,
   type TooltipProps,
 } from 'recharts'
-import { ChartWrapper, CHART_SERIES_COLORS } from './ChartWrapper'
-import { getThemeColor } from '@shared/design-system/charts/chartTokens'
-import { Table } from '@shared/design-system/components'
+import { CHART_PALETTE, CHART_SERIES_COLORS } from './ChartWrapper'
 
 // ─────────────────────────────────────────────────────────────
 // LeanBarChart — Gráfico de barras para KPIs y comparativas
@@ -37,10 +34,6 @@ export interface BarDataPoint {
 export interface LeanBarChartProps {
   data:          BarDataPoint[]
   keys:          string[]          // nombres de las series a renderizar
-  /** Descripción del gráfico para lectores de pantalla (WCAG 1.1.1). Obligatoria. */
-  ariaLabel:     string
-  /** Tabla de datos alternativa. Si se omite se genera automáticamente desde `data`. */
-  dataTable?:    ReactNode
   layout?:       'vertical' | 'horizontal'
   referenceValue?: number          // línea de target
   referenceLabel?: string
@@ -48,10 +41,6 @@ export interface LeanBarChartProps {
   thresholdGood?: number           // >= este valor = verde
   thresholdWarn?: number           // >= este valor (y < good) = naranja
   unit?:         string            // sufijo en tooltip, ej. "%" o "€"
-  height?:       number
-  title?:        string
-  subtitle?:     string
-  loading?:      boolean
   className?:    string
 }
 
@@ -63,15 +52,15 @@ function CustomTooltip({
   if (!active || !payload?.length) return null
 
   return (
-    <div className="rounded-lg border border-border bg-white dark:bg-warm-800 shadow-sm px-3 py-2 text-xs">
-      <p className="font-semibold text-lean-black dark:text-warm-50 mb-1">{label}</p>
+    <div className="rounded-lg border border-border bg-white dark:bg-gray-900 shadow-lg px-3 py-2 text-xs">
+      <p className="font-semibold text-lean-black dark:text-gray-100 mb-1">{label}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-sm" style={{ background: entry.color }} />
           {payload.length > 1 && (
-            <span className="text-text-muted dark:text-warm-300">{entry.name}:</span>
+            <span className="text-text-muted">{entry.name}:</span>
           )}
-          <span className="font-semibold text-lean-black dark:text-warm-50">
+          <span className="font-semibold text-lean-black dark:text-gray-100">
             {entry.value?.toLocaleString('es-ES')}{unit}
           </span>
         </div>
@@ -87,26 +76,9 @@ function getThresholdColor(
   thresholdGood: number,
   thresholdWarn: number
 ): string {
-  if (value >= thresholdGood) return getThemeColor('success-dark')
-  if (value >= thresholdWarn) return getThemeColor('warning-dark')
-  return getThemeColor('danger-dark')
-}
-
-// ── Tabla accesible autogenerada ─────────────────────────────────
-
-function buildBarTable(data: BarDataPoint[], keys: string[], unit: string): ReactNode {
-  const columns = [
-    { key: 'label', header: 'Categoría' },
-    ...keys.map(k => ({ key: k, header: k, align: 'right' as const,
-      render: (r: BarDataPoint) => `${r[k]}${unit}` })),
-  ]
-  return (
-    <Table<BarDataPoint>
-      columns={columns}
-      rows={data}
-      keyExtractor={(r) => r.label}
-    />
-  )
+  if (value >= thresholdGood) return CHART_PALETTE.successDark
+  if (value >= thresholdWarn) return CHART_PALETTE.warningDark
+  return CHART_PALETTE.dangerDark
 }
 
 // ── Componente principal ───────────────────────────────────────
@@ -114,8 +86,6 @@ function buildBarTable(data: BarDataPoint[], keys: string[], unit: string): Reac
 export function LeanBarChart({
   data,
   keys,
-  ariaLabel,
-  dataTable,
   layout          = 'vertical',
   referenceValue,
   referenceLabel  = 'Objetivo',
@@ -123,15 +93,10 @@ export function LeanBarChart({
   thresholdGood   = 80,
   thresholdWarn   = 50,
   unit            = '',
-  height          = 300,
-  title,
-  subtitle,
-  loading         = false,
   className       = '',
 }: LeanBarChartProps) {
-  const isHorizontal  = layout === 'horizontal'
-  const isSingleKey   = keys.length === 1
-  const resolvedTable = dataTable ?? buildBarTable(data, keys, unit)
+  const isHorizontal = layout === 'horizontal'
+  const isSingleKey  = keys.length === 1
 
   // Márgenes según orientación
   const margin = isHorizontal
@@ -139,16 +104,7 @@ export function LeanBarChart({
     : { top: 5, right: 20, bottom: 20, left: 10 }
 
   return (
-    <ChartWrapper
-      ariaLabel={ariaLabel}
-      dataTable={resolvedTable}
-      height={height}
-      title={title}
-      subtitle={subtitle}
-      loading={loading}
-      empty={data.length === 0}
-      className={className}
-    >
+    <div className={className}>
       <BarChart
         data={data}
         layout={isHorizontal ? 'horizontal' : 'vertical'}
@@ -158,7 +114,7 @@ export function LeanBarChart({
       >
         <CartesianGrid
           strokeDasharray="4 2"
-          stroke={getThemeColor('border')}
+          stroke={CHART_PALETTE.border}
           vertical={!isHorizontal}
           horizontal={isHorizontal || !isHorizontal}
         />
@@ -169,14 +125,14 @@ export function LeanBarChart({
             dataKey="label"
             type="category"
             width={92}
-            tick={{ fill: getThemeColor('text-muted'), fontSize: 11, fontFamily: 'Inter, sans-serif' }}
+            tick={{ fill: CHART_PALETTE.muted, fontSize: 11, fontFamily: 'Inter, sans-serif' }}
             axisLine={false}
             tickLine={false}
           />
         ) : (
           <XAxis
             dataKey="label"
-            tick={{ fill: getThemeColor('text-muted'), fontSize: 11, fontFamily: 'Inter, sans-serif' }}
+            tick={{ fill: CHART_PALETTE.muted, fontSize: 11, fontFamily: 'Inter, sans-serif' }}
             axisLine={false}
             tickLine={false}
           />
@@ -186,14 +142,14 @@ export function LeanBarChart({
         {isHorizontal ? (
           <XAxis
             type="number"
-            tick={{ fill: getThemeColor('text-subtle'), fontSize: 10, fontFamily: 'Inter, sans-serif' }}
+            tick={{ fill: CHART_PALETTE.subtle, fontSize: 10, fontFamily: 'Inter, sans-serif' }}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v) => `${v}${unit}`}
           />
         ) : (
           <YAxis
-            tick={{ fill: getThemeColor('text-subtle'), fontSize: 10, fontFamily: 'Inter, sans-serif' }}
+            tick={{ fill: CHART_PALETTE.subtle, fontSize: 10, fontFamily: 'Inter, sans-serif' }}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v) => `${v}${unit}`}
@@ -201,13 +157,13 @@ export function LeanBarChart({
           />
         )}
 
-        <Tooltip content={<CustomTooltip unit={unit} />} cursor={{ fill: getThemeColor('surface') }} />
+        <Tooltip content={<CustomTooltip unit={unit} />} cursor={{ fill: CHART_PALETTE.surface }} />
 
         {keys.length > 1 && (
           <Legend
             wrapperStyle={{
               fontSize:   '11px',
-              color:      getThemeColor('text-muted'),
+              color:      CHART_PALETTE.muted,
               fontFamily: 'Inter, sans-serif',
               paddingTop: '12px',
             }}
@@ -218,13 +174,13 @@ export function LeanBarChart({
         {referenceValue !== undefined && (
           <ReferenceLine
             {...(isHorizontal ? { x: referenceValue } : { y: referenceValue })}
-            stroke={getThemeColor('navy')}
+            stroke={CHART_PALETTE.navy}
             strokeDasharray="6 3"
             strokeWidth={1.5}
             label={{
               value:    referenceLabel,
               position: 'insideTopRight',
-              fill:     getThemeColor('navy'),
+              fill:     CHART_PALETTE.navy,
               fontSize: 10,
               fontFamily: 'Inter, sans-serif',
             }}
@@ -255,7 +211,16 @@ export function LeanBarChart({
           </Bar>
         ))}
       </BarChart>
-    </ChartWrapper>
+    </div>
   )
 }
 
+// ── Datos de demo ──────────────────────────────────────────────
+
+export const DEMO_KPI_DATA: BarDataPoint[] = [
+  { label: 'Reducción costes',   actual: 23, target: 30 },
+  { label: 'Automatización',     actual: 61, target: 70 },
+  { label: 'Satisfacción equipo', actual: 74, target: 80 },
+  { label: 'Time-to-decision',   actual: 45, target: 60 },
+  { label: 'Errores manuales',   actual: 38, target: 50 },
+]

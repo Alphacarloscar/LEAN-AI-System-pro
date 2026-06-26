@@ -20,10 +20,9 @@ import {
   deleteIntervieweeScores,
   buildBlankDimensions,
 } from '@/services/t1.service'
-import { logTrace }     from '@/lib/loadTrace'
-import { reportError }  from '@/lib/reportError'
+import { logTrace } from '@/lib/loadTrace'
 
-const STALE_MS = 60_000
+const STALE_MS = 5 * 60_000
 import type {
   T1IntervieweeContext,
   T1DimensionState,
@@ -203,7 +202,7 @@ export const useT1Store = create<T1Store>()((set, get) => ({
       const message = isTimeout
         ? 'Timeout de carga (>15s) — comprueba la conexión con Supabase'
         : `Error al cargar T1: ${(err as Error)?.message ?? String(err)}`
-      reportError('[T1Store] load FAILED', err)
+      console.error('[T1Store] load FAILED for engagement', engagementId, '—', message, err)
       set({ isLoading: false, loadError: message })
     }
   },
@@ -245,7 +244,7 @@ export const useT1Store = create<T1Store>()((set, get) => ({
         intervieweeDepartment: person.department,
         dimensions:            blankDims,
       }).catch((err) => {
-        reportError('[T1Store] addInterviewee sync', err)
+        console.error('[T1Store] addInterviewee sync:', err)
       })
     }
   },
@@ -269,7 +268,7 @@ export const useT1Store = create<T1Store>()((set, get) => ({
       try {
         await deleteIntervieweeScores(engagementId, intervieweeId)
       } catch (err) {
-        reportError('[T1Store] removeInterviewee sync', err)
+        console.error('[T1Store] removeInterviewee sync:', err)
       }
     }
   },
@@ -310,7 +309,7 @@ export const useT1Store = create<T1Store>()((set, get) => ({
             evidence:              sub.evidence,
           })
         } catch (err) {
-          reportError('[T1Store] setScore sync', err)
+          console.error('[T1Store] setScore sync:', err)
         }
       }, 800)
     }
@@ -350,7 +349,7 @@ export const useT1Store = create<T1Store>()((set, get) => ({
             evidence:              sub.evidence,
           })
         } catch (err) {
-          reportError('[T1Store] setEvidence sync', err)
+          console.error('[T1Store] setEvidence sync:', err)
         }
       }, 1200)
     }

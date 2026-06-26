@@ -1,13 +1,15 @@
 import { type HTMLAttributes, type ReactNode } from 'react'
 
-// ─── Types ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Card — contenedor principal del sistema (12px radius — D9)
+//
+// Variants:
+//   default  → fondo blanco, borde sutil
+//   elevated → sombra sin borde (para modales secundarios, paneles flotantes)
+//   flat     → sin borde ni sombra (para uso dentro de otros cards)
+// ─────────────────────────────────────────────────────────────
 
-/**
- * flat     — sin borde ni sombra; para uso dentro de otros cards
- * elevated — sombra sin borde; para modales secundarios y paneles flotantes
- * outlined — borde visible sin sombra; variante de superficie estándar
- */
-export type CardVariant = 'flat' | 'elevated' | 'outlined' | 'featured'
+export type CardVariant = 'default' | 'elevated' | 'flat'
 export type CardPadding = 'none' | 'sm' | 'md' | 'lg'
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
@@ -18,25 +20,10 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children:  ReactNode
 }
 
-// ─── Variant classes ───────────────────────────────────────────
-
 const variantClasses: Record<CardVariant, string> = {
-  outlined: [
-    'bg-white border border-border',
-    'dark:bg-warm-800 dark:border-warm-600/30',
-  ].join(' '),
-
-  elevated: [
-    'bg-white border border-transparent shadow-sm',
-    'dark:bg-warm-800 dark:shadow-warm-card',
-  ].join(' '),
-
-  flat: 'bg-transparent border-transparent',
-
-  featured: [
-    'bg-white border border-warm-200 border-t-2 border-t-gold shadow-sm',
-    'dark:bg-warm-800 dark:border-warm-600/30 dark:border-t-gold',
-  ].join(' '),
+  default:  'bg-white border-border shadow-border dark:bg-warm-800 dark:border-warm-600/30 dark:shadow-border-dark',
+  elevated: 'bg-white shadow-lg border-transparent dark:bg-warm-800',
+  flat:     'bg-transparent border-transparent',
 }
 
 const paddingClasses: Record<CardPadding, string> = {
@@ -46,10 +33,8 @@ const paddingClasses: Record<CardPadding, string> = {
   lg:   'p-8',
 }
 
-// ─── Component ─────────────────────────────────────────────────
-
 export function Card({
-  variant  = 'outlined',
+  variant  = 'default',
   padding  = 'md',
   header,
   footer,
@@ -57,29 +42,30 @@ export function Card({
   className = '',
   ...props
 }: CardProps) {
-  const hasSlots = Boolean(header || footer)
-
   return (
     <div
       className={[
-        'rounded-xl border',
+        'rounded-lg border',
         variantClasses[variant],
         className,
       ].join(' ')}
       {...props}
     >
+      {/* Header opcional */}
       {header && (
-        <div className="px-6 py-4 border-b border-border dark:border-warm-600/30">
+        <div className="px-6 py-4 shadow-line-bottom">
           {header}
         </div>
       )}
 
-      <div className={hasSlots ? 'px-6 py-4' : paddingClasses[padding]}>
+      {/* Contenido */}
+      <div className={header || footer ? 'px-6 py-4' : paddingClasses[padding]}>
         {children}
       </div>
 
+      {/* Footer opcional */}
       {footer && (
-        <div className="px-6 py-4 border-t border-border bg-surface rounded-b-lg dark:border-warm-600/30 dark:bg-warm-800/50">
+        <div className="px-6 py-4 shadow-line-top bg-surface dark:bg-warm-800/50 rounded-b-lg">
           {footer}
         </div>
       )}

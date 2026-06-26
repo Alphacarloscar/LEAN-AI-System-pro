@@ -1,7 +1,7 @@
-﻿import type { Config } from 'tailwindcss'
+import type { Config } from 'tailwindcss'
 
 /**
- * GOBY — Design System Tokens (D9 · Sprint 4 Rev2)
+ * LEAN AI System — Design System Tokens (D9 · Sprint 4 Rev2)
  * ARQUITECTURA.md sección 7 — Source of truth.
  *
  * Paleta: Obsidian Amber + Grises Metálicos
@@ -23,20 +23,6 @@ const config: Config = {
 
   theme: {
     extend: {
-
-      // ─────────────────────────────────────────────────────────────
-      // SPACING — ADR-021 escala canónica 4px (Carbon 2x)
-      // REGLA: ningún componente usa px-[N] fuera de esta escala.
-      // ─────────────────────────────────────────────────────────────
-      spacing: {
-        '1':  '4px',
-        '2':  '8px',
-        '3':  '12px',
-        '4':  '16px',
-        '6':  '24px',
-        '8':  '32px',
-        '12': '48px',
-      },
 
       // ─────────────────────────────────────────────────────────────
       // COLORES — D9 sección 7.2
@@ -66,7 +52,6 @@ const config: Config = {
         'gold-hover': '#D4940F',   // hover del acento
         'gold-muted': '#8B6A30',   // acento atenuado / estados deshabilitados
         'gold-faint': '#2A1E08',   // fondo muy sutil sobre gold (dark mode)
-        'gold-text':  '#9B6408',   // text link — AA sobre fondos cálidos claros
 
         // ── Plata cálida — metales secundarios ──
         'silver':      '#C4C0B8',  // plata cálida — datos secundarios

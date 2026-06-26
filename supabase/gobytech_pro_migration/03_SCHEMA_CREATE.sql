@@ -372,10 +372,9 @@ CREATE TABLE public.ai_rate_limit_log (
   project_id  uuid        NOT NULL REFERENCES public.projects(id)  ON DELETE CASCADE,
   tool_code   text        NOT NULL
               CHECK (tool_code IN (
-                -- Genéricos — RecommendationPanel (T1-T11)
-                't1', 't2', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11',
-                -- Dedicados — hooks de generación específica
-                't3_opportunities', 't6_policy', 't7_plan', 't8_comms'
+                't5_canvas', 't6_policy', 't7_plan',
+                't8_comms',  't12_iso',
+                't9_overrides', 't9_free_items'
               )),
   created_at  timestamptz NOT NULL DEFAULT now()
 );
@@ -396,10 +395,7 @@ CREATE TABLE public.tool_outputs (
   project_id      uuid        NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   tool_code       text        NOT NULL
                   CHECK (tool_code IN (
-                    -- Genéricos — RecommendationPanel (T1-T11)
-                    't1', 't2', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11',
-                    -- Dedicados — hooks de generación específica
-                    't3_opportunities', 't6_policy', 't7_plan', 't8_comms'
+                    't5_canvas', 't6_policy', 't7_plan', 't8_comms', 't12_iso'
                   )),
   payload         jsonb       NOT NULL DEFAULT '{}',
   version         int         NOT NULL DEFAULT 1 CHECK (version >= 1),

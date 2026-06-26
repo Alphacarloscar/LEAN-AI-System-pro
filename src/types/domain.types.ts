@@ -1,14 +1,21 @@
-﻿// ============================================================
-// GOBY — Tipos del dominio de negocio
+// ============================================================
+// LEAN AI System — Tipos del dominio de negocio
 //
 // Estos tipos son independientes del esquema de Supabase.
 // Representan las entidades tal como las entiende la aplicación.
 // Sprint 0.5: tipos base del dominio — se amplían en cada Sprint.
 // ============================================================
 
-// UserRole y LeanPhase: fuente única en database.types.ts (ADR-D10)
-import type { UserRole, LeanPhase } from './database.types'
-export type { UserRole, LeanPhase }
+// ---- Arquetipos de usuario (D7) ----
+export type UserRole =
+  | 'consultor_alpha'
+  | 'pm_cliente'
+  | 'viewer_csuite'
+  | 'admin_alpha'
+  | 'superadmin'
+
+// ---- Fases L.E.A.N. ----
+export type LeanPhase = 'listen' | 'evaluate' | 'activate' | 'normalize'
 
 // ---- Herramientas T1-T12 ----
 export type ToolCode =
@@ -25,7 +32,7 @@ export interface Engagement {
   name: string
   startDate: string | null
   endDate: string | null
-  currentPhase: LeanPhase
+  currentPhase: LeanPhase | 'closed'
   assignedConsultantId: string | null
   status: 'active' | 'archived'
   createdAt: string

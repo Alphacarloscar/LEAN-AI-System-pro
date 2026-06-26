@@ -438,37 +438,6 @@ BEGIN
 END $$;
 
 
--- CHECK 15 — Constraints tool_code aceptan los 14 tool codes de ai-recommend v2
--- ────────────────────────────────────────────────────────────────
-DO $$
-DECLARE
-  v_missing text[] := '{}';
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'tool_outputs_tool_code_check'
-      AND conrelid = 'public.tool_outputs'::regclass
-  ) THEN
-    v_missing := array_append(v_missing, 'tool_outputs_tool_code_check');
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'ai_rate_limit_log_tool_code_check'
-      AND conrelid = 'public.ai_rate_limit_log'::regclass
-  ) THEN
-    v_missing := array_append(v_missing, 'ai_rate_limit_log_tool_code_check');
-  END IF;
-
-  IF array_length(v_missing, 1) > 0 THEN
-    RAISE EXCEPTION '[CHECK 15 FAIL] Constraints tool_code desactualizados o faltantes: %', v_missing;
-  END IF;
-
-  RAISE NOTICE '[CHECK 15 OK] Constraints tool_code de ai-recommend presentes en tool_outputs y ai_rate_limit_log';
-END;
-$$;
-
-
 -- ════════════════════════════════════════════════════════════════
 -- RESUMEN FINAL
 -- ════════════════════════════════════════════════════════════════

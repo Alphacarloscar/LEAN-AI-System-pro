@@ -1,5 +1,5 @@
-﻿// ============================================================
-// GOBY — Escenario demo: Resistencia al cambio
+// ============================================================
+// LEAN AI System — Escenario demo: Resistencia al cambio
 //
 // Patrón: la tecnología funciona, la gente no quiere usarla.
 // Los pilotos llegan a producción pero mueren en el rollout.

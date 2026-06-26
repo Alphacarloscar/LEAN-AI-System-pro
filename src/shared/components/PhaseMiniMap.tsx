@@ -2,7 +2,8 @@
 // PhaseMiniMap — Indicador visual de posición en la metodología
 //
 // Muestra las 6 fases L.E.A.N. como nodos conectados.
-// La fase activa se resalta; las anteriores atenuadas; las siguientes en gris.
+// La fase activa se resalta en navy; las anteriores en azul
+// apagado; las siguientes en gris.
 //
 // Uso:
 //   <PhaseMiniMap phaseId="listen"   toolCode="T1" />
@@ -12,10 +13,8 @@
 // Props:
 //   phaseId  — id de la fase activa (ver LEAN_PHASES)
 //   toolCode — código de la herramienta activa (T1–T9) para tooltip
-//   dark     — forzar modo oscuro (omitir = detección automática via clase <html>)
+//   dark     — forzar modo oscuro (si no se detecta via CSS class)
 // ============================================================
-
-import { useState, useEffect } from 'react'
 
 // ── Definición estática de las 6 fases L.E.A.N. ───────────────
 export type LeanPhaseId =
@@ -51,23 +50,8 @@ interface PhaseMiniMapProps {
 }
 
 // ── Componente ─────────────────────────────────────────────────
-export function PhaseMiniMap({ phaseId, toolCode, dark: darkProp }: PhaseMiniMapProps) {
+export function PhaseMiniMap({ phaseId, toolCode, dark = false }: PhaseMiniMapProps) {
   const activeIdx = PHASE_ORDER.indexOf(phaseId)
-
-  // Detecta dark mode via clase en <html> y se actualiza si el usuario cambia el tema
-  const [isDark, setIsDark] = useState(
-    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'),
-  )
-  useEffect(() => {
-    if (darkProp !== undefined) return
-    const observer = new MutationObserver(() =>
-      setIsDark(document.documentElement.classList.contains('dark')),
-    )
-    observer.observe(document.documentElement, { attributeFilter: ['class'] })
-    return () => observer.disconnect()
-  }, [darkProp])
-
-  const dark = darkProp ?? isDark
 
   return (
     <div
@@ -93,17 +77,17 @@ export function PhaseMiniMap({ phaseId, toolCode, dark: darkProp }: PhaseMiniMap
           letterStyle = { color: dark ? '#1C1A16' : '#ffffff', fontWeight: 700 }
         } else if (isBefore) {
           nodeStyle = {
-            background:  dark ? 'rgba(196,192,184,0.22)' : 'rgba(42,40,34,0.12)',
-            border:      `1.5px solid ${dark ? 'rgba(196,192,184,0.45)' : 'rgba(42,40,34,0.25)'}`,
+            background:  dark ? 'rgba(196,192,184,0.18)' : 'rgba(42,40,34,0.12)',
+            border:      `1.5px solid ${dark ? 'rgba(196,192,184,0.35)' : 'rgba(42,40,34,0.25)'}`,
           }
-          letterStyle = { color: dark ? 'rgba(240,237,232,0.75)' : 'rgba(42,40,34,0.55)', fontWeight: 600 }
+          letterStyle = { color: dark ? 'rgba(196,192,184,0.7)' : 'rgba(42,40,34,0.55)', fontWeight: 600 }
         } else {
           // upcoming (idx > activeIdx)
           nodeStyle = {
-            background:  dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.03)',
-            border:      `1.5px solid ${dark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.1)'}`,
+            background:  dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+            border:      `1.5px solid ${dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
           }
-          letterStyle = { color: dark ? 'rgba(240,237,232,0.45)' : 'rgba(0,0,0,0.22)', fontWeight: 400 }
+          letterStyle = { color: dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.22)', fontWeight: 400 }
         }
 
         return (
