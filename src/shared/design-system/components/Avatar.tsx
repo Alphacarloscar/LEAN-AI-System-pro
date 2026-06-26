@@ -76,7 +76,7 @@ export function Avatar({ name, size = 'md', src, alt, className = '', ...props }
   // Fallback sin nombre ni foto
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-full bg-gray-200 text-gray-500 dark:bg-warm-600 dark:text-warm-300 ${sizeClass} ${className}`}
+      className={`inline-flex items-center justify-center rounded-full bg-warm-200 text-warm-500 dark:bg-warm-600 dark:text-warm-300 ${sizeClass} ${className}`}
       aria-hidden="true"
     >
       <svg className="h-1/2 w-1/2" viewBox="0 0 24 24" fill="currentColor">

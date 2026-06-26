@@ -71,7 +71,7 @@ const TEST_INTERVIEWEE = {
  * localStorage). selectEngagement() debe haberse llamado antes en beforeEach.
  */
 async function goToT1AndWait(page: Page): Promise<void> {
-  await page.goto('/t1', { waitUntil: 'domcontentloaded' })
+  await page.goto('/t1', { waitUntil: 'networkidle' })
   // Espera al ToolHeader real de T1View (title="AI Readiness Assessment"),
   // no al card del dashboard T10 que también tiene ese texto.
   // El ToolHeader renderiza inmediatamente — si no aparece en 15s hay un crash.
