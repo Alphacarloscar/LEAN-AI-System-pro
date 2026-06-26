@@ -16,6 +16,8 @@ import { useT2Store }                from '@/modules/T2_StakeholderMatrix/store'
 import { useT3Store }                from '@/modules/T3_ValueStreamMap/store'
 import { useT4Store }                from '@/modules/T4_UseCasePriorityBoard/store'
 
+const DEMO_ENABLED = import.meta.env.VITE_DEMO_ENABLED === 'true'
+
 function StatusDot({ ok }: { ok: boolean }) {
   return (
     <span
@@ -95,6 +97,12 @@ export function DebugPanel() {
         <Row label="T2" value={loadingT2 ? 'loading…' : 'ready'} loading={loadingT2} />
         <Row label="T3" value={loadingT3 ? 'loading…' : 'ready'} loading={loadingT3} />
         <Row label="T4" value={loadingT4 ? 'loading…' : 'ready'} loading={loadingT4} />
+        <div className="my-1 border-t border-white/8" />
+        <Row
+          label="DEMO_ENABLED"
+          value={String(DEMO_ENABLED)}
+          loading={false}
+        />
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import { Spinner } from '@shared/design-system/components'
+import { Spinner } from './Spinner'
 
 interface ToolLoadingScreenProps {
   toolCode: string

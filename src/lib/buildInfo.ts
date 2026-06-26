@@ -17,6 +17,7 @@ export interface BuildInfo {
   gitCommit:   string
   buildTime:   string
   vercelEnv:   string
+  demoEnabled: string
   supabaseUrl: string   // masked: solo host, sin scheme ni path
 }
 
@@ -37,6 +38,7 @@ export function getBuildInfo(): BuildInfo {
     gitCommit:   __GIT_COMMIT__,
     buildTime:   __BUILD_TIME__,
     vercelEnv:   import.meta.env.VERCEL_ENV        ?? import.meta.env.VITE_VERCEL_ENV ?? '(local/unknown)',
+    demoEnabled: import.meta.env.VITE_DEMO_ENABLED ?? 'false',
     supabaseUrl: maskedUrl,
   }
 }
@@ -52,6 +54,7 @@ export function logBuildInfo(): void {
     'Git commit':     info.gitCommit,
     'Build time':     info.buildTime,
     'Vercel env':     info.vercelEnv,
+    'Demo enabled':   info.demoEnabled,
     'Supabase host':  info.supabaseUrl,
   })
   console.groupEnd()

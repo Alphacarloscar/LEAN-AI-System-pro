@@ -14,7 +14,7 @@ export function ViewerEmptyState({ message }: { message?: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
       {/* Icono — reloj de arena / en progreso */}
-      <div className="w-14 h-14 rounded-xl bg-[#F7F4EE] flex items-center justify-center mb-5">
+      <div className="w-14 h-14 rounded-2xl bg-[#F7F4EE] flex items-center justify-center mb-5">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
              stroke="#C8860A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M5 3h14M5 21h14M6 3v4l6 5-6 5v4M18 3v4l-6 5 6 5v4" />
