@@ -66,12 +66,11 @@ const TEST_INTERVIEWEE = {
 // ── Helpers locales ────────────────────────────────────────────────────────
 
 /**
- * Navega a T1. La ruta es /t1 (sin parámetro); el engagement activo
- * lo lee T1View desde el store de Zustand (lean-active-engagement en
- * localStorage). selectEngagement() debe haberse llamado antes en beforeEach.
+ * Navega a T1. La ruta requiere /:engagementId desde App.tsx (path="t1/:engagementId").
+ * Usamos LAB_PROJECT_ID directamente en la URL para que el route match sea correcto.
  */
 async function goToT1AndWait(page: Page): Promise<void> {
-  await page.goto('/t1', { waitUntil: 'networkidle' })
+  await page.goto(`/t1/${LAB_PROJECT_ID}`, { waitUntil: 'networkidle' })
   // Espera al ToolHeader real de T1View (title="AI Readiness Assessment"),
   // no al card del dashboard T10 que también tiene ese texto.
   // El ToolHeader renderiza inmediatamente — si no aparece en 15s hay un crash.

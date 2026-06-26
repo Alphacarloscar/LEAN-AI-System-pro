@@ -41,13 +41,13 @@ export async function login(
 // ── selectEngagement ──────────────────────────────────────────────────────────
 // Inyecta el projectId en el localStorage de Zustand (clave lean-active-engagement)
 // antes de navegar a la ruta de la herramienta.
-// Llámalo DESPUÉS de login() y ANTES de page.goto('/t1').
+// Llámalo DESPUÉS de login() y ANTES de page.goto('/t1/:engagementId').
 //
 // Flujo recomendado en beforeEach:
 //   await login(page)
-//   await selectEngagement(page)           // inyecta Toy Story
-//   await page.goto('/t1')
-//   await waitForStoreReady(page, 'T1')   // espera a que el store cargue
+//   await selectEngagement(page)                        // inyecta Toy Story
+//   await page.goto(`/t1/${LAB_PROJECT_ID}`)            // ruta con engagementId
+//   await waitForStoreReady(page, 'T1')                 // espera a que el store cargue
 export async function selectEngagement(
   page:      Page,
   projectId: string = LAB_PROJECT_ID,
