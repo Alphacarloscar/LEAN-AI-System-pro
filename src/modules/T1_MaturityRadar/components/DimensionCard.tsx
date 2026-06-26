@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T1 — DimensionCard (sección de dimensión con subdimensiones)
 //
 // Muestra una dimensión principal (D1–D6) con sus 4 subdimensiones.
@@ -9,19 +9,11 @@
 // ============================================================
 
 import { useState } from 'react'
-import { Badge, Button, FormField, type BadgeVariant } from '@/shared/design-system/components'
+import { Button, FormField } from '@/shared/design-system/components'
 import type { T1DimensionState, T1SubdimensionState } from '../types'
-import { computeDimensionScore }                      from '../types'
+import { computeDimensionScore, maturityHex, maturityTextOnBg } from '../types'
 import type { DimensionDefinition }                    from '../constants'
 import { SUBDIMENSION_MAP }                            from '../constants'
-
-function dimScoreVariant(score: number | null): BadgeVariant {
-  if (score === null) return 'default'
-  if (score >= 3)     return 'success'
-  if (score >= 2)     return 'info'
-  if (score >= 1)     return 'warning'
-  return 'danger'
-}
 
 interface DimensionCardProps {
   state:      T1DimensionState
@@ -50,12 +42,15 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
   const def  = SUBDIMENSION_MAP[sub.code]
   const hasScore = sub.score !== null
 
-  // Color del badge de score activo
-  const scoreColor = (n: number) =>
-    n >= 3   ? 'bg-success-dark text-white' :
-    n >= 2   ? 'bg-info-dark text-white'    :
-    n >= 1   ? 'bg-warning-dark text-white' :
-               'bg-gray-400 text-white'
+  // Gradiente warm-700→gold: 0 = #4A4740 (track barra progreso), 4 = #C8860A (gold)
+  const scoreActiveBg = (n: number): string => {
+    const t = n / 4
+    const r = Math.round(74  + (200 - 74)  * t)
+    const g = Math.round(71  + (134 - 71)  * t)
+    const b = Math.round(64  + (10  - 64)  * t)
+    return `rgb(${r},${g},${b})`
+  }
+  const scoreActiveText = () => '#FFFFFF'
 
   function setScore(n: number) {
     // Si ya está activo el mismo score, lo desmarca (null)
@@ -68,17 +63,17 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
       <div className="flex items-start gap-3 py-3">
 
         {/* Número de subdimensión */}
-        <span className="shrink-0 mt-0.5 text-[10px] font-mono font-semibold text-text-subtle w-8">
+        <span className="shrink-0 mt-0.5 text-[10px] font-mono font-semibold text-text-muted w-8">
           {def?.subdimNumber ?? sub.code}
         </span>
 
         {/* Label + descripción */}
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-lean-black dark:text-gray-200 leading-snug">
+          <p className="text-xs font-medium text-lean-black dark:text-warm-100 leading-snug">
             {sub.label}
           </p>
           {def?.description && (
-            <p className="text-[11px] text-text-subtle mt-0.5 leading-snug">
+            <p className="text-[11px] text-text-muted mt-0.5 leading-snug line-clamp-2">
               {def.description}
             </p>
           )}
@@ -93,11 +88,12 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
               title={SCORE_LABELS[n]}
               className={[
                 'h-7 w-7 rounded-md text-xs font-semibold transition-all duration-150',
-                'focus:outline-none focus:ring-2 focus:ring-navy/30',
+                'focus:outline-none focus:ring-2 focus:ring-gold/40',
                 sub.score === n
-                  ? `${scoreColor(n)} shadow-sm scale-[1.08]`
-                  : 'bg-gray-100 dark:bg-gray-800 text-text-muted hover:bg-gray-200 dark:hover:bg-gray-700',
+                  ? 'shadow-sm scale-[1.08]'
+                  : 'bg-warm-100 dark:bg-warm-700 text-text-muted hover:bg-warm-200 dark:hover:bg-warm-600',
               ].join(' ')}
+              style={sub.score === n ? { backgroundColor: scoreActiveBg(n), color: scoreActiveText() } : undefined}
             >
               {n}
             </button>
@@ -107,8 +103,8 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
 
       {/* ── Score activo — descripción del nivel ── */}
       {hasScore && (
-        <div className="ml-11 mb-1 text-[11px] text-text-muted leading-snug px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-md">
-          <span className="font-medium text-lean-black dark:text-gray-300">
+        <div className="ml-11 mb-1 text-[11px] text-text-muted leading-snug px-2 py-1 bg-warm-50 dark:bg-warm-700/50 rounded-md">
+          <span className="font-medium text-lean-black dark:text-warm-200">
             {SCORE_LABELS[sub.score!]}:{' '}
           </span>
           {def?.criteria[sub.score as 0|1|2|3|4] ?? ''}
@@ -149,7 +145,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
 
       {/* ── Criterios expandidos ── */}
       {sub.showCriteria && def && (
-        <div className="ml-11 mb-2 rounded-lg border border-border/60 bg-gray-50 dark:bg-gray-800/40 divide-y divide-border/40 overflow-hidden">
+        <div className="ml-11 mb-2 rounded-lg border border-border/60 bg-warm-50 dark:bg-warm-700/40 divide-y divide-border/40 overflow-hidden">
           {([0, 1, 2, 3, 4] as const).map((n) => (
             <div
               key={n}
@@ -157,11 +153,11 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
                 'flex gap-2.5 px-3 py-1.5 text-[11px] cursor-pointer transition-colors',
                 sub.score === n
                   ? 'bg-navy/8 dark:bg-navy/20'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700/50',
+                  : 'hover:bg-warm-100 dark:hover:bg-warm-600/50',
               ].join(' ')}
               onClick={() => setScore(n)}
             >
-              <span className="shrink-0 font-bold text-text-subtle w-3 text-center">{n}</span>
+              <span className="shrink-0 font-bold text-text-muted w-3 text-center">{n}</span>
               <span className="text-text-muted leading-relaxed">{def.criteria[n]}</span>
             </div>
           ))}
@@ -205,12 +201,12 @@ export function DimensionCard({ state, definition, onChange }: DimensionCardProp
   }
 
   return (
-    <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden transition-shadow hover:shadow-sm">
+    <div className="rounded-xl border border-border bg-white dark:bg-warm-800 overflow-hidden transition-shadow hover:shadow-sm">
 
       {/* ── Cabecera de dimensión ── */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
+        className="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-warm-50/50 dark:hover:bg-warm-700/50 transition-colors"
       >
         {/* Número D1-D6 */}
         <span className="shrink-0 px-2 py-0.5 rounded-md bg-navy/10 dark:bg-navy/20 text-[11px] font-mono font-bold text-navy dark:text-warm-100">
@@ -219,7 +215,7 @@ export function DimensionCard({ state, definition, onChange }: DimensionCardProp
 
         {/* Label + descripción */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-lean-black dark:text-gray-100">
+          <p className="text-sm font-semibold text-lean-black dark:text-warm-50">
             {definition.label}
           </p>
           <p className="text-[11px] text-text-muted mt-0.5 leading-snug truncate pr-4">
@@ -229,12 +225,15 @@ export function DimensionCard({ state, definition, onChange }: DimensionCardProp
 
         {/* Score + contador */}
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[10px] text-text-subtle tabular-nums">
+          <span className="text-[10px] text-text-muted tabular-nums">
             {scoredCount}/4
           </span>
-          <Badge variant={dimScoreVariant(dimScore)} shape="pill" className="!font-semibold tabular-nums">
+          <span
+            className="px-2.5 py-0.5 rounded-full text-xs font-semibold tabular-nums"
+            style={{ backgroundColor: maturityHex(dimScore), color: maturityTextOnBg(dimScore) }}
+          >
             {dimScore !== null ? dimScore.toFixed(1) : '—'}
-          </Badge>
+          </span>
           <svg
             className={`h-3.5 w-3.5 text-text-subtle transition-transform duration-150 ${isCollapsed ? '-rotate-90' : ''}`}
             viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"

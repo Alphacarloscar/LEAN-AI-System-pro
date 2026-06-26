@@ -35,7 +35,7 @@ export function ClauseSidebar({ controls, active, onSelect }: ClauseSidebarProps
 
       {/* Progreso global */}
       <Card variant="outlined" padding="none" className="rounded-xl px-4 py-3 mb-2">
-        <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1.5">
           Progreso global
         </p>
         <div className="flex items-end gap-2 mb-2">
@@ -45,7 +45,7 @@ export function ClauseSidebar({ controls, active, onSelect }: ClauseSidebarProps
           <span className="text-[10px] text-text-subtle mb-0.5">aprobado</span>
         </div>
         {/* Barra multi-estado */}
-        <div className="h-2 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex">
+        <div className="h-2 rounded-full overflow-hidden bg-warm-100 dark:bg-warm-800 flex">
           {(['aprobado', 'pendiente_revision', 'en_progreso'] as T12Status[]).map((s) => {
             const count = controls.filter((c) => c.status === s).length
             const pct   = (count / total) * 100
@@ -60,8 +60,8 @@ export function ClauseSidebar({ controls, active, onSelect }: ClauseSidebarProps
           })}
         </div>
         <div className="flex justify-between mt-1.5">
-          <span className="text-[9px] text-text-subtle">{approved}/{total} controles</span>
-          <span className="text-[9px] text-text-subtle">
+          <span className="text-[10px] text-text-muted">{approved}/{total} controles</span>
+          <span className="text-[10px] text-text-muted">
             {controls.filter((c) => c.status === 'pendiente_revision').length} en revisión
           </span>
         </div>
@@ -81,7 +81,7 @@ export function ClauseSidebar({ controls, active, onSelect }: ClauseSidebarProps
               'w-full text-left rounded-xl border px-3 py-2.5 transition-all duration-150',
               isActive
                 ? 'border-transparent shadow-sm'
-                : 'border-border bg-white dark:bg-gray-900 hover:border-border-hover hover:bg-gray-50 dark:hover:bg-gray-800/50',
+                : 'border-border bg-white dark:bg-warm-900 hover:border-border-hover hover:bg-warm-100 dark:hover:bg-warm-800',
             ].join(' ')}
             style={isActive ? {
               backgroundColor: cfg.hex + '12',
@@ -100,12 +100,12 @@ export function ClauseSidebar({ controls, active, onSelect }: ClauseSidebarProps
                   {cfg.shortLabel}
                 </span>
               </div>
-              <span className="text-[9px] font-mono text-text-subtle">
+              <span className="text-[10px] font-mono text-text-muted">
                 {prog.aprobado}/{prog.total}
               </span>
             </div>
             {/* Mini barra */}
-            <div className="h-1 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex">
+            <div className="h-1 rounded-full overflow-hidden bg-warm-100 dark:bg-warm-800 flex">
               {prog.aprobado > 0 && (
                 <div
                   style={{ width: `${prog.pct}%`, backgroundColor: cfg.hex }}

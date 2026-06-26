@@ -16,6 +16,37 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['error', { allowConstantExport: true }],
     },
   },
+  // ADR-021: Design System enforcement — prohibir clases Tailwind frías, sombras excesivas,
+  // bordes redondeados exagerados y strokeWidth={2} en iconos.
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: [
+      'src/**/*PDF*.tsx',
+      'src/**/*PDF*.ts',
+      'src/**/chartTokens.ts',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'JSXAttribute[name.name="className"] Literal[value=/\\b(bg|text|border)-(gray|slate|red|blue|emerald|amber|purple|violet|orange|yellow|green|indigo|pink|cyan|fuchsia)-/]',
+          message: 'ADR-021: Usar tokens warm-* o semánticos del DS. Ver VISUAL-SYSTEM-V2.md §B.',
+        },
+        {
+          selector: 'JSXAttribute[name.name="className"] Literal[value=/shadow-(lg|xl|2xl)/]',
+          message: 'ADR-021: Máximo shadow-md. Ver VISUAL-SYSTEM-V2.md §E.1.',
+        },
+        {
+          selector: 'JSXAttribute[name.name="className"] Literal[value=/rounded-(2xl|3xl)/]',
+          message: 'ADR-021: Usar rounded-xl para cards. Ver VISUAL-SYSTEM-V2.md §E.1.',
+        },
+        {
+          selector: 'JSXAttribute[name.name="strokeWidth"] Literal[value=2]',
+          message: 'DS: usar strokeWidth={1.5}. Ver VISUAL-SYSTEM-V2.md §F.2.',
+        },
+      ],
+    },
+  },
   // ADR-011: acceso a datos solo vía src/services/
   // Excluir: services (destino correcto), lib (donde vive supabase.ts),
   //          Auth hooks/stores (supabase.auth.* es excepción documentada),

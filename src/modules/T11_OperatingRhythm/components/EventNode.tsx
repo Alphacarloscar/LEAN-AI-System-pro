@@ -42,14 +42,14 @@ export function EventNode({
         </span>
         <div className="flex items-center gap-1 shrink-0">
           {event.isCritical && (
-            <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400">★</span>
+            <span className="text-[9px] font-bold text-warning-dark dark:text-warning">★</span>
           )}
           {!isUnlocked && (
             <svg className="h-3 w-3 text-text-subtle" viewBox="0 0 12 12" fill="currentColor">
               <path d="M9 5V4a3 3 0 00-6 0v1H2v6h8V5H9zM5 4a1 1 0 012 0v1H5V4z" />
             </svg>
           )}
-          <span className="text-[9px] font-mono text-text-subtle">{event.duration}</span>
+          <span className="text-[10px] font-mono text-text-muted">{event.duration}</span>
         </div>
       </div>
 

@@ -1,11 +1,13 @@
-// ============================================================
+﻿// ============================================================
 // T4 — ScoringTabContent
 // ============================================================
 
+import { Check, X } from 'lucide-react'
 import { Button, Card } from '@shared/design-system/components'
-import { DIMENSION_CONFIG, STATUS_CONFIG, STATUS_ORDER } from '../constants'
+import { DIMENSION_CONFIG, AI_CATEGORY_LABELS } from '../constants'
 import type { UseCase, UseCaseScores } from '../types'
 import { PriorityMatrix }            from './PriorityMatrix'
+import { DOMAIN_ICONS, DOMAIN_LABELS, type DomainIconCode } from '@shared/design-system/charts/domainIcons'
 import { T4ScoreBars, ScoreInput }   from './T4ScoreEditors'
 import { LowScoreRecommendations }   from './LowScoreRecommendations'
 import { priorityScoreColor }        from './T4Badges.constants'
@@ -36,13 +38,20 @@ export function ScoringTabContent({
           Posición en la matriz de prioridad
         </p>
         <PriorityMatrix useCases={allUseCases} activeId={useCase.id} onSelect={onSelect} />
-        <div className="flex flex-wrap gap-3">
-          {STATUS_ORDER.filter((st) => allUseCases.some((uc) => uc.status === st)).map((st) => (
-            <div key={st} className="flex items-center gap-1.5">
-              <span className={`h-2 w-2 rounded-full ${STATUS_CONFIG[st].dotBg}`} />
-              <span className="text-[9px] text-text-subtle">{STATUS_CONFIG[st].label}</span>
-            </div>
-          ))}
+        {/* Leyenda: categoría IA — icono DS neutro + label */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+          {Array.from(new Set(allUseCases.map((uc) => uc.aiCategory))).map((cat) => {
+            const icon  = DOMAIN_ICONS[cat as DomainIconCode]
+            const label = DOMAIN_LABELS[cat as DomainIconCode] ?? AI_CATEGORY_LABELS[cat] ?? cat
+            return (
+              <div key={cat} className="flex items-center gap-1.5">
+                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-warm-100 dark:bg-warm-700 text-warm-600 dark:text-warm-300 shrink-0">
+                  {icon}
+                </span>
+                <span className="text-[9px] text-text-subtle">{label}</span>
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -66,9 +75,9 @@ export function ScoringTabContent({
         {!editingScore ? (
           <>
             <T4ScoreBars scores={useCase.scores} />
-            <Card variant="flat" padding="none" className="mt-5 rounded-2xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
+            <Card variant="flat" padding="none" className="mt-5 rounded-xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Score compuesto · ponderado</p>
-              <p className="text-2xl font-bold tabular-nums text-lean-black dark:text-gray-100">
+              <p className="text-2xl font-bold tabular-nums text-lean-black dark:text-warm-50">
                 {useCase.priorityScore.toFixed(1)}<span className="text-sm font-normal text-text-subtle">/100</span>
               </p>
               <p className="text-[10px] text-text-subtle mt-0.5">KPI 35% · facilidad 30% · riesgo IA 20% · dep. datos 15%</p>
@@ -102,14 +111,14 @@ export function ScoringTabContent({
                     <div className="h-5 w-5 rounded-full bg-navy/10 dark:bg-navy/20 flex items-center justify-center text-[9px] font-bold text-navy dark:text-warm-100 shrink-0">
                       {ss.stakeholderName.charAt(0)}
                     </div>
-                    <p className="text-xs font-semibold text-lean-black dark:text-gray-200">{ss.stakeholderName}</p>
+                    <p className="text-xs font-semibold text-lean-black dark:text-warm-100">{ss.stakeholderName}</p>
                     <p className="text-[10px] text-text-subtle">{ss.stakeholderRole}</p>
                   </div>
                   <div className="flex gap-3 flex-wrap">
                     {(['kpiImpact', 'feasibility', 'aiRisk', 'dataDependency'] as const).map((dim) => (
                       <div key={dim} className="flex items-center gap-1">
                         <span className="text-[9px] text-text-subtle" style={{ color: DIMENSION_CONFIG[dim].hex }}>{DIMENSION_CONFIG[dim].label.split(' ')[0]}:</span>
-                        <span className="text-[10px] font-bold text-lean-black dark:text-gray-200">{ss.scores[dim]}</span>
+                        <span className="text-[10px] font-bold text-lean-black dark:text-warm-100">{ss.scores[dim]}</span>
                       </div>
                     ))}
                   </div>
@@ -121,15 +130,20 @@ export function ScoringTabContent({
         )}
 
         {useCase.goNoGo && !editingScore && (
-          <div className={`mt-5 rounded-2xl px-4 py-3 border ${
+          <div className={`mt-5 rounded-xl px-4 py-3 border ${
             useCase.goNoGo.decision === 'go'    ? 'border-success-dark/20 bg-success-light/8 dark:bg-success-dark/5' :
             useCase.goNoGo.decision === 'no_go' ? 'border-danger-dark/20 bg-danger-light/8' :
             'border-border dark:border-white/8 bg-warm-50 dark:bg-warm-800/40'
           }`}>
             <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">Decisión go/no-go</p>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className={`text-xs font-bold ${useCase.goNoGo.decision === 'go' ? 'text-success-dark' : useCase.goNoGo.decision === 'no_go' ? 'text-danger-dark' : 'text-warning-dark'}`}>
-                {useCase.goNoGo.decision === 'go' ? '✓ GO' : useCase.goNoGo.decision === 'no_go' ? '✕ NO-GO' : '◎ PENDIENTE'}
+              <span className={`inline-flex items-center gap-1 text-xs font-bold ${useCase.goNoGo.decision === 'go' ? 'text-success-dark' : useCase.goNoGo.decision === 'no_go' ? 'text-danger-dark' : 'text-warning-dark'}`}>
+                {useCase.goNoGo.decision === 'go'
+                  ? <><Check size={14} strokeWidth={1.5} /> GO</>
+                  : useCase.goNoGo.decision === 'no_go'
+                  ? <><X size={14} strokeWidth={1.5} /> NO-GO</>
+                  : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg> PENDIENTE</>
+                }
               </span>
               {useCase.goNoGo.decidedBy && <span className="text-[10px] text-text-subtle">· {useCase.goNoGo.decidedBy}</span>}
             </div>

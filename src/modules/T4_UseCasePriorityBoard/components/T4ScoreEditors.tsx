@@ -1,4 +1,4 @@
-import { DIMENSION_CONFIG } from '../constants'
+﻿import { DIMENSION_CONFIG } from '../constants'
 import type { UseCaseScores } from '../types'
 
 const T4_SCORE_BARS = [
@@ -19,7 +19,7 @@ export function T4ScoreBars({ scores }: { scores: UseCaseScores }) {
         return (
           <div key={key} className="flex items-center gap-4">
             <div className="w-44 shrink-0">
-              <p className="text-[11px] font-semibold text-lean-black dark:text-gray-200 leading-tight">
+              <p className="text-[11px] font-semibold text-lean-black dark:text-warm-100 leading-tight">
                 {cfg.label}
               </p>
               <p className="text-[10px] text-text-subtle mt-0.5">
@@ -33,7 +33,7 @@ export function T4ScoreBars({ scores }: { scores: UseCaseScores }) {
               />
             </div>
             <div className="shrink-0 w-14 text-right">
-              <span className="text-xs font-bold tabular-nums text-lean-black dark:text-gray-200">
+              <span className="text-xs font-bold tabular-nums text-lean-black dark:text-warm-100">
                 {val}
               </span>
               <span className="text-[10px] text-text-subtle">/100</span>
@@ -71,13 +71,13 @@ export function ScoreInput({
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold text-lean-black dark:text-gray-200">{label}</p>
+          <p className="text-xs font-semibold text-lean-black dark:text-warm-100">{label}</p>
           {description && (
             <p className="text-[10px] text-text-subtle leading-snug">{description}</p>
           )}
         </div>
         <div className="shrink-0 text-right">
-          <span className="text-sm font-bold tabular-nums text-lean-black dark:text-gray-200">
+          <span className="text-sm font-bold tabular-nums text-lean-black dark:text-warm-100">
             {value}
           </span>
           <span className="text-[10px] text-text-subtle ml-0.5">/100</span>

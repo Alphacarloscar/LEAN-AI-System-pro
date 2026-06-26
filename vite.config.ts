@@ -49,6 +49,14 @@ export default defineConfig({
     port: 5173,
     open: true,
   },
+  esbuild: {
+    target: 'es2022',
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'es2022',
+    },
+  },
   build: {
     target: 'es2022',
     outDir: 'dist',

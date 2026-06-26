@@ -28,12 +28,12 @@ export interface TabsProps {
 
 const PILL_BASE =
   'px-4 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 flex items-center gap-1.5'
-const PILL_ACTIVE   = 'border-navy/50 bg-navy/8 dark:bg-navy/15 text-navy dark:text-warm-100 shadow-sm'
+const PILL_ACTIVE   = 'border-navy/50 bg-navy/8 dark:bg-gold/20 dark:border-gold/60 text-navy dark:text-gold shadow-sm'
 const PILL_INACTIVE =
-  'border-border dark:border-white/10 text-text-muted hover:border-navy/30 hover:text-navy/70 dark:hover:text-info-soft/70'
+  'border-border dark:border-white/10 text-text-muted hover:border-navy/30 hover:text-navy/70 dark:hover:border-gold/30 dark:hover:text-gold/70'
 
 const UNDERLINE_BASE    = 'px-4 py-3 text-xs font-medium border-b-2 transition-colors'
-const UNDERLINE_ACTIVE  = 'border-navy text-lean-black dark:text-warm-50'
+const UNDERLINE_ACTIVE  = 'border-navy dark:border-gold text-lean-black dark:text-gold'
 const UNDERLINE_INACTIVE = 'border-transparent text-text-muted hover:text-text-default'
 
 // ─── Component ─────────────────────────────────────────────────
@@ -100,8 +100,8 @@ export function Tabs({
     const isActive = tab.value === value
     const focusRing =
       variant === 'pill'
-        ? 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/50'
-        : 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy rounded-sm'
+        ? 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/50 dark:focus-visible:ring-gold/50'
+        : 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy dark:focus-visible:ring-gold rounded-sm'
     const disabledCls = tab.disabled ? 'opacity-40 pointer-events-none' : 'cursor-pointer'
 
     if (variant === 'underline') {
@@ -143,7 +143,7 @@ export function Tabs({
               <span
                 aria-label={`(${tab.badge})`}
                 className="inline-flex items-center justify-center h-4 min-w-[1rem] px-1
-                  rounded-full bg-navy/15 dark:bg-navy/30 text-navy dark:text-warm-100
+                  rounded-full bg-navy/15 dark:bg-gold/20 text-navy dark:text-gold
                   text-[9px] font-bold"
               >
                 {tab.badge}

@@ -48,11 +48,11 @@ export const FiveOptionsGrid: Story = {
         columns={3}
         initial="adoptador"
         options={[
-          { value: 'adoptador',  label: 'Adoptador',  activeColor: '#D4EDE3' },
-          { value: 'ambassador', label: 'Ambassador', activeColor: '#DDE8F5' },
+          { value: 'adoptador',  label: 'Adoptador',  activeColor: '#E8F5EE' },
+          { value: 'ambassador', label: 'Ambassador', activeColor: '#EBF2FA' },
           { value: 'decisor',    label: 'Decisor',    activeColor: 'rgba(42,40,34,0.1)' },
-          { value: 'critico',    label: 'Crítico',    activeColor: '#F5DEDE' },
-          { value: 'reticente',  label: 'Reticente',  activeColor: '#FAF0D7' },
+          { value: 'critico',    label: 'Crítico',    activeColor: '#FDECEC' },
+          { value: 'reticente',  label: 'Reticente',  activeColor: '#FEF6E8' },
         ]}
       />
     </div>
@@ -87,9 +87,9 @@ export const SizeMd: Story = {
       size="md"
       initial="media"
       options={[
-        { value: 'baja',  label: 'Baja',  activeColor: '#D4EDE3' },
-        { value: 'media', label: 'Media', activeColor: '#FAF0D7' },
-        { value: 'alta',  label: 'Alta',  activeColor: '#F5DEDE' },
+        { value: 'baja',  label: 'Baja',  activeColor: '#E8F5EE' },
+        { value: 'media', label: 'Media', activeColor: '#FEF6E8' },
+        { value: 'alta',  label: 'Alta',  activeColor: '#FDECEC' },
       ]}
     />
   ),

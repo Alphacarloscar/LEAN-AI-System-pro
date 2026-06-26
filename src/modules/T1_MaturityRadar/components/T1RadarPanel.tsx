@@ -6,19 +6,11 @@
 // Escala 0-4. Se actualiza en cada cambio sin delay.
 // ============================================================
 
-import { Badge, type BadgeVariant }                  from '@/shared/design-system/components'
-import type { T1DimensionState, MaturityTier }       from '../types'
-import { computeOverallScore,
-         resolveMaturityTier, MATURITY_TIER_CONFIG } from '../types'
-import { T1SpiderChart }                             from './T1SpiderChart'
-
-const TIER_VARIANT: Record<MaturityTier, BadgeVariant> = {
-  inicial:     'danger',
-  exploracion: 'warning',
-  desarrollo:  'info',
-  avanzado:    'success',
-  lider:       'success',
-}
+import type { T1DimensionState }                        from '../types'
+import { computeOverallScore, resolveMaturityTier,
+         MATURITY_TIER_CONFIG, maturityHex,
+         maturityTextOnBg }                             from '../types'
+import { T1SpiderChart }                                from './T1SpiderChart'
 
 interface T1RadarPanelProps {
   dimensions: T1DimensionState[]
@@ -28,6 +20,7 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
   const overallScore = computeOverallScore(dimensions)
   const tier         = resolveMaturityTier(overallScore)
   const config       = MATURITY_TIER_CONFIG[tier]
+  const hex          = maturityHex(overallScore)
 
   // Barra de progreso: 0-4 → 0-100%
   const progressPct = (overallScore / 4) * 100
@@ -36,39 +29,40 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
     <div className="space-y-4">
 
       {/* ── Overall score + tier ── */}
-      <div className="rounded-xl border border-border bg-white dark:bg-gray-900 p-5">
-        <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
+      <div className="rounded-xl border border-border bg-white dark:bg-warm-800 p-5">
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-3">
           Madurez IA global
         </p>
 
         {/* Número hero */}
         <div className="flex items-baseline gap-2 mb-2">
-          <span className="text-5xl font-bold tracking-tight text-lean-black dark:text-gray-50 tabular-nums">
+          <span
+            className="text-5xl font-bold tracking-tight tabular-nums"
+            style={{ color: hex }}
+          >
             {overallScore.toFixed(1)}
           </span>
           <span className="text-xl font-light text-text-muted">/ 4</span>
         </div>
 
-        {/* Tier badge */}
-        <Badge variant={TIER_VARIANT[tier]} shape="pill" size="md" className="!font-semibold">
+        {/* Tier badge con color de gradiente */}
+        <span
+          className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+          style={{ backgroundColor: hex, color: maturityTextOnBg(overallScore) }}
+        >
           {config.label}
-        </Badge>
+        </span>
 
         {/* Barra de progreso */}
-        <div className="mt-4 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className="mt-4 h-2 bg-warm-100 dark:bg-warm-600 rounded-full overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-300 ${
-              overallScore >= 3   ? 'bg-success-dark' :
-              overallScore >= 2   ? 'bg-info-dark'    :
-              overallScore >= 1   ? 'bg-warning-dark'  :
-                                    'bg-danger-dark'
-            }`}
-            style={{ width: `${Math.max(progressPct, 1.5)}%` }}
+            className="h-full rounded-full transition-all duration-300"
+            style={{ width: `${Math.max(progressPct, 1.5)}%`, backgroundColor: hex }}
           />
         </div>
         <div className="flex justify-between mt-1">
-          <span className="text-[10px] text-text-subtle">Sin evidencia</span>
-          <span className="text-[10px] text-text-subtle">Óptimo</span>
+          <span className="text-[10px] text-text-muted">Sin evidencia</span>
+          <span className="text-[10px] text-text-muted">Óptimo</span>
         </div>
 
         {/* Descripción del tier */}
@@ -78,8 +72,8 @@ export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
       </div>
 
       {/* ── Radar chart ── */}
-      <div className="rounded-xl border border-border bg-white dark:bg-gray-900 p-5">
-        <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
+      <div className="rounded-xl border border-border bg-white dark:bg-warm-800 p-5">
+        <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1">
           Radar de madurez IA
         </p>
         <p className="text-xs text-text-muted mb-3">Estado actual · Objetivo sprint</p>

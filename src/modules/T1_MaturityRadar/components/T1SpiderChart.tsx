@@ -16,6 +16,7 @@
 import { useState, useEffect } from 'react'
 import type { T1DimensionState } from '../types'
 import { computeDimensionScore } from '../types'
+import { getThemeColor } from '@shared/design-system/charts/chartTokens'
 
 // ── Constantes de layout ──────────────────────────────────────
 
@@ -73,15 +74,15 @@ function useIsDark(): boolean {
 
 function palette(isDark: boolean) {
   return {
-    grid:        isDark ? '#3E3B35' : '#D4D0C8',    // anillos de grilla — warm
-    axis:        isDark ? '#333028' : '#E8E5DC',    // líneas de ejes — warm
-    fill:        isDark ? 'rgba(196,192,184,0.14)' : 'rgba(42,40,34,0.10)',  // fill polígono
-    stroke:      isDark ? '#C4C0B8' : '#2A2822',   // trazo polígono — warm metallic
-    dot:         isDark ? '#C8860A' : '#2A2822',   // puntos de score — gold en dark, charcoal en light
-    target:      '#5FAF8A',                         // target siempre verde
-    label:       isDark ? '#9A9790' : '#6B6864',   // texto labels — warm
-    labelScore:  isDark ? '#F0EDE8' : '#1C1A16',   // texto score en dot — warm
-    gridLabel:   isDark ? '#4A4740' : '#C4C0B8',   // valores de anillos (1,2,3,4)
+    grid:        isDark ? '#3E3B35' : getThemeColor('warm-200'),
+    axis:        isDark ? '#333028' : '#E8E5DC',
+    fill:        isDark ? 'rgba(196,192,184,0.14)' : 'rgba(42,40,34,0.10)',
+    stroke:      isDark ? '#C4C0B8' : '#2A2822',
+    dot:         isDark ? getThemeColor('gold') : '#2A2822',
+    target:      getThemeColor('success-dark'),
+    label:       isDark ? getThemeColor('warm-400') : getThemeColor('text-muted'),
+    labelScore:  isDark ? '#F0EDE8' : '#1C1A16',
+    gridLabel:   isDark ? '#4A4740' : '#C4C0B8',
   }
 }
 
@@ -125,7 +126,7 @@ export function T1SpiderChart({ dimensions }: T1SpiderChartProps) {
         </radialGradient>
         <radialGradient id="spider-dot-dark" cx="35%" cy="28%" r="70%" fx="35%" fy="28%">
           <stop offset="0%"   stopColor="#E0A018" />
-          <stop offset="50%"  stopColor="#C8860A" />
+          <stop offset="50%"  stopColor={getThemeColor('gold')} />
           <stop offset="100%" stopColor="#A06808" />
         </radialGradient>
       </defs>
@@ -188,7 +189,7 @@ export function T1SpiderChart({ dimensions }: T1SpiderChartProps) {
           points={currentPts}
           fill={p.fill}
           stroke={p.stroke}
-          strokeWidth={2}
+          strokeWidth={1.5}
           strokeLinejoin="round"
         />
       )}

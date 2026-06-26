@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T2 — StakeholderQuadrantChart (v2 — circular)
 //
 // Gráfico circular: X = Adopción IA (0-4), Y = Influencia (0-4)
@@ -87,10 +87,9 @@ export function StakeholderQuadrantChart({
   }))
   const jittered = applyJitter(basePositions)
 
-  const archetypesPresent = [...new Set(stakeholders.map((s) => s.archetype))]
 
   return (
-    <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
+    <div className="rounded-xl border border-border bg-white dark:bg-warm-800 overflow-hidden">
 
       {/* Header */}
       <div className="px-5 py-3.5 border-b border-border flex items-center justify-between gap-4 flex-wrap">
@@ -101,17 +100,6 @@ export function StakeholderQuadrantChart({
           <p className="text-xs text-text-muted mt-0.5">
             Adopción IA × Influencia organizacional
           </p>
-        </div>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 justify-end">
-          {archetypesPresent.map((code) => (
-            <div key={code} className="flex items-center gap-1.5">
-              <span
-                className="h-2.5 w-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: ARCHETYPE_HEX[code] }}
-              />
-              <span className="text-[10px] text-text-subtle">{(ARCHETYPE_CONFIG[code] ?? ARCHETYPE_CONFIG.adoptador).label}</span>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -126,32 +114,6 @@ export function StakeholderQuadrantChart({
             <clipPath id="circle-clip">
               <circle cx={CX} cy={CY} r={CR} />
             </clipPath>
-
-            <radialGradient id="grad-adoptador"    cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
-              <stop offset="0%"   stopColor="#AFD7C5" />
-              <stop offset="52%"  stopColor="#5FAF8A" />
-              <stop offset="100%" stopColor="#437B61" />
-            </radialGradient>
-            <radialGradient id="grad-ambassador"   cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
-              <stop offset="0%"   stopColor="#B5C8E0" />
-              <stop offset="52%"  stopColor="#6A90C0" />
-              <stop offset="100%" stopColor="#4A6586" />
-            </radialGradient>
-            <radialGradient id="grad-decisor"      cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
-              <stop offset="0%"   stopColor="#6A6762" />
-              <stop offset="52%"  stopColor="#2A2822" />
-              <stop offset="100%" stopColor="#1C1A16" />
-            </radialGradient>
-            <radialGradient id="grad-critico"      cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
-              <stop offset="0%"   stopColor="#E0B0B0" />
-              <stop offset="52%"  stopColor="#C06060" />
-              <stop offset="100%" stopColor="#864343" />
-            </radialGradient>
-            <radialGradient id="grad-reticente" cx="38%" cy="28%" r="75%" fx="38%" fy="28%">
-              <stop offset="0%"   stopColor="#EAD4AE" />
-              <stop offset="52%"  stopColor="#D4A85C" />
-              <stop offset="100%" stopColor="#947640" />
-            </radialGradient>
           </defs>
 
           <g clipPath="url(#circle-clip)">
@@ -189,9 +151,9 @@ export function StakeholderQuadrantChart({
 
                   {s.resistance === 'alta' && (
                     <>
-                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 12} fill="#C06060" opacity={0.06} />
-                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 8}  fill="#C06060" opacity={0.11} />
-                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 5}  fill="#C06060" opacity={0.17} />
+                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 12} fill={ARCHETYPE_HEX.critico} opacity={0.06} />
+                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 8}  fill={ARCHETYPE_HEX.critico} opacity={0.11} />
+                      <circle cx={pos.cx} cy={pos.cy} r={DOT_R + 5}  fill={ARCHETYPE_HEX.critico} opacity={0.17} />
                     </>
                   )}
 
@@ -208,24 +170,16 @@ export function StakeholderQuadrantChart({
                   <circle
                     cx={pos.cx} cy={pos.cy}
                     r={DOT_R}
-                    fill={`url(#grad-${s.archetype})`}
-                    stroke={isActive ? 'rgba(255,255,255,0.85)' : 'none'}
-                    strokeWidth={isActive ? 1.5 : 0}
-                  />
-
-                  <ellipse
-                    cx={pos.cx - DOT_R * 0.27}
-                    cy={pos.cy - DOT_R * 0.28}
-                    rx={DOT_R * 0.36}
-                    ry={DOT_R * 0.23}
-                    fill="rgba(255,255,255,0.50)"
-                    style={{ pointerEvents: 'none' }}
+                    fill={fill}
+                    fillOpacity="0.85"
+                    stroke={isActive ? 'rgba(255,255,255,0.85)' : 'var(--color-warm-300)'}
+                    strokeWidth="1.5"
                   />
 
                   <text
                     x={pos.cx} y={pos.cy + 4}
                     textAnchor="middle" fontSize={9} fontWeight="700"
-                    fill="rgba(255,255,255,0.92)" fontFamily="Inter, sans-serif"
+                    fill={s.archetype === 'decisor' ? '#F7F4EE' : '#FFFFFF'} fontFamily="Inter, sans-serif"
                     style={{ pointerEvents: 'none', userSelect: 'none' }}
                   >
                     {ini}
@@ -235,7 +189,7 @@ export function StakeholderQuadrantChart({
             })}
           </g>
 
-          <circle cx={CX} cy={CY} r={CR} fill="none" stroke="#D1D5DB" strokeWidth={1.5} />
+          <circle cx={CX} cy={CY} r={CR} fill="none" stroke="var(--color-border)" strokeWidth={1.5} />
 
           {/* Quadrant labels */}
           <text x={94} y={91} textAnchor="middle" fontSize={9} fontWeight="700" fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.critico} letterSpacing="0.06em">CRÍTICO</text>
@@ -248,11 +202,11 @@ export function StakeholderQuadrantChart({
           <text x={426} y={436} textAnchor="middle" fontSize={7.5} fontFamily="ui-monospace, monospace" fill={ARCHETYPE_HEX.adoptador} opacity={0.65}>usa y adopta</text>
 
           {/* Axis labels */}
-          <text x={CX} y={CY - CR - 14} textAnchor="middle" fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">↑ Alta influencia</text>
-          <text x={CX} y={CY + CR + 22} textAnchor="middle" fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">Baja influencia ↓</text>
-          <text x={CX - CR - 6} y={CY + 4} textAnchor="end" fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">← Baja</text>
-          <text x={CX + CR + 6} y={CY + 4} textAnchor="start" fontSize={8.5} fill="#9CA3AF" fontFamily="ui-monospace, monospace">Alta →</text>
-          <text x={CX} y={VB - 6} textAnchor="middle" fontSize={9} fill="#6B7280" fontFamily="Inter, sans-serif">Adopción IA</text>
+          <text x={CX} y={CY - CR - 14} textAnchor="middle" fontSize={8.5} fill="var(--color-warm-100)" fontFamily="ui-monospace, monospace">↑ Alta influencia</text>
+          <text x={CX} y={CY + CR + 22} textAnchor="middle" fontSize={8.5} fill="var(--color-warm-100)" fontFamily="ui-monospace, monospace">Baja influencia ↓</text>
+          <text x={CX - CR - 6} y={CY + 4} textAnchor="end" fontSize={8.5} fill="var(--color-warm-100)" fontFamily="ui-monospace, monospace">← Baja</text>
+          <text x={CX + CR + 6} y={CY + 4} textAnchor="start" fontSize={8.5} fill="var(--color-warm-100)" fontFamily="ui-monospace, monospace">Alta →</text>
+          <text x={CX} y={VB - 6} textAnchor="middle" fontSize={9} fill="var(--color-border)" fontFamily="Inter, sans-serif">Adopción IA</text>
 
           {/* Tooltips */}
           {withScores.map((s) => {
@@ -261,7 +215,6 @@ export function StakeholderQuadrantChart({
               toSvgX(s.interview!.adoptionScore),
               toSvgY(s.interview!.influenceScore),
             )
-            const fill = ARCHETYPE_HEX[s.archetype]
             const ttW  = 155
             const ttH  = 38
             const showAbove = pos.cy - DOT_R - 10 > ttH + 6
@@ -270,9 +223,9 @@ export function StakeholderQuadrantChart({
 
             return (
               <g key={`tt-${s.id}`} style={{ pointerEvents: 'none' }}>
-                <rect x={ttX} y={ttY} width={ttW} height={ttH} rx={6} fill="#0A0A0A" opacity={0.88} />
+                <rect x={ttX} y={ttY} width={ttW} height={ttH} rx={6} fill="var(--color-warm-950)" opacity={0.88} />
                 <text x={ttX + ttW / 2} y={ttY + 14} textAnchor="middle" fontSize={10.5} fontWeight="600" fill="#FFFFFF" fontFamily="Inter, sans-serif">{s.name}</text>
-                <text x={ttX + ttW / 2} y={ttY + 27} textAnchor="middle" fontSize={9.5} fill={fill} fontFamily="Inter, sans-serif">
+                <text x={ttX + ttW / 2} y={ttY + 27} textAnchor="middle" fontSize={9.5} fill="rgba(255,255,255,0.65)" fontFamily="Inter, sans-serif">
                   {(ARCHETYPE_CONFIG[s.archetype] ?? ARCHETYPE_CONFIG.adoptador).label} · {RESISTANCE_CONFIG[s.resistance].label}
                 </text>
               </g>

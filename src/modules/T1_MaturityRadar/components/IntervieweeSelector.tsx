@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // IntervieweeSelector — Collapsible list of interviewees for T1
 // ============================================================
 
@@ -30,12 +30,12 @@ export function IntervieweeSelector({
   const activeInterviewee = interviewees.find((i) => i.id === activeId)
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-3">
-      <div className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
+    <div className="max-w-7xl mx-auto px-8 py-3">
+      <div className="rounded-xl border border-border bg-white dark:bg-warm-800 overflow-hidden">
 
         {/* Toggle bar */}
         <div
-          className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+          className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-warm-700/50 transition-colors"
           onClick={() => setShowInterviewees((v) => !v)}
         >
           <div className="flex items-center gap-3">
@@ -51,7 +51,7 @@ export function IntervieweeSelector({
             </span>
             {activeInterviewee && (
               <span className="text-[10px] text-text-muted">
-                Puntuando: <span className="font-semibold text-lean-black dark:text-gray-200">
+                Puntuando: <span className="font-semibold text-lean-black dark:text-warm-100">
                   {activeInterviewee.name}
                 </span>
               </span>
@@ -83,8 +83,8 @@ export function IntervieweeSelector({
                     className={[
                       'flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all duration-150 group',
                       isActive
-                        ? 'bg-navy-metallic text-white border-navy shadow-sm'
-                        : 'bg-white dark:bg-gray-900 border-border hover:border-navy/30 hover:bg-gray-50 dark:hover:bg-gray-800',
+                        ? 'bg-navy-metallic dark:bg-gold-metallic text-white dark:text-lean-black border-navy dark:border-gold shadow-sm'
+                        : 'bg-white dark:bg-warm-800 border-border hover:border-navy/30 hover:bg-gray-50 dark:hover:bg-warm-700',
                     ].join(' ')}
                   >
                     {/* Selección del entrevistado */}
@@ -95,7 +95,7 @@ export function IntervieweeSelector({
                       <span className={[
                         'text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0',
                         isActive
-                          ? 'bg-white/20 text-white'
+                          ? 'bg-white/20 dark:bg-black/20 text-white dark:text-lean-black'
                           : person.type === 'it'
                             ? 'bg-navy/10 text-navy dark:bg-navy/20 dark:text-warm-100'
                             : 'bg-warning-light text-warning-dark',
@@ -103,14 +103,14 @@ export function IntervieweeSelector({
                         {person.type === 'it' ? 'IT' : 'BIZ'}
                       </span>
                       <div className="min-w-0">
-                        <p className={`text-xs font-semibold truncate ${isActive ? 'text-white' : 'text-lean-black dark:text-gray-100'}`}>
+                        <p className={`text-xs font-semibold truncate ${isActive ? 'text-white dark:text-lean-black' : 'text-lean-black dark:text-warm-50'}`}>
                           {person.name}
                         </p>
-                        <p className={`text-[10px] truncate ${isActive ? 'text-white/70' : 'text-text-muted'}`}>
+                        <p className={`text-[10px] truncate ${isActive ? 'text-white/70 dark:text-lean-black/70' : 'text-text-muted'}`}>
                           {person.role}
                         </p>
                       </div>
-                      <span className={`text-[10px] tabular-nums shrink-0 ${isActive ? 'text-white/70' : 'text-text-subtle'}`}>
+                      <span className={`text-[10px] tabular-nums shrink-0 ${isActive ? 'text-white/70 dark:text-lean-black/70' : 'text-text-subtle'}`}>
                         {isComplete ? (
                           <svg className="h-3.5 w-3.5 text-current" viewBox="0 0 16 16" fill="currentColor">
                             <path fillRule="evenodd" d="M8 1a7 7 0 100 14A7 7 0 008 1zm3.78 5.22a.75.75 0 010 1.06l-4 4a.75.75 0 01-1.06 0l-2-2a.75.75 0 011.06-1.06L7.25 9.69l3.47-3.47a.75.75 0 011.06 0z" />
@@ -129,7 +129,7 @@ export function IntervieweeSelector({
                         className={[
                           'shrink-0 h-5 w-5 rounded-md flex items-center justify-center transition-all duration-150 opacity-0 group-hover:opacity-100',
                           isActive
-                            ? 'hover:bg-white/20 text-white/60 hover:text-white'
+                            ? 'hover:bg-white/20 dark:hover:bg-black/20 text-white/60 dark:text-lean-black/60 hover:text-white dark:hover:text-lean-black'
                             : 'hover:bg-red-100 dark:hover:bg-red-900/30 text-text-subtle hover:text-red-500',
                         ].join(' ')}
                       >

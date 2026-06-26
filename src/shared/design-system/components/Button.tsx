@@ -33,6 +33,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary: [
     'bg-navy-metallic text-white border-transparent',
     'hover:bg-navy-metallic-hover active:scale-[0.98]',
+    'dark:bg-gold-metallic dark:text-lean-black dark:hover:bg-gold-metallic-hover',
     'focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2',
     'disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100',
     'shadow-sm',

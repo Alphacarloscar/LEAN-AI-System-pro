@@ -1,16 +1,18 @@
-// ============================================================
+﻿// ============================================================
 // T4 — Use Case Priority Board
 // ============================================================
 
-import { useState, useMemo, useEffect } from 'react'
-import { useNavigate, useParams }       from 'react-router-dom'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useNavigate, useParams }                    from 'react-router-dom'
 import { useT4Store }             from './store'
 import { useT1Store }             from '@/modules/T1_MaturityRadar/store'
 import { useT2Store }             from '@/modules/T2_StakeholderMatrix/store'
 import { useCompanyProfileStore } from '@/modules/CompanyProfile/store'
 import { useEngagementStore }     from '@/modules/Engagement/store'
 import { useAuthStore }           from '@/modules/Auth'
-import { Button, Spinner, ToolHeader }        from '@shared/design-system/components'
+import { useUnsavedChanges }      from '@/shared/hooks/useUnsavedChanges'
+import { Button, Spinner, ToolHeader } from '@shared/design-system/components'
+import { UnsavedChangesModal }    from '@/shared/components/UnsavedChangesModal'
 import { RecommendationPanel }    from '@/components/RecommendationPanel'
 import { buildT4RecommendationContext } from './t4ContextBuilder'
 import { ImportFromT3Modal }      from './components/ImportFromT3Modal'
@@ -51,8 +53,42 @@ export function T4View({ onBack }: T4ViewProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])
 
-  const [activeId, setActiveId]     = useState<string | null>(null)
-  const [showImport, setShowImport] = useState(false)
+  const [activeId, setActiveId]         = useState<string | null>(null)
+  const [showImport, setShowImport]     = useState(false)
+  const [pendingRoadmapId, setPendingRoadmapId] = useState<string | null>(null)
+  const [isDetailEditing, setIsDetailEditing]   = useState(false)
+
+  // Pending actions intercepted while editing is open
+  type PendingAction = 'back' | 'import'
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
+
+  const isDirtyGlobal = useUnsavedChanges((s) => s.isDirty)
+
+  const handleEditingChange = useCallback((editing: boolean) => {
+    setIsDetailEditing(editing)
+  }, [])
+
+  function requestAction(action: PendingAction) {
+    if (isDetailEditing) {
+      setPendingAction(action)
+    } else {
+      executeAction(action)
+    }
+  }
+
+  function executeAction(action: PendingAction) {
+    if (action === 'back') {
+      onBack ? onBack() : navigate('/')
+    } else if (action === 'import') {
+      setShowImport(true)
+    }
+  }
+
+  function handleActionDiscard() {
+    const action = pendingAction
+    setPendingAction(null)
+    if (action) executeAction(action)
+  }
 
   const activeUseCase = useMemo(
     () => useCases.find((uc) => uc.id === activeId) ?? null,
@@ -100,13 +136,25 @@ export function T4View({ onBack }: T4ViewProps) {
     setActiveId((prev) => (prev === id ? null : id))
   }
 
+  function handleGuardedSelectUseCase(id: string) {
+    if (isDirtyGlobal && activeId && id !== activeId) {
+      setPendingRoadmapId(id)
+    } else {
+      handleSelectUseCase(id)
+    }
+  }
+
+  function handleRoadmapSelect(id: string) {
+    handleGuardedSelectUseCase(id)
+  }
+
   // Guard 1: primera carga sin datos previos → spinner bloqueante
   if (isLoading && !isLoaded) {
     return (
       <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Spinner size="lg" label="Cargando casos de uso…" className="text-navy dark:text-warm-200" />
-          <p className="text-xs text-text-subtle dark:text-gray-500 font-mono">Cargando casos de uso...</p>
+          <p className="text-xs text-text-subtle dark:text-warm-400 font-mono">Cargando casos de uso...</p>
         </div>
       </div>
     )
@@ -117,7 +165,7 @@ export function T4View({ onBack }: T4ViewProps) {
     return (
       <div className="min-h-screen bg-surface dark:bg-warm-900 flex items-center justify-center">
         <div className="max-w-sm text-center space-y-3 px-6">
-          <div className="h-12 w-12 mx-auto rounded-2xl bg-navy/8 dark:bg-navy/20 border border-navy/15 dark:border-navy/30 flex items-center justify-center">
+          <div className="h-12 w-12 mx-auto rounded-xl bg-navy/8 dark:bg-navy/20 border border-navy/15 dark:border-navy/30 flex items-center justify-center">
             <svg
               width="20" height="20" viewBox="0 0 14 14" fill="none"
               stroke="#2A2822" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"
@@ -127,13 +175,13 @@ export function T4View({ onBack }: T4ViewProps) {
               <path d="M5 13V9h4v4M2 6h10" />
             </svg>
           </div>
-          <h2 className="text-sm font-semibold text-lean-black dark:text-warm-50">Selecciona un proyecto</h2>
-          <p className="text-xs text-text-muted dark:text-gray-500 leading-relaxed">
+          <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50">Selecciona un proyecto</h2>
+          <p className="text-xs text-text-muted dark:text-warm-400 leading-relaxed">
             Los casos de uso están vinculados al proyecto activo.
-            Usa el selector <span className="font-semibold text-lean-black dark:text-gray-300">▾ Proyecto</span> en la barra superior para seleccionar uno existente o crear uno nuevo.
+            Usa el selector <span className="font-semibold text-lean-black dark:text-warm-200">▾ Proyecto</span> en la barra superior para seleccionar uno existente o crear uno nuevo.
           </p>
           <Button variant="link" className="mt-2" onClick={() => navigate('/')}>
-            Volver al Dashboard
+            Volver al dashboard
           </Button>
         </div>
       </div>
@@ -141,28 +189,18 @@ export function T4View({ onBack }: T4ViewProps) {
   }
 
   return (
-    <div className="flex flex-col bg-surface dark:bg-warm-950 min-h-screen">
+    <div className="flex flex-col bg-surface dark:bg-warm-950 min-h-full">
 
       {/* HEADER */}
       <ToolHeader
         sticky
-        onBack={() => onBack ? onBack() : navigate('/')}
+        onBack={() => requestAction('back')}
+        backLabel="Volver al dashboard"
         toolCode="T4"
         title="Use Case Priority Board"
-        subtitle={
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">{companyName}</span>
-            {isLoading && isLoaded && (
-              <span className="flex items-center gap-1 text-[10px] text-text-subtle">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse inline-block" />
-                Actualizando…
-              </span>
-            )}
-          </div>
-        }
         phaseMiniMap={<PhaseMiniMap phaseId="evaluate" toolCode="T4" />}
         cta={
-          <Button variant="primary" size="sm" onClick={() => setShowImport(true)}>
+          <Button variant="primary" size="sm" onClick={() => requestAction('import')}>
             ↓ Importar desde T3
           </Button>
         }
@@ -181,13 +219,13 @@ export function T4View({ onBack }: T4ViewProps) {
           <QuarterlyRoadmap
             useCases={useCases}
             activeId={activeId}
-            onSelect={handleSelectUseCase}
+            onSelect={handleRoadmapSelect}
           />
         </div>
 
         {useCases.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center text-2xl">◎</div>
+            <div className="h-12 w-12 rounded-xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg></div>
             <p className="text-sm font-bold text-text-muted">Sin casos de uso</p>
             <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
               Importa procesos desde T3 o añade un caso de uso manualmente.
@@ -203,6 +241,9 @@ export function T4View({ onBack }: T4ViewProps) {
             useCase={activeUseCase}
             allUseCases={useCases}
             onSelect={handleSelectUseCase}
+            pendingNavigateTo={pendingRoadmapId}
+            onClearPendingNavigate={() => setPendingRoadmapId(null)}
+            onEditingChange={handleEditingChange}
             autoT1Context={autoT1Context}
             autoT2Context={autoT2Context}
           />
@@ -223,6 +264,18 @@ export function T4View({ onBack }: T4ViewProps) {
       )}
 
       {showImport && <ImportFromT3Modal onClose={() => setShowImport(false)} />}
+
+      <UnsavedChangesModal
+        open={pendingAction !== null}
+        onCancel={() => setPendingAction(null)}
+        onDiscard={handleActionDiscard}
+        message={
+          pendingAction === 'import'
+            ? 'Si importas datos ahora, los cambios en curso se perderán.'
+            : 'Si navegas ahora, los cambios en curso se perderán.'
+        }
+      />
     </div>
   )
 }
+

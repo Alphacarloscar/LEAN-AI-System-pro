@@ -1,6 +1,6 @@
 ﻿# Technical Debt Register — GOBY
 
-Last updated: 2026-06-15
+Last updated: 2026-06-26
 AI-Ready Repository System v2.1.0
 
 > Registro activo de deuda técnica conocida. Cada item tiene severidad, impacto y plan de acción.
@@ -34,7 +34,7 @@ Los workflows `.github/workflows/ci.yml` y `validate-docs.yml` están creados y 
 
 ---
 
-### DEBT-003 — Cabeceras de herramienta (ToolHeader) duplicadas en T1–T12
+### DEBT-031 — Cabeceras de herramienta (ToolHeader) duplicadas en T1–T12
 **Severidad:** 🟡 Media
 **Detectado:** 2026-06-05 (Sprint 11, durante P1 — normalización de "Volver al dashboard")
 **Área:** src/modules/T*/T*View.tsx (cabeceras), src/modules/CompanyProfile/CompanyProfileView.tsx
@@ -59,7 +59,65 @@ Cada herramienta T1–T12 reescribe a mano su cabecera: badge `T[N]`, título, `
 
 ---
 
+### DEBT-013 — Overrides CSS transitoria gray→warm en index.css
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-25 (dark mode audit)
+**Área:** `src/index.css` líneas ~152–270
+**Estado:** Pendiente
+
+**Descripción:**
+`index.css` contiene bloques de overrides que redirigen clases Tailwind `gray-*` a tokens `warm-*` para dark mode:
+```css
+html.dark .dark\:bg-gray-900  { background-color: #22201C; }
+html.dark .dark\:text-gray-100 { color: #F0EDE8; }
+/* etc. */
+```
+Estos overrides existen como red de seguridad para código migrado que pueda tener ocurrencias dispersas no revisadas.
+
+**Impacto:** Deuda semántica — puede crear inconsistencias si el override no cubre un token específico.
+
+**Plan de acción:**
+1. Ejecutar `grep -r "dark:.*gray-" src/ --include="*.tsx"` periódicamente.
+2. Cuando el grep retorne 0 resultados, eliminar los bloques de override en `index.css`.
+
+---
+
+### DEBT-014 — Tokens semánticos text-muted/text-subtle/surface sin variante dark automática en tailwind.config.ts
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-25 (dark mode audit)
+**Área:** `tailwind.config.ts`
+**Estado:** Pendiente
+
+**Descripción:**
+Los tokens `text-muted`, `text-subtle`, `surface`, `border` están definidos en `tailwind.config.ts` como strings planos. El dark mode de estos tokens se gestiona mediante overrides CSS globales en `index.css`. El resultado es correcto pero frágil: si alguien añade `dark:text-text-muted` esperando comportamiento Tailwind nativo, no funcionará.
+
+**Plan de acción (diferido):**
+Convertir tokens a `'text-muted': 'var(--color-text-muted)'` coordinando con ADR-021.
+
+---
+
+### DEBT-030 — Fuzz testing de schemas Zod (T2, T3, T4) — diferido post-merge
+**Severidad:** 🟢 Baja
+**Detectado:** 2026-06-26
+**Área:** `src/lib/schemas/t2.schemas.ts`, `t3.schemas.ts`, `t4.schemas.ts`
+**Estado:** Pendiente — PR dedicada post-merge
+
+**Descripción:**
+Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (`useCaseFormSchema`) son candidatos ideales para property-based testing con `fast-check`. Generando inputs aleatorios se detectarían edge cases de validación (strings muy largos, valores numéricos en límite, campos opcionales undefined vs null) que los tests deterministas no cubren.
+
+**Plan de acción:**
+1. `npm install --save-dev fast-check`
+2. Crear `src/__tests__/schemas/fuzz-t2-t3-t4.test.ts` con `fc.assert` + `fc.property`
+3. Conectar al pipeline CI existente (`npm run test`)
+
+**Requiere ADR:** No.
+**Relacionado:** ADR-022, DEBT-024.
+
+---
+
 ## Items Resueltos
+
+> Los items tachados están completamente resueltos y se mantienen como registro histórico.
 
 ### ~~DEBT-001~~ — Tests automatizados ✅ (Resuelto parcialmente — 2026-06-02)
 - **Vitest** configurado y funcionando: **507+ tests en 33 ficheros pasando** (medido 2026-06-11)
@@ -119,8 +177,6 @@ en los cuatro ficheros. Añadida regla ESLint `no-restricted-imports` para imped
 **Estado:** Resuelto (2026-06-09)
 
 Creado `src/services/department.service.ts` con `fetchDepartments`, `addDepartment`, `deleteDepartment`. Eliminado import `{ supabase }` de `useDepartmentStore`. Comportamiento observable idéntico.
-
-## Items Activos
 
 ### ~~DEBT-013~~ — Auth y Engagement stores importaban supabase directamente (ADR-011) ✅ (Resuelto — 2026-06-11)
 **Severidad:** 🔴 Alta
@@ -326,6 +382,245 @@ una referencia a un módulo sin contenido.
 
 **Requiere ADR:** No.
 **Relacionado:** DEBT-018, ADR-017.
+
+---
+
+---
+
+### DEBT-024 — Migración de formularios a react-hook-form + Zod (ADR-022)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (ADR-020 Fase 3 / ADR-022)
+**Área:** Todos los formularios de T1–T12 + LoginView
+**Estado:** En progreso (4/12 migradas — T2, T3; T4-EconomicsTab 2026-06-18; T1-NewInterviewModal 2026-06-18)
+
+**Descripción:**
+ADR-022 establece `react-hook-form + zodResolver` como estándar para todos los formularios.
+T2 (`StakeholderFormPhase`) y T3 (`ProcessFormPhase`) migrados en la PR de activación del ADR.
+
+**Pendiente (DEBT-024-bis):** T1, T4–T12, LoginView.
+
+**Impacto:** Formularios no migrados carecen de mensajes de error accesibles, `isSubmitting` y `isDirty`.
+
+**Plan de acción:**
+1. Por cada PR que toque un formulario no migrado, aplicar el patrón de ADR-022 en esa misma PR.
+2. PR dedicada opcional para migración masiva del resto: ver DEBT-024-bis.
+
+**Requiere ADR:** No (ADR-022 ya establece la regla).
+**Relacionado:** ADR-022, DEBT-024-bis.
+
+---
+
+### ~~VIS-001~~ — Erradicación de emojis Unicode en JSX ✅ (Resuelto — 2026-06-17)
+**Severidad:** 🟡 Media (sobriedad ejecutiva — ADR-021 / DESIGN-SYSTEM.md)
+**Detectado:** 2026-06-17 (auditoría DESIGN-SYSTEM.md)
+**Área:** `src/modules/` (T2, T3, T4, T5, T6, T7, T8, T10, T12) + `src/shared/components/ErrorBoundary.tsx`
+**Estado:** Resuelto (2026-06-17)
+
+**Descripción:**
+31 archivos contenían emojis Unicode literales embebidos en JSX (🔥, ⚠️, 🚫, ✓, ✕, ◎, 🔴, ⬜, 👤, 📊, ⚡, 🚀, 💡, etc.). DESIGN-SYSTEM.md (ADR-021) los prohíbe explícitamente: _"emoji, playful micro-interactions — is categorically prohibited"_.
+
+**Cambios aplicados:**
+- **Empty states** `◎` (bullseye) → SVG inline (`circle + center dot`) en T2, T3, T4 (x3), T7.
+- **Iconos semánticos** (⚠️ → `AlertTriangle`, 🚫 → `Ban`, ✓ → `Check`, ✕ → `X`, 🔥 → `Flame`, 💡 → `Lightbulb`, 🚀 → `Rocket`, ⚡ → `Zap`) — todos `size` ajustado a 12/14/16/20 según contexto y `strokeWidth={1.75}` uniforme.
+- **Config objects** `icon: '🔴'` → `icon: 'alert-circle'` con mapa de renderizado en componentes consumidores (`RISK_ICON_MAP`, `DOMAIN_ICON_MAP`, `PHASE_ICON_MAP`, etc.) — T4 constants, T5 constants, T6 constants, T7 CHANGE_PLAN, T8 TYPE_CFG + CHANNEL_CFG.
+- **Labels de Tabs** `'📄 Política IA'` → `icon: <FileText />` usando el prop `icon?: ReactNode` del componente Tabs existente.
+- **Texto en templates de email** (`✅`, `⚠️`, `📅`, `💬` en strings literales) → ASCII equivalentes (`✓`, `!`, `→`).
+- **ErrorBoundary** `❌ Error de renderizado` → texto limpio sin emoji.
+- `T12/constants.ts`: `dot: '◎'` → `dot: '◔'` (caracter de círculo semáforo estándar, no emoji de color).
+
+**Verificación:** `npm run typecheck` → 0 errores. Revisión manual de patrones residuales → 0 emojis en módulos cubiertos por DESIGN-SYSTEM.md.
+
+**Requiere ADR:** No (cumplimiento de ADR-021 ya vigente).
+**Relacionado:** ADR-021, DESIGN-SYSTEM.md.
+
+---
+
+### DEBT-024-bis — Lista de formularios pendientes de migrar a RHF+Zod
+**Severidad:** 🟢 Baja
+**Detectado:** 2026-06-16
+**Área:** T1, T4–T12, LoginView
+**Estado:** Pendiente
+
+| Vista / Componente | Formulario | Schema a crear |
+|--------------------|------------|----------------|
+| ~~T1-NewInterviewModal~~ | ~~NewInterviewModal.tsx~~ | ~~`NewInterviewModal.schema.ts`~~ ✅ 2026-06-18 |
+| T1 | DimensionCard evidencias (textarea directo, sin submit) | n/a — patrón instant-save, no requiere RHF |
+| ~~T4-EconomicsTab~~ | ~~EconomicsTab.tsx~~ | ~~`EconomicsTab.schema.ts`~~ ✅ 2026-06-18 |
+| T4 | ScoringTabContent, AIActClassificationModal | `t4.schemas.ts` (pendiente) |
+| T5 | Formulario de proceso / configuración | `t5.schemas.ts` |
+| T6 | Formulario de herramientas | `t6.schemas.ts` |
+| T7 | Formulario de datos | `t7.schemas.ts` |
+| T8 | Formulario de configuración | `t8.schemas.ts` |
+| T9 | Formulario de análisis | `t9.schemas.ts` |
+| T10 | Formulario de roadmap | `t10.schemas.ts` |
+| T11 | Formulario de métricas | `t11.schemas.ts` |
+| T12 | Formulario de entrega | `t12.schemas.ts` |
+| LoginView | Login + Reset Password | `auth.schemas.ts` |
+
+**Requiere ADR:** No (ADR-022 ya establece la regla).
+**Relacionado:** ADR-022, DEBT-024.
+
+---
+
+### ~~DEBT-025~~ — ChartWrapper sin accesibilidad: sin role ni ariaLabel ✅ (Resuelto — 2026-06-16)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (ADR-020 / sesión UX/UI)
+**Área:** `src/shared/components/charts/ChartWrapper.tsx`
+**Estado:** Resuelto (2026-06-16)
+
+`ChartWrapper` envolvía el `ResponsiveContainer` sin ningún atributo de accesibilidad. Los lectores de pantalla encontraban el gráfico como contenido anónimo sin descripción.
+
+**Fix aplicado (PR feat/a11y-chartwrapper-aria-table):**
+1. `ariaLabel: string` añadida como prop **obligatoria** a `ChartWrapperProps` — TypeScript impide compilar cualquier `<ChartWrapper>` sin ella.
+2. `ResponsiveContainer` envuelto en `<div role="img" aria-label={ariaLabel}>` — el gráfico se anuncia correctamente a lectores de pantalla.
+3. `dataTable?: ReactNode` prop opcional: si se pasa, renderiza un `<details>` expandible con `<summary>Ver datos como tabla</summary>` para ofrecer los datos en formato tabular sin alterar el aspecto visual.
+
+**Nota:** En la fecha de resolución, `LeanBarChart` y `LeanRadarChart` ya incluyen `ariaLabel` descriptivo en sus wrappers. La prop obligatoria garantiza accesibilidad en toda integración futura.
+
+**Relacionado:** ADR-021 (Design System Charter).
+
+---
+
+### ~~DEBT-026~~ — Sidebar fixed cubre contenido en pantallas grandes, altura hardcoded ✅ (Resuelto — 2026-06-16)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (ADR-020 Fase 2)
+**Área:** `src/shared/components/AppSidebar.tsx`, `src/shared/layouts/AppLayout.tsx`
+**Estado:** Resuelto (2026-06-16)
+
+**Fix aplicado:**
+1. `useMediaQuery('(min-width: 1024px)')` — hook creado en `src/shared/hooks/useMediaQuery.ts`.
+2. `AppSidebar` en `>= lg`: sidebar `fixed` + `mt-[var(--header-h,57px)]` siempre visible, sin toggle ni backdrop.
+3. `AppSidebar` en `< lg`: comportamiento original — toggle + backdrop + `translate-x-full/0`.
+4. `AppLayout.main`: añadido `ml-64` cuando `isLg`, sin margen en `< lg`.
+5. Altura migrada a `h-[calc(100vh-var(--header-h,57px))]` en ambos modos.
+
+**Relacionado:** ADR-020, DEBT-026-bis.
+
+---
+
+### DEBT-026-bis — Aplicar columnPriority en tablas T1–T12
+**Severidad:** 🟢 Baja
+**Detectado:** 2026-06-16 (PR feat/sidebar-responsive-tables-mobile)
+**Área:** Todos los `<Table>` en `src/modules/T*/` (T1–T12)
+**Estado:** Pendiente
+
+La PR que añadió `columnPriority` y `mobileView` al componente `Table` no migró las tablas T1–T12. En viewports `< 640 px` las tablas de T1–T12 requieren scroll horizontal sin prioridades declaradas.
+
+**Plan de acción:**
+Por cada tabla en T1–T12: añadir `columnPriority`, evaluar `mobileView="cards"` para tablas con > 5 columnas.
+
+**Requiere ADR:** No.
+**Relacionado:** DEBT-026, ADR-020.
+
+---
+
+### ~~DEBT-027 (parte 3)~~ — Gestión visual de errores asíncronos: sin ServiceErrorToast ni useServiceError ✅ (Resuelto — 2026-06-17)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-17 (ADR-020 PR #6 — DEBT-027 cierre completo)
+**Área:** `src/shared/design-system/components/ServiceErrorToast.tsx`, `src/shared/hooks/useServiceError.ts`, `src/shared/design-system/components/Toast.tsx`
+**Estado:** Resuelto (2026-06-17) — `refactor/ux-ui-adr020-consolidation`
+
+**Fix aplicado:**
+1. `Toast.tsx` — Portal via `createPortal(container, document.body)` para evitar conflictos de z-index con el chasis. Contenedor top respeta `var(--header-h, 56px)` medida por `ResizeObserver` en `AppLayout`.
+2. `Toast.tsx` — variante `error` forzada a `persistent: true` automáticamente — requiere cierre manual explícito.
+3. `Toast.tsx` — nueva firma `addNode(node: ReactNode): string` en el contexto permite inyectar JSX custom (ServiceErrorToast) en la cola FIFO.
+4. `ServiceErrorToast.tsx` — componente con `border-l-4 border-l-danger`, icono `AlertCircle`, botón X de cierre, y badge `DBG` que expande panel `<pre>` con `error.message`, `hint`, `code`, `stack`.
+5. `useServiceError.ts` — hook `notifyError(error, customMessage?)` que consume `addNode` del `ToastContext` — sin imports de Supabase (ADR-011 compliant).
+6. Barrel `index.ts` — exporta `ServiceErrorToast` y `ServiceErrorToastProps`.
+
+**Relacionado:** DEBT-027 parte 1, DEBT-027 parte 2, ADR-020, ADR-011.
+
+---
+
+### ~~DEBT-027 (parte 1)~~ — useToast sin provider global: cola no limitada ✅ (Resuelto — 2026-06-16)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (ADR-020 / sesión UX/UI)
+**Área:** `src/shared/design-system/components/Toast.tsx`, `Toast.hooks.ts`
+**Estado:** Parte 1 Resuelta (2026-06-16) · Parte 2 Pendiente (StreamingIndicator)
+
+**Fix aplicado:**
+1. `ToastProvider` con `ToastContext` — un único estado global en el árbol.
+2. Cola FIFO con `MAX_TOASTS = 3`: al añadir el 4º, se descarta el más antiguo.
+3. Duraciones por variante: `success 3 s · info 4 s · warning 6 s · error 8 s`.
+4. Prop `persistent?: boolean` en `ShowToastOptions` — si `true`, no hay auto-cierre y el botón X es siempre visible.
+5. Posicionamiento responsive: mobile `top-center`, desktop `bottom-right`.
+6. `useToast()` lanza error claro si se usa fuera del provider.
+7. `Toast.hooks.ts` convertido en re-export para backward compat.
+
+**Relacionado:** ADR-020.
+
+---
+
+### ~~DEBT-027 (parte 2)~~ — StreamingIndicator inline para LLM ✅ (Resuelto — 2026-06-16)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (ADR-020 / sesión UX/UI)
+**Área:** `src/shared/design-system/components/StreamingIndicator.tsx`
+**Estado:** Resuelto (2026-06-16) — `refactor/ux-ui-adr020-consolidation`
+
+**Fix aplicado:**
+1. `StreamingIndicator` creado con props `label?` y `variant?: 'inline' | 'card'`. `role="status"` + `aria-live="polite"`.
+2. `useEdgeFunctionInvoke` extendido con `state: 'idle' | 'pending' | 'success' | 'error'` — no-breaking.
+3. T6 `PolicyTab`: `StreamingIndicator variant="inline"` insertado. El formulario y la navegación permanecen activos durante la espera.
+4. `ToolLoadingScreen` conservado — sigue siendo válido para cargas de vista completa.
+5. ADR-014: Appendix A añadido documentando la fase observable y el patrón `StreamingIndicator`.
+
+**Relacionado:** DEBT-027 parte 1, ADR-014.
+
+---
+
+### DEBT-028 — Hex inline en componentes shared: pendiente migrar a token()
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-16 (audit grep ADR-021)
+**Área:** `AppSidebar.tsx`, `AlphaLogo.tsx`, `EngagementSelector.tsx`, `ErrorBoundary.tsx`, `PersistenceBanner.tsx`, `SegmentedControl.tsx`
+**Estado:** Pendiente
+
+**Descripción:**
+El audit de hex inline previo a la implementación de ADR-021 detectó literales `#RRGGBB` hardcodeados en 6 componentes del área `src/shared/`. Detalle completo en la tabla de ADR-021 sección DEBT-028. El charter (ADR-021) prohíbe nuevos hex inline, pero la migración de los existentes se difiere para evitar scope creep en esta PR.
+
+**Impacto:** Si la paleta de colores cambia (marca blanca multi-tenant), estos componentes no heredan el cambio automáticamente.
+
+**Plan de acción:**
+1. Por cada componente, sustituir hex inline por `token('nombre')` o clase Tailwind del token.
+2. `SegmentedControl.tsx` tiene hex `#1C1A16`/`#FFFFFF` en una función de contraste algorítmica — mantener como excepción documentada o migrar a `token('lean-black')`.
+3. PR dedicada: `refactor: migrar hex inline a tokens ADR-021 — shared components`.
+
+**Requiere ADR:** No (ADR-021 ya establece la regla).
+**Relacionado:** ADR-021, DEBT-022.
+
+---
+
+### DEBT-029 — useUnsavedGuard: chasis listo, vistas pendientes de suscribirse ✅ (Chasis — 2026-06-17)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-17 (ADR-020 PR #4 — DEBT-024 parcial)
+**Área:** `src/shared/hooks/useUnsavedGuard.ts` + vistas T1–T12
+**Estado:** Chasis implementado (2026-06-17) — adopción en vistas pendiente
+
+**Descripción:**
+`EngagementSelector` y `AppSidebar` ya leen `useUnsavedChanges` para interceptar la navegación.
+El store Zustand (`isDirty`, `setDirty`, `clearDirty`) existía, pero ninguna vista lo declaraba.
+Se ha creado `useUnsavedGuard(isDirty: boolean, source?)` — hook de integración que las vistas
+llaman con su booleano local de formulario sucio. El hook sincroniza el store global y limpia
+al desmontar, garantizando que ningún módulo deja el flag activo al salir.
+
+**Pendiente (DEBT-029):**
+Por cada vista con formulario mutable (T1–T12, CompanyProfile, LoginView):
+```tsx
+// En la vista, una vez que el formulario tenga isDirty del estado local:
+useUnsavedGuard(isDirty)   // solo una línea
+```
+Las vistas migradas a react-hook-form (ADR-022) exponen `formState.isDirty` directamente.
+Las no migradas necesitan un flag local `useState<boolean>`.
+
+**Impacto actual (sin adopción en vistas):** El modal aparece pero el flag nunca se activa —
+la protección existe pero está inerte hasta que cada vista lo adopte.
+
+**Plan de acción:**
+1. Al migrar cada vista a RHF (DEBT-024), añadir `useUnsavedGuard(formState.isDirty)`.
+2. Para vistas con estado Zustand mutable directo (ej. T1 setScore), derivar un `isDirty` local
+   comparando la snapshot de carga con el estado actual del store.
+
+**Requiere ADR:** No.
+**Relacionado:** DEBT-024, DEBT-024-bis, ADR-020, ADR-022.
 
 ---
 

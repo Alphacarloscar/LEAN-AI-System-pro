@@ -5,6 +5,7 @@ import {
   useRef,
   type ReactNode,
 } from 'react'
+import { createPortal } from 'react-dom'
 
 // ─── Types ─────────────────────────────────────────────────────
 
@@ -106,7 +107,7 @@ export function Modal({
 
   if (!open) return null
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-modal flex items-center justify-center p-4"
       role="dialog"
@@ -127,7 +128,7 @@ export function Modal({
         tabIndex={-1}
         onKeyDown={handleKeyDown}
         className={[
-          'relative w-full rounded-lg bg-white shadow-xl outline-none animate-fade-in',
+          'relative w-full rounded-lg bg-white shadow-md outline-none animate-fade-in',
           'dark:bg-warm-800',
           sizeClasses[size],
         ].join(' ')}
@@ -183,6 +184,7 @@ export function Modal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T2 — ImportFromT1Modal
 //
 // Lista los entrevistados del store de T1 y permite seleccionar
@@ -17,6 +17,7 @@
 // ============================================================
 
 import { useState }                       from 'react'
+import { Check }                          from 'lucide-react'
 import { useT1Store }                     from '@/modules/T1_MaturityRadar/store'
 import { useT2Store }                     from '../store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
@@ -169,8 +170,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
 
             {interviewees.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-                <div className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-gray-800
-                  flex items-center justify-center text-2xl">◎</div>
+                <div className="h-12 w-12 rounded-xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-subtle"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg></div>
                 <p className="text-sm font-medium text-text-muted">Sin entrevistados en T1</p>
                 <p className="text-xs text-text-subtle max-w-xs leading-relaxed">
                   Añade entrevistados en el Madurez Radar (T1) primero para importarlos aquí.
@@ -193,11 +193,11 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
                     key={person.id}
                     onClick={() => toggle(person.id)}
                     className={[
-                      'w-full text-left rounded-2xl border px-4 py-3.5 transition-all duration-150',
+                      'w-full text-left rounded-xl border px-4 py-3.5 transition-all duration-150',
                       'flex items-start gap-3',
                       isSelected
                         ? 'border-navy/40 bg-navy/5 dark:bg-navy/10 ring-1 ring-navy/20'
-                        : 'border-border dark:border-white/8 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-white/14',
+                        : 'border-border dark:border-white/8 bg-white dark:bg-warm-800 hover:border-warm-300 dark:hover:border-white/14',
                     ].join(' ')}
                   >
                     {/* Checkbox */}
@@ -205,7 +205,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
                       'h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5',
                       isSelected
                         ? 'border-navy bg-navy'
-                        : 'border-gray-300 dark:border-gray-600',
+                        : 'border-warm-300 dark:border-warm-500',
                     ].join(' ')}>
                       {isSelected && (
                         <svg viewBox="0 0 10 8" width={10} height={8} fill="none">
@@ -218,7 +218,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start gap-2 flex-wrap">
-                        <p className="text-xs font-bold text-lean-black dark:text-gray-200 leading-tight flex-1">
+                        <p className="text-xs font-bold text-lean-black dark:text-warm-100 leading-tight flex-1">
                           {person.name}
                         </p>
                         <Badge
@@ -253,7 +253,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
                   .map((person) => (
                     <div
                       key={person.id}
-                      className="rounded-2xl border border-border dark:border-white/6
+                      className="rounded-xl border border-border dark:border-white/6
                         px-4 py-3 opacity-40 flex items-center gap-3"
                     >
                       <div className="h-4 w-4 rounded border-2 border-success-dark
@@ -264,13 +264,13 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
                         </svg>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-lean-black dark:text-gray-200 leading-tight">
+                        <p className="text-xs font-bold text-lean-black dark:text-warm-100 leading-tight">
                           {person.name}
                         </p>
                         <p className="text-[10px] text-text-subtle">{person.role}</p>
                       </div>
-                      <span className="text-[9px] font-semibold text-success-dark shrink-0">
-                        Ya en T2 ✓
+                      <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-success-dark shrink-0">
+                        Ya en T2 <Check size={10} strokeWidth={1.5} />
                       </span>
                     </div>
                   ))}
@@ -281,12 +281,11 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
       ) : (
         /* Importación completada */
         <div className="flex flex-col items-center justify-center py-8 px-4 text-center gap-5">
-          <div className="h-14 w-14 rounded-3xl bg-success-light flex items-center
-            justify-center text-2xl text-success-dark">
-            ✓
+          <div className="h-14 w-14 rounded-xl bg-success-light flex items-center justify-center text-success-dark">
+            <Check size={28} strokeWidth={1.5} />
           </div>
           <div>
-            <p className="text-base font-semibold text-lean-black dark:text-gray-100 mb-1">
+            <p className="text-base font-semibold text-lean-black dark:text-warm-50 mb-1">
               {importCount} stakeholder{importCount !== 1 ? 's' : ''} importado{importCount !== 1 ? 's' : ''}
             </p>
             <p className="text-xs text-text-muted leading-relaxed max-w-sm">

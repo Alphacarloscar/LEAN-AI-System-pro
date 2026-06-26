@@ -2,42 +2,29 @@
 // StageModal — Add/Edit/Delete stage modal for T3 StagesTab
 // ============================================================
 
-import { useState } from 'react'
-import { useT3Store }         from '../store'
-import { useEngagementStore } from '@/modules/Engagement/store'
-import { useDepartmentStore } from '@/modules/CompanyProfile/useDepartmentStore'
+import { useForm, Controller }            from 'react-hook-form'
+import { zodResolver }                    from '@hookform/resolvers/zod'
+import { stageFormSchema, type StageFormValues } from '@/lib/schemas/t3.schemas'
+import { useT3Store }                     from '../store'
+import { useEngagementStore }             from '@/modules/Engagement/store'
+import { useDepartmentStore }             from '@/modules/CompanyProfile/useDepartmentStore'
+import { useUnsavedGuard }                from '@/shared/hooks/useUnsavedGuard'
 import { Modal, Button, FormField, SegmentedControl } from '@shared/design-system/components'
-import { Select }             from '@/shared/design-system/components/Select'
-import type { SelectOption }  from '@/shared/design-system/components/Select'
-import type { ProcessStage }  from '../types'
+import { Select }                         from '@/shared/design-system/components/Select'
+import type { SelectOption }              from '@/shared/design-system/components/Select'
+import { T3_VALUE_BAR_COLORS, T3_VALUE_ACTIVE_BG } from '@shared/design-system/charts/chartTokens'
+import type { ProcessStage }              from '../types'
 
 // ── Paleta de valor ──────────────────────────────────────────
 
 const VALUE_CONFIG = {
-  alta:  { label: 'Valor alto',  barColor: '#5FAF8A', chipBg: 'bg-success-light',  chipText: 'text-success-dark'  },
-  media: { label: 'Valor medio', barColor: '#6A90C0', chipBg: 'bg-info-light',     chipText: 'text-info-dark'     },
-  baja:  { label: 'Valor bajo',  barColor: '#D4A85C', chipBg: 'bg-warning-light',  chipText: 'text-warning-dark'  },
-  nula:  { label: 'Sin valor',   barColor: '#C06060', chipBg: 'bg-danger-light',   chipText: 'text-danger-dark'   },
+  alta:  { label: 'Valor alto',  barColor: T3_VALUE_BAR_COLORS.alta,  chipBg: 'bg-success-light',  chipText: 'text-success-dark'  },
+  media: { label: 'Valor medio', barColor: T3_VALUE_BAR_COLORS.media, chipBg: 'bg-info-light',     chipText: 'text-info-dark'     },
+  baja:  { label: 'Valor bajo',  barColor: T3_VALUE_BAR_COLORS.baja,  chipBg: 'bg-warning-light',  chipText: 'text-warning-dark'  },
+  nula:  { label: 'Sin valor',   barColor: T3_VALUE_BAR_COLORS.nula,  chipBg: 'bg-danger-light',   chipText: 'text-danger-dark'   },
 } as const
 
-const VALUE_ACTIVE_COLOR: Record<ProcessStage['valueContribution'], string> = {
-  alta:  '#D4EDE3',
-  media: '#DDE8F5',
-  baja:  '#FAF0D7',
-  nula:  '#F5DEDE',
-}
-
-const EMPTY_FORM = {
-  name:              '',
-  responsible:       '',
-  department:        '',
-  system:            '',
-  procTimeHours:     0.5,
-  waitTimeHours:     1,
-  handoffs:          0,
-  valueContribution: 'media' as ProcessStage['valueContribution'],
-  notes:             '',
-}
+const VALUE_ACTIVE_COLOR: Record<ProcessStage['valueContribution'], string> = T3_VALUE_ACTIVE_BG
 
 interface StageModalProps {
   processId: string
@@ -53,8 +40,16 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
   const deptOptions: SelectOption[] = departments.map((d) => ({ value: d.name, label: d.name }))
   const hasDepts = deptOptions.length > 0
 
-  const [form, setForm] = useState(
-    stage
+  const isEdit = !!stage
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isDirty },
+  } = useForm<StageFormValues>({
+    resolver: zodResolver(stageFormSchema),
+    defaultValues: stage
       ? {
           name:              stage.name,
           responsible:       stage.responsible       ?? '',
@@ -66,25 +61,32 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
           valueContribution: stage.valueContribution,
           notes:             stage.notes             ?? '',
         }
-      : { ...EMPTY_FORM }
-  )
+      : {
+          name:              '',
+          responsible:       '',
+          department:        '',
+          system:            '',
+          procTimeHours:     0.5,
+          waitTimeHours:     1,
+          handoffs:          0,
+          valueContribution: 'media',
+          notes:             '',
+        },
+  })
 
-  const isEdit = !!stage
-  const setF   = (k: keyof typeof form, v: unknown) =>
-    setForm((f) => ({ ...f, [k]: v }))
+  useUnsavedGuard(isDirty, 'T3_StageModal')
 
-  function handleSave() {
-    if (!form.name.trim()) return
+  function onValid(data: StageFormValues) {
     const payload = {
-      name:              form.name.trim(),
-      responsible:       form.responsible  || undefined,
-      department:        form.department   || undefined,
-      system:            form.system       || undefined,
-      procTimeHours:     Number(form.procTimeHours),
-      waitTimeHours:     Number(form.waitTimeHours),
-      handoffs:          Number(form.handoffs),
-      valueContribution: form.valueContribution,
-      notes:             form.notes        || undefined,
+      name:              data.name.trim(),
+      responsible:       data.responsible  || undefined,
+      department:        data.department   || undefined,
+      system:            data.system       || undefined,
+      procTimeHours:     data.procTimeHours,
+      waitTimeHours:     data.waitTimeHours,
+      handoffs:          data.handoffs,
+      valueContribution: data.valueContribution,
+      notes:             data.notes        || undefined,
     }
     if (isEdit) updateStage(processId, stage!.id, payload, engagementId)
     else        addStage(processId, payload, engagementId)
@@ -106,12 +108,7 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
       ) : <div />}
       <div className="flex gap-2">
         <Button variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
-        <Button
-          variant="primary"
-          size="sm"
-          disabled={!form.name.trim()}
-          onClick={handleSave}
-        >
+        <Button variant="primary" size="sm" type="submit" form="stage-form">
           {isEdit ? 'Guardar cambios' : 'Añadir etapa'}
         </Button>
       </div>
@@ -126,54 +123,58 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
       size="md"
       footer={footer}
     >
-      <div className="space-y-4">
+      <form id="stage-form" onSubmit={handleSubmit(onValid)} className="space-y-4">
 
         <FormField
           id="stage-name"
           label="Nombre de la etapa"
           required
-          value={form.name}
-          onChange={(e) => setF('name', e.target.value)}
           placeholder="Ej: Clasificación y routing"
+          error={errors.name?.message}
+          {...register('name')}
         />
 
         <div className="grid grid-cols-2 gap-3">
           <FormField
             id="stage-responsible"
             label="Responsable"
-            value={form.responsible}
-            onChange={(e) => setF('responsible', e.target.value)}
             placeholder="Ej: Técnico L1"
+            error={errors.responsible?.message}
+            {...register('responsible')}
           />
-          <div>
-            <Select
-              label="Departamento"
-              options={deptOptions}
-              value={form.department}
-              onChange={(e) => setF('department', e.target.value)}
-              disabled={!hasDepts || isLoadingDepts}
-              placeholder={
-                isLoadingDepts
-                  ? 'Cargando...'
-                  : hasDepts
-                  ? 'Selecciona (opcional)'
-                  : 'Sin departamentos'
-              }
-              helperText={
-                !hasDepts && !isLoadingDepts
-                  ? 'Configura departamentos en Perfil de Empresa.'
-                  : undefined
-              }
-            />
-          </div>
+          <Controller
+            name="department"
+            control={control}
+            render={({ field }) => (
+              <Select
+                label="Departamento"
+                options={deptOptions}
+                value={field.value ?? ''}
+                onChange={(e) => field.onChange(e.target.value)}
+                disabled={!hasDepts || isLoadingDepts}
+                placeholder={
+                  isLoadingDepts
+                    ? 'Cargando...'
+                    : hasDepts
+                    ? 'Selecciona (opcional)'
+                    : 'Sin departamentos'
+                }
+                helperText={
+                  !hasDepts && !isLoadingDepts
+                    ? 'Configura departamentos en Perfil de Empresa.'
+                    : undefined
+                }
+              />
+            )}
+          />
         </div>
 
         <FormField
           id="stage-system"
           label="Sistema / Herramienta"
-          value={form.system}
-          onChange={(e) => setF('system', e.target.value)}
           placeholder="Ej: ServiceDesk Pro, SAP, Excel"
+          error={errors.system?.message}
+          {...register('system')}
         />
 
         <div className="grid grid-cols-3 gap-3">
@@ -183,8 +184,8 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
             type="number"
             min="0"
             step="0.25"
-            value={String(form.procTimeHours)}
-            onChange={(e) => setF('procTimeHours', parseFloat(e.target.value) || 0)}
+            error={errors.procTimeHours?.message}
+            {...register('procTimeHours', { valueAsNumber: true })}
           />
           <FormField
             id="stage-wait-time"
@@ -192,8 +193,8 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
             type="number"
             min="0"
             step="0.25"
-            value={String(form.waitTimeHours)}
-            onChange={(e) => setF('waitTimeHours', parseFloat(e.target.value) || 0)}
+            error={errors.waitTimeHours?.message}
+            {...register('waitTimeHours', { valueAsNumber: true })}
           />
           <FormField
             id="stage-handoffs"
@@ -201,8 +202,8 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
             type="number"
             min="0"
             step="1"
-            value={String(form.handoffs)}
-            onChange={(e) => setF('handoffs', parseInt(e.target.value) || 0)}
+            error={errors.handoffs?.message}
+            {...register('handoffs', { valueAsNumber: true })}
           />
         </div>
 
@@ -210,16 +211,22 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
           <p className="text-label font-medium text-lean-black dark:text-warm-50">
             Contribución de valor
           </p>
-          <SegmentedControl
-            aria-label="Contribución de valor de la etapa"
-            value={form.valueContribution}
-            onChange={(v) => setF('valueContribution', v as ProcessStage['valueContribution'])}
-            columns={2}
-            options={(['alta', 'media', 'baja', 'nula'] as const).map((v) => ({
-              value:       v,
-              label:       VALUE_CONFIG[v].label,
-              activeColor: VALUE_ACTIVE_COLOR[v],
-            }))}
+          <Controller
+            name="valueContribution"
+            control={control}
+            render={({ field }) => (
+              <SegmentedControl
+                aria-label="Contribución de valor de la etapa"
+                value={field.value}
+                onChange={(v) => field.onChange(v as ProcessStage['valueContribution'])}
+                columns={2}
+                options={(['alta', 'media', 'baja', 'nula'] as const).map((v) => ({
+                  value:       v,
+                  label:       VALUE_CONFIG[v].label,
+                  activeColor: VALUE_ACTIVE_COLOR[v],
+                }))}
+              />
+            )}
           />
         </div>
 
@@ -228,11 +235,11 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
           label="Notas (opcional)"
           multiline
           rows={2}
-          value={form.notes}
-          onChange={(e) => setF('notes', e.target.value)}
           placeholder="Observaciones, mejoras potenciales..."
+          error={errors.notes?.message}
+          {...register('notes')}
         />
-      </div>
+      </form>
     </Modal>
   )
 }

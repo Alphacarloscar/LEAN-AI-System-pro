@@ -1,6 +1,7 @@
-import { useState } from 'react'
+﻿import { useState, useEffect, useMemo } from 'react'
 import { useT4Store } from '../store'
 import { usePermissions } from '@/modules/Auth'
+import { useUnsavedGuard } from '@/shared/hooks/useUnsavedGuard'
 import {
   computePriorityScore,
   getGoNoGoRecommendation,
@@ -11,11 +12,13 @@ import {
 import { priorityScoreColor } from './T4Badges.constants'
 import type { UseCase, UseCaseStatus, UseCaseScores, AIActClassification } from '../types'
 import type { Stakeholder } from '@/modules/T2_StakeholderMatrix/types'
-import { Button, Badge, Card, Tabs } from '@shared/design-system/components'
+import { AlertTriangle, Check, X, Ban } from 'lucide-react'
+import { Button, Badge, Card, Tabs, SegmentedControl } from '@shared/design-system/components'
+import { UnsavedChangesModal }       from '@/shared/components/UnsavedChangesModal'
 import { StatusBadge, CategoryBadge } from './T4Badges'
 import { EconomicsTab }              from './EconomicsTab'
 import { AIActClassificationModal } from './AIActClassificationModal'
-import { AIACT_RISK_CONFIG, AIACT_SCOPE_LABELS } from './AIActClassificationModal.constants'
+import { AIACT_RISK_CONFIG, AIACT_SCOPE_LABELS, AIACT_ICON_MAP } from './AIActClassificationModal.constants'
 import { ScoringTabContent }         from './ScoringTabContent'
 import { RoadmapTabContent }         from './RoadmapTabContent'
 import { ContextoTabContent }        from './ContextoTabContent'
@@ -26,12 +29,18 @@ export function UseCaseDetailPanel({
   useCase,
   allUseCases,
   onSelect,
+  pendingNavigateTo,
+  onClearPendingNavigate,
+  onEditingChange,
   autoT1Context,
   autoT2Context,
 }: {
-  useCase:        UseCase
-  allUseCases:    UseCase[]
-  onSelect:       (id: string) => void
+  useCase:                  UseCase
+  allUseCases:              UseCase[]
+  onSelect:                 (id: string) => void
+  pendingNavigateTo?:       string | null
+  onClearPendingNavigate?:  () => void
+  onEditingChange?:         (isEditing: boolean) => void
   autoT1Context?: { weakDimensions: string[]; total: number } | null
   autoT2Context?: { champions: Stakeholder[]; blockers: Stakeholder[] } | null
 }) {
@@ -40,8 +49,49 @@ export function UseCaseDetailPanel({
   const [tab, setTab]                   = useState<DetailTab>('scoring')
   const [editingScore, setEditingScore] = useState(false)
   const [localScores, setLocalScores]   = useState<UseCaseScores>(useCase.scores)
-  const [pendingStatus, setPendingStatus]   = useState<UseCaseStatus | null>(null)
-  const [showAIActModal, setShowAIActModal] = useState(false)
+  const [pendingStatus, setPendingStatus]       = useState<UseCaseStatus | null>(null)
+  const [showAIActModal, setShowAIActModal]     = useState(false)
+  const [localPendingSelectId, setLocalPendingSelectId] = useState<string | null>(null)
+  const [pendingTab, setPendingTab]             = useState<DetailTab | null>(null)
+  const [isSavingScores, setIsSavingScores]     = useState(false)
+  const [editingEconomics, setEditingEconomics] = useState(false)
+  const [economicsIsDirty, setEconomicsIsDirty] = useState(false)
+  const [economicsSaveRequested, setEconomicsSaveRequested] = useState(false)
+
+  const pendingSelectId = localPendingSelectId ?? pendingNavigateTo ?? null
+  const showUnsavedModal = pendingSelectId !== null || pendingTab !== null
+
+  const isEditingAny = editingScore || editingEconomics
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (editingScore) {
+      const s = useCase.scores
+      return (
+        localScores.kpiImpact      !== s.kpiImpact      ||
+        localScores.feasibility    !== s.feasibility    ||
+        localScores.aiRisk         !== s.aiRisk         ||
+        localScores.dataDependency !== s.dataDependency
+      )
+    }
+    if (editingEconomics) return economicsIsDirty
+    return false
+  }, [editingScore, localScores, useCase.scores, editingEconomics, economicsIsDirty])
+
+  // Notifica al padre cuando el estado de edición cambia (para guardar back/import).
+  useEffect(() => { onEditingChange?.(isEditingAny) }, [isEditingAny, onEditingChange])
+
+  // Guard triggers whenever scoring editor is open, not just when values changed.
+  // This prevents switching use cases mid-edit without user confirmation.
+  useUnsavedGuard(editingScore, 'T4_Scoring')
+
+  // Sincroniza localScores cuando cambia el caso activo o cuando el store
+  // recibe los scores reales de Supabase. Se omite durante la edición para
+  // no pisar los sliders del usuario mientras está ajustando valores.
+  useEffect(() => {
+    if (!editingScore) {
+      setLocalScores(useCase.scores)
+    }
+  }, [useCase.id, useCase.scores.kpiImpact, useCase.scores.feasibility, useCase.scores.aiRisk, useCase.scores.dataDependency, editingScore])
 
   const recommendation = getGoNoGoRecommendation(useCase.priorityScore)
   const catHex         = AI_CATEGORY_HEX[useCase.aiCategory] ?? '#94A3B8'
@@ -54,6 +104,77 @@ export function UseCaseDetailPanel({
 
   function handleScoreChange(dim: keyof UseCaseScores, v: number) {
     setLocalScores((prev) => ({ ...prev, [dim]: v }))
+  }
+
+  function handleGuardedSelect(id: string) {
+    if (isEditingAny) {
+      setLocalPendingSelectId(id)
+    } else {
+      onSelect(id)
+    }
+  }
+
+  function handleGuardedTabChange(newTab: DetailTab) {
+    if (isEditingAny && newTab !== tab) {
+      setPendingTab(newTab)
+    } else {
+      setTab(newTab)
+    }
+  }
+
+  async function handleModalSaveAndContinue() {
+    if (editingScore) {
+      setIsSavingScores(true)
+      try {
+        updateUseCase(useCase.id, { scores: localScores })
+        recalcScore(useCase.id)
+        setEditingScore(false)
+      } finally {
+        setIsSavingScores(false)
+      }
+    } else if (editingEconomics) {
+      setEconomicsSaveRequested(true)
+      // La navegación se completa en handleEconomicsSaveHandled
+      return
+    }
+    const targetSelect = pendingSelectId
+    const targetTab    = pendingTab
+    setLocalPendingSelectId(null)
+    setPendingTab(null)
+    onClearPendingNavigate?.()
+    if (targetSelect) onSelect(targetSelect)
+    if (targetTab)    setTab(targetTab)
+  }
+
+  function handleEconomicsSaveHandled() {
+    setEconomicsSaveRequested(false)
+    const targetSelect = pendingSelectId
+    const targetTab    = pendingTab
+    setLocalPendingSelectId(null)
+    setPendingTab(null)
+    onClearPendingNavigate?.()
+    if (targetSelect) onSelect(targetSelect)
+    if (targetTab)    setTab(targetTab)
+  }
+
+  function handleModalDiscard() {
+    setLocalScores(useCase.scores)
+    setEditingScore(false)
+    setEditingEconomics(false)
+    setEconomicsIsDirty(false)
+    const targetSelect = pendingSelectId
+    const targetTab    = pendingTab
+    setLocalPendingSelectId(null)
+    setPendingTab(null)
+    onClearPendingNavigate?.()
+    if (targetSelect) onSelect(targetSelect)
+    if (targetTab)    setTab(targetTab)
+  }
+
+  function handleModalCancel() {
+    setLocalPendingSelectId(null)
+    setPendingTab(null)
+    onClearPendingNavigate?.()
   }
 
   function handleStatusChange(newStatus: UseCaseStatus) {
@@ -87,14 +208,14 @@ export function UseCaseDetailPanel({
             {useCase.importedFromT3 && ` · Importado desde T3`}
             {useCase.sponsorName && ` · ${useCase.sponsorName}`}
           </p>
-          <h2 className="text-lg font-semibold text-lean-black dark:text-gray-100 leading-tight mb-2">
+          <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 leading-tight mb-2">
             {useCase.name}
           </h2>
           <div className="flex flex-wrap gap-1.5 items-center">
             <StatusBadge status={useCase.status} />
             <CategoryBadge category={useCase.aiCategory} />
             {useCase.roadmap?.quarter && (
-              <Badge shape="pill" size="xs" style={{ backgroundColor: 'rgba(42,40,34,0.08)', color: '#2A2822' }}>
+              <Badge shape="pill" size="xs" className="bg-warm-100 text-warm-700 dark:bg-gold/20 dark:text-gold border border-warm-200 dark:border-gold/30">
                 {useCase.roadmap.quarter}
               </Badge>
             )}
@@ -103,40 +224,33 @@ export function UseCaseDetailPanel({
               const cfg  = AIACT_RISK_CONFIG[risk]
               return (
                 <button
-                  onClick={() => setTab('regulatorio')}
+                  onClick={() => handleGuardedTabChange('regulatorio')}
                   title="Ver clasificación AI Act"
                   className="hover:opacity-80 transition-opacity"
                 >
                   <Badge shape="pill" size="xs" style={{ backgroundColor: `${cfg.hex}22`, color: cfg.hex }}>
-                    {cfg.icon} {cfg.label}
+                    <span className="inline-flex items-center gap-1">
+                      {(() => { const Icon = AIACT_ICON_MAP[cfg.icon] ?? AlertTriangle; return <Icon size={11} strokeWidth={1.5} /> })()}
+                      {cfg.label}
+                    </span>
                   </Badge>
                 </button>
               )
             })()}
           </div>
-          <div className="flex items-center gap-2 mt-3 flex-wrap">
-            <span className="text-[10px] font-mono uppercase text-text-subtle shrink-0">Estado:</span>
-            <div className="flex flex-wrap gap-1.5">
-              {STATUS_ORDER.map((st) => {
-                const cfg      = STATUS_CONFIG[st]
-                const isActive = useCase.status === st
-                return (
-                  <button
-                    key={st}
-                    onClick={() => handleStatusChange(st)}
-                    disabled={isActive}
-                    className={[
-                      'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-100',
-                      isActive
-                        ? `${cfg.badgeBg} ${cfg.badgeText} border-transparent cursor-default ring-2 ring-offset-1 ring-current/20`
-                        : 'bg-white dark:bg-warm-800/60 border-border dark:border-white/10 text-text-muted hover:border-gray-300 dark:hover:border-white/20 hover:text-lean-black dark:hover:text-gray-200',
-                    ].join(' ')}
-                  >
-                    {cfg.label}
-                  </button>
-                )
-              })}
-            </div>
+          <div className="flex items-center gap-3 mt-3 flex-wrap">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-text-subtle shrink-0">Estado:</span>
+            <SegmentedControl
+              aria-label="Estado del caso de uso"
+              size="sm"
+              value={useCase.status}
+              onChange={(v) => handleStatusChange(v as UseCaseStatus)}
+              options={STATUS_ORDER.map((st) => ({
+                value:       st,
+                label:       STATUS_CONFIG[st].label,
+                activeColor: STATUS_CONFIG[st].hex,
+              }))}
+            />
           </div>
           {useCase.description && (
             <p className="text-xs text-text-muted mt-2 leading-relaxed max-w-2xl">
@@ -153,7 +267,7 @@ export function UseCaseDetailPanel({
 
         {/* Score hero */}
         <div className="shrink-0 text-center">
-          <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-0.5">Score</p>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-0.5">Score</p>
           <p className={`text-4xl font-bold tabular-nums leading-none ${priorityScoreColor(useCase.priorityScore)}`}>
             {useCase.priorityScore.toFixed(0)}
           </p>
@@ -167,12 +281,13 @@ export function UseCaseDetailPanel({
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="px-8 py-3 border-b border-border dark:border-white/6">
+      {/* Tabs de navegación */}
+      <div className="px-8 border-b border-border dark:border-white/6">
         <Tabs
           aria-label="Secciones del caso de uso"
+          variant="underline"
           value={tab}
-          onChange={(v) => setTab(v as DetailTab)}
+          onChange={(v) => handleGuardedTabChange(v as DetailTab)}
           tabs={[
             { value: 'scoring',     label: 'Scoring' },
             { value: 'economia',    label: 'Economía' },
@@ -180,7 +295,7 @@ export function UseCaseDetailPanel({
             { value: 'contexto',    label: 'Contexto T1/T2' },
             {
               value: 'regulatorio',
-              label: `⚖️ AI Act${useCase.aiActClassification
+              label: `AI Act${useCase.aiActClassification
                 ? ` · ${AIACT_RISK_CONFIG[useCase.aiActClassification.riskLevel].label}`
                 : ''}`,
             },
@@ -196,7 +311,7 @@ export function UseCaseDetailPanel({
           <ScoringTabContent
             useCase={useCase}
             allUseCases={allUseCases}
-            onSelect={onSelect}
+            onSelect={handleGuardedSelect}
             isReadOnly={isReadOnly}
             editingScore={editingScore}
             localScores={localScores}
@@ -214,9 +329,9 @@ export function UseCaseDetailPanel({
           if (!cls) {
             return (
               <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
-                <span className="text-4xl">⚖️</span>
+                <AlertTriangle size={32} strokeWidth={1.5} className="text-text-subtle" />
                 <div>
-                  <p className="text-sm font-semibold text-lean-black dark:text-gray-100 mb-1">
+                  <p className="text-sm font-semibold text-lean-black dark:text-warm-50 mb-1">
                     Sin clasificación AI Act
                   </p>
                   <p className="text-xs text-text-muted max-w-sm leading-relaxed">
@@ -235,7 +350,7 @@ export function UseCaseDetailPanel({
 
           return (
             <div className="flex flex-col gap-5 max-w-2xl">
-              <div className={`rounded-2xl border px-5 py-4 ${riskCfg.badgeBg}`}>
+              <div className={`rounded-xl border px-5 py-4 ${riskCfg.badgeBg}`}>
                 <p
                   className="text-[10px] font-mono uppercase tracking-widest mb-2"
                   style={{ color: riskCfg.hex }}
@@ -243,8 +358,8 @@ export function UseCaseDetailPanel({
                   Nivel de riesgo EU AI Act
                 </p>
                 <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{riskCfg.icon}</span>
+                  <div className="flex items-center gap-3" style={{ color: riskCfg.hex }}>
+                    {(() => { const Icon = AIACT_ICON_MAP[riskCfg.icon] ?? AlertTriangle; return <Icon size={32} strokeWidth={1.5} /> })()}
                     <div>
                       <p className="text-lg font-bold" style={{ color: riskCfg.hex }}>{riskCfg.label}</p>
                       <p className="text-[10px] text-text-subtle mt-0.5">
@@ -258,46 +373,53 @@ export function UseCaseDetailPanel({
                 </div>
               </div>
 
-              <Card variant="outlined" padding="none" className="rounded-2xl px-5 py-4 flex flex-col gap-3">
+              <Card variant="outlined" padding="none" className="rounded-xl px-5 py-4 flex flex-col gap-3">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
                   Respuestas del cuestionario
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P1 · Ámbito</p>
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200 leading-tight">{scopeLabel}</p>
+                    <p className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-0.5">P1 · Ámbito</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-100 leading-tight">{scopeLabel}</p>
                   </div>
                   <div>
-                    <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P2 · Impacto en personas</p>
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200">
+                    <p className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-0.5">P2 · Impacto en personas</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-100">
                       {cls.personImpact === 'no'           ? 'No afecta a personas físicas'
                       : cls.personImpact === 'human_review' ? 'Sí, con revisión humana'
                       :                                       'Sí, de forma autónoma'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P3 · Datos sensibles</p>
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200">
-                      {cls.sensitiveData ? '⚠️ Sí — datos RGPD Art. 9' : '✓ No'}
+                    <p className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-0.5">P3 · Datos sensibles</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-100">
+                      {cls.sensitiveData
+                        ? <span className="inline-flex items-center gap-1"><AlertTriangle size={12} strokeWidth={1.5} className="text-warning-dark" /> Sí — datos RGPD Art. 9</span>
+                        : <span className="inline-flex items-center gap-1"><Check size={12} strokeWidth={1.5} className="text-success-dark" /> No</span>
+                      }
                     </p>
                   </div>
                   <div>
-                    <p className="text-[9px] font-mono text-text-subtle uppercase tracking-wide mb-0.5">P4 · Explicabilidad</p>
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200">
-                      {cls.explainability === 'yes' ? '✓ Sistema explicable / trazable' : '✕ Output opaco'}
+                    <p className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-0.5">P4 · Explicabilidad</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-100">
+                      {cls.explainability === 'yes'
+                        ? <span className="inline-flex items-center gap-1"><Check size={12} strokeWidth={1.5} className="text-success-dark" /> Sistema explicable / trazable</span>
+                        : <span className="inline-flex items-center gap-1"><X size={12} strokeWidth={1.5} className="text-danger-dark" /> Output opaco</span>
+                      }
                     </p>
                   </div>
                 </div>
               </Card>
 
-              <Card variant="outlined" padding="none" className="rounded-2xl px-5 py-4">
+              <Card variant="outlined" padding="none" className="rounded-xl px-5 py-4">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-3">
                   Obligaciones regulatorias aplicables
                 </p>
                 {cls.riskLevel === 'prohibido' && (
                   <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3">
-                    <p className="text-xs font-semibold text-red-700 dark:text-red-300 mb-1">
-                      🚫 Sistema potencialmente prohibido — Art. 5 AI Act
+                    <p className="text-xs font-semibold text-red-700 dark:text-red-300 mb-1 flex items-center gap-1.5">
+                      <Ban size={14} strokeWidth={1.5} className="shrink-0" />
+                      Sistema potencialmente prohibido — Art. 5 AI Act
                     </p>
                     <p className="text-[10px] text-red-600 dark:text-red-400 leading-relaxed">
                       Detener el desarrollo e iniciar revisión legal inmediata.
@@ -336,8 +458,9 @@ export function UseCaseDetailPanel({
                   </ul>
                 )}
                 {cls.riskLevel === 'minimo' && (
-                  <p className="text-xs text-success-dark leading-relaxed">
-                    ✓ Sin obligaciones regulatorias específicas del AI Act. Se recomienda documentar el uso en el catálogo corporativo de IA como buena práctica de gobernanza.
+                  <p className="text-xs text-success-dark leading-relaxed flex items-start gap-1.5">
+                    <Check size={14} strokeWidth={1.5} className="shrink-0 mt-0.5" />
+                    Sin obligaciones regulatorias específicas del AI Act. Se recomienda documentar el uso en el catálogo corporativo de IA como buena práctica de gobernanza.
                   </p>
                 )}
               </Card>
@@ -346,7 +469,17 @@ export function UseCaseDetailPanel({
         })()}
 
         {/* ── TAB: ECONOMÍA ──────────────────────────────────── */}
-        {tab === 'economia' && <EconomicsTab useCase={useCase} />}
+        {tab === 'economia' && (
+          <EconomicsTab
+            useCase={useCase}
+            onEditingChange={(editing, dirty) => {
+              setEditingEconomics(editing)
+              setEconomicsIsDirty(dirty)
+            }}
+            saveRequested={economicsSaveRequested}
+            onSaveRequestHandled={handleEconomicsSaveHandled}
+          />
+        )}
 
         {/* ── TAB: HOJA DE RUTA ──────────────────────────────── */}
         {tab === 'roadmap' && (
@@ -377,6 +510,17 @@ export function UseCaseDetailPanel({
           onCancel={() => { setShowAIActModal(false); setPendingStatus(null) }}
         />
       )}
+
+      <UnsavedChangesModal
+        open={showUnsavedModal}
+        onCancel={handleModalCancel}
+        onDiscard={handleModalDiscard}
+        message={
+          `Tienes abierta la edición de ${editingEconomics ? 'datos económicos' : 'scoring'} de "${useCase.name}".`
+        }
+        onSave={hasUnsavedChanges ? handleModalSaveAndContinue : undefined}
+        isSaving={isSavingScores}
+      />
     </div>
   )
 }

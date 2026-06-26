@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+﻿import { useMemo } from 'react'
 import { STATUS_CONFIG, ROADMAP_QUARTERS, computeROIFromEconomics } from '../constants'
 import { priorityScoreColor, fmtEur } from './T4Badges.constants'
 import { Card } from '@shared/design-system/components'
@@ -35,7 +35,7 @@ export function QuarterlyRoadmap({
   const unassigned = useCases.filter((uc) => !uc.roadmap?.quarter)
 
   return (
-    <Card variant="outlined" padding="none" className="rounded-2xl px-6 py-5">
+    <Card variant="outlined" padding="none" className="rounded-xl px-6 py-5">
       <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-5">
         Roadmap trimestral — distribución planificada
       </p>
@@ -50,14 +50,14 @@ export function QuarterlyRoadmap({
               className={`flex items-start gap-5 py-4 first:pt-0 last:pb-0 ${isEmpty ? 'opacity-40' : ''}`}
             >
               <div className="shrink-0 w-20 pt-1">
-                <p className="text-sm font-bold text-lean-black dark:text-gray-200 tabular-nums">
+                <p className="text-sm font-bold text-lean-black dark:text-warm-100 tabular-nums">
                   {quarter.split(' ')[0]}
                 </p>
                 <p className="text-[10px] text-text-subtle tabular-nums">
                   {quarter.split(' ')[1]}
                 </p>
                 {!isEmpty && (
-                  <p className="text-[9px] font-mono text-text-subtle mt-0.5">
+                  <p className="text-[10px] font-mono text-text-muted mt-0.5">
                     {cases.length} caso{cases.length !== 1 ? 's' : ''}
                   </p>
                 )}
@@ -107,7 +107,7 @@ export function QuarterlyRoadmap({
                               {uc.priorityScore.toFixed(0)}
                             </span>
                           </div>
-                          <p className="text-xs font-semibold text-lean-black dark:text-gray-200 leading-tight line-clamp-2 mb-1">
+                          <p className="text-xs font-semibold text-lean-black dark:text-warm-100 leading-tight line-clamp-2 mb-1">
                             {uc.name}
                           </p>
                           <p className="text-[10px] text-text-subtle truncate">{uc.department}</p>
@@ -138,12 +138,12 @@ export function QuarterlyRoadmap({
                   onClick={() => onSelect(uc.id)}
                   className="shrink-0 text-left rounded-xl border border-dashed border-border
                     dark:border-white/8 bg-warm-50 dark:bg-warm-900/50 px-3 py-2 transition-all
-                    hover:border-gray-400 hover:opacity-100"
+                    hover:border-warm-400 hover:opacity-100"
                 >
                   <p className="text-[10px] font-semibold text-text-muted truncate max-w-[160px]">
                     {uc.name}
                   </p>
-                  <p className="text-[9px] text-text-subtle">{uc.department}</p>
+                  <p className="text-[10px] text-text-muted">{uc.department}</p>
                 </button>
               ))}
             </div>

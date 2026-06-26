@@ -5,12 +5,22 @@
 // asociados a un dominio IA.
 // ============================================================
 
+import { Settings, Cpu, TrendingUp, MessageSquare, RefreshCw, Network } from 'lucide-react'
 import { useT3Store } from '@/modules/T3_ValueStreamMap'
 import { useT4Store } from '@/modules/T4_UseCasePriorityBoard'
 import { T5_DOMAIN_CONFIG } from '../constants'
 import { Modal, Button, Badge, Card } from '@shared/design-system/components'
 import type { T5DomainCode } from '../types'
 import { UC_STATUS_LABEL, UC_STATUS_VARIANT, UC_COMPLETADO_STYLE, PHASE_LABEL } from './t5StatusMaps'
+
+const DOMAIN_ICON_MAP: Record<string, React.ReactElement> = {
+  settings:         <Settings      size={18} strokeWidth={1.5} />,
+  cpu:              <Cpu           size={18} strokeWidth={1.5} />,
+  'trending-up':    <TrendingUp    size={18} strokeWidth={1.5} />,
+  'message-square': <MessageSquare size={18} strokeWidth={1.5} />,
+  'refresh-cw':     <RefreshCw     size={18} strokeWidth={1.5} />,
+  network:          <Network       size={18} strokeWidth={1.5} />,
+}
 
 interface DomainProjectsModalProps {
   domainCode: T5DomainCode
@@ -40,10 +50,10 @@ export function DomainProjectsModal({ domainCode, onClose }: DomainProjectsModal
       {/* Domain icon + subtitle */}
       <div className="flex items-center gap-3 mb-5">
         <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-xl shrink-0"
-          style={{ backgroundColor: domCfg.hex + '22', border: `1.5px solid ${domCfg.hex}55` }}
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ backgroundColor: domCfg.hex + '22', border: `1.5px solid ${domCfg.hex}55`, color: domCfg.hex }}
         >
-          {domCfg.icon}
+          {DOMAIN_ICON_MAP[domCfg.icon] ?? <Settings size={18} strokeWidth={1.5} />}
         </div>
         <p className="text-[10px] text-text-subtle font-mono uppercase tracking-wide">Proyectos identificados</p>
       </div>
@@ -62,10 +72,10 @@ export function DomainProjectsModal({ domainCode, onClose }: DomainProjectsModal
                   key={uc.id}
                   variant="flat"
                   padding="none"
-                  className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50"
+                  className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border bg-warm-50 dark:bg-warm-800/50"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200 truncate">{uc.name}</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-100 truncate">{uc.name}</p>
                     <p className="text-[10px] text-text-subtle mt-0.5">{uc.department}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -77,7 +87,7 @@ export function DomainProjectsModal({ domainCode, onClose }: DomainProjectsModal
                     >
                       {UC_STATUS_LABEL[uc.status] ?? uc.status}
                     </Badge>
-                    <span className="text-[10px] font-bold tabular-nums text-lean-black dark:text-gray-200 w-8 text-right">
+                    <span className="text-[10px] font-bold tabular-nums text-lean-black dark:text-warm-100 w-8 text-right">
                       {uc.priorityScore}
                     </span>
                   </div>
@@ -99,10 +109,10 @@ export function DomainProjectsModal({ domainCode, onClose }: DomainProjectsModal
                   key={p.id}
                   variant="flat"
                   padding="none"
-                  className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50"
+                  className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border bg-warm-50 dark:bg-warm-800/50"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200 truncate">{p.name}</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-100 truncate">{p.name}</p>
                     <p className="text-[10px] text-text-subtle mt-0.5">{p.department}</p>
                   </div>
                   <span className="text-[10px] text-text-subtle shrink-0 capitalize">
@@ -116,7 +126,7 @@ export function DomainProjectsModal({ domainCode, onClose }: DomainProjectsModal
 
         {domainUCs.length === 0 && domainProcs.length === 0 && (
           <div className="text-center py-8">
-            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 mb-3">
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-warm-100 dark:bg-warm-800 mb-3">
               <svg className="w-5 h-5 text-text-subtle" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="9" cy="9" r="6" />
                 <path d="M15 15l3 3" />

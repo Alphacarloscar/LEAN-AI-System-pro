@@ -63,7 +63,7 @@ export function DeptCategoryModal({
       <div className="flex flex-col gap-5">
 
         {/* Quadrant / Recommendation summary */}
-        <Card variant="flat" padding="none" className="rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50 px-4 py-3">
+        <Card variant="flat" padding="none" className="rounded-xl border border-border bg-warm-50 dark:bg-warm-800/50 px-4 py-3">
           <div className="flex items-center justify-between mb-2">
             <Badge
               shape="pill"
@@ -73,20 +73,20 @@ export function DeptCategoryModal({
               <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: recCfg.hex }} aria-hidden="true" />
               {recCfg.label}
             </Badge>
-            <span className="text-xl font-bold tabular-nums text-lean-black dark:text-gray-100">
+            <span className="text-xl font-bold tabular-nums text-lean-black dark:text-warm-50">
               {assessment.priorityScore}
               <span className="text-[10px] text-text-subtle font-normal">/100</span>
             </span>
           </div>
           <div className="flex gap-4">
             <span className="text-[10px] text-text-subtle">
-              Valor negocio: <strong className="text-lean-black dark:text-gray-200">{assessment.scores.businessValue}</strong>
+              Valor negocio: <strong className="text-lean-black dark:text-warm-100">{assessment.scores.businessValue}</strong>
             </span>
             <span className="text-[10px] text-text-subtle">
-              Madurez técnica: <strong className="text-lean-black dark:text-gray-200">{assessment.scores.technicalReady}</strong>
+              Madurez técnica: <strong className="text-lean-black dark:text-warm-100">{assessment.scores.technicalReady}</strong>
             </span>
             <span className="text-[10px] text-text-subtle">
-              Org readiness: <strong className="text-lean-black dark:text-gray-200">{assessment.scores.orgReadiness}</strong>
+              Org readiness: <strong className="text-lean-black dark:text-warm-100">{assessment.scores.orgReadiness}</strong>
             </span>
           </div>
         </Card>
@@ -103,10 +103,10 @@ export function DeptCategoryModal({
                   key={uc.id}
                   variant="flat"
                   padding="none"
-                  className="px-3 py-2.5 rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50"
+                  className="px-3 py-2.5 rounded-xl border border-border bg-warm-50 dark:bg-warm-800/50"
                 >
                   <div className="flex items-center justify-between gap-3 mb-1">
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200 truncate">{uc.name}</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-100 truncate">{uc.name}</p>
                     <div className="flex items-center gap-2 shrink-0">
                       <Badge
                         variant={UC_STATUS_VARIANT[uc.status] ?? 'default'}
@@ -116,7 +116,7 @@ export function DeptCategoryModal({
                       >
                         {UC_STATUS_LABEL[uc.status] ?? uc.status}
                       </Badge>
-                      <span className="text-[10px] font-bold tabular-nums text-lean-black dark:text-gray-200 w-7 text-right">
+                      <span className="text-[10px] font-bold tabular-nums text-lean-black dark:text-warm-100 w-7 text-right">
                         {uc.priorityScore}
                       </span>
                     </div>
@@ -142,10 +142,10 @@ export function DeptCategoryModal({
                   key={p.id}
                   variant="flat"
                   padding="none"
-                  className="px-3 py-2.5 rounded-xl border border-border bg-gray-50 dark:bg-gray-800/50"
+                  className="px-3 py-2.5 rounded-xl border border-border bg-warm-50 dark:bg-warm-800/50"
                 >
                   <div className="flex items-center justify-between gap-3 mb-1">
-                    <p className="text-xs font-medium text-lean-black dark:text-gray-200 truncate">{p.name}</p>
+                    <p className="text-xs font-medium text-lean-black dark:text-warm-100 truncate">{p.name}</p>
                     <span className="text-[10px] text-text-subtle shrink-0 capitalize">
                       {PHASE_LABEL[p.phase] ?? p.phase}
                     </span>
@@ -161,7 +161,7 @@ export function DeptCategoryModal({
 
         {filteredUCs.length === 0 && filteredProcs.length === 0 && (
           <div className="text-center py-10">
-            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 mb-3">
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-warm-100 dark:bg-warm-800 mb-3">
               <svg className="w-5 h-5 text-text-subtle" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="9" cy="9" r="6" />
                 <path d="M15 15l3 3" />

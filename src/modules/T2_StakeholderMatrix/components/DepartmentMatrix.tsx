@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // T2 — DepartmentMatrix
 //
 // Columna izquierda: stakeholders agrupados por departamento.
@@ -61,12 +61,12 @@ export function DepartmentMatrix({
   if (stakeholders.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="h-12 w-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3">
+        <div className="h-12 w-12 rounded-xl bg-gray-100 dark:bg-warm-700 flex items-center justify-center mb-3">
           <svg className="h-6 w-6 text-text-subtle" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
           </svg>
         </div>
-        <p className="text-sm font-medium text-lean-black dark:text-gray-200">Sin stakeholders registrados</p>
+        <p className="text-sm font-medium text-lean-black dark:text-warm-100">Sin stakeholders registrados</p>
         {isReadOnly ? (
           <p className="text-xs text-text-subtle mt-1">Tu consultor está preparando los datos de esta sección.</p>
         ) : (
@@ -117,11 +117,11 @@ export function DepartmentMatrix({
       {Array.from(departments.entries()).map(([dept, members]) => {
         const isCollapsed = !expandedDepts.has(dept)
         return (
-          <div key={dept} className="rounded-xl border border-border bg-white dark:bg-gray-900 overflow-hidden">
+          <div key={dept} className="rounded-xl border border-border bg-white dark:bg-warm-800 overflow-hidden">
 
             <button
               onClick={() => toggleDept(dept)}
-              className="w-full px-5 py-3 border-b border-border bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between hover:bg-gray-100/60 dark:hover:bg-gray-800/50 transition-colors"
+              className="w-full px-5 py-3 border-b border-border bg-gray-50/50 dark:bg-warm-700/30 flex items-center justify-between hover:bg-gray-100/60 dark:hover:bg-warm-700/50 transition-colors"
             >
               <div className="flex items-center gap-2">
                 <svg
@@ -130,7 +130,7 @@ export function DepartmentMatrix({
                 >
                   <path d="M4 2l4 4-4 4" />
                 </svg>
-                <p className="text-xs font-semibold text-lean-black dark:text-gray-200">{dept}</p>
+                <p className="text-xs font-semibold text-lean-black dark:text-warm-100">{dept}</p>
                 <span className="text-[10px] text-text-subtle">{members.length} persona{members.length > 1 ? 's' : ''}</span>
               </div>
               <div className="flex gap-1">
@@ -153,12 +153,12 @@ export function DepartmentMatrix({
                         'w-full flex items-center gap-3 px-5 py-3 text-left transition-all duration-150',
                         isActive
                           ? 'bg-navy/5 dark:bg-navy/10 border-l-2 border-navy'
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 border-l-2 border-transparent',
+                          : 'hover:bg-gray-50 dark:hover:bg-warm-700/50 border-l-2 border-transparent',
                       ].join(' ')}
                     >
                       <ArchetypeDot archetype={s.archetype} size="md" />
                       <div className="flex-1 min-w-0">
-                        <p className={`text-xs font-semibold truncate ${isActive ? 'text-navy dark:text-warm-100' : 'text-lean-black dark:text-gray-200'}`}>
+                        <p className={`text-xs font-semibold truncate ${isActive ? 'text-navy dark:text-warm-100' : 'text-lean-black dark:text-warm-100'}`}>
                           {s.name}
                           {isRisk && (
                             <svg className="inline h-3 w-3 text-danger-dark ml-1" viewBox="0 0 16 16" fill="currentColor">

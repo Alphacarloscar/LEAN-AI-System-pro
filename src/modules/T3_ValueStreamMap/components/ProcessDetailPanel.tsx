@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback }  from 'react'
+import { useIsDark } from '@/shared/hooks/useDarkMode'
 import { useT3Store }                      from '../store'
 import { useEngagementStore }              from '@/modules/Engagement/store'
 import { useCompanyProfileStore }          from '@/modules/CompanyProfile/store'
@@ -7,7 +8,7 @@ import { computeOverallScore }             from '@/modules/T1_MaturityRadar/type
 import { buildT3OpportunitiesContext }     from '../t3OpportunitiesContextBuilder'
 import { useEdgeFunctionInvoke }           from '@/hooks/useEdgeFunctionInvoke'
 import { AI_CATEGORY_CONFIG }              from '../constants'
-import { Button, Badge, Card, Tabs, type BadgeVariant } from '@shared/design-system/components'
+import { Badge, Card, Tabs, type BadgeVariant } from '@shared/design-system/components'
 import { CategoryBadge, ReadinessBadge, PhaseBadge } from './T3Badges'
 import { DetailPositionMap }               from './DetailPositionMap'
 import { StagesTab }                       from './StagesTab'
@@ -31,10 +32,11 @@ const IMPACT_VARIANT: Record<AIOpportunity['impact'], BadgeVariant> = {
   medio: 'info',
   alto:  'default',  // inline style — navy/10 pattern (background-image conflict)
 }
-// impact alto: bg-navy/10 text-navy — data-driven pair para evitar conflicto gradient
-const IMPACT_ALTO_STYLE: React.CSSProperties = { backgroundColor: 'rgba(42,40,34,0.1)', color: '#2A2822' }
+const IMPACT_ALTO_STYLE_LIGHT: React.CSSProperties = { backgroundColor: 'rgba(42,40,34,0.1)',    color: '#2A2822' }
+const IMPACT_ALTO_STYLE_DARK:  React.CSSProperties = { backgroundColor: 'rgba(240,237,232,0.12)', color: '#C4C0B8' }
 
 export function ProcessDetailPanel({ process }: { process: ValueStream }) {
+  const isDark = useIsDark()
   const [tab, setTab] = useState<DetailTab>('oportunidades')
 
   const updateProcess   = useT3Store((s) => s.updateProcess)
@@ -87,12 +89,12 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
       {/* Panel header */}
       <div className="flex items-start gap-6 px-8 py-5 border-b border-border dark:border-white/6">
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1 truncate">
             {process.department}
             {process.owner && ` · ${process.owner}`}
             {process.ownerRole && ` · ${process.ownerRole}`}
           </p>
-          <h2 className="text-lg font-semibold text-lean-black dark:text-gray-100 leading-tight mb-2">
+          <h2 className="text-lg font-semibold text-lean-black dark:text-warm-100 leading-tight mb-2 line-clamp-2">
             {process.name}
           </h2>
           <div className="flex flex-wrap gap-1.5">
@@ -110,11 +112,11 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
 
         {hasInterview && (
           <div className="shrink-0 text-center">
-            <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-0.5">Score oportunidad</p>
-            <p className="text-4xl font-bold text-lean-black dark:text-gray-100 tabular-nums leading-none">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-0.5">Score oportunidad</p>
+            <p className="text-4xl font-bold text-lean-black dark:text-warm-100 tabular-nums leading-none">
               {process.interview!.opportunityScore.toFixed(1)}
             </p>
-            <p className="text-[10px] text-text-subtle">/4.0</p>
+            <p className="text-[10px] text-text-muted">/4.0</p>
           </div>
         )}
       </div>
@@ -141,7 +143,7 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
             {/* LEFT — position map */}
             {hasInterview ? (
               <div className="flex flex-col items-center gap-3">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">Posición en la matriz</p>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">Posición en la matriz</p>
                 <DetailPositionMap
                   opportunityScore={process.interview!.opportunityScore}
                   readinessScore={process.interview!.readinessScore}
@@ -149,14 +151,16 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
                   size={200}
                 />
                 <div className="w-full">
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">Categoría IA</p>
-                  <p className="text-xs font-semibold text-lean-black dark:text-gray-200 mb-1">{catCfg.tagline}</p>
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1.5">Categoría IA</p>
+                  <p className="text-xs font-semibold text-lean-black dark:text-warm-200 mb-1">{catCfg.tagline}</p>
                   <p className="text-[11px] text-text-muted leading-relaxed">{catCfg.description}</p>
                 </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center text-center gap-3 py-8">
-                <div className="h-10 w-10 rounded-2xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center text-xl">◎</div>
+                <div className="h-10 w-10 rounded-xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-text-muted"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1" /></svg>
+                </div>
                 <p className="text-xs text-text-muted">Completa la entrevista para posicionar este proceso.</p>
               </div>
             )}
@@ -168,25 +172,26 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
                 const canGenerate = hasStages && !aiLoading
                 return (
                   <div className="flex items-center justify-between gap-3 mb-4">
-                    <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
                       Oportunidades IA identificadas · {process.opportunities.length}
                     </p>
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        loading={aiLoading}
-                        disabled={!canGenerate}
+                      <button
+                        disabled={!canGenerate || aiLoading}
                         onClick={handlePersonalizeWithAI}
                         title={!hasStages ? 'Documenta las etapas del proceso primero' : 'Genera recomendaciones específicas con IA'}
-                        icon={!aiLoading ? <span className="text-[11px]">✦</span> : undefined}
+                        style={{ backgroundColor: 'var(--color-gold)', color: '#fff' }}
+                        className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded transition-all duration-150 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] hover:opacity-90"
                       >
-                        {aiLoading
-                          ? 'Generando…'
-                          : process.opportunities.length > 0 ? 'Regenerar con IA' : 'Personalizar con IA'}
-                      </Button>
+                        {aiLoading ? 'Generando…' : process.opportunities.length > 0 ? 'Regenerar con IA' : 'Personalizar con IA'}
+                        {!aiLoading && (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 12h14M13 6l6 6-6 6" />
+                          </svg>
+                        )}
+                      </button>
                       {!hasStages && !aiLoading && (
-                        <p className="text-[9px] text-text-subtle text-right max-w-[180px] leading-tight">
+                        <p className="text-[9px] text-text-muted text-right max-w-[180px] leading-tight">
                           Documenta las etapas primero
                         </p>
                       )}
@@ -205,11 +210,11 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
               {process.opportunities.length === 0 ? (
                 <div className="flex flex-col gap-2">
                   {(process.stages ?? []).length === 0 ? (
-                    <p className="text-xs text-text-subtle leading-relaxed">
+                    <p className="text-xs text-text-muted leading-relaxed">
                       Ve a la pestaña <strong>Etapas del proceso</strong>, documenta qué sistemas usa cada etapa y vuelve aquí para generar recomendaciones IA.
                     </p>
                   ) : (
-                    <p className="text-xs text-text-subtle leading-relaxed">
+                    <p className="text-xs text-text-muted leading-relaxed">
                       Usa el botón <strong>"Personalizar con IA"</strong> para recibir recomendaciones concretas basadas en los sistemas de este proceso.
                     </p>
                   )}
@@ -224,7 +229,7 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
                         variant="flat"
                         padding="none"
                         className={[
-                          'rounded-2xl border px-4 py-3.5 flex flex-col gap-2',
+                          'rounded-xl border px-4 py-3.5 flex flex-col gap-2',
                           isValidated
                             ? 'border-success-dark/20 bg-success-light/8 dark:bg-success-dark/5'
                             : 'border-border dark:border-white/8 bg-white dark:bg-warm-800/50',
@@ -232,8 +237,8 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
                       >
                         <div className="flex items-start gap-2">
                           <span className={`h-1.5 w-1.5 rounded-full mt-1 shrink-0 ${isValidated ? 'bg-success-dark' : 'bg-info-dark'}`} />
-                          <p className="text-xs font-semibold text-lean-black dark:text-gray-200 leading-snug">{opp.title}</p>
-                          {isValidated && <span className="ml-auto shrink-0 text-[9px] font-bold text-success-dark">✓</span>}
+                          <p className="text-xs font-semibold text-lean-black dark:text-warm-200 leading-snug">{opp.title}</p>
+                          {isValidated && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="ml-auto shrink-0 text-success-dark"><polyline points="20 6 9 17 4 12" /></svg>}
                         </div>
                         <p className="text-[11px] text-text-muted leading-relaxed">{opp.description}</p>
                         <div className="flex gap-1.5 flex-wrap mt-auto">
@@ -243,7 +248,7 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
                           <Badge
                             variant={IMPACT_VARIANT[opp.impact]}
                             size="xs"
-                            style={opp.impact === 'alto' ? IMPACT_ALTO_STYLE : undefined}
+                            style={opp.impact === 'alto' ? (isDark ? IMPACT_ALTO_STYLE_DARK : IMPACT_ALTO_STYLE_LIGHT) : undefined}
                           >
                             Impacto {opp.impact}
                           </Badge>
@@ -255,8 +260,8 @@ export function ProcessDetailPanel({ process }: { process: ValueStream }) {
               )}
 
               {process.notes && (
-                <div className="mt-6 rounded-2xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1.5">Notas del consultor</p>
+                <div className="mt-6 rounded-xl bg-warm-50 dark:bg-warm-800/40 border border-border dark:border-white/6 px-4 py-3">
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1.5">Notas del consultor</p>
                   <p className="text-xs text-text-muted leading-relaxed italic">{process.notes}</p>
                 </div>
               )}

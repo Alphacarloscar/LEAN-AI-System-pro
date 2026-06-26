@@ -2,6 +2,8 @@ import { useCallback }                     from 'react'
 import { useT6Store }                       from '@/modules/T6_RiskGovernance/store'
 import type { GeneratedPolicyContent }      from '@/modules/T6_RiskGovernance/types'
 import { useEdgeFunctionInvoke }            from './useEdgeFunctionInvoke'
+import type { EdgeFunctionState }           from './useEdgeFunctionInvoke'
+import { useServiceError }                  from '@/shared/hooks/useServiceError'
 
 export interface PolicyGenerationContext {
   company: {
@@ -34,12 +36,14 @@ export interface PolicyGenerationContext {
 interface UsePolicyGenerationReturn {
   generate:     (context: PolicyGenerationContext, engagementId: string | null) => Promise<void>
   isGenerating: boolean
+  status:       EdgeFunctionState
   error:        string | null
   clearError:   () => void
 }
 
 export function usePolicyGeneration(): UsePolicyGenerationReturn {
   const { saveGeneratedPolicy, setPersistence } = useT6Store()
+  const { notifyError } = useServiceError()
 
   const onSuccess = useCallback((
     policy:       GeneratedPolicyContent,
@@ -59,13 +63,14 @@ export function usePolicyGeneration(): UsePolicyGenerationReturn {
     else setPersistence('saved')
   }, [setPersistence])
 
-  const { invoke, isGenerating, error, clearError } = useEdgeFunctionInvoke<
+  const { invoke, isGenerating, state, error, clearError } = useEdgeFunctionInvoke<
     PolicyGenerationContext,
     GeneratedPolicyContent
   >({
     tool:                't6_policy',
     noEngagementMessage: 'Necesitas un engagement activo para generar la política.',
     logPrefix:           '[usePolicyGeneration]',
+    notifyError,
     validate: (data) => {
       const policy = data as GeneratedPolicyContent | null
       if (!policy) throw new Error('La Edge Function no devolvió contenido de política.')
@@ -81,5 +86,5 @@ export function usePolicyGeneration(): UsePolicyGenerationReturn {
     [invoke],
   )
 
-  return { generate, isGenerating, error, clearError }
+  return { generate, isGenerating, status: state, error, clearError }
 }

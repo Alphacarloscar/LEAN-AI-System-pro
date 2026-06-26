@@ -21,7 +21,7 @@ export function EventDetailPanel({
         onClick={onClose}
       />
       {/* Panel */}
-      <aside className="fixed right-0 top-0 h-full w-[400px] max-w-[92vw] bg-white dark:bg-warm-800 border-l border-border dark:border-warm-600 z-50 overflow-y-auto animate-slide-in-right shadow-xl">
+      <aside className="fixed right-0 top-0 h-full w-[400px] max-w-[92vw] bg-white dark:bg-warm-800 border-l border-border dark:border-warm-600 z-50 overflow-y-auto animate-slide-in-right shadow-sm">
 
         {/* Panel header */}
         <div className={`px-5 py-4 ${lcfg.bg} border-b border-border dark:border-warm-600 sticky top-0 z-10`}>
@@ -32,16 +32,16 @@ export function EventDetailPanel({
                   {T11_FREQUENCY_LABEL[event.frequency]}
                 </span>
                 {event.isCritical && (
-                  <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                  <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-warning-dark dark:bg-warning-dark/40 text-lean-white dark:text-warm-50">
                     CRÍTICO
                   </span>
                 )}
-                <span className="text-[10px] font-mono text-text-subtle">{event.duration}</span>
+                <span className="text-[10px] font-mono text-text-subtle dark:text-warm-300">{event.duration}</span>
               </div>
               <p className="text-sm font-bold text-lean-black dark:text-warm-50 leading-snug">
                 {event.title}
               </p>
-              <p className="text-[11px] text-text-subtle mt-0.5">{event.subtitle}</p>
+              <p className="text-[11px] text-text-subtle dark:text-warm-300 mt-0.5">{event.subtitle}</p>
             </div>
             <button
               onClick={onClose}
@@ -62,12 +62,12 @@ export function EventDetailPanel({
 
           {/* Participantes */}
           <div>
-            <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-2">
               Participantes
             </p>
             <div className="flex flex-wrap gap-1.5">
               {event.participants.map((p) => (
-                <span key={p} className="px-2 py-0.5 rounded-full text-[10px] bg-gray-100 dark:bg-warm-700 text-text-muted dark:text-warm-100">
+                <span key={p} className="px-2 py-0.5 rounded-full text-[10px] bg-warm-100 dark:bg-warm-600 border border-border dark:border-warm-500 text-text-muted dark:text-warm-50">
                   {p}
                 </span>
               ))}
@@ -76,7 +76,7 @@ export function EventDetailPanel({
 
           {/* Datos que se revisan */}
           <div>
-            <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-2">
               Datos que se revisan
             </p>
             <ul className="space-y-1.5">
@@ -91,7 +91,7 @@ export function EventDetailPanel({
 
           {/* Agenda tipo */}
           <div>
-            <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-2">
               Agenda tipo
             </p>
             <ol className="space-y-2">
@@ -111,7 +111,7 @@ export function EventDetailPanel({
 
           {/* KPIs */}
           <div>
-            <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle mb-2">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-2">
               KPIs que se revisan
             </p>
             <ul className="space-y-1.5">

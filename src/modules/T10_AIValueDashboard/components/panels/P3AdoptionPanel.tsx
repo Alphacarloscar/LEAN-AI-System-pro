@@ -1,5 +1,6 @@
 // P3 — T2+T7 Adopción
 
+import { AlertTriangle } from 'lucide-react'
 import { DeptBar }         from '../DeptBar'
 import { NavButton }       from '../NavButton'
 import { ExpandedSection } from '../ExpandedSection'
@@ -25,17 +26,17 @@ export function P3AdoptionPanel({ t2data, shadowAIPct, expanded, onToggle, onNav
   return (
     <PanelCard
       id="p3" expanded={expanded} onClick={onToggle}
-      tag="T2 + T7 · Adopción" tagColor="info"
+      tag="T2 + T7 · Adopción"
       title="Velocidad de adopción" subtitle={`${t2data.totalStakeholders} stakeholders · ${t2data.activePercent}% activos`}
       animDelay={160}
       heroSlot={<HeroMetric label="Adopción activa" value={`${t2data.activePercent}%`} colorScore={t2data.activePercent} />}
     >
       <div className="mb-2">
-        <p className="text-[9px] font-mono uppercase tracking-widest text-text-subtle dark:text-warm-400 mb-1.5">
+        <p className="text-[9px] font-sans uppercase tracking-widest text-text-muted dark:text-warm-400 mb-1.5">
           Composición por departamento
         </p>
         {t2data.departments.length > 0
-          ? t2data.departments.map((dept, i) => <DeptBar key={i} {...dept} />)
+          ? t2data.departments.map((dept, i) => <DeptBar key={i} {...dept} colors={[t2data.groups[0]?.color ?? '#C8860A', t2data.groups[1]?.color ?? '#B07840', t2data.groups[2]?.color ?? '#9A9790']} />)
           : <p className="text-[10px] text-text-muted dark:text-warm-300">Sin stakeholders registrados aún</p>
         }
         {t2data.groups.length > 0 && (
@@ -63,25 +64,22 @@ export function P3AdoptionPanel({ t2data, shadowAIPct, expanded, onToggle, onNav
             </div>
           </div>
           {shadowAIPct !== null && (
-            <div
-              className="rounded-xl border px-3 py-2.5 mb-3"
-              style={{ backgroundColor: 'rgba(200,134,10,0.04)', borderColor: 'rgba(200,134,10,0.25)' }}
-            >
+            <div className="rounded-r-xl border-l-4 border-l-gold bg-card dark:bg-warm-700 px-3 py-2.5 mb-3">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm">⚠️</span>
-                  <p className="text-[9px] font-mono uppercase tracking-widest" style={{ color: '#C8860A' }}>
+                  <AlertTriangle size={14} strokeWidth={1.5} className="text-gold" />
+                  <p className="text-[9px] font-sans uppercase tracking-widest text-gold">
                     Riesgo de Shadow AI
                   </p>
                 </div>
-                <span className="text-sm font-bold tabular-nums" style={{ color: '#C8860A' }}>
+                <span className="text-sm font-bold tabular-nums text-gold">
                   {shadowAIPct.pct}%
                 </span>
               </div>
-              <div className="w-full h-1 rounded-full bg-gray-100 dark:bg-warm-700 overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: `${shadowAIPct.pct}%`, backgroundColor: '#C8860A' }} />
+              <div className="w-full h-1 rounded-full bg-border dark:bg-warm-700 overflow-hidden">
+                <div className="h-full rounded-full bg-gold" style={{ width: `${shadowAIPct.pct}%` }} />
               </div>
-              <p className="text-[9px] text-text-subtle mt-1">
+              <p className="text-[9px] text-text-muted mt-1">
                 {shadowAIPct.withTools} de {shadowAIPct.total} perfiles declaran herramientas externas · Ver detalle en T6
               </p>
             </div>

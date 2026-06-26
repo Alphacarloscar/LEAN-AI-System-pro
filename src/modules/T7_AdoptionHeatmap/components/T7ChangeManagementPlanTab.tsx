@@ -1,16 +1,18 @@
 // ── Tab 3: Plan Global de Gestión del Cambio ─────────────────
 // Plan estático de fallback (se usa si el LLM aún no ha generado)
 
+import { Lightbulb } from 'lucide-react'
 import { usePermissions } from '@/modules/Auth'
 import type { GeneratedChangePlan, GeneratedChangePlanPhase } from '../types'
+import type { EdgeFunctionState } from '@/hooks/useEdgeFunctionInvoke'
 import { PlanPhaseCard } from './T7PlanPhaseCard'
-import { Button } from '@shared/design-system/components'
+import { Button, StreamingIndicator } from '@shared/design-system/components'
 
 const CHANGE_PLAN = [
   {
     phase:     'Mes 1–2',
     title:     'Activar a los agentes de cambio',
-    icon:      '⚡',
+    icon:      'zap',
     objective: 'Construir la masa crítica interna antes del lanzamiento visible.',
     segments:  ['Innovadores', 'Early Adopters'],
     actions: [
@@ -24,7 +26,7 @@ const CHANGE_PLAN = [
   {
     phase:     'Mes 3–4',
     title:     'Construir evidencia, reducir fricción',
-    icon:      '📊',
+    icon:      'bar-chart-2',
     objective: 'Generar datos internos de impacto para convertir a la Mayoría Temprana.',
     segments:  ['Early Majority', 'Mayoría Temprana'],
     actions: [
@@ -38,7 +40,7 @@ const CHANGE_PLAN = [
   {
     phase:     'Mes 5–6',
     title:     'Escalar y normalizar',
-    icon:      '🚀',
+    icon:      'rocket',
     objective: 'Transición de piloto a operación. La adopción pasa de voluntaria a estructural.',
     segments:  ['Late Majority', 'Laggards'],
     actions: [
@@ -54,6 +56,7 @@ const CHANGE_PLAN = [
 interface ChangeManagementPlanTabProps {
   generatedPlan: GeneratedChangePlan | null
   isGenerating:  boolean
+  planStatus:    EdgeFunctionState
   error:         string | null
   canGenerate:   boolean
   onGenerate:    () => void
@@ -63,6 +66,7 @@ interface ChangeManagementPlanTabProps {
 export function ChangeManagementPlanTab({
   generatedPlan,
   isGenerating,
+  planStatus,
   error,
   canGenerate,
   onGenerate,
@@ -70,10 +74,9 @@ export function ChangeManagementPlanTab({
 }: ChangeManagementPlanTabProps) {
   const { isReadOnly } = usePermissions()
 
-  const isLLM  = !!generatedPlan
-  const phases = isLLM
-    ? generatedPlan!.phases
-    : CHANGE_PLAN
+  const isPending = planStatus === 'pending'
+  const isLLM     = !!generatedPlan
+  const phases    = isLLM ? generatedPlan!.phases : CHANGE_PLAN
 
   return (
     <div className="space-y-5">
@@ -88,14 +91,14 @@ export function ChangeManagementPlanTab({
           </p>
           {isLLM && generatedPlan?.contextualNote && (
             <p className="text-xs text-text-subtle mt-1 italic">
-              💡 {generatedPlan.contextualNote}
+                <span className="inline-flex items-start gap-1.5"><Lightbulb size={12} strokeWidth={2} className="shrink-0 mt-0.5" />{generatedPlan.contextualNote}</span>
             </p>
           )}
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
           {!isReadOnly && isLLM && (
-            <Button variant="ghost" size="sm" onClick={onClear}>
+            <Button variant="ghost" size="sm" onClick={onClear} disabled={isPending}>
               Restaurar plantilla
             </Button>
           )}
@@ -104,25 +107,33 @@ export function ChangeManagementPlanTab({
               variant="primary"
               size="sm"
               onClick={onGenerate}
-              disabled={!canGenerate || isGenerating}
+              disabled={!canGenerate || isPending}
               loading={isGenerating}
               icon={<svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M6 1v2M6 9v2M1 6h2M9 6h2M2.5 2.5l1.4 1.4M8.1 8.1l1.4 1.4M2.5 9.5l1.4-1.4M8.1 3.9l1.4-1.4"/></svg>}
             >
-              {isGenerating ? 'Generando plan…' : isLLM ? 'Regenerar plan con IA' : 'Generar plan con IA'}
+              {isPending ? 'Generando plan…' : isLLM ? 'Regenerar plan con IA' : 'Generar plan con IA'}
             </Button>
           )}
         </div>
       </div>
 
-      {/* Error */}
-      {error && (
+      {/* Error — ya notificado via ServiceErrorToast; mensaje inline como fallback */}
+      {error && !isPending && (
         <div className="rounded-lg border border-danger-light bg-danger-light/30 dark:bg-red-900/15 px-4 py-3">
           <p className="text-xs text-danger-dark">{error}</p>
         </div>
       )}
 
+      {/* Inline streaming feedback — sustituye el bloqueo de pantalla */}
+      {isPending && (
+        <StreamingIndicator
+          variant="card-full"
+          label="Generando plan de cambio con IA…"
+        />
+      )}
+
       {/* Badge LLM */}
-      {isLLM && (
+      {isLLM && !isPending && (
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-navy/8 dark:bg-navy/20 border border-navy/20 dark:border-navy/30 w-fit">
           <span className="h-1.5 w-1.5 rounded-full bg-navy animate-pulse" />
           <span className="text-[10px] font-semibold text-navy dark:text-warm-100">
@@ -133,8 +144,8 @@ export function ChangeManagementPlanTab({
         </div>
       )}
 
-      {/* Fases */}
-      {phases.map((step, i) => (
+      {/* Fases — ocultas mientras se genera para no crear layout shift */}
+      {!isPending && phases.map((step, i) => (
         <PlanPhaseCard key={i} step={step as GeneratedChangePlanPhase} />
       ))}
     </div>

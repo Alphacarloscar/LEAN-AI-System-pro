@@ -16,11 +16,18 @@ export interface UseEdgeFunctionInvokeOptions<TContext, TResult> {
   onSuccess:           (result: TResult, engagementId: string, context: TContext) => void
   onPersistence?:      (persistence: EdgeFunctionPersistence | undefined) => void
   logPrefix?:          string
+  /** Si se provee, dispara automáticamente un ServiceErrorToast en el estado 'error'. */
+  notifyError?:        (error: unknown, customMessage?: string) => void
 }
+
+export type EdgeFunctionState = 'idle' | 'pending' | 'success' | 'error'
 
 export interface UseEdgeFunctionInvokeReturn<TContext> {
   invoke:       (context: TContext, engagementId: string | null) => Promise<void>
   isGenerating: boolean
+  state:        EdgeFunctionState
+  /** Alias semántico de clearError — devuelve el estado a 'idle'. */
+  reset:        () => void
   error:        string | null
   clearError:   () => void
 }
@@ -35,10 +42,12 @@ export function useEdgeFunctionInvoke<TContext, TResult>(
     validate,
     onSuccess,
     onPersistence,
+    notifyError,
     logPrefix          = `[useEdgeFunctionInvoke:${tool}]`,
   } = options
 
   const [isGenerating, setIsGenerating] = useState(false)
+  const [state,        setState]        = useState<EdgeFunctionState>('idle')
   const [error,        setError]        = useState<string | null>(null)
 
   const invoke = useCallback(async (
@@ -47,10 +56,12 @@ export function useEdgeFunctionInvoke<TContext, TResult>(
   ) => {
     if (!engagementId) {
       setError(noEngagementMessage)
+      setState('error')
       return
     }
 
     setIsGenerating(true)
+    setState('pending')
     setError(null)
 
     try {
@@ -80,6 +91,7 @@ export function useEdgeFunctionInvoke<TContext, TResult>(
 
       const validated = validate(result?.data)
       onSuccess(validated, engagementId, context)
+      setState('success')
 
       if (onPersistence) {
         onPersistence(result?.persistence as EdgeFunctionPersistence | undefined)
@@ -87,13 +99,18 @@ export function useEdgeFunctionInvoke<TContext, TResult>(
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error desconocido'
       setError(msg)
+      setState('error')
       reportError(logPrefix, err)
+      notifyError?.(err)
     } finally {
       setIsGenerating(false)
     }
-  }, [tool, timeoutMs, noEngagementMessage, validate, onSuccess, onPersistence, logPrefix])
+  }, [tool, timeoutMs, noEngagementMessage, validate, onSuccess, onPersistence, notifyError, logPrefix])
 
-  const clearError = useCallback(() => setError(null), [])
+  const clearError = useCallback(() => {
+    setError(null)
+    setState('idle')
+  }, [])
 
-  return { invoke, isGenerating, error, clearError }
+  return { invoke, isGenerating, state, reset: clearError, error, clearError }
 }

@@ -135,7 +135,7 @@ export function SegmentedControl({
               sizeClasses[size],
               // Default active (no activeColor) — uses primary token
               isActive && !opt.activeColor
-                ? 'bg-navy-metallic text-white border-transparent shadow-sm'
+                ? 'bg-navy-metallic dark:bg-gold-metallic text-white dark:text-lean-black border-transparent shadow-sm'
                 : '',
               // Inactive
               !isActive

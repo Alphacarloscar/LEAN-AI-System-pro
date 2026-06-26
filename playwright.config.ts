@@ -1,7 +1,12 @@
 import { defineConfig, devices } from '@playwright/test'
+import { config } from 'dotenv'
+
+// Carga credenciales E2E desde .env.e2e si existe (nunca commitear ese archivo)
+config({ path: '.env.e2e', override: false })
 
 export default defineConfig({
   testDir: './e2e',
+  globalTeardown: './e2e/global-teardown.ts',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

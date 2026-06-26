@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "lint:design": "bash scripts/lint-design.sh",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -23,6 +24,7 @@
   },
   "dependencies": {
     "@fontsource/inter": "^5.1.0",
+    "@hookform/resolvers": "^5.4.0",
     "@react-pdf/renderer": "^3.4.4",
     "@sentry/react": "^10.56.0",
     "@supabase/supabase-js": "^2.45.4",

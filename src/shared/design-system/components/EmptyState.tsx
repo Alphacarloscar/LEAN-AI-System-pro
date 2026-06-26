@@ -29,7 +29,7 @@ export function EmptyState({
       ].join(' ')}
     >
       {icon && (
-        <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gold/10 border border-gold/20 text-gold shrink-0">
+        <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-gold/10 border border-gold/20 text-gold shrink-0">
           {icon}
         </div>
       )}

@@ -32,6 +32,12 @@ jobs:
         run: npm run lint
         continue-on-error: false
 
+      - name: Verification — ADR-021 Design System (gray→warm migration)
+        # continue-on-error: true → TRANSITORIO hasta que Fase 2 de ADR-021 esté completa.
+        # Cambiar a false (o eliminar la línea) cuando lint:design devuelva 0 violaciones.
+        run: npm run lint:design
+        continue-on-error: true
+
       - name: Verification — TypeScript Typecheck
         run: npm run typecheck
 

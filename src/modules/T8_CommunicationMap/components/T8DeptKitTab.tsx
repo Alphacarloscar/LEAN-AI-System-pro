@@ -1,21 +1,25 @@
 // ── T8 Tab 4: Kit por Departamento ────────────────────────────
 
+import { AlertTriangle, Mail, Building2, MessageSquare, Monitor, Video, FileText } from 'lucide-react'
 import { CHANNEL_CFG } from '../T8Generators'
 import type { DeptKit } from '../types'
 import { Card, Badge } from '@shared/design-system/components'
+import { deptCfg } from '@/modules/T7_AdoptionHeatmap/T7Constants'
+
+const CHANNEL_ICON_MAP: Record<string, React.ReactElement> = {
+  mail:            <Mail          size={12} strokeWidth={1.5} />,
+  building:        <Building2     size={12} strokeWidth={1.5} />,
+  'message-square':<MessageSquare size={12} strokeWidth={1.5} />,
+  monitor:         <Monitor       size={12} strokeWidth={1.5} />,
+  video:           <Video         size={12} strokeWidth={1.5} />,
+  'file-text':     <FileText      size={12} strokeWidth={1.5} />,
+}
 
 export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
-  const DEPT_COLORS: Record<string, string> = {
-    'Dirección General':     '#2A2822',
-    'IT / Tecnología':       '#6366F1',
-    'Operaciones':           '#F97316',
-    'Marketing & Comercial': '#10B981',
-  }
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
       {kits.map(kit => {
-        const color = DEPT_COLORS[kit.department] ?? '#94A3B8'
+        const color = deptCfg(kit.department).fill
         const readinessVariant = kit.readiness >= 65 ? 'success' : kit.readiness >= 35 ? 'warning' : 'danger'
         const channelCfg = CHANNEL_CFG[kit.channel]
 
@@ -25,7 +29,7 @@ export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <span className="w-3.5 h-3.5 rounded-full flex-shrink-0 mt-0.5" style={{ backgroundColor: color }} />
-                <p className="font-semibold text-sm text-lean-black dark:text-gray-100">{kit.department}</p>
+                <p className="font-semibold text-sm text-lean-black dark:text-warm-50">{kit.department}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant={readinessVariant} shape="pill" size="xs">
@@ -35,16 +39,16 @@ export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
             </div>
 
             {/* Concern + Approach */}
-            <div className="space-y-2.5">
-              <div className="flex gap-2 items-start p-3 rounded-lg bg-warning-light/40 border border-warning-light">
-                <span className="text-warning-dark text-xs flex-shrink-0 mt-0.5">⚠</span>
+            <div className="space-y-2.5 mt-1">
+              <div className="flex gap-2 items-start p-3 rounded-lg bg-warning-light/40 dark:bg-warning-dark/10 border border-warning-light dark:border-warning-dark/30">
+                <AlertTriangle size={14} strokeWidth={1.5} className="text-warning-dark flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[10px] font-mono uppercase tracking-widest text-warning-dark mb-0.5">Preocupación principal</p>
-                  <p className="text-xs text-warning-dark leading-relaxed">{kit.mainConcern}</p>
+                  <p className="text-xs text-warning-dark dark:text-warning leading-relaxed">{kit.mainConcern}</p>
                 </div>
               </div>
 
-              <Card variant="flat" padding="none" className="p-3 rounded-lg border border-border dark:border-white/6 bg-gray-50 dark:bg-gray-800/50">
+              <Card variant="flat" padding="none" className="p-3 rounded-lg border border-border dark:border-warm-600 bg-surface dark:bg-warm-700">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-1">Enfoque comunicativo</p>
                 <p className="text-xs text-text-muted leading-relaxed">{kit.approach}</p>
               </Card>
@@ -55,7 +59,7 @@ export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-[10px] font-mono text-text-subtle">Ambassador interno:</span>
                 {kit.ambassadors.map(a => (
-                  <span key={a} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                  <span key={a} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-info-light text-info-dark dark:bg-info-light/10 dark:text-info">
                     {a}
                   </span>
                 ))}
@@ -63,8 +67,8 @@ export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
             )}
 
             {/* Acciones */}
-            <div>
-              <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle mb-2">Acciones concretas</p>
+            <div className="mt-2 border-t border-border dark:border-warm-600 -mx-5 px-5 pt-4 space-y-3">
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-2">Acciones concretas</p>
               <div className="space-y-2">
                 {kit.actions.map((action, i) => (
                   <div key={i} className="flex gap-2 items-start">
@@ -78,14 +82,14 @@ export function DeptKitTab({ kits }: { kits: DeptKit[] }) {
                   </div>
                 ))}
               </div>
-            </div>
 
-            {/* Canal recomendado */}
-            <div className="flex items-center gap-2 pt-2 border-t border-border dark:border-white/6">
-              <span className="text-[10px] font-mono text-text-subtle">Canal principal:</span>
-              <span className="text-[10px] font-medium text-text-muted">
-                {channelCfg.icon} {channelCfg.label}
-              </span>
+              {/* Canal recomendado */}
+              <div className="flex items-center gap-2 pt-2 border-t border-border dark:border-white/6">
+                <span className="text-[10px] font-mono text-text-subtle">Canal principal:</span>
+                <span className="text-[10px] font-medium text-text-muted inline-flex items-center gap-1">
+                  {CHANNEL_ICON_MAP[channelCfg.icon] ?? null} {channelCfg.label}
+                </span>
+              </div>
             </div>
           </Card>
         )

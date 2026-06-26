@@ -24,10 +24,10 @@ export function EmpresaTab({
   return (
     <>
       {/* Sector y tamaño */}
-      <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 p-6 space-y-5">
+      <div className="rounded-xl bg-white dark:bg-warm-800 border border-border dark:border-white/6 p-6 space-y-5">
         <div>
           <SectionLabel>Datos de la empresa</SectionLabel>
-          <p className="text-xs text-text-muted dark:text-gray-500 -mt-1">
+          <p className="text-xs text-text-muted dark:text-warm-400 -mt-1">
             Información permanente de la empresa, compartida entre todos sus proyectos.
           </p>
         </div>
@@ -57,10 +57,10 @@ export function EmpresaTab({
       </div>
 
       {/* Departamentos */}
-      <div className="rounded-2xl bg-white dark:bg-gray-900 border border-border dark:border-white/6 p-6 space-y-4">
+      <div className="rounded-xl bg-white dark:bg-warm-800 border border-border dark:border-white/6 p-6 space-y-4">
         <div>
           <SectionLabel>Departamentos de la empresa</SectionLabel>
-          <p className="text-xs text-text-muted dark:text-gray-500 -mt-1">
+          <p className="text-xs text-text-muted dark:text-warm-400 -mt-1">
             Lista centralizada compartida entre todos los proyectos.
             Disponible como selector en T2, T3, T4 y T8.
           </p>

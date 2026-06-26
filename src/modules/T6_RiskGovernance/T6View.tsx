@@ -9,6 +9,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect } from 'react'
+import { AlertCircle, Circle, FileText, Scale } from 'lucide-react'
 import { useParams }         from 'react-router-dom'
 import { useT4Store }        from '@/modules/T4_UseCasePriorityBoard'
 import { useT5Store }        from '@/modules/T5_AITaxonomyCanvas'
@@ -90,15 +91,14 @@ export function T6View({
   ).length
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-warm-900">
+    <div className="min-h-full bg-surface dark:bg-warm-900">
 
       {/* ── Header ── */}
       <ToolHeader
         onBack={onBack}
-        backLabel="Volver"
+        backLabel="Volver al dashboard"
         toolCode="T6"
         title="Risk &amp; Governance"
-        subtitle={companyName}
         phaseMiniMap={<PhaseMiniMap phaseId="evaluate" toolCode="T6" />}
         maxWidth="max-w-[1100px]"
         chips={
@@ -106,12 +106,12 @@ export function T6View({
             <div className="flex items-center gap-2 flex-wrap">
               {highRisk > 0 && (
                 <Badge variant="warning" shape="pill">
-                  🔴 {highRisk} caso{highRisk > 1 ? 's' : ''} alto riesgo
+                  <span className="inline-flex items-center gap-1"><AlertCircle size={12} strokeWidth={1.5} /> {highRisk} caso{highRisk > 1 ? 's' : ''} alto riesgo</span>
                 </Badge>
               )}
               {unclassified > 0 && (
                 <Badge variant="default" shape="pill">
-                  ⬜ {unclassified} sin clasificar
+                  <span className="inline-flex items-center gap-1"><Circle size={12} strokeWidth={1.5} /> {unclassified} sin clasificar</span>
                 </Badge>
               )}
             </div>
@@ -129,8 +129,8 @@ export function T6View({
             value={tab}
             onChange={(v) => setTab(v as T6Tab)}
             tabs={[
-              { value: 'politica', label: '📄 Política IA Corporativa' },
-              { value: 'riesgos',  label: '⚖️ Dashboard AI Act', badge: highRisk > 0 ? `${highRisk} alto` : undefined },
+              { value: 'politica', label: 'Política IA Corporativa', icon: <FileText size={14} strokeWidth={1.5} /> },
+              { value: 'riesgos',  label: 'Dashboard AI Act', icon: <Scale size={14} strokeWidth={1.5} />, badge: highRisk > 0 ? `${highRisk} alto` : undefined },
             ]}
           />
         </div>

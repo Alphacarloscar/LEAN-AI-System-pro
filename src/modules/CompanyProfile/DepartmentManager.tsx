@@ -84,8 +84,8 @@ export function DepartmentManager({ companyId }: Props) {
       {/* ── Lista de departamentos ── */}
       {isLoading ? (
         <div className="flex items-center gap-2 py-1">
-          <Spinner size="sm" label="Cargando departamentos…" className="text-text-subtle dark:text-gray-600" />
-          <span className="text-xs text-text-subtle dark:text-gray-600 font-mono">
+          <Spinner size="sm" label="Cargando departamentos…" className="text-text-subtle dark:text-warm-400" />
+          <span className="text-xs text-text-subtle dark:text-warm-400 font-mono">
             Cargando departamentos...
           </span>
         </div>
@@ -115,7 +115,7 @@ export function DepartmentManager({ companyId }: Props) {
         </div>
 
       ) : (
-        <p className="text-xs text-text-subtle dark:text-gray-600 italic py-1">
+        <p className="text-xs text-text-subtle dark:text-warm-400 italic py-1">
           Sin departamentos configurados. Añade los departamentos de esta empresa para que estén disponibles en T2, T3, T4 y T8.
         </p>
       )}
@@ -135,9 +135,9 @@ export function DepartmentManager({ companyId }: Props) {
             disabled={isAdding}
             className={[
               'flex-1 px-4 py-2 rounded-lg text-sm transition-colors duration-150',
-              'bg-white dark:bg-gray-900',
+              'bg-white dark:bg-warm-800',
               'border border-border dark:border-white/8',
-              'text-lean-black dark:text-gray-100 placeholder-text-subtle dark:placeholder-gray-600',
+              'text-lean-black dark:text-warm-50 placeholder-text-subtle dark:placeholder-warm-400',
               'focus:outline-none focus:border-[#C8860A]/60 focus:ring-2 focus:ring-[#C8860A]/15',
               'disabled:opacity-50 disabled:cursor-not-allowed',
             ].join(' ')}
@@ -151,7 +151,7 @@ export function DepartmentManager({ companyId }: Props) {
               'shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
               inputValue.trim() && !isAdding
                 ? 'bg-[#C8860A] text-white hover:bg-[#B07709] shadow-sm'
-                : 'bg-gray-100 dark:bg-gray-800 text-text-subtle dark:text-gray-600 cursor-not-allowed',
+                : 'bg-warm-100 dark:bg-warm-700 text-text-subtle dark:text-warm-400 cursor-not-allowed',
             ].join(' ')}
           >
             {isAdding ? (

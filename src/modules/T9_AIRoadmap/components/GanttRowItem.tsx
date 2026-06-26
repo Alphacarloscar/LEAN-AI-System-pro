@@ -7,6 +7,7 @@
 
 import type { ReactNode } from 'react'
 import { Badge }          from '@shared/design-system/components'
+import { useUnsavedGuard } from '@/shared/hooks/useUnsavedGuard'
 import {
   DS,
   mapAIActRisk,
@@ -27,6 +28,7 @@ interface GanttRowProps {
   row:           GanttRow
   isEditing:     boolean
   editValue:     string
+  isDirty:       boolean
   onEditStart:   (current: string) => void
   onEditChange:  (v: string) => void
   onEditSave:    () => void
@@ -35,8 +37,9 @@ interface GanttRowProps {
 // ── Componente ────────────────────────────────────────────────
 
 export function GanttRowItem({
-  row, isEditing, editValue, onEditStart, onEditChange, onEditSave,
+  row, isEditing, editValue, isDirty, onEditStart, onEditChange, onEditSave,
 }: GanttRowProps) {
+  useUnsavedGuard(isDirty, 'T9_GanttRowItem')
 
   let name:          string
   let department:    string
@@ -64,7 +67,7 @@ export function GanttRowItem({
     const sm      = T4_STATUS_META[uc.status] ?? T4_STATUS_META.candidato
     statusBadge   = <Badge shape="pill" size="xs" style={{ backgroundColor: sm.bg, color: sm.color }}>{sm.label}</Badge>
     barBg         = DS.navy
-    barTextColor  = '#ffffff'
+    barTextColor  = DS.white
     barOpacity    = uc.status === 'completado' ? 0.45 : 1
     showMilestone = !!uc.roadmap?.quarter
     sourceLabel   = 'T4 · Go'
@@ -91,7 +94,7 @@ export function GanttRowItem({
 
   return (
     <div
-      className="grid border-t border-border dark:border-white/6 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
+      className="grid border-t border-border dark:border-white/6 hover:bg-warm-50 dark:hover:bg-warm-800/40 transition-colors"
       style={{ gridTemplateColumns: '260px 1fr', minHeight: 56 }}
     >
       {/* Columna izquierda: info */}
@@ -125,12 +128,12 @@ export function GanttRowItem({
                 if (e.key === 'Enter')  onEditSave()
                 if (e.key === 'Escape') onEditSave()
               }}
-              className="text-[10px] border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5 bg-white dark:bg-gray-800 text-text-muted w-28 outline-none focus:ring-1 focus:ring-blue-300"
+              className="text-[10px] border border-border dark:border-warm-600/40 rounded px-1.5 py-0.5 bg-white dark:bg-warm-700 text-text-muted dark:text-warm-200 w-28 outline-none focus:ring-1 focus:ring-gold/20 focus:border-gold"
             />
           ) : (
             <button
               onClick={() => onEditStart(responsible)}
-              className="flex items-center gap-0.5 text-[10px] text-text-muted hover:text-lean-black dark:hover:text-gray-100 transition-colors group"
+              className="flex items-center gap-0.5 text-[10px] text-text-muted hover:text-lean-black dark:hover:text-warm-50 transition-colors group"
             >
               <span>{responsible || '— sin responsable'}</span>
               <svg
