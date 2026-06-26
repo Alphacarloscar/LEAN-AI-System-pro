@@ -60,6 +60,81 @@
 
 
 -- ════════════════════════════════════════════════════════════════
+-- §PRE  VERIFICACIÓN DE PRERREQUISITOS
+-- ════════════════════════════════════════════════════════════════
+--
+-- Este bloque comprueba los 3 prerrequisitos ANTES de ejecutar
+-- el resto del script. Si alguno falla, lanza un error claro y
+-- detiene la ejecución. Corregir el problema y volver a ejecutar.
+--
+-- ┌─────────────────────────────────────────────────────────────┐
+-- │  PRERREQUISITO 1 — pg_cron habilitado                       │
+-- │  Si falla: Dashboard → Database → Extensions → pg_cron      │
+-- │            → Enable → guardar                               │
+-- ├─────────────────────────────────────────────────────────────┤
+-- │  PRERREQUISITO 2 — Vault secret "audit_pepper" configurado  │
+-- │  Pasos si falta:                                            │
+-- │  a) Generar valor (ejecutar en SQL Editor):                 │
+-- │       SELECT encode(gen_random_bytes(32), 'hex');           │
+-- │  b) Guardar en Vault:                                       │
+-- │       Dashboard → Project Settings → Vault → New Secret     │
+-- │       Name: audit_pepper  /  Value: <hex 64 chars>         │
+-- │  c) Activar como parámetro de BD (ejecutar en SQL Editor):  │
+-- │       ALTER DATABASE postgres                               │
+-- │         SET app.audit_pepper = '<valor hex>';               │
+-- │  (repetir a/b/c para cada proyecto: PRE y PRO por separado) │
+-- ├─────────────────────────────────────────────────────────────┤
+-- │  PRERREQUISITO 3 — Edge Function log-audit-event desplegada │
+-- │  Si falta: Dashboard → Edge Functions → Deploy              │
+-- │  (el SQL puede ejecutarse sin ella, pero los eventos de     │
+-- │   auditoría no se escribirán en BD hasta que esté activa)   │
+-- └─────────────────────────────────────────────────────────────┘
+
+-- CHECK 1: pg_cron instalado
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_extension WHERE extname = 'pg_cron'
+  ) THEN
+    RAISE EXCEPTION
+      E'PRERREQUISITO FALTANTE: pg_cron no está habilitado.\n'
+      'Ir a: Dashboard → Database → Extensions → pg_cron → Enable\n'
+      'Después volver a ejecutar este script.';
+  END IF;
+END $$;
+
+-- CHECK 2: audit_pepper configurado y no vacío
+DO $$
+DECLARE
+  v_pepper text;
+BEGIN
+  v_pepper := current_setting('app.audit_pepper', true);
+  IF v_pepper IS NULL OR trim(v_pepper) = '' THEN
+    RAISE EXCEPTION
+      E'PRERREQUISITO FALTANTE: app.audit_pepper no está configurado.\n'
+      'Pasos:\n'
+      '  1. Generar valor:  SELECT encode(gen_random_bytes(32), ''hex'');\n'
+      '  2. Guardar en Vault: Dashboard → Project Settings → Vault → New Secret\n'
+      '     Name: audit_pepper  /  Value: <hex 64 chars>\n'
+      '  3. Activar:  ALTER DATABASE postgres SET app.audit_pepper = ''<valor>'';\n'
+      'Después volver a ejecutar este script.';
+  END IF;
+  RAISE NOTICE 'CHECK 2 OK: app.audit_pepper está configurado (longitud: % chars).', length(v_pepper);
+END $$;
+
+-- CHECK 3 (informativo): Edge Function log-audit-event
+--   No bloqueable desde SQL — la función es externa. Se muestra aviso.
+DO $$
+BEGIN
+  RAISE NOTICE
+    'CHECK 3 (manual): Verificar que la Edge Function log-audit-event está desplegada '
+    'en Dashboard → Edge Functions antes de usar la aplicación.';
+END $$;
+
+RAISE NOTICE '§PRE completado — todos los prerrequisitos verificados. Continuando con el despliegue.';
+
+
+-- ════════════════════════════════════════════════════════════════
 -- §0  EXTENSIONES
 -- ════════════════════════════════════════════════════════════════
 -- pgcrypto: requerido por hmac() y encode(digest())
