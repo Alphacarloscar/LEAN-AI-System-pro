@@ -5,9 +5,9 @@ import type { GeneratedChangePlanPhase } from '../types'
 import { Card, Badge } from '@shared/design-system/components'
 
 const PHASE_ICON_MAP: Record<string, React.ReactElement> = {
-  zap:          <Zap       size={20} strokeWidth={2} />,
-  'bar-chart-2':<BarChart2 size={20} strokeWidth={2} />,
-  rocket:       <Rocket    size={20} strokeWidth={2} />,
+  zap:          <Zap       size={20} strokeWidth={1.5} />,
+  'bar-chart-2':<BarChart2 size={20} strokeWidth={1.5} />,
+  rocket:       <Rocket    size={20} strokeWidth={1.5} />,
 }
 
 export function PlanPhaseCard({ step }: { step: GeneratedChangePlanPhase }) {
@@ -45,7 +45,7 @@ export function PlanPhaseCard({ step }: { step: GeneratedChangePlanPhase }) {
         ))}
       </div>
 
-      <div className="flex gap-2 items-start p-3 rounded-lg bg-danger-light/30 dark:bg-red-900/15 border border-danger-light dark:border-red-800/30">
+      <div className="flex gap-2 items-start p-3 rounded-lg bg-danger-light/30 dark:bg-danger/15 border border-danger-light dark:border-danger/30">
         <svg className="flex-shrink-0 mt-0.5 w-3.5 h-3.5 text-danger-dark" fill="none" viewBox="0 0 16 16">
           <path d="M8 2L1 14h14L8 2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
           <path d="M8 7v3M8 12v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>

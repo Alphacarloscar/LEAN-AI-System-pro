@@ -113,7 +113,7 @@ export function NewInterviewModal({ onClose, onSubmit, departments }: NewIntervi
               aria-describedby={errors.department ? 'dept-error' : undefined}
               className={[
                 'w-full px-3 py-2 rounded-lg text-sm text-lean-black dark:text-warm-50',
-                'bg-gray-50 dark:bg-warm-700 border transition-all duration-150',
+                'bg-warm-50 dark:bg-warm-700 border transition-all duration-150',
                 errors.department
                   ? 'border-danger focus:outline-none focus:ring-2 focus:ring-danger/20'
                   : 'border-border focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40',
@@ -142,7 +142,7 @@ export function NewInterviewModal({ onClose, onSubmit, departments }: NewIntervi
           />
         )}
 
-        <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-gray-50 dark:bg-warm-700/50 border border-border/60">
+        <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-warm-50 dark:bg-warm-700/50 border border-border/60">
           Se crearán <span className="font-medium text-text-muted">{TOTAL_SUBDIMENSIONS} subdimensiones</span> en blanco para este entrevistado. Puntúalas en la sesión.
         </p>
 

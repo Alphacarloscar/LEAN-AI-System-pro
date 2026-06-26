@@ -160,7 +160,7 @@ export function LeanRadarChart({
           stroke={getThemeColor('navy')}
           fill={getThemeColor('navy')}
           fillOpacity={0.18}
-          strokeWidth={2}
+          strokeWidth={1.5}
           dot={{ r: 3, fill: getThemeColor('navy'), strokeWidth: 0 }}
         />
 
@@ -172,7 +172,7 @@ export function LeanRadarChart({
             stroke={getThemeColor('success')}
             fill={getThemeColor('success')}
             fillOpacity={0.10}
-            strokeWidth={2}
+            strokeWidth={1.5}
             strokeDasharray="5 3"
             dot={{ r: 3, fill: getThemeColor('success'), strokeWidth: 0 }}
           />

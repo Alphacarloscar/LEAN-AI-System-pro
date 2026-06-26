@@ -130,7 +130,7 @@ export function T2View({ onBack }: T2ViewProps) {
               size="sm"
               onClick={() => setShowModal(true)}
               icon={
-                <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M8 2v12M2 8h12" />
                 </svg>
               }
@@ -148,7 +148,7 @@ export function T2View({ onBack }: T2ViewProps) {
           Haz clic en un stakeholder para ver su perfil y las intervenciones recomendadas.
         </p>
         {lastError && (
-          <p className="mt-2 text-[11px] text-red-500 font-mono bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg">
+          <p className="mt-2 text-[11px] text-danger font-mono bg-danger-light dark:bg-danger/20 px-3 py-1.5 rounded-lg">
             {lastError}
           </p>
         )}
@@ -175,7 +175,7 @@ export function T2View({ onBack }: T2ViewProps) {
         {isLoadingT2 && (
           <div className="max-w-7xl mx-auto px-8 pt-2">
             <div className="flex items-center gap-1.5 text-[11px] text-text-subtle">
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              <div className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
               Actualizando datos…
             </div>
           </div>

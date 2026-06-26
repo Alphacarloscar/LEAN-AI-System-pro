@@ -125,7 +125,7 @@ export function T12View({ onBack }: T12ViewProps) {
               variant="primary"
               size="sm"
               onClick={handleExport}
-              icon={<svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v8M4 6l4 4 4-4M2 14h12" /></svg>}
+              icon={<svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v8M4 6l4 4 4-4M2 14h12" /></svg>}
             >
               Exportar para auditor
             </Button>
@@ -225,7 +225,7 @@ export function T12View({ onBack }: T12ViewProps) {
           {/* Estado completo de la sección */}
           {activeControls.every((c) => c.status === 'aprobado') && activeControls.length > 0 && (
             <div className="mt-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-success-light border border-success-dark/20">
-              <svg className="h-4 w-4 text-success-dark shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="h-4 w-4 text-success-dark shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 4L6 11l-3-3" />
               </svg>
               <p className="text-xs font-semibold text-success-dark">

@@ -70,7 +70,7 @@ const TEST_INTERVIEWEE = {
  * lo lee T1View desde el store de Zustand (lean-active-engagement en
  * localStorage). selectEngagement() debe haberse llamado antes en beforeEach.
  */
-async function goToT1AndWait(page: Page, _engagementId: string = LAB_PROJECT_ID): Promise<void> {
+async function goToT1AndWait(page: Page): Promise<void> {
   await page.goto('/t1', { waitUntil: 'domcontentloaded' })
   // Espera al ToolHeader real de T1View (title="AI Readiness Assessment"),
   // no al card del dashboard T10 que también tiene ese texto.

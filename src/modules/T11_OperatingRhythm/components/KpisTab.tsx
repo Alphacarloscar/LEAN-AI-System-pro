@@ -32,7 +32,7 @@ export function KpisTab({ kpiGroups }: { kpiGroups: T11KpiGroup[] }) {
                 </thead>
                 <tbody>
                   {group.kpis.map((kpi, i) => (
-                    <tr key={kpi.name} className={`border-b border-border/50 dark:border-warm-500/50 ${i % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-warm-700/30'}`}>
+                    <tr key={kpi.name} className={`border-b border-border/50 dark:border-warm-500/50 ${i % 2 === 0 ? '' : 'bg-warm-50/50 dark:bg-warm-700/30'}`}>
                       <td className="px-4 py-3">
                         <p className="text-xs font-semibold text-lean-black dark:text-warm-50">{kpi.name}</p>
                       </td>

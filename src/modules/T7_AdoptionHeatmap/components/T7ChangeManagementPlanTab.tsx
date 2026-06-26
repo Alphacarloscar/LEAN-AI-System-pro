@@ -91,7 +91,7 @@ export function ChangeManagementPlanTab({
           </p>
           {isLLM && generatedPlan?.contextualNote && (
             <p className="text-xs text-text-subtle mt-1 italic">
-                <span className="inline-flex items-start gap-1.5"><Lightbulb size={12} strokeWidth={2} className="shrink-0 mt-0.5" />{generatedPlan.contextualNote}</span>
+                <span className="inline-flex items-start gap-1.5"><Lightbulb size={12} strokeWidth={1.5} className="shrink-0 mt-0.5" />{generatedPlan.contextualNote}</span>
             </p>
           )}
         </div>
@@ -119,7 +119,7 @@ export function ChangeManagementPlanTab({
 
       {/* Error — ya notificado via ServiceErrorToast; mensaje inline como fallback */}
       {error && !isPending && (
-        <div className="rounded-lg border border-danger-light bg-danger-light/30 dark:bg-red-900/15 px-4 py-3">
+        <div className="rounded-lg border border-danger-light bg-danger-light/30 dark:bg-danger/15 px-4 py-3">
           <p className="text-xs text-danger-dark">{error}</p>
         </div>
       )}

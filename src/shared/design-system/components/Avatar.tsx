@@ -115,7 +115,7 @@ export function AvatarGroup({ users, max = 4, size = 'sm', className = '' }: Ava
         <span
           className={[
             'inline-flex items-center justify-center rounded-full',
-            'bg-gray-200 text-gray-600 text-xs font-medium',
+            'bg-warm-200 text-warm-600 text-xs font-medium',
             'ring-2 ring-white dark:ring-warm-900',
             sizeClasses[size],
           ].join(' ')}

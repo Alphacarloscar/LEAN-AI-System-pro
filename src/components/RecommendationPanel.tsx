@@ -75,7 +75,7 @@ function LoadingState() {
 function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 gap-3">
-      <p className="text-xs text-red-500 dark:text-red-400 text-center max-w-xs">
+      <p className="text-xs text-danger dark:text-danger text-center max-w-xs">
         {error}
       </p>
       <button
@@ -93,9 +93,9 @@ function RecommendationCard({ rec, index }: { rec: T1Recommendation; index: numb
   const effort = EFFORT_CONFIG[rec.effort as keyof typeof EFFORT_CONFIG] ?? EFFORT_CONFIG.medio
 
   return (
-    <div className="flex gap-3 p-4 rounded-xl bg-white dark:bg-warm-800/60 border border-border dark:border-white/6 hover:border-amber-300 dark:hover:border-amber-700/50 transition-colors">
+    <div className="flex gap-3 p-4 rounded-xl bg-white dark:bg-warm-800/60 border border-border dark:border-white/6 hover:border-gold/40 dark:hover:border-gold/30 transition-colors">
       {/* Número */}
-      <div className="shrink-0 w-6 h-6 rounded-lg bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/40 flex items-center justify-center">
+      <div className="shrink-0 w-6 h-6 rounded-lg bg-gold/5 dark:bg-gold/20 border border-gold/20 dark:border-gold/30 flex items-center justify-center">
         <span className="text-[10px] font-bold text-[#C8860A]">{index + 1}</span>
       </div>
 
@@ -156,7 +156,7 @@ export function RecommendationPanel({
   // Banner compacto — solo si no hay datos y no se ha iniciado generación
   if (!hasGenerated && !hasData && !isLoading && !error) {
     return (
-      <div className="rounded-xl border border-gold/30 bg-amber-50/60 dark:bg-amber-900/15 px-5 py-3
+      <div className="rounded-xl border border-gold/30 bg-gold/5 dark:bg-gold/10 px-5 py-3
                       flex items-center gap-4">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <div className="h-8 w-8 rounded-lg bg-gold/10 border border-gold/20
@@ -194,9 +194,9 @@ export function RecommendationPanel({
     <div className="rounded-xl bg-surface dark:bg-warm-900/40 border border-border dark:border-white/6 overflow-hidden">
 
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gold/30 dark:border-white/6 bg-amber-50/60 dark:bg-amber-900/15">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gold/30 dark:border-white/6 bg-gold/5 dark:bg-gold/10">
         <div className="flex items-center gap-2.5">
-          <div className="w-6 h-6 rounded-lg bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/30 flex items-center justify-center text-[#C8860A]">
+          <div className="w-6 h-6 rounded-lg bg-gold/5 dark:bg-gold/20 border border-gold/20 dark:border-gold/30 flex items-center justify-center text-[#C8860A]">
             <SparkleIcon />
           </div>
           <div>
@@ -230,8 +230,8 @@ export function RecommendationPanel({
           <div className="space-y-3">
             {/* Nota contextual */}
             {data.contextualNote && (
-              <div className="px-3 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30">
-                <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
+              <div className="px-3 py-2.5 rounded-xl bg-gold/5 dark:bg-gold/15 border border-gold/20 dark:border-gold/30">
+                <p className="text-[11px] text-gold-text dark:text-gold-hover leading-relaxed">
                   {data.contextualNote}
                 </p>
               </div>

@@ -194,13 +194,13 @@ export function CompanyProfileView() {
           <div className="flex items-center gap-3 shrink-0">
             {activeTab === 'proyecto' && (
               <>
-                {saveError && <span className="text-[10px] text-red-500 font-mono max-w-[280px] truncate" title={saveError}>{saveError}</span>}
+                {saveError && <span className="text-[10px] text-danger font-mono max-w-[280px] truncate" title={saveError}>{saveError}</span>}
                 {savedDate && !isDirty && !saveError && <span className="text-[10px] text-text-subtle dark:text-warm-400 font-mono">Guardado {savedDate}</span>}
                 {isDirty && !isSaving && <span className="text-[10px] text-warning-dark font-mono animate-pulse">Cambios sin guardar</span>}
               </>
             )}
             {activeTab === 'empresa' && companySaveError && (
-              <span className="text-[10px] text-red-500 font-mono max-w-[280px] truncate" title={companySaveError}>{companySaveError}</span>
+              <span className="text-[10px] text-danger font-mono max-w-[280px] truncate" title={companySaveError}>{companySaveError}</span>
             )}
 
             {canEditCompanySettings && activeTab === 'empresa' && (
@@ -210,13 +210,13 @@ export function CompanyProfileView() {
                 className={[
                   'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
                   isCompanySaving || !companyId
-                    ? 'bg-gray-300 dark:bg-warm-700 text-gray-500 cursor-not-allowed'
+                    ? 'bg-warm-300 dark:bg-warm-700 text-warm-500 cursor-not-allowed'
                     : companySaveFlash ? 'bg-success-dark text-white'
                     : 'bg-navy-metallic dark:bg-gold-metallic text-white dark:text-lean-black hover:bg-navy-metallic-hover dark:hover:bg-gold-metallic-hover shadow-sm',
                 ].join(' ')}
               >
                 {isCompanySaving ? (<><Spinner size="sm" label="Guardando…" />Guardando...</>)
-                  : companySaveFlash ? (<><svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 7l4 4 6-7" /></svg>Guardado</>)
+                  : companySaveFlash ? (<><svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 7l4 4 6-7" /></svg>Guardado</>)
                   : 'Guardar empresa'}
               </button>
             )}
@@ -227,13 +227,13 @@ export function CompanyProfileView() {
                 disabled={isSaving}
                 className={[
                   'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
-                  isSaving ? 'bg-gray-300 dark:bg-warm-700 text-gray-500 cursor-not-allowed'
+                  isSaving ? 'bg-warm-300 dark:bg-warm-700 text-warm-500 cursor-not-allowed'
                     : savedFlash ? 'bg-success-dark text-white'
                     : 'bg-navy-metallic dark:bg-gold-metallic text-white dark:text-lean-black hover:bg-navy-metallic-hover dark:hover:bg-gold-metallic-hover shadow-sm',
                 ].join(' ')}
               >
                 {isSaving ? (<><Spinner size="sm" label="Guardando…" />Guardando...</>)
-                  : savedFlash ? (<><svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 7l4 4 6-7" /></svg>Guardado</>)
+                  : savedFlash ? (<><svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 7l4 4 6-7" /></svg>Guardado</>)
                   : (<><svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 2H4L2 4v8a1 1 0 001 1h8a1 1 0 001-1V3a1 1 0 00-1-1z" /><path d="M9 2v4H5V2" /><rect x="4" y="8" width="6" height="5" rx="0.5" /></svg>Guardar contexto</>)}
               </button>
             )}

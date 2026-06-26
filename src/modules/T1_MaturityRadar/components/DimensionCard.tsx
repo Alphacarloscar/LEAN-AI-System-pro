@@ -120,7 +120,7 @@ function SubdimRow({ sub, onChange }: SubdimRowProps) {
           icon={
             <svg
               className={`h-3 w-3 transition-transform duration-150 ${sub.showCriteria ? 'rotate-90' : ''}`}
-              viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+              viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
             >
               <path d="M6 12l4-4-4-4" />
             </svg>
@@ -236,7 +236,7 @@ export function DimensionCard({ state, definition, onChange }: DimensionCardProp
           </span>
           <svg
             className={`h-3.5 w-3.5 text-text-subtle transition-transform duration-150 ${isCollapsed ? '-rotate-90' : ''}`}
-            viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+            viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
           >
             <path d="M4 6l4 4 4-4" />
           </svg>

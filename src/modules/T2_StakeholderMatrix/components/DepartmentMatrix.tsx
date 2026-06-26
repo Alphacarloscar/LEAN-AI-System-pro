@@ -61,7 +61,7 @@ export function DepartmentMatrix({
   if (stakeholders.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="h-12 w-12 rounded-xl bg-gray-100 dark:bg-warm-700 flex items-center justify-center mb-3">
+        <div className="h-12 w-12 rounded-xl bg-warm-100 dark:bg-warm-700 flex items-center justify-center mb-3">
           <svg className="h-6 w-6 text-text-subtle" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
           </svg>
@@ -121,7 +121,7 @@ export function DepartmentMatrix({
 
             <button
               onClick={() => toggleDept(dept)}
-              className="w-full px-5 py-3 border-b border-border bg-gray-50/50 dark:bg-warm-700/30 flex items-center justify-between hover:bg-gray-100/60 dark:hover:bg-warm-700/50 transition-colors"
+              className="w-full px-5 py-3 border-b border-border bg-warm-50/50 dark:bg-warm-700/30 flex items-center justify-between hover:bg-warm-100/60 dark:hover:bg-warm-700/50 transition-colors"
             >
               <div className="flex items-center gap-2">
                 <svg
@@ -153,7 +153,7 @@ export function DepartmentMatrix({
                         'w-full flex items-center gap-3 px-5 py-3 text-left transition-all duration-150',
                         isActive
                           ? 'bg-navy/5 dark:bg-navy/10 border-l-2 border-navy'
-                          : 'hover:bg-gray-50 dark:hover:bg-warm-700/50 border-l-2 border-transparent',
+                          : 'hover:bg-warm-50 dark:hover:bg-warm-700/50 border-l-2 border-transparent',
                       ].join(' ')}
                     >
                       <ArchetypeDot archetype={s.archetype} size="md" />

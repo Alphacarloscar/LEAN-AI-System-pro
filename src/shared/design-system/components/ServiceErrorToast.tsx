@@ -46,7 +46,7 @@ export function ServiceErrorToast({
     <div
       role="alert"
       aria-live="assertive"
-      className="flex flex-col w-[calc(100vw-32px)] sm:w-auto sm:min-w-[320px] sm:max-w-sm rounded-xl shadow-lg bg-white dark:bg-warm-800 border border-border border-l-4 border-l-danger animate-fade-in"
+      className="flex flex-col w-[calc(100vw-32px)] sm:w-auto sm:min-w-[320px] sm:max-w-sm rounded-xl shadow-md bg-white dark:bg-warm-800 border border-border border-l-4 border-l-danger animate-fade-in"
     >
       {/* ── Fila principal ── */}
       <div className="flex items-start gap-3 p-4">
@@ -58,7 +58,7 @@ export function ServiceErrorToast({
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
           >

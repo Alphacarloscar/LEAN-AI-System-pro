@@ -82,7 +82,7 @@ export function EmptyNoData({ onNavigate }: { onNavigate: (path: string) => void
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gold transition-all hover:opacity-90 shadow-sm"
         >
           Comenzar con T1 — Radar de Madurez
-          <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <path d="M2 6h8M6.5 2.5L10 6l-3.5 3.5" />
           </svg>
         </button>

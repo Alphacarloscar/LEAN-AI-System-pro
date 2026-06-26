@@ -181,7 +181,7 @@ function ToastItemComponent({
       role="alert"
       aria-live="polite"
       className={[
-        'flex items-start gap-3 p-4 rounded-lg shadow-lg',
+        'flex items-start gap-3 p-4 rounded-lg shadow-md',
         'w-[calc(100vw-32px)] sm:min-w-[280px] sm:w-auto sm:max-w-sm',
         'animate-fade-in',
         bgClasses[item.variant],

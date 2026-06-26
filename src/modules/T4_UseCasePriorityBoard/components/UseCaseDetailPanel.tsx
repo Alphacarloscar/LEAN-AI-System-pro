@@ -416,12 +416,12 @@ export function UseCaseDetailPanel({
                   Obligaciones regulatorias aplicables
                 </p>
                 {cls.riskLevel === 'prohibido' && (
-                  <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3">
-                    <p className="text-xs font-semibold text-red-700 dark:text-red-300 mb-1 flex items-center gap-1.5">
+                  <div className="rounded-xl bg-danger-light dark:bg-danger/20 border border-danger-light dark:border-danger px-4 py-3">
+                    <p className="text-xs font-semibold text-danger-dark dark:text-danger mb-1 flex items-center gap-1.5">
                       <Ban size={14} strokeWidth={1.5} className="shrink-0" />
                       Sistema potencialmente prohibido — Art. 5 AI Act
                     </p>
-                    <p className="text-[10px] text-red-600 dark:text-red-400 leading-relaxed">
+                    <p className="text-[10px] text-danger-dark dark:text-danger leading-relaxed">
                       Detener el desarrollo e iniciar revisión legal inmediata.
                     </p>
                   </div>

@@ -41,7 +41,7 @@ function ChevronIcon({ open }: { open: boolean }) {
 function PlusIcon() {
   return (
     <svg width="10" height="10" viewBox="0 0 12 12" fill="none"
-         stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+         stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
       <path d="M6 2v8M2 6h8" />
     </svg>
   )
@@ -220,7 +220,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
       {/* Dropdown */}
       {open && (
         <div className={[
-          'absolute top-full left-0 mt-1.5 w-64 rounded-xl shadow-lg border overflow-hidden z-50',
+          'absolute top-full left-0 mt-1.5 w-64 rounded-xl shadow-md border overflow-hidden z-50',
           dark
             ? 'bg-warm-800 border-white/10'
             : 'bg-white border-black/8',
@@ -239,8 +239,8 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                     'w-full text-left px-4 py-2.5 text-xs transition-colors',
                     !activeEngagementId
                       ? dark
-                        ? 'bg-amber-900/30 text-amber-300 font-medium'
-                        : 'bg-amber-50 text-[#C8860A] font-medium'
+                        ? 'bg-gold/20 text-gold-hover font-medium'
+                        : 'bg-gold/5 text-gold font-medium'
                       : dark
                         ? 'text-warm-200 hover:bg-white/6'
                         : 'text-lean-black hover:bg-warm-50',
@@ -261,7 +261,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                 </button>
               </div>
               {projects.length > 0 && (
-                <div className={['border-t', dark ? 'border-white/8' : 'border-gray-100'].join(' ')} />
+                <div className={['border-t', dark ? 'border-white/8' : 'border-warm-100'].join(' ')} />
               )}
             </>
           )}
@@ -283,11 +283,11 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                       'w-full text-left px-4 py-2.5 text-xs transition-colors',
                       isActive
                         ? dark
-                          ? 'bg-amber-900/30 text-amber-300 font-medium'
-                          : 'bg-amber-50 text-[#C8860A] font-medium'
+                          ? 'bg-gold/20 text-gold-hover font-medium'
+                          : 'bg-gold/5 text-gold font-medium'
                         : dark
-                          ? 'text-gray-300 hover:bg-white/6'
-                          : 'text-gray-700 hover:bg-gray-50',
+                          ? 'text-warm-300 hover:bg-white/6'
+                          : 'text-warm-500 hover:bg-warm-50',
                     ].join(' ')}
                   >
                     <div className="flex items-center gap-2">
@@ -311,7 +311,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
               })}
             </div>
           ) : (
-            <div className={['px-4 py-3 text-xs', dark ? 'text-gray-500' : 'text-gray-400'].join(' ')}>
+            <div className={['px-4 py-3 text-xs', dark ? 'text-warm-500' : 'text-warm-400'].join(' ')}>
               Sin proyectos disponibles
             </div>
           )}
@@ -319,7 +319,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
           {/* Separador + formulario de creación — solo si puede crear */}
           {canCreateProject && (
             <>
-              <div className={['border-t', dark ? 'border-white/8' : 'border-gray-100'].join(' ')} />
+              <div className={['border-t', dark ? 'border-white/8' : 'border-warm-100'].join(' ')} />
 
               {creating ? (
                 <div className="p-3 flex flex-col gap-2">
@@ -334,7 +334,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                         placeholder="Nombre del proyecto..."
                         className={[
                           inlineInputClass,
-                          createError ? (dark ? 'border-red-500' : 'border-red-400') : '',
+                          createError ? (dark ? 'border-danger' : 'border-danger-dark') : '',
                         ].join(' ')}
                         disabled={createBusy}
                       />
@@ -344,7 +344,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                     {needsCompanySelector && (
                       <div>
                         {loadingCo ? (
-                          <div className={['flex items-center gap-1.5 text-xs px-1', dark ? 'text-gray-400' : 'text-gray-500'].join(' ')}>
+                          <div className={['flex items-center gap-1.5 text-xs px-1', dark ? 'text-warm-400' : 'text-warm-500'].join(' ')}>
                             <Spinner size="sm" /> Cargando empresas…
                           </div>
                         ) : (
@@ -355,7 +355,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                             disabled={createBusy}
                             className={[
                               inlineSelectClass,
-                              !selectedCompany && createError ? (dark ? 'border-red-500' : 'border-red-400') : '',
+                              !selectedCompany && createError ? (dark ? 'border-danger' : 'border-danger-dark') : '',
                             ].join(' ')}
                           >
                             <option value="">Empresa (obligatorio)…</option>
@@ -382,7 +382,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                   </form>
 
                   {createError && (
-                    <p className={['text-[10px] px-0.5 leading-snug', dark ? 'text-red-400' : 'text-red-500'].join(' ')}>
+                    <p className={['text-[10px] px-0.5 leading-snug', dark ? 'text-danger' : 'text-danger'].join(' ')}>
                       {createError}
                     </p>
                   )}

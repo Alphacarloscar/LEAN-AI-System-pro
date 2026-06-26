@@ -171,16 +171,16 @@ export function T7View({ onBack }: T7ViewProps) {
 
       {/* Banner no bloqueante — stakeholders pendientes */}
       {(isLoadingT2 || (!isLoadingT2 && stakeholders.length === 0)) && (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-600/40 px-4 py-3">
-          <svg className="mt-0.5 shrink-0 text-amber-500" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <div className="flex items-start gap-3 rounded-lg border border-gold/30 bg-gold/5 dark:bg-gold/15 dark:border-gold/40 px-4 py-3">
+          <svg className="mt-0.5 shrink-0 text-gold" width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M8 2L14 13H2L8 2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
             <path d="M8 6v3.5M8 11.5v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
           </svg>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
+            <p className="text-xs font-medium text-gold-text dark:text-gold-hover">
               {isLoadingT2 ? 'Cargando stakeholders…' : 'Stakeholders no cargados.'}
             </p>
-            <p className="text-xs text-amber-700/80 dark:text-amber-300/70 mt-0.5">
+            <p className="text-xs text-gold-text/80 dark:text-gold-hover/70 mt-0.5">
               {isLoadingT2
                 ? 'La vista se actualizará automáticamente cuando terminen de cargar.'
                 : 'Puedes ir a T2 para añadir stakeholders, reintentar la carga o continuar con datos vacíos.'}
@@ -189,7 +189,7 @@ export function T7View({ onBack }: T7ViewProps) {
           {!isLoadingT2 && engagementId && (
             <button
               onClick={() => loadT2(engagementId)}
-              className="shrink-0 text-[11px] font-medium text-gold dark:text-amber-300 hover:underline"
+              className="shrink-0 text-[11px] font-medium text-gold dark:text-gold-hover hover:underline"
             >
               Reintentar
             </button>

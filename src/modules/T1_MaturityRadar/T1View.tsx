@@ -295,7 +295,7 @@ export function T1View({ onBack }: T1ViewProps) {
         {isLoadingT1 && (
           <div className="max-w-7xl mx-auto px-8 pt-2">
             <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              <div className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
               Actualizando datos…
             </div>
           </div>

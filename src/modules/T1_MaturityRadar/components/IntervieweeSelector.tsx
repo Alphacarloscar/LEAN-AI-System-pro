@@ -35,7 +35,7 @@ export function IntervieweeSelector({
 
         {/* Toggle bar */}
         <div
-          className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-warm-700/50 transition-colors"
+          className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-warm-50 dark:hover:bg-warm-700/50 transition-colors"
           onClick={() => setShowInterviewees((v) => !v)}
         >
           <div className="flex items-center gap-3">
@@ -84,7 +84,7 @@ export function IntervieweeSelector({
                       'flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all duration-150 group',
                       isActive
                         ? 'bg-navy-metallic dark:bg-gold-metallic text-white dark:text-lean-black border-navy dark:border-gold shadow-sm'
-                        : 'bg-white dark:bg-warm-800 border-border hover:border-navy/30 hover:bg-gray-50 dark:hover:bg-warm-700',
+                        : 'bg-white dark:bg-warm-800 border-border hover:border-navy/30 hover:bg-warm-50 dark:hover:bg-warm-700',
                     ].join(' ')}
                   >
                     {/* Selección del entrevistado */}
@@ -130,7 +130,7 @@ export function IntervieweeSelector({
                           'shrink-0 h-5 w-5 rounded-md flex items-center justify-center transition-all duration-150 opacity-0 group-hover:opacity-100',
                           isActive
                             ? 'hover:bg-white/20 dark:hover:bg-black/20 text-white/60 dark:text-lean-black/60 hover:text-white dark:hover:text-lean-black'
-                            : 'hover:bg-red-100 dark:hover:bg-red-900/30 text-text-subtle hover:text-red-500',
+                            : 'hover:bg-danger-light dark:hover:bg-danger/30 text-text-subtle hover:text-danger',
                         ].join(' ')}
                       >
                         <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">

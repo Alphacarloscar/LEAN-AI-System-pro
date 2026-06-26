@@ -129,7 +129,7 @@ export function ResetPasswordView() {
     <div className="min-h-screen flex items-center justify-center bg-surface dark:bg-warm-950 px-4">
       <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm border border-border dark:border-warm-600/30 p-8 w-full max-w-sm text-center">
         <GobyLogo />
-        <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+        <div className="w-12 h-12 rounded-full bg-danger-light flex items-center justify-center mx-auto mb-4">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M10 6v4M10 14h.01M19 10a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -152,7 +152,7 @@ export function ResetPasswordView() {
     <div className="min-h-screen flex items-center justify-center bg-surface dark:bg-warm-950 px-4">
       <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm border border-border dark:border-warm-600/30 p-8 w-full max-w-sm text-center">
         <GobyLogo />
-        <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
+        <div className="w-12 h-12 rounded-full bg-success-light flex items-center justify-center mx-auto mb-4">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M7 10l2 2 4-4M19 10a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -209,7 +209,7 @@ export function ResetPasswordView() {
           </div>
 
           {error && (
-            <p className="text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>
+            <p className="text-xs text-danger dark:text-danger bg-danger-light dark:bg-danger/20 px-3 py-2 rounded-lg">{error}</p>
           )}
 
           <button

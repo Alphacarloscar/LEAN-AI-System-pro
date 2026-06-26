@@ -142,15 +142,15 @@ export function ControlCard({ control, forceExpanded, onUpdate }: ControlCardPro
                 style={{ backgroundColor: nextCfg.hex }}
               >
                 {cfg.nextLabel}
-                <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                   <path d="M2 6h8M6 2l4 4-4 4" />
                 </svg>
               </button>
             )}
 
             {control.status === 'aprobado' && (
-              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-success-dark dark:text-green-400">
-                <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-success-dark dark:text-success">
+                <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M13 4L6 11l-3-3" />
                 </svg>
                 Control aprobado

@@ -153,7 +153,7 @@ export function ProyectoTab() {
         {!isReadOnly && (
           <button
             onClick={addFriction}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-border dark:border-white/10 text-xs text-text-muted dark:text-warm-400 hover:border-navy/40 hover:text-navy dark:hover:text-gray-300 hover:bg-navy/3 dark:hover:bg-navy/5 transition-all duration-150"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-border dark:border-white/10 text-xs text-text-muted dark:text-warm-400 hover:border-navy/40 hover:text-navy dark:hover:text-warm-300 hover:bg-navy/3 dark:hover:bg-navy/5 transition-all duration-150"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
               <path d="M7 2v10M2 7h10" />

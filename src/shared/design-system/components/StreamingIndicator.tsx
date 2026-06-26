@@ -21,7 +21,7 @@ function SpinnerSm() {
   return (
     <svg
       aria-hidden="true"
-      className="animate-spin h-3 w-3 shrink-0 text-amber-600 dark:text-amber-400"
+      className="animate-spin h-3 w-3 shrink-0 text-gold dark:text-gold-hover"
       viewBox="0 0 24 24"
       fill="none"
     >
@@ -72,9 +72,9 @@ export function StreamingIndicator({
         </div>
 
         {/* Pulsing gold badge */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-300/60 dark:border-amber-700/50 bg-white/80 dark:bg-warm-800/60 animate-pulse">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gold/30 dark:border-gold/40 bg-white/80 dark:bg-warm-800/60 animate-pulse">
           <SparklesIcon />
-          <span className="text-[11px] font-semibold text-[#C8860A] dark:text-amber-400 whitespace-nowrap">
+          <span className="text-[11px] font-semibold text-[#C8860A] dark:text-gold-hover whitespace-nowrap">
             {label}
           </span>
         </div>
@@ -92,7 +92,7 @@ export function StreamingIndicator({
         className="flex flex-col items-center justify-center gap-3 w-full h-full min-h-[80px] px-4 py-5"
       >
         <div className={`${shimmerBar} w-full h-1.5`} />
-        <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+        <div className="flex items-center gap-2 text-gold-text dark:text-gold-hover">
           <SpinnerSm />
           <span className="text-xs font-medium text-text-muted">{label}</span>
         </div>

@@ -78,7 +78,7 @@ export function T4View({ onBack }: T4ViewProps) {
 
   function executeAction(action: PendingAction) {
     if (action === 'back') {
-      onBack ? onBack() : navigate('/')
+      if (onBack) { onBack() } else { navigate('/') }
     } else if (action === 'import') {
       setShowImport(true)
     }

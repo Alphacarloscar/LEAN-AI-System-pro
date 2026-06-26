@@ -105,7 +105,7 @@ export function DepartmentManager({ companyId }: Props) {
                   aria-label={`Eliminar ${dept.name}`}
                   className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-full opacity-0 group-hover:opacity-100 text-[#C8860A]/50 hover:text-danger-dark hover:bg-danger-light/30 transition-all duration-100"
                 >
-                  <svg width="7" height="7" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <svg width="7" height="7" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                     <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" />
                   </svg>
                 </button>
@@ -157,7 +157,7 @@ export function DepartmentManager({ companyId }: Props) {
             {isAdding ? (
               <Spinner size="sm" label="Añadiendo…" />
             ) : (
-              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                 <path d="M7 2v10M2 7h10" />
               </svg>
             )}

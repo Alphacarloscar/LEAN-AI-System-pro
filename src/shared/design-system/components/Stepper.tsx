@@ -37,7 +37,7 @@ function StepIcon({ status, number }: { status: StepStatus; number: number }) {
   if (status === 'complete') {
     return (
       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy dark:bg-warm-600">
-        <svg className="h-4 w-4 text-white" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg className="h-4 w-4 text-white" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M3 8l3.5 3.5L13 5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>

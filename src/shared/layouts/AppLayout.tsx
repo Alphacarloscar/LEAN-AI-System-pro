@@ -46,7 +46,7 @@ function DarkModeToggle({ dark, onToggle }: { dark: boolean; onToggle: () => voi
         'h-8 w-8 rounded-full flex items-center justify-center',
         'transition-colors duration-200',
         dark
-          ? 'bg-white/10 hover:bg-white/20 text-amber-300/80'
+          ? 'bg-white/10 hover:bg-white/20 text-gold-hover/80'
           : 'bg-black/5 hover:bg-black/10 text-warm-500',
       ].join(' ')}
     >
@@ -164,7 +164,7 @@ function SessionRecoveryBanner({ state, onReLogin }: {
         bg-warm-900/90 dark:bg-warm-700/90 text-white text-[12px] font-medium
         shadow-sm backdrop-blur-sm border border-white/10"
       >
-        <Spinner size="sm" label="Reconectando…" className="text-amber-400" />
+        <Spinner size="sm" label="Reconectando…" className="text-gold" />
         Reconectando y actualizando datos…
       </div>
     )
@@ -176,7 +176,7 @@ function SessionRecoveryBanner({ state, onReLogin }: {
       <div className="w-full max-w-sm mx-4 bg-white dark:bg-warm-800 rounded-xl
         border border-border shadow-md p-6 text-center space-y-4"
       >
-        <div className="h-12 w-12 rounded-full bg-amber-50 dark:bg-amber-900/30
+        <div className="h-12 w-12 rounded-full bg-gold/5 dark:bg-gold/20
           flex items-center justify-center mx-auto"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C8860A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -256,7 +256,7 @@ export function AppLayout() {
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[200]
             focus:px-4 focus:py-2 focus:rounded-lg focus:bg-gold focus:text-white
-            focus:text-sm focus:font-semibold focus:shadow-lg focus:outline-none"
+            focus:text-sm focus:font-semibold focus:shadow-md focus:outline-none"
         >
           Saltar al contenido principal
         </a>

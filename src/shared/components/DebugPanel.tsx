@@ -21,7 +21,7 @@ function StatusDot({ ok }: { ok: boolean }) {
     <span
       className={[
         'inline-block w-2 h-2 rounded-full shrink-0',
-        ok ? 'bg-green-400' : 'bg-amber-400 animate-pulse',
+        ok ? 'bg-success' : 'bg-gold animate-pulse',
       ].join(' ')}
     />
   )
@@ -64,7 +64,7 @@ export function DebugPanel() {
 
   return (
     <div
-      className="fixed bottom-4 right-4 z-[9999] w-64 rounded-lg border border-white/10 bg-black/85 backdrop-blur-sm shadow-xl"
+      className="fixed bottom-4 right-4 z-[9999] w-64 rounded-lg border border-white/10 bg-black/85 backdrop-blur-sm shadow-md"
       style={{ fontFamily: 'monospace' }}
     >
       {/* Header */}

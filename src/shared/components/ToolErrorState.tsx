@@ -10,7 +10,7 @@ export function ToolErrorState({
   return (
     <div className="flex flex-col items-center justify-center h-64 gap-4">
       <div className="flex flex-col items-center gap-2 text-center">
-        <svg className="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <svg className="h-8 w-8 text-danger" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

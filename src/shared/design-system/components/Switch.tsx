@@ -48,7 +48,7 @@ export function Switch({
           'relative inline-flex items-center rounded-full cursor-pointer',
           'transition-colors duration-200',
           // Off: gris | On: navy
-          'bg-gray-300 peer-checked:bg-navy',
+          'bg-warm-300 peer-checked:bg-navy',
           'peer-focus-visible:ring-2 peer-focus-visible:ring-navy peer-focus-visible:ring-offset-2',
           'peer-disabled:opacity-50 peer-disabled:cursor-not-allowed',
           'dark:bg-warm-600 peer-checked:dark:bg-navy',

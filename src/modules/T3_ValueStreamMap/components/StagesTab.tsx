@@ -279,7 +279,7 @@ export function StagesTab({ processId, stages }: StagesTabProps) {
 
       {/* ── Bottleneck callout ─────────────────────────────────── */}
       {bottleneck && bottleneck.waitTimeHours > 0 && (
-        <div className="mt-4 rounded-xl bg-danger-light border border-red-100 dark:border-red-900/20 px-4 py-3 flex items-start gap-3">
+        <div className="mt-4 rounded-xl bg-danger-light border border-danger-light dark:border-danger/20 px-4 py-3 flex items-start gap-3">
           <Flame size={20} strokeWidth={1.5} className="text-danger-dark shrink-0 mt-0.5" />
           <div>
             <p className="text-xs font-semibold text-danger-dark mb-0.5">

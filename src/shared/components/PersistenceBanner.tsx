@@ -34,7 +34,7 @@ export function PersistenceBanner({ error, isRetrying, onRetry }: PersistenceBan
       {/* Icono alerta */}
       <svg
         width="16" height="16" viewBox="0 0 24 24" fill="none"
-        stroke="#C8860A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        stroke="#C8860A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
         className="shrink-0"
       >
         <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />

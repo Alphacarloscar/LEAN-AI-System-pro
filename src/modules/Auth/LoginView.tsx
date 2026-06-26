@@ -140,7 +140,7 @@ export function LoginView() {
             <AlphaLogo size="lg" />
             {forgotSent ? (
               <div className="text-center space-y-3">
-                <p className="text-sm font-semibold text-green-600 dark:text-green-400">✓ Enlace enviado</p>
+                <p className="text-sm font-semibold text-success-dark dark:text-success">✓ Enlace enviado</p>
                 <p className="text-xs text-text-muted dark:text-warm-200">Revisa tu bandeja de entrada y sigue el enlace para crear una nueva contraseña.</p>
                 <button onClick={() => { setIsForgot(false); setForgotSent(false); setForgotEmail('') }} className="text-xs text-navy dark:text-gold underline underline-offset-2 mt-2">
                   Volver al acceso
@@ -151,8 +151,8 @@ export function LoginView() {
                 <p className="text-xs text-text-muted dark:text-warm-200 text-center">Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.</p>
                 <Field label="Email" type="email" value={forgotEmail} onChange={setForgotEmail} placeholder="tu@empresa.com" autoComplete="email" />
                 {forgotError && (
-                  <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/40">
-                    <p className="text-xs text-red-600 dark:text-red-400">{forgotError}</p>
+                  <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-danger-light dark:bg-danger/20 border border-danger-light dark:border-danger/40">
+                    <p className="text-xs text-danger-dark dark:text-danger">{forgotError}</p>
                   </div>
                 )}
                 <button type="submit" disabled={loading || !forgotEmail} className={['w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-150', loading || !forgotEmail ? 'bg-warm-100 dark:bg-warm-700 text-warm-300 dark:text-warm-500 cursor-not-allowed' : 'bg-navy-metallic dark:bg-gold-metallic text-white dark:text-lean-black hover:bg-navy-metallic-hover dark:hover:bg-gold-metallic-hover active:scale-[0.98] shadow-sm'].join(' ')}>
@@ -179,7 +179,7 @@ export function LoginView() {
             <AlphaLogo size="lg" />
             {recOk ? (
               <div className="text-center space-y-2">
-                <p className="text-sm font-semibold text-green-600 dark:text-green-400">✓ Contraseña actualizada</p>
+                <p className="text-sm font-semibold text-success-dark dark:text-success">✓ Contraseña actualizada</p>
                 <p className="text-xs text-text-subtle dark:text-warm-300">Redirigiendo al login…</p>
               </div>
             ) : (
@@ -188,8 +188,8 @@ export function LoginView() {
                 <Field label="Nueva contraseña" type="password" value={newPass} onChange={setNewPass} placeholder="Mínimo 6 caracteres" autoComplete="new-password" />
                 <Field label="Repite la contraseña" type="password" value={newPass2} onChange={setNewPass2} placeholder="••••••••" autoComplete="new-password" />
                 {recError && (
-                  <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/40">
-                    <p className="text-xs text-red-600 dark:text-red-400">{recError}</p>
+                  <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-danger-light dark:bg-danger/20 border border-danger-light dark:border-danger/40">
+                    <p className="text-xs text-danger-dark dark:text-danger">{recError}</p>
                   </div>
                 )}
                 <button type="submit" disabled={loading || !newPass || !newPass2} className={['w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-150', loading || !newPass || !newPass2 ? 'bg-warm-100 dark:bg-warm-700 text-warm-300 dark:text-warm-500 cursor-not-allowed' : 'bg-navy-metallic text-white hover:bg-navy-metallic-hover'].join(' ')}>
@@ -255,11 +255,11 @@ export function LoginView() {
 
             {/* Error */}
             {error && (
-              <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-50 border border-red-100">
-                <svg className="h-4 w-4 text-red-400 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="currentColor">
+              <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-danger-light border border-danger-light">
+                <svg className="h-4 w-4 text-danger mt-0.5 shrink-0" viewBox="0 0 16 16" fill="currentColor">
                   <path fillRule="evenodd" d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 3.75a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0v-3.5zm.75 6.5a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
                 </svg>
-                <p className="text-xs text-red-600">{error}</p>
+                <p className="text-xs text-danger-dark">{error}</p>
               </div>
             )}
 

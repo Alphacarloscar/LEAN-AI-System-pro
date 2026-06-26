@@ -259,7 +259,7 @@ export function AIActClassificationModal({
               <span className="text-sm font-bold">{riskCfg.label}</span>
             </div>
             {previewRisk === 'prohibido' && (
-              <p className="text-[10px] mt-1.5 text-red-600 dark:text-red-400 leading-relaxed flex items-start gap-1.5">
+              <p className="text-[10px] mt-1.5 text-danger-dark dark:text-danger leading-relaxed flex items-start gap-1.5">
                 <AlertTriangle size={12} strokeWidth={1.5} className="shrink-0 mt-0.5" />
                 Este sistema puede caer en la categoría de uso prohibido por el AI Act (Art. 5). Revisa con el equipo legal antes de proceder.
               </p>

@@ -51,7 +51,7 @@ export function Drawer({
       <div
         className={[
           'absolute top-0 bottom-0 flex flex-col',
-          'bg-white shadow-xl dark:bg-warm-800',
+          'bg-white shadow-md dark:bg-warm-800',
           width,
           slideClass,
         ].join(' ')}

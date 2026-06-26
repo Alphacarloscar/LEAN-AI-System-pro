@@ -24,7 +24,7 @@ export function ViewerEmptyState({ message }: { message?: string }) {
       <p className="text-sm font-medium text-[#2A2822] mb-2 max-w-xs">
         {message ?? 'Tu consultor o equipo está recopilando los datos para esta sección.'}
       </p>
-      <p className="text-xs text-gray-400 max-w-xs">
+      <p className="text-xs text-warm-400 max-w-xs">
         Los resultados aparecerán aquí pronto.
       </p>
     </div>

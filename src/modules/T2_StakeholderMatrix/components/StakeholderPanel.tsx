@@ -50,7 +50,7 @@ export function StakeholderPanel({
               </div>
               <button
                 onClick={onClose}
-                className="h-6 w-6 rounded-md flex items-center justify-center text-text-subtle hover:bg-gray-200 dark:hover:bg-warm-600 transition-colors shrink-0"
+                className="h-6 w-6 rounded-md flex items-center justify-center text-text-subtle hover:bg-warm-200 dark:hover:bg-warm-600 transition-colors shrink-0"
               >
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
                   <path d="M1 1l9 9M10 1L1 10" />
@@ -61,7 +61,7 @@ export function StakeholderPanel({
               <ArchetypeBadge archetype={stakeholder.archetype} />
               <ResistanceBadge resistance={stakeholder.resistance} />
               {stakeholder.manualOverride && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] bg-gray-100 dark:bg-warm-700 text-text-subtle">
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-warm-100 dark:bg-warm-700 text-text-subtle">
                   Ajuste manual
                 </span>
               )}

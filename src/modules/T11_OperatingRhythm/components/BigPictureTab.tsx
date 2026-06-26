@@ -43,14 +43,14 @@ export function BigPictureTab({
 
       {/* Callout adaptativo — solo en modo básico */}
       {adaptiveMode === 'basic' && (
-        <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-900/15 px-4 py-3">
-          <svg className="h-4 w-4 text-red-500 dark:text-red-400 shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <div className="mb-4 flex items-start gap-3 rounded-xl border border-danger-light dark:border-danger/40 bg-danger-light dark:bg-danger/15 px-4 py-3">
+          <svg className="h-4 w-4 text-danger dark:text-danger shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="8" cy="8" r="6" />
             <path d="M8 5v3M8 11h.01" />
           </svg>
           <div>
-            <p className="text-[11px] font-semibold text-red-700 dark:text-red-400 mb-0.5">Modo Básico activo</p>
-            <p className="text-[10px] text-red-600/80 dark:text-red-400/70 leading-relaxed">
+            <p className="text-[11px] font-semibold text-danger-dark dark:text-danger mb-0.5">Modo Básico activo</p>
+            <p className="text-[10px] text-danger-dark/80 dark:text-danger/70 leading-relaxed">
               Tu madurez IA está por debajo de 2.0. Se muestran únicamente las ceremonias esenciales para no sobrecargar la organización.
               Los eventos adicionales se desbloquearán automáticamente al superar ese umbral.
             </p>
