@@ -49,7 +49,6 @@ export function T9View({ onBack }: T9ViewProps) {
   const { useCases, engagementId: t4EngagementId, loadEngagement: loadT4 } = useT4Store()
   const { overrides, freeItems, setOverride, addFreeItem, updateFreeItem, syncEngagement: syncT9 } = useT9Store()
   const { profile: companyProfile }                     = useCompanyProfileStore()
-  const companyName                                     = companyProfile.engagementName
   const loadProfile                                     = useCompanyProfileStore((s) => s.loadProfile)
   const { engagementId: urlId }                         = useParams<{ engagementId: string }>()
   const storeId                                         = useEngagementStore((s) => s.activeEngagementId)
