@@ -28,7 +28,7 @@
 //   — afterEach limpia el interviewee creado para dejar el seed intacto
 // ============================================================
 
-import { test, expect, type Page, type Response } from '@playwright/test'
+import { test, expect, type Page, type Response, type Request } from '@playwright/test'
 import { login, selectEngagement, waitForStoreReady, LAB_PROJECT_ID, USERS } from './helpers'
 
 // ── Constantes del entorno E2E ─────────────────────────────────────────────
@@ -87,25 +87,40 @@ async function goToT1AndWait(page: Page): Promise<void> {
  *   — services.department  (carga de departamentos al montar T1)
  *   — services.t1/fetchT1Data  (carga inicial del store al navegar a /t1)
  *
- * req.postData() es síncrono dentro del callback de waitForResponse — seguro.
+ * Patrón de dos fases:
+ *   1. page.on('request') captura el body ANTES de que la request se envíe,
+ *      cuando postData() es garantizadamente accesible.
+ *   2. waitForResponse identifica la respuesta por referencia de objeto (WeakSet),
+ *      evitando releer postData() en el callback de respuesta donde puede ser null.
  */
 function waitForAuditResponseFromMethod(
   page:        Page,
   serviceName: string,
   methodName:  string,
 ): Promise<Response> {
-  return page.waitForResponse(
-    (res) => {
-      if (!EDGE_FN_PATTERN.test(res.url())) return false
-      try {
-        const body = JSON.parse(res.request().postData() ?? '{}') as Record<string, unknown>
-        return body.service_name === serviceName && body.method_name === methodName
-      } catch {
-        return false
+  // WeakSet allows GC of completed requests; no memory leak risk.
+  const matchingRequests = new WeakSet<Request>()
+
+  const onRequest = (req: Request) => {
+    if (!EDGE_FN_PATTERN.test(req.url()) || req.method() !== 'POST') return
+    try {
+      const body = JSON.parse(req.postData() ?? '{}') as Record<string, unknown>
+      if (body.service_name === serviceName && body.method_name === methodName) {
+        matchingRequests.add(req)
       }
-    },
+    } catch {
+      // Non-JSON body — not our request
+    }
+  }
+
+  page.on('request', onRequest)
+
+  return page.waitForResponse(
+    (res) => matchingRequests.has(res.request()),
     { timeout: EDGE_FN_TIMEOUT },
-  )
+  ).finally(() => {
+    page.off('request', onRequest)
+  })
 }
 
 /**
