@@ -115,6 +115,33 @@ Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (
 
 ---
 
+### ~~DEBT-033~~ — audit.spec.ts usaba waitForResponse para Edge Function con cold-start ✅ (Resuelto — 2026-06-29)
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-29 (timeouts recurrentes en CI ~27 casos)
+**Área:** `e2e/audit.spec.ts` — helper `prepareAuditWatcher`
+**Estado:** Resuelto en commit `01829a1` (rama develop local)
+
+**Descripción:**
+El helper original usaba `page.waitForResponse()` esperando la respuesta HTTP de la Edge Function `log-audit-event`. El cold-start de Deno + latencia Supabase Cloud superaba los 60s de timeout en CI, causando falsos negativos en toda la suite de auditoría.
+
+**Solución aplicada:**
+Reemplazar `waitForResponse` por `page.waitForRequest()` con filtro sobre `service_name` + `method_name` en el cuerpo POST. La Promise resuelve al **enviar** la request (no al recibir la respuesta), eliminando la dependencia de la latencia del servidor. Los tests que necesitan el status code llaman `auditRequest.response()` después, con timeout adicional explícito de 30s solo donde es imprescindible.
+
+**Patrón canónico para Edge Functions con cold-start:**
+```ts
+// CORRECTO: resuelve al enviar — independiente del cold-start
+const requestPromise = page.waitForRequest(
+  (req) => EDGE_FN_PATTERN.test(req.url()) && req.method() === 'POST'
+    && body.service_name === SERVICE && body.method_name === METHOD,
+  { timeout: EDGE_FN_TIMEOUT },
+)
+// Si necesitas la respuesta: await (await requestPromise).response()
+```
+
+**Relacionado:** ADR-017 (Audit Logging Proxy).
+
+---
+
 ### ~~DEBT-032~~ — Specs E2E navegan a rutas T1-T12 sin :engagementId ✅ (Resuelto — 2026-06-29)
 **Severidad:** 🔴 Alta
 **Detectado:** 2026-06-29 (refactor v2.1.0 "atomic-screen-independence")
