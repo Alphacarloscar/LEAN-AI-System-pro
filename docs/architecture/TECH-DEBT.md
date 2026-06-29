@@ -115,6 +115,17 @@ Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (
 
 ---
 
+### ~~DEBT-034~~ — auth.spec.ts usaba selector de clase CSS frágil post-ADR-021 ✅ (Resuelto — 2026-06-29)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-29 (migración tokens semánticos ADR-021)
+**Área:** `e2e/auth.spec.ts:33`, `src/modules/Auth/LoginView.tsx:258`
+**Estado:** Resuelto en PR `fix(e2e+a11y): role=alert en error de LoginView + selector E2E actualizado [e2e]`
+
+**Descripción:**
+`auth.spec.ts` seleccionaba el bloque de error de login con `.bg-red-50 .text-red-600`. La migración ADR-021 cambió esas clases a tokens semánticos (`bg-danger-light`, `text-danger-dark`), rompiendo el selector. Fix: añadir `role="alert"` al `<div>` de error en `LoginView.tsx` (mejora a11y) y usar `page.getByRole('alert')` en el spec — selector estable e independiente de tokens de color.
+
+---
+
 ### ~~DEBT-033~~ — audit.spec.ts usaba waitForResponse para Edge Function con cold-start ✅ (Resuelto — 2026-06-29)
 **Severidad:** 🔴 Alta
 **Detectado:** 2026-06-29 (timeouts recurrentes en CI ~27 casos)

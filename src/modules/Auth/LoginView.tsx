@@ -255,7 +255,7 @@ export function LoginView() {
 
             {/* Error */}
             {error && (
-              <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-danger-light border border-danger-light">
+              <div role="alert" className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-danger-light border border-danger-light">
                 <svg className="h-4 w-4 text-danger mt-0.5 shrink-0" viewBox="0 0 16 16" fill="currentColor">
                   <path fillRule="evenodd" d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 3.75a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0v-3.5zm.75 6.5a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
                 </svg>

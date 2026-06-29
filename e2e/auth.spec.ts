@@ -7,7 +7,7 @@ const DEV_PASSWORD = process.env.E2E_PASSWORD ?? ''
 //   - Email: input[autocomplete="email"]  (Field con autoComplete="email")
 //   - Password: input[autocomplete="current-password"]
 //   - Submit: button[type="submit"] con texto "Acceder"
-//   - Error: div.bg-red-50 > p.text-red-600
+//   - Error: div[role="alert"] (bg-danger-light/text-danger-dark tras ADR-021)
 
 test.describe('Autenticación', () => {
   test('página de login carga y muestra el formulario', async ({ page }) => {
@@ -28,9 +28,9 @@ test.describe('Autenticación', () => {
     await page.locator('input[autocomplete="current-password"]').fill('wrongpassword123')
     await page.locator('button[type="submit"]').click()
 
-    // El error aparece en un div.bg-red-50 con un <p> de texto rojo
+    // El error aparece en un div[role="alert"] — selector estable tras migración ADR-021
     await expect(
-      page.locator('.bg-red-50 .text-red-600').first()
+      page.getByRole('alert').first()
     ).toBeVisible({ timeout: 8_000 })
   })
 
