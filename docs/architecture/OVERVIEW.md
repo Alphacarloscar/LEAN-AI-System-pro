@@ -171,7 +171,11 @@ Los tooltips usan clases Tailwind: `bg-white dark:bg-warm-800 shadow-sm`. Los ej
 
 ## E2E patterns
 
-**Patrón canónico para Edge Functions con cold-start:** usar `page.waitForRequest()` en lugar de `page.waitForResponse()`. La Promise resuelve al enviar la request (independiente de la latencia Deno/Supabase Cloud); si se necesita el status HTTP, llamar `await (await requestPromise).response()` con timeout adicional explícito de 30s solo donde sea imprescindible. Ver `e2e/audit.spec.ts::prepareAuditWatcher` como referencia.
+**Patrón canónico audit watcher (`prepareAuditWatcher`):** registrar AMBAS promises antes de la acción del usuario y destruirlas antes de que `afterEach` navegue a otra página. El helper devuelve `{ request, response }`:
+- `request()` — `waitForRequest` con filtro `url + method + body`. Resuelve al ENVIAR (~15s en CI). Usar en todos los tests de payload.
+- `response()` — `waitForResponse` con el mismo filtro, timeout 90s. Resuelve al RECIBIR la respuesta HTTP. Usar solo en tests que verifican status 200. Registrada ANTES de la acción para evitar que `afterEach` cancele la conexión (race condition).
+- `beforeAll` warm-up: POST dummy a la Edge Function con anon key para sacarla de cold-start Deno (~60s en CI) antes del primer test real.
+- Ver `e2e/audit.spec.ts::prepareAuditWatcher` como implementación de referencia.
 
 **Rutas T1-T12 en specs:** siempre navegar con el `engagementId` explícito: `page.goto(\`/tN/${LAB_PROJECT_ID}\`)`. Sin el parámetro, el router redirige al fallback `/` y el ToolHeader no monta. `LAB_PROJECT_ID` se exporta desde `e2e/helpers.ts`. Ver ADR-024.
 

@@ -115,6 +115,20 @@ Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (
 
 ---
 
+### ~~DEBT-036~~ — audit.spec.ts tests 1 y 5 fallan por race condition afterEach vs response() ✅ (Resuelto — 2026-06-29)
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-29 (CI run #28380357417 — `Expected: 200 / Received: undefined`)
+**Área:** `e2e/audit.spec.ts` — tests en líneas 195 y 365
+**Estado:** Resuelto en PR `fix(e2e): audit watcher devuelve request+response separadas + warm-up [e2e]`
+
+**Causa raíz (hipótesis A):**
+`afterEach` navegaba a `/` antes de que `auditRequest.response()` recibiera la respuesta de la Edge Function. Playwright cancela conexiones en vuelo al navegar → `response()` devuelve `undefined`. El cold-start Deno (hasta 60s en CI) agravaba el problema.
+
+**Solución:**
+`prepareAuditWatcher` registra `waitForResponse` ANTES de la acción del usuario (junto con `waitForRequest`). La promise de respuesta queda viva independientemente de que `afterEach` navegue. El helper devuelve `{ request, response }` con `EDGE_FN_TIMEOUT = 90_000`. `beforeAll` warm-up con POST dummy a la Edge Function para evitar cold-start en el primer test.
+
+---
+
 ### ~~DEBT-035~~ — supabase.functions no mockeado → ruido "audit.write TypeError" en CI ✅ (Resuelto — 2026-06-29)
 **Severidad:** 🟡 Media
 **Detectado:** 2026-06-29 (~30 stderr por run en CI)

@@ -28,7 +28,7 @@
 //   — afterEach limpia el interviewee creado para dejar el seed intacto
 // ============================================================
 
-import { test, expect, type Page, type Request } from '@playwright/test'
+import { test, expect, type Page, type Request, type Response } from '@playwright/test'
 import { login, selectEngagement, waitForStoreReady, LAB_PROJECT_ID, USERS } from './helpers'
 
 // ── Constantes del entorno E2E ─────────────────────────────────────────────
@@ -40,9 +40,10 @@ const EDGE_FN_PATTERN = /\/functions\/v1\/log-audit-event/
 
 // Timeout para detectar que la request a la Edge Function fue ENVIADA.
 // Solo cubre: form fill → store action → makeAuditable → fireAuditLog → fetch iniciado.
-// No espera la respuesta del servidor — eso elimina la dependencia de la latencia
-// de la Edge Function (cold start Deno + INSERT) que causaba timeouts en CI.
-const EDGE_FN_TIMEOUT = 45_000
+// 90s para absorber cold-start Deno + RLS check + INSERT en Supabase Cloud CI.
+// (El cold-start de una Edge Function Deno puede tardar hasta 60s en arrancar +
+//  ~10-15s para RLS validation + INSERT → margen total conservador 90s.)
+const EDGE_FN_TIMEOUT = 90_000
 
 // Nombre del servicio auditado que aparecerá en el campo service_name del log.
 // Definido en src/services/t1.service.ts línea 230: makeAuditable(_impl, 'services.t1')
@@ -85,45 +86,59 @@ async function goToT1AndWait(page: Page): Promise<void> {
 }
 
 /**
- * Registra un waitForRequest ANTES de la acción y devuelve una función que
- * resuelve cuando la request de auditoría es ENVIADA al servidor.
+ * Registra waitForRequest + waitForResponse ANTES de la acción del usuario.
+ * Devuelve { request, response } — ambas promises se resuelven independientemente.
  *
  * Uso:
- *   const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
+ *   const { request, response } = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
  *   await fillAndSubmitNewIntervieweeModal(page)
- *   const auditRequest = await startWaiting()
+ *   const auditRequest  = await request()
+ *   const auditResponse = await response()   // solo en tests que verifican status
  *
- * Diferencia respecto al patrón anterior (waitForResponse):
- *   — waitForResponse esperaba la respuesta HTTP de la Edge Function (cold start
- *     Deno + INSERT podía tardar >60s en CI → timeout consistente).
- *   — waitForRequest resuelve en cuanto el browser envía la request (~15s en CI:
- *     tiempo de la RPC bulk insert previa), sin depender de la latencia del servidor.
- *
- * Para tests que necesitan la respuesta, usar auditRequest.response() después.
+ * Por qué dos promises separadas:
+ *   — waitForRequest resuelve cuando el browser ENVÍA la request (~15s en CI).
+ *     Los tests de payload (body) solo necesitan esto.
+ *   — waitForResponse resuelve cuando el servidor RESPONDE. Si se registra DESPUÉS
+ *     de la acción y afterEach navega a '/' antes de que llegue la respuesta,
+ *     Playwright cancela la conexión → response() devuelve undefined.
+ *     Registrando la promise ANTES de la acción se evita esa race condition.
+ *   — Timeout 90s cubre cold-start Deno + RLS check + INSERT en Supabase Cloud CI.
  */
 function prepareAuditWatcher(
   page:        Page,
   serviceName: string,
   methodName:  string,
-): () => Promise<Request> {
-  // La Promise se registra INMEDIATAMENTE (antes de la acción del usuario)
-  // para no perder requests que llegan muy rápido después del submit.
-  // Resuelve cuando la request es ENVIADA al servidor (no espera la respuesta),
-  // eliminando la dependencia de la latencia de la Edge Function en CI.
+): { request: () => Promise<Request>; response: () => Promise<Response> } {
+  const matcher = (url: string, body: Record<string, unknown>) =>
+    EDGE_FN_PATTERN.test(url) &&
+    body.service_name === serviceName &&
+    body.method_name === methodName
+
+  // Ambas promises registradas ANTES de cualquier acción del usuario.
   const requestPromise = page.waitForRequest(
     (req) => {
-      if (!EDGE_FN_PATTERN.test(req.url()) || req.method() !== 'POST') return false
+      if (req.method() !== 'POST') return false
       try {
-        const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
-        return body.service_name === serviceName && body.method_name === methodName
-      } catch {
-        return false
-      }
+        return matcher(req.url(), (req.postDataJSON() ?? {}) as Record<string, unknown>)
+      } catch { return false }
     },
     { timeout: EDGE_FN_TIMEOUT },
   )
 
-  return () => requestPromise
+  const responsePromise = page.waitForResponse(
+    (res) => {
+      if (res.request().method() !== 'POST') return false
+      try {
+        return matcher(res.url(), (res.request().postDataJSON() ?? {}) as Record<string, unknown>)
+      } catch { return false }
+    },
+    { timeout: EDGE_FN_TIMEOUT },
+  )
+
+  return {
+    request:  () => requestPromise,
+    response: () => responsePromise,
+  }
 }
 
 /**
@@ -172,6 +187,23 @@ test.describe('Audit Trail — integración E2E', () => {
 
   test.setTimeout(120_000)
 
+  // ── Warm-up de la Edge Function ───────────────────────────────────────
+  // Supabase Edge Functions (Deno) sufren cold-start de hasta 60s en CI.
+  // Un POST dummy antes de la suite hace que el runtime arranque y quede
+  // caliente para los tests reales. El 401/400 de respuesta es esperado
+  // (no enviamos JWT válido) — lo importante es que el runtime se inicie.
+  test.beforeAll(async ({ request }) => {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL
+    const anonKey     = process.env.VITE_SUPABASE_ANON_KEY
+    if (!supabaseUrl || !anonKey) return   // entorno local sin vars → skip silencioso
+    const warmupUrl = `${supabaseUrl}/functions/v1/log-audit-event`
+    await request.post(warmupUrl, {
+      headers: { 'Authorization': `Bearer ${anonKey}`, 'Content-Type': 'application/json' },
+      data:    { _warmup: true },
+      timeout: 90_000,
+    }).catch(() => { /* cold-start puede devolver error — es esperado */ })
+  })
+
   test.beforeEach(async ({ page }) => {
     await login(page, USERS.consultor.email, USERS.consultor.password)
     await selectEngagement(page, LAB_PROJECT_ID)
@@ -193,18 +225,13 @@ test.describe('Audit Trail — integración E2E', () => {
   // Este es el test más importante: garantiza que la traza llega a la red.
 
   test('crear entrevistado dispara la llamada HTTP a log-audit-event', async ({ page }) => {
-    // Filtramos por service+method para ignorar fetchT1Data y services.department.
-    // startWaiting() resuelve cuando la request es ENVIADA (no espera la respuesta),
-    // eliminando la dependencia de la latencia de la Edge Function en CI.
-    const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
+    // Ambas promises registradas ANTES de la acción para evitar race con afterEach.
+    const { request, response } = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
 
     await fillAndSubmitNewIntervieweeModal(page)
 
-    const auditRequest = await startWaiting()
-
-    // Verificar que la request llegó al servidor esperando su respuesta.
-    // Timeout generoso para el round-trip Supabase (cold start Deno + INSERT).
-    const auditResponse = await auditRequest.response()
+    await request()   // confirma que la request fue enviada
+    const auditResponse = await response()
 
     expect(
       auditResponse?.status(),
@@ -237,9 +264,9 @@ test.describe('Audit Trail — integración E2E', () => {
       }
     })
 
-    const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
+    const { request } = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
     await fillAndSubmitNewIntervieweeModal(page)
-    await startWaiting()
+    await request()
 
     expect(capturedRequestBody, 'El body de la request no fue capturado').not.toBeNull()
 
@@ -300,9 +327,9 @@ test.describe('Audit Trail — integración E2E', () => {
       }
     })
 
-    const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
+    const { request } = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
     await fillAndSubmitNewIntervieweeModal(page)
-    await startWaiting()
+    await request()
 
     expect(capturedBody, 'El body de la request debe haber sido capturado').not.toBeNull()
 
@@ -339,9 +366,9 @@ test.describe('Audit Trail — integración E2E', () => {
       }
     })
 
-    const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
+    const { request } = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
     await fillAndSubmitNewIntervieweeModal(page)
-    await startWaiting()
+    await request()
 
     expect(capturedBody).not.toBeNull()
 
@@ -363,11 +390,11 @@ test.describe('Audit Trail — integración E2E', () => {
   // { success: false, error: "..." } con HTTP 500.
 
   test('la Edge Function confirma la inserción con { success: true }', async ({ page }) => {
-    const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
+    const { request, response } = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
     await fillAndSubmitNewIntervieweeModal(page)
-    const auditRequest = await startWaiting()
+    await request()
 
-    const res = await auditRequest.response()
+    const res = await response()
 
     expect(res?.status()).toBe(200)
 
@@ -450,9 +477,9 @@ test.describe('Audit Trail — integración E2E', () => {
       }
     })
 
-    const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
+    const { request } = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
     await fillAndSubmitNewIntervieweeModal(page)
-    await startWaiting()
+    await request()
 
     expect(
       capturedAuthHeader,
@@ -492,9 +519,9 @@ test.describe('Audit Trail — integración E2E', () => {
       }
     })
 
-    const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
+    const { request } = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
     await fillAndSubmitNewIntervieweeModal(page)
-    await startWaiting()
+    await request()
 
     expect(
       capturedStatus,
