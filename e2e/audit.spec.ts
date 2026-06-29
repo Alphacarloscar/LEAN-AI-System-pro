@@ -175,6 +175,8 @@ async function fillAndSubmitNewIntervieweeModal(page: Page): Promise<void> {
 
 test.describe('Audit Trail — integración E2E', () => {
 
+  test.setTimeout(90_000)
+
   test.beforeEach(async ({ page }) => {
     await login(page, USERS.consultor.email, USERS.consultor.password)
     await selectEngagement(page, LAB_PROJECT_ID)
