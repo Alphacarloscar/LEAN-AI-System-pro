@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test'
-import { login, selectEngagement } from './helpers'
+import { login, selectEngagement, LAB_PROJECT_ID } from './helpers'
 
 test.describe('T6 — Risk & Governance', () => {
   test.beforeEach(async ({ page }) => {
     await login(page)
     await selectEngagement(page)
-    await page.goto('/t6', { waitUntil: 'domcontentloaded' })
+    await page.goto(`/t6/${LAB_PROJECT_ID}`, { waitUntil: 'domcontentloaded' })
     // Esperar al título real (descarta el spinner de ProtectedRoute durante isInitializing)
     await expect(page.getByText(/Risk.*Governance/i).first()).toBeVisible({ timeout: 15_000 })
   })
@@ -14,7 +14,7 @@ test.describe('T6 — Risk & Governance', () => {
     const jsErrors: string[] = []
     page.on('pageerror', (err) => jsErrors.push(err.message))
 
-    await page.goto('/t6')
+    await page.goto(`/t6/${LAB_PROJECT_ID}`)
     await expect(page).not.toHaveURL(/login/)
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
 

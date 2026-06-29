@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { login, selectEngagement, waitForStoreReady } from './helpers'
+import { login, selectEngagement, waitForStoreReady, LAB_PROJECT_ID } from './helpers'
 
 test.describe('T4 — Use Case Priority Board', () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe('T4 — Use Case Priority Board', () => {
     await login(page)
     await selectEngagement(page)
     // networkidle espera a que los fetch de t4.service terminen — garantiza datos antes de las aserciones
-    await page.goto('/t4', { waitUntil: 'networkidle' })
+    await page.goto(`/t4/${LAB_PROJECT_ID}`, { waitUntil: 'networkidle' })
     // Espera a que el estado de carga del store se resuelva antes de que corran los tests
     await waitForStoreReady(page, 'Cargando', 20_000)
     await expect(page.locator('main, [role="main"], #root > div').first()).toBeVisible({
@@ -19,7 +19,7 @@ test.describe('T4 — Use Case Priority Board', () => {
     const jsErrors: string[] = []
     page.on('pageerror', (err) => jsErrors.push(err.message))
 
-    await page.goto('/t4', { waitUntil: 'networkidle' })
+    await page.goto(`/t4/${LAB_PROJECT_ID}`, { waitUntil: 'networkidle' })
     await expect(page).not.toHaveURL(/login/)
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
 

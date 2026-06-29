@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { login, selectEngagement } from './helpers'
+import { login, selectEngagement, LAB_PROJECT_ID } from './helpers'
 
 test.describe('T1 — AI Readiness Assessment', () => {
   test.beforeEach(async ({ page }) => {
@@ -8,7 +8,7 @@ test.describe('T1 — AI Readiness Assessment', () => {
     await login(page)
     await selectEngagement(page)
     // networkidle espera a que todos los fetch HTTP (Supabase REST) terminen — garantiza datos cargados
-    await page.goto('/t1', { waitUntil: 'networkidle' })
+    await page.goto(`/t1/${LAB_PROJECT_ID}`, { waitUntil: 'networkidle' })
     await expect(page.locator('main, [role="main"], #root > div').first()).toBeVisible({
       timeout: 5_000,
     })
@@ -18,7 +18,7 @@ test.describe('T1 — AI Readiness Assessment', () => {
     const jsErrors: string[] = []
     page.on('pageerror', (err) => jsErrors.push(err.message))
 
-    await page.goto('/t1', { waitUntil: 'networkidle' })
+    await page.goto(`/t1/${LAB_PROJECT_ID}`, { waitUntil: 'networkidle' })
     await expect(page).not.toHaveURL(/login/)
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
 
