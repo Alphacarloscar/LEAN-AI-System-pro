@@ -9,7 +9,8 @@ vi.mock('@/lib/supabase', () => ({
       getSession:         vi.fn(),
       onAuthStateChange:  vi.fn(),
     },
-    from: vi.fn(),
+    from:      vi.fn(),
+    functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) },
   },
 }))
 

@@ -115,6 +115,20 @@ Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (
 
 ---
 
+### ~~DEBT-035~~ — supabase.functions no mockeado → ruido "audit.write TypeError" en CI ✅ (Resuelto — 2026-06-29)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-29 (~30 stderr por run en CI)
+**Área:** `src/__tests__/services/*.test.ts`, `src/__tests__/auth/`, `src/__tests__/admin/`, `src/__tests__/unit/Engagement/`
+**Estado:** Resuelto en PR `test: mockear supabase.functions en service unit tests (limpieza ruido audit)`
+
+**Descripción:**
+`auditClient.ts:37` llama `supabase.functions.invoke('log-audit-event', ...)` en un IIFE fire-and-forget. Los mocks de `vi.mock('@/lib/supabase')` en 13 test files no incluían `functions`, por lo que el IIFE lanzaba `TypeError: Cannot read properties of undefined (reading 'invoke')` o `Cannot destructure property 'error' of '(intermediate value)'`. Los tests pasaban (646/649) porque el error queda atrapado por el try/catch del IIFE, pero ensuciaba stderr de CI.
+
+**Solución:**
+Añadir `functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) }` en los 15 `vi.mock('@/lib/supabase')` afectados. El archivo `src/__tests__/__mocks__/supabase.ts` documenta el patrón canónico para futuros tests. Resultado: 0 `audit.write TypeError` en stderr.
+
+---
+
 ### ~~DEBT-034~~ — auth.spec.ts usaba selector de clase CSS frágil post-ADR-021 ✅ (Resuelto — 2026-06-29)
 **Severidad:** 🟡 Media
 **Detectado:** 2026-06-29 (migración tokens semánticos ADR-021)

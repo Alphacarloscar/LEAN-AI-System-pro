@@ -5,8 +5,9 @@ vi.mock('@/lib/audit', () => ({ makeAuditable: <T>(s: T) => s }))
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
-    rpc:  vi.fn(),
-    from: vi.fn(),
+    rpc:       vi.fn(),
+    from:      vi.fn(),
+    functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) },
   },
 }))
 
