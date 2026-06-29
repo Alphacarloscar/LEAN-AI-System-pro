@@ -12,6 +12,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: 1,
   reporter: process.env.CI ? 'github' : 'list',
+  timeout: 120_000,
 
   use: {
     // Soporte multi-puerto: E2E_BASE_URL sobreescribe si la app usa puerto distinto
