@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { login, selectEngagement } from './helpers'
+import { login, selectEngagement, LAB_PROJECT_ID } from './helpers'
 
 test.describe('T2 — AI Stakeholder Matrix', () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe('T2 — AI Stakeholder Matrix', () => {
     await login(page)
     await selectEngagement(page)
     // networkidle espera a que los fetch de Supabase REST terminen — evita timeout en ToolHeader
-    await page.goto('/t2', { waitUntil: 'networkidle' })
+    await page.goto(`/t2/${LAB_PROJECT_ID}`, { waitUntil: 'networkidle' })
     // Espera dirigida al título real del ToolHeader (descarta el spinner de ProtectedRoute)
     await page.waitForSelector('text=AI Stakeholder Matrix', { timeout: 15_000 })
   })
@@ -16,7 +16,7 @@ test.describe('T2 — AI Stakeholder Matrix', () => {
     const jsErrors: string[] = []
     page.on('pageerror', (err) => jsErrors.push(err.message))
 
-    await page.goto('/t2', { waitUntil: 'networkidle' })
+    await page.goto(`/t2/${LAB_PROJECT_ID}`, { waitUntil: 'networkidle' })
     await expect(page).not.toHaveURL(/login/)
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 10_000 })
 

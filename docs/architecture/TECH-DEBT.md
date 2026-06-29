@@ -115,6 +115,20 @@ Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (
 
 ---
 
+### ~~DEBT-032~~ — Specs E2E navegan a rutas T1-T12 sin :engagementId ✅ (Resuelto — 2026-06-29)
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-29 (refactor v2.1.0 "atomic-screen-independence")
+**Área:** `e2e/t1.spec.ts`, `t2.spec.ts`, `t4.spec.ts`, `t5.spec.ts`, `t6.spec.ts`, `t9.spec.ts`
+**Estado:** Resuelto en PR `fix(e2e): añadir :engagementId a navegaciones t1/t2/t4/t5/t6/t9 [e2e]`
+
+**Descripción:**
+El refactor v2.1.0 (ADR-024) convirtió las rutas T1–T12 a `tN/:engagementId`. Los specs E2E seguían navegando a `/tN` sin el parámetro, lo que causaba redirección al fallback `/` (T10). El `<h1>` del ToolHeader nunca aparecía y ~27 tests caían por timeout.
+
+**Solución aplicada:**
+Sustituir `page.goto('/tN', ...)` por `page.goto(\`/tN/${LAB_PROJECT_ID}\`, ...)` en todos los specs afectados. El test paramétrico de ToolHeader en `t9.spec.ts` (líneas ~208-225) también parametrizado. Relacionado con ADR-024.
+
+---
+
 ## Items Resueltos
 
 > Los items tachados están completamente resueltos y se mantienen como registro histórico.

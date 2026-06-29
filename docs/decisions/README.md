@@ -43,6 +43,7 @@ AI-Ready Repository System v2.1.0 | Última actualización: 2026-06-26
 | [ADR-021](technical/ADR-021-design-system-charter.md) | Design System Charter — escala space, tokens CSS vars, densidad configurable | ACCEPTED | 2026-06-16 | UX/UI · Stack |
 | [ADR-022](technical/ADR-022-forms-rhf-zod-standard.md) | Estándar de formularios: react-hook-form + Zod | ACCEPTED | 2026-06-16 | Stack · UX/UI |
 | [ADR-023](technical/ADR-023-visual-system-v2.md) | Visual System V2 — Obsidian Editorial warm-only palette | ACCEPTED | 2026-06-23 | UX/UI · Design System |
+| [ADR-024](technical/ADR-024-routes-require-engagement-id.md) | Rutas T1-T12 requieren parámetro :engagementId | ACCEPTED | 2026-06-29 | Arquitectura · E2E |
 
 ---
 
@@ -64,5 +65,5 @@ Las decisiones estratégicas de producto/mercado se documentan en:
 
 ## Próximo número disponible
 
-- **ADR:** ADR-024
+- **ADR:** ADR-025
 - **FDR:** FDR-002 (reservado por ADR-020 Fase 2 — pantalla piloto AppLayout)

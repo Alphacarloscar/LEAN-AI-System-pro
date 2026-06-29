@@ -14,14 +14,14 @@
 // ============================================================
 
 import { test, expect } from '@playwright/test'
-import { login, selectEngagement } from './helpers'
+import { login, selectEngagement, LAB_PROJECT_ID } from './helpers'
 
 test.describe('T9 — AI Roadmap 6M (Gantt)', () => {
   test.beforeEach(async ({ page }) => {
     await login(page)
     await selectEngagement(page)
     // domcontentloaded es suficiente; el Gantt renderea con datos del store local
-    await page.goto('/t9', { waitUntil: 'domcontentloaded' })
+    await page.goto(`/t9/${LAB_PROJECT_ID}`, { waitUntil: 'domcontentloaded' })
     // Esperar al h1 semántico que emite ToolHeader — título real: "Roadmap IA — 6 meses"
     await expect(page.getByRole('heading', { name: /Roadmap IA/i }).first()).toBeVisible({
       timeout: 15_000,
@@ -34,7 +34,7 @@ test.describe('T9 — AI Roadmap 6M (Gantt)', () => {
     const jsErrors: string[] = []
     page.on('pageerror', (err) => jsErrors.push(err.message))
 
-    await page.goto('/t9', { waitUntil: 'domcontentloaded' })
+    await page.goto(`/t9/${LAB_PROJECT_ID}`, { waitUntil: 'domcontentloaded' })
     await expect(page).not.toHaveURL(/login/)
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 10_000 })
 
@@ -180,7 +180,7 @@ test.describe('T9 — AI Roadmap 6M (Gantt)', () => {
 
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 10_000 })
 
-    await page.goto('/t4', { waitUntil: 'domcontentloaded' })
+    await page.goto(`/t4/${LAB_PROJECT_ID}`, { waitUntil: 'domcontentloaded' })
     await expect(page).not.toHaveURL(/login/)
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
 
@@ -206,11 +206,11 @@ test.describe('ToolHeader ADR-021 — resiliencia de h1 en T1-T12', () => {
 
   // Mapa ruta → regex del título esperado (del ToolHeader de cada vista)
   const TOOL_HEADERS: { path: string; titleRegex: RegExp }[] = [
-    { path: '/t1',  titleRegex: /AI Readiness Assessment/i   },
-    { path: '/t4',  titleRegex: /Use Case Priority Board/i   },
-    { path: '/t5',  titleRegex: /AI.*Taxonomy.*Canvas|AI Domain Architecture/i },
-    { path: '/t9',  titleRegex: /Roadmap IA/i                 },
-    { path: '/t12', titleRegex: /ISO.*42001|ISO Assessment/i },
+    { path: `/t1/${LAB_PROJECT_ID}`,  titleRegex: /AI Readiness Assessment/i   },
+    { path: `/t4/${LAB_PROJECT_ID}`,  titleRegex: /Use Case Priority Board/i   },
+    { path: `/t5/${LAB_PROJECT_ID}`,  titleRegex: /AI.*Taxonomy.*Canvas|AI Domain Architecture/i },
+    { path: `/t9/${LAB_PROJECT_ID}`,  titleRegex: /Roadmap IA/i                 },
+    { path: `/t12/${LAB_PROJECT_ID}`, titleRegex: /ISO.*42001|ISO Assessment/i },
   ]
 
   for (const { path, titleRegex } of TOOL_HEADERS) {
