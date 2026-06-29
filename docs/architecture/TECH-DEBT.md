@@ -115,6 +115,23 @@ Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (
 
 ---
 
+### ~~DEBT-037~~ — t4.spec.ts usaba networkidle en vista con cold-start LLM ✅ (Resuelto — 2026-06-29)
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-29 (CI timeout 120s en test "el panel de scoring/detalle tiene los tabs esperados")
+**Área:** `e2e/t4.spec.ts` — `beforeEach` + test línea 66
+**Estado:** Resuelto en PR `fix(e2e): t4 scoring panel — anclar espera a elemento estable, no networkidle [e2e]`
+
+**Causa raíz:**
+`beforeEach` usaba `waitUntil: 'networkidle'`. T4 monta `UseCaseDetailPanel` que invoca la Edge Function `ai-recommend` en mount. En CI, el cold-start Deno (~60s) mantiene la request en vuelo → `networkidle` nunca se cumple → el test consume los 120s de budget antes de poder hacer aserciones.
+
+**Solución:**
+Sustituir `networkidle` por `domcontentloaded` + assert explícito de `page.getByText(/Use Case Priority Board/i)` con `timeout: 15_000`. Anclar el test :66 al mismo selector estable (`/dashboard ejecutivo/i`) que ya usan los tests :32 y :55. Timeout explícito `{ timeout: 5_000 }` en la aserción final para no consumir el budget global.
+
+**Guideline E2E derivada:**
+No usar `waitUntil: 'networkidle'` en vistas que disparan invocaciones LLM (Edge Functions ai-recommend, log-audit-event) en mount. Usar `domcontentloaded` + assert de elemento estable del ToolHeader o ExecDashboard. Ver sección "E2E patterns" en OVERVIEW.md.
+
+---
+
 ### ~~DEBT-036~~ — audit.spec.ts tests 1 y 5 fallan por race condition afterEach vs response() ✅ (Resuelto — 2026-06-29)
 **Severidad:** 🔴 Alta
 **Detectado:** 2026-06-29 (CI run #28380357417 — `Expected: 200 / Received: undefined`)

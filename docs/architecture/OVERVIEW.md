@@ -179,6 +179,8 @@ Los tooltips usan clases Tailwind: `bg-white dark:bg-warm-800 shadow-sm`. Los ej
 
 **Rutas T1-T12 en specs:** siempre navegar con el `engagementId` explícito: `page.goto(\`/tN/${LAB_PROJECT_ID}\`)`. Sin el parámetro, el router redirige al fallback `/` y el ToolHeader no monta. `LAB_PROJECT_ID` se exporta desde `e2e/helpers.ts`. Ver ADR-024.
 
+**Vistas con invocaciones LLM en mount:** nunca usar `waitUntil: 'networkidle'` en T4, T6 ni otras vistas que disparen `ai-recommend` o `log-audit-event` al montarse — el cold-start Deno (~60s en CI) mantiene la request en vuelo e impide que `networkidle` se cumpla. Usar `domcontentloaded` + assert explícito del ToolHeader o ExecDashboard con `timeout: 15_000`. Ver DEBT-037.
+
 ---
 
 ## Testing — Mocks compartidos

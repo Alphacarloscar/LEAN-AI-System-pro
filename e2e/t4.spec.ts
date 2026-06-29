@@ -6,8 +6,9 @@ test.describe('T4 — Use Case Priority Board', () => {
     await page.setViewportSize({ width: 1280, height: 720 })
     await login(page)
     await selectEngagement(page)
-    // networkidle espera a que los fetch de t4.service terminen — garantiza datos antes de las aserciones
-    await page.goto(`/t4/${LAB_PROJECT_ID}`, { waitUntil: 'networkidle' })
+    // domcontentloaded evita que ai-recommend (LLM cold-start en CI) bloquee networkidle 120s
+    await page.goto(`/t4/${LAB_PROJECT_ID}`, { waitUntil: 'domcontentloaded' })
+    await expect(page.getByText(/Use Case Priority Board/i).first()).toBeVisible({ timeout: 15_000 })
     // Espera a que el estado de carga del store se resuelva antes de que corran los tests
     await waitForStoreReady(page, 'Cargando', 20_000)
     await expect(page.locator('main, [role="main"], #root > div').first()).toBeVisible({
@@ -19,7 +20,7 @@ test.describe('T4 — Use Case Priority Board', () => {
     const jsErrors: string[] = []
     page.on('pageerror', (err) => jsErrors.push(err.message))
 
-    await page.goto(`/t4/${LAB_PROJECT_ID}`, { waitUntil: 'networkidle' })
+    await page.goto(`/t4/${LAB_PROJECT_ID}`, { waitUntil: 'domcontentloaded' })
     await expect(page).not.toHaveURL(/login/)
     await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
 
@@ -64,7 +65,7 @@ test.describe('T4 — Use Case Priority Board', () => {
   })
 
   test('el panel de scoring/detalle tiene los tabs esperados', async ({ page }) => {
-    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
+    // Anclar a elemento estable que no depende de ai-recommend (mismo que pasan tests :32 y :55)
     await expect(page.getByText(/dashboard ejecutivo/i).first()).toBeVisible({ timeout: 15_000 })
 
     // Los tabs Scoring/Economía/Hoja de ruta sólo aparecen con un caso de uso seleccionado.
@@ -76,7 +77,7 @@ test.describe('T4 — Use Case Priority Board', () => {
       const isVisible = await locator.isVisible({ timeout: 2_000 }).catch(() => false)
       if (isVisible) break
     }
-    await expect(page.locator('main, [role="main"]').first()).toBeVisible()
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
   })
 
   test('el botón para añadir caso de uso está accesible', async ({ page }) => {
