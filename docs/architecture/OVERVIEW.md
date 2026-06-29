@@ -1,6 +1,6 @@
 ﻿# Architecture Overview — GOBY
 
-Last updated: 2026-06-26
+Last updated: 2026-06-29
 AI-Ready Repository System v2.1.0
 
 > Este documento es una síntesis de arquitectura para orientación rápida.
@@ -165,3 +165,12 @@ Usa prop `dark: boolean` para cambiar clases JSX condicionalmente (el componente
 ### Gráficos Recharts
 
 Los tooltips usan clases Tailwind: `bg-white dark:bg-warm-800 shadow-sm`. Los ejes y colores de datos usan `getThemeColor()` de `chartTokens.ts` que lee CSS variables en tiempo de ejecución — respeta el modo activo automáticamente.
+
+
+---
+
+## E2E patterns
+
+**Patrón canónico para Edge Functions con cold-start:** usar `page.waitForRequest()` en lugar de `page.waitForResponse()`. La Promise resuelve al enviar la request (independiente de la latencia Deno/Supabase Cloud); si se necesita el status HTTP, llamar `await (await requestPromise).response()` con timeout adicional explícito de 30s solo donde sea imprescindible. Ver `e2e/audit.spec.ts::prepareAuditWatcher` como referencia.
+
+**Rutas T1-T12 en specs:** siempre navegar con el `engagementId` explícito: `page.goto(\`/tN/${LAB_PROJECT_ID}\`)`. Sin el parámetro, el router redirige al fallback `/` y el ToolHeader no monta. `LAB_PROJECT_ID` se exporta desde `e2e/helpers.ts`. Ver ADR-024.
