@@ -7,7 +7,8 @@ vi.mock('@/lib/audit', () => ({ makeAuditable: <T>(s: T) => s }))
 // Mock del cliente Supabase — antes de los imports del servicio
 vi.mock('@/lib/supabase', () => ({
   supabase: {
-    from: vi.fn(),
+    from:      vi.fn(),
+    functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) },
   },
 }))
 

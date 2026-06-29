@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
-    from: vi.fn(),
-    rpc:  vi.fn(),
+    from:      vi.fn(),
+    rpc:       vi.fn(),
+    functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) },
   },
 }))
 

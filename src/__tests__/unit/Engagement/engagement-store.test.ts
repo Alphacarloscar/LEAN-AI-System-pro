@@ -19,6 +19,7 @@ vi.mock('@/lib/supabase', () => ({
       eq:     vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: { company_id: 'company-1' } }),
     }),
+    functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) },
   },
 }))
 
