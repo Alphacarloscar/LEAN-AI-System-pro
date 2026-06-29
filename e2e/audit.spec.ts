@@ -506,14 +506,16 @@ test.describe('Audit Trail — integración E2E', () => {
   // que cubren los unit tests de makeAuditable.test.ts.
 
   test('status en el payload es "success" cuando el servicio resuelve', async ({ page }) => {
-    let capturedStatus: unknown = null
+    let capturedStatus:       unknown = null
+    let capturedErrorMessage: unknown = null
 
     page.on('request', (req) => {
       if (EDGE_FN_PATTERN.test(req.url()) && req.method() === 'POST') {
         try {
           const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
           if (body.service_name === SERVICE_NAME && body.method_name === WRITE_METHOD) {
-            capturedStatus = body.status
+            capturedStatus       = body.status
+            capturedErrorMessage = body.error_message ?? null
           }
         } catch { /* ignorar */ }
       }
@@ -523,9 +525,21 @@ test.describe('Audit Trail — integración E2E', () => {
     await fillAndSubmitNewIntervieweeModal(page)
     await request()
 
+    // Diagnóstico: si status es "error", el error_message del payload revela
+    // la causa real (ej. PGRST202 = función RPC ausente en DEV, RLS violation, etc.)
+    if (capturedStatus !== 'success') {
+      console.error(
+        `[audit-test-508] status=${String(capturedStatus)} ` +
+        `error_message=${String(capturedErrorMessage)}`,
+      )
+    }
+
     expect(
       capturedStatus,
-      'status debe ser "success" — si es "error", el UPSERT a Supabase falló',
+      `status debe ser "success" — recibido: ${String(capturedStatus)} | ` +
+      `error_message: ${String(capturedErrorMessage)} | ` +
+      'Si es PGRST202: la función bulk_upsert_t1_scores no existe en DEV/PRE — ejecutar ' +
+      '20260609130000_create_bulk_upsert_t1_scores_function.sql en Supabase SQL Editor.',
     ).toBe('success')
   })
 })
