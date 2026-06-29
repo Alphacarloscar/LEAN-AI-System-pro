@@ -112,7 +112,7 @@ function prepareAuditWatcher(
   const onRequest = (req: Request) => {
     if (!EDGE_FN_PATTERN.test(req.url()) || req.method() !== 'POST') return
     try {
-      const body = JSON.parse(req.postData() ?? '{}') as Record<string, unknown>
+      const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
       if (body.service_name === serviceName && body.method_name === methodName) {
         matchingRequests.add(req)
       }
@@ -229,7 +229,7 @@ test.describe('Audit Trail — integración E2E', () => {
     page.on('request', (req) => {
       if (EDGE_FN_PATTERN.test(req.url()) && req.method() === 'POST') {
         try {
-          const body = JSON.parse(req.postData() ?? '{}') as Record<string, unknown>
+          const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
           if (body.service_name === SERVICE_NAME && body.method_name === WRITE_METHOD) {
             capturedRequestBody = body
           }
@@ -294,7 +294,7 @@ test.describe('Audit Trail — integración E2E', () => {
     page.on('request', (req) => {
       if (EDGE_FN_PATTERN.test(req.url()) && req.method() === 'POST') {
         try {
-          const body = JSON.parse(req.postData() ?? '{}') as Record<string, unknown>
+          const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
           if (body.service_name === SERVICE_NAME && body.method_name === WRITE_METHOD) {
             capturedBody = body
           }
@@ -333,7 +333,7 @@ test.describe('Audit Trail — integración E2E', () => {
     page.on('request', (req) => {
       if (EDGE_FN_PATTERN.test(req.url()) && req.method() === 'POST') {
         try {
-          const body = JSON.parse(req.postData() ?? '{}') as Record<string, unknown>
+          const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
           if (body.service_name === SERVICE_NAME && body.method_name === WRITE_METHOD) {
             capturedBody = body
           }
@@ -442,7 +442,7 @@ test.describe('Audit Trail — integración E2E', () => {
     page.on('request', (req) => {
       if (EDGE_FN_PATTERN.test(req.url()) && req.method() === 'POST') {
         try {
-          const body = JSON.parse(req.postData() ?? '{}') as Record<string, unknown>
+          const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
           if (body.service_name === SERVICE_NAME && body.method_name === WRITE_METHOD) {
             capturedAuthHeader = req.headers()['authorization'] ?? null
           }
@@ -484,7 +484,7 @@ test.describe('Audit Trail — integración E2E', () => {
     page.on('request', (req) => {
       if (EDGE_FN_PATTERN.test(req.url()) && req.method() === 'POST') {
         try {
-          const body = JSON.parse(req.postData() ?? '{}') as Record<string, unknown>
+          const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
           if (body.service_name === SERVICE_NAME && body.method_name === WRITE_METHOD) {
             capturedStatus = body.status
           }
