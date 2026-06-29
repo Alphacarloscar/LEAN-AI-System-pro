@@ -28,7 +28,7 @@
 //   — afterEach limpia el interviewee creado para dejar el seed intacto
 // ============================================================
 
-import { test, expect, type Page, type Response, type Request } from '@playwright/test'
+import { test, expect, type Page, type Request } from '@playwright/test'
 import { login, selectEngagement, waitForStoreReady, LAB_PROJECT_ID, USERS } from './helpers'
 
 // ── Constantes del entorno E2E ─────────────────────────────────────────────
@@ -38,11 +38,11 @@ import { login, selectEngagement, waitForStoreReady, LAB_PROJECT_ID, USERS } fro
 // internamente. La intercepción se hace por sufijo de ruta.
 const EDGE_FN_PATTERN = /\/functions\/v1\/log-audit-event/
 
-// Timeout generoso para la Edge Function: en local Docker puede tardar 4-6s
-// en la primera invocación (cold start del runtime Deno).
-// En CI contra Supabase Cloud, el tiempo total incluye: form fill (~5s) +
-// RPC bulk insert 24 rows (~10-15s) + Edge Function cold start (~6s) → 60s.
-const EDGE_FN_TIMEOUT = 60_000
+// Timeout para detectar que la request a la Edge Function fue ENVIADA.
+// Solo cubre: form fill → store action → makeAuditable → fireAuditLog → fetch iniciado.
+// No espera la respuesta del servidor — eso elimina la dependencia de la latencia
+// de la Edge Function (cold start Deno + INSERT) que causaba timeouts en CI.
+const EDGE_FN_TIMEOUT = 45_000
 
 // Nombre del servicio auditado que aparecerá en el campo service_name del log.
 // Definido en src/services/t1.service.ts línea 230: makeAuditable(_impl, 'services.t1')
@@ -72,63 +72,58 @@ const TEST_INTERVIEWEE = {
  * Usamos LAB_PROJECT_ID directamente en la URL para que el route match sea correcto.
  */
 async function goToT1AndWait(page: Page): Promise<void> {
-  await page.goto(`/t1/${LAB_PROJECT_ID}`, { waitUntil: 'networkidle' })
+  // 'domcontentloaded' en lugar de 'networkidle' para no consumir budget de test
+  // esperando que terminen todas las llamadas API iniciales (fetchT1Data, profiles, etc.)
+  // La visibilidad del ToolHeader + waitForStoreReady garantizan que el componente está listo.
+  await page.goto(`/t1/${LAB_PROJECT_ID}`, { waitUntil: 'domcontentloaded' })
   // Espera al ToolHeader real de T1View (title="AI Readiness Assessment"),
   // no al card del dashboard T10 que también tiene ese texto.
-  // El ToolHeader renderiza inmediatamente — si no aparece en 15s hay un crash.
   await expect(
     page.locator('header').getByText('AI Readiness Assessment').first(),
-  ).toBeVisible({ timeout: 15_000 })
+  ).toBeVisible({ timeout: 20_000 })
   await waitForStoreReady(page)
 }
 
 /**
- * Registra el listener de request ANTES de la acción, y devuelve una función
- * que inicia el waitForResponse (con su timeout) solo cuando se llama.
+ * Registra un waitForRequest ANTES de la acción y devuelve una función que
+ * resuelve cuando la request de auditoría es ENVIADA al servidor.
  *
  * Uso:
  *   const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
- *   await fillAndSubmitNewIntervieweeModal(page)   // listener ya activo
- *   const auditResponse = await startWaiting()     // timer arranca aquí
+ *   await fillAndSubmitNewIntervieweeModal(page)
+ *   const auditRequest = await startWaiting()
  *
- * Patrón de dos fases:
- *   1. page.on('request') captura el body cuando la request se crea
- *      (postData() garantizadamente accesible en ese momento).
- *   2. waitForResponse identifica la respuesta por referencia de objeto (WeakSet),
- *      evitando releer postData() en el callback de respuesta donde puede ser null.
+ * Diferencia respecto al patrón anterior (waitForResponse):
+ *   — waitForResponse esperaba la respuesta HTTP de la Edge Function (cold start
+ *     Deno + INSERT podía tardar >60s en CI → timeout consistente).
+ *   — waitForRequest resuelve en cuanto el browser envía la request (~15s en CI:
+ *     tiempo de la RPC bulk insert previa), sin depender de la latencia del servidor.
  *
- * El listener se registra ANTES de la acción para no perder requests que llegan
- * muy rápido, pero el timeout de waitForResponse solo corre desde después de la
- * acción — evitando que el tiempo de llenado del formulario consuma el timeout.
+ * Para tests que necesitan la respuesta, usar auditRequest.response() después.
  */
 function prepareAuditWatcher(
   page:        Page,
   serviceName: string,
   methodName:  string,
-): () => Promise<Response> {
-  // WeakSet allows GC of completed requests; no memory leak risk.
-  const matchingRequests = new WeakSet<Request>()
-
-  const onRequest = (req: Request) => {
-    if (!EDGE_FN_PATTERN.test(req.url()) || req.method() !== 'POST') return
-    try {
-      const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
-      if (body.service_name === serviceName && body.method_name === methodName) {
-        matchingRequests.add(req)
+): () => Promise<Request> {
+  // La Promise se registra INMEDIATAMENTE (antes de la acción del usuario)
+  // para no perder requests que llegan muy rápido después del submit.
+  // Resuelve cuando la request es ENVIADA al servidor (no espera la respuesta),
+  // eliminando la dependencia de la latencia de la Edge Function en CI.
+  const requestPromise = page.waitForRequest(
+    (req) => {
+      if (!EDGE_FN_PATTERN.test(req.url()) || req.method() !== 'POST') return false
+      try {
+        const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
+        return body.service_name === serviceName && body.method_name === methodName
+      } catch {
+        return false
       }
-    } catch {
-      // Non-JSON body — not our request
-    }
-  }
-
-  page.on('request', onRequest)
-
-  return () => page.waitForResponse(
-    (res) => matchingRequests.has(res.request()),
+    },
     { timeout: EDGE_FN_TIMEOUT },
-  ).finally(() => {
-    page.off('request', onRequest)
-  })
+  )
+
+  return () => requestPromise
 }
 
 /**
@@ -198,18 +193,21 @@ test.describe('Audit Trail — integración E2E', () => {
   // Este es el test más importante: garantiza que la traza llega a la red.
 
   test('crear entrevistado dispara la llamada HTTP a log-audit-event', async ({ page }) => {
-    // Listener registrado ANTES de la acción; timer arranca DESPUÉS del submit.
-    // Filtramos por service+method para ignorar fetchT1Data (carga inicial del store)
-    // y services.department (carga de departamentos al montar la vista).
+    // Filtramos por service+method para ignorar fetchT1Data y services.department.
+    // startWaiting() resuelve cuando la request es ENVIADA (no espera la respuesta),
+    // eliminando la dependencia de la latencia de la Edge Function en CI.
     const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
 
     await fillAndSubmitNewIntervieweeModal(page)
 
-    // Si no llega en EDGE_FN_TIMEOUT el test falla con timeout explícito — sin falso positivo.
-    const auditResponse = await startWaiting()
+    const auditRequest = await startWaiting()
+
+    // Verificar que la request llegó al servidor esperando su respuesta.
+    // Timeout generoso para el round-trip Supabase (cold start Deno + INSERT).
+    const auditResponse = await auditRequest.response()
 
     expect(
-      auditResponse.status(),
+      auditResponse?.status(),
       'La Edge Function debe responder 200 OK — cualquier otro código indica fallo server-side',
     ).toBe(200)
   })
@@ -367,13 +365,15 @@ test.describe('Audit Trail — integración E2E', () => {
   test('la Edge Function confirma la inserción con { success: true }', async ({ page }) => {
     const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
     await fillAndSubmitNewIntervieweeModal(page)
-    const res = await startWaiting()
+    const auditRequest = await startWaiting()
 
-    expect(res.status()).toBe(200)
+    const res = await auditRequest.response()
+
+    expect(res?.status()).toBe(200)
 
     let responseBody: Record<string, unknown>
     try {
-      responseBody = await res.json() as Record<string, unknown>
+      responseBody = await res!.json() as Record<string, unknown>
     } catch {
       throw new Error('La Edge Function no devolvió JSON válido')
     }
