@@ -40,7 +40,9 @@ const EDGE_FN_PATTERN = /\/functions\/v1\/log-audit-event/
 
 // Timeout generoso para la Edge Function: en local Docker puede tardar 4-6s
 // en la primera invocación (cold start del runtime Deno).
-const EDGE_FN_TIMEOUT = 20_000
+// En CI contra Supabase Cloud, el tiempo total incluye: form fill (~5s) +
+// RPC bulk insert 24 rows (~10-15s) + Edge Function cold start (~6s) → 60s.
+const EDGE_FN_TIMEOUT = 60_000
 
 // Nombre del servicio auditado que aparecerá en el campo service_name del log.
 // Definido en src/services/t1.service.ts línea 230: makeAuditable(_impl, 'services.t1')
@@ -81,23 +83,29 @@ async function goToT1AndWait(page: Page): Promise<void> {
 }
 
 /**
- * Registra el listener de respuesta ANTES de ejecutar la acción.
- * Filtra por service_name Y method_name para anclar la espera exactamente
- * al log que genera la acción del test, descartando:
- *   — services.department  (carga de departamentos al montar T1)
- *   — services.t1/fetchT1Data  (carga inicial del store al navegar a /t1)
+ * Registra el listener de request ANTES de la acción, y devuelve una función
+ * que inicia el waitForResponse (con su timeout) solo cuando se llama.
+ *
+ * Uso:
+ *   const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
+ *   await fillAndSubmitNewIntervieweeModal(page)   // listener ya activo
+ *   const auditResponse = await startWaiting()     // timer arranca aquí
  *
  * Patrón de dos fases:
- *   1. page.on('request') captura el body ANTES de que la request se envíe,
- *      cuando postData() es garantizadamente accesible.
+ *   1. page.on('request') captura el body cuando la request se crea
+ *      (postData() garantizadamente accesible en ese momento).
  *   2. waitForResponse identifica la respuesta por referencia de objeto (WeakSet),
  *      evitando releer postData() en el callback de respuesta donde puede ser null.
+ *
+ * El listener se registra ANTES de la acción para no perder requests que llegan
+ * muy rápido, pero el timeout de waitForResponse solo corre desde después de la
+ * acción — evitando que el tiempo de llenado del formulario consuma el timeout.
  */
-function waitForAuditResponseFromMethod(
+function prepareAuditWatcher(
   page:        Page,
   serviceName: string,
   methodName:  string,
-): Promise<Response> {
+): () => Promise<Response> {
   // WeakSet allows GC of completed requests; no memory leak risk.
   const matchingRequests = new WeakSet<Request>()
 
@@ -115,7 +123,7 @@ function waitForAuditResponseFromMethod(
 
   page.on('request', onRequest)
 
-  return page.waitForResponse(
+  return () => page.waitForResponse(
     (res) => matchingRequests.has(res.request()),
     { timeout: EDGE_FN_TIMEOUT },
   ).finally(() => {
@@ -188,15 +196,15 @@ test.describe('Audit Trail — integración E2E', () => {
   // Este es el test más importante: garantiza que la traza llega a la red.
 
   test('crear entrevistado dispara la llamada HTTP a log-audit-event', async ({ page }) => {
-    // Registrar ANTES de la acción para no perder la respuesta.
+    // Listener registrado ANTES de la acción; timer arranca DESPUÉS del submit.
     // Filtramos por service+method para ignorar fetchT1Data (carga inicial del store)
     // y services.department (carga de departamentos al montar la vista).
-    const auditResponsePromise = waitForAuditResponseFromMethod(page, SERVICE_NAME, WRITE_METHOD)
+    const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
 
     await fillAndSubmitNewIntervieweeModal(page)
 
     // Si no llega en EDGE_FN_TIMEOUT el test falla con timeout explícito — sin falso positivo.
-    const auditResponse = await auditResponsePromise
+    const auditResponse = await startWaiting()
 
     expect(
       auditResponse.status(),
@@ -229,9 +237,9 @@ test.describe('Audit Trail — integración E2E', () => {
       }
     })
 
-    const auditResponsePromise = waitForAuditResponseFromMethod(page, SERVICE_NAME, WRITE_METHOD)
+    const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
     await fillAndSubmitNewIntervieweeModal(page)
-    await auditResponsePromise
+    await startWaiting()
 
     expect(capturedRequestBody, 'El body de la request no fue capturado').not.toBeNull()
 
@@ -292,9 +300,9 @@ test.describe('Audit Trail — integración E2E', () => {
       }
     })
 
-    const auditResponsePromise = waitForAuditResponseFromMethod(page, SERVICE_NAME, WRITE_METHOD)
+    const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
     await fillAndSubmitNewIntervieweeModal(page)
-    await auditResponsePromise
+    await startWaiting()
 
     expect(capturedBody, 'El body de la request debe haber sido capturado').not.toBeNull()
 
@@ -331,9 +339,9 @@ test.describe('Audit Trail — integración E2E', () => {
       }
     })
 
-    const auditResponsePromise = waitForAuditResponseFromMethod(page, SERVICE_NAME, WRITE_METHOD)
+    const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
     await fillAndSubmitNewIntervieweeModal(page)
-    await auditResponsePromise
+    await startWaiting()
 
     expect(capturedBody).not.toBeNull()
 
@@ -355,9 +363,9 @@ test.describe('Audit Trail — integración E2E', () => {
   // { success: false, error: "..." } con HTTP 500.
 
   test('la Edge Function confirma la inserción con { success: true }', async ({ page }) => {
-    const auditResponsePromise = waitForAuditResponseFromMethod(page, SERVICE_NAME, WRITE_METHOD)
+    const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
     await fillAndSubmitNewIntervieweeModal(page)
-    const res = await auditResponsePromise
+    const res = await startWaiting()
 
     expect(res.status()).toBe(200)
 
@@ -440,9 +448,9 @@ test.describe('Audit Trail — integración E2E', () => {
       }
     })
 
-    const auditResponsePromise = waitForAuditResponseFromMethod(page, SERVICE_NAME, WRITE_METHOD)
+    const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
     await fillAndSubmitNewIntervieweeModal(page)
-    await auditResponsePromise
+    await startWaiting()
 
     expect(
       capturedAuthHeader,
@@ -482,9 +490,9 @@ test.describe('Audit Trail — integración E2E', () => {
       }
     })
 
-    const auditResponsePromise = waitForAuditResponseFromMethod(page, SERVICE_NAME, WRITE_METHOD)
+    const startWaiting = prepareAuditWatcher(page, SERVICE_NAME, WRITE_METHOD)
     await fillAndSubmitNewIntervieweeModal(page)
-    await auditResponsePromise
+    await startWaiting()
 
     expect(
       capturedStatus,
