@@ -115,6 +115,23 @@ Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (
 
 ---
 
+### ~~DEBT-043~~ — 3 call sites de functions.invoke() sin JWT explícito tras ADR-026 ✅ (Resuelto — 2026-06-30)
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-30 (auditoría ADR-026 tras fix de auditClient.ts)
+**Área:** `src/hooks/useEdgeFunctionInvoke.ts`, `src/services/companies.service.ts` (×2)
+**Estado:** Resuelto en PR `fix(audit): helper getAuthHeader() compartido + propagación JWT en 4 Edge Function call sites — cierre ADR-026 [e2e]`
+
+**Call sites corregidos:**
+- `useEdgeFunctionInvoke.ts:68` → `ai-recommend`: `getUser()` en Edge Fn → 401 con anon key → LLM no generaba respuesta
+- `companies.service.ts:65` → `invite-user`: `getUser()` en Edge Fn → 401 → invitación fallaba silenciosamente
+- `companies.service.ts:111` → `delete-user`: `getUser()` en Edge Fn → 401 → eliminación fallaba silenciosamente
+
+**Solución:** Helper compartido `src/lib/getAuthHeader.ts` exporta `getAuthHeader()`. Los 3 call sites añaden `const headers = await getAuthHeader()` y pasan `headers` a `functions.invoke()`. Si no hay sesión → lanzar error visible (a diferencia de audit trail que descarta silenciosamente).
+
+**Auditoría server-side:** Las 3 Edge Functions verifican `getUser()` y devuelven 401 si falla — sin vulnerabilidades de autenticación abiertas.
+
+---
+
 ### ~~DEBT-042~~ — supabase.functions.invoke() enviaba anon key en lugar de JWT del usuario → 401 en log-audit-event → 0 filas en audit_logs ✅ (Resuelto — 2026-06-30)
 **Severidad:** 🔴 Crítica — afecta a PROD desde el inicio del sistema
 **Detectado:** 2026-06-30 (Supabase Dashboard Invocations: role="anon" → 401 sistemático)

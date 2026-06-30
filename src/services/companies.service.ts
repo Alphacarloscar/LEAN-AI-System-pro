@@ -17,6 +17,7 @@
 // ============================================================
 
 import { supabase }                  from '@/lib/supabase'
+import { getAuthHeader }             from '@/lib/getAuthHeader'
 import { makeAuditable }             from '@/lib/audit'
 import type { CompanyRow, UserRole } from '@/types/database.types'
 
@@ -62,6 +63,9 @@ const _impl = {
     companyId: string
     role?:     UserRole
   }): Promise<void> {
+    const headers = await getAuthHeader()
+    if (!headers) throw new Error('[Companies] inviteUserToCompany: Sesión expirada — vuelve a iniciar sesión')
+
     const { data, error } = await supabase.functions.invoke('invite-user', {
       body: {
         email:     params.email,
@@ -69,6 +73,7 @@ const _impl = {
         companyId: params.companyId,
         role:      params.role ?? 'client_viewer',
       },
+      headers,
     })
 
     if (error) {
@@ -108,8 +113,12 @@ const _impl = {
   // de Supabase con service role key para eliminar el usuario de Auth
   // (el perfil se borra en cascada por la FK profiles.id → auth.users.id).
   async deleteUser(userId: string): Promise<void> {
+    const headers = await getAuthHeader()
+    if (!headers) throw new Error('[Companies] deleteUser: Sesión expirada — vuelve a iniciar sesión')
+
     const { data, error } = await supabase.functions.invoke('delete-user', {
       body: { userId },
+      headers,
     })
 
     if (error) {

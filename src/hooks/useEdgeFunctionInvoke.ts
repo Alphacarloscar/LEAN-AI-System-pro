@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { supabase }               from '@/lib/supabase'
 import { reportError }            from '@/lib/reportError'
+import { getAuthHeader }          from '@/lib/getAuthHeader'
 
 export interface EdgeFunctionPersistence {
   saved:  boolean
@@ -65,9 +66,12 @@ export function useEdgeFunctionInvoke<TContext, TResult>(
     setError(null)
 
     try {
+      const headers = await getAuthHeader()
+      if (!headers) throw new Error('Sesión expirada — vuelve a iniciar sesión')
+
       const invokePromise = supabase.functions.invoke(
         'ai-recommend',
-        { body: { tool, context, engagementId } },
+        { body: { tool, context, engagementId }, headers },
       )
 
       const timeoutPromise = new Promise<never>((_, reject) =>

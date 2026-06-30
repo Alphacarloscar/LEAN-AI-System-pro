@@ -17,19 +17,12 @@
 
 import { supabase }            from '@/lib/supabase'
 import { reportError }         from '@/lib/reportError'
+import { getAuthHeader }       from '@/lib/getAuthHeader'
 import type { AuditLogInsert } from './types'
 
 // El cliente solo envía los datos del evento. El contexto de usuario (id, email, rol)
 // se añade de forma segura en la Edge Function 'log-audit-event'.
 type AuditLogEntry = Omit<AuditLogInsert, 'id' | 'created_at' | 'user_id' | 'user_email' | 'user_role'>
-
-/** Obtiene el Authorization header con el JWT de la sesión activa.
- *  Devuelve null si no hay sesión — el caller debe abortar el audit. */
-async function getAuthHeader(): Promise<{ Authorization: string } | null> {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.access_token) return null
-  return { Authorization: `Bearer ${session.access_token}` }
-}
 
 /**
  * Inserta un registro de auditoría de forma asíncrona sin bloquear al caller.

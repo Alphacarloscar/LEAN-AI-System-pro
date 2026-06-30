@@ -43,29 +43,42 @@ const { error } = await supabase.functions.invoke('nombre-funcion', {
 El helper `getAuthHeader()` en `auditClient.ts` encapsula este patrón para
 el audit trail. Para otros servicios, replicar el patrón inline.
 
-## Call sites auditados
+## Helper compartido
 
-| Archivo | Función invocada | ¿Necesita JWT del usuario? | Estado |
+`src/lib/getAuthHeader.ts` encapsula el patrón — importar desde ahí en todos los call sites:
+
+```ts
+import { getAuthHeader } from '@/lib/getAuthHeader'
+
+const headers = await getAuthHeader()
+if (!headers) throw new Error('[<context>] Sesión expirada — vuelve a iniciar sesión')
+await supabase.functions.invoke('<fn>', { body, headers })
+```
+
+Para el audit trail (fire-and-forget), si no hay sesión se descarta silenciosamente en lugar de lanzar.
+
+## Call sites auditados — 4/4 ✅
+
+| Archivo | Función invocada | Edge Fn verifica caller | Estado |
 |---|---|---|---|
-| `src/lib/audit/auditClient.ts` | `log-audit-event` | Sí — `getUser()` en Edge Fn | ✅ Corregido |
-| `src/hooks/useEdgeFunctionInvoke.ts` | `ai-recommend` | Sí — usa contexto de usuario | ⚠️ Pendiente |
-| `src/services/companies.service.ts` | `invite-user` | Admin API — service_role en Edge Fn | 🔍 Verificar |
-| `src/services/companies.service.ts` | `delete-user` | Admin API — service_role en Edge Fn | 🔍 Verificar |
+| `src/lib/audit/auditClient.ts` | `log-audit-event` | ✅ `getUser()` | ✅ Corregido |
+| `src/hooks/useEdgeFunctionInvoke.ts` | `ai-recommend` | ✅ `getUser()` línea 749 | ✅ Corregido |
+| `src/services/companies.service.ts` | `invite-user` | ✅ `getUser()` línea 41 | ✅ Corregido |
+| `src/services/companies.service.ts` | `delete-user` | ✅ `getUser()` línea 42 | ✅ Corregido |
 
-Los call sites marcados ⚠️ y 🔍 se revisarán en una tarea separada.
+Auditoría server-side: las 3 Edge Functions verifican `getUser()` y devuelven 401 si falla — sin vulnerabilidades de autenticación.
 
 ## Consecuencias
 
 **Positivas:**
 - La Edge Function recibe el JWT del usuario autenticado → `getUser()` resuelve correctamente.
 - `audit_logs` empieza a recibir filas en producción.
-- El patrón es explícito y fácil de auditar con `grep "functions.invoke"`.
+- El patrón centralizado en `getAuthHeader.ts` es fácil de auditar con `grep "getAuthHeader"`.
+- `ai-recommend`, `invite-user` y `delete-user` dejan de fallar silenciosamente con anon key.
 
 **Negativas / trade-offs:**
-- Requiere `await supabase.auth.getSession()` antes de cada invoke — latencia
-  mínima (~0ms si la sesión está en memoria, 1 round-trip si expiró).
-- Si no hay sesión activa, el invoke se descarta. Para el audit trail esto es
-  correcto por diseño (ADR-017). Para otros servicios, evaluar si lanzar error.
+- Requiere `await getAuthHeader()` antes de cada invoke — latencia mínima (~0ms si la sesión está en memoria).
+- Si no hay sesión activa, el audit se descarta; los otros servicios lanzan error visible al usuario.
 
 ## Alternativas descartadas
 
