@@ -181,3 +181,29 @@ PRO (SQL Editor proyecto PRO)
 | Usuarios app | Via RLS (app únicamente) | Via RLS (app) | Via RLS (app) | Sin acceso al Dashboard |
 
 > **Regla crítica:** Claude NUNCA ejecuta queries directas en la BD de PRO. Proporciona el SQL script para que Carlos lo ejecute manualmente en Supabase SQL Editor, con instrucciones paso a paso y query de verificación.
+
+
+---
+
+## Audit Edge Function — Propagación de JWT
+
+**Problema diagnosticado (2026-06-30):** `supabase.functions.invoke()` en supabase-js v2 envía el `anon key` en el header `Authorization` por defecto, incluso con sesión activa. La Edge Function `log-audit-event` llama a `supabase.auth.getUser()` para extraer la identidad del caller — con anon key recibe `{ user: null }` y devuelve `401 "Invalid token"`. Resultado: 0 filas en `audit_logs` en toda la historia del sistema hasta el fix.
+
+**Fix aplicado:** `auditClient.ts` lee el `access_token` vía `supabase.auth.getSession()` y lo pasa explícitamente:
+
+```ts
+const { data: { session } } = await supabase.auth.getSession()
+// headers: { Authorization: `Bearer ${session.access_token}` }
+await supabase.functions.invoke('log-audit-event', { body: entry, headers })
+```
+
+**Regla derivada (ADR-026):** Toda llamada a `supabase.functions.invoke()` en este proyecto debe pasar el `Authorization` header explícitamente si la Edge Function necesita identificar al usuario. Ver `src/lib/audit/auditClient.ts::getAuthHeader()` como implementación de referencia.
+
+**Validación post-deploy:**
+```sql
+SELECT COUNT(*)
+FROM audit_logs
+WHERE method_name = 'upsertAllScoresForInterviewee'
+  AND created_at > now() - interval '30 minutes';
+-- Debe devolver > 0 tras un run de E2E post-fix.
+```

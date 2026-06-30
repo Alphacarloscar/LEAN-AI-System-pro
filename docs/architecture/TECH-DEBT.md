@@ -115,6 +115,24 @@ Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (
 
 ---
 
+### ~~DEBT-042~~ — supabase.functions.invoke() enviaba anon key en lugar de JWT del usuario → 401 en log-audit-event → 0 filas en audit_logs ✅ (Resuelto — 2026-06-30)
+**Severidad:** 🔴 Crítica — afecta a PROD desde el inicio del sistema
+**Detectado:** 2026-06-30 (Supabase Dashboard Invocations: role="anon" → 401 sistemático)
+**Área:** `src/lib/audit/auditClient.ts` — `fireAuditLog` + `fireAuditLogAwaitable`
+**Estado:** Resuelto en PR `fix(audit): propagar Authorization JWT explícito en supabase.functions.invoke [e2e]`
+
+**Causa raíz:**
+`supabase-js` v2 envía el `anon key` como `Authorization` header en `functions.invoke()` por defecto, incluso con sesión autenticada activa. `log-audit-event` llama a `supabase.auth.getUser()` para identificar al caller → con anon key devuelve `{ user: null }` → 401 "Invalid token". El error queda atrapado silenciosamente por el `try/catch` del IIFE fire-and-forget → 0 filas en `audit_logs` en toda la historia del sistema. Los 480 upserts de t1_dimension_scores confirmaban que el flujo de datos llegaba hasta el cliente pero el audit nunca persistía.
+
+**Solución:**
+Helper privado `getAuthHeader()` en `auditClient.ts` lee el `access_token` vía `supabase.auth.getSession()` y construye `{ Authorization: "Bearer <token>" }`. Ambas funciones (`fireAuditLog` y `fireAuditLogAwaitable`) usan el header explícito. Si no hay sesión activa, el audit se descarta sin error (un audit sin usuario es inválido por diseño — ADR-017).
+
+**Impacto en PROD:** 100% de los audit logs perdidos desde el despliegue inicial del sistema. A partir de este fix, todos los eventos de escritura instrumentados con `makeAuditable` quedarán persistidos correctamente.
+
+**Call sites pendientes de revisión (ADR-026):** `useEdgeFunctionInvoke.ts` (ai-recommend) y `companies.service.ts` (invite-user, delete-user) — evaluados en tarea separada.
+
+---
+
 ### ~~DEBT-041~~ — makeAuditable fire-and-forget cancela INSERT en audit_logs cuando afterEach cierra la página ✅ (Resuelto — 2026-06-30)
 **Severidad:** 🔴 Alta
 **Detectado:** 2026-06-30 (480 filas en t1_dimension_scores, 0 filas en audit_logs para upsertAllScoresForInterviewee en 20 runs)
