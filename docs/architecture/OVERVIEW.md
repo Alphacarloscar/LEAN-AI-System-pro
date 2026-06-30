@@ -171,11 +171,12 @@ Los tooltips usan clases Tailwind: `bg-white dark:bg-warm-800 shadow-sm`. Los ej
 
 ## E2E patterns
 
-**Patrón canónico audit watcher (`prepareAuditWatcher`):** registrar AMBAS promises antes de la acción del usuario y destruirlas antes de que `afterEach` navegue a otra página. El helper devuelve `{ request, response }`:
-- `request()` — `waitForRequest` con filtro `url + method + body`. Resuelve al ENVIAR (~15s en CI). Usar en todos los tests de payload.
-- `response()` — `waitForResponse` con el mismo filtro, timeout 90s. Resuelve al RECIBIR la respuesta HTTP. Usar solo en tests que verifican status 200. Registrada ANTES de la acción para evitar que `afterEach` cancele la conexión (race condition).
+**Patrón canónico audit watcher — request siempre, response opt-in:**
+- `prepareAuditWatcher(page, service, method)` — registra solo `waitForRequest` ANTES de la acción. Devuelve `{ request }`. Usar en todos los tests que solo verifican el payload enviado (tests 2, 3, 4, 6, 7, 8).
+- `prepareAuditResponseWatcher(page, service, method)` — registra `waitForResponse` con timeout 120s. Devuelve un getter `() => Promise<Response>`. Usar ÚNICAMENTE en los tests que verifican la respuesta HTTP del servidor (tests 1 y 5). Registrar ANTES de la acción para evitar que `afterEach` cancele la conexión.
+- No registrar `waitForResponse` en helpers compartidos si no todos los tests la consumen: una promise de response huérfana que afterEach corta genera `"Error: page.waitForResponse: Test ended."` en cada test que no la awaite (regresión DEBT-037).
 - `beforeAll` warm-up: POST dummy a la Edge Function con anon key para sacarla de cold-start Deno (~60s en CI) antes del primer test real.
-- Ver `e2e/audit.spec.ts::prepareAuditWatcher` como implementación de referencia.
+- Ver `e2e/audit.spec.ts::prepareAuditWatcher` y `prepareAuditResponseWatcher` como implementación de referencia.
 
 **Rutas T1-T12 en specs:** siempre navegar con el `engagementId` explícito: `page.goto(\`/tN/${LAB_PROJECT_ID}\`)`. Sin el parámetro, el router redirige al fallback `/` y el ToolHeader no monta. `LAB_PROJECT_ID` se exporta desde `e2e/helpers.ts`. Ver ADR-024.
 

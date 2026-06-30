@@ -115,6 +115,25 @@ Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (
 
 ---
 
+### ~~DEBT-037~~ — Regresión Prompt 6: responsePromise colgante en prepareAuditWatcher → 7 tests audit fallidos ✅ (Resuelto — 2026-06-30)
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-30 (CI run #28385372191 — `Error: page.waitForResponse: Test ended.` en tests 2, 3, 4, 6)
+**Área:** `e2e/audit.spec.ts` — helper `prepareAuditWatcher` (líneas 107-142 antes del fix)
+**Estado:** Resuelto en PR `fix(e2e): audit watcher — response promise opt-in para evitar Test ended [e2e]`
+
+**Causa raíz:**
+El refactor del Prompt 6 (commit `e5ea224`) registraba SIEMPRE dos promises (`waitForRequest` + `waitForResponse`) en `prepareAuditWatcher`. Los tests 2, 3, 4, 6 sólo consumían la request promise → la response promise quedaba pendiente. Cuando `afterEach` navegaba a `/`, Playwright cancelaba la página y lanzaba `"Error: page.waitForResponse: Test ended."` en cada promise huérfana, convirtiendo 4 tests verdes en rojos. Los tests 1 y 5 también fallaban por timeout 90s (la Edge Function no responde a tiempo — problema server-side pendiente Prompt 7).
+
+**Solución:**
+`prepareAuditWatcher` devuelve solo `{ request }`. Los tests 1 y 5 llaman además a `prepareAuditResponseWatcher` (helper nuevo) que registra `waitForResponse` localmente con timeout extendido a 120s. Ninguna promise de response queda huérfana en los tests que no la necesitan.
+
+**Impacto:**
+- Tests 2, 3, 4, 6: vuelven a verde instantáneamente.
+- Tests 1, 5: siguen fallando por problema server-side (Edge Function no responde en 120s en CI). Pendiente Prompt 7.
+- Test 7: depende de tests anteriores — estado pendiente Prompt 7.
+
+---
+
 ### ~~DEBT-036~~ — audit.spec.ts tests 1 y 5 fallan por race condition afterEach vs response() ✅ (Resuelto — 2026-06-29)
 **Severidad:** 🔴 Alta
 **Detectado:** 2026-06-29 (CI run #28380357417 — `Expected: 200 / Received: undefined`)
