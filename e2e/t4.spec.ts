@@ -65,19 +65,15 @@ test.describe('T4 — Use Case Priority Board', () => {
   })
 
   test('el panel de scoring/detalle tiene los tabs esperados', async ({ page }) => {
-    // Anclar a elemento estable que no depende de ai-recommend (mismo que pasan tests :32 y :55)
-    await expect(page.getByText(/dashboard ejecutivo/i).first()).toBeVisible({ timeout: 15_000 })
+    // Los tabs Scoring/Economía/Hoja de ruta SÓLO aparecen con un caso de uso seleccionado.
+    // Seleccionamos el primero del QuarterlyRoadmap antes de asertar los tabs.
+    const firstCard = page.locator('[data-testid="use-case-card"]').first()
+    await firstCard.waitFor({ state: 'visible', timeout: 15_000 })
+    await firstCard.click()
 
-    // Los tabs Scoring/Economía/Hoja de ruta sólo aparecen con un caso de uso seleccionado.
-    // Hacemos scroll a la zona del panel de detalle antes de buscar los tabs.
-    const tabs = ['Scoring', 'Economía', 'Hoja de ruta']
-    for (const tab of tabs) {
-      const locator = page.getByText(tab, { exact: false }).first()
-      await locator.scrollIntoViewIfNeeded().catch(() => {})
-      const isVisible = await locator.isVisible({ timeout: 2_000 }).catch(() => false)
-      if (isVisible) break
-    }
-    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByRole('tab', { name: /scoring/i })).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByRole('tab', { name: /econom/i })).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByRole('tab', { name: /hoja de ruta/i })).toBeVisible({ timeout: 5_000 })
   })
 
   test('el botón para añadir caso de uso está accesible', async ({ page }) => {

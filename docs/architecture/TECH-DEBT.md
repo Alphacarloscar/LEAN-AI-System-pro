@@ -115,6 +115,20 @@ Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (
 
 ---
 
+### ~~DEBT-040~~ — t4.spec.ts test "scoring panel" asetaba tabs sin seleccionar use-case → timeout 120s ✅ (Resuelto — 2026-06-30)
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-30 (t4.spec.ts:67 agotando 120s en CI)
+**Área:** `e2e/t4.spec.ts` test 4 + `src/modules/T4_UseCasePriorityBoard/components/QuarterlyRoadmap.tsx`
+**Estado:** Resuelto en PR `fix(e2e): t4 scoring panel selecciona use-case explícitamente antes de asertar tabs [e2e]`
+
+**Causa raíz:**
+Los tabs Scoring/Economía/Hoja de ruta solo se renderizan cuando `activeUseCase !== null` en T4View (línea 238: `{activeUseCase && <UseCaseDetailPanel … />}`). El test intentaba encontrar los tabs con scroll y timeouts cortos pero sin nunca seleccionar un use-case — la condición never era true y el test agotaba el timeout global de 120s. El seed sí tiene 4 use-cases en el proyecto Toy Story, por lo que el fix es exclusivamente en el test y en el selector.
+
+**Solución:**
+Añadir `data-testid="use-case-card"` al `<button>` de cada use-case en `QuarterlyRoadmap.tsx`. En el test, esperar a que el primer card sea visible con `waitFor`, hacer click, y luego asertar los tres tabs con `getByRole('tab')` y timeouts explícitos.
+
+---
+
 ### ~~DEBT-039~~ — fillAndSubmitNewIntervieweeModal: tagName leído antes de hidratación → rama else ejecuta fill en un select ✅ (Resuelto — 2026-06-30)
 **Severidad:** 🔴 Alta
 **Detectado:** 2026-06-30 (`Error: locator.fill: Element is not an <input>, <textarea> or [contenteditable]` en audit.spec.ts:188)

@@ -86,6 +86,7 @@ export function QuarterlyRoadmap({
                       return (
                         <button
                           key={uc.id}
+                          data-testid="use-case-card"
                           onClick={() => onSelect(uc.id)}
                           className={[
                             'shrink-0 w-52 text-left rounded-xl border px-3 py-2.5 transition-all duration-150',
