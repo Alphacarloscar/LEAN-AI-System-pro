@@ -132,28 +132,26 @@ function prepareAuditWatcher(
 /**
  * Registra waitForResponse para los tests que necesitan verificar la respuesta
  * del servidor (tests 1 y 5). Debe llamarse ANTES de la acción del usuario.
- * Timeout extendido a 120s para absorber cold-start Deno en CI.
+ * Filtra por el body del REQUEST (req.postDataJSON()), no del response body
+ * — el response de log-audit-event es {success:true} y no contiene service_name
+ * ni method_name, por lo que filtrar por response body causaría timeout infinito.
  */
 function prepareAuditResponseWatcher(
   page:        Page,
   serviceName: string,
   methodName:  string,
 ): () => Promise<Response> {
-  const RESPONSE_TIMEOUT = 120_000
-
-  const matcher = (url: string, body: Record<string, unknown>) =>
-    EDGE_FN_PATTERN.test(url) &&
-    body.service_name === serviceName &&
-    body.method_name === methodName
-
   const responsePromise = page.waitForResponse(
     (res) => {
-      if (res.request().method() !== 'POST') return false
+      const req = res.request()
+      if (req.method() !== 'POST') return false
+      if (!EDGE_FN_PATTERN.test(req.url())) return false
       try {
-        return matcher(res.url(), (res.request().postDataJSON() ?? {}) as Record<string, unknown>)
+        const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
+        return body.service_name === serviceName && body.method_name === methodName
       } catch { return false }
     },
-    { timeout: RESPONSE_TIMEOUT },
+    { timeout: EDGE_FN_TIMEOUT },
   )
 
   return () => responsePromise

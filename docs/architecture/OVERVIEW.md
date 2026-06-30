@@ -173,7 +173,7 @@ Los tooltips usan clases Tailwind: `bg-white dark:bg-warm-800 shadow-sm`. Los ej
 
 **Patrón canónico audit watcher — request siempre, response opt-in:**
 - `prepareAuditWatcher(page, service, method)` — registra solo `waitForRequest` ANTES de la acción. Devuelve `{ request }`. Usar en todos los tests que solo verifican el payload enviado (tests 2, 3, 4, 6, 7, 8).
-- `prepareAuditResponseWatcher(page, service, method)` — registra `waitForResponse` con timeout 120s. Devuelve un getter `() => Promise<Response>`. Usar ÚNICAMENTE en los tests que verifican la respuesta HTTP del servidor (tests 1 y 5). Registrar ANTES de la acción para evitar que `afterEach` cancele la conexión.
+- `prepareAuditResponseWatcher(page, service, method)` — registra `waitForResponse` con timeout 90s. Devuelve un getter `() => Promise<Response>`. Usar ÚNICAMENTE en los tests que verifican la respuesta HTTP del servidor (tests 1 y 5). Registrar ANTES de la acción para evitar que `afterEach` cancele la conexión. **CRÍTICO:** el filtro debe leer `req.postDataJSON()` (body del REQUEST), nunca el body del response — el response de log-audit-event es `{success:true}` y no contiene `service_name` ni `method_name`, por lo que filtrar por response body causaría timeout infinito (DEBT-038).
 - No registrar `waitForResponse` en helpers compartidos si no todos los tests la consumen: una promise de response huérfana que afterEach corta genera `"Error: page.waitForResponse: Test ended."` en cada test que no la awaite (regresión DEBT-037).
 - `beforeAll` warm-up: POST dummy a la Edge Function con anon key para sacarla de cold-start Deno (~60s en CI) antes del primer test real.
 - Ver `e2e/audit.spec.ts::prepareAuditWatcher` y `prepareAuditResponseWatcher` como implementación de referencia.

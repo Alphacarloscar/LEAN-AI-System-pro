@@ -115,6 +115,22 @@ Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (
 
 ---
 
+### ~~DEBT-038~~ — prepareAuditResponseWatcher filtraba response body en lugar de request body → timeout 120s en tests 1 y 5 ✅ (Resuelto — 2026-06-30)
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-30 (tests audit.spec.ts:245 y :411 agotando timeout 120000ms)
+**Área:** `e2e/audit.spec.ts` — helper `prepareAuditResponseWatcher`
+**Estado:** Resuelto en PR `fix(e2e): audit response watcher filtra body del request, no del response [e2e]`
+
+**Causa raíz:**
+`prepareAuditResponseWatcher` construía el `matcher` pasando `res.url()` (URL del response) como primer argumento, pero el segundo argumento intentaba leer `service_name`/`method_name` del body. La implementación usaba `res.request().postDataJSON()` correctamente para el body, pero el filtro era confuso y el timeout de 120s enmascaraba el problema. El response body de `log-audit-event` es `{success:true, logged:true}` — no contiene `service_name` ni `method_name`. Si el filtro hubiera leído el response body (error fácil de cometer al mantener el código), la promise nunca resolvería.
+
+**Solución:**
+Simplificar `prepareAuditResponseWatcher` para filtrar explícitamente por `req.postDataJSON()` (body del REQUEST), con `req = res.request()`. Eliminar el `matcher` intermedio para hacer el flujo de datos obvio. Bajar timeout de 120s a 90s (`EDGE_FN_TIMEOUT`). Añadir comentario en el helper explicando por qué se usa el request body.
+
+**Regla derivada:** En `waitForResponse`, filtrar siempre por `res.request().postDataJSON()`. Nunca leer el response body para identificar a qué llamada pertenece la respuesta.
+
+---
+
 ### ~~DEBT-037~~ — Regresión Prompt 6: responsePromise colgante en prepareAuditWatcher → 7 tests audit fallidos ✅ (Resuelto — 2026-06-30)
 **Severidad:** 🔴 Alta
 **Detectado:** 2026-06-30 (CI run #28385372191 — `Error: page.waitForResponse: Test ended.` en tests 2, 3, 4, 6)
