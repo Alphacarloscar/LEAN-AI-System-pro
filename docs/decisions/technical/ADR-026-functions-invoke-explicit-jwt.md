@@ -80,6 +80,38 @@ Auditoría server-side: las 3 Edge Functions verifican `getUser()` y devuelven 4
 - Requiere `await getAuthHeader()` antes de cada invoke — latencia mínima (~0ms si la sesión está en memoria).
 - Si no hay sesión activa, el audit se descarta; los otros servicios lanzan error visible al usuario.
 
+## Modo awaitable en E2E — flag `window.__E2E_AWAIT_AUDIT__`
+
+**Problema:** El audit trail usa fire-and-forget (`fireAuditLog`) en producción para no bloquear la UX. En E2E, el `afterEach` de Playwright navega a `/` inmediatamente tras la acción del usuario — antes de que la Edge Function `log-audit-event` complete el INSERT. Playwright cancela la página en vuelo → 0 filas en `audit_logs` aunque el JWT sea correcto y el upsert T1 haya tenido éxito.
+
+**Solución:** `makeAuditable` detecta el flag `globalThis.__E2E_AWAIT_AUDIT__` en los callbacks `.then()`:
+
+```ts
+if ((globalThis as Record<string, unknown>)['__E2E_AWAIT_AUDIT__'] === true) {
+  await fireAuditLogAwaitable(entry).catch((err) => reportError('audit.write', err))
+} else {
+  fireAuditLog(entry)  // fire-and-forget en producción — sin cambio
+}
+```
+
+En `e2e/audit.spec.ts`, el `beforeEach` inyecta el flag en cada página antes del primer script de la app:
+
+```ts
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    (window as unknown as Record<string, unknown>)['__E2E_AWAIT_AUDIT__'] = true
+  })
+  // ... login, selectEngagement, etc.
+})
+```
+
+**Garantías:**
+- En PROD/PRE el flag no está definido → `globalThis.__E2E_AWAIT_AUDIT__ !== true` → fire-and-forget de siempre. No hay regresión de UX.
+- En E2E, el Proxy espera el INSERT antes de devolver el control → `afterEach` no puede interrumpir la request en vuelo.
+- El `catch` preserva ADR-010: los errores de audit van a `reportError('audit.write', err)`, no se propagan al caller.
+
+**Ver también:** ADR-025 (design del modo awaitable), `src/lib/audit/makeAuditable.ts` líneas ~216 y ~249.
+
 ## Alternativas descartadas
 
 - **Confiar en supabase-js para propagar el token**: no funciona en v2 para
