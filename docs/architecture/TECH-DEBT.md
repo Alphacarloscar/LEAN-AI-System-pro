@@ -115,6 +115,17 @@ Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (
 
 ---
 
+### ~~DEBT-039~~ — fillAndSubmitNewIntervieweeModal: tagName leído antes de hidratación → rama else ejecuta fill en un select ✅ (Resuelto — 2026-06-30)
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-30 (`Error: locator.fill: Element is not an <input>, <textarea> or [contenteditable]` en audit.spec.ts:188)
+**Área:** `e2e/audit.spec.ts` — helper `fillAndSubmitNewIntervieweeModal`
+**Estado:** Resuelto en PR `fix(e2e): detección robusta de tagName en helper de entrevistado [e2e]`
+
+**Causa raíz:**
+Dos bugs combinados: (1) `deptSelect.evaluate()` se ejecutaba sin esperar que el elemento fuera visible → si el modal no había hidratado aún, el evaluate podía fallar o devolver valor inesperado. (2) La comparación usaba `'select'` (minúsculas) pero `tagName` en el DOM siempre devuelve mayúsculas (`'SELECT'`) → aunque `toLowerCase()` lo normalizaba, si el evaluate fallaba silenciosamente el catch no existía y caía al `else`. Fix: añadir `waitFor({ state: 'visible' })` antes del evaluate, añadir `.catch(() => '')` para seguridad, y comparar con `'SELECT'` (mayúsculas, sin toLowerCase).
+
+---
+
 ### ~~DEBT-038~~ — prepareAuditResponseWatcher filtraba response body en lugar de request body → timeout 120s en tests 1 y 5 ✅ (Resuelto — 2026-06-30)
 **Severidad:** 🔴 Alta
 **Detectado:** 2026-06-30 (tests audit.spec.ts:245 y :411 agotando timeout 120000ms)

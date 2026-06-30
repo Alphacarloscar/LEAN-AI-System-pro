@@ -177,10 +177,13 @@ async function fillAndSubmitNewIntervieweeModal(page: Page): Promise<void> {
 
   // Departamento: el select aparece cuando hay departamentos cargados del seed.
   // Si aún no cargaron, el campo es un input de texto libre (fallback del componente).
+  // waitFor garantiza hidratación completa antes de leer tagName.
+  // tagName devuelve MAYÚSCULAS en el DOM — comparar con 'SELECT', no 'select'.
   const deptSelect = page.locator('#new-interviewee-dept')
-  const tagName    = await deptSelect.evaluate((el) => el.tagName.toLowerCase())
+  await deptSelect.waitFor({ state: 'visible', timeout: 5_000 })
+  const tagName = await deptSelect.evaluate((el) => el.tagName).catch(() => '')
 
-  if (tagName === 'select') {
+  if (tagName === 'SELECT') {
     await deptSelect.selectOption({ label: TEST_INTERVIEWEE.department })
   } else {
     await deptSelect.fill(TEST_INTERVIEWEE.department)
