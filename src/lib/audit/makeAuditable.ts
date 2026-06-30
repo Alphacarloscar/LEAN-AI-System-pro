@@ -18,7 +18,8 @@
 //     para que los auditores puedan identificar entradas incompletas (ADR-017).
 // ============================================================
 
-import { fireAuditLog }                           from './auditClient'
+import { fireAuditLog, fireAuditLogAwaitable }    from './auditClient'
+import { reportError }                            from '@/lib/reportError'
 import type { AuditLogInsert, AuditAIMetadata } from './types'
 import type { Json }            from '@/types'
 
@@ -184,7 +185,7 @@ export function makeAuditable<T extends Record<string, unknown>>(
 
         return (raw as Promise<unknown>).then(
           // ── Éxito ──────────────────────────────────────────────────────
-          (response) => {
+          async (response) => {
             const duration_ms    = Math.round(performance.now() - startedAt)
             const argsResult     = safeSerialize(args, true)
             const responseResult = safeSerialize(response, true)
@@ -209,12 +210,19 @@ export function makeAuditable<T extends Record<string, unknown>>(
               ).json,
             }
 
-            fireAuditLog(entry)
+            // En E2E (window.__E2E_AWAIT_AUDIT__) esperamos a que el INSERT complete
+            // antes de devolver el control — evita cancelación por afterEach (ADR-017 §test-mode).
+            // En producción: fire-and-forget de siempre.
+            if ((globalThis as Record<string, unknown>)['__E2E_AWAIT_AUDIT__'] === true) {
+              await fireAuditLogAwaitable(entry).catch((err) => reportError('audit.write', err))
+            } else {
+              fireAuditLog(entry)
+            }
             return response
           },
 
           // ── Error ───────────────────────────────────────────────────────
-          (error) => {
+          async (error) => {
             const duration_ms = Math.round(performance.now() - startedAt)
             const errObj      = error instanceof Error ? error : new Error(String(error))
             const argsResult  = safeSerialize(args, true)
@@ -238,7 +246,11 @@ export function makeAuditable<T extends Record<string, unknown>>(
               ).json,
             }
 
-            fireAuditLog(entry)
+            if ((globalThis as Record<string, unknown>)['__E2E_AWAIT_AUDIT__'] === true) {
+              await fireAuditLogAwaitable(entry).catch((err) => reportError('audit.write', err))
+            } else {
+              fireAuditLog(entry)
+            }
 
             // Re-lanza SIEMPRE — el Proxy es transparente para la UI y los stores.
             throw error

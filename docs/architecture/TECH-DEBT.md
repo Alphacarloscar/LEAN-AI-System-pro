@@ -115,6 +115,25 @@ Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (
 
 ---
 
+### ~~DEBT-041~~ — makeAuditable fire-and-forget cancela INSERT en audit_logs cuando afterEach cierra la página ✅ (Resuelto — 2026-06-30)
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-30 (480 filas en t1_dimension_scores, 0 filas en audit_logs para upsertAllScoresForInterviewee en 20 runs)
+**Área:** `src/lib/audit/makeAuditable.ts`, `src/lib/audit/auditClient.ts`, `e2e/audit.spec.ts`
+**Estado:** Resuelto en PR `fix(audit): modo awaitable opcional para E2E — evita cancelación afterEach [e2e]`
+
+**Causa raíz:**
+`makeAuditable` usa fire-and-forget (`fireAuditLog` en IIFE void). En E2E, `afterEach` navega a `/` inmediatamente tras el upsert T1. El Proxy ya devolvió el control al caller (upsert completó), pero la Edge Function `log-audit-event` aún no terminó el INSERT. Playwright cancela la página → la request HTTP se interrumpe → 0 filas en `audit_logs`. 100% reproducible en CI.
+
+**Solución (ADR-025):**
+- Nueva exportación `fireAuditLogAwaitable` en `auditClient.ts` que devuelve la Promise directamente (sin IIFE).
+- `makeAuditable` lee `globalThis.__E2E_AWAIT_AUDIT__` en los callbacks `.then()`. Si está activo: `await fireAuditLogAwaitable(...)`. Si no: `fireAuditLog(...)` fire-and-forget.
+- `e2e/audit.spec.ts` `beforeEach` inyecta `window.__E2E_AWAIT_AUDIT__ = true` vía `page.addInitScript()`.
+- El código de producción no cambia.
+
+**Patrón derivado:** fire-and-forget en producción, awaitable opt-in en E2E vía flag de ventana. Ver ADR-025.
+
+---
+
 ### ~~DEBT-040~~ — t4.spec.ts test "scoring panel" asetaba tabs sin seleccionar use-case → timeout 120s ✅ (Resuelto — 2026-06-30)
 **Severidad:** 🔴 Alta
 **Detectado:** 2026-06-30 (t4.spec.ts:67 agotando 120s en CI)

@@ -224,6 +224,13 @@ test.describe('Audit Trail — integración E2E', () => {
   })
 
   test.beforeEach(async ({ page }) => {
+    // Activa el modo awaitable de makeAuditable: el Proxy esperará a que el
+    // INSERT en audit_logs complete antes de devolver el control al caller.
+    // Sin esto, afterEach navega a '/' antes de que la Edge Function termine
+    // → 0 filas en audit_logs aunque el upsert T1 haya tenido éxito (ADR-017 §test-mode).
+    await page.addInitScript(() => {
+      (window as unknown as Record<string, unknown>)['__E2E_AWAIT_AUDIT__'] = true
+    })
     await login(page, USERS.consultor.email, USERS.consultor.password)
     await selectEngagement(page, LAB_PROJECT_ID)
     await goToT1AndWait(page)

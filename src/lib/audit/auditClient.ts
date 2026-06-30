@@ -46,3 +46,23 @@ export function fireAuditLog(entry: AuditLogEntry): void {
     }
   })()
 }
+
+/**
+ * Versión awaitable de fireAuditLog para entornos E2E.
+ * A diferencia de fireAuditLog, devuelve la Promise sin envolverla en IIFE,
+ * permitiendo que el caller espere a que el INSERT en audit_logs complete
+ * antes de que el test cierre la página (evita cancelación por afterEach).
+ *
+ * Lanza si la Edge Function devuelve error — el caller en makeAuditable
+ * debe decidir si swallowear (ADR-010: no silenciar en producción).
+ * Solo se usa cuando globalThis.__E2E_AWAIT_AUDIT__ === true.
+ */
+export async function fireAuditLogAwaitable(entry: AuditLogEntry): Promise<void> {
+  const { error } = await supabase.functions.invoke('log-audit-event', {
+    body: entry,
+  })
+
+  if (error != null) {
+    throw new Error(`[AuditLog] Invoke failed: ${error.message}`)
+  }
+}
