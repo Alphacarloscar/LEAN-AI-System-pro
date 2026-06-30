@@ -5,6 +5,12 @@ vi.mock('@/lib/supabase', () => ({
     from:      vi.fn(),
     rpc:       vi.fn(),
     functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) },
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { access_token: 'mock-jwt-token' } },
+        error: null,
+      }),
+    },
   },
 }))
 

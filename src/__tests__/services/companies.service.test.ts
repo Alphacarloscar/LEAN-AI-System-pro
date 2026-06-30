@@ -4,6 +4,12 @@ vi.mock('@/lib/supabase', () => ({
   supabase: {
     from:      vi.fn(),
     functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) },
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { access_token: 'mock-jwt-token' } },
+        error: null,
+      }),
+    },
   },
 }))
 
@@ -160,14 +166,16 @@ describe('inviteUserToCompany', () => {
       role:      'client_editor',
     })
 
-    expect(supabase.functions.invoke).toHaveBeenCalledWith('invite-user', {
-      body: {
-        email:     'usuario@empresa.com',
-        name:      'Ana García',
-        companyId: 'comp-001',
-        role:      'client_editor',
-      },
-    })
+    expect(supabase.functions.invoke).toHaveBeenCalledWith('invite-user',
+      expect.objectContaining({
+        body: {
+          email:     'usuario@empresa.com',
+          name:      'Ana García',
+          companyId: 'comp-001',
+          role:      'client_editor',
+        },
+      }),
+    )
   })
 
   it('usa role "client_viewer" por defecto si no se especifica', async () => {
@@ -297,9 +305,9 @@ describe('deleteUser', () => {
 
     await deleteUser('user-uuid-123')
 
-    expect(supabase.functions.invoke).toHaveBeenCalledWith('delete-user', {
-      body: { userId: 'user-uuid-123' },
-    })
+    expect(supabase.functions.invoke).toHaveBeenCalledWith('delete-user',
+      expect.objectContaining({ body: { userId: 'user-uuid-123' } }),
+    )
   })
 
   it('lanza error si la Edge Function devuelve error de red', async () => {

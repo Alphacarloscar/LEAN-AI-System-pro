@@ -115,6 +115,24 @@ Los schemas Zod de T2 (`stakeholderFormSchema`), T3 (`processFormSchema`) y T4 (
 
 ---
 
+### ~~DEBT-044~~ — 15 tests con TypeError getSession + 4 aserciones invoke sin headers tras ADR-026 ✅ (Resuelto — 2026-06-30)
+**Severidad:** 🔴 Alta — 15 tests rotos en CI
+**Detectado:** 2026-06-30 (CI post-commit `271b042`)
+**Área:** `src/__tests__/admin/admin.service.test.ts`, `src/__tests__/services/companies.service.test.ts` + 9 archivos de test de servicios
+**Estado:** Resuelto en PR `fix(tests): añadir auth.getSession a mocks de supabase tras ADR-026 [e2e]`
+
+**Causa raíz:**
+`getAuthHeader()` (introducido en ADR-026) llama a `supabase.auth.getSession()`. Los mocks inline de 11 archivos de test no incluían `auth` en el objeto mockeado → `TypeError: Cannot read properties of undefined (reading 'getSession')`. Adicionalmente, 4 aserciones `toHaveBeenCalledWith` verificaban el shape exacto de los args de `invoke` sin incluir el nuevo campo `headers` → 4 fallos de aserción.
+
+**Solución:**
+- Añadir `auth: { getSession: vi.fn().mockResolvedValue(...) }` a los 11 archivos de test afectados.
+- Cambiar las 4 aserciones exactas a `expect.objectContaining({ body: ... })` para ser robustas ante el campo `headers`.
+- Actualizar `__mocks__/supabase.ts` y `OVERVIEW.md` con la regla: cualquier mock de supabase debe incluir **siempre** `functions.invoke` + `auth.getSession`.
+
+**Resultado:** 646/646 passed, 3 todo. 0 stderr `TypeError`.
+
+---
+
 ### ~~DEBT-043~~ — 3 call sites de functions.invoke() sin JWT explícito tras ADR-026 ✅ (Resuelto — 2026-06-30)
 **Severidad:** 🔴 Alta
 **Detectado:** 2026-06-30 (auditoría ADR-026 tras fix de auditClient.ts)

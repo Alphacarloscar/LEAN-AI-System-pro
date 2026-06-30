@@ -184,4 +184,8 @@ Los tooltips usan clases Tailwind: `bg-white dark:bg-warm-800 shadow-sm`. Los ej
 
 ## Testing — Mocks compartidos
 
-**Patrón canónico del mock de Supabase:** todo `vi.mock('@/lib/supabase')` en tests de servicio debe incluir `functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) }`. Sin él, `auditClient.ts` lanza `TypeError` en stderr al intentar llamar `supabase.functions.invoke` en su IIFE fire-and-forget. Ver `src/__tests__/__mocks__/supabase.ts` para la plantilla de referencia y lista completa de propiedades necesarias.
+**Patrón canónico del mock de Supabase:** todo `vi.mock('@/lib/supabase')` debe incluir **siempre** dos propiedades:
+- `functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) }` — sin él, `auditClient.ts` lanza `TypeError` en stderr (fire-and-forget IIFE).
+- `auth: { getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'mock-jwt-token' } }, error: null }) }` — sin él, `getAuthHeader()` (ADR-026) lanza `TypeError: Cannot read properties of undefined (reading 'getSession')` en todos los servicios que llaman a `functions.invoke` con JWT explícito.
+
+Ver `src/__tests__/__mocks__/supabase.ts` para la plantilla de referencia completa.

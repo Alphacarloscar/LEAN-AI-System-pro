@@ -9,14 +9,27 @@
  *     supabase: {
  *       from:      vi.fn(),
  *       rpc:       vi.fn(),       // solo si el servicio lo usa
- *       auth:      { ... },        // solo si el servicio lo usa
  *       functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) },
+ *       auth: {
+ *         getSession: vi.fn().mockResolvedValue({
+ *           data: { session: { access_token: 'mock-jwt-token' } },
+ *           error: null,
+ *         }),
+ *       },
  *     },
  *   }))
  *
- * La clave es incluir SIEMPRE `functions.invoke` para silenciar el stderr
- * "audit.write TypeError" que produce auditClient.ts cuando supabase.functions
- * no está definido en el mock (fire-and-forget IIFE en auditClient.ts:37).
+ * Por qué es obligatorio incluir SIEMPRE `functions.invoke` y `auth.getSession`:
+ *
+ * - `functions.invoke`: auditClient.ts (fire-and-forget IIFE) llama a invoke
+ *   vía makeAuditable en todos los servicios. Sin mock → TypeError en stderr.
+ *
+ * - `auth.getSession`: getAuthHeader() (ADR-026) llama a getSession() antes
+ *   de cada functions.invoke para obtener el JWT del usuario. Sin mock →
+ *   TypeError: Cannot read properties of undefined (reading 'getSession').
+ *   Afecta directamente a inviteUserToCompany y deleteUser (companies + admin
+ *   tests) que llaman explícitamente a getAuthHeader(), y a cualquier servicio
+ *   que pase por el path makeAuditable → fireAuditLog → getAuthHeader.
  *
  * Ver: docs/architecture/OVERVIEW.md — "Testing — Mocks compartidos"
  */
