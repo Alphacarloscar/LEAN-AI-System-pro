@@ -38,12 +38,10 @@ import { login, selectEngagement, waitForStoreReady, LAB_PROJECT_ID, USERS } fro
 // internamente. La intercepción se hace por sufijo de ruta.
 const EDGE_FN_PATTERN = /\/functions\/v1\/log-audit-event/
 
-// Timeout para detectar que la request a la Edge Function fue ENVIADA.
-// Solo cubre: form fill → store action → makeAuditable → fireAuditLog → fetch iniciado.
-// 115s para absorber cold-start Deno + pool contention bajo alta concurrencia.
-// (cold-start ~60s + profiles query paralela + INSERT → pico observado ~76s en prod;
-//  margen de 39s extra sobre test.setTimeout=120_000.)
-const EDGE_FN_TIMEOUT = 115_000
+// Timeout para detectar que la request a la Edge Function fue ENVIADA y respondida.
+// Con EdgeRuntime.waitUntil() la función responde en ~200ms (solo auth + body parse);
+// 30s cubre cold-start Deno (~60s máx) + latencia de red CI → margen holgado.
+const EDGE_FN_TIMEOUT = 30_000
 
 // Nombre del servicio auditado que aparecerá en el campo service_name del log.
 // Definido en src/services/t1.service.ts línea 230: makeAuditable(_impl, 'services.t1')

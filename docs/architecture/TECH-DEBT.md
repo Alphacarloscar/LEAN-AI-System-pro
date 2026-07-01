@@ -383,8 +383,8 @@ Ambos operadores son idempotentes bajo su estado esperado y no se ven afectados 
 Los tests E2E de CI corren contra `pre-gobytech-prod.vercel.app` → mismo proyecto Supabase Cloud que tráfico real. Durante el CI run `28508523638` se observaron 40+ invocaciones concurrentes a `log-audit-event` en una ventana de 36s (solo 1 worker Playwright). El exceso proviene de usuarios reales o automatización paralela compartiendo el pool de conexiones DB. Consecuencia: cada invocación de la Edge Function tarda ~76s (95% I/O wait, pool saturado) vs 90s de timeout → flake intermitente en `audit.spec.ts:282` y `:448`.
 
 **Mitigación aplicada (2026-07-01):**
-1. `supabase/functions/log-audit-event/index.ts`: `adminClient` creado antes de la query a `profiles`, eliminando overhead de evaluación RLS (`is_platform_admin()`). Query a `profiles` + `req.json()` ahora en `Promise.all` → un round-trip menos secuencial.
-2. `e2e/audit.spec.ts`: `EDGE_FN_TIMEOUT` subido de 90s a 115s (margen sobre el pico observado de 76s; `test.setTimeout` ya era 120s).
+1. `supabase/functions/log-audit-event/index.ts`: Refactored para usar `EdgeRuntime.waitUntil()`. La función responde HTTP 200 en ~200ms (solo `auth.getUser()` + body validation); el `profiles` query + INSERT ocurren en background. El tiempo de respuesta ya no depende de la saturación del DB pool.
+2. `e2e/audit.spec.ts`: `EDGE_FN_TIMEOUT` bajado de 90s/115s a 30s (cold-start + red; la respuesta llega en ~200ms ahora).
 
 **Acción pendiente (infra):**
 Crear proyecto Supabase dedicado para E2E (staging), configurar variables `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` separadas en el secret de GitHub Actions. Esto elimina la contención de pool con tráfico real y haría que los tests sean deterministas.
