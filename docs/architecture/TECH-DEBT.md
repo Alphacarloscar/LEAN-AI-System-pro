@@ -327,6 +327,52 @@ Sustituir `page.goto('/tN', ...)` por `page.goto(\`/tN/${LAB_PROJECT_ID}\`, ...)
 
 ---
 
+### DEBT-032 — `prepareAuditResponseWatcher` timeouteaba por `postDataJSON()` no fiable en callback de `waitForResponse`
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-30 (durante ciclo de estabilización E2E post-ADR-026)
+**Área:** `e2e/audit.spec.ts` — helper `prepareAuditResponseWatcher`
+**Estado:** ✅ Resuelto (2026-06-30) — pendiente validación en CI
+
+**Descripción:**
+Los tests `audit.spec.ts:253` y `:419` timeouteaban a los 90 s en `page.waitForResponse` pese a que:
+- El fix ADR-026 estaba aplicado (Authorization con Bearer JWT del usuario)
+- El modo awaitable (`__E2E_AWAIT_AUDIT__`) estaba activo, así que la request del audit sí se enviaba antes del afterEach
+- El helper hermano `prepareAuditWatcher` (que usa `page.waitForRequest`) matcheaba correctamente
+
+Causa raíz: el callback del `waitForResponse` intentaba re-parsear el body de la request con `res.request().postDataJSON()`. En algunos backends (Deno Edge Functions vía Supabase Cloud), ese `postDataJSON()` no está disponible/es null en el momento del callback de response, aunque SÍ lo está en el evento `page.on('request')`. Resultado: el filtro devolvía `false` para toda response y timeouteaba.
+
+**Solución aplicada:**
+Refactor de `prepareAuditResponseWatcher`: registrar un listener `page.on('request')` que trackea en un `WeakSet<Request>` las requests que matchean el filtro (donde `postDataJSON()` sí funciona). El callback de `waitForResponse` solo consulta por referencia de objeto: `matchingRequests.has(res.request())`. Sin re-parsing del body en response. Se desregistra el listener en `.finally()` para evitar fugas.
+
+**Referencias:**
+- Fix: `e2e/audit.spec.ts` líneas 132-177
+- Origen: ciclo de estabilización E2E post-ADR-026 (JWT propagation en `functions.invoke`)
+
+---
+
+### DEBT-033 — Race condition en detección `<input>`/`<select>` de `#new-interviewee-dept`
+**Severidad:** 🟢 Baja
+**Detectado:** 2026-06-30 (test `audit.spec.ts:579` reportado como flaky)
+**Área:** `e2e/audit.spec.ts` — helper `fillAndSubmitNewIntervieweeModal`
+**Estado:** ✅ Resuelto (2026-06-30) — pendiente validación en CI
+
+**Descripción:**
+El campo Departamento del modal "Nueva entrevista" se renderiza inicialmente como `<input>` de texto libre y, cuando los departamentos del seed terminan de cargarse, se sustituye por un `<select>` con las opciones disponibles. El helper leía `element.tagName` una única vez y podía pillar el estado transitorio equivocado: se detectaba `<input>` → `fill()` → en ese instante el DOM cambiaba a `<select>` → "element was detached from the DOM, retrying" → fallo.
+
+**Solución aplicada:**
+Consultar por SELECTOR ESPECÍFICO en vez de leer `tagName`:
+- `page.locator('select#new-interviewee-dept').waitFor({ state: 'visible', timeout: 3_000 })` — espera activa (polling) hasta 3 s a que el `<select>` aparezca. **Nota:** se usa `waitFor`, no `isVisible({ timeout })` — `isVisible()` comprueba una única vez y no espera, pese a aceptar un parámetro `timeout`.
+- Si aparece → `selectOption({ label: TEST_INTERVIEWEE.department })`
+- Si no aparece → fallback al `input#new-interviewee-dept` con `fill()`
+
+Ambos operadores son idempotentes bajo su estado esperado y no se ven afectados por transiciones intermedias del DOM.
+
+**Referencias:**
+- Fix: `e2e/audit.spec.ts` líneas 197-217
+- Origen: mismo ciclo de estabilización E2E post-ADR-026
+
+---
+
 ## Items Resueltos
 
 > Los items tachados están completamente resueltos y se mantienen como registro histórico.

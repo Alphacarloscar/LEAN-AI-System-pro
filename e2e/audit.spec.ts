@@ -132,27 +132,46 @@ function prepareAuditWatcher(
 /**
  * Registra waitForResponse para los tests que necesitan verificar la respuesta
  * del servidor (tests 1 y 5). Debe llamarse ANTES de la acción del usuario.
- * Filtra por el body del REQUEST (req.postDataJSON()), no del response body
- * — el response de log-audit-event es {success:true} y no contiene service_name
- * ni method_name, por lo que filtrar por response body causaría timeout infinito.
+ *
+ * BUG FIX (2026-06-30): el filtro NO puede parsear req.postDataJSON() dentro
+ * del callback de waitForResponse — en algunos backends (Deno Edge Functions
+ * vía Supabase), el body del request no está disponible en ese contexto,
+ * aunque SÍ lo esté en page.on('request'). Como consecuencia, el filtro
+ * devolvía false para TODA response y timeouteaba a 90s (tests audit:253 y :419).
+ *
+ * Solución: escuchar page.on('request') para trackear las requests que matchean
+ * el filtro (donde postDataJSON SÍ funciona), guardarlas en un Set, y hacer el
+ * filtro de waitForResponse por REFERENCIA de objeto contra ese Set. Sin
+ * re-parsing del body en el callback de response — solo set.has(res.request()).
  */
 function prepareAuditResponseWatcher(
   page:        Page,
   serviceName: string,
   methodName:  string,
 ): () => Promise<Response> {
+  // Set de requests que matchean el filtro. Se puebla en el evento 'request'
+  // (donde postDataJSON() es fiable) y se consulta en el callback de response
+  // por referencia de objeto — evitando re-parseo poco fiable.
+  const matchingRequests = new WeakSet<Request>()
+
+  const onRequest = (req: Request) => {
+    if (req.method() !== 'POST') return
+    if (!EDGE_FN_PATTERN.test(req.url())) return
+    try {
+      const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
+      if (body.service_name === serviceName && body.method_name === methodName) {
+        matchingRequests.add(req)
+      }
+    } catch { /* body no-JSON u otro error — ignorar, no matchea */ }
+  }
+  page.on('request', onRequest)
+
   const responsePromise = page.waitForResponse(
-    (res) => {
-      const req = res.request()
-      if (req.method() !== 'POST') return false
-      if (!EDGE_FN_PATTERN.test(req.url())) return false
-      try {
-        const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
-        return body.service_name === serviceName && body.method_name === methodName
-      } catch { return false }
-    },
+    (res) => matchingRequests.has(res.request()),
     { timeout: EDGE_FN_TIMEOUT },
-  )
+  ).finally(() => {
+    page.off('request', onRequest)
+  })
 
   return () => responsePromise
 }
@@ -177,16 +196,26 @@ async function fillAndSubmitNewIntervieweeModal(page: Page): Promise<void> {
 
   // Departamento: el select aparece cuando hay departamentos cargados del seed.
   // Si aún no cargaron, el campo es un input de texto libre (fallback del componente).
-  // waitFor garantiza hidratación completa antes de leer tagName.
-  // tagName devuelve MAYÚSCULAS en el DOM — comparar con 'SELECT', no 'select'.
-  const deptSelect = page.locator('#new-interviewee-dept')
-  await deptSelect.waitFor({ state: 'visible', timeout: 5_000 })
-  const tagName = await deptSelect.evaluate((el) => el.tagName).catch(() => '')
+  //
+  // BUG FIX (2026-06-30): antes leíamos tagName una única vez y podíamos pillar
+  // un estado transitorio: el elemento se detecta como <input>, se llama fill(),
+  // y en ese instante el DOM cambia a <select> ("element was detached from the
+  // DOM, retrying" + fallo). Ahora esperamos activamente (con polling real vía
+  // waitFor, NO isVisible — isVisible no espera, solo comprueba en el instante)
+  // a que el SELECTOR ESPECÍFICO 'select#…' aparezca visible hasta 3s; solo
+  // caemos al input si el select no llega a aparecer en ese plazo.
+  const deptSelectVersion = page.locator('select#new-interviewee-dept')
+  const isSelect = await deptSelectVersion
+    .waitFor({ state: 'visible', timeout: 3_000 })
+    .then(() => true)
+    .catch(() => false)
 
-  if (tagName === 'SELECT') {
-    await deptSelect.selectOption({ label: TEST_INTERVIEWEE.department })
+  if (isSelect) {
+    await deptSelectVersion.selectOption({ label: TEST_INTERVIEWEE.department })
   } else {
-    await deptSelect.fill(TEST_INTERVIEWEE.department)
+    const deptInput = page.locator('input#new-interviewee-dept')
+    await deptInput.waitFor({ state: 'visible', timeout: 3_000 })
+    await deptInput.fill(TEST_INTERVIEWEE.department)
   }
 
   // Perfil: el SegmentedControl de IT/Negocio — selecciona IT
