@@ -129,6 +129,7 @@ Deno.serve(async (req) => {
     // Mantener la función viva hasta que insertTask complete.
     // EdgeRuntime es una global del Supabase Edge Runtime (no estándar Deno).
     // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(globalThis as any).EdgeRuntime?.waitUntil?.(insertTask)
 
     return ok({ logged: true })
