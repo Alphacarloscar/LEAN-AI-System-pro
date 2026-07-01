@@ -40,10 +40,10 @@ const EDGE_FN_PATTERN = /\/functions\/v1\/log-audit-event/
 
 // Timeout para detectar que la request a la Edge Function fue ENVIADA.
 // Solo cubre: form fill → store action → makeAuditable → fireAuditLog → fetch iniciado.
-// 90s para absorber cold-start Deno + RLS check + INSERT en Supabase Cloud CI.
-// (El cold-start de una Edge Function Deno puede tardar hasta 60s en arrancar +
-//  ~10-15s para RLS validation + INSERT → margen total conservador 90s.)
-const EDGE_FN_TIMEOUT = 90_000
+// 115s para absorber cold-start Deno + pool contention bajo alta concurrencia.
+// (cold-start ~60s + profiles query paralela + INSERT → pico observado ~76s en prod;
+//  margen de 39s extra sobre test.setTimeout=120_000.)
+const EDGE_FN_TIMEOUT = 115_000
 
 // Nombre del servicio auditado que aparecerá en el campo service_name del log.
 // Definido en src/services/t1.service.ts línea 230: makeAuditable(_impl, 'services.t1')

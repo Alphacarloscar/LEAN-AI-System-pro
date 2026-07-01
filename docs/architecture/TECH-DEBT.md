@@ -1,6 +1,6 @@
 ﻿# Technical Debt Register — GOBY
 
-Last updated: 2026-06-26
+Last updated: 2026-07-01
 AI-Ready Repository System v2.1.0
 
 > Registro activo de deuda técnica conocida. Cada item tiene severidad, impacto y plan de acción.
@@ -370,6 +370,29 @@ Ambos operadores son idempotentes bajo su estado esperado y no se ven afectados 
 **Referencias:**
 - Fix: `e2e/audit.spec.ts` líneas 197-217
 - Origen: mismo ciclo de estabilización E2E post-ADR-026
+
+---
+
+### DEBT-012 — E2E tests comparten entorno Supabase con tráfico de producción
+**Severidad:** 🟠 Alta
+**Detectado:** 2026-07-01 (análisis trace Playwright CI run 28508523638)
+**Área:** CI / Supabase / E2E infrastructure
+**Estado:** Mitigado parcialmente (Edge Function optimizada + timeout aumentado). Causa raíz sin resolver.
+
+**Descripción:**
+Los tests E2E de CI corren contra `pre-gobytech-prod.vercel.app` → mismo proyecto Supabase Cloud que tráfico real. Durante el CI run `28508523638` se observaron 40+ invocaciones concurrentes a `log-audit-event` en una ventana de 36s (solo 1 worker Playwright). El exceso proviene de usuarios reales o automatización paralela compartiendo el pool de conexiones DB. Consecuencia: cada invocación de la Edge Function tarda ~76s (95% I/O wait, pool saturado) vs 90s de timeout → flake intermitente en `audit.spec.ts:282` y `:448`.
+
+**Mitigación aplicada (2026-07-01):**
+1. `supabase/functions/log-audit-event/index.ts`: `adminClient` creado antes de la query a `profiles`, eliminando overhead de evaluación RLS (`is_platform_admin()`). Query a `profiles` + `req.json()` ahora en `Promise.all` → un round-trip menos secuencial.
+2. `e2e/audit.spec.ts`: `EDGE_FN_TIMEOUT` subido de 90s a 115s (margen sobre el pico observado de 76s; `test.setTimeout` ya era 120s).
+
+**Acción pendiente (infra):**
+Crear proyecto Supabase dedicado para E2E (staging), configurar variables `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` separadas en el secret de GitHub Actions. Esto elimina la contención de pool con tráfico real y haría que los tests sean deterministas.
+
+**Referencias:**
+- Trace artifact: CI run `28508523638`, retry1, `1-trace.network` (69 requests, 11 × `log-audit-event` con `status: -1`)
+- Supabase Edge Function ID: `117b9550-1e2f-4d80-89e2-a296a4c0c45a`, project `mkypmakmkxpecuezofkk`
+- EarlyDrop executions: `17b682d2`, `29022a30` (cpu_time ~35-167ms, wall ~76s → 99% I/O wait)
 
 ---
 

@@ -34,6 +34,14 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) return err('Unauthorized', 401)
 
+    // adminClient se crea temprano (service_role) para usarlo en la query de
+    // profiles, evitando la evaluación de RLS (is_platform_admin()) que añade
+    // latencia bajo alta concurrencia al requerir una query extra a profiles.
+    const adminClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    )
+
     const callerClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
@@ -43,20 +51,17 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authErr } = await callerClient.auth.getUser()
     if (authErr || !user) return err('Invalid token', 401)
 
-    // Role se lee de profiles — fuente autoritativa, no del JWT payload
-    const { data: profile } = await callerClient
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+    // Role (fuente autoritativa: profiles) y body parse en paralelo para
+    // reducir latencia bajo alta concurrencia — ambas operaciones son
+    // independientes del resultado de la otra.
+    const [{ data: profile }, bodyRaw] = await Promise.all([
+      adminClient.from('profiles').select('role').eq('id', user.id).single(),
+      req.json().catch(() => null as unknown),
+    ])
 
     // ── 2. Parsear y validar el body ──────────────────────────
-    let body: Record<string, unknown>
-    try {
-      body = await req.json()
-    } catch {
-      return err('Invalid JSON body', 400)
-    }
+    if (bodyRaw === null) return err('Invalid JSON body', 400)
+    const body = bodyRaw as Record<string, unknown>
 
     if (typeof body.service_name !== 'string' || !body.service_name) {
       return err('Missing required field: service_name', 400)
@@ -73,10 +78,6 @@ Deno.serve(async (req) => {
     // Los campos de identidad (user_id, user_email, user_role) provienen
     // exclusivamente del JWT verificado — el cliente no puede falsificarlos.
     // Cualquier valor que el cliente haya enviado en esos campos es ignorado.
-    const adminClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
 
     // Extraer los campos conocidos del body; ignorar user_id/email/role del cliente
     const {
