@@ -39,9 +39,10 @@ import { login, selectEngagement, waitForStoreReady, LAB_PROJECT_ID, USERS } fro
 const EDGE_FN_PATTERN = /\/functions\/v1\/log-audit-event/
 
 // Timeout para detectar que la request a la Edge Function fue ENVIADA y respondida.
-// Con EdgeRuntime.waitUntil() la función responde en ~200ms (solo auth + body parse);
-// 30s cubre cold-start Deno (~60s máx) + latencia de red CI → margen holgado.
-const EDGE_FN_TIMEOUT = 30_000
+// Con EdgeRuntime.waitUntil() la función responde en cold_start + auth.getUser().
+// Cold-start Deno en Supabase Cloud puede llegar a 60s; auth añade 1-5s adicionales.
+// 90s da margen suficiente incluso en el peor caso de arranque en frío en CI.
+const EDGE_FN_TIMEOUT = 90_000
 
 // Nombre del servicio auditado que aparecerá en el campo service_name del log.
 // Definido en src/services/t1.service.ts línea 230: makeAuditable(_impl, 'services.t1')

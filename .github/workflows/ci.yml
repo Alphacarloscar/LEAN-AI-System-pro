@@ -84,7 +84,13 @@ jobs:
     name: Playwright E2E Tests
     runs-on: ubuntu-latest
     needs: [ci, deploy-functions]
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    # IMPORTANTE: con 'if' propio + 'needs', GitHub Actions evalúa el 'if' en lugar
+    # del chequeo implícito de éxito. Sin needs.deploy-functions.result == 'success',
+    # el job E2E corre aunque deploy-functions falle (Edge Function vieja desplegada).
+    if: >-
+      github.ref == 'refs/heads/develop' &&
+      github.event_name == 'push' &&
+      needs.deploy-functions.result == 'success'
 
     env:
       E2E_BASE_URL:               ${{ secrets.VERCEL_PREVIEW_URL_DEVELOP }}
