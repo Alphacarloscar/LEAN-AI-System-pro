@@ -44,6 +44,9 @@ AI-Ready Repository System v2.1.0 | Última actualización: 2026-06-26
 | [ADR-022](technical/ADR-022-forms-rhf-zod-standard.md) | Estándar de formularios: react-hook-form + Zod | ACCEPTED | 2026-06-16 | Stack · UX/UI |
 | [ADR-023](technical/ADR-023-visual-system-v2.md) | Visual System V2 — Obsidian Editorial warm-only palette | ACCEPTED | 2026-06-23 | UX/UI · Design System |
 | [ADR-024](technical/ADR-024-routes-require-engagement-id.md) | Rutas T1-T12 requieren parámetro :engagementId | ACCEPTED | 2026-06-29 | Arquitectura · E2E |
+| [ADR-025](technical/ADR-025-audit-test-mode-awaitable.md) | Modo awaitable de auditoría para E2E (flag `__E2E_AWAIT_AUDIT__`) | ACCEPTED | 2026-06-30 | Audit trail · E2E |
+| [ADR-026](technical/ADR-026-functions-invoke-explicit-jwt.md) | `functions.invoke()` debe propagar JWT explícito (Bearer token) | ACCEPTED | 2026-06-30 | Seguridad · Infraestructura |
+| [ADR-027](technical/ADR-027-e2e-edge-function-route-interception.md) | Intercepción de Edge Functions en E2E con `page.route()` | ACCEPTED | 2026-07-02 | E2E · Testing |
 
 ---
 
@@ -65,5 +68,5 @@ Las decisiones estratégicas de producto/mercado se documentan en:
 
 ## Próximo número disponible
 
-- **ADR:** ADR-025
+- **ADR:** ADR-028
 - **FDR:** FDR-002 (reservado por ADR-020 Fase 2 — pantalla piloto AppLayout)

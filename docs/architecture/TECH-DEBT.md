@@ -1,6 +1,6 @@
 ﻿# Technical Debt Register — GOBY
 
-Last updated: 2026-07-01
+Last updated: 2026-07-02
 AI-Ready Repository System v2.1.0
 
 > Registro activo de deuda técnica conocida. Cada item tiene severidad, impacto y plan de acción.
@@ -327,26 +327,50 @@ Sustituir `page.goto('/tN', ...)` por `page.goto(\`/tN/${LAB_PROJECT_ID}\`, ...)
 
 ---
 
-### DEBT-032 — `prepareAuditResponseWatcher` timeouteaba por `postDataJSON()` no fiable en callback de `waitForResponse`
-**Severidad:** 🟡 Media
-**Detectado:** 2026-06-30 (durante ciclo de estabilización E2E post-ADR-026)
+### ~~DEBT-045~~ — `prepareAuditResponseWatcher` timeouteaba: tres mecanismos fallidos, solución final `page.route()` ✅ (Resuelto — 2026-07-02)
+**Severidad:** 🔴 Alta
+**Detectado:** 2026-06-30 (ciclo de estabilización E2E post-ADR-026)
 **Área:** `e2e/audit.spec.ts` — helper `prepareAuditResponseWatcher`
-**Estado:** ✅ Resuelto (2026-06-30) — pendiente validación en CI
+**Estado:** ✅ Resuelto (2026-07-02) — CI verde: 122 passed, 2 flaky (retry pass), 2 skipped
 
-**Descripción:**
-Los tests `audit.spec.ts:253` y `:419` timeouteaban a los 90 s en `page.waitForResponse` pese a que:
-- El fix ADR-026 estaba aplicado (Authorization con Bearer JWT del usuario)
-- El modo awaitable (`__E2E_AWAIT_AUDIT__`) estaba activo, así que la request del audit sí se enviaba antes del afterEach
-- El helper hermano `prepareAuditWatcher` (que usa `page.waitForRequest`) matcheaba correctamente
+**Historial de intentos fallidos:**
+1. **WeakSet + `page.on('request') + waitForResponse`** — `res.request()` en el callback de `waitForResponse` devuelve una instancia **distinta** al `Request` capturado en `page.on('request', ...)` bajo Chromium headless con respuestas CORS → `WeakSet.has()` siempre `false` → timeout.
+2. **`waitForRequest + req.response()`** — `req.response()` devuelve `null` porque Playwright registra el request como "abortado": el SDK de Supabase hace fire-and-forget del fetch y CDP marca el ciclo de vida del request cerrado antes de emitir el response event.
+3. **`waitForResponse + res.request().postDataJSON()`** — CDP `Network.responseReceived` no incluye el body del request. `postDataJSON()` devuelve `null` en el callback de response → predicado siempre `false` → timeout de 90 s.
 
-Causa raíz: el callback del `waitForResponse` intentaba re-parsear el body de la request con `res.request().postDataJSON()`. En algunos backends (Deno Edge Functions vía Supabase Cloud), ese `postDataJSON()` no está disponible/es null en el momento del callback de response, aunque SÍ lo está en el evento `page.on('request')`. Resultado: el filtro devolvía `false` para toda response y timeouteaba.
+**Causa raíz de los tres:**
+Los mecanismos B y C fallan porque CDP no transporta el body del request en los eventos de respuesta. El mecanismo A falla por identidad de objetos en Playwright bajo Chromium headless con CORS.
 
-**Solución aplicada:**
-Refactor de `prepareAuditResponseWatcher`: registrar un listener `page.on('request')` que trackea en un `WeakSet<Request>` las requests que matchean el filtro (donde `postDataJSON()` sí funciona). El callback de `waitForResponse` solo consulta por referencia de objeto: `matchingRequests.has(res.request())`. Sin re-parsing del body en response. Se desregistra el listener en `.finally()` para evitar fugas.
+**Solución final:**
+`page.route() + route.fetch()`. Playwright intercepta el request **antes** de enviarlo a la red — en ese contexto `req.postDataJSON()` SÍ está disponible. `route.fetch()` realiza la llamada HTTP real y devuelve `APIResponse` con `.status()` y `.json()` completos.
+
+```ts
+void page.route(EDGE_FN_PATTERN, async (route) => {
+  const req = route.request()
+  if (req.method() !== 'POST') { await route.continue(); return }
+  try {
+    const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
+    if (body.service_name === serviceName && body.method_name === methodName) {
+      const response = await route.fetch()
+      resolve(response)
+      await route.fulfill({ response })
+      return
+    }
+  } catch (e) {
+    reject(e instanceof Error ? e : new Error(String(e)))
+    try { await route.abort() } catch { /* ignorar */ }
+    return
+  }
+  await route.continue()
+})
+```
+
+**Regla derivada:** Para verificar body + respuesta de una Edge Function en Playwright: usar `page.route()`. **Nunca** `waitForResponse + postDataJSON()` — CDP no incluye el body del request en el evento de respuesta.
 
 **Referencias:**
-- Fix: `e2e/audit.spec.ts` líneas 132-177
-- Origen: ciclo de estabilización E2E post-ADR-026 (JWT propagation en `functions.invoke`)
+- Fix: `e2e/audit.spec.ts` líneas 131-185 — comentario explica los 3 mecanismos fallidos
+- ADR: ADR-027 (`docs/decisions/technical/ADR-027-e2e-edge-function-route-interception.md`)
+- CI run de validación: commit `1037d7c` — 122 passed, 0 hard failures
 
 ---
 
@@ -370,6 +394,26 @@ Ambos operadores son idempotentes bajo su estado esperado y no se ven afectados 
 **Referencias:**
 - Fix: `e2e/audit.spec.ts` líneas 197-217
 - Origen: mismo ciclo de estabilización E2E post-ADR-026
+
+---
+
+### DEBT-034 — `t1_dimension_scores.interviewee_id` y `person_id` coexisten sin reconciliar
+**Severidad:** 🟢 Baja
+**Detectado:** 2026-07-02 (feature PersonSelectList)
+**Área:** `t1_dimension_scores`, `src/modules/T1_MaturityRadar/`
+**Estado:** Pendiente
+
+**Descripción:**
+La migración `20260703_company_persons.sql` añade `t1_dimension_scores.person_id` (FK a `company_persons`) para soportar `PersonSelectField` en T1. La tabla ya tenía una columna `interviewee_id` (uuid nullable, sin FK real, generada client-side con `crypto.randomUUID()` en `useT1Store.addInterviewee`) que identifica al entrevistado dentro del propio T1 pero no está vinculada a ningún registro persistente reutilizable. Ambas columnas conviven sin reconciliar: `interviewee_id` sigue siendo la clave usada internamente por T1 (`dimensionStates[interviewee_id]`), mientras que `person_id` solo se rellena vía formulario cuando el consultor selecciona/crea una persona en `PersonSelectField`.
+
+**Impacto:**
+- Confusión potencial sobre cuál es la fuente de verdad para "quién es el entrevistado" en T1.
+- `person_id` puede quedar `null` si el consultor no usa el selector (aún hay flujo alternativo de texto libre).
+
+**Plan de acción:**
+Evaluar en un PR dedicado si `interviewee_id` puede sustituirse por `person_id` como clave única de T1, lo que requeriría migrar `dimensionStates` a indexar por `person_id` y garantizar que toda persona tenga un registro en `company_persons` antes de aceptar scores. Fuera de alcance de la feature PersonSelectList (que solo añade la columna sin forzar su uso).
+
+**Relacionado:** Feature PersonSelectList (`supabase/migrations/20260703_company_persons.sql`).
 
 ---
 
