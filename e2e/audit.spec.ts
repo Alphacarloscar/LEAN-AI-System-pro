@@ -129,50 +129,44 @@ function prepareAuditWatcher(
 }
 
 /**
- * Registra waitForResponse para los tests que necesitan verificar la respuesta
- * del servidor (tests 1 y 5). Debe llamarse ANTES de la acción del usuario.
+ * Registra waitForRequest ANTES de la acción del usuario y devuelve una función
+ * que espera la respuesta de esa request concreta mediante req.response().
  *
- * BUG FIX (2026-06-30): el filtro NO puede parsear req.postDataJSON() dentro
- * del callback de waitForResponse — en algunos backends (Deno Edge Functions
- * vía Supabase), el body del request no está disponible en ese contexto,
- * aunque SÍ lo esté en page.on('request'). Como consecuencia, el filtro
- * devolvía false para TODA response y timeouteaba a 90s (tests audit:253 y :419).
+ * El approach anterior (WeakSet + waitForResponse callback) fallaba porque
+ * res.request() en el callback de waitForResponse devuelve una referencia distinta
+ * al objeto Request capturado en page.on('request', ...) cuando Chromium headless
+ * recibe respuestas CORS de Supabase Edge Functions. WeakSet.has() fallaba siempre
+ * por ser una comparación de identidad (===) entre dos instancias distintas.
  *
- * Solución: escuchar page.on('request') para trackear las requests que matchean
- * el filtro (donde postDataJSON SÍ funciona), guardarlas en un Set, y hacer el
- * filtro de waitForResponse por REFERENCIA de objeto contra ese Set. Sin
- * re-parsing del body en el callback de response — solo set.has(res.request()).
+ * req.response() opera sobre la MISMA instancia del Request que devolvió
+ * waitForRequest — sin WeakSet, sin callbacks de waitForResponse, sin problemas
+ * de identidad de objeto.
+ *
+ * Solo lo usan los tests 1 y 5, que necesitan verificar HTTP status y body.
  */
 function prepareAuditResponseWatcher(
   page:        Page,
   serviceName: string,
   methodName:  string,
 ): () => Promise<Response> {
-  // Set de requests que matchean el filtro. Se puebla en el evento 'request'
-  // (donde postDataJSON() es fiable) y se consulta en el callback de response
-  // por referencia de objeto — evitando re-parseo poco fiable.
-  const matchingRequests = new WeakSet<Request>()
-
-  const onRequest = (req: Request) => {
-    if (req.method() !== 'POST') return
-    if (!EDGE_FN_PATTERN.test(req.url())) return
-    try {
-      const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
-      if (body.service_name === serviceName && body.method_name === methodName) {
-        matchingRequests.add(req)
-      }
-    } catch { /* body no-JSON u otro error — ignorar, no matchea */ }
-  }
-  page.on('request', onRequest)
-
-  const responsePromise = page.waitForResponse(
-    (res) => matchingRequests.has(res.request()),
+  const reqPromise = page.waitForRequest(
+    (req) => {
+      if (req.method() !== 'POST') return false
+      if (!EDGE_FN_PATTERN.test(req.url())) return false
+      try {
+        const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
+        return body.service_name === serviceName && body.method_name === methodName
+      } catch { return false }
+    },
     { timeout: EDGE_FN_TIMEOUT },
-  ).finally(() => {
-    page.off('request', onRequest)
-  })
+  )
 
-  return () => responsePromise
+  return async () => {
+    const req = await reqPromise
+    const res = await req.response()
+    if (!res) throw new Error('[prepareAuditResponseWatcher] No response for audit request')
+    return res
+  }
 }
 
 /**
