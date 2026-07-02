@@ -266,6 +266,7 @@ export function CompanyProfileView() {
         {activeTab === 'empresa' && (
           <EmpresaTab
             companyId={companyId}
+            projectId={engagementId ?? null}
             companySettings={companySettings}
             onSettingsChange={(patch) => setCompanySettings((s) => ({ ...s, ...patch }))}
             canEditCompanySettings={canEditCompanySettings}

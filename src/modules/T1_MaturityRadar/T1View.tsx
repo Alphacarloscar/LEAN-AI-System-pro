@@ -32,6 +32,7 @@ import { useT1Store }                           from './store'
 import { useEngagementStore }                   from '@/modules/Engagement/store'
 import { useCompanyProfileStore }              from '@/modules/CompanyProfile/store'
 import { useDepartmentStore }                  from '@/modules/CompanyProfile/useDepartmentStore'
+import { useCompanyPersonStore }               from '@/modules/CompanyProfile/useCompanyPersonStore'
 import { RecommendationPanel }                 from '@/components/RecommendationPanel'
 import { buildT1RecommendationContext }        from './t1ContextBuilder'
 import { usePermissions }                      from '@/modules/Auth'
@@ -59,14 +60,17 @@ export function T1View({ onBack }: T1ViewProps) {
 
   // ── Departamentos centralizados (para el modal de alta) ──────
   const { departments, fetchDepartments, reset: resetDepartments } = useDepartmentStore()
+  const addPerson = useCompanyPersonStore((s) => s.addPerson)
+  const [companyId, setCompanyId] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     if (!engagementId) return
     let cancelled = false
 
-    getProjectCompanyId(engagementId).then((companyId) => {
-      if (cancelled || !companyId) return
-      fetchDepartments(companyId)
+    getProjectCompanyId(engagementId).then((cid) => {
+      if (cancelled) return
+      setCompanyId(cid ?? undefined)
+      if (cid) fetchDepartments(cid)
     })
 
     return () => {
@@ -105,6 +109,16 @@ export function T1View({ onBack }: T1ViewProps) {
         },
         engagementId,
       )
+      if (engagementId) {
+        void addPerson({
+          projectId:  engagementId,
+          companyId,
+          name:       form.name.trim(),
+          role:       form.role.trim(),
+          department: form.department,
+          sourceTool: 't1',
+        })
+      }
     } finally {
       setShowNewModal(false)
     }
@@ -370,11 +384,13 @@ export function T1View({ onBack }: T1ViewProps) {
       </div> {/* fin contenido principal */}
 
       {/* ── Modal nueva entrevista ── */}
-      {showNewModal && (
+      {showNewModal && engagementId && (
         <NewInterviewModal
           onClose={() => setShowNewModal(false)}
           onSubmit={addInterviewee}
           departments={departments}
+          projectId={engagementId}
+          companyId={companyId}
         />
       )}
     </div>

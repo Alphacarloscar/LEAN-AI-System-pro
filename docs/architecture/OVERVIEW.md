@@ -1,6 +1,6 @@
 ﻿# Architecture Overview — GOBY
 
-Last updated: 2026-06-29
+Last updated: 2026-07-06
 AI-Ready Repository System v2.1.0
 
 > Este documento es una síntesis de arquitectura para orientación rápida.
@@ -76,6 +76,7 @@ src/
 - `engagements` — proyectos de adopción IA por empresa
 - `engagement_members` — relación usuario ↔ engagement
 - `company_profiles` — perfil de empresa del cliente
+- `company_persons` — personas del proyecto (nombre, cargo, departamento, tool origen), reutilizables entre T1/T2/T3/T9/CompanyProfile via el componente compartido `PersonSelectField` (`src/shared/design-system/components/PersonSelectField.tsx`). Consultor/superadmin pueden fusionar duplicados desde "Equipo del proyecto" — función Postgres atómica `merge_company_persons` repunta las referencias reales en T1/T2/T3/T9 y elimina la persona sustituida (ver `docs/operations/DATABASES.md`)
 - `snapshots` — capturas longitudinales del estado de un engagement
 
 **Entidades con payload JSONB** (por herramienta, flexibles):

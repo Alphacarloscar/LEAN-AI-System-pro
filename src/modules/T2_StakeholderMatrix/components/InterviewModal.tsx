@@ -29,14 +29,17 @@ import { stakeholderFormSchema, type StakeholderFormValues } from '@/lib/schemas
 import { useDepartmentStore }            from '@/modules/CompanyProfile/useDepartmentStore'
 import { Select }                        from '@/shared/design-system/components/Select'
 import type { SelectOption }             from '@/shared/design-system/components/Select'
-import { Modal, Button, FormField, Badge, SegmentedControl } from '@shared/design-system/components'
+import { Modal, Button, FormField, Badge, SegmentedControl, PersonSelectField } from '@shared/design-system/components'
+import type { CompanyPerson }            from '@/modules/CompanyProfile/useCompanyPersonStore'
 import { ArchetypeBadge, ResistanceBadge } from './T2Badges'
 
 // ── Props ─────────────────────────────────────────────────────
 
 interface InterviewModalProps {
-  onClose:  () => void
-  onSubmit: (stakeholder: Omit<Stakeholder, 'id' | 'createdAt'>) => void
+  onClose:   () => void
+  onSubmit:  (stakeholder: Omit<Stakeholder, 'id' | 'createdAt'>) => void
+  projectId: string
+  companyId?: string
   /**
    * Si se pasa, el modal OMITE la fase de formulario y empieza directamente
    * en la entrevista. Útil para entrevistar stakeholders importados desde T1.
@@ -71,18 +74,24 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 function StakeholderFormPhase({
   onNext,
   initialValues,
+  projectId,
+  companyId,
 }: {
   onNext:         (form: NewStakeholderForm) => void
   initialValues?: NewStakeholderForm
+  projectId:      string
+  companyId?:     string
 }) {
   const { departments, isLoading: isLoadingDepts } = useDepartmentStore()
   const deptOptions: SelectOption[] = departments.map((d) => ({ value: d.name, label: d.name }))
   const hasDepts = deptOptions.length > 0
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(initialValues?.personId ?? null)
 
   const {
     register,
     handleSubmit,
     control,
+    setValue,
     setFocus,
     formState: { errors, isSubmitting },
   } = useForm<StakeholderFormValues>({
@@ -96,11 +105,26 @@ function StakeholderFormPhase({
   }, [])
 
   function onValid(data: StakeholderFormValues) {
-    onNext(data)
+    onNext({ ...data, personId: selectedPersonId })
+  }
+
+  function handlePersonSelected(personId: string, person: CompanyPerson) {
+    setSelectedPersonId(personId)
+    setValue('name', person.name, { shouldValidate: true })
+    setValue('role', person.role, { shouldValidate: true })
+    if (person.department) setValue('department', person.department, { shouldValidate: true })
   }
 
   return (
     <form onSubmit={handleSubmit(onValid)} className="space-y-4">
+      <PersonSelectField
+        projectId={projectId}
+        companyId={companyId}
+        sourceTool="t2"
+        label="Persona"
+        onChange={handlePersonSelected}
+      />
+
       <FormField
         id="stakeholder-name"
         label="Nombre"
@@ -384,7 +408,7 @@ function ResultPhase({
 
 // ── Componente principal ──────────────────────────────────────
 
-export function InterviewModal({ onClose, onSubmit, existingStakeholder }: InterviewModalProps) {
+export function InterviewModal({ onClose, onSubmit, projectId, companyId, existingStakeholder }: InterviewModalProps) {
   // Si hay stakeholder existente con departamento REAL (no 'Sin asignar'), saltamos el formulario.
   // 'Sin asignar' se asigna automáticamente en el import de T1 → hay que forzar el form para que el consultor lo corrija.
   const dept = existingStakeholder?.department?.trim() ?? ''
@@ -425,6 +449,7 @@ export function InterviewModal({ onClose, onSubmit, existingStakeholder }: Inter
       manualOverride,
       notes:           existingStakeholder?.notes,
       unofficialTools: form.unofficialTools?.trim() || undefined,
+      personId:        form.personId ?? null,
       interview: {
         ...result,
         archetype,
@@ -447,7 +472,7 @@ export function InterviewModal({ onClose, onSubmit, existingStakeholder }: Inter
         <p className="text-[11px] text-text-subtle -mt-2 mb-4">{form.name} · {form.role}</p>
       )}
 
-      {phase === 'form'      && <StakeholderFormPhase  onNext={handleFormNext} initialValues={existingStakeholder ? form : undefined} />}
+      {phase === 'form'      && <StakeholderFormPhase  onNext={handleFormNext} initialValues={existingStakeholder ? form : undefined} projectId={projectId} companyId={companyId} />}
       {phase === 'interview' && <InterviewPhase         onComplete={handleInterviewComplete} />}
       {phase === 'result'    && <ResultPhase            form={form} answers={answers}         onConfirm={handleConfirm} />}
     </Modal>

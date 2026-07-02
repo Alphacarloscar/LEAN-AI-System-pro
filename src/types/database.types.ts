@@ -119,6 +119,57 @@ export type Database = {
           },
         ]
       }
+      company_persons: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          department: string
+          id: string
+          name: string
+          project_id: string
+          role: string
+          source_tool: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          department?: string
+          id?: string
+          name: string
+          project_id: string
+          role?: string
+          source_tool: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          department?: string
+          id?: string
+          name?: string
+          project_id?: string
+          role?: string
+          source_tool?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_persons_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_persons_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_profiles: {
         Row: {
           areas_prioritarias: Json
@@ -433,6 +484,7 @@ export type Database = {
           manual_override: boolean
           name: string
           notes: string | null
+          person_id: string | null
           project_id: string
           resistance: string
           role: string
@@ -447,6 +499,7 @@ export type Database = {
           manual_override?: boolean
           name: string
           notes?: string | null
+          person_id?: string | null
           project_id: string
           resistance: string
           role: string
@@ -461,12 +514,20 @@ export type Database = {
           manual_override?: boolean
           name?: string
           notes?: string | null
+          person_id?: string | null
           project_id?: string
           resistance?: string
           role?: string
           unofficial_tools?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stakeholders_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "company_persons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stakeholders_project_id_fkey"
             columns: ["project_id"]
@@ -486,6 +547,7 @@ export type Database = {
           interviewee_name: string | null
           interviewee_role: string | null
           interviewee_type: string
+          person_id: string | null
           project_id: string
           score: number | null
           subdimension_code: string
@@ -500,6 +562,7 @@ export type Database = {
           interviewee_name?: string | null
           interviewee_role?: string | null
           interviewee_type?: string
+          person_id?: string | null
           project_id: string
           score?: number | null
           subdimension_code: string
@@ -514,12 +577,20 @@ export type Database = {
           interviewee_name?: string | null
           interviewee_role?: string | null
           interviewee_type?: string
+          person_id?: string | null
           project_id?: string
           score?: number | null
           subdimension_code?: string
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "t1_dimension_scores_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "company_persons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "t1_dimension_scores_project_id_fkey"
             columns: ["project_id"]
@@ -581,6 +652,7 @@ export type Database = {
           end_month: number
           id: string
           name: string
+          person_id: string | null
           project_id: string
           responsible: string
           risk_level: string
@@ -597,6 +669,7 @@ export type Database = {
           end_month: number
           id?: string
           name: string
+          person_id?: string | null
           project_id: string
           responsible?: string
           risk_level?: string
@@ -613,6 +686,7 @@ export type Database = {
           end_month?: number
           id?: string
           name?: string
+          person_id?: string | null
           project_id?: string
           responsible?: string
           risk_level?: string
@@ -623,6 +697,13 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "t9_free_items_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "company_persons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "t9_free_items_project_id_fkey"
             columns: ["project_id"]
@@ -928,6 +1009,10 @@ export type Database = {
       is_platform_admin: { Args: never; Returns: boolean }
       is_project_member: { Args: { pid: string }; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
+      merge_company_persons: {
+        Args: { p_principal_id: string; p_replaced_id: string }
+        Returns: Json
+      }
       save_tool_output: {
         Args: {
           p_payload: Json
@@ -1104,6 +1189,7 @@ export type FrictionImpact    = 'Bajo' | 'Medio' | 'Alto'
 // ── Row types ───────────────────────────────────────────────────
 export type CompanyRow           = Database['public']['Tables']['companies']['Row']
 export type CompanyDepartmentRow = Database['public']['Tables']['company_departments']['Row']
+export type CompanyPersonRow     = Database['public']['Tables']['company_persons']['Row']
 export type ProfileRow           = Database['public']['Tables']['profiles']['Row']
 export type ProjectRow           = Database['public']['Tables']['projects']['Row']
 export type ProjectMemberRow     = Database['public']['Tables']['project_members']['Row']
@@ -1120,6 +1206,7 @@ export type ToolOutputRow        = Database['public']['Tables']['tool_outputs'][
 // ── Insert types ────────────────────────────────────────────────
 export type CompanyInsert          = Database['public']['Tables']['companies']['Insert']
 export type CompanyDepartmentInsert= Database['public']['Tables']['company_departments']['Insert']
+export type CompanyPersonInsert    = Database['public']['Tables']['company_persons']['Insert']
 export type ProjectInsert          = Database['public']['Tables']['projects']['Insert']
 export type CompanyProfileInsert   = Database['public']['Tables']['company_profiles']['Insert']
 export type FrictionInsert         = Database['public']['Tables']['frictions']['Insert']

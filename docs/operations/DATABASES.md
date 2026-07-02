@@ -1,6 +1,6 @@
 ﻿﻿﻿﻿# Databases — GOBY
 
-Last updated: 2026-06-01
+Last updated: 2026-07-06
 AI-Ready Repository System v2.1.0
 
 > ⚠️ Política de seguridad: Este fichero documenta la ESTRUCTURA y PROTOCOLOS de base de datos.
@@ -44,6 +44,7 @@ AI-Ready Repository System v2.1.0
 | `company_profiles` | Perfil de empresa del cliente | `project_id` |
 | `snapshots` | Capturas longitudinales del estado | `project_id` |
 | `frictions` | Fricciones detectadas en T3 | `project_id` |
+| `company_persons` | Personas del proyecto (nombre, cargo, departamento, tool origen) — reutilizable desde T1, T2, T3, T9 y CompanyProfile via `PersonSelectField` | `project_id` (opcional `company_id`) |
 | `audit_logs` | Historial de auditoría (90 días) | `user_id` / `metadata.company_id` |
 | `audit_logs_archive` | Archivo de auditoría (5 años) | `user_id` / `metadata.company_id` |
 | `audit_access_logs` | Meta-auditoría de accesos al log | `user_id` |
@@ -88,6 +89,11 @@ AI-Ready Repository System v2.1.0
 | `20260615_003_audit_system.sql` | Migración consolidada del sistema de auditoría: tablas `audit_logs`, `audit_logs_archive`, `audit_access_logs` + índices + RLS + funciones de purga HMAC + jobs pg_cron + `get_audit_logs` SECURITY DEFINER (ADR-017, ADR-018, ADR-019) | ✅ DEV — ⏳ PRE + PRO pendiente |
 | `20260615_007_perf_profiles_idx.sql` | Índice explícito en `profiles.id` para mejorar rendimiento de consultas de rol | ✅ DEV — ⏳ PRE + PRO pendiente |
 | `20260616_004_audit_schema_drift.sql` | Drift fix: añade columnas faltantes en tablas preexistentes (`audit_logs.correlation_id`, `audit_logs_archive.correlation_id/user_email_hash/ai_provider/ai_model/ai_total_tokens`) | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260703_company_persons.sql` | Tabla `company_persons` (scope `project_id`, RLS via `user_can_read_project`/`user_can_edit_project`) + columnas `person_id` (FK nullable) en `t9_free_items` y `t1_dimension_scores` — soporta `PersonSelectField` en T1/T2/T3/T9/CompanyProfile | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260704_backfill_company_persons_toy_story.sql` | Backfill de datos (histórico, ámbito único): cargó `company_persons` desde T1/T2/T3/T9 solo para "Toy Story"/"Disney". Superado por la versión genérica de abajo — no reutilizar como plantilla para nuevos clientes. | ✅ Ejecutado (DEV + PRE + PRO) |
+| `20260705_backfill_company_persons_all_projects.sql` | Backfill de datos genérico: carga `company_persons` desde T1/T2/T3/T9 para **todos** los proyectos/empresas de la BD en una sola pasada. Reemplaza al backfill anterior como método estándar — usar este para cualquier carga futura (clientes nuevos, proyectos añadidos con posterioridad a la migración de esquema). No es migración de esquema. Requiere `20260703_company_persons.sql` ya aplicada. Ver protocolo más abajo. | ✅ DEV (validado contra Postgres 15 vía Docker, multi-tenant) — ⏳ PRE + PRO pendiente |
+| `20260706_stakeholders_person_id.sql` | Añade `stakeholders.person_id` (FK nullable a `company_persons`, `ON DELETE SET NULL`) + backfill por `(project_id, nombre, cargo)`. Hasta esta migración, T2 solo copiaba nombre/cargo/departamento como texto libre sin vínculo real — con esta columna, T1, T2, T3 y T9 quedan todos con una referencia real que la función de fusión (ver siguiente fila) puede repuntar. | ✅ DEV (validado contra Postgres 15 vía Docker) — ⏳ PRE + PRO pendiente |
+| `20260706_merge_company_persons_function.sql` | Función `merge_company_persons(p_principal_id, p_replaced_id)` — fusiona dos `company_persons`: repunta T1/T2/T3(JSONB)/T9 hacia la principal y elimina la sustituible. `SECURITY DEFINER`, solo `superadmin`/`consultant`, atómica (revierte todo ante cualquier error). Invocada desde `src/services/company-person.service.ts` vía `supabase.rpc(...)`. Ver sección "Función merge_company_persons" más abajo. | ✅ DEV (validado contra Postgres 15 vía Docker: caso feliz, mismo id, proyectos distintos, persona inexistente, rol no autorizado, rollback transaccional) — ⏳ PRE + PRO pendiente |
 
 > Las migraciones marcadas ⏳ se aplican juntas via `supabase/releases/release-v2.2.0-pre-pro.sql` (único script idempotente).
 
@@ -107,6 +113,61 @@ AI-Ready Repository System v2.1.0
 3. Ejecutar y verificar con los bloques §V del propio script.
 4. Repetir en PRO solo tras confirmación de PRE.
 5. Actualizar esta tabla con ✅ + fecha de ejecución.
+
+---
+
+## Scripts de Backfill (carga de datos, no de esquema)
+
+A diferencia de las migraciones (que crean/alteran tablas), un **backfill** rellena una tabla nueva con datos que ya existen en otras tablas — típico tras añadir una entidad que reutiliza información dispersa en varias herramientas (ej. `company_persons` a partir de T1/T2/T3/T9).
+
+**Ficheros de backfill activos:**
+
+| Archivo | Qué carga | Alcance |
+|---------|-----------|---------|
+| `supabase/migrations/20260705_backfill_company_persons_all_projects.sql` | `company_persons` a partir de `t1_dimension_scores.interviewee_*`, `stakeholders.*`, `value_streams.stages[].responsible/department` (JSONB) y `t9_free_items.responsible/department` | **Todos** los proyectos/empresas de la BD (sin filtro por nombre) |
+| `supabase/migrations/20260704_backfill_company_persons_toy_story.sql` | Mismo origen de datos, pero ámbito fijo a un solo proyecto | ⚠️ Histórico — ya ejecutado, no reutilizar. Usar el genérico de arriba para cualquier carga nueva. |
+
+**Características de diseño (aplican a cualquier backfill futuro):**
+- **Idempotente**: usa `NOT EXISTS` antes de cada `INSERT` — ejecutarlo varias veces (o tras dar de alta un cliente nuevo) no duplica filas ya creadas. Validado con doble ejecución en Postgres 15 (Docker), incluyendo dos empresas distintas con una persona homónima entre ellas, sin duplicados ni fugas cruzadas.
+- **Sin filtro por nombre**: el genérico opera sobre `JOIN public.projects p ON p.id = <tabla>.project_id` sin `WHERE p.name = ...` — cubre automáticamente cualquier proyecto/empresa presente en la BD, incluidos los que se den de alta después de ejecutar el script (basta con re-ejecutarlo).
+- **Deduplicación por (project_id, nombre, cargo)**: dos entradas con el mismo nombre pero cargo distinto (o sin cargo, como ocurre en T3/T9 que no capturan cargo) se tratan como personas distintas dentro del mismo proyecto — evita fusionar por error a dos personas homónimas. El `project_id` en la comparación también evita que una persona de una empresa se fusione con la homónima de otra empresa. Los duplicados aparentes "con/sin cargo" se resuelven de forma natural hacia delante: en cuanto T3/T9 empiecen a usar `PersonSelectField` para capturar también el cargo, las siguientes altas ya no generarán esas filas "sin cargo".
+- **Vínculo `person_id`**: además de crear las filas en `company_persons`, actualiza `t1_dimension_scores.person_id` y `t9_free_items.person_id` con el id de la persona correspondiente. En T3, como `stages` es JSONB, reescribe el array completo añadiendo `"personId"` a cada etapa cuyo `responsible` coincida con una persona.
+- **Verificación incluida**: el script termina con un `RAISE NOTICE` con el total global, más un `SELECT` de desglose por empresa/proyecto/herramienta — revisar ambos tras ejecutar para confirmar el resultado antes de pasar al siguiente entorno.
+
+**Protocolo de ejecución por entornos:**
+1. Confirmar que `20260703_company_persons.sql` ya está aplicada en el entorno destino (tabla `company_persons` debe existir).
+2. Copiar el contenido íntegro de `20260705_backfill_company_persons_all_projects.sql` en el SQL Editor de Supabase del entorno.
+3. Ejecutar. Revisar el `NOTICE` con el total y la tabla de desglose por empresa/proyecto/herramienta que devuelve el `SELECT` final.
+4. Repetir en el siguiente entorno (DEV → PRE → PRO) solo tras confirmar el resultado en el anterior.
+5. Actualizar la tabla de "Migraciones Ejecutadas" con ✅ + fecha por entorno.
+6. **Cuando se dé de alta un cliente/proyecto nuevo más adelante**, basta con volver a ejecutar este mismo script — es idempotente y cubre automáticamente los datos nuevos sin tocar los ya migrados.
+
+---
+
+## Función `merge_company_persons` (fusionar personas del equipo)
+
+Funcionalidad de "Equipo del proyecto" (Perfil de Empresa) para roles `consultant`/`superadmin`: fusiona dos `company_persons` — una "principal" (se conserva) y una "sustituible" (se elimina) — repuntando todas las referencias reales antes de borrar.
+
+**Fichero:** `supabase/migrations/20260706_merge_company_persons_function.sql`
+
+**Por qué una función Postgres y no llamadas secuenciales desde el cliente:** la fusión toca 4 tablas (T1, T2, T3 JSONB, T9) más el `DELETE` final en `company_persons`. Supabase no ofrece transacciones multi-statement desde el cliente JS — varias llamadas `.from(...).update()` seguidas no son atómicas entre sí. Se optó por una única función `SECURITY DEFINER` en `plpgsql`, invocada una sola vez vía `supabase.rpc('merge_company_persons', {...})` desde `src/services/company-person.service.ts`. Toda la función corre en una única transacción implícita de Postgres: si cualquier `RAISE EXCEPTION` se dispara (validación fallida, error inesperado), **todos** los cambios hechos hasta ese punto dentro de la función se revierten automáticamente — no existe estado parcial ni hace falta lógica de rollback manual en el frontend.
+
+**Validaciones dentro de la función (en este orden):**
+1. Rol del que llama (`profiles.role` de `auth.uid()`) debe ser `superadmin` o `consultant` — si no, `RAISE EXCEPTION` y aborta sin tocar nada.
+2. `p_principal_id` y `p_replaced_id` no pueden ser el mismo id.
+3. Ambas personas deben existir en `company_persons`.
+4. Ambas personas deben pertenecer al mismo `project_id` — si no, aborta (protección adicional aunque la UI ya solo ofrece personas del proyecto activo).
+5. Repunta `t1_dimension_scores.person_id`, `stakeholders.person_id`, `value_streams.stages[].personId` (JSONB, reescribiendo el array completo por cada `value_stream` afectado) y `t9_free_items.person_id`.
+6. Verificación defensiva: si quedara alguna referencia sin repuntar, aborta antes de borrar.
+7. `DELETE FROM company_persons WHERE id = p_replaced_id`.
+8. Devuelve un `jsonb` con el conteo de filas actualizadas por herramienta (`t1_updated`, `t2_updated`, `t3_updated`, `t9_updated`).
+
+**Frontend:**
+- `src/services/company-person.service.ts` → `mergePersons(principalId, replacedId)` — llama al RPC, envuelve el error de Postgres (mensaje ya en español, listo para mostrar al usuario).
+- `src/modules/CompanyProfile/useCompanyPersonStore.ts` → acción `mergePersons(projectId, principalId, replacedId)` — en éxito refresca `persons` con `fetchPersons`; en error deja el mensaje en `mergeError` (no toca `persons`, no hay refresh — el estado visible no cambia porque el backend no cambió nada).
+- `src/modules/CompanyProfile/components/MergePersonsModal.tsx` — modal con dos selectores (principal / sustituible, mutuamente excluyentes). Si `mergeError` está poblado, el mismo componente muestra un **modal de error dedicado** con el texto descriptivo devuelto por la función, en vez del formulario — no un toast, tal como se especificó en el requisito.
+
+**Validado con Docker (Postgres 15) antes de entregar:** caso feliz (4 tablas repuntadas correctamente, persona sustituible eliminada, referencias ya correctas a la principal quedan intactas), mismo id, proyectos distintos, persona inexistente, rol no autorizado (`client_viewer`), y confirmación explícita de que un `ROLLBACK` externo (simulando cualquier error a mitad de la operación) no deja ningún cambio parcial en ninguna de las 4 tablas ni en `company_persons`.
 
 ---
 

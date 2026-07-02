@@ -53,6 +53,7 @@ export function T2View({ onBack }: T2ViewProps) {
 
   const { isReadOnly } = usePermissions()
   const { fetchDepartments, reset: resetDepartments } = useDepartmentStore()
+  const [companyId, setCompanyId] = useState<string | undefined>(undefined)
 
   // Garantizar datos al montar la ruta (idempotente).
   useEffect(() => {
@@ -69,6 +70,7 @@ export function T2View({ onBack }: T2ViewProps) {
   useEffect(() => {
     if (engagementId) {
       getProjectCompanyId(engagementId).then((cid) => {
+        setCompanyId(cid ?? undefined)
         if (cid) fetchDepartments(cid)
       })
     } else {
@@ -236,17 +238,21 @@ export function T2View({ onBack }: T2ViewProps) {
       </div>
 
       {/* ── Modal nueva entrevista ── */}
-      {showModal && (
+      {showModal && engagementId && (
         <InterviewModal
           onClose={() => setShowModal(false)}
           onSubmit={handleAddStakeholder}
+          projectId={engagementId}
+          companyId={companyId}
         />
       )}
 
       {/* ── Modal entrevista para stakeholder ya importado ── */}
-      {interviewingExisting && (
+      {interviewingExisting && engagementId && (
         <InterviewModal
           onClose={() => setInterviewingExisting(null)}
+          projectId={engagementId}
+          companyId={companyId}
           onSubmit={(data) => {
             updateStakeholder(
               interviewingExisting.id,

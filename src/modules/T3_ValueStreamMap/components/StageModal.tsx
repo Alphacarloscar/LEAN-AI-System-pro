@@ -9,9 +9,10 @@ import { useT3Store }                     from '../store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
 import { useDepartmentStore }             from '@/modules/CompanyProfile/useDepartmentStore'
 import { useUnsavedGuard }                from '@/shared/hooks/useUnsavedGuard'
-import { Modal, Button, FormField, SegmentedControl } from '@shared/design-system/components'
+import { Modal, Button, FormField, SegmentedControl, PersonSelectField } from '@shared/design-system/components'
 import { Select }                         from '@/shared/design-system/components/Select'
 import type { SelectOption }              from '@/shared/design-system/components/Select'
+import type { CompanyPerson }             from '@/modules/CompanyProfile/useCompanyPersonStore'
 import { T3_VALUE_BAR_COLORS, T3_VALUE_ACTIVE_BG } from '@shared/design-system/charts/chartTokens'
 import type { ProcessStage }              from '../types'
 
@@ -46,6 +47,7 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<StageFormValues>({
     resolver: zodResolver(stageFormSchema),
@@ -75,6 +77,11 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
   })
 
   useUnsavedGuard(isDirty, 'T3_StageModal')
+
+  function handlePersonSelected(_personId: string, person: CompanyPerson) {
+    setValue('responsible', person.name, { shouldValidate: true, shouldDirty: true })
+    if (person.department) setValue('department', person.department, { shouldValidate: true, shouldDirty: true })
+  }
 
   function onValid(data: StageFormValues) {
     const payload = {
@@ -134,10 +141,19 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
           {...register('name')}
         />
 
+        {engagementId && (
+          <PersonSelectField
+            projectId={engagementId}
+            sourceTool="t3"
+            label="Responsable"
+            onChange={handlePersonSelected}
+          />
+        )}
+
         <div className="grid grid-cols-2 gap-3">
           <FormField
             id="stage-responsible"
-            label="Responsable"
+            label="Responsable (texto libre)"
             placeholder="Ej: Técnico L1"
             error={errors.responsible?.message}
             {...register('responsible')}

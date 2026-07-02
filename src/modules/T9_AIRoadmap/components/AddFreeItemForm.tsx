@@ -6,7 +6,8 @@
 
 import { useForm, Controller }         from 'react-hook-form'
 import { zodResolver }                 from '@hookform/resolvers/zod'
-import { Card, Button, FormField }     from '@shared/design-system/components'
+import { Card, Button, FormField, PersonSelectField } from '@shared/design-system/components'
+import type { CompanyPerson }          from '@/modules/CompanyProfile/useCompanyPersonStore'
 import { useUnsavedGuard }             from '@/shared/hooks/useUnsavedGuard'
 import { AddFreeItemSchema }           from '@/lib/schemas/t9.schemas'
 import type { AddFreeItemFormValues }  from '@/lib/schemas/t9.schemas'
@@ -18,12 +19,13 @@ const SELECT_CLS =
   'w-full text-xs border border-border dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-warm-700 text-lean-black dark:text-warm-50 outline-none focus:ring-1 focus:ring-gold/20 focus:border-gold'
 
 interface AddFormProps {
-  onSave:   (data: AddFreeItemFormValues) => void
-  onCancel: () => void
+  onSave:    (data: AddFreeItemFormValues) => void
+  onCancel:  () => void
+  projectId: string
 }
 
-export function AddFreeItemForm({ onSave, onCancel }: AddFormProps) {
-  const { register, handleSubmit, control, watch, formState } =
+export function AddFreeItemForm({ onSave, onCancel, projectId }: AddFormProps) {
+  const { register, handleSubmit, control, watch, setValue, formState } =
     useForm<AddFreeItemFormValues>({
       resolver: zodResolver(AddFreeItemSchema),
       defaultValues: {
@@ -41,6 +43,11 @@ export function AddFreeItemForm({ onSave, onCancel }: AddFormProps) {
 
   const startMonth = watch('startMonth')
 
+  function handlePersonSelected(_personId: string, person: CompanyPerson) {
+    setValue('responsible', person.name, { shouldValidate: true, shouldDirty: true })
+    if (person.department) setValue('department', person.department, { shouldValidate: true, shouldDirty: true })
+  }
+
   return (
     <Card variant="flat" padding="none" className="border-t border-border dark:border-white/6 px-5 py-4 bg-warm-50 dark:bg-warm-800/60">
       <p className="text-xs font-medium text-lean-black dark:text-warm-50 mb-3">
@@ -48,6 +55,15 @@ export function AddFreeItemForm({ onSave, onCancel }: AddFormProps) {
       </p>
 
       <form onSubmit={handleSubmit(onSave)}>
+        <div className="mb-3">
+          <PersonSelectField
+            projectId={projectId}
+            sourceTool="t9"
+            label="Responsable"
+            onChange={handlePersonSelected}
+          />
+        </div>
+
         <div className="grid gap-3 mb-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
           {/* Nombre — ocupa 2 columnas */}
           <div style={{ gridColumn: '1 / 3' }}>
@@ -72,7 +88,7 @@ export function AddFreeItemForm({ onSave, onCancel }: AddFormProps) {
           <div>
             <FormField
               id="free-item-responsible"
-              label="Responsable"
+              label="Responsable (texto libre)"
               placeholder="Nombre y apellido"
               {...register('responsible')}
             />

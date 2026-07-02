@@ -92,6 +92,8 @@ export interface Stakeholder {
    * usa por su cuenta. Alimenta el indicador "Riesgo de Shadow AI" en T6 y T10.
    */
   unofficialTools?: string
+  /** Referencia opcional a company_persons.id — seleccionado via PersonSelectField */
+  personId?: string | null
 }
 
 // ── Formulario para crear stakeholder (antes de entrevista) ──
@@ -101,4 +103,6 @@ export interface NewStakeholderForm {
   role:           string
   department:     string
   unofficialTools?: string
+  /** Referencia opcional a company_persons.id — seleccionado via PersonSelectField */
+  personId?: string | null
 }

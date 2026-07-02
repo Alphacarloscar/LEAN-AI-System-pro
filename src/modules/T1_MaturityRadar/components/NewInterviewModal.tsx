@@ -4,7 +4,8 @@
 
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Modal, Button, FormField, SegmentedControl } from '@/shared/design-system/components'
+import { Modal, Button, FormField, SegmentedControl, PersonSelectField } from '@/shared/design-system/components'
+import type { CompanyPerson } from '@/modules/CompanyProfile/useCompanyPersonStore'
 import { TOTAL_SUBDIMENSIONS } from '../constants'
 import { useUnsavedGuard } from '@/shared/hooks/useUnsavedGuard'
 import { newIntervieweeSchema, type NewIntervieweeFormValues } from './NewInterviewModal.schema'
@@ -16,13 +17,16 @@ interface NewInterviewModalProps {
   onClose:     () => void
   onSubmit:    (form: NewIntervieweeFormValues) => Promise<void>
   departments: { name: string }[]
+  projectId:   string
+  companyId?:  string
 }
 
-export function NewInterviewModal({ onClose, onSubmit, departments }: NewInterviewModalProps) {
+export function NewInterviewModal({ onClose, onSubmit, departments, projectId, companyId }: NewInterviewModalProps) {
   const {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors, isDirty, isSubmitting },
   } = useForm<NewIntervieweeFormValues>({
     resolver:      zodResolver(newIntervieweeSchema),
@@ -33,6 +37,12 @@ export function NewInterviewModal({ onClose, onSubmit, departments }: NewIntervi
       department: '',
     },
   })
+
+  function handlePersonSelected(_personId: string, person: CompanyPerson) {
+    setValue('name', person.name, { shouldValidate: true, shouldDirty: true })
+    setValue('role', person.role, { shouldValidate: true, shouldDirty: true })
+    if (person.department) setValue('department', person.department, { shouldValidate: true, shouldDirty: true })
+  }
 
   // Protege los datos introducidos si el usuario intenta cerrar el modal
   // navegando fuera del engagement (isDirty = hay texto en algún campo)
@@ -49,6 +59,14 @@ export function NewInterviewModal({ onClose, onSubmit, departments }: NewIntervi
         Añade un nuevo entrevistado al assessment en curso
       </p>
       <form onSubmit={handleSubmit(onValid)} noValidate className="space-y-4">
+
+        <PersonSelectField
+          projectId={projectId}
+          companyId={companyId}
+          sourceTool="t1"
+          label="Persona"
+          onChange={handlePersonSelected}
+        />
 
         <FormField
           id="new-interviewee-name"

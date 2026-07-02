@@ -39,6 +39,7 @@ export function rowToStakeholder(row: StakeholderRow): Stakeholder {
     createdAt:       row.created_at ?? '',
     manualOverride:  row.manual_override || undefined,
     unofficialTools: row.unofficial_tools ?? undefined,
+    personId:        row.person_id ?? undefined,
   }
 }
 
@@ -57,6 +58,7 @@ export function stakeholderToInsert(s: Stakeholder, projectId: string): Stakehol
     notes:            s.notes ?? null,
     manual_override:  s.manualOverride ?? false,
     unofficial_tools: s.unofficialTools ?? null,
+    person_id:        s.personId ?? null,
   }
 }
 

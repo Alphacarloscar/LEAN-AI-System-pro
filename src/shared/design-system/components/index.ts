@@ -82,6 +82,9 @@ export type { StepperProps, StepItem, StepStatus } from './Stepper'
 export { SegmentedControl }    from './SegmentedControl'
 export type { SegmentedControlProps, SegmentedControlOption } from './SegmentedControl'
 
+export { PersonSelectField }   from './PersonSelectField'
+export type { PersonSelectFieldProps } from './PersonSelectField'
+
 // ── Grupo C — Layout / feedback ──
 export { Spinner }             from './Spinner'
 export type { SpinnerProps, SpinnerSize } from './Spinner'

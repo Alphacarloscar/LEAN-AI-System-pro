@@ -316,10 +316,11 @@ export function T9View({ onBack }: T9ViewProps) {
           )
         })}
 
-        {showAddForm && (
+        {showAddForm && engagementId && (
           <AddFreeItemForm
             onSave={handleAddFree}
             onCancel={() => setShowAddForm(false)}
+            projectId={engagementId}
           />
         )}
       </Card>

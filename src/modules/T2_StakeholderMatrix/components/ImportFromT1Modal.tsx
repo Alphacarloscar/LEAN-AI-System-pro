@@ -21,6 +21,7 @@ import { Check }                          from 'lucide-react'
 import { useT1Store }                     from '@/modules/T1_MaturityRadar/store'
 import { useT2Store }                     from '../store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
+import { useCompanyPersonStore }          from '@/modules/CompanyProfile/useCompanyPersonStore'
 import type { ArchetypeCode }             from '../types'
 import { Modal, Button, Badge }           from '@shared/design-system/components'
 import { reportError }                    from '@/lib/reportError'
@@ -39,6 +40,7 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
   const interviewees              = useT1Store((s) => s.interviewees)
   const { stakeholders, addStakeholder } = useT2Store()
   const engagementId              = useEngagementStore((s) => s.activeEngagementId)
+  const addPerson                 = useCompanyPersonStore((s) => s.addPerson)
 
   const [selected, setSelected]   = useState<Set<string>>(new Set())
   const [importing, setImporting] = useState(false)
@@ -95,6 +97,16 @@ export function ImportFromT1Modal({ onClose }: ImportFromT1ModalProps) {
         },
         engagementId,
       ).catch((err) => reportError('[ImportFromT1] addStakeholder sync', err))
+
+      if (engagementId) {
+        void addPerson({
+          projectId:  engagementId,
+          name:       person.name,
+          role:       person.role,
+          department,
+          sourceTool: 't2',
+        })
+      }
     })
 
     setImportCount(toImport.length)
