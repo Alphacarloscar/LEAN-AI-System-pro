@@ -28,7 +28,7 @@
 //   — afterEach limpia el interviewee creado para dejar el seed intacto
 // ============================================================
 
-import { test, expect, type Page, type Request, type Response } from '@playwright/test'
+import { test, expect, type Page, type Request, type APIResponse } from '@playwright/test'
 import { login, selectEngagement, waitForStoreReady, LAB_PROJECT_ID, USERS } from './helpers'
 
 // ── Constantes del entorno E2E ─────────────────────────────────────────────
@@ -129,42 +129,57 @@ function prepareAuditWatcher(
 }
 
 /**
- * Registra waitForResponse ANTES de la acción del usuario y devuelve una función
- * que resuelve con la Response cuando llega.
+ * Registra page.route() ANTES de la acción y devuelve una función que resuelve
+ * con la APIResponse real cuando llega la respuesta de la Edge Function.
  *
- * El filtro lee res.request().postDataJSON() directamente — sin WeakSet ni
- * comparación de identidad. Solo lo usan los tests 1 y 5.
+ * Historial de mecanismos fallidos (solo para futura referencia):
+ *   1. WeakSet + waitForResponse: res.request() en el callback de waitForResponse
+ *      devuelve instancia DISTINTA al Request capturado en page.on('request', ...)
+ *      bajo Chromium headless con respuestas CORS → WeakSet.has() siempre falso.
+ *   2. waitForRequest + req.response(): req.response() devuelve null porque
+ *      Playwright registra la request como "abortada" — probablemente porque
+ *      el fetch de supabase.functions.invoke() es fire-and-forget y CDP ve la
+ *      request cerrada antes de emitir el response event.
+ *   3. waitForResponse + res.request().postDataJSON(): CDP Network.responseReceived
+ *      no incluye el body del request — postDataJSON() devuelve null en el
+ *      callback de waitForResponse → predicado siempre false → timeout de 90s.
+ *
+ * Solución: page.route() intercepta ANTES de que el browser envíe el request.
+ * En ese contexto, req.postDataJSON() SÍ está disponible. route.fetch() envía
+ * el request real al servidor y devuelve la APIResponse con status y body reales.
+ * Solo lo usan los tests 1 y 5.
  */
 function prepareAuditResponseWatcher(
   page:        Page,
   serviceName: string,
   methodName:  string,
-): () => Promise<Response> {
-  // waitForResponse con filtro directo sobre res.request().postDataJSON().
-  //
-  // Historial de intentos fallidos:
-  //   1. WeakSet + waitForResponse: res.request() devuelve instancia DISTINTA al
-  //      Request capturado en page.on('request', ...) bajo Chromium headless con
-  //      respuestas CORS → WeakSet.has() siempre falso.
-  //   2. waitForRequest + req.response(): req.response() devuelve null porque el
-  //      fetch de supabase.functions.invoke() es fire-and-forget; Playwright ve la
-  //      request como abortada antes de recibir respuesta.
-  //
-  // Solución correcta: waitForResponse filtrando por res.request().postDataJSON()
-  // directamente — sin comparación de identidad, sin depender de req.response().
-  // res.request() tiene los datos correctos (URL, method, body) aunque sea una
-  // instancia distinta al Request de page.on('request', ...).
-  const resPromise = page.waitForResponse(
-    (res) => {
-      if (res.request().method() !== 'POST') return false
-      if (!EDGE_FN_PATTERN.test(res.url())) return false
-      try {
-        const body = (res.request().postDataJSON() ?? {}) as Record<string, unknown>
-        return body.service_name === serviceName && body.method_name === methodName
-      } catch { return false }
-    },
-    { timeout: EDGE_FN_TIMEOUT },
-  )
+): () => Promise<APIResponse> {
+  let resolve!: (r: APIResponse) => void
+  let reject!:  (e: Error) => void
+  const resPromise = new Promise<APIResponse>((res, rej) => { resolve = res; reject = rej })
+
+  // page.route() devuelve una Promise que se ignora intencionalmente:
+  // la ruta queda registrada antes de que cualquier acción de usuario pueda
+  // disparar el fetch (hay varios await intermedios entre esta línea y la
+  // llamada HTTP de fireAuditLogAwaitable).
+  void page.route(EDGE_FN_PATTERN, async (route) => {
+    const req = route.request()
+    if (req.method() !== 'POST') { await route.continue(); return }
+    try {
+      const body = (req.postDataJSON() ?? {}) as Record<string, unknown>
+      if (body.service_name === serviceName && body.method_name === methodName) {
+        const response = await route.fetch()
+        resolve(response)
+        await route.fulfill({ response })
+        return
+      }
+    } catch (e) {
+      reject(e instanceof Error ? e : new Error(String(e)))
+      try { await route.abort() } catch { /* ignorar */ }
+      return
+    }
+    await route.continue()
+  })
 
   return () => resPromise
 }
