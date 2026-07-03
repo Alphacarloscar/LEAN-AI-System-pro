@@ -14,12 +14,12 @@ import { Modal, Button, Select } from '@shared/design-system/components'
 import type { SelectOption } from '@shared/design-system/components'
 
 interface MergePersonsModalProps {
-  projectId: string
+  companyId: string | null
   persons:   CompanyPerson[]
   onClose:   () => void
 }
 
-export function MergePersonsModal({ projectId, persons, onClose }: MergePersonsModalProps) {
+export function MergePersonsModal({ companyId, persons, onClose }: MergePersonsModalProps) {
   const { mergePersons, isMerging, mergeError, clearMergeError } = useCompanyPersonStore()
   const [principalId, setPrincipalId] = useState('')
   const [replacedId,  setReplacedId]  = useState('')
@@ -34,7 +34,8 @@ export function MergePersonsModal({ projectId, persons, onClose }: MergePersonsM
   const canConfirm = !!principalId && !!replacedId && principalId !== replacedId && !isMerging
 
   async function handleConfirm() {
-    const ok = await mergePersons(projectId, principalId, replacedId)
+    if (!companyId) return
+    const ok = await mergePersons(companyId, 'company', principalId, replacedId)
     if (ok) onClose()
   }
 
@@ -46,7 +47,7 @@ export function MergePersonsModal({ projectId, persons, onClose }: MergePersonsM
             {mergeError}
           </p>
           <p className="text-xs text-text-muted dark:text-warm-400">
-            No se ha aplicado ningún cambio. El equipo del proyecto sigue igual que antes de intentar la fusión.
+            No se ha aplicado ningún cambio. Las personas de la empresa siguen igual que antes de intentar la fusión.
           </p>
           <Button variant="primary" size="sm" fullWidth onClick={() => { clearMergeError(); onClose() }}>
             Entendido

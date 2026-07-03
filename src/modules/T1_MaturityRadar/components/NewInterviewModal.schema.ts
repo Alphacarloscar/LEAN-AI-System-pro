@@ -21,6 +21,9 @@ export const newIntervieweeSchema = z.object({
     .string()
     .min(1, 'El departamento es obligatorio')
     .refine((v) => v.trim().length > 0, 'Selecciona o escribe un departamento'),
+
+  /** id de company_persons si se seleccionó una persona existente; null si se está creando una nueva. */
+  personId: z.string().nullable(),
 })
 
 export type NewIntervieweeFormValues = z.infer<typeof newIntervieweeSchema>

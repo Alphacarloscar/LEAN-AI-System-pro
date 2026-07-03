@@ -5,6 +5,10 @@
 import type { T1DimensionState } from '../types'
 import { computeDimensionScore, computeOverallScore } from '../types'
 import type { IntervieweeAggregate } from './T1ExecutiveOutput'
+import { DEPARTMENT_TYPE_ICON } from '@/modules/CompanyProfile/departmentDisplay'
+
+const ItIcon  = DEPARTMENT_TYPE_ICON.it
+const BizIcon = DEPARTMENT_TYPE_ICON.negocio_ops
 
 // ── Colores IT / BIZ ──────────────────────────────────────────
 
@@ -165,7 +169,10 @@ export function ITBizGapSection({ dimensions, itInterviewees, bizInterviewees }:
       {/* Resumen global */}
       <div className="flex items-center gap-6 mb-4 p-4 rounded-xl bg-warm-50 dark:bg-warm-700/50 border border-border/60">
         <div className="text-center">
-          <p className={`text-2xl font-bold tabular-nums ${IT_TEXT_CLASS}`}>{itOverall.toFixed(1)}</p>
+          <p className={`flex items-center justify-center gap-1.5 text-2xl font-bold tabular-nums ${IT_TEXT_CLASS}`}>
+            <ItIcon size={16} strokeWidth={1.5} aria-label="IT / Tecnología" />
+            {itOverall.toFixed(1)}
+          </p>
           <p className="text-[11px] text-text-muted mt-0.5">IT (avg)</p>
         </div>
         <div className="flex-1 flex flex-col items-center">
@@ -187,7 +194,10 @@ export function ITBizGapSection({ dimensions, itInterviewees, bizInterviewees }:
           </div>
         </div>
         <div className="text-center">
-          <p className={`text-2xl font-bold tabular-nums ${BIZ_TEXT_CLASS}`}>{bizOverall.toFixed(1)}</p>
+          <p className={`flex items-center justify-center gap-1.5 text-2xl font-bold tabular-nums ${BIZ_TEXT_CLASS}`}>
+            {bizOverall.toFixed(1)}
+            <BizIcon size={16} strokeWidth={1.5} aria-label="Negocio / Ops" />
+          </p>
           <p className="text-[11px] text-text-muted mt-0.5">Negocio (avg)</p>
         </div>
       </div>

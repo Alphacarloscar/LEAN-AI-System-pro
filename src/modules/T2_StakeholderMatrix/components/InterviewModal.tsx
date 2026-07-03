@@ -30,7 +30,7 @@ import { useDepartmentStore }            from '@/modules/CompanyProfile/useDepar
 import { Select }                        from '@/shared/design-system/components/Select'
 import type { SelectOption }             from '@/shared/design-system/components/Select'
 import { Modal, Button, FormField, Badge, SegmentedControl, PersonSelectField } from '@shared/design-system/components'
-import type { CompanyPerson }            from '@/modules/CompanyProfile/useCompanyPersonStore'
+import { useCompanyPersonStore, type CompanyPerson } from '@/modules/CompanyProfile/useCompanyPersonStore'
 import { ArchetypeBadge, ResistanceBadge } from './T2Badges'
 
 // ── Props ─────────────────────────────────────────────────────
@@ -85,7 +85,10 @@ function StakeholderFormPhase({
   const { departments, isLoading: isLoadingDepts } = useDepartmentStore()
   const deptOptions: SelectOption[] = departments.map((d) => ({ value: d.name, label: d.name }))
   const hasDepts = deptOptions.length > 0
+  const { addPerson } = useCompanyPersonStore()
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(initialValues?.personId ?? null)
+  const [personSelected, setPersonSelected] = useState(!!initialValues?.personId)
+  const [isCreatingNew, setIsCreatingNew] = useState(false)
 
   const {
     register,
@@ -93,6 +96,7 @@ function StakeholderFormPhase({
     control,
     setValue,
     setFocus,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<StakeholderFormValues>({
     resolver: zodResolver(stakeholderFormSchema),
@@ -104,8 +108,21 @@ function StakeholderFormPhase({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function onValid(data: StakeholderFormValues) {
-    onNext({ ...data, personId: selectedPersonId })
+  async function onValid(data: StakeholderFormValues) {
+    let personId = selectedPersonId
+    // Persona nueva — se crea aquí (único punto de escritura, ya no dentro de PersonSelectField)
+    if (isCreatingNew) {
+      const created = await addPerson({
+        projectId,
+        companyId,
+        name:       data.name.trim(),
+        role:       data.role.trim(),
+        department: data.department,
+        sourceTool: 't2',
+      })
+      personId = created?.id ?? null
+    }
+    onNext({ ...data, personId })
   }
 
   function handlePersonSelected(personId: string, person: CompanyPerson) {
@@ -113,17 +130,33 @@ function StakeholderFormPhase({
     setValue('name', person.name, { shouldValidate: true })
     setValue('role', person.role, { shouldValidate: true })
     if (person.department) setValue('department', person.department, { shouldValidate: true })
+    setIsCreatingNew(false)
+    setPersonSelected(true)
+  }
+
+  function handleCreateNew() {
+    reset({ name: '', role: '', department: '', unofficialTools: '' })
+    setSelectedPersonId(null)
+    setIsCreatingNew(true)
+    setPersonSelected(true)
   }
 
   return (
     <form onSubmit={handleSubmit(onValid)} className="space-y-4">
       <PersonSelectField
         projectId={projectId}
-        companyId={companyId}
+        selectedPersonId={selectedPersonId ?? undefined}
+        isCreatingNew={isCreatingNew}
         sourceTool="t2"
         label="Persona"
         onChange={handlePersonSelected}
+        onCreateNew={handleCreateNew}
       />
+      {isCreatingNew && (
+        <p className="text-[11px] text-text-subtle -mt-2">
+          Rellena los datos de la nueva persona abajo.
+        </p>
+      )}
 
       <FormField
         id="stakeholder-name"
@@ -131,6 +164,7 @@ function StakeholderFormPhase({
         type="text"
         placeholder="Ej. Javier Morales"
         error={errors.name?.message}
+        disabled={!isCreatingNew}
         {...register('name')}
       />
 
@@ -140,18 +174,8 @@ function StakeholderFormPhase({
         type="text"
         placeholder="Ej. CIO, Head of Digital, CFO…"
         error={errors.role?.message}
+        disabled={!isCreatingNew}
         {...register('role')}
-      />
-
-      {/* Shadow AI — campo empático, opcional */}
-      <FormField
-        id="stakeholder-unofficial-tools"
-        label="Herramientas externas (opcional)"
-        multiline
-        rows={2}
-        placeholder="Herramientas externas (IA o digitales) que empleas por tu cuenta para agilizar cuellos de botella diarios"
-        hint="Ej. ChatGPT, Notion AI, Zapier… Su uso no implica incumplimiento; nos ayuda a entender el flujo real de trabajo."
-        {...register('unofficialTools')}
       />
 
       {/* Departamento — Select centralizado desde company_departments */}
@@ -164,7 +188,7 @@ function StakeholderFormPhase({
             options={deptOptions}
             value={field.value}
             onChange={(e) => field.onChange(e.target.value)}
-            disabled={!hasDepts || isLoadingDepts}
+            disabled={!hasDepts || isLoadingDepts || !isCreatingNew}
             errorText={errors.department?.message}
             placeholder={
               isLoadingDepts
@@ -182,6 +206,18 @@ function StakeholderFormPhase({
         )}
       />
 
+      {/* Shadow AI — campo empático, opcional */}
+      <FormField
+        id="stakeholder-unofficial-tools"
+        label="Herramientas externas (opcional)"
+        multiline
+        rows={2}
+        placeholder="Herramientas externas (IA o digitales) que empleas por tu cuenta para agilizar cuellos de botella diarios"
+        hint="Ej. ChatGPT, Notion AI, Zapier… Su uso no implica incumplimiento; nos ayuda a entender el flujo real de trabajo."
+        disabled={!personSelected}
+        {...register('unofficialTools')}
+      />
+
       <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-warm-50 dark:bg-warm-700/50 border border-border/60">
         A continuación, 5 preguntas que determinarán el arquetipo y el nivel de resistencia automáticamente.
       </p>
@@ -191,7 +227,7 @@ function StakeholderFormPhase({
         variant="primary"
         size="sm"
         fullWidth
-        disabled={isSubmitting}
+        disabled={isSubmitting || !personSelected}
         loading={isSubmitting}
       >
         Iniciar entrevista →

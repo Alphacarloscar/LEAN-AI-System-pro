@@ -109,7 +109,9 @@ export function T1View({ onBack }: T1ViewProps) {
         },
         engagementId,
       )
-      if (engagementId) {
+      // Solo se crea un registro en company_persons si es una persona nueva —
+      // si se seleccionó una existente (form.personId), ya existe y no se duplica.
+      if (engagementId && !form.personId) {
         void addPerson({
           projectId:  engagementId,
           companyId,
@@ -390,7 +392,6 @@ export function T1View({ onBack }: T1ViewProps) {
           onSubmit={addInterviewee}
           departments={departments}
           projectId={engagementId}
-          companyId={companyId}
         />
       )}
     </div>

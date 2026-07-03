@@ -11,9 +11,11 @@
 import { create } from 'zustand'
 import { reportError } from '@/lib/reportError'
 import {
-  fetchPersons  as svcFetchPersons,
-  addPerson     as svcAddPerson,
-  mergePersons  as svcMergePersons,
+  fetchPersons          as svcFetchPersons,
+  fetchPersonsByCompany as svcFetchPersonsByCompany,
+  addPerson             as svcAddPerson,
+  updatePerson          as svcUpdatePerson,
+  mergePersons          as svcMergePersons,
 } from '@/services/company-person.service'
 
 // ── Tipos públicos ──────────────────────────────────────────────
@@ -21,14 +23,16 @@ import {
 export type SourceTool = 't1' | 't2' | 't3' | 't9' | 'company_profile'
 
 export interface CompanyPerson {
-  id:          string
-  project_id:  string
-  company_id:  string | null
-  name:        string
-  role:        string
-  department:  string
-  source_tool: SourceTool
-  created_at:  string
+  id:           string
+  project_id:   string
+  company_id:   string | null
+  /** Nombre del proyecto de origen — via join a projects(name). */
+  project_name: string | null
+  name:         string
+  role:         string
+  department:   string
+  source_tool:  SourceTool
+  created_at:   string
 }
 
 export interface NewCompanyPerson {
@@ -60,14 +64,19 @@ interface CompanyPersonStore {
 
   /** Carga las personas de un proyecto. Llamar al abrir el selector. */
   fetchPersons: (projectId: string) => Promise<void>
+  /** Carga todas las personas de una empresa (todos sus proyectos). */
+  fetchPersonsByCompany: (companyId: string) => Promise<void>
   /** Crea una nueva persona y la añade al estado local. */
   addPerson:    (person: NewCompanyPerson) => Promise<CompanyPerson | null>
+  /** Actualiza nombre/cargo/departamento de una persona existente. */
+  updatePerson: (id: string, updates: { name: string; role: string; department: string }) => Promise<CompanyPerson | null>
   /**
    * Fusiona dos personas: `principalId` se conserva, `replacedId` se elimina
    * tras repuntar todas sus referencias. Atómico en el backend — en éxito
-   * refresca la lista; en error deja `mergeError` con el texto descriptivo.
+   * refresca la lista (via `fetchPersons` o `fetchPersonsByCompany`, según
+   * `scopeType`); en error deja `mergeError` con el texto descriptivo.
    */
-  mergePersons: (projectId: string, principalId: string, replacedId: string) => Promise<boolean>
+  mergePersons: (scopeId: string, scopeType: 'project' | 'company', principalId: string, replacedId: string) => Promise<boolean>
   /** Limpia el mensaje de error de fusión (al cerrar el modal de error). */
   clearMergeError: () => void
   /** Limpia el estado (llamar al desmontar o al salir del proyecto). */
@@ -95,6 +104,18 @@ export const useCompanyPersonStore = create<CompanyPersonStore>()((set) => ({
     }
   },
 
+  fetchPersonsByCompany: async (companyId: string) => {
+    set({ isLoading: true, error: null })
+    try {
+      const persons = await svcFetchPersonsByCompany(companyId)
+      set({ persons, isLoading: false })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al cargar personas'
+      reportError('[CompanyPersonStore] fetchPersonsByCompany', err)
+      set({ isLoading: false, error: msg })
+    }
+  },
+
   // ── Add ───────────────────────────────────────────────────
 
   addPerson: async (person: NewCompanyPerson) => {
@@ -114,15 +135,33 @@ export const useCompanyPersonStore = create<CompanyPersonStore>()((set) => ({
     }
   },
 
+  // ── Update ────────────────────────────────────────────────
+
+  updatePerson: async (id, updates) => {
+    set({ error: null })
+    try {
+      const updated = await svcUpdatePerson(id, updates)
+      set((s) => ({ persons: s.persons.map((p) => (p.id === id ? updated : p)) }))
+      return updated
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al actualizar persona'
+      reportError('[CompanyPersonStore] updatePerson', err)
+      set({ error: msg })
+      return null
+    }
+  },
+
   // ── Merge ─────────────────────────────────────────────────
 
-  mergePersons: async (projectId: string, principalId: string, replacedId: string) => {
+  mergePersons: async (scopeId: string, scopeType: 'project' | 'company', principalId: string, replacedId: string) => {
     set({ isMerging: true, mergeError: null })
     try {
       await svcMergePersons(principalId, replacedId)
       set({ isMerging: false })
       // Refrescar el listado desde Supabase — la sustituible ya no existe.
-      const persons = await svcFetchPersons(projectId)
+      const persons = scopeType === 'company'
+        ? await svcFetchPersonsByCompany(scopeId)
+        : await svcFetchPersons(scopeId)
       set({ persons })
       return true
     } catch (err) {

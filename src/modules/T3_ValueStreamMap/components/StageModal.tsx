@@ -2,17 +2,18 @@
 // StageModal — Add/Edit/Delete stage modal for T3 StagesTab
 // ============================================================
 
+import { useState }                       from 'react'
 import { useForm, Controller }            from 'react-hook-form'
 import { zodResolver }                    from '@hookform/resolvers/zod'
 import { stageFormSchema, type StageFormValues } from '@/lib/schemas/t3.schemas'
 import { useT3Store }                     from '../store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
 import { useDepartmentStore }             from '@/modules/CompanyProfile/useDepartmentStore'
+import { useCompanyPersonStore, type CompanyPerson } from '@/modules/CompanyProfile/useCompanyPersonStore'
 import { useUnsavedGuard }                from '@/shared/hooks/useUnsavedGuard'
 import { Modal, Button, FormField, SegmentedControl, PersonSelectField } from '@shared/design-system/components'
 import { Select }                         from '@/shared/design-system/components/Select'
 import type { SelectOption }              from '@/shared/design-system/components/Select'
-import type { CompanyPerson }             from '@/modules/CompanyProfile/useCompanyPersonStore'
 import { T3_VALUE_BAR_COLORS, T3_VALUE_ACTIVE_BG } from '@shared/design-system/charts/chartTokens'
 import type { ProcessStage }              from '../types'
 
@@ -42,6 +43,9 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
   const hasDepts = deptOptions.length > 0
 
   const isEdit = !!stage
+  const { addPerson } = useCompanyPersonStore()
+  const [isCreatingNew, setIsCreatingNew] = useState(false)
+  const [selectedPersonId, setSelectedPersonId] = useState<string | undefined>(undefined)
 
   const {
     register,
@@ -78,12 +82,30 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
 
   useUnsavedGuard(isDirty, 'T3_StageModal')
 
-  function handlePersonSelected(_personId: string, person: CompanyPerson) {
+  function handlePersonSelected(personId: string, person: CompanyPerson) {
     setValue('responsible', person.name, { shouldValidate: true, shouldDirty: true })
     if (person.department) setValue('department', person.department, { shouldValidate: true, shouldDirty: true })
+    setIsCreatingNew(false)
+    setSelectedPersonId(personId)
   }
 
-  function onValid(data: StageFormValues) {
+  function handleCreateNew() {
+    setValue('responsible', '', { shouldDirty: true })
+    setValue('department', '', { shouldDirty: true })
+    setSelectedPersonId(undefined)
+    setIsCreatingNew(true)
+  }
+
+  async function onValid(data: StageFormValues) {
+    // Persona nueva — se crea aquí (único punto de escritura, ya no dentro de PersonSelectField)
+    if (isCreatingNew && engagementId && data.responsible) {
+      void addPerson({
+        projectId:  engagementId,
+        name:       data.responsible.trim(),
+        department: data.department ?? '',
+        sourceTool: 't3',
+      })
+    }
     const payload = {
       name:              data.name.trim(),
       responsible:       data.responsible  || undefined,
@@ -142,20 +164,31 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
         />
 
         {engagementId && (
-          <PersonSelectField
-            projectId={engagementId}
-            sourceTool="t3"
-            label="Responsable"
-            onChange={handlePersonSelected}
-          />
+          <>
+            <PersonSelectField
+              projectId={engagementId}
+              selectedPersonId={selectedPersonId}
+              isCreatingNew={isCreatingNew}
+              sourceTool="t3"
+              label="Responsable"
+              onChange={handlePersonSelected}
+              onCreateNew={handleCreateNew}
+            />
+            {isCreatingNew && (
+              <p className="text-[11px] text-text-subtle -mt-2">
+                Rellena los datos de la nueva persona abajo.
+              </p>
+            )}
+          </>
         )}
 
         <div className="grid grid-cols-2 gap-3">
           <FormField
             id="stage-responsible"
-            label="Responsable (texto libre)"
-            placeholder="Ej: Técnico L1"
+            label="Nombre y apellidos"
+            placeholder="Selecciona un responsable arriba"
             error={errors.responsible?.message}
+            disabled={!isCreatingNew}
             {...register('responsible')}
           />
           <Controller
@@ -167,7 +200,7 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
                 options={deptOptions}
                 value={field.value ?? ''}
                 onChange={(e) => field.onChange(e.target.value)}
-                disabled={!hasDepts || isLoadingDepts}
+                disabled={!hasDepts || isLoadingDepts || !isCreatingNew}
                 placeholder={
                   isLoadingDepts
                     ? 'Cargando...'

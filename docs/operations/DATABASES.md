@@ -1,6 +1,6 @@
 ﻿﻿﻿﻿# Databases — GOBY
 
-Last updated: 2026-07-06
+Last updated: 2026-07-08
 AI-Ready Repository System v2.1.0
 
 > ⚠️ Política de seguridad: Este fichero documenta la ESTRUCTURA y PROTOCOLOS de base de datos.
@@ -44,7 +44,8 @@ AI-Ready Repository System v2.1.0
 | `company_profiles` | Perfil de empresa del cliente | `project_id` |
 | `snapshots` | Capturas longitudinales del estado | `project_id` |
 | `frictions` | Fricciones detectadas en T3 | `project_id` |
-| `company_persons` | Personas del proyecto (nombre, cargo, departamento, tool origen) — reutilizable desde T1, T2, T3, T9 y CompanyProfile via `PersonSelectField` | `project_id` (opcional `company_id`) |
+| `company_persons` | Personas de la empresa (nombre, cargo, departamento, tool origen) — reutilizable desde T1, T2, T3, T9 y CompanyProfile via `PersonSelectField`. Lectura: `company_id` (todos los proyectos de la empresa, con fallback a `project_id` para filas legado) via `user_can_read_company`/`user_can_read_project`. Escritura (alta/edición): sigue exigiendo `project_id` concreto via `user_can_edit_project` | `project_id` (escritura) / `company_id` (lectura, con fallback a `project_id`) |
+| `company_departments` | Departamentos de la empresa (nombre, `color`, `type`: `it`/`negocio_ops`) — centralizados, consumidos desde T1 (selector de entrevistado) y CompanyProfile | `company_id` |
 | `audit_logs` | Historial de auditoría (90 días) | `user_id` / `metadata.company_id` |
 | `audit_logs_archive` | Archivo de auditoría (5 años) | `user_id` / `metadata.company_id` |
 | `audit_access_logs` | Meta-auditoría de accesos al log | `user_id` |
@@ -94,8 +95,12 @@ AI-Ready Repository System v2.1.0
 | `20260705_backfill_company_persons_all_projects.sql` | Backfill de datos genérico: carga `company_persons` desde T1/T2/T3/T9 para **todos** los proyectos/empresas de la BD en una sola pasada. Reemplaza al backfill anterior como método estándar — usar este para cualquier carga futura (clientes nuevos, proyectos añadidos con posterioridad a la migración de esquema). No es migración de esquema. Requiere `20260703_company_persons.sql` ya aplicada. Ver protocolo más abajo. | ✅ DEV (validado contra Postgres 15 vía Docker, multi-tenant) — ⏳ PRE + PRO pendiente |
 | `20260706_stakeholders_person_id.sql` | Añade `stakeholders.person_id` (FK nullable a `company_persons`, `ON DELETE SET NULL`) + backfill por `(project_id, nombre, cargo)`. Hasta esta migración, T2 solo copiaba nombre/cargo/departamento como texto libre sin vínculo real — con esta columna, T1, T2, T3 y T9 quedan todos con una referencia real que la función de fusión (ver siguiente fila) puede repuntar. | ✅ DEV (validado contra Postgres 15 vía Docker) — ⏳ PRE + PRO pendiente |
 | `20260706_merge_company_persons_function.sql` | Función `merge_company_persons(p_principal_id, p_replaced_id)` — fusiona dos `company_persons`: repunta T1/T2/T3(JSONB)/T9 hacia la principal y elimina la sustituible. `SECURITY DEFINER`, solo `superadmin`/`consultant`, atómica (revierte todo ante cualquier error). Invocada desde `src/services/company-person.service.ts` vía `supabase.rpc(...)`. Ver sección "Función merge_company_persons" más abajo. | ✅ DEV (validado contra Postgres 15 vía Docker: caso feliz, mismo id, proyectos distintos, persona inexistente, rol no autorizado, rollback transaccional) — ⏳ PRE + PRO pendiente |
+| `20260707_company_departments_type.sql` | Añade `company_departments.type` (`'it'` \| `'negocio_ops'`, `NOT NULL DEFAULT 'negocio_ops'`, `CHECK` constraint) — clasifica cada departamento como IT/Tecnología o Negocio & Ops, misma distinción que T1 ya usa para `interviewee.type`. Idempotente (`ADD COLUMN IF NOT EXISTS` + backfill `WHERE type IS NULL` antes del `NOT NULL`). Clasificación real de departamentos preexistentes vía `scripts/migrate-departments-to-type.sql` (no auto-ejecutado). | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260708_company_persons_company_scope.sql` | Amplía la LECTURA de `company_persons` de `project_id` a `company_id` (todos los proyectos de una empresa) para la sección "Personas en la empresa": nuevo helper `user_can_read_company(company_id)` (mismo patrón que `user_can_read_project`), policy `company_persons_select` con `OR` sobre ambos helpers (fallback para filas legado con `company_id NULL`), índice `idx_company_persons_company_id`, y `merge_company_persons` actualizada para validar "misma empresa" (via `projects.company_id`) en vez de "mismo proyecto". Escritura (INSERT/UPDATE/DELETE) sin cambio de fondo — sigue exigiendo `project_id` concreto. Ver limitación conocida sobre T3 en TECH-DEBT.md. | ✅ DEV — ⏳ PRE + PRO pendiente |
 
-> Las migraciones marcadas ⏳ se aplican juntas via `supabase/releases/release-v2.2.0-pre-pro.sql` (único script idempotente).
+> Las migraciones de auditoría (`20260615_003`, `20260615_007`, `20260616_004`) marcadas ⏳ se aplican juntas via `supabase/releases/release-v2.2.0-pre-pro.sql` (único script idempotente).
+>
+> Las migraciones `20260703`, `20260705`, `20260706` (ambas), `20260707` y `20260708` marcadas ⏳ se aplican juntas via `supabase/releases/release-v2.2.1-person-select-list.sql` (único script idempotente) — **no** están cubiertas por `release-v2.2.0-pre-pro.sql`.
 
 > **FASE2_verify_indexes.sql, FASE3_add_missing_indexes.sql** — scripts de verificación/mantenimiento, no migraciones de esquema.
 
@@ -106,6 +111,7 @@ AI-Ready Repository System v2.1.0
 | Archivo release | Cubre | Ejecutar en | Estado |
 |-----------------|-------|-------------|--------|
 | `supabase/releases/release-v2.2.0-pre-pro.sql` | Sistema auditoría completo: 003+007+004 consolidados + fix search_path | PRE → PRO (en ese orden) | ⏳ Pendiente |
+| `supabase/releases/release-v2.2.1-person-select-list.sql` | `company_persons` (tabla + backfill completo) + `stakeholders.person_id` + `company_departments.type` + RLS de `company_persons` a scope de empresa + `merge_company_persons` (versión final). Consolida 20260703, 20260705, 20260706 (x2), 20260707, 20260708. Ver protocolo de ejecución en la cabecera del propio script (incluye paso manual de clasificación de departamentos con `scripts/migrate-departments-to-type.sql`). | PRE → PRO (en ese orden) | ⏳ Pendiente |
 
 **Protocolo:**
 1. Verificar prerrequisitos: pg_cron habilitado + Vault `audit_pepper` configurado en el proyecto destino.
@@ -130,7 +136,7 @@ A diferencia de las migraciones (que crean/alteran tablas), un **backfill** rell
 **Características de diseño (aplican a cualquier backfill futuro):**
 - **Idempotente**: usa `NOT EXISTS` antes de cada `INSERT` — ejecutarlo varias veces (o tras dar de alta un cliente nuevo) no duplica filas ya creadas. Validado con doble ejecución en Postgres 15 (Docker), incluyendo dos empresas distintas con una persona homónima entre ellas, sin duplicados ni fugas cruzadas.
 - **Sin filtro por nombre**: el genérico opera sobre `JOIN public.projects p ON p.id = <tabla>.project_id` sin `WHERE p.name = ...` — cubre automáticamente cualquier proyecto/empresa presente en la BD, incluidos los que se den de alta después de ejecutar el script (basta con re-ejecutarlo).
-- **Deduplicación por (project_id, nombre, cargo)**: dos entradas con el mismo nombre pero cargo distinto (o sin cargo, como ocurre en T3/T9 que no capturan cargo) se tratan como personas distintas dentro del mismo proyecto — evita fusionar por error a dos personas homónimas. El `project_id` en la comparación también evita que una persona de una empresa se fusione con la homónima de otra empresa. Los duplicados aparentes "con/sin cargo" se resuelven de forma natural hacia delante: en cuanto T3/T9 empiecen a usar `PersonSelectField` para capturar también el cargo, las siguientes altas ya no generarán esas filas "sin cargo".
+- **Deduplicación por (project_id, nombre, cargo)**: dos entradas con el mismo nombre pero cargo distinto (o sin cargo, como ocurría en T3/T9 antes del rediseño de `PersonSelectField` del 2026-07-08) se tratan como personas distintas dentro del mismo proyecto — evita fusionar por error a dos personas homónimas. El `project_id` en la comparación también evita que una persona de una empresa se fusione con la homónima de otra empresa. Desde 2026-07-08, T1/T2/T3/T9 usan todos `PersonSelectField` (selector puro; ver sección `PersonSelectField` más abajo) para elegir/dar de alta la persona, así que las altas nuevas ya no generan filas "sin cargo" — este backfill sigue siendo relevante solo para datos legado previos a esa fecha.
 - **Vínculo `person_id`**: además de crear las filas en `company_persons`, actualiza `t1_dimension_scores.person_id` y `t9_free_items.person_id` con el id de la persona correspondiente. En T3, como `stages` es JSONB, reescribe el array completo añadiendo `"personId"` a cada etapa cuyo `responsible` coincida con una persona.
 - **Verificación incluida**: el script termina con un `RAISE NOTICE` con el total global, más un `SELECT` de desglose por empresa/proyecto/herramienta — revisar ambos tras ejecutar para confirmar el resultado antes de pasar al siguiente entorno.
 
@@ -144,11 +150,11 @@ A diferencia de las migraciones (que crean/alteran tablas), un **backfill** rell
 
 ---
 
-## Función `merge_company_persons` (fusionar personas del equipo)
+## Función `merge_company_persons` (fusionar personas de la empresa)
 
-Funcionalidad de "Equipo del proyecto" (Perfil de Empresa) para roles `consultant`/`superadmin`: fusiona dos `company_persons` — una "principal" (se conserva) y una "sustituible" (se elimina) — repuntando todas las referencias reales antes de borrar.
+Funcionalidad de "Personas en la empresa" (Perfil de Empresa) para roles `consultant`/`superadmin`: fusiona dos `company_persons` — una "principal" (se conserva) y una "sustituible" (se elimina) — repuntando todas las referencias reales antes de borrar.
 
-**Fichero:** `supabase/migrations/20260706_merge_company_persons_function.sql`
+**Ficheros:** `supabase/migrations/20260706_merge_company_persons_function.sql` (versión original, scope por proyecto) + `supabase/migrations/20260708_company_persons_company_scope.sql` (`CREATE OR REPLACE`, amplía el scope a empresa).
 
 **Por qué una función Postgres y no llamadas secuenciales desde el cliente:** la fusión toca 4 tablas (T1, T2, T3 JSONB, T9) más el `DELETE` final en `company_persons`. Supabase no ofrece transacciones multi-statement desde el cliente JS — varias llamadas `.from(...).update()` seguidas no son atómicas entre sí. Se optó por una única función `SECURITY DEFINER` en `plpgsql`, invocada una sola vez vía `supabase.rpc('merge_company_persons', {...})` desde `src/services/company-person.service.ts`. Toda la función corre en una única transacción implícita de Postgres: si cualquier `RAISE EXCEPTION` se dispara (validación fallida, error inesperado), **todos** los cambios hechos hasta ese punto dentro de la función se revierten automáticamente — no existe estado parcial ni hace falta lógica de rollback manual en el frontend.
 
@@ -156,18 +162,20 @@ Funcionalidad de "Equipo del proyecto" (Perfil de Empresa) para roles `consultan
 1. Rol del que llama (`profiles.role` de `auth.uid()`) debe ser `superadmin` o `consultant` — si no, `RAISE EXCEPTION` y aborta sin tocar nada.
 2. `p_principal_id` y `p_replaced_id` no pueden ser el mismo id.
 3. Ambas personas deben existir en `company_persons`.
-4. Ambas personas deben pertenecer al mismo `project_id` — si no, aborta (protección adicional aunque la UI ya solo ofrece personas del proyecto activo).
+4. Ambas personas deben pertenecer a la **misma empresa** (`company_id`, resuelto vía `projects.company_id` de cada `project_id` — no vía `company_persons.company_id`, que puede ser `NULL` en filas legado) — si no, aborta. Desde `20260708_company_persons_company_scope.sql` ya no exige mismo `project_id`, solo misma empresa.
 5. Repunta `t1_dimension_scores.person_id`, `stakeholders.person_id`, `value_streams.stages[].personId` (JSONB, reescribiendo el array completo por cada `value_stream` afectado) y `t9_free_items.person_id`.
 6. Verificación defensiva: si quedara alguna referencia sin repuntar, aborta antes de borrar.
 7. `DELETE FROM company_persons WHERE id = p_replaced_id`.
 8. Devuelve un `jsonb` con el conteo de filas actualizadas por herramienta (`t1_updated`, `t2_updated`, `t3_updated`, `t9_updated`).
 
+**Limitación conocida (ver TECH-DEBT.md):** el paso 5 para T3 sigue filtrando `value_streams` por `project_id = v_project_principal` — si las dos personas fusionadas pertenecen a proyectos distintos de la misma empresa, las referencias `personId` en `value_streams.stages` del proyecto de la persona sustituida **no** se repuntan.
+
 **Frontend:**
 - `src/services/company-person.service.ts` → `mergePersons(principalId, replacedId)` — llama al RPC, envuelve el error de Postgres (mensaje ya en español, listo para mostrar al usuario).
-- `src/modules/CompanyProfile/useCompanyPersonStore.ts` → acción `mergePersons(projectId, principalId, replacedId)` — en éxito refresca `persons` con `fetchPersons`; en error deja el mensaje en `mergeError` (no toca `persons`, no hay refresh — el estado visible no cambia porque el backend no cambió nada).
-- `src/modules/CompanyProfile/components/MergePersonsModal.tsx` — modal con dos selectores (principal / sustituible, mutuamente excluyentes). Si `mergeError` está poblado, el mismo componente muestra un **modal de error dedicado** con el texto descriptivo devuelto por la función, en vez del formulario — no un toast, tal como se especificó en el requisito.
+- `src/modules/CompanyProfile/useCompanyPersonStore.ts` → acción `mergePersons(scopeId, scopeType, principalId, replacedId)` — `scopeType` (`'project'` | `'company'`) decide si el refresh post-éxito usa `fetchPersons` o `fetchPersonsByCompany`; en error deja el mensaje en `mergeError` (no toca `persons`, no hay refresh — el estado visible no cambia porque el backend no cambió nada).
+- `src/modules/CompanyProfile/components/MergePersonsModal.tsx` — modal con dos selectores (principal / sustituible, mutuamente excluyentes), ahora recibe `companyId` y opera sobre personas de todos los proyectos de la empresa. Si `mergeError` está poblado, el mismo componente muestra un **modal de error dedicado** con el texto descriptivo devuelto por la función, en vez del formulario — no un toast, tal como se especificó en el requisito.
 
-**Validado con Docker (Postgres 15) antes de entregar:** caso feliz (4 tablas repuntadas correctamente, persona sustituible eliminada, referencias ya correctas a la principal quedan intactas), mismo id, proyectos distintos, persona inexistente, rol no autorizado (`client_viewer`), y confirmación explícita de que un `ROLLBACK` externo (simulando cualquier error a mitad de la operación) no deja ningún cambio parcial en ninguna de las 4 tablas ni en `company_persons`.
+**Validado con Docker (Postgres 15) antes de entregar (versión original, scope por proyecto):** caso feliz (4 tablas repuntadas correctamente, persona sustituible eliminada, referencias ya correctas a la principal quedan intactas), mismo id, proyectos distintos, persona inexistente, rol no autorizado (`client_viewer`), y confirmación explícita de que un `ROLLBACK` externo (simulando cualquier error a mitad de la operación) no deja ningún cambio parcial en ninguna de las 4 tablas ni en `company_persons`. La ampliación a scope por empresa (`20260708_company_persons_company_scope.sql`) reutiliza la misma estructura transaccional — pendiente de validar en Docker antes de aplicar en PRE/PRO.
 
 ---
 

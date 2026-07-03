@@ -4,10 +4,11 @@
 // Formulario inline para añadir iniciativas libres al roadmap.
 // ============================================================
 
+import { useState }                    from 'react'
 import { useForm, Controller }         from 'react-hook-form'
 import { zodResolver }                 from '@hookform/resolvers/zod'
 import { Card, Button, FormField, PersonSelectField } from '@shared/design-system/components'
-import type { CompanyPerson }          from '@/modules/CompanyProfile/useCompanyPersonStore'
+import { useCompanyPersonStore, type CompanyPerson } from '@/modules/CompanyProfile/useCompanyPersonStore'
 import { useUnsavedGuard }             from '@/shared/hooks/useUnsavedGuard'
 import { AddFreeItemSchema }           from '@/lib/schemas/t9.schemas'
 import type { AddFreeItemFormValues }  from '@/lib/schemas/t9.schemas'
@@ -41,11 +42,39 @@ export function AddFreeItemForm({ onSave, onCancel, projectId }: AddFormProps) {
 
   useUnsavedGuard(formState.isDirty, 'T9_AddFreeItem')
 
+  const { addPerson } = useCompanyPersonStore()
+  const [personSelected, setPersonSelected] = useState(false)
+  const [isCreatingNew, setIsCreatingNew] = useState(false)
+  const [selectedPersonId, setSelectedPersonId] = useState<string | undefined>(undefined)
   const startMonth = watch('startMonth')
 
-  function handlePersonSelected(_personId: string, person: CompanyPerson) {
+  function handlePersonSelected(personId: string, person: CompanyPerson) {
     setValue('responsible', person.name, { shouldValidate: true, shouldDirty: true })
     if (person.department) setValue('department', person.department, { shouldValidate: true, shouldDirty: true })
+    setIsCreatingNew(false)
+    setPersonSelected(true)
+    setSelectedPersonId(personId)
+  }
+
+  function handleCreateNew() {
+    setValue('responsible', '', { shouldDirty: true })
+    setValue('department', '', { shouldDirty: true })
+    setSelectedPersonId(undefined)
+    setIsCreatingNew(true)
+    setPersonSelected(true)
+  }
+
+  function handleSave(data: AddFreeItemFormValues) {
+    // Persona nueva — se crea aquí (único punto de escritura, ya no dentro de PersonSelectField)
+    if (isCreatingNew && data.responsible) {
+      void addPerson({
+        projectId,
+        name:       data.responsible.trim(),
+        department: data.department,
+        sourceTool: 't9',
+      })
+    }
+    onSave(data)
   }
 
   return (
@@ -54,25 +83,42 @@ export function AddFreeItemForm({ onSave, onCancel, projectId }: AddFormProps) {
         Nueva iniciativa libre
       </p>
 
-      <form onSubmit={handleSubmit(onSave)}>
+      <form onSubmit={handleSubmit(handleSave)}>
         <div className="mb-3">
-          <PersonSelectField
-            projectId={projectId}
-            sourceTool="t9"
-            label="Responsable"
-            onChange={handlePersonSelected}
+          <FormField
+            id="free-item-name"
+            label="Nombre de la iniciativa *"
+            placeholder="Ej: Migración ERP, Formación interna..."
+            {...register('name')}
+            error={formState.errors.name?.message}
           />
         </div>
 
+        <div className="mb-1">
+          <PersonSelectField
+            projectId={projectId}
+            selectedPersonId={selectedPersonId}
+            isCreatingNew={isCreatingNew}
+            sourceTool="t9"
+            label="Responsable"
+            onChange={handlePersonSelected}
+            onCreateNew={handleCreateNew}
+          />
+        </div>
+        {isCreatingNew && (
+          <p className="text-[11px] text-text-subtle mb-3">
+            Rellena los datos de la nueva persona abajo.
+          </p>
+        )}
+
         <div className="grid gap-3 mb-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-          {/* Nombre — ocupa 2 columnas */}
-          <div style={{ gridColumn: '1 / 3' }}>
+          <div>
             <FormField
-              id="free-item-name"
-              label="Nombre de la iniciativa *"
-              placeholder="Ej: Migración ERP, Formación interna..."
-              {...register('name')}
-              error={formState.errors.name?.message}
+              id="free-item-responsible"
+              label="Nombre y apellidos"
+              placeholder="Selecciona un responsable arriba"
+              disabled={!isCreatingNew}
+              {...register('responsible')}
             />
           </div>
 
@@ -80,17 +126,9 @@ export function AddFreeItemForm({ onSave, onCancel, projectId }: AddFormProps) {
             <FormField
               id="free-item-department"
               label="Departamento"
-              placeholder="IT, RRHH, Finanzas..."
+              placeholder="Selecciona un responsable arriba"
+              disabled={!isCreatingNew}
               {...register('department')}
-            />
-          </div>
-
-          <div>
-            <FormField
-              id="free-item-responsible"
-              label="Responsable (texto libre)"
-              placeholder="Nombre y apellido"
-              {...register('responsible')}
             />
           </div>
 
@@ -152,7 +190,7 @@ export function AddFreeItemForm({ onSave, onCancel, projectId }: AddFormProps) {
         </div>
 
         <div className="flex gap-2">
-          <Button type="submit" variant="primary" size="sm">
+          <Button type="submit" variant="primary" size="sm" disabled={!personSelected}>
             Añadir al roadmap
           </Button>
           <Button type="button" variant="ghost" size="sm" onClick={onCancel}>

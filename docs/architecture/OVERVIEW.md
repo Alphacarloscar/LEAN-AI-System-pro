@@ -1,6 +1,6 @@
 ﻿# Architecture Overview — GOBY
 
-Last updated: 2026-07-06
+Last updated: 2026-07-08
 AI-Ready Repository System v2.1.0
 
 > Este documento es una síntesis de arquitectura para orientación rápida.
@@ -76,7 +76,8 @@ src/
 - `engagements` — proyectos de adopción IA por empresa
 - `engagement_members` — relación usuario ↔ engagement
 - `company_profiles` — perfil de empresa del cliente
-- `company_persons` — personas del proyecto (nombre, cargo, departamento, tool origen), reutilizables entre T1/T2/T3/T9/CompanyProfile via el componente compartido `PersonSelectField` (`src/shared/design-system/components/PersonSelectField.tsx`). Consultor/superadmin pueden fusionar duplicados desde "Equipo del proyecto" — función Postgres atómica `merge_company_persons` repunta las referencias reales en T1/T2/T3/T9 y elimina la persona sustituida (ver `docs/operations/DATABASES.md`)
+- `company_persons` — personas de la empresa (nombre, cargo, departamento, tool origen), reutilizables entre T1/T2/T3/T9/CompanyProfile via el componente compartido `PersonSelectField` (`src/shared/design-system/components/PersonSelectField.tsx`). `PersonSelectField` es un **selector puro** (dropdown de personas existentes + opción "+ Nueva persona") — no tiene formulario propio: al elegir una persona existente, el modal padre (T1/T2/T3/T9) bloquea sus propios campos Nombre/Cargo/Departamento en modo lectura; al elegir "+ Nueva persona", los desbloquea para capturar los datos y es el propio modal quien llama a `addPerson` en su submit (evita doble formulario — ver DEBT-038 en `TECH-DEBT.md`). Alta/edición siguen atadas a un proyecto concreto, pero la lectura ("Personas en la empresa", `CompanyPeopleSection.tsx`) muestra las personas de **todos** los proyectos de la empresa, con filtros por perfil/departamento/proyecto. Consultor/superadmin pueden editar (`CompanyPeopleSection.tsx` → `EditPersonModal.tsx`, botón "Editar" solo visible para esos roles, con `Select` de departamento centralizado) o fusionar duplicados de cualquier proyecto de la empresa — función Postgres atómica `merge_company_persons` repunta las referencias reales en T1/T2/T3/T9 y elimina la persona sustituida (ver `docs/operations/DATABASES.md`)
+- `company_departments` — departamentos centralizados por empresa (`company_id`), con `type` (`'it'` | `'negocio_ops'`) para distinguir IT/Tecnología de Negocio & Ops. Gestionados desde `CompanyProfile/DepartmentManager.tsx` (alta, edición inline de nombre/tipo, baja — chips coloreados con los tokens `navy`/`warning`, mismos que `IntervieweeSelector`). T1 (`NewInterviewModal.tsx`) consume esta lista al dar de alta un entrevistado: el campo "Perfil" (IT/Negocio) ya no es una elección independiente, se **deriva** del `type` del departamento seleccionado y se muestra como badge de solo lectura — si la empresa no tiene departamentos, muestra un aviso en vez de permitir texto libre
 - `snapshots` — capturas longitudinales del estado de un engagement
 
 **Entidades con payload JSONB** (por herramienta, flexibles):

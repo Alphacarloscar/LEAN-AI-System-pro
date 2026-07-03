@@ -3,7 +3,7 @@
 // ============================================================
 
 import { DepartmentManager }  from '../DepartmentManager'
-import { TeamSection }        from './TeamSection'
+import { CompanyPeopleSection } from './CompanyPeopleSection'
 import { SectionLabel, FieldLabel, LeanSelect } from './CompanyProfileHelpers'
 import { SECTOR_OPTIONS, COMPANY_SIZE_OPTIONS } from '../types'
 
@@ -14,14 +14,13 @@ interface CompanySettings {
 
 interface EmpresaTabProps {
   companyId:              string | null
-  projectId:              string | null
   companySettings:        CompanySettings
   onSettingsChange:       (patch: Partial<CompanySettings>) => void
   canEditCompanySettings: boolean
 }
 
 export function EmpresaTab({
-  companyId, projectId, companySettings, onSettingsChange, canEditCompanySettings,
+  companyId, companySettings, onSettingsChange, canEditCompanySettings,
 }: EmpresaTabProps) {
   return (
     <>
@@ -70,8 +69,8 @@ export function EmpresaTab({
         <DepartmentManager companyId={companyId} />
       </div>
 
-      {/* Equipo del proyecto */}
-      <TeamSection projectId={projectId} companyId={companyId} />
+      {/* Personas en la empresa */}
+      <CompanyPeopleSection companyId={companyId} />
     </>
   )
 }

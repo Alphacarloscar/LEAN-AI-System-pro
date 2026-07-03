@@ -112,6 +112,21 @@ const _impl = {
     return (data?.company_id as string | null) ?? null
   },
 
+  // Lista id+name de todos los proyectos de una empresa (sin filtrar por
+  // status — se quieren ver también personas de proyectos archivados).
+  // Usado por CompanyPeopleSection para el filtro de proyecto y el
+  // selector de proyecto al dar de alta una persona.
+  async listProjectsByCompany(companyId: string): Promise<Pick<ProjectRow, 'id' | 'name'>[]> {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('id, name')
+      .eq('company_id', companyId)
+      .order('name', { ascending: true })
+
+    if (error) throw new Error(`[Projects] listProjectsByCompany: ${error.message}`)
+    return data ?? []
+  },
+
   // Devuelve company_id y datos de la empresa asociada.
   // Usado por CompanyProfileView (ADR-011).
   async getProjectWithCompany(projectId: string): Promise<ProjectCompanyData> {
@@ -148,6 +163,7 @@ export const {
   archiveProject,
   getProjectCompanyId,
   getProjectWithCompany,
+  listProjectsByCompany,
 } = _service
 
 // ── Alias de compatibilidad (deprecados) ────────────────────

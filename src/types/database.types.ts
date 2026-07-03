@@ -94,6 +94,7 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          type: string
         }
         Insert: {
           color?: string
@@ -101,6 +102,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           name: string
+          type?: string
         }
         Update: {
           color?: string
@@ -108,6 +110,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           name?: string
+          type?: string
         }
         Relationships: [
           {
@@ -1181,6 +1184,7 @@ export type ProjectStatus = 'active' | 'archived'
 export type LeanPhase     = 'listen' | 'evaluate' | 'activate' | 'normalize' | 'closed'
 export type ISO42001Status = 'no_iniciado' | 'en_progreso' | 'implementado'
 export type UseCaseStatus = 'candidato' | 'priorizado' | 'go' | 'no_go' | 'en_piloto' | 'completado'
+export type DepartmentType = 'it' | 'negocio_ops'
 
 // ── Friction enums ────────────────────────────────────────────
 export type FrictionFrequency = 'Baja' | 'Media' | 'Alta'

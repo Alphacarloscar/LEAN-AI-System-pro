@@ -17,6 +17,7 @@ import { supabase } from '@/lib/supabase'
 import {
   fetchDepartments,
   addDepartment,
+  updateDepartment,
   deleteDepartment,
 } from '@/services/department.service'
 import type { Department } from '@/modules/CompanyProfile/useDepartmentStore'
@@ -31,6 +32,7 @@ function makeDept(overrides: Partial<Department> = {}): Department {
     company_id: COMPANY_ID,
     name:       'Tecnología',
     color:      '#C8860A',
+    type:       'negocio_ops',
     created_at: '2026-01-10T08:00:00.000Z',
     ...overrides,
   }
@@ -53,7 +55,7 @@ describe('fetchDepartments', () => {
     const result = await fetchDepartments(COMPANY_ID)
 
     expect(supabase.from).toHaveBeenCalledWith('company_departments')
-    expect(mockChain.select).toHaveBeenCalledWith('id, company_id, name, color, created_at')
+    expect(mockChain.select).toHaveBeenCalledWith('id, company_id, name, color, type, created_at')
     expect(mockChain.eq).toHaveBeenCalledWith('company_id', COMPANY_ID)
     expect(mockChain.order).toHaveBeenCalledWith('created_at', { ascending: true })
     expect(result).toHaveLength(2)
@@ -121,13 +123,14 @@ describe('addDepartment', () => {
     }
     vi.mocked(supabase.from).mockReturnValue(mockChain as never)
 
-    const result = await addDepartment(COMPANY_ID, '  Marketing  ')
+    const result = await addDepartment(COMPANY_ID, '  Marketing  ', 'negocio_ops')
 
     expect(supabase.from).toHaveBeenCalledWith('company_departments')
     expect(mockChain.insert).toHaveBeenCalledWith({
       company_id: COMPANY_ID,
       name:       'Marketing',
       color:      '#C8860A',
+      type:       'negocio_ops',
     })
     expect(result.name).toBe('Marketing')
     expect(result.color).toBe('#C8860A')
@@ -142,7 +145,7 @@ describe('addDepartment', () => {
     }
     vi.mocked(supabase.from).mockReturnValue(mockChain as never)
 
-    const result = await addDepartment(COMPANY_ID, 'RRHH')
+    const result = await addDepartment(COMPANY_ID, 'RRHH', 'negocio_ops')
 
     expect(result.id).toBe('dept-new')
     expect(result.company_id).toBe(COMPANY_ID)
@@ -157,9 +160,9 @@ describe('addDepartment', () => {
     }
     vi.mocked(supabase.from).mockReturnValue(mockChain as never)
 
-    await addDepartment(COMPANY_ID, 'Finanzas')
+    await addDepartment(COMPANY_ID, 'Finanzas', 'negocio_ops')
 
-    expect(mockChain.select).toHaveBeenCalledWith('id, company_id, name, color, created_at')
+    expect(mockChain.select).toHaveBeenCalledWith('id, company_id, name, color, type, created_at')
   })
 
   it('lanza error con prefijo [DepartmentService] si Supabase devuelve error', async () => {
@@ -170,7 +173,7 @@ describe('addDepartment', () => {
     }
     vi.mocked(supabase.from).mockReturnValue(mockChain as never)
 
-    await expect(addDepartment(COMPANY_ID, 'Finanzas')).rejects.toThrow('[DepartmentService] addDepartment:')
+    await expect(addDepartment(COMPANY_ID, 'Finanzas', 'negocio_ops')).rejects.toThrow('[DepartmentService] addDepartment:')
   })
 
   it('lanza error si Supabase no devuelve data (insert silencioso)', async () => {
@@ -181,8 +184,74 @@ describe('addDepartment', () => {
     }
     vi.mocked(supabase.from).mockReturnValue(mockChain as never)
 
-    await expect(addDepartment(COMPANY_ID, 'Finanzas')).rejects.toThrow(
+    await expect(addDepartment(COMPANY_ID, 'Finanzas', 'negocio_ops')).rejects.toThrow(
       '[DepartmentService] addDepartment: no data returned',
+    )
+  })
+})
+
+// ── updateDepartment ──────────────────────────────────────────────
+
+describe('updateDepartment', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('actualiza nombre y tipo con el payload recortado', async () => {
+    const updated = makeDept({ name: 'Finanzas Corp', type: 'it' })
+    const mockChain = {
+      update: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: updated, error: null }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    const result = await updateDepartment('dept-001', { name: '  Finanzas Corp  ', type: 'it' })
+
+    expect(supabase.from).toHaveBeenCalledWith('company_departments')
+    expect(mockChain.update).toHaveBeenCalledWith({ name: 'Finanzas Corp', type: 'it' })
+    expect(mockChain.eq).toHaveBeenCalledWith('id', 'dept-001')
+    expect(result.name).toBe('Finanzas Corp')
+    expect(result.type).toBe('it')
+  })
+
+  it('actualiza solo el campo indicado (parcial)', async () => {
+    const updated = makeDept({ type: 'it' })
+    const mockChain = {
+      update: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: updated, error: null }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    await updateDepartment('dept-001', { type: 'it' })
+
+    expect(mockChain.update).toHaveBeenCalledWith({ type: 'it' })
+  })
+
+  it('lanza error con prefijo [DepartmentService] si Supabase falla', async () => {
+    const mockChain = {
+      update: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: { message: 'RLS violation' } }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    await expect(updateDepartment('dept-001', { name: 'X' })).rejects.toThrow('[DepartmentService] updateDepartment:')
+  })
+
+  it('lanza error si Supabase no devuelve data', async () => {
+    const mockChain = {
+      update: vi.fn().mockReturnThis(),
+      eq:     vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }
+    vi.mocked(supabase.from).mockReturnValue(mockChain as never)
+
+    await expect(updateDepartment('dept-001', { name: 'X' })).rejects.toThrow(
+      '[DepartmentService] updateDepartment: no data returned',
     )
   })
 })

@@ -24,6 +24,7 @@ export const Empty: Story = {
     sourceTool: 't2',
     label:      'Persona',
     onChange:   () => {},
+    onCreateNew: () => {},
   },
 }
 
@@ -35,16 +36,21 @@ export const WithPersons: Story = {
     sourceTool: 't2',
     label:      'Persona',
     onChange:   () => {},
+    onCreateNew: () => {},
   },
 }
 
 // ── New person mode (flujo "+ Nueva persona") ────────────────────
+// El padre habilita sus propios campos de Nombre/Cargo/Departamento
+// cuando isCreatingNew=true — PersonSelectField ya no los duplica.
 
 export const NewPersonMode: Story = {
   args: {
     projectId:  'demo-project-new-person',
     sourceTool: 't3',
     label:      'Responsable',
+    isCreatingNew: true,
     onChange:   () => {},
+    onCreateNew: () => {},
   },
 }

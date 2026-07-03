@@ -1,6 +1,6 @@
 ﻿# Technical Debt Register — GOBY
 
-Last updated: 2026-07-01
+Last updated: 2026-07-08
 AI-Ready Repository System v2.1.0
 
 > Registro activo de deuda técnica conocida. Cada item tiene severidad, impacto y plan de acción.
@@ -10,6 +10,71 @@ AI-Ready Repository System v2.1.0
 ---
 
 ## Items Activos
+
+### DEBT-035 — merge_company_persons no repunta referencias T3 entre proyectos distintos de la misma empresa
+**Severidad:** 🟡 Media
+**Detectado:** 2026-07-07 (feature "Personas en la empresa" — ampliación de scope de `company_persons` a `company_id`)
+**Área:** `supabase/migrations/20260708_company_persons_company_scope.sql` (función `merge_company_persons`)
+
+**Descripción:**
+Tras ampliar `merge_company_persons` para permitir fusionar dos personas de proyectos distintos dentro de la misma empresa (antes exigía mismo `project_id`), el paso de repunte de T3 sigue filtrando `UPDATE value_streams ... WHERE vs.project_id = v_project_principal`. Si las dos personas fusionadas pertenecen a proyectos distintos, las referencias `personId` en `value_streams.stages` (JSONB) del proyecto de la persona **sustituida** no se actualizan — quedan apuntando a un id que ya no existe en `company_persons`. No rompe la aplicación (JSONB sin FK real), pero esa etapa de T3 queda sin responsable asignado tras la fusión.
+
+**Por qué no se amplió en el mismo cambio:** ampliar el `UPDATE` a todos los `value_streams` de todos los proyectos de la empresa cambia el radio de impacto de la función sin que se haya pedido explícitamente, y VSM (T3) es una entidad fuertemente atada a un proyecto por diseño — se prefirió documentar la limitación en vez de ampliar el alcance sin validarlo.
+
+**Acción futura:** Si se detecta necesidad real, ampliar el `WHERE` a `vs.project_id IN (SELECT id FROM projects WHERE company_id = v_company_principal)`, en un PR dedicado que incluya validación en Docker de la fusión cross-proyecto sobre T3.
+
+---
+
+### DEBT-036 — [RESUELTO 2026-07-08] EditPersonModal: campo department como texto libre, sin FK a company_departments
+**Severidad:** 🟢 Baja
+**Detectado:** 2026-07-07 (feature "Personas en la empresa")
+**Resuelto:** 2026-07-08 — `EditPersonModal.tsx` ahora usa un `Select` (`departmentOptions`) poblado desde `company_departments` de la empresa, con opción "Sin departamento" y fallback "(no listado)" para valores legado que no coincidan con ningún departamento centralizado (evita perder el dato al abrir el modal). Ya no es texto libre.
+**Área:** `src/modules/CompanyProfile/components/EditPersonModal.tsx`
+
+---
+
+### DEBT-034 — Dos esquemas de color distintos para IT vs Negocio/Ops
+**Severidad:** 🟢 Baja
+**Detectado:** 2026-07-02 (feature/person-select-list — al colorear `company_departments` por tipo)
+**Actualizado:** 2026-07-08 — `NewInterviewModal.tsx` (T1) ya no tiene un `SegmentedControl` propio con hex hardcodeado: "Perfil" se deriva ahora del `company_departments.type` del departamento elegido (vía `DEPARTMENT_TYPE_ICON`/`DEPARTMENT_TYPE_LABEL` de `departmentDisplay.ts`) y se muestra como badge de solo lectura, no como control editable. El esquema `#2A2822`/`#5FAF8A` desapareció. Quedan **2** esquemas coexistiendo (antes 3):
+**Área:** `IntervieweeSelector.tsx` (tokens `navy`/`warning`, igual que `DepartmentManager.tsx`/`departmentDisplay.ts`), `ITBizGapSection.tsx` (`gold`/`warm-500`, exención documentada a REGLA 1)
+
+**Descripción:**
+No existe un par de color único para la distinción IT/Negocio en todo el código. `departmentDisplay.ts` (fuente de verdad para `company_departments.type`) usa `navy`/`warning`, coherente con `IntervieweeSelector.tsx`. `ITBizGapSection.tsx` sigue con su propio `gold`/`warm-500` histórico.
+
+**Acción futura:** Unificar `ITBizGapSection.tsx` al par `navy`/`warning` de `departmentDisplay.ts` (el único basado en tokens DS sin hex hardcodeado), en un PR dedicado de limpieza visual — no mezclar con features.
+
+**Nota E2E:** `DEBT-033` (más abajo) documenta el fix de `fillAndSubmitNewIntervieweeModal` para el `<select>#new-interviewee-dept`. El fallback de texto libre cuando `departments.length === 0` se sustituyó por un aviso (sin input) — si el seed de `e2e/fixtures/seed.sql` alguna vez deja de precargar `company_departments`, ese test empezaría a fallar por falta de campo en vez de degradar a texto libre. No aplica hoy porque el seed siempre carga departamentos.
+
+---
+
+### DEBT-037 — T1View.addInterviewee creaba company_persons duplicados al reutilizar persona existente [RESUELTO 2026-07-08]
+**Severidad:** 🔴 Alta (bug de datos, no solo deuda)
+**Detectado y resuelto:** 2026-07-08, misma sesión (feature/person-select-list)
+**Área:** `src/modules/T1_MaturityRadar/T1View.tsx` (`addInterviewee`)
+
+**Descripción:**
+`addInterviewee` llamaba a `addPerson` incondicionalmente en cada alta de entrevistado, sin comprobar si la persona ya existía en `company_persons` (seleccionada vía `PersonSelectField`). `useCompanyPersonStore.addPerson` no hace deduplicación — cada llamada inserta una fila nueva. Resultado: cada vez que se registraba una entrevista para una persona ya existente, se creaba una fila duplicada con mismo nombre/cargo/departamento pero id distinto.
+
+**Fix:** `NewIntervieweeFormValues` ahora incluye `personId: string | null` (rellenado por `PersonSelectField` al seleccionar una persona existente; `null` si se está dando de alta una nueva). `addInterviewee` solo llama a `addPerson` cuando `form.personId` es `null`.
+
+**Nota:** no se ha hecho limpieza retroactiva de duplicados ya existentes en BD — si se detectan, ejecutar `merge_company_persons` manualmente entre las filas duplicadas (mismo flujo que "Fusionar personas" en Perfil de Empresa).
+
+---
+
+### DEBT-038 — PersonSelectField: rediseño de "+ Nueva persona" (antes duplicaba formulario)
+**Severidad:** ✅ Resuelto — documentado para contexto histórico
+**Detectado y resuelto:** 2026-07-08, misma sesión (feature/person-select-list)
+**Área:** `src/shared/design-system/components/PersonSelectField.tsx` y sus 5 consumidores (T1/T2/T3/T9 + `CompanyPeopleSection.tsx`)
+
+**Descripción:**
+`PersonSelectField` tenía su propio mini-formulario interno (Nombre/Cargo/Departamento + botón "Guardar persona") para el flujo "+ Nueva persona", que se mostraba a la vez que los campos Nombre/Cargo/Departamento del modal padre (T1/T2/T3/T9) — dos formularios visibles simultáneamente para los mismos datos.
+
+**Fix:** `PersonSelectField` pasó a ser un selector puro (solo `<Select>` + opción "+ Nueva persona"). Al elegirla, dispara `onCreateNew()` — el padre habilita sus propios campos (antes bloqueados) para capturar los datos, y es el padre quien llama a `addPerson` en su propio submit si `isCreatingNew` es `true`. Aplicado en T1 (`NewInterviewModal.tsx`), T2 (`InterviewModal.tsx`), T3 (`StageModal.tsx`), T9 (`AddFreeItemForm.tsx`) y `CompanyPeopleSection.tsx` (que ya no usa `PersonSelectField` en su modal "Añadir persona" — tiene su propio mini-formulario, dado que ahí no hay un modal "padre" con campos propios que reutilizar).
+
+**Regla de negocio reforzada en el mismo cambio:** una vez seleccionada una persona **existente**, Nombre/Cargo/Departamento (y Perfil en T1, derivado del departamento) quedan en solo lectura en los 4 módulos — solo son editables desde "Perfil de Empresa" por `superadmin`/`consultant` (`EditPersonModal.tsx`).
+
+---
 
 ### DEBT-002 — Branch protection pendiente de activar en GitHub
 **Severidad:** 🟡 Media
