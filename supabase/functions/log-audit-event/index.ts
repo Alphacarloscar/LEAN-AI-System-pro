@@ -24,7 +24,7 @@
 // Relacionado: ADR-017 · migration 20260615_003_audit_system.sql · DEBT-012
 // ============================================================
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',

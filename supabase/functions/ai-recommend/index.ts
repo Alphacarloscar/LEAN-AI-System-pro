@@ -18,7 +18,7 @@
 // Response shape: { data: <GeneratedContent>, persistence: { saved: boolean, error?: string } }
 // ================================================================
 
-import { createClient }           from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient }           from 'npm:@supabase/supabase-js@2'
 import type { AIAuditEntry }      from '../_shared/audit-types.ts'
 
 // ── CORS — Allowlist exacta de orígenes permitidos ───────────
