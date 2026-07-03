@@ -199,6 +199,12 @@ async function fillAndSubmitNewIntervieweeModal(page: Page): Promise<void> {
   // Modal "Nueva entrevista" — esperamos el título del modal para confirmar apertura
   await expect(page.getByText('Nueva entrevista').first()).toBeVisible({ timeout: 5_000 })
 
+  // PersonSelectField: seleccionar "+ Nueva persona" habilita los campos de nombre/cargo/dept.
+  // Tras el rediseño (feat: Personas en la empresa), los campos quedan disabled hasta que
+  // el usuario elige esta opción.
+  await page.locator('select#person-select').waitFor({ state: 'visible', timeout: 5_000 })
+  await page.locator('select#person-select').selectOption({ value: '__new__' })
+
   await page.locator('#new-interviewee-name').fill(TEST_INTERVIEWEE.name)
   await page.locator('#new-interviewee-role').fill(TEST_INTERVIEWEE.role)
 
