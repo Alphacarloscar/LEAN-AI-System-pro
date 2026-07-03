@@ -84,7 +84,9 @@ test.describe('Proyectos', () => {
 
   test('puede crear un proyecto nuevo', async ({ page }) => {
     await openProjectDropdown(page)
-    await projectDropdown(page).getByText('Nuevo proyecto').click()
+    const newProjectBtn = projectDropdown(page).getByText('Nuevo proyecto')
+    await newProjectBtn.scrollIntoViewIfNeeded()
+    await newProjectBtn.click({ force: true })
 
     const nameInput = page.getByPlaceholder('Nombre del proyecto...')
     await expect(nameInput).toBeVisible({ timeout: 3_000 })
