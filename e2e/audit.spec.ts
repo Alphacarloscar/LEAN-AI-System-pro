@@ -513,10 +513,12 @@ test.describe('Audit Trail — integración E2E', () => {
       page.getByRole('button', { name: /crear entrevista/i }),
     ).not.toBeVisible({ timeout: 8_000 })
 
-    // El nuevo entrevistado debe aparecer en la UI — el store actualizó el estado
+    // El nuevo entrevistado debe existir en el DOM — el store actualizó el estado.
+    // Usamos toBeAttached (no toBeVisible) porque el nombre puede estar en secciones
+    // colapsadas o en opciones de PersonSelectField que son hidden cuando el dropdown está cerrado.
     await expect(
       page.getByText(TEST_INTERVIEWEE.name, { exact: false }).first(),
-    ).toBeVisible({ timeout: 10_000 })
+    ).toBeAttached({ timeout: 10_000 })
 
     // Registrar si el audit falló (informativo — no hace fallar el test ya que
     // el comportamiento esperado es que el usuario NO sea afectado por el fallo)
@@ -635,6 +637,6 @@ test.describe('Audit Trail — garantía de no-bloqueo ante fallos de red', () =
 
     await expect(
       page.getByText(TEST_INTERVIEWEE.name, { exact: false }).first(),
-    ).toBeVisible({ timeout: 10_000 })
+    ).toBeAttached({ timeout: 10_000 })
   })
 })
