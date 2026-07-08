@@ -13,7 +13,11 @@
 //   — Fase 1 modela SOLO tools actuales. Sin abstracciones para
 //     fusiones futuras (T7+T8, T3+T4): eso entra en su FDR posterior.
 //   — Los paquetes son navegación, NO permisos. No tocan RLS/ADR-008.
-//   — T10 NO pertenece a ningún paquete: es el Dashboard Global standalone.
+//   — Tools standalone (fuera de todo paquete, sueltas en la nav):
+//       · T10 (AI Value Dashboard) → Dashboard Global, vive en '/'.
+//       · T12 (ISO 42001 Assessment) → suelta, sin desplegable.
+//     Decisión Carlos 2026-06-25: T12 no merece desplegable propio (sería
+//     un paquete de una sola tool → lectura de "producto a medias" en demo).
 // ============================================================
 
 import type { ToolCode } from '@/types'
@@ -22,7 +26,6 @@ export type PackageId =
   | 'ai-maturity'
   | 'ai-compliance'
   | 'ai-portfolio'
-  | 'iso-42001'
 
 export interface SalesPackage {
   /** Identificador técnico estable (usado en rutas /packages/:packageId). */
@@ -76,24 +79,35 @@ export const SALES_PACKAGES: SalesPackage[] = [
     dashboardLabel: 'Portfolio Dashboard',
     tools: ['T3', 'T4', 'T5', 'T9', 'T11'],
   },
-  {
-    id: 'iso-42001',
-    commercialName: 'ISO 42001 Readiness',
-    internalName: 'Evaluación ISO 42001',
-    description:
-      'Evaluación de preparación frente a la norma ISO/IEC 42001 de gestión de IA.',
-    primaryBuyerPain:
-      'Necesitamos certificarnos / prepararnos para ISO 42001 y no sé cuánto nos falta.',
-    dashboardLabel: 'ISO 42001',
-    tools: ['T12'],
-  },
 ]
 
-// ── Standalone — fuera de paquetes pero visible y clicable (gancho de venta) ──
-// T10 (AI Value Dashboard) es la vista global de valor; vive en '/'.
-export const STANDALONE_TOOLS: ToolCode[] = ['T10']
+// ── Standalone — fuera de paquetes pero visibles y clicables en la nav ──
+//   T10 → Dashboard Global ('/').  T12 → ISO 42001 Assessment (suelta).
+// Orden = orden de aparición. T10 va primero (cabecera de la nav).
+//
+// IMPORTANTE — distinguir dos planos (acordado con auditor GPT, B2):
+//   STANDALONE_TOOLS  = plano de NAVEGACIÓN: qué tools se pintan sueltas
+//                       en la sidebar (incluye T10).
+//   isIndexRoute      = plano de ROUTING: T10 vive en '/', por eso NO es
+//                       enrutable bajo '/tools/t10' (lo bloquea
+//                       StandaloneToolRouteView vía getToolRouteDefinition).
+//   → T10 está en este array (navegación) pero NO es ruta /tools (routing).
+export const STANDALONE_TOOLS: ToolCode[] = ['T10', 'T12']
 
 // ── Helpers ───────────────────────────────────────────────────
+
+/** Conjunto de ids válidos — fuente para el type guard (evita listas duplicadas). */
+const PACKAGE_IDS: readonly PackageId[] = SALES_PACKAGES.map((p) => p.id)
+
+/**
+ * Type guard: ¿es `value` un PackageId válido?
+ * Úsalo al leer el packageId de la URL antes de tratarlo como PackageId
+ * (la URL es entrada no confiable). Si es false → ruta inválida → NotFound.
+ */
+export function isPackageId(value: string): value is PackageId {
+  return (PACKAGE_IDS as readonly string[]).includes(value)
+}
+
 export function getPackageById(id: string): SalesPackage | undefined {
   return SALES_PACKAGES.find((p) => p.id === id)
 }
@@ -101,4 +115,14 @@ export function getPackageById(id: string): SalesPackage | undefined {
 /** Paquete que contiene una tool dada (o undefined si es standalone / sin paquete). */
 export function getPackageForTool(code: ToolCode): SalesPackage | undefined {
   return SALES_PACKAGES.find((p) => p.tools.includes(code))
+}
+
+/**
+ * ¿Pertenece `code` al paquete `packageId`?
+ * Necesario para validar combinaciones de URL como /packages/ai-maturity/tools/t6
+ * (T6 NO está en ai-maturity → combinación inválida → NotFound en B2).
+ */
+export function isToolAllowedInPackage(packageId: PackageId, code: ToolCode): boolean {
+  const pkg = getPackageById(packageId)
+  return pkg ? pkg.tools.includes(code) : false
 }

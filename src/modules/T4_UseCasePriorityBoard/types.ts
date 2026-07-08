@@ -125,6 +125,27 @@ export interface UseCaseEconomics {
   implementationCostMode: ImplCostMode
 }
 
+// ── Métricas agregadas del portfolio (derivadas, read-only) ──
+//
+// Forma de salida de selectT4PortfolioMetrics (portfolio.selectors.ts).
+// Propiedad de T4 (FDR-002 ownership). Consumida por T10 (P2) y por
+// Packages/AiPortfolioDashboard. NO editar la forma sin actualizar
+// ambos consumidores: cambiaría el render de T10.
+
+export interface T4PortfolioMetrics {
+  totalInitiatives: number
+  /** Reservado (T10 lo deja en 0 hoy). */
+  estimatedValue:   number
+  totalInvestment:  number
+  ahorroAnual:      number
+  paybackMeses:     number
+  roi3years:        number
+  /** Ratio de retorno de portfolio (ahorro×3 / inversión), 1 decimal. */
+  roi:              number
+  statuses:         { active: number; validating: number; backlog: number; stopped: number }
+  topInitiatives:   Array<{ name: string; status: string; value: number }>
+}
+
 // ── Contexto T1 (read-only) ───────────────────────────────────
 
 export interface T1Context {

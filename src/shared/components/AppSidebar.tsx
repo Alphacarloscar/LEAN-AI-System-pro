@@ -12,33 +12,45 @@
 import { useState }                   from 'react'
 import { useNavigate, useLocation }   from 'react-router-dom'
 import { useEngagementStore }         from '@/modules/Engagement/store'
+import { isPackageNavEnabled }        from '@/config/featureFlags'
+import { PackageNav }                 from '@/shared/components/PackageNav'
+import { toolLabel }                  from '@/config/toolMetadata'
+import type { ToolCode }              from '@/types'
 
 // ── Registro estático del producto ───────────────────────────
 // Fuente de verdad de la navegación. NUNCA debe depender de:
 //   DemoContext, Supabase, CompanyProfileStore, ni datos cargados.
 
 interface ToolNavItem {
-  code:  string
+  code:  ToolCode
   label: string
   path:  string
 }
 
-// Códigos base de navegación — la ruta final se construye dinámicamente
-// con el engagementId activo en AppSidebar.
-const TOOL_NAVIGATION_BASE: ToolNavItem[] = [
-  { code: 'T1',  label: 'AI Readiness Assessment',   path: '/t1'  },
-  { code: 'T2',  label: 'Stakeholder Matrix',         path: '/t2'  },
-  { code: 'T3',  label: 'Value Stream Map',           path: '/t3'  },
-  { code: 'T4',  label: 'Use Case Priority Board',    path: '/t4'  },
-  { code: 'T5',  label: 'AI Taxonomy Canvas',         path: '/t5'  },
-  { code: 'T6',  label: 'Risk & Governance',          path: '/t6'  },
-  { code: 'T7',  label: 'Adoption Heatmap',           path: '/t7'  },
-  { code: 'T8',  label: 'Communication Map',          path: '/t8'  },
-  { code: 'T9',  label: 'AI Roadmap',                 path: '/t9'  },
-  { code: 'T10', label: 'AI Value Dashboard',         path: '/'    },
-  { code: 'T11', label: 'Operating Rhythm',           path: '/t11' },
-  { code: 'T12', label: 'ISO 42001 Assessment',       path: '/t12' },
+// Códigos + path base de navegación. El label SIEMPRE se deriva de
+// toolMetadata (fuente única, FDR-002): flag-on y flag-off muestran el
+// mismo texto → cero divergencia de nombres entre las dos navegaciones.
+// La ruta final se construye dinámicamente con el engagementId activo.
+const TOOL_NAV_BASE: Array<{ code: ToolCode; path: string }> = [
+  { code: 'T1',  path: '/t1'  },
+  { code: 'T2',  path: '/t2'  },
+  { code: 'T3',  path: '/t3'  },
+  { code: 'T4',  path: '/t4'  },
+  { code: 'T5',  path: '/t5'  },
+  { code: 'T6',  path: '/t6'  },
+  { code: 'T7',  path: '/t7'  },
+  { code: 'T8',  path: '/t8'  },
+  { code: 'T9',  path: '/t9'  },
+  { code: 'T10', path: '/'    },
+  { code: 'T11', path: '/t11' },
+  { code: 'T12', path: '/t12' },
 ]
+
+const TOOL_NAVIGATION_BASE: ToolNavItem[] = TOOL_NAV_BASE.map((t) => ({
+  code:  t.code,
+  label: toolLabel(t.code),
+  path:  t.path,
+}))
 
 // ── Sidebar ────────────────────────────────────────────────────
 export function AppSidebar() {
@@ -46,6 +58,7 @@ export function AppSidebar() {
   const navigate         = useNavigate()
   const location         = useLocation()
   const engagementId     = useEngagementStore((s) => s.activeEngagementId)
+  const packageNav       = isPackageNavEnabled()
 
   // Construye la ruta final: T1–T12 incluyen el engagementId en la URL.
   // T10 (path '/') no lleva engagementId porque es el dashboard raíz.
@@ -109,10 +122,10 @@ export function AppSidebar() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-black/6 dark:border-white/6">
           <span className="text-[10px] font-mono uppercase tracking-widest text-black/30 dark:text-white/30">
-            Herramientas
+            {packageNav ? 'Paquetes' : 'Herramientas'}
           </span>
           <span className="text-[10px] font-mono text-black/25 dark:text-white/20">
-            T1 – T12
+            {packageNav ? 'GOBY' : 'T1 – T12'}
           </span>
         </div>
 
@@ -155,7 +168,12 @@ export function AppSidebar() {
           {/* Separador */}
           <div className="mx-4 my-2 border-t border-black/6 dark:border-white/6" />
 
-          {/* ── T1–T12 — lista estática del producto ── */}
+          {/* ── Navegación principal ──
+              flag ON  → paquetes comerciales (FDR-002)
+              flag OFF → lista plana T1–T12 (comportamiento legacy intacto) */}
+          {packageNav ? (
+            <PackageNav onNavigate={goTo} />
+          ) : (
           <div className="px-3 space-y-0.5">
             {TOOL_NAVIGATION.map((tool) => {
               const isActive = location.pathname === tool.path ||
@@ -193,6 +211,7 @@ export function AppSidebar() {
               )
             })}
           </div>
+          )}
         </nav>
 
         {/* Footer */}

@@ -7,11 +7,11 @@ import { useT4Store }    from '@/modules/T4_UseCasePriorityBoard'
 import { useT2Store }    from '@/modules/T2_StakeholderMatrix'
 import { AIACT_RISK_CONFIG } from '../constants'
 import type { AIActRiskLevel } from '@/modules/T4_UseCasePriorityBoard/types'
+import {
+  ALL_RISK_LEVELS,
+  selectAIActRiskSummaryFromUseCases,
+} from '@/modules/T4_UseCasePriorityBoard/selectors/aiActRisk.selectors'
 import { Button, Card } from '@shared/design-system/components'
-
-// ── Helpers ───────────────────────────────────────────────────
-
-const ALL_RISK_LEVELS: AIActRiskLevel[] = ['prohibido', 'alto', 'limitado', 'minimo', 'sin_clasificar']
 
 // ── ShadowAICard ──────────────────────────────────────────────
 
@@ -95,22 +95,10 @@ export function RiskDashboardTab() {
   const { useCases } = useT4Store()
   const [selectedLevel, setSelectedLevel] = useState<AIActRiskLevel | null>(null)
 
-  const summary = useMemo(() => {
-    const byLevel = ALL_RISK_LEVELS.reduce((acc, l) => ({ ...acc, [l]: 0 }), {} as Record<AIActRiskLevel, number>)
-    let classified = 0
-    useCases.forEach((uc) => {
-      const level = uc.aiActClassification?.riskLevel ?? 'sin_clasificar'
-      byLevel[level]++
-      if (uc.aiActClassification) classified++
-    })
-    return {
-      total:           useCases.length,
-      byLevel,
-      classified,
-      unclassified:    useCases.length - classified,
-      coveragePercent: useCases.length > 0 ? Math.round((classified / useCases.length) * 100) : 0,
-    }
-  }, [useCases])
+  const summary = useMemo(
+    () => selectAIActRiskSummaryFromUseCases(useCases),
+    [useCases],
+  )
 
   const filteredCases = selectedLevel
     ? useCases.filter((uc) => (uc.aiActClassification?.riskLevel ?? 'sin_clasificar') === selectedLevel)

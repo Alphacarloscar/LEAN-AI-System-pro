@@ -18,6 +18,9 @@ import { isDemoEnabled }             from '@/lib/config'
 import { getT5Canvas, upsertT5Canvas } from '@/services/t5.service'
 import { reportError }               from '@/lib/reportError'
 
+// Ventana de frescura para el stale-guard de ensureLoaded (FDR-002 B3).
+const STALE_MS = 5 * 60_000
+
 // ── Debounce helper ──────────────────────────────────────────
 
 const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>()
@@ -211,7 +214,14 @@ interface T5Store {
   engagementId: string | null
   isLoading:    boolean
   loadError:    string | null
+  /** Timestamp de la última carga resuelta; null si nunca se cargó. Lo usa el
+   *  stale-guard de ensureLoaded (FDR-002 B3). Runtime-only — el store no persiste. */
+  lastLoadedAt: number | null
 
+  /** Carga idempotente para Views/dashboards: dedup de carga en vuelo + stale-guard.
+   *  Envuelve load() sin bypassear su lógica. Añadido en FDR-002 B3 para uniformar
+   *  el contrato de carga con T1/T3/T4 (que ya exponían ensureLoaded). */
+  ensureLoaded:       (projectId: string, options?: { force?: boolean; reason?: string; staleMs?: number }) => Promise<void>
   /** Carga el canvas desde Supabase para el proyecto dado.
    *  Con null, hidrata con datos de demo o canvas vacío según config. */
   load:               (projectId: string | null) => Promise<void>
@@ -224,6 +234,20 @@ export const useT5Store = create<T5Store>()((set, get) => ({
   engagementId: null,
   isLoading:    false,
   loadError:    null,
+  lastLoadedAt: null,
+
+  // ── ensureLoaded ───────────────────────────────────────────
+  ensureLoaded: async (projectId, options = {}) => {
+    const { force = false, staleMs = STALE_MS } = options
+    const state = get()
+    // Dedup: carga en vuelo del mismo proyecto → no relanzar.
+    if (state.isLoading && state.engagementId === projectId && !force) return
+    // Stale-guard: ya cargado (lastLoadedAt) y fresco del mismo proyecto → skip.
+    if (!force && state.engagementId === projectId && state.lastLoadedAt) {
+      if (Date.now() - state.lastLoadedAt < staleMs) return
+    }
+    await get().load(projectId)
+  },
 
   // ── load ───────────────────────────────────────────────────
   load: async (projectId) => {
@@ -245,7 +269,7 @@ export const useT5Store = create<T5Store>()((set, get) => ({
 
     try {
       const canvas = await getT5Canvas(projectId)
-      set({ canvas: canvas ?? buildEmptyCanvas(), isLoading: false })
+      set({ canvas: canvas ?? buildEmptyCanvas(), isLoading: false, lastLoadedAt: Date.now() })
     } catch (err) {
       reportError('T5Store.load', err)
       set({ isLoading: false, loadError: String(err) })
@@ -288,5 +312,5 @@ export const useT5Store = create<T5Store>()((set, get) => ({
     })
   },
 
-  resetCanvas: () => set({ canvas: isDemoEnabled ? buildDemoCanvas() : buildEmptyCanvas() }),
+  resetCanvas: () => set({ canvas: isDemoEnabled ? buildDemoCanvas() : buildEmptyCanvas(), lastLoadedAt: null }),
 }))

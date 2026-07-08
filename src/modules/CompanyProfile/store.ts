@@ -22,6 +22,9 @@ import {
 }                             from '@/services/company-profile.service'
 import { reportError } from '@/lib/reportError'
 
+// Ventana de frescura para el stale-guard de ensureLoaded (FDR-002 B3).
+const STALE_MS = 5 * 60_000
+
 // ── Generador de UUID — compatible con Supabase (columna tipo uuid) ──
 function genId(): string {
   return crypto.randomUUID()
@@ -37,8 +40,16 @@ interface CompanyProfileStore {
   /** @deprecated usa isLoadingData o isSaving según contexto */
   isLoading:     boolean         // alias: isLoadingData || isSaving (para compatibilidad UI)
   saveError:  string | null
+  /** Engagement de la última carga vía loadProfile/ensureLoaded; null si ninguna.
+   *  Runtime-only (no se persiste) — base del stale-guard. FDR-002 B3. */
+  loadedEngagementId: string | null
+  /** Timestamp de la última carga resuelta; null si nunca. FDR-002 B3. */
+  lastLoadedAt:  number | null
 
   // Ciclo de vida — engagement
+  /** Carga idempotente para Views/dashboards: dedup + stale-guard. Envuelve
+   *  loadProfile() para uniformar el contrato con T1/T3/T4/T5. FDR-002 B3. */
+  ensureLoaded: (engagementId: string, options?: { force?: boolean; reason?: string; staleMs?: number }) => Promise<void>
   /** Carga el perfil desde Supabase al seleccionar un engagement */
   loadProfile:  (engagementId: string) => Promise<void>
 
@@ -68,6 +79,22 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
       isSaving:      false,
       isLoading:     false,
       saveError:     null,
+      loadedEngagementId: null,
+      lastLoadedAt:  null,
+
+      // ── Carga idempotente (dedup + stale-guard) ───────────────
+
+      ensureLoaded: async (engagementId, options = {}) => {
+        const { force = false, staleMs = STALE_MS } = options
+        const state = get()
+        // Dedup: carga en vuelo del mismo engagement → no relanzar.
+        if (state.isLoadingData && state.loadedEngagementId === engagementId && !force) return
+        // Stale-guard: ya cargado y fresco del mismo engagement → skip.
+        if (!force && state.loadedEngagementId === engagementId && state.lastLoadedAt) {
+          if (Date.now() - state.lastLoadedAt < staleMs) return
+        }
+        await get().loadProfile(engagementId)
+      },
 
       // ── Carga desde Supabase ──────────────────────────────────
 
@@ -76,7 +103,7 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
         // Mantener los datos anteriores visibles durante el refetch evita que el
         // header quede en blanco si hay timeout o error de red.
         // El perfil solo se sobreescribe cuando llega la respuesta correcta.
-        set({ isLoadingData: true, isLoading: true, saveError: null })
+        set({ isLoadingData: true, isLoading: true, saveError: null, loadedEngagementId: engagementId })
 
         // Timeout de seguridad: evita spinner infinito si Supabase no responde.
         // Al expirar, conservamos los datos que ya había en el store.
@@ -96,6 +123,7 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
               isDirty:       false,
               isLoadingData: false,
               isLoading:     get().isSaving,
+              lastLoadedAt:  Date.now(),
             })
           } else {
             // Engagement nuevo — no hay perfil en Supabase, limpiar solo en este caso
@@ -104,6 +132,7 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
               isDirty:       false,
               isLoadingData: false,
               isLoading:     get().isSaving,
+              lastLoadedAt:  Date.now(),
             })
           }
         } catch (err) {
@@ -157,7 +186,7 @@ export const useCompanyProfileStore = create<CompanyProfileStore>()(
       },
 
       resetProfile: () =>
-        set({ profile: { ...EMPTY_PROFILE }, isDirty: false, saveError: null, isLoadingData: false, isSaving: false, isLoading: false }),
+        set({ profile: { ...EMPTY_PROFILE }, isDirty: false, saveError: null, isLoadingData: false, isSaving: false, isLoading: false, loadedEngagementId: null, lastLoadedAt: null }),
 
       // ── Mutadores de fricciones ───────────────────────────────
 

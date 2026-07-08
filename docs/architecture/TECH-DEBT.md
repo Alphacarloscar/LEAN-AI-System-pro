@@ -11,6 +11,39 @@ AI-Ready Repository System v2.1.0
 
 ## Items Activos
 
+### DEBT-022 — CompanyProfile no expone `loadError` (fallo de carga indistinguible de perfil vacío)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-06-27
+**Área:** `src/modules/CompanyProfile/store.ts` (`loadProfile`)
+**Estado:** Pendiente
+
+**Descripción:** `loadProfile` traga los errores de carga (solo setea `saveError` en el flujo de guardado, no un `loadError` de lectura). El dashboard de paquete ai-portfolio (FDR-002 B3) deriva el estado de la card T11 de `profile.savedAt !== null`; si una carga falla por red, `savedAt` queda `null` y la card lee "Contexto de empresa pendiente" — un falso vacío que el comprador interpreta como "no hay perfil" cuando en realidad fue un fallo de carga.
+**Impacto:** En la demo, un error de red en CompanyProfile se presenta como dato ausente, no como error. Mitigado parcialmente con copy neutral ("Contexto de empresa pendiente", nunca "Falta perfil"), pero la señal de error real se pierde. T11 hereda esta ceguera (no puede mostrar 'error', solo 'empty').
+**Plan de acción:**
+1. Añadir `loadError: string | null` al store de CompanyProfile (paridad con T3/T4/T5 tras FDR-002 B3).
+2. Setearlo en el `catch` de `loadProfile` vía `reportError` + `set({ loadError })`.
+3. Propagarlo al selector `selectT11Card` (nuevo input `profileError`) para que T11 distinga 'error' de 'empty'.
+4. Actualizar el adapter `useAiPortfolioDashboard` para leer y pasar `profileError`.
+**Requiere ADR:** No.
+**Relacionado:** FDR-002 B3, selector `selectT11Card`.
+
+### DEBT-023 — Dos fórmulas ROI paralelas en T4 (agregada de portfolio vs. canónica per-caso)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-07-08
+**Área:** `src/modules/T4_UseCasePriorityBoard/selectors/portfolio.selectors.ts` (`selectT4PortfolioMetrics`) vs. `constants.ts` (`computeROIFromEconomics`)
+**Estado:** Pendiente
+
+**Descripción:** Al extraer las métricas de portfolio de `T10View.liveT4` a un selector propietario (FDR-002 ownership, Veredicto A), se descubrió que esa lógica **nunca usó** el helper canónico `computeROIFromEconomics` (constants.ts, testeado). `selectT4PortfolioMetrics` replica la matemática ROI de forma **divergente**: (a) suma `annualSaving` sin redondear per-caso (el canónico hace `Math.round` por caso); (b) `paybackMeses` y `roi3years` los calcula como **media de valores per-caso**, no per-caso; (c) el campo `roi` es un ratio de portfolio (`ahorro×3/inversión`) que no existe en el canónico. Resultado: dos fuentes de verdad para "ROI de un caso".
+**Impacto:** Un CIO podría ver, en la card T4 del EconomicsTab (per-caso, canónico) y en el dashboard T10/paquete (agregado), números que no cuadran bajo inspección. Riesgo comercial bajo-medio: erosiona la narrativa "un número, una fuente" justo en la métrica estrella (ROI). Hoy **no bloquea** (consumos en contextos distintos: detalle vs. agregado), pero es inconsistencia latente.
+**Plan de acción (PR separado, requiere sign-off de producto — cambia números que T10 enseña hoy):**
+1. Decidir la fórmula agregada canónica de portfolio (¿media de per-caso, o `totalInvestment`/`totalSaving` a nivel cartera?). Lane de GPT (arquitectura) + Carlos (producto).
+2. Reescribir `selectT4PortfolioMetrics` para agregar SOBRE `computeROIFromEconomics` per-caso (fuente única).
+3. Re-baseline de `portfolio.selectors.test.ts` con los valores acordados.
+4. Verificar el render de T10 antes/después y comunicar el delta a Carlos.
+**Requiere ADR:** No (matización de fórmula, no de arquitectura).
+**Relacionado:** FDR-002 ownership, `computeROIFromEconomics`, T10 P2PortfolioPanel.
+**⚠ NO auto-resuelto:** unificar cambiaría los números de una tool en producción → decisión de producto explícita, no refactor silencioso.
+
 ### DEBT-002 — Branch protection pendiente de activar en GitHub
 **Severidad:** 🟡 Media
 **Detectado:** 2026-06-01 (AI-Ready Setup)

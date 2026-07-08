@@ -9,6 +9,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { RadarDimension }          from '@/shared/components/charts/LeanRadarChart'
 import { useT4Store }                    from '@/modules/T4_UseCasePriorityBoard/store'
+import { selectT4PortfolioMetrics }      from '@/modules/T4_UseCasePriorityBoard/selectors/portfolio.selectors'
 import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
 import { useCompanyProfileStore }        from '@/modules/CompanyProfile/store'
 import { useEngagementStore }            from '@/modules/Engagement/store'
@@ -128,33 +129,10 @@ export function T10View({ onNavigate }: T10ViewProps) {
     [liveT1Radar, useCases, stakeholders, companyProfile],
   )
 
-  // ── T4: portfolio ────────────────────────────────────────────
-  const liveT4 = useMemo(() => {
-    if (useCases.length === 0) return {
-      totalInitiatives: 0, estimatedValue: 0, totalInvestment: 0, ahorroAnual: 0,
-      paybackMeses: 0, roi3years: 0, roi: 0,
-      statuses: { active: 0, validating: 0, backlog: 0, stopped: 0 },
-      topInitiatives: [] as Array<{ name: string; status: string; value: number }>,
-    }
-    const active     = useCases.filter(uc => ['go', 'en_piloto', 'completado'].includes(uc.status)).length
-    const validating = useCases.filter(uc => uc.status === 'priorizado').length
-    const backlog    = useCases.filter(uc => uc.status === 'candidato').length
-    const stopped    = useCases.filter(uc => uc.status === 'no_go').length
-    const ucWithEco  = useCases.filter(uc => uc.economics)
-    const totalInvestment = ucWithEco.reduce((s, uc) => s + (uc.economics?.implementationCost ?? 0), 0)
-    const savings = ucWithEco.map(uc => { const e = uc.economics!; return e.processHoursPerWeek * e.headcount * 52 * e.efficiencyGain * e.hourlyRate })
-    const totalSaving = savings.reduce((a, b) => a + b, 0)
-    const paybacks  = ucWithEco.map((uc, i) => { const s = savings[i]; const c = uc.economics?.implementationCost ?? 0; return s > 0 && c > 0 ? (c / s) * 12 : null }).filter((p): p is number => p !== null)
-    const roi3List  = ucWithEco.map((uc, i) => { const s = savings[i]; const c = uc.economics?.implementationCost ?? 0; return s > 0 && c > 0 ? ((s * 3 - c) / c) * 100 : null }).filter((r): r is number => r !== null)
-    const topInitiatives = [...useCases].filter(uc => ['go', 'en_piloto', 'priorizado'].includes(uc.status)).sort((a, b) => b.priorityScore - a.priorityScore).slice(0, 3).map(uc => ({ name: uc.name, status: ['go', 'en_piloto'].includes(uc.status) ? 'active' : 'validating', value: uc.economics?.implementationCost ?? 0 }))
-    return {
-      totalInitiatives: useCases.length, estimatedValue: 0, totalInvestment, ahorroAnual: totalSaving,
-      paybackMeses: paybacks.length ? Math.round(paybacks.reduce((a, b) => a + b, 0) / paybacks.length) : 0,
-      roi3years: roi3List.length ? Math.round(roi3List.reduce((a, b) => a + b, 0) / roi3List.length) : 0,
-      roi: totalInvestment > 0 ? Math.round((totalSaving * 3 / totalInvestment) * 10) / 10 : 0,
-      statuses: { active, validating, backlog, stopped }, topInitiatives,
-    }
-  }, [useCases])
+  // ── T4: portfolio ── (métrica propietaria de T4 · FDR-002 ownership) ──
+  // Antes inline aquí; extraída a selectT4PortfolioMetrics para que Packages
+  // la consuma sin recalcular (Veredicto A). Render idéntico byte-a-byte.
+  const liveT4 = useMemo(() => selectT4PortfolioMetrics(useCases), [useCases])
 
   // ── T2: adopción ─────────────────────────────────────────────
   const liveT2 = useMemo(() => {

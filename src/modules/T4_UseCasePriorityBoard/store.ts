@@ -53,6 +53,9 @@ interface T4Store {
    *  distinguir "datos ya cargados" de "store recién limpiado" sin depender
    *  solo de useCases.length (que sería 0 para proyectos nuevos). */
   isLoaded:        boolean
+  /** Mensaje de error de la última carga; null si OK. Añadido (FDR-002 B3) para que
+   *  el dashboard de paquete distinga "sin casos" de "fallo de carga" sin inferencia. */
+  loadError:       string | null
   loadedProjectId: string | null
   lastLoadedAt:    number | null
   /** UUID generado por cada llamada a loadEngagement() — descarta respuestas de cargas obsoletas */
@@ -89,6 +92,7 @@ export const useT4Store = create<T4Store>()(
       engagementId:    null,
       isLoading:       false,
       isLoaded:        false,
+      loadError:       null,
       loadedProjectId: null,
       lastLoadedAt:    null,
       currentRequestId: null,
@@ -117,7 +121,7 @@ export const useT4Store = create<T4Store>()(
       // ── loadEngagement ──────────────────────────────────────
       loadEngagement: async (engagementId) => {
         const requestId = crypto.randomUUID()
-        set({ isLoading: true, isLoaded: false, engagementId, loadedProjectId: engagementId, currentRequestId: requestId })
+        set({ isLoading: true, isLoaded: false, loadError: null, engagementId, loadedProjectId: engagementId, currentRequestId: requestId })
 
         const LOAD_TIMEOUT_MS = 10_000
         const fetchPromise   = fetchUseCases(engagementId)
@@ -128,11 +132,13 @@ export const useT4Store = create<T4Store>()(
         try {
           const useCases = await Promise.race([fetchPromise, timeoutPromise])
           if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
-          set({ useCases, isLoading: false, isLoaded: true, lastLoadedAt: Date.now() })
+          set({ useCases, isLoading: false, isLoaded: true, lastLoadedAt: Date.now(), loadError: null })
         } catch (err) {
           if (get().currentRequestId !== requestId) return  // respuesta stale — descartar
+          const isTimeout = (err as Error)?.message === 'T4_LOAD_TIMEOUT'
+          const errMsg    = isTimeout ? 'timeout' : String(err)
           reportError('[T4Store] load', err)
-          set({ isLoading: false, isLoaded: false })
+          set({ isLoading: false, isLoaded: false, loadError: errMsg })
         }
       },
 
@@ -222,7 +228,7 @@ export const useT4Store = create<T4Store>()(
       },
 
       // ── reset ──────────────────────────────────────────────────
-      reset: () => set({ useCases: [], engagementId: null, isLoading: false, isLoaded: false, loadedProjectId: null, lastLoadedAt: null, currentRequestId: null }),
+      reset: () => set({ useCases: [], engagementId: null, isLoading: false, isLoaded: false, loadError: null, loadedProjectId: null, lastLoadedAt: null, currentRequestId: null }),
     }),
     {
       name:       'lean-t4-usecases',

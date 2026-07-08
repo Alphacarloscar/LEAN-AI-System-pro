@@ -29,3 +29,10 @@ notas_transcripciones*.md
 # Propuestas comerciales a leads (datos de cliente, precios) — NO subir a GitHub
 Propuesta_*.pptx
 Propuesta_*.pdf
+*Propuesta*.pptx
+*Propuesta*.pdf
+ESADE_*.pptx
+ESADE_*.pdf
+# Documentos internos de proyecto (leads, precios) — NO subir a GitHub
+GOBY-MVP-*.md
+LinkedIn - Semana*.md

@@ -45,15 +45,11 @@ export interface ISO42001Control {
 }
 
 // ── Resumen de riesgos AI Act ─────────────────────────────────
-
-export interface AIActRiskSummary {
-  total:          number
-  byLevel:        Record<AIActRiskLevel, number>
-  classified:     number
-  unclassified:   number
-  /** % de casos clasificados */
-  coveragePercent: number
-}
+// Home canónico movido a T4 (FDR-002 B3): la métrica deriva de los
+// useCases de T4. Se importa para uso local (riskSummary) y se reexporta
+// para no romper consumidores de T6 (index.ts) que ya lo importaban aquí.
+import type { AIActRiskSummary } from '@/modules/T4_UseCasePriorityBoard/selectors/aiActRisk.selectors'
+export type { AIActRiskSummary }
 
 // ── Política IA corporativa ───────────────────────────────────
 
