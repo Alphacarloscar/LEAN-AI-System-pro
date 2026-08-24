@@ -7,7 +7,7 @@
 
 import { Settings, Cpu, TrendingUp, MessageSquare, RefreshCw, Network } from 'lucide-react'
 import { useT3Store } from '@/modules/T3_ValueStreamMap'
-import { useT4Store } from '@/modules/T4_UseCasePriorityBoard'
+import { useT4Kernel } from '@/modules/T4_UseCasePriorityBoard/index.public'
 import { T5_DOMAIN_CONFIG } from '../constants'
 import { Modal, Button, Badge, Card } from '@shared/design-system/components'
 import type { T5DomainCode } from '../types'
@@ -29,7 +29,7 @@ interface DomainProjectsModalProps {
 
 export function DomainProjectsModal({ domainCode, onClose }: DomainProjectsModalProps) {
   const processes = useT3Store(s => s.processes)
-  const useCases  = useT4Store(s => s.useCases)
+  const { useCases } = useT4Kernel()
   const domCfg    = T5_DOMAIN_CONFIG[domainCode]
 
   const domainUCs   = useCases.filter(uc => uc.aiCategory === domainCode)

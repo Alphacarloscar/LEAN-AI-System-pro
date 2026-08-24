@@ -6,7 +6,7 @@
 // ============================================================
 
 import { useT3Store }             from '@/modules/T3_ValueStreamMap'
-import { useT4Store }             from '@/modules/T4_UseCasePriorityBoard'
+import { useT4Kernel }            from '@/modules/T4_UseCasePriorityBoard/index.public'
 import {
   T5_DOMAIN_CONFIG,
   T5_RECOMMENDATION_CONFIG,
@@ -29,7 +29,7 @@ export function DeptCategoryModal({
   onClose,
 }: DeptCategoryModalProps) {
   const processes  = useT3Store(s => s.processes)
-  const useCases   = useT4Store(s => s.useCases)
+  const { useCases } = useT4Kernel()
   const domCfg     = T5_DOMAIN_CONFIG[domainCode]
   const assessment = canvas.domains[domainCode]
   const recCfg     = T5_RECOMMENDATION_CONFIG[assessment.recommendation]

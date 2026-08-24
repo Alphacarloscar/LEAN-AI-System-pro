@@ -4,7 +4,7 @@
 
 import { useState, useMemo } from 'react'
 import { Ban, AlertCircle, AlertTriangle, CheckCircle, Circle, AlertTriangle as AT } from 'lucide-react'
-import { useT4Store }    from '@/modules/T4_UseCasePriorityBoard'
+import { useT4Kernel }   from '@/modules/T4_UseCasePriorityBoard/index.public'
 import { useT2Store }    from '@/modules/T2_StakeholderMatrix'
 import { AIACT_RISK_CONFIG } from '../constants'
 import type { AIActRiskLevel } from '@/modules/T4_UseCasePriorityBoard/types'
@@ -111,7 +111,7 @@ function ShadowAICard() {
 // ── RiskDashboardTab ──────────────────────────────────────────
 
 export function RiskDashboardTab() {
-  const { useCases } = useT4Store()
+  const { useCases } = useT4Kernel()
   const [selectedLevel, setSelectedLevel] = useState<AIActRiskLevel | null>(null)
 
   const summary = useMemo(() => {

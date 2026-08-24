@@ -11,7 +11,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { AlertCircle, Circle, FileText, Scale } from 'lucide-react'
 import { useParams }         from 'react-router-dom'
-import { useT4Store }        from '@/modules/T4_UseCasePriorityBoard'
+import { useT4Kernel }       from '@/modules/T4_UseCasePriorityBoard/index.public'
 import { useT5Store }        from '@/modules/T5_AITaxonomyCanvas'
 import { useT6Store }        from './store'
 import { useCompanyProfileStore } from '@/modules/CompanyProfile/store'
@@ -40,7 +40,7 @@ export function T6View({
     isLoading:   t4Loading,
     isLoaded:    t4Loaded,
     ensureLoaded: ensureT4,
-  }                      = useT4Store()
+  }                      = useT4Kernel()
   const { canvas, load: loadT5 } = useT5Store()
   const { syncEngagement: syncT6, loadPolicyFromDb } = useT6Store()
   const companyProfile   = useCompanyProfileStore((s) => s.profile)

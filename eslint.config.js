@@ -80,4 +80,25 @@ export default tseslint.config(
       }],
     },
   },
+  // ADR-029 Fase 2: T4 como Shared Kernel
+  // Prohibir useT4Store fuera del módulo T4.
+  // Consumidores (T5, T6, T7) deben importar useT4Kernel desde index.public.ts
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: [
+      'src/modules/T4_UseCasePriorityBoard/**',
+      'src/__tests__/**',
+    ],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [
+          {
+            group: ['@/modules/T4_UseCasePriorityBoard'],
+            importNames: ['useT4Store'],
+            message: 'ADR-029: useT4Store es privado a T4. Usar useT4Kernel desde "@/modules/T4_UseCasePriorityBoard/index.public" en su lugar. Ver docs/decisions/FASE2-PASO-B-INTERFAZ.md',
+          },
+        ],
+      }],
+    },
+  },
 )

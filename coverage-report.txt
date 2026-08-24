@@ -1,0 +1,39 @@
+﻿
+> lean-ai-system@0.1.0 test
+> vitest run --coverage
+
+
+ RUN  v4.1.9 C:/Users/Alpha Consulting/Documents/LEAN-AI-System-pro
+      Coverage enabled with v8
+
+ ❯ src/__tests__/services/engagements.service.test.ts (2 tests | 1 failed) 5815ms
+     × exports the same symbols as projects.service 5769ms
+node.exe : 
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/__tests__/services/engagements.service.test.ts > engagements.service — re-export contract > exports the 
+same symbols as projects.service
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/__tests__/services/engagements.service.test.ts:7:3
+      5| // must be accessible via engagements.service.
+      6| describe('engagements.service — re-export contract', () => {
+      7|   it('exports the same symbols as projects.service', async () => {
+       |   ^
+      8|     const engagementsModule = await import('@/services/engagements.ser…
+      9|     const projectsModule    = await import('@/services/projects.servic…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 43 passed (44)
+      Tests  1 failed | 660 passed | 3 todo (664)
+   Start at  12:56:57
+   Duration  35.05s (transform 31.25s, setup 42.37s, import 89.22s, tests 26.33s, environment 132.20s)
+

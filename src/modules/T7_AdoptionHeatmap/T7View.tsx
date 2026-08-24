@@ -14,7 +14,7 @@
 import { useState, useMemo, useEffect }  from 'react'
 import { useNavigate, useParams }        from 'react-router-dom'
 import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
-import { useT4Store }                    from '@/modules/T4_UseCasePriorityBoard'
+import { useT4Kernel }                   from '@/modules/T4_UseCasePriorityBoard/index.public'
 import { useT1Store }                    from '@/modules/T1_MaturityRadar/store'
 import { PhaseMiniMap }                 from '@/shared/components/PhaseMiniMap'
 import { useDarkMode }                  from '@/shared/hooks/useDarkMode'
@@ -67,8 +67,7 @@ export function T7View({ onBack }: T7ViewProps) {
   }, [engagementId])
 
   // T4 use cases para contexto del plan de cambio
-  const useCases      = useT4Store(s => s.useCases)
-  const ensureLoadedT4 = useT4Store(s => s.ensureLoaded)
+  const { useCases, ensureLoaded: ensureLoadedT4 } = useT4Kernel()
 
   // T1 — promedio de madurez agregado de todos los entrevistados
   const dimensionStates = useT1Store(s => s.dimensionStates)

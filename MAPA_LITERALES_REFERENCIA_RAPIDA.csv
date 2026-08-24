@@ -1,0 +1,28 @@
+Archivo,Línea,Tipo,Literal,Contexto,Acoplamiento,Trivial,Moderado,Alto,Fase_Generalización,Notas
+src/types/domain.types.ts,14-16,TypeScript type,T1 | T2 | ... | T12,ToolCode enum,CRÍTICO,No,No,Sí,Fase 7-8,Extensible enum o tabla BD
+src/types/database.types.ts,31-62,Tabla SQL,ai_rate_limit_log,Nombre tabla,BAJO,No,Sí,No,Fase 8,Renombrar a rate_limit_log
+src/modules/T1_MaturityRadar/constants.ts,49-100,DimensionDefinition,D1 Estrategia + 4 subdimensions,6 dimensiones IA fijas,CRÍTICO,No,No,Sí,Fase 1-2,45+ criterios mencionan "IA"
+src/modules/T1_MaturityRadar/constants.ts,56,Recomendación,Nombrar un AI Executive Sponsor,Estrategia inicial,CRÍTICO,No,Sí,No,Fase 5,Parametrizar por dominio
+src/modules/T1_MaturityRadar/constants.ts,66-75,SubdimensionDefinition,D1.1 Visión IA corporativa,Criterios 0-4,CRÍTICO,No,No,Sí,Fase 1-2,Criterios mencionan "IA"
+src/modules/T5_AITaxonomyCanvas/constants.ts,10-66,T5_DOMAIN_CONFIG,automatizacion_rpa | automatizacion_inteligente | ... | agéntica,6 dominios IA,CRÍTICO,No,No,Sí,Fase 1-2,36+ literales en 6 dominios
+src/modules/T5_AITaxonomyCanvas/constants.ts,30,Tagline,RPA + comprensión contextual mediante IA,Descripción de dominio,CRÍTICO,No,Sí,No,Fase 5,Renombrar a agnóstico
+src/modules/T5_AITaxonomyCanvas/constants.ts,Líneas no mostradas,Fórmula,businessValue×0.40 + technicalReady×0.30 + orgReadiness×0.20 + (100-riskLevel)×0.10,Scoring compuesto,CRÍTICO,No,No,Sí,Fase 2-3,Específica de 6 dominios IA
+src/modules/T5_AITaxonomyCanvas/types.ts,11-17,TypeScript type,T5DomainCode enum,6 códigos IA,CRÍTICO,No,No,Sí,Fase 1-2,Renombrar a DomainCode genérico
+src/modules/T4_UseCasePriorityBoard/constants.ts,49-55,DIMENSION_CONFIG,aiRisk,Dimensión de scoring,CRÍTICO,No,Sí,No,Fase 5-8,Renombrar a regulatoryRisk
+src/modules/T4_UseCasePriorityBoard/constants.ts,72-77,SCORE_WEIGHTS,kpiImpact: 0.35 | feasibility: 0.30 | aiRisk: 0.20 | dataDependency: 0.15,Pesos scoring,CRÍTICO,No,No,Sí,Fase 2-3,Hardcodeado para IA
+src/config/salesPackages.ts,21-25,PackageId enum,ai-maturity | ai-compliance | ai-portfolio | iso-42001,4 paquetes IA,CRÍTICO,Sí,No,No,No Cambiar,Decisión comercial
+src/config/salesPackages.ts,46-55,SalesPackage,AI Maturity Boost,Nombre comercial,CRÍTICO,Sí,No,No,No Cambiar,Branding comercial
+src/lib/schemas/t4.schemas.ts,Líneas estimadas 36-45,Zod schema,AIActClassificationSchema con enums hardcodeados,Validación Zod,CRÍTICO,No,No,Sí,Fase 2,Usar DynamicSchemaRegistry
+supabase/functions/ai-recommend/,Estimado,LLM Prompt,buildT1Prompt | buildT6Prompt | buildT7Prompt | buildT8Prompt,4 prompts generadores,CRÍTICO,No,Sí,No,Fase 6,Migrar a templates parametrizables
+src/services/company-profile.service.ts,Estimado,Servicio,Query a company_profiles con objetivo_principal_ia,Campo deprecated,MEDIO,No,Sí,No,Fase 1-2,Renombrar + agregar governance_domain
+src/services/t4.service.ts,Estimado,Servicio,Parseo de use_cases.ai_act_classification JSONB,Campo IA específico,CRÍTICO,No,No,Sí,Fase 5-8,Renombrar + hacer dinámico
+src/services/t1.service.ts,Estimado,Servicio,Query a t1_dimension_scores (6D hardcodeadas),Scoring T1,CRÍTICO,No,No,Sí,Fase 1-2,Reemplazar por queries dinámicas
+src/modules/T1_MaturityRadar/store.ts,Estimado líneas 1-120,Zustand store,useT1Store con dimensionStates[respondentId],Estado T1,CRÍTICO,No,No,Sí,Fase 3,Refactor a createEvaluationStore factory
+src/modules/T5_AITaxonomyCanvas/store.ts,Estimado líneas 1-56,Zustand store,useT5Store con DEMO_DOMAINS (6 dominios fijos),Estado T5,CRÍTICO,No,No,Sí,Fase 3,Factory genérico
+src/modules/T1_MaturityRadar/components/T1View.tsx,Estimado,React Component,Renderiza 6 dimensiones explícitamente,Componente UI,CRÍTICO,No,Sí,No,Fase 4,Parametrizar N dimensiones
+src/modules/T5_AITaxonomyCanvas/components/PortfolioMatrix.tsx,Estimado,React Component,SVG hardcodeado a 6 dominios,Gráfico T5,CRÍTICO,No,Sí,No,Fase 4,Canvas dinámico
+src/modules/T10_AIValueDashboard/T10View.tsx,Estimado líneas 43-50,React Component,6 paneles P1-P6 hardcodeados,Dashboard T10,CRÍTICO,No,Sí,No,Fase 4,panelRegistry dinámico
+src/shared/design-system/charts/domainIcons.tsx,Estimado,Assets,Mapeo de 6 dominios a iconos,Iconografía,MEDIO,No,Sí,No,Fase 4,Parameterizar por config
+src/shared/design-system/charts/chartTokens.ts,Estimado,Assets,DOMAIN_COLORS con 6 colores T5,Paleta,MEDIO,No,Sí,No,Fase 4,Dinámico de BD
+supabase/migrations/001_foundation.sql,Estimado,SQL,ai_rate_limit_log table name,Tabla deprecated,BAJO,No,Sí,No,Fase 8,Renombrar en nueva migration
+supabase/migrations/004_companies_and_rename.sql,Estimado,SQL,use_cases table con ai_category | ai_act_classification,Schema,CRÍTICO,No,No,Sí,Fase 1-2,Nueva migration para dinámico

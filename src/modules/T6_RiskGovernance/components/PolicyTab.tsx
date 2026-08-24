@@ -3,7 +3,7 @@
 // ============================================================
 
 import { AlertTriangle, Check, RefreshCw, Ban, AlertCircle, CheckCircle, Circle } from 'lucide-react'
-import { useT4Store }        from '@/modules/T4_UseCasePriorityBoard'
+import { useT4Kernel }       from '@/modules/T4_UseCasePriorityBoard/index.public'
 import { useT5Store }        from '@/modules/T5_AITaxonomyCanvas'
 import { useT6Store }        from '../store'
 import { AIACT_RISK_CONFIG } from '../constants'
@@ -30,7 +30,7 @@ interface PolicyTabProps {
 
 export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
   const { isReadOnly } = usePermissions()
-  const { useCases }   = useT4Store()
+  const { useCases }   = useT4Kernel()
   const { canvas }     = useT5Store()
   const { generatedPolicy, clearGeneratedPolicy, persistenceStatus, persistenceError, retrySave } = useT6Store()
   const profile        = useCompanyProfileStore((s) => s.profile)
