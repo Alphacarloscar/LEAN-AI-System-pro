@@ -490,7 +490,7 @@ CREATE TABLE framework_controls (
 | Fase 0 | ✅ Implementada | 2026-08-24 | Ver criterios actualizados en §4 |
 | Fase 1 | ✅ Implementada | 2026-08-24 | Migraciones SQL + seed dominio AI. Código ready para PRE. |
 | Fase 2 | ⏳ Pendiente | — | Shared Kernel T4 |
-| Fase 3 | ⏳ Pendiente | — | Navegación y permisos |
+| Fase 3 | ✅ Implementada | 2026-08-24 | usePermissions + AppSidebar dinámico + packageModules. CI verde. |
 | Fase 4 | ⏳ Pendiente | — | T10 dos estados |
 | Fase 5 | ⏳ Pendiente | — | Eliminación literales AI |
 | Fase 6 | ⏳ Pendiente | — | Validación E2E |
@@ -498,7 +498,7 @@ CREATE TABLE framework_controls (
 ---
 
 **Versión:** 1.0.0  
-**Última revisión:** 2026-08-24 (Fase 0 completada)  
-**Próxima revisión:** al iniciar Fase 1  
+**Última revisión:** 2026-08-24 (Fase 3 completada)  
+**Próxima revisión:** al iniciar Fase 4  
 **Idioma:** Español de España (documentación humana)  
 **Fuente de verdad para implementación:** este documento + `CLAUDE.md` del repo

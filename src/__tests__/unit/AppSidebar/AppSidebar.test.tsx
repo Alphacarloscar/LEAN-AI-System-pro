@@ -19,6 +19,16 @@ vi.mock('@shared/design-system/components', () => ({
   ),
 }))
 
+// Mock de usePermissions — por defecto muestra todos los módulos
+vi.mock('@/modules/Auth/usePermissions', () => ({
+  usePermissions: () => ({
+    isReadOnly: false,
+    canEditCompanySettings: false,
+    hasPackage: vi.fn(() => true),
+    hasModule: vi.fn(() => true), // Todos los módulos visibles en tests
+  }),
+}))
+
 // react-router-dom useNavigate — devuelve función no-op para evitar crash fuera de Router
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>()

@@ -391,8 +391,10 @@ export type Database = {
       projects: {
         Row: {
           company_id: string | null
+          contracted_packages: string[]
           created_at: string | null
           current_phase: string
+          domain_id: string
           end_date: string | null
           id: string
           name: string
@@ -403,8 +405,10 @@ export type Database = {
         }
         Insert: {
           company_id?: string | null
+          contracted_packages?: string[]
           created_at?: string | null
           current_phase?: string
+          domain_id: string
           end_date?: string | null
           id?: string
           name: string
@@ -415,8 +419,10 @@ export type Database = {
         }
         Update: {
           company_id?: string | null
+          contracted_packages?: string[]
           created_at?: string | null
           current_phase?: string
+          domain_id?: string
           end_date?: string | null
           id?: string
           name?: string
@@ -1185,6 +1191,9 @@ export type LeanPhase     = 'listen' | 'evaluate' | 'activate' | 'normalize' | '
 export type ISO42001Status = 'no_iniciado' | 'en_progreso' | 'implementado'
 export type UseCaseStatus = 'candidato' | 'priorizado' | 'go' | 'no_go' | 'en_piloto' | 'completado'
 export type DepartmentType = 'it' | 'negocio_ops'
+
+// ── Package enums (ADR-029) ───────────────────────────────────
+export type PackageEnum = 'boost_assessment' | 'portfolio_management' | 'legal_compliance'
 
 // ── Friction enums ────────────────────────────────────────────
 export type FrictionFrequency = 'Baja' | 'Media' | 'Alta'

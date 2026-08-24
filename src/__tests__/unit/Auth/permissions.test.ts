@@ -1,11 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock del store de auth — debe ir antes del import del hook
+// Mock de stores — deben ir antes del import del hook
 vi.mock('@/modules/Auth/store', () => ({
   useAuthStore: vi.fn(),
 }))
 
+vi.mock('@/modules/Engagement/store', () => ({
+  useEngagementStore: vi.fn(),
+}))
+
 import { useAuthStore } from '@/modules/Auth/store'
+import { useEngagementStore } from '@/modules/Engagement/store'
 import { usePermissions } from '@/modules/Auth/usePermissions'
 import type { AuthUser } from '@/modules/Auth/types'
 
@@ -17,6 +22,11 @@ function mockUser(role: AuthUser['role']): AuthUser {
 
 function setupStore(user: AuthUser | null) {
   vi.mocked(useAuthStore).mockReturnValue({ user } as ReturnType<typeof useAuthStore>)
+  // Mock engagement store sin proyecto activo (valores por defecto vacíos)
+  vi.mocked(useEngagementStore).mockImplementation((selector) => {
+    const state = { projects: [], activeEngagementId: null }
+    return selector(state as any)
+  })
 }
 
 // ── usePermissions ────────────────────────────────────────────

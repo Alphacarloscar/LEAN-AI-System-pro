@@ -18,43 +18,50 @@ import { useSidebar }                 from '@/shared/hooks/useSidebar'
 import { UnsavedChangesModal }        from '@/shared/components/UnsavedChangesModal'
 import { useState }                   from 'react'
 import { useEngagementStore }         from '@/modules/Engagement/store'
+import { usePermissions }             from '@/modules/Auth/usePermissions'
+import type { ToolCode }              from '@/types'
 
 // ── Registro estático del producto ───────────────────────────
 
 interface ToolNavItem {
-  code:  string
-  label: string
-  path:  string
+  code:       ToolCode
+  moduleCode: ToolCode
+  label:      string
+  path:       string
 }
 
 // Códigos base de navegación — la ruta final se construye dinámicamente
 // con el engagementId activo en AppSidebar.
+// moduleCode = ToolCode que se usa en usePermissions.hasModule()
 const TOOL_NAVIGATION_BASE: ToolNavItem[] = [
-  { code: 'T1',  label: 'AI Readiness Assessment',   path: '/t1'  },
-  { code: 'T2',  label: 'Stakeholder Matrix',         path: '/t2'  },
-  { code: 'T3',  label: 'Value Stream Map',           path: '/t3'  },
-  { code: 'T4',  label: 'Use Case Priority Board',    path: '/t4'  },
-  { code: 'T5',  label: 'AI Taxonomy Canvas',         path: '/t5'  },
-  { code: 'T6',  label: 'Risk & Governance',          path: '/t6'  },
-  { code: 'T7',  label: 'Adoption Heatmap',           path: '/t7'  },
-  { code: 'T8',  label: 'Communication Map',          path: '/t8'  },
-  { code: 'T9',  label: 'AI Roadmap',                 path: '/t9'  },
-  { code: 'T10', label: 'AI Value Dashboard',         path: '/'    },
-  { code: 'T11', label: 'Operating Rhythm',           path: '/t11' },
-  { code: 'T12', label: 'ISO 42001 Assessment',       path: '/t12' },
+  { code: 'T1',  moduleCode: 'T1',  label: 'AI Readiness Assessment',   path: '/t1'  },
+  { code: 'T2',  moduleCode: 'T2',  label: 'Stakeholder Matrix',         path: '/t2'  },
+  { code: 'T3',  moduleCode: 'T3',  label: 'Value Stream Map',           path: '/t3'  },
+  { code: 'T4',  moduleCode: 'T4',  label: 'Use Case Priority Board',    path: '/t4'  },
+  { code: 'T5',  moduleCode: 'T5',  label: 'AI Taxonomy Canvas',         path: '/t5'  },
+  { code: 'T6',  moduleCode: 'T6',  label: 'Risk & Governance',          path: '/t6'  },
+  { code: 'T7',  moduleCode: 'T7',  label: 'Adoption Heatmap',           path: '/t7'  },
+  { code: 'T8',  moduleCode: 'T8',  label: 'Communication Map',          path: '/t8'  },
+  { code: 'T9',  moduleCode: 'T9',  label: 'AI Roadmap',                 path: '/t9'  },
+  { code: 'T10', moduleCode: 'T10', label: 'AI Value Dashboard',         path: '/'    },
+  { code: 'T11', moduleCode: 'T11', label: 'Operating Rhythm',           path: '/t11' },
+  { code: 'T12', moduleCode: 'T12', label: 'ISO 42001 Assessment',       path: '/t12' },
 ]
 
 // ── Panel interior ────────────────────────────────────────────
 function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; engagementId: string | null }) {
   const location = useLocation()
+  const { hasModule } = usePermissions()
 
   // Construye la ruta final: T1–T12 incluyen el engagementId en la URL.
   // T10 (path '/') no lleva engagementId porque es el dashboard raíz.
-  const TOOL_NAVIGATION = TOOL_NAVIGATION_BASE.map((tool) =>
-    tool.path !== '/' && engagementId
-      ? { ...tool, path: `${tool.path}/${engagementId}` }
-      : tool
-  )
+  const TOOL_NAVIGATION = TOOL_NAVIGATION_BASE
+    .filter((tool) => hasModule(tool.moduleCode))
+    .map((tool) =>
+      tool.path !== '/' && engagementId
+        ? { ...tool, path: `${tool.path}/${engagementId}` }
+        : tool
+    )
 
   const isCompanyProfileActive = location.pathname === '/company-profile'
 

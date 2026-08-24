@@ -14,3 +14,4 @@ export type {
   DependencyType,
   ContextRef,
 } from './domain.types'
+export type { PackageId } from './packages'
