@@ -1,6 +1,8 @@
 // P1 — T1 Madurez IA
 
 import type { RadarDimension } from '@/shared/components/charts/LeanRadarChart'
+import { PackagePreviewBanner } from '@shared/design-system/components'
+import { usePackagePanel } from '@shared/hooks/usePackagePanel'
 import { DimBar }         from '../DimBar'
 import { NavButton }      from '../NavButton'
 import { ExpandedSection } from '../ExpandedSection'
@@ -28,6 +30,24 @@ interface P1Props {
 export function P1MaturityPanel({
   radar, avg, tier, weakest, breakdown, expanded, onToggle, onNavigate,
 }: P1Props) {
+  const { isActive } = usePackagePanel('boost_assessment')
+
+  const content = !isActive ? (
+    <PackagePreviewBanner
+      packageName="Boost Assessment"
+      moduleCodes={['T1']}
+    />
+  ) : (
+    <div className="space-y-[5px]">
+      {radar.slice(0, 4).map(dim => (
+        <DimBar key={dim.dimension} label={dim.dimension} value={dim.current} max={4} color="var(--color-gold)" />
+      ))}
+      {radar.length > 4 && (
+        <p className="text-xs text-text-muted dark:text-warm-400 pt-0.5">+{radar.length - 4} más</p>
+      )}
+    </div>
+  )
+
   return (
     <PanelCard
       id="p1" expanded={expanded} onClick={onToggle}
@@ -36,16 +56,10 @@ export function P1MaturityPanel({
       animDelay={0}
       heroSlot={<HeroMetric label="Madurez IA" value={avg.toFixed(1)} colorScore={(avg / 4) * 100} dangerBelow={38} warningBelow={63} />}
     >
-      <div className="space-y-[5px]">
-        {radar.slice(0, 4).map(dim => (
-          <DimBar key={dim.dimension} label={dim.dimension} value={dim.current} max={4} color="var(--color-gold)" />
-        ))}
-        {radar.length > 4 && (
-          <p className="text-xs text-text-muted dark:text-warm-400 pt-0.5">+{radar.length - 4} más</p>
-        )}
+      <div className={!isActive ? 'relative' : undefined}>
+        {content}
       </div>
-
-      {expanded && (
+      {isActive && expanded && (
         <ExpandedSection>
           {breakdown.interviewsCount > 0 ? (
             <>

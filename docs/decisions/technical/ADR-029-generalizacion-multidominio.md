@@ -491,7 +491,7 @@ CREATE TABLE framework_controls (
 | Fase 1 | ✅ Implementada | 2026-08-24 | Migraciones SQL + seed dominio AI. Código ready para PRE. |
 | Fase 2 | ⏳ Pendiente | — | Shared Kernel T4 |
 | Fase 3 | ✅ Implementada | 2026-08-24 | usePermissions + AppSidebar dinámico + packageModules. CI verde. |
-| Fase 4 | ⏳ Pendiente | — | T10 dos estados |
+| Fase 4 | ✅ Implementada | 2026-08-24 | PackagePreviewBanner + usePackagePanel + 6 paneles con estados activo/preview. 23 tests. CI verde. |
 | Fase 5 | ⏳ Pendiente | — | Eliminación literales AI |
 | Fase 6 | ⏳ Pendiente | — | Validación E2E |
 

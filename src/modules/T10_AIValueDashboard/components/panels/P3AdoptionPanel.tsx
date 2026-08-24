@@ -1,6 +1,8 @@
 // P3 — T2+T7 Adopción
 
 import { AlertTriangle } from 'lucide-react'
+import { PackagePreviewBanner } from '@shared/design-system/components'
+import { usePackagePanel } from '@shared/hooks/usePackagePanel'
 import { DeptBar }         from '../DeptBar'
 import { NavButton }       from '../NavButton'
 import { ExpandedSection } from '../ExpandedSection'
@@ -23,6 +25,35 @@ interface P3Props {
 }
 
 export function P3AdoptionPanel({ t2data, shadowAIPct, expanded, onToggle, onNavigate }: P3Props) {
+  const { isActive } = usePackagePanel('boost_assessment')
+
+  const content = !isActive ? (
+    <PackagePreviewBanner
+      packageName="Boost Assessment"
+      moduleCodes={['T2', 'T7']}
+    />
+  ) : (
+    <div className="mb-2">
+      <p className="text-[9px] font-sans uppercase tracking-widest text-text-muted dark:text-warm-400 mb-1.5">
+        Composición por departamento
+      </p>
+      {t2data.departments.length > 0
+        ? t2data.departments.map((dept, i) => <DeptBar key={i} {...dept} colors={[t2data.groups[0]?.color ?? '#C8860A', t2data.groups[1]?.color ?? '#B07840', t2data.groups[2]?.color ?? '#9A9790']} />)
+        : <p className="text-[10px] text-text-muted dark:text-warm-300">Sin stakeholders registrados aún</p>
+      }
+      {t2data.groups.length > 0 && (
+        <div className="flex gap-3 mt-1.5">
+          {t2data.groups.map((g, i) => (
+            <div key={i} className="flex items-center gap-1 text-[9px] text-text-muted dark:text-warm-300">
+              <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: g.color }} />
+              {g.label.split(' ')[0]} {g.count}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <PanelCard
       id="p3" expanded={expanded} onClick={onToggle}
@@ -31,27 +62,10 @@ export function P3AdoptionPanel({ t2data, shadowAIPct, expanded, onToggle, onNav
       animDelay={160}
       heroSlot={<HeroMetric label="Adopción activa" value={`${t2data.activePercent}%`} colorScore={t2data.activePercent} />}
     >
-      <div className="mb-2">
-        <p className="text-[9px] font-sans uppercase tracking-widest text-text-muted dark:text-warm-400 mb-1.5">
-          Composición por departamento
-        </p>
-        {t2data.departments.length > 0
-          ? t2data.departments.map((dept, i) => <DeptBar key={i} {...dept} colors={[t2data.groups[0]?.color ?? '#C8860A', t2data.groups[1]?.color ?? '#B07840', t2data.groups[2]?.color ?? '#9A9790']} />)
-          : <p className="text-[10px] text-text-muted dark:text-warm-300">Sin stakeholders registrados aún</p>
-        }
-        {t2data.groups.length > 0 && (
-          <div className="flex gap-3 mt-1.5">
-            {t2data.groups.map((g, i) => (
-              <div key={i} className="flex items-center gap-1 text-[9px] text-text-muted dark:text-warm-300">
-                <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: g.color }} />
-                {g.label.split(' ')[0]} {g.count}
-              </div>
-            ))}
-          </div>
-        )}
+      <div className={!isActive ? 'relative' : undefined}>
+        {content}
       </div>
-
-      {expanded && (
+      {isActive && expanded && (
         <ExpandedSection>
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>

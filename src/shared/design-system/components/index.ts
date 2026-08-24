@@ -97,3 +97,6 @@ export type { ToolHeaderProps } from './ToolHeader'
 
 export { EmptyState }          from './EmptyState'
 export type { EmptyStateProps } from './EmptyState'
+
+export { PackagePreviewBanner } from './PackagePreviewBanner'
+export type { PackagePreviewBannerProps } from './PackagePreviewBanner'
