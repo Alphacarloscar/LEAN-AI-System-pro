@@ -488,7 +488,7 @@ CREATE TABLE framework_controls (
 | Fase | Estado | Fecha | Notas |
 |---|---|---|---|
 | Fase 0 | ✅ Implementada | 2026-08-24 | Ver criterios actualizados en §4 |
-| Fase 1 | ⏳ Pendiente | — | BD y dominio |
+| Fase 1 | ✅ Implementada | 2026-08-24 | Migraciones SQL + seed dominio AI. Código ready para PRE. |
 | Fase 2 | ⏳ Pendiente | — | Shared Kernel T4 |
 | Fase 3 | ⏳ Pendiente | — | Navegación y permisos |
 | Fase 4 | ⏳ Pendiente | — | T10 dos estados |
