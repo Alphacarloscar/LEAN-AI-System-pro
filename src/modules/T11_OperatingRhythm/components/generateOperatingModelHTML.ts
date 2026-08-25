@@ -65,6 +65,7 @@ export function generateOperatingModelHTML(
     </div>
     <div style="text-align:right;">
       <p style="font-size:10px;color:#9ca3af;margin:0;">Generado el ${now}</p>
+      {/* TODO: domain-specific prefix — parametrize when second domain is implemented */}
       <p style="font-size:11px;font-weight:600;margin:4px 0 0;color:${matCfg.hex};">Madurez IA: ${matCfg.label} (${model.maturityAvg.toFixed(1)}/4)</p>
     </div>
   </div>

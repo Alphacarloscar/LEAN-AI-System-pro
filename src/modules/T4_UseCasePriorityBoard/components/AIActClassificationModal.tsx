@@ -3,6 +3,7 @@ import { zodResolver }         from '@hookform/resolvers/zod'
 import { AlertTriangle } from 'lucide-react'
 import { usePermissions }      from '@/modules/Auth'
 import { useUnsavedGuard }     from '@/shared/hooks/useUnsavedGuard'
+import { useDomainFramework }  from '@/shared/hooks/useDomainFramework'
 import { Modal, Button, Badge } from '@shared/design-system/components'
 import type { AIActClassification } from '../types'
 import { computeAIActRisk }    from '../types'
@@ -23,6 +24,7 @@ export function AIActClassificationModal({
   onCancel:    () => void
 }) {
   const { isReadOnly } = usePermissions()
+  const { getLabel } = useDomainFramework()
 
   const {
     handleSubmit,
@@ -95,7 +97,7 @@ export function AIActClassificationModal({
       footer={footer}
     >
       <div className="flex items-center gap-2 mb-4">
-        <Badge variant="navy" shape="pill" size="xs" className="font-bold">AI Act</Badge>
+        <Badge variant="navy" shape="pill" size="xs" className="font-bold">{getLabel('ai_act_badge')}</Badge>
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
           Clasificación regulatoria
         </p>

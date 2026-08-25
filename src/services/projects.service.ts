@@ -29,15 +29,15 @@ export interface ProjectCompanyData {
 
 const _impl = {
 
-  async listMyProjects(): Promise<ProjectRow[]> {
+  async listMyProjects(): Promise<(ProjectRow & { governance_domains?: any })[]> {
     const { data, error } = await supabase
       .from('projects')
-      .select('*')
+      .select('*, governance_domains(label)')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
 
     if (error) throw new Error(`[Projects] listMyProjects: ${error.message}`)
-    return data ?? []
+    return (data ?? []) as (ProjectRow & { governance_domains?: any })[]
   },
 
   // Sprint 8: usa RPC con SECURITY DEFINER en lugar de INSERT directo.

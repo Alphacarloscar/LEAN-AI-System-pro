@@ -1,11 +1,12 @@
 // ============================================================
-// RiskDashboardTab — Tab 2 of T6View: AI Act risk distribution
+// RiskDashboardTab — Tab 2 of T6View: Framework risk distribution (AI Act for ai_adoption domain)
 // ============================================================
 
 import { useState, useMemo } from 'react'
 import { Ban, AlertCircle, AlertTriangle, CheckCircle, Circle, AlertTriangle as AT } from 'lucide-react'
 import { useT4Store }    from '@/modules/T4_UseCasePriorityBoard'
 import { useT2Store }    from '@/modules/T2_StakeholderMatrix'
+import { useDomainFramework } from '@/shared/hooks/useDomainFramework'
 import { AIACT_RISK_CONFIG } from '../constants'
 import type { AIActRiskLevel } from '@/modules/T4_UseCasePriorityBoard/types'
 import { Button, Card } from '@shared/design-system/components'
@@ -112,6 +113,7 @@ function ShadowAICard() {
 
 export function RiskDashboardTab() {
   const { useCases } = useT4Store()
+  const { getLabel } = useDomainFramework()
   const [selectedLevel, setSelectedLevel] = useState<AIActRiskLevel | null>(null)
 
   const summary = useMemo(() => {
@@ -173,7 +175,7 @@ export function RiskDashboardTab() {
       <Card variant="outlined" padding="none" className="rounded-xl px-5 py-4">
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-subtle">
-            Cobertura de clasificación AI Act
+            {getLabel('ai_act_coverage')}
           </p>
           <span className="text-sm font-bold text-lean-black dark:text-warm-100 tabular-nums">
             {summary.classified}/{summary.total} casos ({summary.coveragePercent}%)
@@ -216,7 +218,7 @@ export function RiskDashboardTab() {
                 <th className="text-left py-2 px-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Departamento</th>
                 <th className="text-left py-2 px-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Categoría IA</th>
                 <th className="text-left py-2 px-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Estado</th>
-                <th className="text-left py-2 px-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Riesgo AI Act</th>
+                <th className="text-left py-2 px-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">{getLabel('ai_act_risk')}</th>
               </tr>
             </thead>
             <tbody>

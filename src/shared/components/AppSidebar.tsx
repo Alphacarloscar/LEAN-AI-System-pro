@@ -43,7 +43,7 @@ const TOOL_NAVIGATION_BASE: ToolNavItem[] = [
   { code: 'T7',  moduleCode: 'T7',  label: 'Adoption Heatmap',           path: '/t7'  },
   { code: 'T8',  moduleCode: 'T8',  label: 'Communication Map',          path: '/t8'  },
   { code: 'T9',  moduleCode: 'T9',  label: 'AI Roadmap',                 path: '/t9'  },
-  { code: 'T10', moduleCode: 'T10', label: 'AI Value Dashboard',         path: '/'    },
+  { code: 'T10', moduleCode: 'T10', label: 'Dashboard',                  path: '/'    },
   { code: 'T11', moduleCode: 'T11', label: 'Operating Rhythm',           path: '/t11' },
   { code: 'T12', moduleCode: 'T12', label: 'ISO 42001 Assessment',       path: '/t12' },
 ]
@@ -52,6 +52,9 @@ const TOOL_NAVIGATION_BASE: ToolNavItem[] = [
 function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; engagementId: string | null }) {
   const location = useLocation()
   const { hasModule } = usePermissions()
+  const projects = useEngagementStore((state) => state.projects)
+  const activeId = useEngagementStore((state) => state.activeEngagementId)
+  const activeProject = projects.find((p) => p.id === activeId)
 
   // Construye la ruta final: T1–T12 incluyen el engagementId en la URL.
   // T10 (path '/') no lleva engagementId porque es el dashboard raíz.
@@ -153,7 +156,10 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
                       : 'text-warm-700 dark:text-warm-100',
                   ].join(' ')}
                 >
-                  {tool.label}
+                  {tool.code === 'T10'
+                    ? (activeProject?.governance_domains?.label ?? 'Dashboard')
+                    : tool.label
+                  }
                 </span>
               </button>
             )

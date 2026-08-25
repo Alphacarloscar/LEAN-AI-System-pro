@@ -46,6 +46,7 @@ export interface PolicyPDFData {
   highRiskCases:    UseCase[]
   activeDomains:    Array<{ code: string; domain: T5DomainAssessment }>
   ownerDomains:     T5DomainAssessment[]
+  riskLabel?:       string
   /** Contenido narrativo generado por LLM (opcional — si no existe, se usa plantilla) */
   generatedPolicy?: {
     declaracion_opening:  string
@@ -181,7 +182,7 @@ function PolicyPDFDocument({ data }: { data: PolicyPDFData }) {
                 <View style={s.tableHeader}>
                   <Text style={[s.thCell, s.col1]}>Sistema IA</Text>
                   <Text style={[s.thCell, s.col2]}>Departamento</Text>
-                  <Text style={[s.thCell, s.col3]}>Riesgo AI Act</Text>
+                  <Text style={[s.thCell, s.col3]}>{data.riskLabel ?? 'Riesgo AI Act'}</Text>
                   <Text style={[s.thCell, s.col4]}>Estado</Text>
                 </View>
                 {approvedCases.map((uc) => {

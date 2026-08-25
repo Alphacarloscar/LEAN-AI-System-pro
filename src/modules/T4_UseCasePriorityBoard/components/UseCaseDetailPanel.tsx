@@ -2,6 +2,7 @@
 import { useT4Store } from '../store'
 import { usePermissions } from '@/modules/Auth'
 import { useUnsavedGuard } from '@/shared/hooks/useUnsavedGuard'
+import { useDomainFramework } from '@/shared/hooks/useDomainFramework'
 import {
   computePriorityScore,
   getGoNoGoRecommendation,
@@ -46,6 +47,7 @@ export function UseCaseDetailPanel({
 }) {
   const { updateUseCase, recalcScore, updateAIActClassification } = useT4Store()
   const { isReadOnly } = usePermissions()
+  const { getLabel } = useDomainFramework()
   const [tab, setTab]                   = useState<DetailTab>('scoring')
   const [editingScore, setEditingScore] = useState(false)
   const [localScores, setLocalScores]   = useState<UseCaseScores>(useCase.scores)
@@ -225,7 +227,7 @@ export function UseCaseDetailPanel({
               return (
                 <button
                   onClick={() => handleGuardedTabChange('regulatorio')}
-                  title="Ver clasificación AI Act"
+                  title={getLabel('ai_act_tooltip')}
                   className="hover:opacity-80 transition-opacity"
                 >
                   <Badge shape="pill" size="xs" style={{ backgroundColor: `${cfg.hex}22`, color: cfg.hex }}>
@@ -295,7 +297,7 @@ export function UseCaseDetailPanel({
             { value: 'contexto',    label: 'Contexto T1/T2' },
             {
               value: 'regulatorio',
-              label: `AI Act${useCase.aiActClassification
+              label: `${getLabel('ai_act_tab')}${useCase.aiActClassification
                 ? ` · ${AIACT_RISK_CONFIG[useCase.aiActClassification.riskLevel].label}`
                 : ''}`,
             },
@@ -332,7 +334,7 @@ export function UseCaseDetailPanel({
                 <AlertTriangle size={32} strokeWidth={1.5} className="text-text-subtle" />
                 <div>
                   <p className="text-sm font-semibold text-lean-black dark:text-warm-50 mb-1">
-                    Sin clasificación AI Act
+                    {getLabel('ai_act_empty')}
                   </p>
                   <p className="text-xs text-text-muted max-w-sm leading-relaxed">
                     Clasifica este caso de uso para evaluar su nivel de riesgo regulatorio según el EU AI Act y el RGPD.
@@ -355,7 +357,7 @@ export function UseCaseDetailPanel({
                   className="text-[10px] font-mono uppercase tracking-widest mb-2"
                   style={{ color: riskCfg.hex }}
                 >
-                  Nivel de riesgo EU AI Act
+                  {getLabel('ai_act_risk_level')}
                 </p>
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3" style={{ color: riskCfg.hex }}>
@@ -419,7 +421,7 @@ export function UseCaseDetailPanel({
                   <div className="rounded-xl bg-danger-light dark:bg-danger/20 border border-danger-light dark:border-danger px-4 py-3">
                     <p className="text-xs font-semibold text-danger-dark dark:text-danger mb-1 flex items-center gap-1.5">
                       <Ban size={14} strokeWidth={1.5} className="shrink-0" />
-                      Sistema potencialmente prohibido — Art. 5 AI Act
+                      {getLabel('ai_act_prohibited')}
                     </p>
                     <p className="text-[10px] text-danger-dark dark:text-danger leading-relaxed">
                       Detener el desarrollo e iniciar revisión legal inmediata.
@@ -460,7 +462,7 @@ export function UseCaseDetailPanel({
                 {cls.riskLevel === 'minimo' && (
                   <p className="text-xs text-success-dark leading-relaxed flex items-start gap-1.5">
                     <Check size={14} strokeWidth={1.5} className="shrink-0 mt-0.5" />
-                    Sin obligaciones regulatorias específicas del AI Act. Se recomienda documentar el uso en el catálogo corporativo de IA como buena práctica de gobernanza.
+                    {getLabel('ai_act_no_obligations')}
                   </p>
                 )}
               </Card>

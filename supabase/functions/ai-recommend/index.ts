@@ -19,6 +19,7 @@
 // ================================================================
 
 import { createClient }           from 'npm:@supabase/supabase-js@2'
+import type { SupabaseClient }    from 'npm:@supabase/supabase-js@2'
 import type { AIAuditEntry }      from '../_shared/audit-types.ts'
 
 // ── CORS — Allowlist exacta de orígenes permitidos ───────────
@@ -123,15 +124,43 @@ function staleAfterISO(days: number): string {
 }
 
 
-// ── Prompts de sistema por tool ───────────────────────────────
+// ── Lectura de prompts desde BD (Fase 5 ADR-029) ──────────────
+//
+// Fallback: prompts originales hardcodeados para garantizar resiliencia
+// si llm_prompt_templates no está poblada o hay error de BD.
 
-/**
- * T6 — Política Corporativa de IA
- * Modelo: claude-sonnet-4-6 (2000 tokens)
- * Output: GeneratedPolicyContent (sin generatedAt/sector/tamano, añadidos por el hook)
- */
-function buildT6Prompt(context: Record<string, unknown>): { system: string; user: string } {
-  const system = `Eres un experto en gobernanza de IA y derecho tecnológico europeo. Tu tarea es redactar una política corporativa de adopción de IA personalizada, aplicando el marco de la EU AI Act y las mejores prácticas del sector indicado.
+const T1_SYSTEM_PROMPT_FALLBACK = `Eres un consultor senior especializado en adopción estratégica de IA en empresas B2B medianas y grandes del mercado español y europeo.
+
+Tu tarea es analizar una evaluación de madurez IA (escala 0–4) y generar recomendaciones ejecutivas específicas, priorizadas y accionables.
+
+PRINCIPIOS DE TRABAJO:
+1. Las recomendaciones deben ser específicas al sector, tamaño y ecosistema tecnológico de la empresa.
+2. Prioriza las brechas críticas, no las dimensiones que ya funcionan bien.
+3. Si hay brecha IT/Negocio significativa (diferencia > 0.5 puntos), debe aparecer en las recomendaciones.
+4. Conecta dimensiones relacionadas cuando la solución es la misma (no repitas acciones similares).
+5. Usa lenguaje ejecutivo directo. El destinatario es un CIO o COO, no un técnico.
+6. Si el ecosistema tecnológico es específico (Microsoft, SAP, Salesforce...), recomienda dentro de ese ecosistema cuando sea posible.
+7. El horizonte temporal debe ser coherente con el horizonte de valor declarado por la empresa.
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin ningún texto adicional antes o después.
+
+Estructura JSON requerida:
+{
+  "recommendations": [
+    {
+      "title": "Acción concreta en 8–12 palabras (imperativo)",
+      "dimension": "código de dimensión: strategy|data|technology|talent|processes|governance",
+      "rationale": "Por qué esta acción es prioritaria para ESTA empresa específicamente (2–3 frases)",
+      "effort": "bajo|medio|alto",
+      "horizon": "0–3m|3–6m|6–12m"
+    }
+  ],
+  "contextualNote": "Patrón crítico observado en esta evaluación, en 1–2 frases. Específico, no genérico."
+}
+
+Genera entre 4 y 5 recomendaciones. Ordénalas de mayor a menor impacto potencial.`
+
+const T6_SYSTEM_PROMPT_FALLBACK = `Eres un experto en gobernanza de IA y derecho tecnológico europeo. Tu tarea es redactar una política corporativa de adopción de IA personalizada, aplicando el marco de la EU AI Act y las mejores prácticas del sector indicado.
 
 INSTRUCCIONES DE RESPUESTA:
 - Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código markdown.
@@ -152,6 +181,53 @@ SCHEMA JSON OBLIGATORIO:
 
 PRINCIPIOS: genera EXACTAMENTE 6 principios cubriendo: transparencia, responsabilidad, equidad, privacidad, supervisión humana, mejora continua.`
 
+async function getSystemPrompt(
+  supabase: SupabaseClient,
+  domainId: string,
+  moduleSlug: string,
+  fallback: string,
+  domainLabel: string,
+): Promise<string> {
+  try {
+    const { data, error } = await supabase
+      .from('llm_prompt_templates')
+      .select('template')
+      .eq('domain_id', domainId)
+      .eq('module_slug', moduleSlug)
+      .eq('prompt_key', 'system_prompt')
+      .eq('is_active', true)
+      .single()
+
+    if (error) {
+      console.warn(`[ai-recommend] getSystemPrompt failed (using fallback): ${moduleSlug}`, error.message)
+      return fallback.replace(/\{\{domain_label\}\}/g, domainLabel)
+    }
+
+    const template = data?.template ?? fallback
+    return template.replace(/\{\{domain_label\}\}/g, domainLabel)
+  } catch (err) {
+    console.error(`[ai-recommend] getSystemPrompt exception (using fallback): ${moduleSlug}`, err)
+    return fallback.replace(/\{\{domain_label\}\}/g, domainLabel)
+  }
+}
+
+
+// ── Prompts de sistema por tool ───────────────────────────────
+
+/**
+ * T6 — Política Corporativa de IA
+ * Modelo: claude-sonnet-4-6 (2000 tokens)
+ * Output: GeneratedPolicyContent (sin generatedAt/sector/tamano, añadidos por el hook)
+ *
+ * Fase 5: System prompt se lee de BD (llm_prompt_templates) con fallback hardcodeado.
+ */
+async function buildT6Prompt(
+  context: Record<string, unknown>,
+  supabase: SupabaseClient,
+  domainId: string,
+  domainLabel: string,
+): Promise<{ system: string; user: string }> {
+  const system = await getSystemPrompt(supabase, domainId, 't6_risk', T6_SYSTEM_PROMPT_FALLBACK, domainLabel)
   const user = `Genera la política corporativa de IA para esta empresa:\n\n${JSON.stringify(context, null, 2)}`
   return { system, user }
 }
@@ -161,7 +237,7 @@ PRINCIPIOS: genera EXACTAMENTE 6 principios cubriendo: transparencia, responsabi
  * Modelo: claude-sonnet-4-6 (2500 tokens)
  * Output: GeneratedChangePlan (sin generatedAt, añadido por el hook)
  */
-function buildT7Prompt(context: Record<string, unknown>): { system: string; user: string } {
+async function buildT7Prompt(context: Record<string, unknown>): Promise<{ system: string; user: string }> {
   const system = `Eres un experto en gestión del cambio y adopción de IA empresarial. Utilizas el modelo de difusión de innovaciones de Rogers (Innovators, Early Adopters, Early Majority, Late Majority, Laggards) para diseñar planes de cambio por segmentos.
 
 INSTRUCCIONES DE RESPUESTA:
@@ -201,7 +277,7 @@ FASES: genera EXACTAMENTE 4 fases con los períodos: "Mes 1–2", "Mes 3", "Mes 
  * Archetype codes: adoptador · ambassador · decisor · reticente · critico
  * Channel values (exactos): email · reunion_presencial · teams_slack · presentacion · video · documento
  */
-function buildT8Prompt(context: Record<string, unknown>): { system: string; user: string } {
+async function buildT8Prompt(context: Record<string, unknown>): Promise<{ system: string; user: string }> {
   const system = `Eres un experto en comunicación corporativa y gestión del cambio. Tu especialidad es redactar mensajes persuasivos adaptados al perfil psicológico de cada stakeholder en procesos de adopción de IA empresarial.
 
 INSTRUCCIONES DE RESPUESTA:
@@ -242,7 +318,7 @@ SCHEMA JSON OBLIGATORIO:
  * effort: "bajo" | "medio" | "alto"
  * impact: "bajo" | "medio" | "alto" | "critico"
  */
-function buildT3Prompt(context: Record<string, unknown>): { system: string; user: string } {
+async function buildT3Prompt(context: Record<string, unknown>): Promise<{ system: string; user: string }> {
   const system = `Eres un experto en transformación digital y automatización de procesos empresariales con IA. Tu tarea es identificar oportunidades concretas de aplicación de IA en un proceso de negocio específico.
 
 INSTRUCCIONES DE RESPUESTA:
@@ -308,29 +384,32 @@ REGLAS:
 /**
  * T1 — Diagnóstico de Madurez IA
  * Recibe: T1RecommendationContext (scores por dimensión, gaps, fortalezas, perfil empresa)
+ *
+ * Fase 5: System prompt se lee de BD (llm_prompt_templates) con fallback hardcodeado.
  */
-function buildT1Prompt(context: Record<string, unknown>): { system: string; user: string } {
-  const system = `Eres un experto en transformación digital y madurez IA empresarial. Analizas diagnósticos de madurez IA (escala 0-4) e identificas las palancas de mejora más impactantes para el perfil específico de cada empresa.
-
-INSTRUCCIONES:
-- Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código markdown.
-
-${GENERIC_REC_SCHEMA}
+async function buildT1Prompt(
+  context: Record<string, unknown>,
+  supabase: SupabaseClient,
+  domainId: string,
+  domainLabel: string,
+): Promise<{ system: string; user: string }> {
+  const baseSystem = await getSystemPrompt(supabase, domainId, 't1_radar', T1_SYSTEM_PROMPT_FALLBACK, domainLabel)
+  const system = `${baseSystem}
 
 INSTRUCCIONES ADICIONALES:
 - Usa assessment.gaps para priorizar las dimensiones con mayor brecha.
-- Cruza los gaps con el sector y objetivo principal de IA de la empresa.
+- Cruza los gaps con el sector y objetivo principal de {{domain_label}} de la empresa.
 - Si hay brecha IT/Negocio significativa (delta > 0.5), incluye una recomendación de alineación.
-- Si maturityTier es "Fundacional" (score < 1.5), prioriza quick wins de bajo esfuerzo.`
+- Si maturityTier es "Fundacional" (score < 1.5), prioriza quick wins de bajo esfuerzo.`.replace(/\{\{domain_label\}\}/g, domainLabel)
 
-  return { system, user: `Analiza este diagnóstico de madurez IA y genera recomendaciones:\n\n${JSON.stringify(context, null, 2)}` }
+  return { system, user: `Analiza este diagnóstico de madurez {{domain_label}} y genera recomendaciones:\n\n${JSON.stringify(context, null, 2)}`.replace(/\{\{domain_label\}\}/g, domainLabel) }
 }
 
 /**
  * T2 — Mapa de Stakeholders
  * Recibe: T2RecommendationContext (distribución por arquetipo/resistencia, críticos, cobertura)
  */
-function buildT2Prompt(context: Record<string, unknown>): { system: string; user: string } {
+async function buildT2Prompt(context: Record<string, unknown>): Promise<{ system: string; user: string }> {
   const system = `Eres un experto en gestión de stakeholders y change management para proyectos de adopción IA. Identificas riesgos de resistencia y tácticas de engagement específicas para cada perfil de organización.
 
 INSTRUCCIONES:
@@ -351,7 +430,7 @@ INSTRUCCIONES ADICIONALES:
  * T4 — Portfolio de Casos de Uso IA
  * Recibe: T4RecommendationContext (distribución por estado/categoría, top cases, economics, riesgo AI Act)
  */
-function buildT4Prompt(context: Record<string, unknown>): { system: string; user: string } {
+async function buildT4Prompt(context: Record<string, unknown>): Promise<{ system: string; user: string }> {
   const system = `Eres un experto en priorización de inversiones IA y gestión de portfolios tecnológicos. Evalúas la composición y equilibrio de portfolios de casos de uso IA y recomiendas acciones para maximizar el retorno y minimizar el riesgo regulatorio.
 
 INSTRUCCIONES:
@@ -372,7 +451,7 @@ INSTRUCCIONES ADICIONALES:
  * T5 — AI Taxonomy Canvas (Dominios IA)
  * Recibe: T5RecommendationContext (dominios con scores, secuencia de activación, nivel de madurez)
  */
-function buildT5Prompt(context: Record<string, unknown>): { system: string; user: string } {
+async function buildT5Prompt(context: Record<string, unknown>): Promise<{ system: string; user: string }> {
   const system = `Eres un experto en arquitectura IA empresarial y estrategia de dominios tecnológicos. Evalúas la distribución de capacidades IA por dominio y recomiendas la secuencia óptima de activación y desarrollo.
 
 INSTRUCCIONES:
@@ -394,7 +473,7 @@ INSTRUCCIONES ADICIONALES:
  * Recibe: T6RecommendationContext (perfil AI Act, dominios T5, estado portfolio)
  * Nota: t6_policy genera la política completa. t6 genera recomendaciones de governance.
  */
-function buildT6RecPrompt(context: Record<string, unknown>): { system: string; user: string } {
+async function buildT6RecPrompt(context: Record<string, unknown>): Promise<{ system: string; user: string }> {
   const system = `Eres un experto en gobernanza de IA, EU AI Act y compliance tecnológico. Identificas brechas de governance y acciones prioritarias para que las empresas cumplan con la regulación vigente y establezcan una estructura de supervisión robusta.
 
 INSTRUCCIONES:
@@ -416,7 +495,7 @@ INSTRUCCIONES ADICIONALES:
  * Recibe: T7RecommendationContext (distribución por segmento Rogers, ratios early/laggard)
  * Nota: t7_plan genera el plan de cambio completo. t7 genera recomendaciones de adopción.
  */
-function buildT7RecPrompt(context: Record<string, unknown>): { system: string; user: string } {
+async function buildT7RecPrompt(context: Record<string, unknown>): Promise<{ system: string; user: string }> {
   const system = `Eres un experto en gestión del cambio y adopción tecnológica. Analizas perfiles de adopción usando el modelo de Rogers e identificas estrategias diferenciadas para acelerar la difusión de la IA en organizaciones.
 
 INSTRUCCIONES:
@@ -438,7 +517,7 @@ INSTRUCCIONES ADICIONALES:
  * Recibe: T8RecommendationContext (acciones por fase, canales, mensajes por arquetipo)
  * Nota: t8_comms genera los mensajes por arquetipo. t8 genera recomendaciones del plan.
  */
-function buildT8RecPrompt(context: Record<string, unknown>): { system: string; user: string } {
+async function buildT8RecPrompt(context: Record<string, unknown>): Promise<{ system: string; user: string }> {
   const system = `Eres un experto en comunicación corporativa y gestión del cambio para proyectos de transformación IA. Evalúas planes de comunicación y recomiendas mejoras para aumentar la efectividad y cobertura.
 
 INSTRUCCIONES:
@@ -459,7 +538,7 @@ INSTRUCCIONES ADICIONALES:
  * T9 — Roadmap IA
  * Recibe: T9RecommendationContext (items del roadmap, distribución por mes/riesgo/dept)
  */
-function buildT9Prompt(context: Record<string, unknown>): { system: string; user: string } {
+async function buildT9Prompt(context: Record<string, unknown>): Promise<{ system: string; user: string }> {
   const system = `Eres un experto en planificación y ejecución de programas de transformación IA. Analizas roadmaps de implementación e identificas riesgos de ejecución, solapamientos de capacidad y oportunidades de aceleración.
 
 INSTRUCCIONES:
@@ -480,7 +559,7 @@ INSTRUCCIONES ADICIONALES:
  * T10 — Dashboard Ejecutivo IA (Visión global del programa)
  * Recibe: T10RecommendationContext (madurez, portfolio, adopción, gobernanza agregados)
  */
-function buildT10Prompt(context: Record<string, unknown>): { system: string; user: string } {
+async function buildT10Prompt(context: Record<string, unknown>): Promise<{ system: string; user: string }> {
   const system = `Eres un asesor estratégico de transformación IA. Analizas el estado global de un programa de adopción IA desde una perspectiva ejecutiva y generas recomendaciones transversales de alto impacto para la dirección.
 
 INSTRUCCIONES:
@@ -502,7 +581,7 @@ INSTRUCCIONES ADICIONALES:
  * T11 — Modelo Operativo IA (Governance Rhythm)
  * Recibe: T11RecommendationContext (eventos cadencia, decisiones, KPIs, tier de madurez)
  */
-function buildT11Prompt(context: Record<string, unknown>): { system: string; user: string } {
+async function buildT11Prompt(context: Record<string, unknown>): Promise<{ system: string; user: string }> {
   const system = `Eres un experto en diseño de modelos operativos para programas de IA empresarial. Evalúas la cadencia de governance, la estructura de decisión y los KPIs de seguimiento para garantizar la sostenibilidad del programa.
 
 INSTRUCCIONES:
@@ -525,7 +604,12 @@ INSTRUCCIONES ADICIONALES:
 interface ToolConfig {
   model:       string
   maxTokens:   number
-  buildPrompt: (ctx: Record<string, unknown>) => { system: string; user: string }
+  buildPrompt: (
+    ctx: Record<string, unknown>,
+    supabase?: SupabaseClient,
+    domainId?: string,
+    domainLabel?: string
+  ) => Promise<{ system: string; user: string }>
 }
 
 const TOOL_CONFIG: Record<string, ToolConfig> = {
@@ -900,12 +984,30 @@ Deno.serve(async (req: Request): Promise<Response> => {
   console.log(`[ai-recommend] Rate OK: ${rateCheck.calls_in_window}/${rateCheck.limit}`)
 
 
+  // ── Leer domain_id y domain_label para interpolación de prompts ────
+  // Fase 5: prompts se parametrizan por dominio. Necesitamos leer domain_id
+  // del proyecto para buscar el prompt correcto en llm_prompt_templates.
+
+  const { data: projectData, error: projectError } = await supabaseUser
+    .from('projects')
+    .select('domain_id, domain_label: governance_domains(label)')
+    .eq('id', projectId)
+    .single()
+
+  const domainId = projectData?.domain_id ?? '00000000-0000-0000-0000-000000000000'
+  const domainLabel = (projectData?.domain_label as { label?: string } | null)?.label ?? 'IA'
+
+  if (projectError) {
+    console.warn('[ai-recommend] Error leyendo domain_id:', projectError.message)
+  }
+
+
   // ── PASO 9 — Llamar a Anthropic Claude API ────────────────────
   // El timer mide solo la latencia de la llamada LLM, no el paso de guardado.
   // logAIAudit se dispara inmediatamente tras callClaude (éxito o error) para
   // garantizar que ningún token quede sin registrar aunque falle el paso 10.
 
-  const { system, user: userMessage } = toolConfig.buildPrompt(context)
+  const { system, user: userMessage } = await toolConfig.buildPrompt(context, supabaseUser, domainId, domainLabel)
 
   const llmStartedAt = Date.now()
   let claudeResult: ClaudeResult

@@ -14,6 +14,7 @@ import type { PolicyGenerationContext } from '@/hooks/usePolicyGeneration'
 import { PolicyDownloadButton } from '../PolicyPDF'
 import { PersistenceBanner } from '@/shared/components/PersistenceBanner'
 import { Badge, StreamingIndicator } from '@shared/design-system/components'
+import { useDomainFramework } from '@/shared/hooks/useDomainFramework'
 
 const RISK_ICON_SM = {
   ban:              <Ban           size={12} strokeWidth={1.5} />,
@@ -34,6 +35,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
   const { canvas }     = useT5Store()
   const { generatedPolicy, clearGeneratedPolicy, persistenceStatus, persistenceError, retrySave } = useT6Store()
   const profile        = useCompanyProfileStore((s) => s.profile)
+  const { getLabel }   = useDomainFramework()
   const { generate, status: genStatus, error: genError, clearError } = usePolicyGeneration()
   const isPending = genStatus === 'pending'
   const now            = new Date()
@@ -103,6 +105,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
     highRiskCases,
     activeDomains:   activeDomains.map(code => ({ code, domain: canvas.domains[code] })),
     ownerDomains:    Object.values(canvas.domains).slice(0, 4),
+    riskLabel:       getLabel('ai_act_risk'),
     generatedPolicy: generatedPolicy ?? null,
   }
 
@@ -313,7 +316,7 @@ export function PolicyTab({ companyName, engagementId }: PolicyTabProps) {
                     <tr className="border-b border-border dark:border-white/6">
                       <th className="text-left py-2 pr-4 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Sistema IA</th>
                       <th className="text-left py-2 px-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Departamento</th>
-                      <th className="text-left py-2 px-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Riesgo AI Act</th>
+                      <th className="text-left py-2 px-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">{getLabel('ai_act_risk')}</th>
                       <th className="text-left py-2 pl-3 text-[10px] font-mono uppercase tracking-widest text-text-subtle">Estado</th>
                     </tr>
                   </thead>

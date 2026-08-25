@@ -18,10 +18,10 @@ import { listMyProjects, createProject }  from '@/services/projects.service'
 import { getAuthUserCompanyId }          from '@/services/auth.service'
 import { resetAllEngagementStores } from '@/lib/resetEngagementStores'
 import { reportError }               from '@/lib/reportError'
-import type { ProjectRow }                from '@/types/database.types'
+import type { ProjectRow, ProjectRowWithDomain }                from '@/types/database.types'
 
 interface EngagementStore {
-  projects: ProjectRow[]
+  projects: ProjectRowWithDomain[]
   activeEngagementId: string | null
   isLoading:          boolean
 

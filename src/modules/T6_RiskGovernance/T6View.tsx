@@ -16,6 +16,7 @@ import { useT5Store }        from '@/modules/T5_AITaxonomyCanvas'
 import { useT6Store }        from './store'
 import { useCompanyProfileStore } from '@/modules/CompanyProfile/store'
 import { useEngagementStore }     from '@/modules/Engagement/store'
+import { useDomainFramework }     from '@/shared/hooks/useDomainFramework'
 import { RecommendationPanel }    from '@/components/RecommendationPanel'
 import { buildT6RecommendationContext } from './t6ContextBuilder'
 import { PhaseMiniMap }          from '@/shared/components/PhaseMiniMap'
@@ -46,6 +47,7 @@ export function T6View({
   const companyProfile   = useCompanyProfileStore((s) => s.profile)
   const companyName      = companyProfile.engagementName
   const loadProfile      = useCompanyProfileStore((s) => s.loadProfile)
+  const { getLabel }     = useDomainFramework()
   const { engagementId: urlId } = useParams<{ engagementId: string }>()
   const storeId                 = useEngagementStore((s) => s.activeEngagementId)
   const engagementId            = urlId ?? storeId
@@ -130,7 +132,7 @@ export function T6View({
             onChange={(v) => setTab(v as T6Tab)}
             tabs={[
               { value: 'politica', label: 'Política IA Corporativa', icon: <FileText size={14} strokeWidth={1.5} /> },
-              { value: 'riesgos',  label: 'Dashboard AI Act', icon: <Scale size={14} strokeWidth={1.5} />, badge: highRisk > 0 ? `${highRisk} alto` : undefined },
+              { value: 'riesgos',  label: getLabel('ai_act_dashboard'), icon: <Scale size={14} strokeWidth={1.5} />, badge: highRisk > 0 ? `${highRisk} alto` : undefined },
             ]}
           />
         </div>
@@ -151,7 +153,7 @@ export function T6View({
               <RecommendationPanel
                 tool="t6"
                 title="Análisis de Riesgo y Cumplimiento"
-                subtitle="Recomendaciones de gobernanza basadas en tu exposición AI Act"
+                subtitle={getLabel('ai_act_risk_subtitle')}
                 context={t6LLMContext}
                 engagementId={engagementId}
               />
