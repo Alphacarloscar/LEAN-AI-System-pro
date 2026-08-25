@@ -1,6 +1,6 @@
 # ADR-029 — Generalización Multidominio de GOBY
 
-**Estado:** Propuesto  
+**Estado:** Implementado  
 **Fecha:** 2026-08-24  
 **Autores:** Panel ROL-01 · ROL-02 · ROL-05 · ROL-16  
 **Revisores:** Alpha (responsable de desarrollo)  
@@ -493,12 +493,12 @@ CREATE TABLE framework_controls (
 | Fase 3 | ✅ Implementada | 2026-08-24 | usePermissions + AppSidebar dinámico + packageModules. CI verde. |
 | Fase 4 | ✅ Implementada | 2026-08-24 | PackagePreviewBanner + usePackagePanel + 6 paneles con estados activo/preview. 23 tests. CI verde. |
 | Fase 5 | ✅ Implementada | 2026-08-25 | Tipos 4/3A/1 parametrizados. Tipo B y prefijos Tipo 2 → backlog segundo dominio. 741 tests. CI verde. |
-| Fase 6 | ⏳ Pendiente | — | Validación E2E + diagnóstico contracted_packages |
+| Fase 6 | ✅ Implementada | 2026-08-25 | 157 specs E2E (T10/T11/T12 nuevos). Test Boost Only project agregado a seed para validar estados preview. Typecheck verde. |
 
 ---
 
 **Versión:** 1.0.0  
-**Última revisión:** 2026-08-24 (Fase 3 completada)  
-**Próxima revisión:** al iniciar Fase 4  
+**Última revisión:** 2026-08-25 (Fase 6 completada — todas las fases implementadas)  
+**Próxima revisión:** al iniciar implementación de segundo dominio  
 **Idioma:** Español de España (documentación humana)  
 **Fuente de verdad para implementación:** este documento + `CLAUDE.md` del repo

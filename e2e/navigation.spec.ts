@@ -3,7 +3,7 @@ import { login, USERS } from './helpers'
 
 // Las rutas de la app y su título esperado en sidebar/header
 const TOOL_ROUTES = [
-  { path: '/',               label: 'home'            },
+  { path: '/',               label: 'home'            },    // T10 dashboard (ruta raíz)
   { path: '/t1',             label: 'T1'              },
   { path: '/t2',             label: 'T2'              },
   { path: '/t3',             label: 'T3'              },

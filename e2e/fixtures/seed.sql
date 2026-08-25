@@ -48,11 +48,19 @@ INSERT INTO public.company_departments (id, company_id, name, color) VALUES
   ('59faa869-b864-484e-83dd-7792540bf703', '0b83042d-414e-4d4c-8c83-3a469affbfb3', 'Diseño',      '#C8860A')
 ON CONFLICT (id) DO NOTHING;
 
--- ── 4. Project (canon E2E: "Toy Story") ──────────────────────
+-- ── 4. Projects (canon E2E: "Toy Story" + "Test Boost Only") ─
 INSERT INTO public.projects (id, name, owner_id, company_id, status, current_phase)
 VALUES (
   'e2058bff-9759-465d-ae4d-df79fdf23815',
   'Toy Story',
+  '51e0f939-b12a-42d5-87b6-6e6d5d6036a0',
+  '0b83042d-414e-4d4c-8c83-3a469affbfb3',
+  'active',
+  'listen'
+),
+(
+  'd1a2b3c4-e5f6-4a1b-9c8d-7e6f5a4b3c2d',
+  'Test Boost Only',
   '51e0f939-b12a-42d5-87b6-6e6d5d6036a0',
   '0b83042d-414e-4d4c-8c83-3a469affbfb3',
   'active',
@@ -62,7 +70,9 @@ VALUES (
 -- ── 5. Project members ───────────────────────────────────────
 INSERT INTO public.project_members (project_id, user_id, role) VALUES
   ('e2058bff-9759-465d-ae4d-df79fdf23815', '51e0f939-b12a-42d5-87b6-6e6d5d6036a0', 'consultant'),
-  ('e2058bff-9759-465d-ae4d-df79fdf23815', '22749bdd-8ea1-49e1-8f44-7ae199bb77b0', 'consultant')
+  ('e2058bff-9759-465d-ae4d-df79fdf23815', '22749bdd-8ea1-49e1-8f44-7ae199bb77b0', 'consultant'),
+  ('d1a2b3c4-e5f6-4a1b-9c8d-7e6f5a4b3c2d', '51e0f939-b12a-42d5-87b6-6e6d5d6036a0', 'consultant'),
+  ('d1a2b3c4-e5f6-4a1b-9c8d-7e6f5a4b3c2d', '22749bdd-8ea1-49e1-8f44-7ae199bb77b0', 'consultant')
 ON CONFLICT (project_id, user_id) DO NOTHING;
 
 -- ── 6. T1 dimension scores — interviewee: Andy (CEO / business) ──
@@ -173,6 +183,8 @@ UNION ALL
 SELECT 'profiles',                    COUNT(*) FROM public.profiles            WHERE company_id = '0b83042d-414e-4d4c-8c83-3a469affbfb3'
 UNION ALL
 SELECT 'projects (Toy Story)',         COUNT(*) FROM public.projects            WHERE id = 'e2058bff-9759-465d-ae4d-df79fdf23815'
+UNION ALL
+SELECT 'projects (Test Boost Only)',   COUNT(*) FROM public.projects            WHERE id = 'd1a2b3c4-e5f6-4a1b-9c8d-7e6f5a4b3c2d'
 UNION ALL
 SELECT 'project_members',              COUNT(*) FROM public.project_members     WHERE project_id = 'e2058bff-9759-465d-ae4d-df79fdf23815'
 UNION ALL

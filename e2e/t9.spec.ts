@@ -210,6 +210,7 @@ test.describe('ToolHeader ADR-021 — resiliencia de h1 en T1-T12', () => {
     { path: `/t4/${LAB_PROJECT_ID}`,  titleRegex: /Use Case Priority Board/i   },
     { path: `/t5/${LAB_PROJECT_ID}`,  titleRegex: /AI.*Taxonomy.*Canvas|AI Domain Architecture/i },
     { path: `/t9/${LAB_PROJECT_ID}`,  titleRegex: /Roadmap IA/i                 },
+    { path: `/t11/${LAB_PROJECT_ID}`, titleRegex: /Operating Rhythm|Operating Model/i },
     { path: `/t12/${LAB_PROJECT_ID}`, titleRegex: /ISO.*42001|ISO Assessment/i },
   ]
 

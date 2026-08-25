@@ -1,10 +1,13 @@
 import { expect, type Page } from '@playwright/test'
 
 // ── Lab constants ─────────────────────────────────────────────────────────────
-// Empresa Disney · proyecto canon "Toy Story"
+// Empresa Disney · dos proyectos canon:
+//   - "Toy Story" — todos los paquetes (boost + portfolio + legal)
+//   - "Test Boost Only" — solo paquete boost_assessment (para testear estado preview)
 // Seed en e2e/fixtures/seed.sql
-export const LAB_COMPANY_ID  = '0b83042d-414e-4d4c-8c83-3a469affbfb3'
-export const LAB_PROJECT_ID  = 'e2058bff-9759-465d-ae4d-df79fdf23815'
+export const LAB_COMPANY_ID           = '0b83042d-414e-4d4c-8c83-3a469affbfb3'
+export const LAB_PROJECT_ID           = 'e2058bff-9759-465d-ae4d-df79fdf23815'  // Toy Story
+export const LAB_PROJECT_BOOST_ONLY   = 'd1a2b3c4-e5f6-4a1b-9c8d-7e6f5a4b3c2d'  // Test Boost Only
 
 export const USERS = {
   superadmin: {
