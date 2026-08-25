@@ -492,8 +492,8 @@ CREATE TABLE framework_controls (
 | Fase 2 | ⏳ Pendiente | — | Shared Kernel T4 |
 | Fase 3 | ✅ Implementada | 2026-08-24 | usePermissions + AppSidebar dinámico + packageModules. CI verde. |
 | Fase 4 | ✅ Implementada | 2026-08-24 | PackagePreviewBanner + usePackagePanel + 6 paneles con estados activo/preview. 23 tests. CI verde. |
-| Fase 5 | ⏳ Pendiente | — | Eliminación literales AI |
-| Fase 6 | ⏳ Pendiente | — | Validación E2E |
+| Fase 5 | ✅ Implementada | 2026-08-25 | Tipos 4/3A/1 parametrizados. Tipo B y prefijos Tipo 2 → backlog segundo dominio. 741 tests. CI verde. |
+| Fase 6 | ⏳ Pendiente | — | Validación E2E + diagnóstico contracted_packages |
 
 ---
 
