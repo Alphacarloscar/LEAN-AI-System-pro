@@ -321,6 +321,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
                     friction={friction}
                     onUpdate={(updates) => updateFriction(friction.id, updates)}
                     onRemove={() => removeFriction(friction.id)}
+                    areas={departments}
                   />
                 ))}
               </div>

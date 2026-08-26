@@ -140,6 +140,7 @@ export function ProyectoTab() {
                 key={friction.id} index={i} friction={friction}
                 onUpdate={(partial) => updateFriction(friction.id, partial)}
                 onRemove={() => removeFriction(friction.id)}
+                areas={departments}
               />
             ))}
           </div>

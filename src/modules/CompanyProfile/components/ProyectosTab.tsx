@@ -11,12 +11,12 @@ import { getEcosystemOptions, getFrictionLabel, HORIZON_OPTIONS } from '@/module
 import { listProjectsByCompany, createProject, deleteProject } from '@/services/projects.service'
 import { loadActiveDomains } from '@/services/domains.service'
 import { usePermissions } from '@/modules/Auth'
+import { useDepartmentStore } from '../useDepartmentStore'
 import { reportError } from '@/lib/reportError'
 import { ProjectDetailView } from '../ProjectDetailView'
 import { ImpactWarningDialog } from '@/shared/components/ImpactWarningDialog'
 import {
   FRICTION_TYPE_OPTIONS,
-  ALL_BUSINESS_AREAS,
 } from '../types'
 import type { GovernanceDomain } from '@/services/domains.service'
 import type { Friction } from '../types'
@@ -32,6 +32,7 @@ interface ProyectosTabProps {
 
 export function ProyectosTab({ companyId }: ProyectosTabProps) {
   const { canEditCompanySettings } = usePermissions()
+  const { departments } = useDepartmentStore()
   const [projects, setProjects] = useState<ProyectoItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [domains, setDomains] = useState<GovernanceDomain[]>([])
@@ -369,9 +370,13 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
                                 className="w-full px-2 py-1 rounded border border-border text-[11px] bg-white dark:bg-warm-800"
                               >
                                 <option value="">Área</option>
-                                {ALL_BUSINESS_AREAS.map(area => (
-                                  <option key={area} value={area}>{area}</option>
-                                ))}
+                                {departments.length > 0 ? (
+                                  departments.map(dept => (
+                                    <option key={dept.id} value={dept.name}>{dept.name}</option>
+                                  ))
+                                ) : (
+                                  <option disabled>Sin departamentos</option>
+                                )}
                               </select>
                             </div>
                             <div>

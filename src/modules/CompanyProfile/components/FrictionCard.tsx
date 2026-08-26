@@ -12,9 +12,13 @@ interface FrictionCardProps {
   friction: Friction
   onUpdate: (partial: Partial<Friction>) => void
   onRemove: () => void
+  areas?: { id: string; name: string }[]
 }
 
-export function FrictionCard({ index, friction, onUpdate, onRemove }: FrictionCardProps) {
+export function FrictionCard({ index, friction, onUpdate, onRemove, areas }: FrictionCardProps) {
+  const areaOptions = areas && areas.length > 0
+    ? areas.map(a => a.name)
+    : AREA_OPTIONS as unknown as string[]
   return (
     <div className="rounded-xl bg-warm-50 dark:bg-warm-800 border border-border dark:border-white/6 p-5 space-y-4">
       <div className="flex items-center justify-between">
@@ -50,7 +54,7 @@ export function FrictionCard({ index, friction, onUpdate, onRemove }: FrictionCa
           <LeanSelect
             value={friction.areaFuncional}
             onChange={(v) => onUpdate({ areaFuncional: v })}
-            options={AREA_OPTIONS as unknown as string[]}
+            options={areaOptions}
             placeholder="Opcional..."
           />
         </div>
