@@ -25,11 +25,11 @@ import { updateCompanySettings }  from '@/services/companies.service'
 import { reportError }            from '@/lib/reportError'
 import { isDemoEnabled }          from '@/lib/config'
 import { EmpresaTab }             from './components/EmpresaTab'
-import { ProyectoTab }            from './components/ProyectoTab'
+import { ProyectosTab }           from './components/ProyectosTab'
 
 // ── Tipos locales ─────────────────────────────────────────────
 
-type ActiveTab = 'empresa' | 'proyecto'
+type ActiveTab = 'empresa' | 'proyectos'
 
 interface CompanySettings {
   sector:       string
@@ -40,11 +40,10 @@ interface CompanySettings {
 
 export function CompanyProfileView() {
   const navigate     = useNavigate()
-  const { isReadOnly, canEditCompanySettings } = usePermissions()
+  const { canEditCompanySettings } = usePermissions()
 
   const {
-    isDirty, isSaving, isLoadingData, saveError,
-    loadProfile, saveProfile, resetProfile,
+    isLoadingData, loadProfile, resetProfile,
   } = useCompanyProfileStore()
 
   const { reset: resetDepartments, fetchDepartments } = useDepartmentStore()
@@ -60,7 +59,6 @@ export function CompanyProfileView() {
   const [isCompanySaving,   setIsCompanySaving]   = useState(false)
   const [companySaveFlash,  setCompanySaveFlash]  = useState(false)
   const [companySaveError,  setCompanySaveError]  = useState<string | null>(null)
-  const [savedFlash,        setSavedFlash]        = useState(false)
 
   // ── Carga al seleccionar proyecto ─────────────────────────────
   useEffect(() => {
@@ -106,21 +104,6 @@ export function CompanyProfileView() {
     }
   }
 
-  // ── Guardar contexto del proyecto ─────────────────────────────
-  async function handleProjectSave() {
-    await saveProfile(engagementId ?? undefined)
-    if (!saveError) {
-      setSavedFlash(true)
-      setTimeout(() => setSavedFlash(false), 2000)
-    }
-  }
-
-  const savedDate = useCompanyProfileStore((s) => s.profile.savedAt)
-    ? new Date(useCompanyProfileStore.getState().profile.savedAt!).toLocaleDateString('es-ES', {
-        day: '2-digit', month: 'short', year: 'numeric',
-        hour: '2-digit', minute: '2-digit',
-      })
-    : null
 
   // ── Guards ────────────────────────────────────────────────────
   if (isLoadingData) {
@@ -192,13 +175,9 @@ export function CompanyProfileView() {
 
           {/* Botón de guardado contextual */}
           <div className="flex items-center gap-3 shrink-0">
-            {activeTab === 'proyecto' && (
-              <>
-                {saveError && <span className="text-[10px] text-danger font-mono max-w-[280px] truncate" title={saveError}>{saveError}</span>}
-                {savedDate && !isDirty && !saveError && <span className="text-[10px] text-text-subtle dark:text-warm-400 font-mono">Guardado {savedDate}</span>}
-                {isDirty && !isSaving && <span className="text-[10px] text-warning-dark font-mono animate-pulse">Cambios sin guardar</span>}
-              </>
-            )}
+            {/* Nota: saveProfile, saveError, isDirty y isSaving son de company_profiles (Contexto del Proyecto).
+                 Aquí no se muestra porque ese contenido se ha movido al tab "Proyecto" (ProyectoTab.tsx).
+                 CompanyProfileView solo maneja guardado de Empresa (sector/tamaño) */}
             {activeTab === 'empresa' && companySaveError && (
               <span className="text-[10px] text-danger font-mono max-w-[280px] truncate" title={companySaveError}>{companySaveError}</span>
             )}
@@ -220,23 +199,6 @@ export function CompanyProfileView() {
                   : 'Guardar empresa'}
               </button>
             )}
-
-            {!isReadOnly && activeTab === 'proyecto' && (
-              <button
-                onClick={handleProjectSave}
-                disabled={isSaving}
-                className={[
-                  'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
-                  isSaving ? 'bg-warm-300 dark:bg-warm-700 text-warm-500 cursor-not-allowed'
-                    : savedFlash ? 'bg-success-dark text-white'
-                    : 'bg-navy-metallic dark:bg-gold-metallic text-white dark:text-lean-black hover:bg-navy-metallic-hover dark:hover:bg-gold-metallic-hover shadow-sm',
-                ].join(' ')}
-              >
-                {isSaving ? (<><Spinner size="sm" label="Guardando…" />Guardando...</>)
-                  : savedFlash ? (<><svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 7l4 4 6-7" /></svg>Guardado</>)
-                  : (<><svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 2H4L2 4v8a1 1 0 001 1h8a1 1 0 001-1V3a1 1 0 00-1-1z" /><path d="M9 2v4H5V2" /><rect x="4" y="8" width="6" height="5" rx="0.5" /></svg>Guardar contexto</>)}
-              </button>
-            )}
           </div>
         </div>
 
@@ -244,7 +206,7 @@ export function CompanyProfileView() {
         <div className="max-w-5xl mx-auto mt-3 flex gap-1">
           {([
             { id: 'empresa',  label: 'Empresa' },
-            { id: 'proyecto', label: 'Contexto del proyecto' },
+            { id: 'proyectos', label: 'Proyectos' },
           ] as { id: ActiveTab; label: string }[]).map((tab) => (
             <button
               key={tab.id}
@@ -271,7 +233,9 @@ export function CompanyProfileView() {
             canEditCompanySettings={canEditCompanySettings}
           />
         )}
-        {activeTab === 'proyecto' && <ProyectoTab />}
+        {activeTab === 'proyectos' && companyId && (
+          <ProyectosTab companyId={companyId} />
+        )}
       </div>
     </div>
   )

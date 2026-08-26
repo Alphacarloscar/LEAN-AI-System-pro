@@ -1,8 +1,8 @@
 // ============================================================
-// CompanyProjectsSection — CRUD de proyectos en el perfil de empresa
+// ProyectosTab — Gestión de proyectos de la empresa
 //
-// Disponible solo para superadmin y consultant.
-// Permite crear y listar proyectos asociados a la empresa.
+// Listado de proyectos, crear nuevo, editar contexto.
+// Solo superadmin/consultant pueden editar.
 // ============================================================
 
 import { useState, useEffect } from 'react'
@@ -13,17 +13,17 @@ import { loadActiveDomains } from '@/services/domains.service'
 import { reportError } from '@/lib/reportError'
 import type { GovernanceDomain } from '@/services/domains.service'
 
-interface CompanyProject {
+interface ProyectoItem {
   id: string
   name: string
 }
 
-interface CompanyProjectsSectionProps {
+interface ProyectosTabProps {
   companyId: string
 }
 
-export function CompanyProjectsSection({ companyId }: CompanyProjectsSectionProps) {
-  const [projects, setProjects] = useState<CompanyProject[]>([])
+export function ProyectosTab({ companyId }: ProyectosTabProps) {
+  const [projects, setProjects] = useState<ProyectoItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [domains, setDomains] = useState<GovernanceDomain[]>([])
 

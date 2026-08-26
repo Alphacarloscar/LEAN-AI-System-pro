@@ -1,0 +1,19 @@
+
+Running 155 tests using 1 worker
+
+  -    1 [chromium] › e2e\admin.spec.ts:29:3 › Admin Panel — acceso superadmin › la vista /admin carga sin crash
+  -    2 [chromium] › e2e\admin.spec.ts:43:3 › Admin Panel — acceso superadmin › muestra los 3 tabs: Empresas, Usuarios, Proyectos
+  -    3 [chromium] › e2e\admin.spec.ts:54:3 › Admin Panel — acceso superadmin › tab Empresas muestra al menos una empresa
+  -    4 [chromium] › e2e\admin.spec.ts:72:3 › Admin Panel — acceso superadmin › tab Usuarios muestra al menos un usuario
+  -    5 [chromium] › e2e\admin.spec.ts:87:3 › Admin Panel — acceso superadmin › el botón de crear empresa está visible
+  -    6 [chromium] › e2e\admin.spec.ts:98:3 › Admin Panel — acceso superadmin › el botón de invitar usuario está visible
+  -    7 [chromium] › e2e\admin.spec.ts:132:3 › Admin Panel — acceso denegado a roles no-superadmin › usuario no-superadmin no puede ver /admin (redirige o muestra 403)
+  x    8 [chromium] › e2e\architecture-guard.spec.ts:163:5 › Radar 1 — Anti-Ametralladora: Debounce Guard › T1 (AI Readiness — evidencia con debounce 800 ms) — ningún campo de texto dispara PATCH/POST por cada tecla (13.1s)
+  x    9 [chromium] › e2e\architecture-guard.spec.ts:163:5 › Radar 1 — Anti-Ametralladora: Debounce Guard › T4 (Economics — kpiPrincipal con estado local) — ningún campo de texto dispara PATCH/POST por cada tecla (13.0s)
+  x   10 [chromium] › e2e\architecture-guard.spec.ts:163:5 › Radar 1 — Anti-Ametralladora: Debounce Guard › CompanyProfile (Proyecto — inputs con updateField Zustand) — ningún campo de texto dispara PATCH/POST por cada tecla (13.1s)
+  x   11 [chromium] › e2e\architecture-guard.spec.ts:251:3 › Radar 2 — Rastreador de Fugas: PostgREST Leak Guard › interacciones en T1 y T4 no filtran errores crudos de PostgREST a la consola (13.2s)
+  x   12 [chromium] › e2e\audit.spec.ts:296:3 › Audit Trail — integración E2E › crear entrevistado dispara la llamada HTTP a log-audit-event (13.8s)
+  x   13 [chromium] › e2e\audit.spec.ts:319:3 › Audit Trail — integración E2E › el payload enviado a log-audit-event cumple el contrato AuditLogInsert (13.4s)
+  x   14 [chromium] › e2e\audit.spec.ts:386:3 › Audit Trail — integración E2E › args_payload refleja los datos del entrevistado creado (13.5s)
+  x   15 [chromium] › e2e\audit.spec.ts:425:3 › Audit Trail — integración E2E › metadata.engagement_id contiene el proyecto activo del seed (13.6s)
+  x   16 [chromium] › e2e\audit.spec.ts:462:3 › Audit Trail — integración E2E › la Edge Function confirma la inserción con { success: true } (616ms)

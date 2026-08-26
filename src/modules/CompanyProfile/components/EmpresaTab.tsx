@@ -4,7 +4,6 @@
 
 import { DepartmentManager }  from '../DepartmentManager'
 import { CompanyPeopleSection } from './CompanyPeopleSection'
-import { CompanyProjectsSection } from './CompanyProjectsSection'
 import { SectionLabel, FieldLabel, LeanSelect } from './CompanyProfileHelpers'
 import { SECTOR_OPTIONS, COMPANY_SIZE_OPTIONS } from '../types'
 
@@ -72,11 +71,6 @@ export function EmpresaTab({
 
       {/* Personas en la empresa */}
       <CompanyPeopleSection companyId={companyId} />
-
-      {/* Proyectos de la empresa (solo superadmin/consultant) */}
-      {canEditCompanySettings && companyId && (
-        <CompanyProjectsSection companyId={companyId} />
-      )}
     </>
   )
 }
