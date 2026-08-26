@@ -71,10 +71,10 @@ BEGIN
     name = COALESCE(NULLIF(p_name, ''), name),
     objetivo_principal = CASE WHEN p_objetivo_principal IS NOT NULL THEN trim(p_objetivo_principal) ELSE objetivo_principal END,
     restricciones = CASE WHEN p_restricciones IS NOT NULL THEN trim(p_restricciones) ELSE restricciones END,
-    horizonte_valor = COALESCE(p_horizonte_valor, horizonte_valor),
-    ecosistema_tecnologico = COALESCE(p_ecosistema_tecnologico, ecosistema_tecnologico),
+    horizonte_valor = COALESCE(NULLIF(p_horizonte_valor, ''), horizonte_valor),
+    ecosistema_tecnologico = COALESCE(NULLIF(p_ecosistema_tecnologico, ''), ecosistema_tecnologico),
     fricciones_oportunidades = CASE WHEN p_fricciones_oportunidades IS NOT NULL THEN p_fricciones_oportunidades::jsonb ELSE fricciones_oportunidades END,
-    areas_prioritarias = COALESCE(p_areas_prioritarias, areas_prioritarias),
+    areas_prioritarias = COALESCE(NULLIF(p_areas_prioritarias, '{}'::text[]), areas_prioritarias),
     updated_at = now()
   WHERE id = p_project_id
   RETURNING * INTO v_project;
