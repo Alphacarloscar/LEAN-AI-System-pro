@@ -49,12 +49,22 @@ const _impl = {
     domainId?:     string
     currentPhase?: ProjectRow['current_phase']
     startDate?:    string
+    objetivoPrincipal?: string
+    restricciones?: string
+    horizonteValor?: string
+    ecosistemaTecnologico?: string
+    friccionesOportunidades?: string
   }): Promise<ProjectRow> {
     const { data, error } = await supabase.rpc('create_project', {
       p_name:       params.name,
       p_company_id: params.companyId ?? undefined,
       p_domain_id:  params.domainId ?? undefined,
       p_phase:      params.currentPhase ?? 'listen',
+      p_objetivo_principal: params.objetivoPrincipal ?? undefined,
+      p_restricciones: params.restricciones ?? undefined,
+      p_horizonte_valor: params.horizonteValor ?? undefined,
+      p_ecosistema_tecnologico: params.ecosistemaTecnologico ?? undefined,
+      p_fricciones_oportunidades: params.friccionesOportunidades ?? undefined,
     })
 
     if (error) {

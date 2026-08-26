@@ -120,6 +120,48 @@ const _impl = {
     if (error) throw new Error(`[CompanyPersonService] mergePersons: ${error.message}`)
     return data as unknown as MergeSummary
   },
+
+  /** Gets projects affected by deleting this person (only returns active projects). */
+  async getPersonImpact(personId: string): Promise<{ activeProjects: { id: string; name: string }[] }> {
+    const { data: person, error: personError } = await supabase
+      .from('company_persons')
+      .select('project_id')
+      .eq('id', personId)
+      .single()
+
+    if (personError) {
+      throw new Error(`[CompanyPersonService] getPersonImpact: ${personError.message}`)
+    }
+
+    if (!person) {
+      return { activeProjects: [] }
+    }
+
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select('id, name')
+      .eq('id', person.project_id)
+      .eq('status', 'active')
+      .single()
+
+    if (projectError) {
+      throw new Error(`[CompanyPersonService] getPersonImpact: ${projectError.message}`)
+    }
+
+    return {
+      activeProjects: project ? [{ id: project.id, name: project.name }] : [],
+    }
+  },
+
+  /** Deletes a person by id. */
+  async deletePerson(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('company_persons')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw new Error(`[CompanyPersonService] deletePerson: ${error.message}`)
+  },
 }
 
 // ── Punto de exportación auditado ────────────────────────────
@@ -132,4 +174,6 @@ export const {
   addPerson,
   updatePerson,
   mergePersons,
+  getPersonImpact,
+  deletePerson,
 } = _service

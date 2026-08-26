@@ -17,11 +17,13 @@ import { useDepartmentStore, type DepartmentType } from '../useDepartmentStore'
 import { usePermissions }        from '@/modules/Auth'
 import { Spinner, Badge, Button, Modal, Select, FormField } from '@shared/design-system/components'
 import type { SelectOption } from '@shared/design-system/components'
+import { ImpactWarningDialog } from '@/shared/components/ImpactWarningDialog'
 import { SectionLabel } from './CompanyProfileHelpers'
 import { MergePersonsModal } from './MergePersonsModal'
 import { EditPersonModal } from './EditPersonModal'
 import { DEPARTMENT_TYPE_LABEL, DEPARTMENT_CHIP_CLASS, DEPARTMENT_DOT_CLASS } from '../departmentDisplay'
 import { listProjectsByCompany } from '@/services/projects.service'
+import { getPersonImpact, deletePerson as svcDeletePerson } from '@/services/company-person.service'
 import { reportError } from '@/lib/reportError'
 
 interface CompanyPeopleSectionProps {
@@ -49,6 +51,11 @@ export function CompanyPeopleSection({ companyId }: CompanyPeopleSectionProps) {
   const [showMergeModal, setShowMergeModal] = useState(false)
   const [editingPerson, setEditingPerson] = useState<CompanyPerson | null>(null)
 
+  const [deletingPerson, setDeletingPerson] = useState<CompanyPerson | null>(null)
+  const [impactWarningOpen, setImpactWarningOpen] = useState(false)
+  const [impactDescription, setImpactDescription] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
+
   function resetAddPersonModal() {
     setShowAddModal(false)
     setAddPersonProjectId('')
@@ -73,6 +80,56 @@ export function CompanyPeopleSection({ companyId }: CompanyPeopleSectionProps) {
     } finally {
       setIsAddingPerson(false)
     }
+  }
+
+  async function handleDeletePersonClick(person: CompanyPerson) {
+    setDeletingPerson(person)
+    setIsDeleting(true)
+
+    try {
+      const impact = await getPersonImpact(person.id)
+
+      if (impact.activeProjects.length > 0) {
+        const projectNames = impact.activeProjects.map(p => p.name).join(', ')
+        setImpactDescription(
+          `⚠️ Esta persona participa en ${impact.activeProjects.length} proyecto(s) activo(s): ${projectNames}.\n` +
+          `Eliminarla puede dejar fases de entrevista incompletas y afectar ` +
+          `métricas de cobertura en esos proyectos.\n` +
+          `¿Confirmas la eliminación?`
+        )
+      } else {
+        setImpactDescription('¿Confirmas la eliminación de esta persona?')
+      }
+
+      setImpactWarningOpen(true)
+    } catch (err) {
+      reportError('[CompanyPeopleSection] handleDeletePersonClick', err)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  async function handleConfirmDeletePerson() {
+    if (!deletingPerson) return
+
+    setIsDeleting(true)
+
+    try {
+      await svcDeletePerson(deletingPerson.id)
+      await fetchPersonsByCompany(companyId!)
+      setImpactWarningOpen(false)
+      setDeletingPerson(null)
+    } catch (err) {
+      reportError('[CompanyPeopleSection] handleConfirmDeletePerson', err)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  function handleCancelDeletePerson() {
+    setImpactWarningOpen(false)
+    setDeletingPerson(null)
+    setImpactDescription('')
   }
 
   useEffect(() => {
@@ -214,9 +271,19 @@ export function CompanyPeopleSection({ companyId }: CompanyPeopleSectionProps) {
                     {person.source_tool}
                   </Badge>
                   {canEditCompanySettings && (
-                    <Button variant="ghost" size="sm" onClick={() => setEditingPerson(person)}>
-                      Editar
-                    </Button>
+                    <>
+                      <Button variant="ghost" size="sm" onClick={() => setEditingPerson(person)}>
+                        Editar
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDeletePersonClick(person)}
+                        disabled={isDeleting}
+                      >
+                        Eliminar
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
@@ -300,6 +367,16 @@ export function CompanyPeopleSection({ companyId }: CompanyPeopleSectionProps) {
           onClose={() => setEditingPerson(null)}
         />
       )}
+
+      {/* ── Impact Warning Dialog ── */}
+      <ImpactWarningDialog
+        isOpen={impactWarningOpen}
+        title={deletingPerson ? `Eliminar persona "${deletingPerson.name}"` : 'Eliminar persona'}
+        impactDescription={impactDescription}
+        onConfirm={handleConfirmDeletePerson}
+        onCancel={handleCancelDeletePerson}
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

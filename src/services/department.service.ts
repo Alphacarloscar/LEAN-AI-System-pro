@@ -67,6 +67,27 @@ const _impl = {
     return { ...data, type: data.type as DepartmentType, created_at: data.created_at ?? '' }
   },
 
+  /** Gets persons affected by deleting this department, identified by name match. */
+  async getDepartmentImpact(
+    _departmentId: string,
+    companyId: string,
+    departmentName: string,
+  ): Promise<{ affectedPersons: { id: string; name: string }[] }> {
+    const { data, error } = await supabase
+      .from('company_persons')
+      .select('id, name')
+      .eq('company_id', companyId)
+      .eq('department', departmentName)
+
+    if (error) {
+      throw new Error(`[DepartmentService] getDepartmentImpact: ${error.message}`)
+    }
+
+    return {
+      affectedPersons: (data ?? []).map(p => ({ id: p.id, name: p.name })),
+    }
+  },
+
   /** Deletes a department by id. */
   async deleteDepartment(id: string): Promise<void> {
     const { error } = await supabase
@@ -86,5 +107,6 @@ export const {
   fetchDepartments,
   addDepartment,
   updateDepartment,
+  getDepartmentImpact,
   deleteDepartment,
 } = _service

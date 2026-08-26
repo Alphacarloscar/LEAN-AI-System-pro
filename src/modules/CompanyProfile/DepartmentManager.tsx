@@ -13,7 +13,9 @@ import { Pencil }             from 'lucide-react'
 import { useDepartmentStore, type Department, type DepartmentType } from './useDepartmentStore'
 import { usePermissions }     from '@/modules/Auth'
 import { Spinner, SegmentedControl } from '@shared/design-system/components'
+import { ImpactWarningDialog } from '@/shared/components/ImpactWarningDialog'
 import { reportError }        from '@/lib/reportError'
+import { getDepartmentImpact, deleteDepartment as svcDeleteDepartment } from '@/services/department.service'
 import {
   DEPARTMENT_TYPE_LABEL,
   DEPARTMENT_CHIP_CLASS,
@@ -49,6 +51,11 @@ export function DepartmentManager({ companyId }: Props) {
   const [editName,  setEditName]  = useState('')
   const [editType,  setEditType]  = useState<DepartmentType>('negocio_ops')
   const [isSaving,  setIsSaving]  = useState(false)
+
+  const [deletingDept, setDeletingDept] = useState<Department | null>(null)
+  const [impactWarningOpen, setImpactWarningOpen] = useState(false)
+  const [impactDescription, setImpactDescription] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // ── Handlers ──────────────────────────────────────────────
 
@@ -131,6 +138,63 @@ export function DepartmentManager({ companyId }: Props) {
       e.preventDefault()
       cancelEditing()
     }
+  }
+
+  async function handleDeleteDepartmentClick(dept: Department) {
+    setDeletingDept(dept)
+    setIsDeleting(true)
+    setLocalError(null)
+
+    try {
+      const impact = await getDepartmentImpact(dept.id, companyId!, dept.name)
+
+      if (impact.affectedPersons.length > 0) {
+        const names = impact.affectedPersons.map(p => p.name).join(', ')
+        setImpactDescription(
+          `⚠️ Este departamento tiene ${impact.affectedPersons.length} persona(s) asociada(s): ${names}.\n` +
+          `Eliminar el departamento dejará esas personas sin departamento asignado, ` +
+          `lo que puede afectar métricas de cobertura organizacional en los proyectos activos.\n` +
+          `¿Confirmas la eliminación?`
+        )
+      } else {
+        setImpactDescription('¿Confirmas la eliminación de este departamento?')
+      }
+
+      setImpactWarningOpen(true)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al verificar impacto de eliminación'
+      reportError('[DepartmentManager] handleDeleteDepartmentClick', err)
+      setLocalError(msg)
+      setDeletingDept(null)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  async function handleConfirmDelete() {
+    if (!deletingDept || !companyId) return
+
+    setIsDeleting(true)
+    setLocalError(null)
+
+    try {
+      await svcDeleteDepartment(deletingDept.id)
+      await deleteDepartment(deletingDept.id)
+      setImpactWarningOpen(false)
+      setDeletingDept(null)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al eliminar departamento'
+      reportError('[DepartmentManager] handleConfirmDelete', err)
+      setLocalError(msg)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  function handleCancelDelete() {
+    setImpactWarningOpen(false)
+    setDeletingDept(null)
+    setImpactDescription('')
   }
 
   // Guard: sin empresa activa no renderizamos nada
@@ -227,9 +291,10 @@ export function DepartmentManager({ companyId }: Props) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => deleteDepartment(dept.id)}
+                      onClick={() => handleDeleteDepartmentClick(dept)}
+                      disabled={isDeleting}
                       aria-label={`Eliminar ${dept.name}`}
-                      className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-full hover:text-danger-dark hover:bg-danger-light/30 transition-all duration-100"
+                      className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-full hover:text-danger-dark hover:bg-danger-light/30 transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <svg width="7" height="7" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                         <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" />
@@ -314,6 +379,16 @@ export function DepartmentManager({ companyId }: Props) {
       {activeError && (
         <p className="text-[11px] text-danger-dark font-mono">{activeError}</p>
       )}
+
+      {/* ── Impact Warning Dialog ── */}
+      <ImpactWarningDialog
+        isOpen={impactWarningOpen}
+        title={deletingDept ? `Eliminar departamento "${deletingDept.name}"` : 'Eliminar departamento'}
+        impactDescription={impactDescription}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        isLoading={isDeleting}
+      />
 
     </div>
   )
