@@ -31,7 +31,7 @@ CREATE OR REPLACE FUNCTION public.create_project(
   p_restricciones text DEFAULT NULL,
   p_horizonte_valor text DEFAULT NULL,
   p_ecosistema_tecnologico text DEFAULT NULL,
-  p_fricciones_oportunidades jsonb DEFAULT NULL
+  p_fricciones_oportunidades text DEFAULT NULL
 )
 RETURNS SETOF public.projects
 LANGUAGE plpgsql
@@ -116,7 +116,7 @@ BEGIN
     CASE WHEN p_restricciones IS NOT NULL THEN trim(p_restricciones) ELSE NULL END,
     CASE WHEN p_horizonte_valor IS NOT NULL THEN trim(p_horizonte_valor) ELSE NULL END,
     CASE WHEN p_ecosistema_tecnologico IS NOT NULL THEN trim(p_ecosistema_tecnologico) ELSE NULL END,
-    COALESCE(p_fricciones_oportunidades, '[]'::JSONB),
+    CASE WHEN p_fricciones_oportunidades IS NOT NULL THEN p_fricciones_oportunidades::jsonb ELSE '[]'::JSONB END,
     v_now,
     v_now
   )
@@ -132,7 +132,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, text, text, jsonb) IS
+COMMENT ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, text, text, text) IS
   'Crea un proyecto con domain_id obligatorio y 5 campos opcionales de contexto. '
   'p_fricciones_oportunidades es JSONB array de {id, tipo, areaFuncional, frecuencia, impacto, notas}. '
   'Solo superadmin y consultant pueden invocarla. '
@@ -140,8 +140,8 @@ COMMENT ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, te
   'Firma extendida en migración 20260827 — antes aceptaba solo (uuid, text, uuid, text).';
 
 -- ── Permisos ──────────────────────────────────────────────────────
-REVOKE ALL     ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, text, text, jsonb) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, text, text, jsonb) TO authenticated;
+REVOKE ALL     ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, text, text, text) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, text, text, text) TO authenticated;
 
 -- Mantener la firma anterior (4 parámetros) por retrocompatibilidad si algo aún la invoca
 -- El sobrecargar función permite coexistencia de ambas firmas

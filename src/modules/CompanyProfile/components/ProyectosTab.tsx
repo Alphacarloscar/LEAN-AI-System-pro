@@ -14,7 +14,12 @@ import { usePermissions } from '@/modules/Auth'
 import { reportError } from '@/lib/reportError'
 import { ProjectDetailView } from '../ProjectDetailView'
 import { ImpactWarningDialog } from '@/shared/components/ImpactWarningDialog'
+import {
+  FRICTION_TYPE_OPTIONS,
+  ALL_BUSINESS_AREAS,
+} from '../types'
 import type { GovernanceDomain } from '@/services/domains.service'
+import type { Friction } from '../types'
 
 interface ProyectoItem {
   id: string
@@ -47,7 +52,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
   const [restricciones, setRestricciones] = useState('')
   const [horizonteValor, setHorizonteValor] = useState('')
   const [ecosistemaTecnologico, setEcosistemaTecnologico] = useState('')
-  const [friccionesOportunidades, setFriccionesOportunidades] = useState('')
+  const [fricciones, setFricciones] = useState<Friction[]>([])
 
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
@@ -78,9 +83,29 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
     setRestricciones('')
     setHorizonteValor('')
     setEcosistemaTecnologico('')
-    setFriccionesOportunidades('')
+    setFricciones([])
     setCreateError(null)
     setCreateSuccess(false)
+  }
+
+  function addFriccion() {
+    const newFriction: Friction = {
+      id: crypto.randomUUID(),
+      tipo: '',
+      areaFuncional: '',
+      frecuencia: null,
+      impacto: null,
+      notas: '',
+    }
+    setFricciones([...fricciones, newFriction])
+  }
+
+  function updateFriction(id: string, updates: Partial<Friction>) {
+    setFricciones(fricciones.map(f => f.id === id ? { ...f, ...updates } : f))
+  }
+
+  function removeFriction(id: string) {
+    setFricciones(fricciones.filter(f => f.id !== id))
   }
 
   async function handleCreateProject() {
@@ -101,7 +126,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
         restricciones: restricciones.trim() || undefined,
         horizonteValor: horizonteValor || undefined,
         ecosistemaTecnologico: ecosistemaTecnologico || undefined,
-        friccionesOportunidades: friccionesOportunidades.trim() || undefined,
+        friccionesOportunidades: fricciones.length > 0 ? JSON.stringify(fricciones) : undefined,
       })
 
       setCreateSuccess(true)
@@ -295,18 +320,102 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
                   />
                 </div>
 
+                {/* Fricciones estructuradas */}
                 <div>
-                  <label htmlFor="proyecto-fricciones" className="text-xs font-medium text-text-subtle dark:text-warm-400 mb-1 block">
-                    {frictionLabel}
-                  </label>
-                  <textarea
-                    id="proyecto-fricciones"
-                    value={friccionesOportunidades}
-                    onChange={(e) => setFriccionesOportunidades(e.target.value)}
-                    placeholder="Ej: Brecha de competencias, poca adopción de tecnología, resistencia al cambio, etc."
-                    rows={2}
-                    className={textareaClass}
-                  />
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-medium text-text-subtle dark:text-warm-400 block">
+                      {frictionLabel}
+                    </label>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={addFriccion}
+                    >
+                      + Añadir
+                    </Button>
+                  </div>
+
+                  {fricciones.length > 0 ? (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {fricciones.map((friction, idx) => (
+                        <div key={friction.id} className="bg-warm-50 dark:bg-warm-900 p-3 rounded-lg border border-border dark:border-white/10 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-semibold text-text-subtle dark:text-warm-400">Fricción {idx + 1}</span>
+                            <button
+                              onClick={() => removeFriction(friction.id)}
+                              className="text-xs text-danger-dark hover:bg-danger-light/20 px-2 py-1 rounded"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-[11px]">
+                            <div>
+                              <select
+                                value={friction.tipo}
+                                onChange={(e) => updateFriction(friction.id, { tipo: e.target.value })}
+                                className="w-full px-2 py-1 rounded border border-border text-[11px] bg-white dark:bg-warm-800"
+                              >
+                                <option value="">Tipo</option>
+                                {FRICTION_TYPE_OPTIONS.map(opt => (
+                                  <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <select
+                                value={friction.areaFuncional}
+                                onChange={(e) => updateFriction(friction.id, { areaFuncional: e.target.value })}
+                                className="w-full px-2 py-1 rounded border border-border text-[11px] bg-white dark:bg-warm-800"
+                              >
+                                <option value="">Área</option>
+                                {ALL_BUSINESS_AREAS.map(area => (
+                                  <option key={area} value={area}>{area}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <select
+                                value={friction.frecuencia || ''}
+                                onChange={(e) => updateFriction(friction.id, { frecuencia: e.target.value as any })}
+                                className="w-full px-2 py-1 rounded border border-border text-[11px] bg-white dark:bg-warm-800"
+                              >
+                                <option value="">Frecuencia</option>
+                                <option value="Baja">Baja</option>
+                                <option value="Media">Media</option>
+                                <option value="Alta">Alta</option>
+                              </select>
+                            </div>
+                            <div>
+                              <select
+                                value={friction.impacto || ''}
+                                onChange={(e) => updateFriction(friction.id, { impacto: e.target.value as any })}
+                                className="w-full px-2 py-1 rounded border border-border text-[11px] bg-white dark:bg-warm-800"
+                              >
+                                <option value="">Impacto</option>
+                                <option value="Bajo">Bajo</option>
+                                <option value="Medio">Medio</option>
+                                <option value="Alto">Alto</option>
+                              </select>
+                            </div>
+                            <div className="col-span-2">
+                              <textarea
+                                value={friction.notas}
+                                onChange={(e) => updateFriction(friction.id, { notas: e.target.value })}
+                                placeholder="Notas..."
+                                rows={1}
+                                className="w-full px-2 py-1 rounded border border-border text-[11px] bg-white dark:bg-warm-800 resize-none"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-text-subtle dark:text-warm-400 italic py-2">
+                      Sin fricciones. Usa el botón "Añadir" para empezar.
+                    </p>
+                  )}
                 </div>
               </>
             )}

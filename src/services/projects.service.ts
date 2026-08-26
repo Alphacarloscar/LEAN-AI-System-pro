@@ -62,8 +62,18 @@ const _impl = {
     restricciones?: string
     horizonteValor?: string
     ecosistemaTecnologico?: string
-    friccionesOportunidades?: string
+    friccionesOportunidades?: string | ProjectFriction[]
   }): Promise<ProjectRow> {
+    // Convertir array de fricciones a JSON string si es necesario
+    let friccionesString: string | undefined
+    if (params.friccionesOportunidades) {
+      if (typeof params.friccionesOportunidades === 'string') {
+        friccionesString = params.friccionesOportunidades
+      } else {
+        friccionesString = JSON.stringify(params.friccionesOportunidades)
+      }
+    }
+
     const { data, error } = await supabase.rpc('create_project', {
       p_name:       params.name,
       p_company_id: params.companyId ?? undefined,
@@ -73,7 +83,7 @@ const _impl = {
       p_restricciones: params.restricciones ?? undefined,
       p_horizonte_valor: params.horizonteValor ?? undefined,
       p_ecosistema_tecnologico: params.ecosistemaTecnologico ?? undefined,
-      p_fricciones_oportunidades: params.friccionesOportunidades ?? undefined,
+      p_fricciones_oportunidades: friccionesString ?? undefined,
     })
 
     if (error) {
