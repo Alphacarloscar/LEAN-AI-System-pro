@@ -5,30 +5,35 @@
 import { useState, useEffect }  from 'react'
 import { Spinner }              from '@shared/design-system/components'
 import { listMyProjects, createProject } from '@/services/projects.service'
+import { loadActiveDomains } from '@/services/domains.service'
 import { CheckIcon }            from './AdminHelpers'
 import type { ProjectsTabProps } from './AdminHelpers'
 import type { ProjectRow }      from '@/types/database.types'
+import type { GovernanceDomain } from '@/services/domains.service'
 
 export function ProjectsTab({ companies }: ProjectsTabProps) {
   const [projects,  setProjects]  = useState<ProjectRow[]>([])
   const [name,      setName]      = useState('')
   const [companyId, setCompanyId] = useState('')
+  const [domainId,  setDomainId]  = useState('')
+  const [domains,   setDomains]   = useState<GovernanceDomain[]>([])
   const [creating,  setCreating]  = useState(false)
   const [success,   setSuccess]   = useState(false)
   const [error,     setError]     = useState<string | null>(null)
 
   useEffect(() => {
     listMyProjects().then(setProjects)
+    loadActiveDomains().then(setDomains)
   }, [])
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim()) return
+    if (!name.trim() || !domainId) return
     setCreating(true); setError(null)
     try {
-      const project = await createProject({ name: name.trim(), companyId: companyId || undefined })
+      const project = await createProject({ name: name.trim(), companyId: companyId || undefined, domainId })
       setProjects((prev) => [project, ...prev])
-      setName(''); setCompanyId('')
+      setName(''); setCompanyId(''); setDomainId('')
       setSuccess(true)
       setTimeout(() => setSuccess(false), 2000)
     } catch (err) {
@@ -50,7 +55,11 @@ export function ProjectsTab({ companies }: ProjectsTabProps) {
             <option value="">Sin empresa</option>
             {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-          <button type="submit" disabled={creating || !name.trim()}
+          <select value={domainId} onChange={(e) => setDomainId(e.target.value)} aria-label="Seleccionar dominio para el proyecto" className="h-9 px-3 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60">
+            <option value="">Seleccionar dominio</option>
+            {domains.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+          </select>
+          <button type="submit" disabled={creating || !name.trim() || !domainId}
             className="h-9 px-4 rounded-lg bg-gold text-white text-sm font-medium disabled:opacity-40 hover:bg-gold-hover transition-colors flex items-center gap-2 whitespace-nowrap">
             {creating ? <Spinner /> : success ? <CheckIcon /> : null}
             Crear

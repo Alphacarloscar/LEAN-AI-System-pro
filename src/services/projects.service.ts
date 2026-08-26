@@ -32,7 +32,7 @@ const _impl = {
   async listMyProjects(): Promise<(ProjectRow & { governance_domains?: any })[]> {
     const { data, error } = await supabase
       .from('projects')
-      .select('*, governance_domains(label)')
+      .select('*, governance_domains(id, slug, label)')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
 
@@ -46,12 +46,14 @@ const _impl = {
   async createProject(params: {
     name:          string
     companyId?:    string
+    domainId?:     string
     currentPhase?: ProjectRow['current_phase']
     startDate?:    string
   }): Promise<ProjectRow> {
     const { data, error } = await supabase.rpc('create_project', {
       p_name:       params.name,
       p_company_id: params.companyId ?? undefined,
+      p_domain_id:  params.domainId ?? undefined,
       p_phase:      params.currentPhase ?? 'listen',
     })
 
@@ -170,6 +172,6 @@ export const {
 /** @deprecated Usar listMyProjects */
 export const listMyEngagements = listMyProjects
 /** @deprecated Usar createProject */
-export const createEngagement  = (p: { name: string }) => createProject(p)
+export const createEngagement  = (p: { name: string; domainId?: string }) => createProject(p)
 /** @deprecated Usar addProjectMember */
 export const addMember         = addProjectMember

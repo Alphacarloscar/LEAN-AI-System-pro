@@ -70,17 +70,19 @@ describe('ProjectsTab — accesibilidad de formulario Crear proyecto', () => {
 
   it('el select de empresa tiene al menos una opción accesible ("Sin empresa")', () => {
     render(<ProjectsTab companies={NO_COMPANIES} />)
-    // El <select> debe existir y tener la opción por defecto
-    const select = screen.getByRole('combobox')
-    expect(select).toBeDefined()
-    expect(within(select).getByText('Sin empresa')).toBeDefined()
+    // El primer <select> es el de empresa
+    const selects = screen.getAllByRole('combobox')
+    const companySelect = selects[0]
+    expect(companySelect).toBeDefined()
+    expect(within(companySelect).getByText('Sin empresa')).toBeDefined()
   })
 
   it('el select de empresa lista las empresas disponibles', () => {
     render(<ProjectsTab companies={SAMPLE_COMPANIES} />)
-    const select = screen.getByRole('combobox')
-    expect(within(select).getByText('ACME S.A.')).toBeDefined()
-    expect(within(select).getByText('Nexus S.L.')).toBeDefined()
+    const selects = screen.getAllByRole('combobox')
+    const companySelect = selects[0]
+    expect(within(companySelect).getByText('ACME S.A.')).toBeDefined()
+    expect(within(companySelect).getByText('Nexus S.L.')).toBeDefined()
   })
 
   it('el botón de submit tiene texto accesible "Crear"', () => {
