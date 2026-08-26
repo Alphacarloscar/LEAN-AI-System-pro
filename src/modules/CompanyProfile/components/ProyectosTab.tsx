@@ -1,16 +1,19 @@
 // ============================================================
 // ProyectosTab — Gestión de proyectos de la empresa
 //
-// Listado de proyectos, crear nuevo, editar contexto.
+// Listado de proyectos, crear nuevo, editar en pantalla detail.
 // Solo superadmin/consultant pueden editar.
 // ============================================================
 
 import { useState, useEffect } from 'react'
 import { Spinner, Button, Modal, FormField } from '@shared/design-system/components'
 import { getEcosystemOptions, getFrictionLabel, HORIZON_OPTIONS } from '@/modules/Admin/constants/ecosystemOptions'
-import { listProjectsByCompany, createProject } from '@/services/projects.service'
+import { listProjectsByCompany, createProject, deleteProject } from '@/services/projects.service'
 import { loadActiveDomains } from '@/services/domains.service'
+import { usePermissions } from '@/modules/Auth'
 import { reportError } from '@/lib/reportError'
+import { ProjectDetailView } from '../ProjectDetailView'
+import { ImpactWarningDialog } from '@/shared/components/ImpactWarningDialog'
 import type { GovernanceDomain } from '@/services/domains.service'
 
 interface ProyectoItem {
@@ -23,9 +26,19 @@ interface ProyectosTabProps {
 }
 
 export function ProyectosTab({ companyId }: ProyectosTabProps) {
+  const { canEditCompanySettings } = usePermissions()
   const [projects, setProjects] = useState<ProyectoItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [domains, setDomains] = useState<GovernanceDomain[]>([])
+
+  // Pantalla de edición
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
+
+  // Eliminar proyecto
+  const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null)
+  const [deletingProjectName, setDeletingProjectName] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [projectName, setProjectName] = useState('')
@@ -145,6 +158,28 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-lean-black dark:text-warm-100 truncate">{project.name}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setSelectedProjectId(project.id)}
+                  >
+                    Editar
+                  </Button>
+                  {canEditCompanySettings && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => {
+                        setDeletingProjectId(project.id)
+                        setDeletingProjectName(project.name)
+                        setShowDeleteConfirm(true)
+                      }}
+                    >
+                      Eliminar
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
@@ -302,6 +337,46 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
           </div>
         </Modal>
       )}
+
+      {/* Pantalla de edición de proyecto */}
+      {selectedProjectId && (
+        <ProjectDetailView
+          projectId={selectedProjectId}
+          companyId={companyId}
+          onClose={() => {
+            setSelectedProjectId(null)
+            loadProjects()
+          }}
+        />
+      )}
+
+      {/* Dialog de confirmación para eliminar proyecto */}
+      <ImpactWarningDialog
+        isOpen={showDeleteConfirm}
+        title="Eliminar proyecto"
+        impactDescription={`¿Estás seguro de que quieres eliminar el proyecto "${deletingProjectName}"? Esta acción no se puede deshacer. Se eliminarán todos los datos asociados al proyecto.`}
+        onConfirm={async () => {
+          if (!deletingProjectId) return
+          setIsDeleting(true)
+          try {
+            await deleteProject(deletingProjectId)
+            loadProjects()
+            setShowDeleteConfirm(false)
+            setDeletingProjectId(null)
+            setDeletingProjectName('')
+          } catch (err) {
+            reportError('[ProyectosTab] deleteProject', err)
+          } finally {
+            setIsDeleting(false)
+          }
+        }}
+        onCancel={() => {
+          setShowDeleteConfirm(false)
+          setDeletingProjectId(null)
+          setDeletingProjectName('')
+        }}
+        isLoading={isDeleting}
+      />
     </>
   )
 }

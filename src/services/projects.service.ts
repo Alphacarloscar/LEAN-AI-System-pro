@@ -22,6 +22,15 @@ export interface ProjectCompanyData {
   company_size: string
 }
 
+export interface ProjectFriction {
+  id: string
+  tipo: string
+  areaFuncional: string
+  frecuencia: 'Baja' | 'Media' | 'Alta' | null
+  impacto: 'Bajo' | 'Medio' | 'Alto' | null
+  notas: string
+}
+
 // ── Implementaciones privadas ────────────────────────────────
 // Los cuerpos son idénticos a la versión anterior.
 // makeAuditable envuelve este objeto y devuelve el mismo tipo,
@@ -158,6 +167,54 @@ const _impl = {
       company_size: company?.company_size ?? '',
     }
   },
+
+  // Obtener proyecto completo con todos sus campos
+  async getProjectById(projectId: string): Promise<ProjectRow> {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', projectId)
+      .single()
+
+    if (error) throw new Error(`[Projects] getProjectById: ${error.message}`)
+    return data as ProjectRow
+  },
+
+  // Actualizar proyecto existente
+  async updateProject(projectId: string, params: {
+    name?: string
+    objetivoPrincipal?: string
+    restricciones?: string
+    horizonteValor?: string
+    ecosistemaTecnologico?: string
+    friccionesOportunidades?: ProjectFriction[]
+    areasPrioritarias?: string[]
+  }): Promise<ProjectRow> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.rpc as any)('update_project', {
+      p_project_id: projectId,
+      p_name: params.name ?? undefined,
+      p_objetivo_principal: params.objetivoPrincipal ?? undefined,
+      p_restricciones: params.restricciones ?? undefined,
+      p_horizonte_valor: params.horizonteValor ?? undefined,
+      p_ecosistema_tecnologico: params.ecosistemaTecnologico ?? undefined,
+      p_fricciones_oportunidades: params.friccionesOportunidades ?? undefined,
+      p_areas_prioritarias: params.areasPrioritarias ?? undefined,
+    })
+
+    if (error) throw new Error(`[Projects] updateProject RPC error: ${error.message}`)
+    return data as ProjectRow
+  },
+
+  // Eliminar proyecto (limpia project_members y company_profiles)
+  async deleteProject(projectId: string): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.rpc as any)('delete_project', {
+      p_project_id: projectId,
+    })
+
+    if (error) throw new Error(`[Projects] deleteProject RPC error: ${error.message}`)
+  },
 }
 
 // ── Punto de exportación auditado ────────────────────────────
@@ -176,6 +233,9 @@ export const {
   getProjectCompanyId,
   getProjectWithCompany,
   listProjectsByCompany,
+  getProjectById,
+  updateProject,
+  deleteProject,
 } = _service
 
 // ── Alias de compatibilidad (deprecados) ────────────────────
