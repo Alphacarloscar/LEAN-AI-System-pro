@@ -19,6 +19,7 @@ import { Button, ToolHeader } from '@/shared/design-system/components'
 import { RetryBanner }                          from '@/shared/components/RetryBanner'
 import { DIMENSION_DEFINITIONS, TOTAL_SUBDIMENSIONS } from './constants'
 import type { T1DimensionState } from './types'
+import { useDomainDimensions } from '@/hooks/useDomainDimensions'
 import { countScoredSubdimensions, computeOverallScore } from './types'
 import { DimensionCard }                        from './components/DimensionCard'
 import { T1RadarPanel }                         from './components/T1RadarPanel'
@@ -49,6 +50,9 @@ export function T1View({ onBack }: T1ViewProps) {
   const [showNewModal, setShowNewModal] = useState(false)
 
   const { isReadOnly } = usePermissions()
+
+  // ── Dominio + dimensiones ────────────────────────────────────
+  const { dimensions: domainDimensions } = useDomainDimensions()
 
   // ── Store T1 + engagement ────────────────────────────────────
   const store                    = useT1Store()
@@ -108,6 +112,7 @@ export function T1View({ onBack }: T1ViewProps) {
           department: form.department,
         },
         engagementId,
+        domainDimensions,
       )
       // Solo se crea un registro en company_persons si es una persona nueva —
       // si se seleccionó una existente (form.personId), ya existe y no se duplica.

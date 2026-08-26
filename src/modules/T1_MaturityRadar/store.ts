@@ -63,6 +63,7 @@ interface T1Store {
   addInterviewee: (
     person: Omit<T1IntervieweeContext, 'id'>,
     engagementId: string | null,
+    dimensionDefs?: import('@/modules/T1_MaturityRadar/constants').DimensionDefinition[],
   ) => Promise<void>
   removeInterviewee: (
     intervieweeId: string,
@@ -222,10 +223,10 @@ export const useT1Store = create<T1Store>()((set, get) => ({
   setActiveId: (id) => set({ activeId: id }),
 
   // ── addInterviewee ─────────────────────────────────────────
-  addInterviewee: async (person, engagementId) => {
+  addInterviewee: async (person, engagementId, dimensionDefs) => {
     const id = crypto.randomUUID()
     const newInterviewee: T1IntervieweeContext = { ...person, id }
-    const blankDims = buildBlankDimensions()
+    const blankDims = buildBlankDimensions(dimensionDefs)
 
     set((state) => ({
       interviewees:    [...state.interviewees, newInterviewee],

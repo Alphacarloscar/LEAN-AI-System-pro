@@ -16,6 +16,7 @@ import { supabase }             from '@/lib/supabase'
 import { makeAuditable }          from '@/lib/audit'
 import type { T1DimensionScoreInsert } from '@/types/database.types'
 import { DIMENSION_DEFINITIONS }       from '@/modules/T1_MaturityRadar/constants'
+import type { DimensionDefinition }    from '@/modules/T1_MaturityRadar/constants'
 import type {
   T1DimensionState,
   T1SubdimensionState,
@@ -32,8 +33,11 @@ export interface T1LoadResult {
 // ── Helpers ──────────────────────────────────────────────────
 
 /** Construye dimensiones vacías (sin puntuar) para un entrevistado nuevo */
-export function buildBlankDimensions(): T1DimensionState[] {
-  return DIMENSION_DEFINITIONS.map((def) => ({
+export function buildBlankDimensions(
+  dimensionDefs?: DimensionDefinition[]
+): T1DimensionState[] {
+  const defs = dimensionDefs ?? DIMENSION_DEFINITIONS
+  return defs.map((def) => ({
     code:          def.code,
     label:         def.label,
     dimNumber:     def.dimNumber,
@@ -51,13 +55,15 @@ export function buildBlankDimensions(): T1DimensionState[] {
 
 /** Construye dimensiones aplicando los scores recibidos de BD */
 function buildDimensionsFromRows(
-  rows: { dimension_code: string; subdimension_code: string; score: number | null; evidence: string }[]
+  rows: { dimension_code: string; subdimension_code: string; score: number | null; evidence: string }[],
+  dimensionDefs?: DimensionDefinition[]
 ): T1DimensionState[] {
+  const defs = dimensionDefs ?? DIMENSION_DEFINITIONS
   const scoreMap = new Map(
     rows.map((r) => [`${r.dimension_code}::${r.subdimension_code}`, r])
   )
 
-  return DIMENSION_DEFINITIONS.map((def) => ({
+  return defs.map((def) => ({
     code:          def.code,
     label:         def.label,
     dimNumber:     def.dimNumber,

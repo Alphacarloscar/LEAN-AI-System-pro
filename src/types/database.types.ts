@@ -1231,9 +1231,9 @@ export type T5CanvasInsert         = Database['public']['Tables']['t5_canvas']['
 export type ISO42001ControlInsert  = Database['public']['Tables']['iso42001_controls']['Insert']
 export type ToolOutputInsert       = Database['public']['Tables']['tool_outputs']['Insert']
 
-// ── ADR-029 Fase 5: ProjectRow extendido con domain label ─────────
+// ── ADR-029 Fase 5: ProjectRow extendido con domain (id, slug, label) ─────────
 export type ProjectRowWithDomain = ProjectRow & {
-  governance_domains?: { label: string } | null
+  governance_domains?: { id: string; slug: string; label: string } | null
 }
 
 // ── Deprecated aliases (compatibilidad) ─────────────────────────
