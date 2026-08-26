@@ -7,7 +7,12 @@
 
 import { useState, useEffect } from 'react'
 import { Spinner, Button, Modal, FormField } from '@shared/design-system/components'
-import { getEcosystemOptions, getFrictionLabel, HORIZON_OPTIONS } from '@/modules/Admin/constants/ecosystemOptions'
+import {
+  getEcosystemOptions,
+  getEcosystemLabel,
+  getFrictionTypes,
+  HORIZON_OPTIONS
+} from '@/modules/Admin/constants/ecosystemOptions'
 import { listProjectsByCompany, createProject, deleteProject } from '@/services/projects.service'
 import { loadActiveDomains } from '@/services/domains.service'
 import { usePermissions } from '@/modules/Auth'
@@ -15,9 +20,6 @@ import { useDepartmentStore } from '../useDepartmentStore'
 import { reportError } from '@/lib/reportError'
 import { ProjectDetailView } from '../ProjectDetailView'
 import { ImpactWarningDialog } from '@/shared/components/ImpactWarningDialog'
-import {
-  FRICTION_TYPE_OPTIONS,
-} from '../types'
 import type { GovernanceDomain } from '@/services/domains.service'
 import type { Friction } from '../types'
 
@@ -147,7 +149,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
   const selectedDomain = domains.find((d) => d.id === domainId)
   const selectedDomainSlug = selectedDomain?.slug
   const ecosystemOptions = getEcosystemOptions(selectedDomainSlug)
-  const frictionLabel = getFrictionLabel(selectedDomainSlug)
+  const frictionTypes = getFrictionTypes(selectedDomainSlug)
 
   const textareaClass = "w-full px-3 py-2 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60 focus:bg-white placeholder:text-text-subtle resize-none"
   const selectClass = "w-full px-3 py-2 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60 focus:bg-white"
@@ -223,7 +225,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
           open={true}
           onClose={resetCreateModal}
           title="Crear proyecto"
-          size="md"
+          size="lg"
         >
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {/* Nombre y dominio */}
@@ -291,7 +293,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
 
                   <div>
                     <label htmlFor="proyecto-ecosistema" className="text-xs font-medium text-text-subtle dark:text-warm-400 mb-1 block">
-                      Ecosistema tecnológico
+                      {getEcosystemLabel(selectedDomain?.slug)}
                     </label>
                     <select
                       id="proyecto-ecosistema"
@@ -299,7 +301,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
                       onChange={(e) => setEcosistemaTecnologico(e.target.value)}
                       className={selectClass}
                     >
-                      <option value="">Seleccionar ecosistema</option>
+                      <option value="">Seleccionar opción</option>
                       {ecosystemOptions.map((opt) => (
                         <option key={opt} value={opt}>{opt}</option>
                       ))}
@@ -323,14 +325,15 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
 
                 {/* Fricciones estructuradas */}
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-medium text-text-subtle dark:text-warm-400 block">
-                      {frictionLabel}
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <label className="text-xs font-medium text-text-subtle dark:text-warm-400 block flex-shrink-0">
+                      Fricciones
                     </label>
                     <Button
                       variant="secondary"
                       size="sm"
                       onClick={addFriccion}
+                      className="whitespace-nowrap"
                     >
                       + Añadir
                     </Button>
@@ -358,7 +361,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
                                 className="w-full px-2 py-1 rounded border border-border text-[11px] bg-white dark:bg-warm-800"
                               >
                                 <option value="">Tipo</option>
-                                {FRICTION_TYPE_OPTIONS.map(opt => (
+                                {frictionTypes.map(opt => (
                                   <option key={opt} value={opt}>{opt}</option>
                                 ))}
                               </select>

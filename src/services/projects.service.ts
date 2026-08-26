@@ -208,7 +208,7 @@ const _impl = {
       p_restricciones: params.restricciones ?? undefined,
       p_horizonte_valor: params.horizonteValor ?? undefined,
       p_ecosistema_tecnologico: params.ecosistemaTecnologico ?? undefined,
-      p_fricciones_oportunidades: params.friccionesOportunidades ?? undefined,
+      p_fricciones_oportunidades: params.friccionesOportunidades ? JSON.stringify(params.friccionesOportunidades) : undefined,
       p_areas_prioritarias: params.areasPrioritarias ?? undefined,
     })
 

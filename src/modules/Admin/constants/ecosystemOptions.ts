@@ -1,5 +1,5 @@
 // ============================================================
-// Domain-aware ecosystem options and labels
+// Domain-aware options: ecosystem, friction types, labels
 // Used in ProjectsTab form for domain-conditional fields
 // ============================================================
 
@@ -21,6 +21,43 @@ export const ECOSYSTEM_OPTIONS: Record<string, string[]> = {
     'Oracle Cloud',
     'Infraestructura legacy / on-premise',
     'Mixto / Híbrido',
+  ],
+}
+
+// Prácticas y frameworks de transformación digital
+export const PRACTICES_OPTIONS: Record<string, string[]> = {
+  transformacion_digital: [
+    'Agile / Scrum',
+    'Lean',
+    'DevOps',
+    'Design Thinking',
+    'Digital-first culture',
+    'Cloud-native',
+    'Microservicios',
+  ],
+}
+
+// Tipos de problemas / fricciones específicos por dominio
+export const FRICTION_TYPES_BY_DOMAIN: Record<string, string[]> = {
+  ai_adoption: [
+    'Falta de talento / formación en IA',
+    'Datos dispersos o de baja calidad',
+    'Falta de gobierno y políticas de IA',
+    'Resistencia al cambio interna',
+    'Coste elevado sin ROI claro',
+    'Shadow IT / herramientas IA no aprobadas',
+    'Baja adopción de herramientas tecnológicas',
+    'Velocidad de decisión lenta',
+  ],
+  transformacion_digital: [
+    'Procesos manuales ineficientes',
+    'Sistemas legacy sin integración',
+    'Falta de cultura digital',
+    'Resistencia al cambio organizacional',
+    'Falta de inversión en tecnología',
+    'Talento insuficiente en transformación',
+    'Silos departamentales',
+    'Falta de estrategia digital clara',
   ],
 }
 
@@ -50,6 +87,37 @@ export function getEcosystemOptions(domainSlug?: string | null): string[] {
     return ECOSYSTEM_OPTIONS[domainSlug as keyof typeof ECOSYSTEM_OPTIONS]
   }
   return DEFAULT_ECOSYSTEM_OPTIONS
+}
+
+export function getEcosystemLabel(domainSlug?: string | null): string {
+  if (domainSlug === 'transformacion_digital') {
+    return 'Prácticas y frameworks de transformación'
+  }
+  return 'Ecosistema tecnológico'
+}
+
+export function getPracticesOptions(domainSlug?: string | null): string[] {
+  if (domainSlug && domainSlug in PRACTICES_OPTIONS) {
+    return PRACTICES_OPTIONS[domainSlug as keyof typeof PRACTICES_OPTIONS]
+  }
+  return []
+}
+
+export function getFrictionTypes(domainSlug?: string | null): string[] {
+  if (domainSlug && domainSlug in FRICTION_TYPES_BY_DOMAIN) {
+    return FRICTION_TYPES_BY_DOMAIN[domainSlug as keyof typeof FRICTION_TYPES_BY_DOMAIN]
+  }
+  // Default fallback
+  return [
+    'Falta de talento / formación',
+    'Datos de baja calidad',
+    'Falta de gobierno',
+    'Resistencia al cambio',
+    'Coste elevado sin ROI',
+    'Herramientas no aprobadas',
+    'Baja adopción tecnológica',
+    'Velocidad de decisión lenta',
+  ]
 }
 
 export function getFrictionLabel(domainSlug?: string | null): string {

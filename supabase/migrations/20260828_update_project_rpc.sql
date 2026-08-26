@@ -23,7 +23,7 @@ CREATE OR REPLACE FUNCTION public.update_project(
   p_restricciones text DEFAULT NULL,
   p_horizonte_valor text DEFAULT NULL,
   p_ecosistema_tecnologico text DEFAULT NULL,
-  p_fricciones_oportunidades jsonb DEFAULT NULL,
+  p_fricciones_oportunidades text DEFAULT NULL,
   p_areas_prioritarias text[] DEFAULT NULL
 )
 RETURNS public.projects
@@ -73,7 +73,7 @@ BEGIN
     restricciones = CASE WHEN p_restricciones IS NOT NULL THEN trim(p_restricciones) ELSE restricciones END,
     horizonte_valor = COALESCE(p_horizonte_valor, horizonte_valor),
     ecosistema_tecnologico = COALESCE(p_ecosistema_tecnologico, ecosistema_tecnologico),
-    fricciones_oportunidades = COALESCE(p_fricciones_oportunidades, fricciones_oportunidades),
+    fricciones_oportunidades = CASE WHEN p_fricciones_oportunidades IS NOT NULL THEN p_fricciones_oportunidades::jsonb ELSE fricciones_oportunidades END,
     areas_prioritarias = COALESCE(p_areas_prioritarias, areas_prioritarias),
     updated_at = now()
   WHERE id = p_project_id
@@ -83,15 +83,15 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.update_project(uuid, text, text, text, text, text, jsonb, text[]) IS
+COMMENT ON FUNCTION public.update_project(uuid, text, text, text, text, text, text, text[]) IS
   'Actualiza campos de un proyecto existente. '
   'Superadmin puede actualizar cualquier proyecto. '
   'Consultant solo puede actualizar sus propios proyectos. '
   'p_fricciones_oportunidades es JSONB array de fricciones estructuradas.';
 
 -- ── Permisos ──────────────────────────────────────────────────────
-REVOKE ALL     ON FUNCTION public.update_project(uuid, text, text, text, text, text, jsonb, text[]) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.update_project(uuid, text, text, text, text, text, jsonb, text[]) TO authenticated;
+REVOKE ALL     ON FUNCTION public.update_project(uuid, text, text, text, text, text, text, text[]) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.update_project(uuid, text, text, text, text, text, text, text[]) TO authenticated;
 
 -- ── Verificación post-migration ───────────────────────────────────
 DO $$
