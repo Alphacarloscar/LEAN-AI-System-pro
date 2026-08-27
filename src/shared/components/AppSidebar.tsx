@@ -16,8 +16,9 @@ import { useNavigate, useLocation }   from 'react-router-dom'
 import { useUnsavedChanges }          from '@/shared/hooks/useUnsavedChanges'
 import { useSidebar }                 from '@/shared/hooks/useSidebar'
 import { UnsavedChangesModal }        from '@/shared/components/UnsavedChangesModal'
-import { useState }                   from 'react'
+import { useState, useEffect }         from 'react'
 import { useEngagementStore }         from '@/modules/Engagement/store'
+import { useCompanyProfileStore }      from '@/modules/CompanyProfile/store'
 import { usePermissions }             from '@/modules/Auth/usePermissions'
 import type { ToolCode }              from '@/types'
 
@@ -57,17 +58,26 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
   const activeProject = projects.find((p) => p.id === activeId)
 
   // Gate de completitud: T1-T12 bloqueadas si el proyecto no tiene contexto completo
+  const profile      = useCompanyProfileStore((s) => s.profile)
+  const loadProfile  = useCompanyProfileStore((s) => s.loadProfile)
+
+  // Cargar el perfil del proyecto activo si el store aún no lo tiene
+  useEffect(() => {
+    if (activeProject?.id) void loadProfile(activeProject.id)
+  }, [activeProject?.id, loadProfile])
+
   const isProjectComplete = Boolean(
-    activeProject?.objetivo_principal_ia &&
-    activeProject?.horizonte_valor &&
-    activeProject?.ecosistema_tecnologico &&
-    (activeProject?.areas_prioritarias as string[] | null)?.length
+    activeProject &&
+    profile.objetivoPrincipalIA &&
+    profile.horizonteEsperadoValor &&
+    profile.ecosistemaTecnologico &&
+    profile.areasPrioritarias.length > 0
   )
   const missingFields = [
-    !activeProject?.objetivo_principal_ia     && 'Objetivo IA',
-    !activeProject?.horizonte_valor           && 'Horizonte esperado',
-    !activeProject?.ecosistema_tecnologico    && 'Ecosistema tecnológico',
-    !((activeProject?.areas_prioritarias as string[] | null)?.length) && 'Departamentos implicados',
+    !profile.objetivoPrincipalIA      && 'Objetivo IA',
+    !profile.horizonteEsperadoValor   && 'Horizonte esperado',
+    !profile.ecosistemaTecnologico    && 'Ecosistema tecnológico',
+    !profile.areasPrioritarias.length && 'Departamentos implicados',
   ].filter(Boolean) as string[]
 
   // Construye la ruta final: T1–T12 incluyen el engagementId en la URL.
@@ -131,8 +141,8 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
           </div>
         </button>
 
-        {/* Banner: proyecto incompleto */}
-        {!isProjectComplete && (
+        {/* Banner: proyecto incompleto (solo si hay proyecto activo) */}
+        {activeProject && !isProjectComplete && (
           <div className="mx-3 mt-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30">
             <p className="text-[10px] font-medium text-amber-800 dark:text-amber-300 leading-snug">
               Completa el contexto del proyecto para desbloquear las herramientas.
@@ -161,7 +171,7 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
             return (
               <>
                 {/* Gate de completitud: bloqueado si el proyecto no tiene contexto */}
-                {!isProjectComplete && !isActive ? (
+                {activeProject && !isProjectComplete && !isActive ? (
                 <div
                   key={tool.code}
                   title={`Completa el contexto del proyecto antes de usar esta herramienta. Falta: ${missingFields.join(', ')}`}
