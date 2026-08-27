@@ -226,6 +226,7 @@ CREATE TABLE IF NOT EXISTS public.framework_controls (
   label       text NOT NULL,
   description text,
   category    text,
+  is_active   boolean NOT NULL DEFAULT true,
   UNIQUE (domain_id, control_id)
 );
 

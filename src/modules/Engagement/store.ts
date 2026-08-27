@@ -32,7 +32,8 @@ interface EngagementStore {
   // Crea un nuevo engagement y lo selecciona
   // companyId: si se pasa (superadmin/consultant) se usa directamente;
   //            si no (client_editor), se infiere del perfil del usuario.
-  createAndSelect: (name: string, companyId?: string) => Promise<ProjectRow>
+  // domainId: opcional; si se pasa, se asigna al proyecto; si no, usa default en RPC.
+  createAndSelect: (name: string, companyId?: string, domainId?: string) => Promise<ProjectRow>
   // Limpia el estado al logout
   reset:              () => void
 }
@@ -96,7 +97,7 @@ export const useEngagementStore = create<EngagementStore>()(
         set({ activeEngagementId: id })
       },
 
-      createAndSelect: async (name, companyId) => {
+      createAndSelect: async (name, companyId, domainId) => {
         set({ isLoading: true })
         try {
           // Si companyId viene explícito (superadmin/consultant lo pasan desde el selector)
@@ -106,7 +107,7 @@ export const useEngagementStore = create<EngagementStore>()(
             resolvedCompanyId = await getAuthUserCompanyId()
           }
 
-          const project = await createProject({ name, companyId: resolvedCompanyId })
+          const project = await createProject({ name, companyId: resolvedCompanyId, domainId })
           set((s) => ({
             projects:           [...s.projects, project],
             activeEngagementId: project.id,

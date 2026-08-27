@@ -31,6 +31,33 @@ Every change must be documented in the SAME commit/PR:
 3. If you fix or introduce tech debt, log it instantly in `docs/architecture/TECH-DEBT.md`.
 4. For new standards, instantiate from template in `docs/decisions/`.
 
+## DATABASE SAFETY RULES (BLOQUEANTE — leer antes de cualquier operación de BD)
+
+### Comandos permitidos y prohibidos
+
+| Acción | Comando correcto | PROHIBIDO |
+|---|---|---|
+| Aplicar migraciones pendientes | `supabase migration up` | ~~`supabase db reset`~~ |
+| Ver estado del entorno | `supabase status` | — |
+| Reconstrucción total (solo DEV) | `supabase db reset` + keyword `CONFIRM_RESET` | Sin keyword = prohibido |
+
+### Reglas absolutas
+
+1. **NUNCA ejecutar `supabase db reset`** sin que el usuario haya escrito explícitamente la keyword `CONFIRM_RESET` en el mismo mensaje de instrucción.
+2. **`supabase db reset` destruye el esquema local completo y todos los datos.** El comando correcto para aplicar migraciones es `supabase migration up`.
+3. **El campo `domain_id` en la tabla `projects` es INMUTABLE.** Una vez insertado, nunca hacer UPDATE sobre él. Está enforced en DB y en la Edge Function `ai-recommend`.
+4. **Environments PRE y PRO:** nunca ejecutar migraciones ni SQL directo desde CLI. Solo vía SQL aprobado por Carlos en el panel web de Supabase.
+5. **Antes de cualquier operación de BD:** confirmar el entorno activo con `supabase status`.
+
+### Flujo correcto de migraciones (DEV local)
+
+```
+supabase status # confirmar que apunta a local
+Crear fichero en supabase/migrations/ con nombre YYYYMMDD_HHMMSS_descripcion.sql
+supabase migration up # aplica solo las migraciones pendientes
+supabase gen types > src/types/supabase.ts # regenerar tipos TypeScript
+npm run typecheck # verificar coherencia
+```
 
 ## ADR-021 — Design System Enforcement
 - PROHIBIDO: bg-gray-*, text-gray-*, border-gray-* → usar equivalentes warm-*
@@ -42,3 +69,15 @@ Every change must be documented in the SAME commit/PR:
 - OBLIGATORIO: Colores de gráficos vía chartTokens.ts, no inline
 - OBLIGATORIO: Todo icono semántico con texto o tooltip explicativo
 - Exentos: archivos *PDF*.tsx pueden usar style={{}} inline pero con valores del DS
+
+## DOCUMENTATION CHECKLIST (obligatorio en cada PR)
+
+Antes de declarar cualquier tarea completada, verificar:
+
+- [ ] Si hay cambio en BD: actualizar `DATABASES.md`
+- [ ] Si hay decisión arquitectónica nueva: crear/actualizar ADR en `docs/adr/`
+- [ ] Si hay deuda técnica: añadir/cerrar entrada en `TECH-DEBT.md`
+- [ ] Si hay nuevo patrón de código: actualizar `ARQUITECTURA.md` u `OVERVIEW.md`
+- [ ] Tests actualizados: unitarios + E2E si el cambio afecta a flujos de usuario
+- [ ] `npm run typecheck` pasa sin errores
+- [ ] `npm run test` pasa sin regresiones

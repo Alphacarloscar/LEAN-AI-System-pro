@@ -68,13 +68,13 @@ BEGIN
   -- ── Actualizar campos ──────────────────────────────────────────
   UPDATE public.projects
   SET
-    name = COALESCE(NULLIF(p_name, ''), name),
+    name = CASE WHEN p_name IS NOT NULL AND p_name != '' THEN p_name ELSE name END,
     objetivo_principal = CASE WHEN p_objetivo_principal IS NOT NULL THEN trim(p_objetivo_principal) ELSE objetivo_principal END,
     restricciones = CASE WHEN p_restricciones IS NOT NULL THEN trim(p_restricciones) ELSE restricciones END,
-    horizonte_valor = COALESCE(NULLIF(p_horizonte_valor, ''), horizonte_valor),
-    ecosistema_tecnologico = COALESCE(NULLIF(p_ecosistema_tecnologico, ''), ecosistema_tecnologico),
-    fricciones_oportunidades = CASE WHEN p_fricciones_oportunidades IS NOT NULL THEN p_fricciones_oportunidades::jsonb ELSE fricciones_oportunidades END,
-    areas_prioritarias = COALESCE(NULLIF(p_areas_prioritarias, '{}'::text[]), areas_prioritarias),
+    horizonte_valor = CASE WHEN p_horizonte_valor IS NOT NULL AND p_horizonte_valor != '' THEN p_horizonte_valor ELSE horizonte_valor END,
+    ecosistema_tecnologico = CASE WHEN p_ecosistema_tecnologico IS NOT NULL AND p_ecosistema_tecnologico != '' THEN p_ecosistema_tecnologico ELSE ecosistema_tecnologico END,
+    fricciones_oportunidades = CASE WHEN p_fricciones_oportunidades IS NOT NULL THEN p_fricciones_oportunidades::jsonb ELSE fricciones_oportunidades END::jsonb,
+    areas_prioritarias = CASE WHEN p_areas_prioritarias IS NOT NULL AND array_length(p_areas_prioritarias, 1) > 0 THEN p_areas_prioritarias ELSE areas_prioritarias END,
     updated_at = now()
   WHERE id = p_project_id
   RETURNING * INTO v_project;

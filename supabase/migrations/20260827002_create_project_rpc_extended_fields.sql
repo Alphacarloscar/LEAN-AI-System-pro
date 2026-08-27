@@ -143,10 +143,6 @@ COMMENT ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, te
 REVOKE ALL     ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, text, text, text) FROM PUBLIC, anon;
 GRANT  EXECUTE ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, text, text, text) TO authenticated;
 
--- Mantener la firma anterior (4 parámetros) por retrocompatibilidad si algo aún la invoca
--- El sobrecargar función permite coexistencia de ambas firmas
-GRANT  EXECUTE ON FUNCTION public.create_project(uuid, text, uuid, text) TO authenticated;
-
 
 -- ── Verificación post-migration ───────────────────────────────────
 DO $$
