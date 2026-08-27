@@ -21,10 +21,11 @@ interface P3Props {
   shadowAIPct:  { pct: number; total: number; withTools: number } | null
   expanded:     boolean
   onToggle:     () => void
-  onNavigate:   (path: string) => void
+  onNavigate:    (path: string) => void
+  locked?:       boolean
 }
 
-export function P3AdoptionPanel({ t2data, shadowAIPct, expanded, onToggle, onNavigate }: P3Props) {
+export function P3AdoptionPanel({ t2data, shadowAIPct, expanded, onToggle, onNavigate , locked = false }: P3Props) {
   const { isActive } = usePackagePanel('boost_assessment')
 
   const content = !isActive ? (
@@ -55,7 +56,7 @@ export function P3AdoptionPanel({ t2data, shadowAIPct, expanded, onToggle, onNav
   )
 
   return (
-    <PanelCard
+    <PanelCard locked={locked}
       id="p3" expanded={expanded} onClick={onToggle}
       tag="T2 + T7 · Adopción"
       title="Velocidad de adopción" subtitle={`${t2data.totalStakeholders} stakeholders · ${t2data.activePercent}% activos`}

@@ -87,7 +87,7 @@ export function T10View({ onNavigate }: T10ViewProps) {
   const { processes, load: loadT3 }      = useT3Store()
   const { controls: t12Controls, syncEngagement: syncT12 } = useT12Store()
   const { freeItems: t9FreeItems, syncEngagement: syncT9  } = useT9Store()
-  const { isReadOnly: isReadOnlyProject } = usePermissions()
+  const { isReadOnly: isReadOnlyProject, hasModule } = usePermissions()
 
   // mount-only: carga inicial de todos los módulos cuando cambia el engagement
   // stable Zustand actions — añadirlas es inofensivo pero convención del proyecto es omitirlas
@@ -312,6 +312,7 @@ export function T10View({ onNavigate }: T10ViewProps) {
             radar={liveT1Radar} avg={avg} tier={tier} weakest={weakest}
             breakdown={liveT1Breakdown} expanded={expanded === 'p1'}
             onToggle={() => toggle('p1')} onNavigate={navigateWithId}
+            locked={!hasModule('T1')}
           />
 
           <P2PortfolioPanel
@@ -322,21 +323,25 @@ export function T10View({ onNavigate }: T10ViewProps) {
           <P3AdoptionPanel
             t2data={liveT2} shadowAIPct={shadowAIPct} expanded={expanded === 'p3'}
             onToggle={() => toggle('p3')} onNavigate={navigateWithId}
+            locked={!hasModule('T7')}
           />
 
           <P4EcosystemPanel
             t3data={liveT3} expanded={expanded === 'p4'}
             onToggle={() => toggle('p4')} onNavigate={navigateWithId}
+            locked={!hasModule('T5')}
           />
 
           <P5RiskPanel
             p5data={liveP5} riskSegments={riskSegments} shadowAIPct={shadowAIPct}
             expanded={expanded === 'p5'} onToggle={() => toggle('p5')} onNavigate={navigateWithId}
+            locked={!hasModule('T6')}
           />
 
           <P6GovernancePanel
             p6data={liveP6} risksHigh={liveP5.risks.high} expanded={expanded === 'p6'}
             onToggle={() => toggle('p6')} onNavigate={navigateWithId}
+            locked={!hasModule('T9')}
           />
 
         </div>

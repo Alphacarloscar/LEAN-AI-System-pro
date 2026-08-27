@@ -18,7 +18,6 @@ import { useSidebar }                 from '@/shared/hooks/useSidebar'
 import { UnsavedChangesModal }        from '@/shared/components/UnsavedChangesModal'
 import React, { useState }             from 'react'
 import { useEngagementStore }         from '@/modules/Engagement/store'
-import { usePermissions }             from '@/modules/Auth/usePermissions'
 import type { ToolCode }              from '@/types'
 
 // ── Registro estático del producto ───────────────────────────
@@ -30,28 +29,105 @@ interface ToolNavItem {
   path:       string
 }
 
-// Códigos base de navegación — la ruta final se construye dinámicamente
-// con el engagementId activo en AppSidebar.
-// moduleCode = ToolCode que se usa en usePermissions.hasModule()
-const TOOL_NAVIGATION_BASE: ToolNavItem[] = [
-  { code: 'T1',  moduleCode: 'T1',  label: 'AI Readiness Assessment',   path: '/t1'  },
-  { code: 'T2',  moduleCode: 'T2',  label: 'Stakeholder Matrix',         path: '/t2'  },
-  { code: 'T3',  moduleCode: 'T3',  label: 'Value Stream Map',           path: '/t3'  },
-  { code: 'T4',  moduleCode: 'T4',  label: 'Use Case Priority Board',    path: '/t4'  },
-  { code: 'T5',  moduleCode: 'T5',  label: 'AI Taxonomy Canvas',         path: '/t5'  },
-  { code: 'T6',  moduleCode: 'T6',  label: 'Risk & Governance',          path: '/t6'  },
-  { code: 'T7',  moduleCode: 'T7',  label: 'Adoption Heatmap',           path: '/t7'  },
-  { code: 'T8',  moduleCode: 'T8',  label: 'Communication Map',          path: '/t8'  },
-  { code: 'T9',  moduleCode: 'T9',  label: 'AI Roadmap',                 path: '/t9'  },
-  { code: 'T10', moduleCode: 'T10', label: 'Dashboard',                  path: '/'    },
-  { code: 'T11', moduleCode: 'T11', label: 'Operating Rhythm',           path: '/t11' },
-  { code: 'T12', moduleCode: 'T12', label: 'ISO 42001 Assessment',       path: '/t12' },
+// T10 (plataforma) y T4 (shared kernel) son siempre visibles
+const T10_TOOL: ToolNavItem = { code: 'T10', moduleCode: 'T10', label: 'Dashboard', path: '/' }
+const T4_TOOL:  ToolNavItem = { code: 'T4',  moduleCode: 'T4',  label: 'Use Case Priority Board', path: '/t4' }
+
+// Paquetes con sus herramientas — orden de renderizado en sidebar
+export interface PackageGroup {
+  packageId: string
+  label:     string
+  tools:     ToolNavItem[]
+}
+
+export const PACKAGE_GROUPS: PackageGroup[] = [
+  {
+    packageId: 'boost_assessment',
+    label:     'Boost Assessment',
+    tools: [
+      { code: 'T1', moduleCode: 'T1', label: 'AI Readiness Assessment', path: '/t1' },
+      { code: 'T2', moduleCode: 'T2', label: 'Stakeholder Matrix',       path: '/t2' },
+      { code: 'T7', moduleCode: 'T7', label: 'Adoption Heatmap',         path: '/t7' },
+    ],
+  },
+  {
+    packageId: 'portfolio_management',
+    label:     'Portfolio Management',
+    tools: [
+      { code: 'T3',  moduleCode: 'T3',  label: 'Value Stream Map',   path: '/t3'  },
+      { code: 'T5',  moduleCode: 'T5',  label: 'AI Taxonomy Canvas', path: '/t5'  },
+      { code: 'T8',  moduleCode: 'T8',  label: 'Communication Map',  path: '/t8'  },
+      { code: 'T9',  moduleCode: 'T9',  label: 'AI Roadmap',         path: '/t9'  },
+      { code: 'T11', moduleCode: 'T11', label: 'Operating Rhythm',   path: '/t11' },
+    ],
+  },
+  {
+    packageId: 'legal_compliance',
+    label:     'Legal & Compliance',
+    tools: [
+      { code: 'T6',  moduleCode: 'T6',  label: 'Risk & Governance',   path: '/t6'  },
+      { code: 'T12', moduleCode: 'T12', label: 'ISO 42001 Assessment', path: '/t12' },
+    ],
+  },
 ]
+
+// ── Sub-componentes de herramienta ──────────────────────────────
+
+function ToolButton({ tool, isActive, onNav, label }: {
+  tool: ToolNavItem; isActive: boolean; onNav: (p: string) => void; label: string
+}) {
+  return (
+    <button
+      onClick={() => onNav(tool.path)}
+      aria-current={isActive ? 'page' : undefined}
+      className={[
+        'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left',
+        'transition-all duration-100',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold',
+        isActive ? 'bg-gold/10 dark:bg-gold/15' : 'hover:bg-black/3 dark:hover:bg-white/4',
+      ].join(' ')}
+    >
+      <span className={['font-mono text-[10px] shrink-0 w-7 text-center', isActive ? 'text-gold' : 'text-warm-400'].join(' ')}>
+        {tool.code}
+      </span>
+      <span className={['text-xs truncate', isActive ? 'font-semibold text-gold dark:text-gold-hover' : 'text-warm-700 dark:text-warm-100'].join(' ')}>
+        {label}
+      </span>
+    </button>
+  )
+}
+
+function ToolLocked({ tool, missingFields }: { tool: ToolNavItem; missingFields: string[] }) {
+  return (
+    <div
+      title={`Completa el contexto del proyecto antes de usar esta herramienta. Falta: ${missingFields.join(', ')}`}
+      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-not-allowed opacity-40"
+    >
+      <span className="font-mono text-[10px] shrink-0 w-7 text-center text-warm-400">{tool.code}</span>
+      <span className="text-xs truncate text-warm-700 dark:text-warm-100 flex-1">{tool.label}</span>
+      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-warm-400">
+        <rect x="2" y="5" width="8" height="6" rx="1"/><path d="M4 5V3.5a2 2 0 014 0V5"/>
+      </svg>
+    </div>
+  )
+}
+
+function ToolDimmed({ tool, onNav }: { tool: ToolNavItem; onNav: (p: string) => void }) {
+  return (
+    <button
+      onClick={() => onNav(tool.path)}
+      title="Herramienta no incluida en el plan activo"
+      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left opacity-35 hover:opacity-55 transition-opacity duration-100"
+    >
+      <span className="font-mono text-[10px] shrink-0 w-7 text-center text-warm-400">{tool.code}</span>
+      <span className="text-xs truncate text-warm-700 dark:text-warm-100 flex-1">{tool.label}</span>
+    </button>
+  )
+}
 
 // ── Panel interior ────────────────────────────────────────────
 function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; engagementId: string | null }) {
   const location = useLocation()
-  const { hasModule } = usePermissions()
   const projects = useEngagementStore((state) => state.projects)
   const activeId = useEngagementStore((state) => state.activeEngagementId)
   const activeProject = projects.find((p) => p.id === activeId)
@@ -79,15 +155,16 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
     !(ap.areas_prioritarias?.length) && 'Departamentos implicados',
   ].filter(Boolean) as string[] : []
 
-  // Construye la ruta final: T1–T12 incluyen el engagementId en la URL.
-  // T10 (path '/') no lleva engagementId porque es el dashboard raíz.
-  const TOOL_NAVIGATION = TOOL_NAVIGATION_BASE
-    .filter((tool) => hasModule(tool.moduleCode))
-    .map((tool) =>
-      tool.path !== '/' && engagementId
-        ? { ...tool, path: `${tool.path}/${engagementId}` }
-        : tool
-    )
+  // Helper: añade engagementId a una ruta (T10 '/' no lleva id)
+  function buildPath(tool: ToolNavItem) {
+    return tool.path !== '/' && engagementId
+      ? `${tool.path}/${engagementId}`
+      : tool.path
+  }
+
+  // Paquetes contratados del proyecto activo
+  const contractedPackages: string[] = (activeProject as any)?.contracted_packages ?? []
+  const hasPackage = (pkgId: string) => contractedPackages.includes(pkgId)
 
   const isCompanyProfileActive = location.pathname === '/company-profile'
 
@@ -161,73 +238,72 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
         {/* Separador */}
         <div className="mx-4 my-2 border-t border-black/6 dark:border-white/6" />
 
-        {/* ── T1–T12 ── */}
+        {/* ── T10 (plataforma) · T4 (shared kernel) ── */}
         <div className="px-3 space-y-0.5">
-          {TOOL_NAVIGATION.map((tool) => {
-            const isActive = location.pathname === tool.path ||
-                             (tool.path !== '/' && location.pathname.startsWith(tool.path + '/'))
-
+          {[T10_TOOL, T4_TOOL].map((tool) => {
+            const path     = buildPath(tool)
+            const isActive = location.pathname === path ||
+                             (path !== '/' && location.pathname.startsWith(path + '/'))
+            const isLocked = activeProject && !isProjectComplete && !isActive
             return (
               <React.Fragment key={tool.code}>
-                {/* Gate de completitud: bloqueado si el proyecto no tiene contexto */}
-                {activeProject && !isProjectComplete && !isActive ? (
-                <div
-                  title={`Completa el contexto del proyecto antes de usar esta herramienta. Falta: ${missingFields.join(', ')}`}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-not-allowed opacity-40"
-                >
-                  <span className="font-mono text-[10px] shrink-0 w-7 text-center text-warm-400">
-                    {tool.code}
-                  </span>
-                  <span className="text-xs truncate text-warm-700 dark:text-warm-100 flex-1">
-                    {tool.label}
-                  </span>
-                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none"
-                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-                    className="shrink-0 text-warm-400">
-                    <rect x="2" y="5" width="8" height="6" rx="1"/>
-                    <path d="M4 5V3.5a2 2 0 014 0V5"/>
-                  </svg>
-                </div>
-              ) : (
-              <button
-                onClick={() => onNav(tool.path)}
-                aria-current={isActive ? 'page' : undefined}
-                className={[
-                  'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left',
-                  'transition-all duration-100',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold',
-                  isActive
-                    ? 'bg-gold/10 dark:bg-gold/15'
-                    : 'hover:bg-black/3 dark:hover:bg-white/4',
-                ].join(' ')}
-              >
-                <span
-                  className={[
-                    'font-mono text-[10px] shrink-0 w-7 text-center',
-                    isActive ? 'text-gold' : 'text-warm-400',
-                  ].join(' ')}
-                >
-                  {tool.code}
-                </span>
-                <span
-                  className={[
-                    'text-xs truncate',
-                    isActive
-                      ? 'font-semibold text-gold dark:text-gold-hover'
-                      : 'text-warm-700 dark:text-warm-100',
-                  ].join(' ')}
-                >
-                  {tool.code === 'T10'
-                    ? (activeProject?.governance_domains?.label ?? 'Dashboard')
-                    : tool.label
-                  }
-                </span>
-              </button>
-              )}
+                {isLocked ? (
+                  <ToolLocked tool={tool} missingFields={missingFields} />
+                ) : (
+                  <ToolButton
+                    tool={{ ...tool, path }}
+                    isActive={isActive}
+                    onNav={onNav}
+                    label={tool.code === 'T10' ? (activeProject?.governance_domains?.label ?? 'Dashboard') : tool.label}
+                  />
+                )}
               </React.Fragment>
             )
           })}
         </div>
+
+        {/* ── Paquetes contratados ── */}
+        {PACKAGE_GROUPS.map((group) => {
+          const contracted = hasPackage(group.packageId)
+          return (
+            <div key={group.packageId} className="mt-3">
+              {/* Cabecera de paquete */}
+              <div className={[
+                'flex items-center gap-2 px-4 mb-1',
+                contracted ? '' : 'opacity-40',
+              ].join(' ')}>
+                <span className="text-[9px] font-mono uppercase tracking-widest text-black/35 dark:text-white/30 truncate flex-1">
+                  {group.label}
+                </span>
+                {!contracted && (
+                  <span className="text-[8px] font-mono uppercase tracking-wide text-black/25 dark:text-white/20 shrink-0 border border-black/12 dark:border-white/12 rounded px-1 py-0.5">
+                    No activo
+                  </span>
+                )}
+              </div>
+              {/* Herramientas del paquete */}
+              <div className="px-3 space-y-0.5">
+                {group.tools.map((tool) => {
+                  const path     = buildPath(tool)
+                  const isActive = location.pathname === path ||
+                                   (path !== '/' && location.pathname.startsWith(path + '/'))
+                  const isLocked = activeProject && !isProjectComplete && !isActive
+                  return (
+                    <React.Fragment key={tool.code}>
+                      {isLocked ? (
+                        <ToolLocked tool={tool} missingFields={missingFields} />
+                      ) : !contracted ? (
+                        <ToolDimmed tool={{ ...tool, path }} onNav={onNav} />
+                      ) : (
+                        <ToolButton tool={{ ...tool, path }} isActive={isActive} onNav={onNav} label={tool.label} />
+                      )}
+                    </React.Fragment>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
       </nav>
 
       {/* Footer */}

@@ -22,9 +22,10 @@ interface P4Props {
   expanded:   boolean
   onToggle:   () => void
   onNavigate: (path: string) => void
+  locked?: boolean
 }
 
-export function P4EcosystemPanel({ t3data, expanded, onToggle, onNavigate }: P4Props) {
+export function P4EcosystemPanel({ t3data, expanded, onToggle, onNavigate , locked = false }: P4Props) {
   const { isActive } = usePackagePanel('portfolio_management')
 
   const content = !isActive ? (
@@ -63,7 +64,7 @@ export function P4EcosystemPanel({ t3data, expanded, onToggle, onNavigate }: P4P
   )
 
   return (
-    <PanelCard
+    <PanelCard locked={locked}
       id="p4" expanded={expanded} onClick={onToggle}
       tag="T3 · Ecosistema IA"
       title="Ecosistema IA"

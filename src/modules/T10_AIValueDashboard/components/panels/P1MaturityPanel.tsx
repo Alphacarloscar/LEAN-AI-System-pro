@@ -25,11 +25,11 @@ interface P1Props {
   expanded:      boolean
   onToggle:      () => void
   onNavigate:    (path: string) => void
+  locked?:       boolean
 }
 
 export function P1MaturityPanel({
-  radar, avg, tier, weakest, breakdown, expanded, onToggle, onNavigate,
-}: P1Props) {
+  radar, avg, tier, weakest, breakdown, expanded, onToggle, onNavigate, locked = false }: P1Props) {
   const { isActive } = usePackagePanel('boost_assessment')
 
   const content = !isActive ? (
@@ -49,7 +49,7 @@ export function P1MaturityPanel({
   )
 
   return (
-    <PanelCard
+    <PanelCard locked={locked}
       id="p1" expanded={expanded} onClick={onToggle}
       tag="T1 · Readiness"
       title="Madurez IA" subtitle={`${radar.length} dimensiones · Score ${avg}/4`}

@@ -20,10 +20,11 @@ interface P5Props {
   shadowAIPct:  { pct: number; total: number; withTools: number } | null
   expanded:     boolean
   onToggle:     () => void
-  onNavigate:   (path: string) => void
+  onNavigate:    (path: string) => void
+  locked?:       boolean
 }
 
-export function P5RiskPanel({ p5data, riskSegments, shadowAIPct, expanded, onToggle, onNavigate }: P5Props) {
+export function P5RiskPanel({ p5data, riskSegments, shadowAIPct, expanded, onToggle, onNavigate , locked = false }: P5Props) {
   const { isActive } = usePackagePanel('legal_compliance')
 
   const content = !isActive ? (
@@ -89,7 +90,7 @@ export function P5RiskPanel({ p5data, riskSegments, shadowAIPct, expanded, onTog
   )
 
   return (
-    <PanelCard
+    <PanelCard locked={locked}
       id="p5" expanded={expanded} onClick={onToggle}
       tag="T6 + T12 · Riesgos"
       title="Riesgo + ISO 42001"

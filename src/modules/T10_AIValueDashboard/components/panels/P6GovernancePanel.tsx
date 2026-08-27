@@ -27,9 +27,10 @@ interface P6Props {
   expanded:   boolean
   onToggle:   () => void
   onNavigate: (path: string) => void
+  locked?: boolean
 }
 
-export function P6GovernancePanel({ p6data, risksHigh, expanded, onToggle, onNavigate }: P6Props) {
+export function P6GovernancePanel({ p6data, risksHigh, expanded, onToggle, onNavigate , locked = false }: P6Props) {
   const { isActive } = usePackagePanel('portfolio_management')
 
   const content = !isActive ? (
@@ -63,7 +64,7 @@ export function P6GovernancePanel({ p6data, risksHigh, expanded, onToggle, onNav
   )
 
   return (
-    <PanelCard
+    <PanelCard locked={locked}
       id="p6" expanded={expanded} onClick={onToggle}
       tag="T8 · T9 · T11 · Gobierno"
       title="Gobierno activo"

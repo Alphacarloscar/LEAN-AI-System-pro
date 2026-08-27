@@ -1,3 +1,4 @@
+import React from 'react'
 // PanelCard — tarjeta base del dashboard con tag, hero metric y contenido expandible
 
 import { Card } from '@shared/design-system/components'
@@ -5,7 +6,7 @@ import { Card } from '@shared/design-system/components'
 export function PanelCard({
   featured = false, expanded, onClick,
   tag, title, subtitle,
-  animDelay, heroSlot, children,
+  animDelay, heroSlot, children, locked = false,
 }: {
   id?:        string
   featured?:  boolean
@@ -17,16 +18,26 @@ export function PanelCard({
   animDelay:  number
   heroSlot?:  React.ReactNode
   children:   React.ReactNode
+  locked?:    boolean
 }) {
   return (
+    <div className="relative">
+      {locked && (
+        <div className="absolute inset-0 z-10 rounded-xl bg-white/60 dark:bg-warm-900/60 backdrop-blur-[1px] flex items-start justify-end p-2 pointer-events-none">
+          <span className="text-[9px] font-mono uppercase tracking-wider text-black/40 dark:text-white/35 border border-black/12 dark:border-white/12 rounded px-1.5 py-0.5 bg-white/80 dark:bg-warm-900/80">
+            No incluido en plan
+          </span>
+        </div>
+      )}
     <Card
       variant={featured ? 'featured' : 'outlined'}
       padding="none"
-      onClick={onClick}
+      onClick={locked ? undefined : onClick}
       className={[
-        'relative overflow-hidden p-4 cursor-pointer',
+        'relative overflow-hidden p-4',
+        locked ? 'cursor-default opacity-45 select-none' : 'cursor-pointer',
         'transition-all duration-200 animate-fade-in',
-        expanded ? 'ring-1 ring-gold/40 dark:ring-gold/30' : '',
+        expanded && !locked ? 'ring-1 ring-gold/40 dark:ring-gold/30' : '',
       ].join(' ')}
       style={{
         animationDelay:    `${animDelay}ms`,
@@ -46,5 +57,6 @@ export function PanelCard({
 
       {children}
     </Card>
+    </div>
   )
 }

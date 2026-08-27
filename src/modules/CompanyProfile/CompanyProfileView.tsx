@@ -26,10 +26,11 @@ import { reportError }            from '@/lib/reportError'
 import { isDemoEnabled }          from '@/lib/config'
 import { EmpresaTab }             from './components/EmpresaTab'
 import { ProyectosTab }           from './components/ProyectosTab'
+import { PlanesTab }              from './components/PlanesTab'
 
 // ── Tipos locales ─────────────────────────────────────────────
 
-type ActiveTab = 'empresa' | 'proyectos'
+type ActiveTab = 'empresa' | 'planes' | 'proyectos'
 
 interface CompanySettings {
   sector:       string
@@ -206,6 +207,7 @@ export function CompanyProfileView() {
         <div className="max-w-5xl mx-auto mt-3 flex gap-1">
           {([
             { id: 'empresa',  label: 'Empresa' },
+            { id: 'planes',    label: 'Planes' },
             { id: 'proyectos', label: 'Proyectos' },
           ] as { id: ActiveTab; label: string }[]).map((tab) => (
             <button
@@ -233,6 +235,10 @@ export function CompanyProfileView() {
             canEditCompanySettings={canEditCompanySettings}
           />
         )}
+        {activeTab === 'planes' && companyId && (
+          <PlanesTab companyId={companyId} />
+        )}
+
         {activeTab === 'proyectos' && companyId && (
           <ProyectosTab companyId={companyId} />
         )}
