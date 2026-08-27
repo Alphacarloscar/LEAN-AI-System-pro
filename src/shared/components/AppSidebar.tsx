@@ -19,7 +19,6 @@ import { UnsavedChangesModal }        from '@/shared/components/UnsavedChangesMo
 import { useState }                   from 'react'
 import { useEngagementStore }         from '@/modules/Engagement/store'
 import { usePermissions }             from '@/modules/Auth/usePermissions'
-import { useCompanyProfileStore }      from '@/modules/CompanyProfile/store'
 import type { ToolCode }              from '@/types'
 
 // ── Registro estático del producto ───────────────────────────
@@ -58,18 +57,17 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
   const activeProject = projects.find((p) => p.id === activeId)
 
   // Gate de completitud: T1-T12 bloqueadas si el proyecto no tiene contexto completo
-  const profile = useCompanyProfileStore((s) => s.profile)
   const isProjectComplete = Boolean(
-    profile.objetivoPrincipalIA &&
-    profile.horizonteEsperadoValor &&
-    profile.ecosistemaTecnologico &&
-    profile.areasPrioritarias.length > 0
+    activeProject?.objetivo_principal_ia &&
+    activeProject?.horizonte_valor &&
+    activeProject?.ecosistema_tecnologico &&
+    (activeProject?.areas_prioritarias as string[] | null)?.length
   )
   const missingFields = [
-    !profile.objetivoPrincipalIA     && 'Objetivo IA',
-    !profile.horizonteEsperadoValor  && 'Horizonte esperado',
-    !profile.ecosistemaTecnologico   && 'Ecosistema tecnológico',
-    !profile.areasPrioritarias.length && 'Departamentos implicados',
+    !activeProject?.objetivo_principal_ia     && 'Objetivo IA',
+    !activeProject?.horizonte_valor           && 'Horizonte esperado',
+    !activeProject?.ecosistema_tecnologico    && 'Ecosistema tecnológico',
+    !((activeProject?.areas_prioritarias as string[] | null)?.length) && 'Departamentos implicados',
   ].filter(Boolean) as string[]
 
   // Construye la ruta final: T1–T12 incluyen el engagementId en la URL.
@@ -137,7 +135,7 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
         {!isProjectComplete && (
           <div className="mx-3 mt-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30">
             <p className="text-[10px] font-medium text-amber-800 dark:text-amber-300 leading-snug">
-              Completa el Perfil de Empresa para desbloquear las herramientas.
+              Completa el contexto del proyecto para desbloquear las herramientas.
             </p>
             <p className="text-[10px] text-amber-700/70 dark:text-amber-400/70 mt-0.5">
               Falta: {missingFields.join(' · ')}
@@ -155,11 +153,12 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
                              (tool.path !== '/' && location.pathname.startsWith(tool.path + '/'))
 
             return (
-              {/* Gate de completitud: bloqueado si el proyecto no tiene contexto */}
-              {!isProjectComplete && !isActive ? (
+              <>
+                {/* Gate de completitud: bloqueado si el proyecto no tiene contexto */}
+                {!isProjectComplete && !isActive ? (
                 <div
                   key={tool.code}
-                  title={`Completa el Perfil de Empresa antes de usar las herramientas. Falta: ${missingFields.join(', ')}`}
+                  title={`Completa el contexto del proyecto antes de usar esta herramienta. Falta: ${missingFields.join(', ')}`}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-not-allowed opacity-40"
                 >
                   <span className="font-mono text-[10px] shrink-0 w-7 text-center text-warm-400">
@@ -212,6 +211,7 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
                 </span>
               </button>
               )}
+              </>
             )
           })}
         </div>
