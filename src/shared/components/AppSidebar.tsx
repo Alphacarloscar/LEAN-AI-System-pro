@@ -140,6 +140,12 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
             <p className="text-[10px] text-amber-700/70 dark:text-amber-400/70 mt-0.5">
               Falta: {missingFields.join(' · ')}
             </p>
+            <button
+              onClick={() => onNav('/company-profile')}
+              className="mt-1.5 text-[10px] font-medium text-amber-700 dark:text-amber-300 underline underline-offset-2 hover:text-amber-900 dark:hover:text-amber-100 transition-colors"
+            >
+              Ir a Perfil de Empresa →
+            </button>
           </div>
         )}
 

@@ -94,7 +94,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
         const { count } = await supabase
           .from('t1_dimension_scores')
           .select('*', { count: 'exact', head: true })
-          .eq('engagement_id', projectId)
+          .eq('project_id', projectId)
         setT1HasData((count ?? 0) > 0)
       } catch (err) {
         reportError('[ProjectDetailView] load', err)
