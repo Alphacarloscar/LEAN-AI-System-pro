@@ -19,6 +19,7 @@ import { UnsavedChangesModal }        from '@/shared/components/UnsavedChangesMo
 import { useState }                   from 'react'
 import { useEngagementStore }         from '@/modules/Engagement/store'
 import { usePermissions }             from '@/modules/Auth/usePermissions'
+import { useCompanyProfileStore }      from '@/modules/CompanyProfile/store'
 import type { ToolCode }              from '@/types'
 
 // ── Registro estático del producto ───────────────────────────
@@ -55,6 +56,21 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
   const projects = useEngagementStore((state) => state.projects)
   const activeId = useEngagementStore((state) => state.activeEngagementId)
   const activeProject = projects.find((p) => p.id === activeId)
+
+  // Gate de completitud: T1-T12 bloqueadas si el proyecto no tiene contexto completo
+  const profile = useCompanyProfileStore((s) => s.profile)
+  const isProjectComplete = Boolean(
+    profile.objetivoPrincipalIA &&
+    profile.horizonteEsperadoValor &&
+    profile.ecosistemaTecnologico &&
+    profile.areasPrioritarias.length > 0
+  )
+  const missingFields = [
+    !profile.objetivoPrincipalIA     && 'Objetivo IA',
+    !profile.horizonteEsperadoValor  && 'Horizonte esperado',
+    !profile.ecosistemaTecnologico   && 'Ecosistema tecnológico',
+    !profile.areasPrioritarias.length && 'Departamentos implicados',
+  ].filter(Boolean) as string[]
 
   // Construye la ruta final: T1–T12 incluyen el engagementId en la URL.
   // T10 (path '/') no lleva engagementId porque es el dashboard raíz.
@@ -117,6 +133,18 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
           </div>
         </button>
 
+        {/* Banner: proyecto incompleto */}
+        {!isProjectComplete && (
+          <div className="mx-3 mt-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30">
+            <p className="text-[10px] font-medium text-amber-800 dark:text-amber-300 leading-snug">
+              Completa el Perfil de Empresa para desbloquear las herramientas.
+            </p>
+            <p className="text-[10px] text-amber-700/70 dark:text-amber-400/70 mt-0.5">
+              Falta: {missingFields.join(' · ')}
+            </p>
+          </div>
+        )}
+
         {/* Separador */}
         <div className="mx-4 my-2 border-t border-black/6 dark:border-white/6" />
 
@@ -127,6 +155,27 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
                              (tool.path !== '/' && location.pathname.startsWith(tool.path + '/'))
 
             return (
+              {/* Gate de completitud: bloqueado si el proyecto no tiene contexto */}
+              {!isProjectComplete && !isActive ? (
+                <div
+                  key={tool.code}
+                  title={`Completa el Perfil de Empresa antes de usar las herramientas. Falta: ${missingFields.join(', ')}`}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-not-allowed opacity-40"
+                >
+                  <span className="font-mono text-[10px] shrink-0 w-7 text-center text-warm-400">
+                    {tool.code}
+                  </span>
+                  <span className="text-xs truncate text-warm-700 dark:text-warm-100 flex-1">
+                    {tool.label}
+                  </span>
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none"
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                    className="shrink-0 text-warm-400">
+                    <rect x="2" y="5" width="8" height="6" rx="1"/>
+                    <path d="M4 5V3.5a2 2 0 014 0V5"/>
+                  </svg>
+                </div>
+              ) : (
               <button
                 key={tool.code}
                 onClick={() => onNav(tool.path)}
@@ -162,6 +211,7 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
                   }
                 </span>
               </button>
+              )}
             )
           })}
         </div>

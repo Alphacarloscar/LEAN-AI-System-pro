@@ -14,7 +14,7 @@
 
 import { create }                         from 'zustand'
 import { persist }                        from 'zustand/middleware'
-import { listMyProjects, createProject }  from '@/services/projects.service'
+import { listMyProjects, createProject, updateProject } from '@/services/projects.service'
 import { getAuthUserCompanyId }          from '@/services/auth.service'
 import { resetAllEngagementStores } from '@/lib/resetEngagementStores'
 import { reportError }               from '@/lib/reportError'
@@ -33,7 +33,17 @@ interface EngagementStore {
   // companyId: si se pasa (superadmin/consultant) se usa directamente;
   //            si no (client_editor), se infiere del perfil del usuario.
   // domainId: opcional; si se pasa, se asigna al proyecto; si no, usa default en RPC.
-  createAndSelect: (name: string, companyId?: string, domainId?: string) => Promise<ProjectRow>
+  createAndSelect: (
+    name: string,
+    companyId?: string,
+    domainId?: string,
+    extra?: {
+      objetivoPrincipalIA?:    string
+      horizonteEsperadoValor?: string
+      ecosistemaTecnologico?:  string
+      areasPrioritarias?:      string[]
+    }
+  ) => Promise<ProjectRow>
   // Limpia el estado al logout
   reset:              () => void
 }
@@ -97,17 +107,25 @@ export const useEngagementStore = create<EngagementStore>()(
         set({ activeEngagementId: id })
       },
 
-      createAndSelect: async (name, companyId, domainId) => {
+      createAndSelect: async (name, companyId, domainId, extra) => {
         set({ isLoading: true })
         try {
-          // Si companyId viene explícito (superadmin/consultant lo pasan desde el selector)
-          // lo usamos directamente. Si no (client_editor), lo inferimos del perfil.
           let resolvedCompanyId = companyId
           if (!resolvedCompanyId) {
             resolvedCompanyId = await getAuthUserCompanyId()
           }
-
-          const project = await createProject({ name, companyId: resolvedCompanyId, domainId })
+          const project = await createProject({
+            name,
+            companyId:             resolvedCompanyId,
+            domainId,
+            objetivoPrincipal:     extra?.objetivoPrincipalIA,
+            horizonteValor:        extra?.horizonteEsperadoValor,
+            ecosistemaTecnologico: extra?.ecosistemaTecnologico,
+          })
+          // Guardar áreas prioritarias via updateProject (RPC separado)
+          if (extra?.areasPrioritarias?.length) {
+            await updateProject(project.id, { areasPrioritarias: extra.areasPrioritarias })
+          }
           set((s) => ({
             projects:           [...s.projects, project],
             activeEngagementId: project.id,

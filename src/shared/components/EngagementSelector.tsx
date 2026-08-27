@@ -24,6 +24,12 @@ import type { GovernanceDomain }        from '@/services/domains.service'
 import { isDemoEnabled }                from '@/lib/config'
 import { reportError }                  from '@/lib/reportError'
 import { useUnsavedChanges }            from '@/shared/hooks/useUnsavedChanges'
+import {
+  IA_OBJECTIVE_OPTIONS,
+  VALUE_HORIZON_OPTIONS,
+  TECH_ECOSYSTEM_OPTIONS,
+  ALL_BUSINESS_AREAS,
+} from '@/modules/CompanyProfile/types'
 import { UnsavedChangesModal }          from '@/shared/components/UnsavedChangesModal'
 
 // ── Iconos ────────────────────────────────────────────────────
@@ -91,6 +97,11 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
   const [domains,        setDomains]        = useState<GovernanceDomain[]>([])
   const [selectedDomain, setSelectedDomain] = useState<string>('')
   const [domainsLoading, setDomainsLoading] = useState(false)
+  // Campos extendidos del proyecto
+  const [objPrincipal,  setObjPrincipal]  = useState('')
+  const [horizonte,     setHorizonte]     = useState('')
+  const [ecosistema,    setEcosistema]    = useState('')
+  const [deptSelected,  setDeptSelected]  = useState<string[]>([])
 
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef    = useRef<HTMLInputElement>(null)
@@ -144,6 +155,10 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
     setNewName('')
     setSelectedCompany('')
     setSelectedDomain('')
+    setObjPrincipal('')
+    setHorizonte('')
+    setEcosistema('')
+    setDeptSelected([])
     setCreateError(null)
   }
 
@@ -170,7 +185,17 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
     try {
       // Pasamos companyId explícito para superadmin/consultant;
       // undefined para client_editor (el store lo infiere del perfil)
-      await createAndSelect(name, needsCompanySelector ? selectedCompany : undefined, selectedDomain)
+      await createAndSelect(
+        name,
+        needsCompanySelector ? selectedCompany : undefined,
+        selectedDomain,
+        {
+          objetivoPrincipalIA:    objPrincipal  || undefined,
+          horizonteEsperadoValor: horizonte     || undefined,
+          ecosistemaTecnologico:  ecosistema    || undefined,
+          areasPrioritarias:      deptSelected.length ? deptSelected : undefined,
+        }
+      )
       closeCreate()
       setOpen(false)
     } catch (err) {
@@ -395,6 +420,65 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                       />
                     </div>
 
+                    {/* Objetivo principal IA */}
+                    <div>
+                      <label className={['block text-[10px] font-mono uppercase tracking-wide mb-1', dark ? 'text-warm-400' : 'text-warm-600'].join(' ')}>
+                        Objetivo principal IA
+                      </label>
+                      <select value={objPrincipal} onChange={e => { setObjPrincipal(e.target.value); setCreateError(null) }}
+                        disabled={createBusy} className={inlineSelectClass}>
+                        <option value="">Selecciona un objetivo…</option>
+                        {IA_OBJECTIVE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                    {/* Horizonte esperado */}
+                    <div>
+                      <label className={['block text-[10px] font-mono uppercase tracking-wide mb-1', dark ? 'text-warm-400' : 'text-warm-600'].join(' ')}>
+                        Horizonte esperado
+                      </label>
+                      <select value={horizonte} onChange={e => { setHorizonte(e.target.value); setCreateError(null) }}
+                        disabled={createBusy} className={inlineSelectClass}>
+                        <option value="">Selecciona un horizonte…</option>
+                        {VALUE_HORIZON_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                    {/* Ecosistema tecnológico */}
+                    <div>
+                      <label className={['block text-[10px] font-mono uppercase tracking-wide mb-1', dark ? 'text-warm-400' : 'text-warm-600'].join(' ')}>
+                        Ecosistema tecnológico
+                      </label>
+                      <select value={ecosistema} onChange={e => { setEcosistema(e.target.value); setCreateError(null) }}
+                        disabled={createBusy} className={inlineSelectClass}>
+                        <option value="">Selecciona ecosistema…</option>
+                        {TECH_ECOSYSTEM_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                    {/* Departamentos implicados */}
+                    <div>
+                      <label className={['block text-[10px] font-mono uppercase tracking-wide mb-1', dark ? 'text-warm-400' : 'text-warm-600'].join(' ')}>
+                        Departamentos implicados
+                      </label>
+                      <div className={['max-h-28 overflow-y-auto rounded-lg border p-2 flex flex-wrap gap-1.5',
+                        dark ? 'bg-white/8 border-white/12' : 'bg-warm-50 border-border'].join(' ')}>
+                        {ALL_BUSINESS_AREAS.map(area => {
+                          const sel = deptSelected.includes(area)
+                          return (
+                            <button key={area} type="button" disabled={createBusy}
+                              onClick={() => setDeptSelected(prev =>
+                                sel ? prev.filter(a => a !== area) : [...prev, area])}
+                              className={['text-[10px] px-2 py-0.5 rounded-full border transition-colors',
+                                sel
+                                  ? 'bg-[#C8860A] border-[#C8860A] text-white'
+                                  : dark
+                                    ? 'border-white/20 text-warm-400 hover:border-gold/50'
+                                    : 'border-border text-text-muted hover:border-gold/50',
+                              ].join(' ')}>
+                              {area}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
                     {/* Selector de empresa — solo para superadmin/consultant */}
                     {needsCompanySelector && (
                       <div>
