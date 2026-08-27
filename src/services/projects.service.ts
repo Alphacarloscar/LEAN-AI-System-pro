@@ -199,6 +199,7 @@ const _impl = {
     ecosistemaTecnologico?: string
     friccionesOportunidades?: ProjectFriction[]
     areasPrioritarias?: string[]
+    contractedPackages?: string[]
   }): Promise<ProjectRow> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase.rpc as any)('update_project', {
@@ -213,6 +214,16 @@ const _impl = {
     })
 
     if (error) throw new Error(`[Projects] updateProject RPC error: ${error.message}`)
+
+    // contracted_packages no está en el RPC — se actualiza directamente
+    if (params.contractedPackages !== undefined) {
+      const { error: pkgError } = await supabase
+        .from('projects')
+        .update({ contracted_packages: params.contractedPackages })
+        .eq('id', projectId)
+      if (pkgError) throw new Error(`[Projects] updateProject packages error: ${pkgError.message}`)
+    }
+
     return data as ProjectRow
   },
 

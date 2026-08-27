@@ -16,6 +16,7 @@ import { getProjectById, updateProject } from '@/services/projects.service'
 import { loadActiveDomains } from '@/services/domains.service'
 import { useDepartmentStore } from './useDepartmentStore'
 import { useEngagementStore } from '@/modules/Engagement/store'
+import { PACKAGE_MODULES } from '@/config/packageModules'
 import { usePermissions } from '@/modules/Auth'
 import { reportError } from '@/lib/reportError'
 import { FrictionCard } from './components/FrictionCard'
@@ -64,6 +65,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
   const [ecosistemaTecnologico, setEcosistemaTecnologico] = useState('')
   const [fricciones, setFricciones] = useState<Friction[]>([])
   const [areasPrioritarias, setAreasPrioritarias] = useState<string[]>([])
+  const [contractedPackages, setContractedPackages] = useState<string[]>([])
 
   // Cargar proyecto al montar
   useEffect(() => {
@@ -86,6 +88,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
         setHorizonteValor(extendedProj.horizonte_valor || '')
         setEcosistemaTecnologico(extendedProj.ecosistema_tecnologico || '')
         setAreasPrioritarias(extendedProj.areas_prioritarias || [])
+        setContractedPackages((extendedProj as any).contracted_packages || [])
 
         // Fricciones: vienen como JSONB array
         if (extendedProj.fricciones_oportunidades && Array.isArray(extendedProj.fricciones_oportunidades)) {
@@ -125,6 +128,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
         ecosistemaTecnologico: ecosistemaTecnologico || undefined,
         friccionesOportunidades: fricciones,
         areasPrioritarias,
+        contractedPackages,
       })
       await useEngagementStore.getState().loadMyProjects()
       onClose()
@@ -371,6 +375,53 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
           </div>
         )}
       </div>
+
+
+      {/* Paquetes contratados — solo superadmin/consultant */}
+      {!isReadOnly && (
+        <div className="px-8 pt-6 pb-2">
+          <div className="max-w-4xl mx-auto">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400 mb-3">
+              Paquetes contratados
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {(Object.keys(PACKAGE_MODULES) as string[]).map((pkg) => {
+                const labels: Record<string, string> = {
+                  boost_assessment:    'Boost Assessment (T1 · T2 · T7)',
+                  portfolio_management:'Portfolio Management (T3 · T5 · T8 · T9 · T11)',
+                  legal_compliance:    'Legal & Compliance (T6 · T12)',
+                }
+                const checked = contractedPackages.includes(pkg)
+                return (
+                  <label
+                    key={pkg}
+                    className={[
+                      'flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors',
+                      checked
+                        ? 'border-gold/50 bg-gold/5 dark:bg-gold/10'
+                        : 'border-border dark:border-white/10 hover:bg-black/2 dark:hover:bg-white/3',
+                    ].join(' ')}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        setContractedPackages(prev =>
+                          checked ? prev.filter(p => p !== pkg) : [...prev, pkg]
+                        )
+                      }}
+                      className="mt-0.5 accent-gold"
+                    />
+                    <span className="text-xs text-warm-700 dark:text-warm-200 leading-snug">
+                      {labels[pkg] ?? pkg}
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer con botones */}
       {!isReadOnly && (
