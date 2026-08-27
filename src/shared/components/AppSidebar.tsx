@@ -16,9 +16,8 @@ import { useNavigate, useLocation }   from 'react-router-dom'
 import { useUnsavedChanges }          from '@/shared/hooks/useUnsavedChanges'
 import { useSidebar }                 from '@/shared/hooks/useSidebar'
 import { UnsavedChangesModal }        from '@/shared/components/UnsavedChangesModal'
-import React, { useState, useEffect }  from 'react'
+import React, { useState }             from 'react'
 import { useEngagementStore }         from '@/modules/Engagement/store'
-import { useCompanyProfileStore }      from '@/modules/CompanyProfile/store'
 import { usePermissions }             from '@/modules/Auth/usePermissions'
 import type { ToolCode }              from '@/types'
 
@@ -58,27 +57,27 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
   const activeProject = projects.find((p) => p.id === activeId)
 
   // Gate de completitud: T1-T12 bloqueadas si el proyecto no tiene contexto completo
-  const profile      = useCompanyProfileStore((s) => s.profile)
-  const loadProfile  = useCompanyProfileStore((s) => s.loadProfile)
-
-  // Cargar el perfil del proyecto activo si el store aún no lo tiene
-  useEffect(() => {
-    if (activeProject?.id) void loadProfile(activeProject.id)
-  }, [activeProject?.id, loadProfile])
+  // Columnas añadidas por migración 20260827001 — no en database.types.ts todavía
+  const ap = activeProject as (typeof activeProject & {
+    objetivo_principal?:    string | null
+    horizonte_valor?:       string | null
+    ecosistema_tecnologico?: string | null
+    areas_prioritarias?:    string[] | null
+  }) | undefined
 
   const isProjectComplete = Boolean(
-    activeProject &&
-    profile.objetivoPrincipalIA &&
-    profile.horizonteEsperadoValor &&
-    profile.ecosistemaTecnologico &&
-    profile.areasPrioritarias.length > 0
+    ap &&
+    ap.objetivo_principal &&
+    ap.horizonte_valor &&
+    ap.ecosistema_tecnologico &&
+    (ap.areas_prioritarias?.length ?? 0) > 0
   )
-  const missingFields = [
-    !profile.objetivoPrincipalIA      && 'Objetivo IA',
-    !profile.horizonteEsperadoValor   && 'Horizonte esperado',
-    !profile.ecosistemaTecnologico    && 'Ecosistema tecnológico',
-    !profile.areasPrioritarias.length && 'Departamentos implicados',
-  ].filter(Boolean) as string[]
+  const missingFields = ap ? [
+    !ap.objetivo_principal      && 'Objetivo IA',
+    !ap.horizonte_valor         && 'Horizonte esperado',
+    !ap.ecosistema_tecnologico  && 'Ecosistema tecnológico',
+    !(ap.areas_prioritarias?.length) && 'Departamentos implicados',
+  ].filter(Boolean) as string[] : []
 
   // Construye la ruta final: T1–T12 incluyen el engagementId en la URL.
   // T10 (path '/') no lleva engagementId porque es el dashboard raíz.
