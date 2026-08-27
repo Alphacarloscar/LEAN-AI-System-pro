@@ -15,6 +15,7 @@ import { Spinner, Button } from '@shared/design-system/components'
 import { getProjectById, updateProject } from '@/services/projects.service'
 import { loadActiveDomains } from '@/services/domains.service'
 import { useDepartmentStore } from './useDepartmentStore'
+import { useEngagementStore } from '@/modules/Engagement/store'
 import { usePermissions } from '@/modules/Auth'
 import { reportError } from '@/lib/reportError'
 import { FrictionCard } from './components/FrictionCard'
@@ -125,6 +126,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
         friccionesOportunidades: fricciones,
         areasPrioritarias,
       })
+      await useEngagementStore.getState().loadMyProjects()
       onClose()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al guardar proyecto'
