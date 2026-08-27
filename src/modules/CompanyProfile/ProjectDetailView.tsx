@@ -26,6 +26,7 @@ import {
 import { getEcosystemOptions } from '@/modules/Admin/constants/ecosystemOptions'
 import type { ProjectRow } from '@/types/database.types'
 import type { GovernanceDomain } from '@/services/domains.service'
+import { supabase }                  from '@/lib/supabase'
 
 interface ExtendedProjectRow extends ProjectRow {
   objetivo_principal?: string | null
@@ -51,6 +52,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [t1HasData, setT1HasData] = useState(false)
 
   // Campos editables
   const [name, setName] = useState('')
@@ -88,6 +90,12 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
         if (extendedProj.fricciones_oportunidades && Array.isArray(extendedProj.fricciones_oportunidades)) {
           setFricciones(extendedProj.fricciones_oportunidades)
         }
+        // Comprobar si T1 tiene datos (bloquea cambio de dominio)
+        const { count } = await supabase
+          .from('t1_dimension_scores')
+          .select('*', { count: 'exact', head: true })
+          .eq('engagement_id', projectId)
+        setT1HasData((count ?? 0) > 0)
       } catch (err) {
         reportError('[ProjectDetailView] load', err)
       } finally {
@@ -228,7 +236,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
             <select
               value={domainId}
               onChange={(e) => setDomainId(e.target.value)}
-              disabled={isReadOnly}
+              disabled={isReadOnly || t1HasData}
               className="w-full px-4 py-2.5 rounded-lg text-sm bg-white dark:bg-warm-800 border border-border dark:border-white/8 text-lean-black dark:text-warm-50 focus:outline-none focus:border-navy dark:focus:border-navy/60 disabled:opacity-50"
             >
               <option value="">Seleccionar dominio</option>
@@ -236,6 +244,11 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
                 <option key={d.id} value={d.id}>{d.label}</option>
               ))}
             </select>
+            {t1HasData && (
+              <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">
+                El dominio está bloqueado porque ya existe una entrevista T1 guardada para este proyecto.
+              </p>
+            )}
           </div>
         </div>
 
