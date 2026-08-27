@@ -18,9 +18,11 @@ import { Spinner }                      from '@shared/design-system/components'
 import { useEngagementStore }           from '@/modules/Engagement/store'
 import { useAuthStore }                 from '@/modules/Auth'
 import { listCompanies }                from '@/services/companies.service'
+import { loadActiveDomains }            from '@/services/domains.service'
+import type { CompanyRow }              from '@/types/database.types'
+import type { GovernanceDomain }        from '@/services/domains.service'
 import { isDemoEnabled }                from '@/lib/config'
 import { reportError }                  from '@/lib/reportError'
-import type { CompanyRow }              from '@/types/database.types'
 import { useUnsavedChanges }            from '@/shared/hooks/useUnsavedChanges'
 import { UnsavedChangesModal }          from '@/shared/components/UnsavedChangesModal'
 
@@ -85,6 +87,11 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
   const [loadingCo,      setLoadingCo]      = useState(false)
   const [selectedCompany, setSelectedCompany] = useState('')
 
+  // Estado para dominios
+  const [domains,        setDomains]        = useState<GovernanceDomain[]>([])
+  const [selectedDomain, setSelectedDomain] = useState<string>('')
+  const [domainsLoading, setDomainsLoading] = useState(false)
+
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef    = useRef<HTMLInputElement>(null)
 
@@ -120,10 +127,23 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [creating])
 
+  // Cargar dominios cuando se abre el modal de creación
+  useEffect(() => {
+    if (!creating) return
+    if (domains.length > 0) return // ya cargados
+    setDomainsLoading(true)
+    loadActiveDomains()
+      .then(setDomains)
+      .catch(err => reportError('[EngagementSelector] loadActiveDomains', err))
+      .finally(() => setDomainsLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [creating])
+
   function closeCreate() {
     setCreating(false)
     setNewName('')
     setSelectedCompany('')
+    setSelectedDomain('')
     setCreateError(null)
   }
 
@@ -135,6 +155,11 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
     e.preventDefault()
     const name = newName.trim()
     if (!name) return
+    // Dominio obligatorio para todos
+    if (!selectedDomain) {
+      setCreateError('Debes seleccionar un dominio')
+      return
+    }
     // Para superadmin/consultant, empresa obligatoria
     if (needsCompanySelector && !selectedCompany) {
       setCreateError('Selecciona una empresa antes de crear el proyecto.')
@@ -145,7 +170,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
     try {
       // Pasamos companyId explícito para superadmin/consultant;
       // undefined para client_editor (el store lo infiere del perfil)
-      await createAndSelect(name, needsCompanySelector ? selectedCompany : undefined)
+      await createAndSelect(name, needsCompanySelector ? selectedCompany : undefined, selectedDomain)
       closeCreate()
       setOpen(false)
     } catch (err) {
@@ -325,6 +350,36 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                 <div className="p-3 flex flex-col gap-2">
                   <form onSubmit={handleCreate} className="flex flex-col gap-2">
 
+                    {/* Selector de dominio */}
+                    <div>
+                      <label htmlFor="engagement-domain-select" className={['block text-[10px] font-mono uppercase tracking-wide mb-1', dark ? 'text-warm-400' : 'text-warm-600'].join(' ')}>
+                        Dominio <span aria-hidden="true">*</span>
+                      </label>
+                      {domainsLoading ? (
+                        <div className={['flex items-center gap-1.5 text-xs px-2.5 py-1.5', dark ? 'text-warm-400' : 'text-warm-500'].join(' ')}>
+                          <Spinner size="sm" /> Cargando dominios…
+                        </div>
+                      ) : (
+                        <select
+                          id="engagement-domain-select"
+                          value={selectedDomain}
+                          onChange={(e) => { setSelectedDomain(e.target.value); setCreateError(null) }}
+                          required
+                          disabled={createBusy}
+                          aria-label="Selecciona el dominio del proyecto"
+                          className={[
+                            inlineSelectClass,
+                            !selectedDomain && createError ? (dark ? 'border-danger' : 'border-danger-dark') : '',
+                          ].join(' ')}
+                        >
+                          <option value="">Selecciona un dominio…</option>
+                          {domains.map(d => (
+                            <option key={d.id} value={d.id}>{d.label}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+
                     {/* Nombre del proyecto */}
                     <div className="flex gap-2">
                       <input
@@ -373,6 +428,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                       disabled={
                         createBusy ||
                         !newName.trim() ||
+                        !selectedDomain ||
                         (needsCompanySelector && !selectedCompany)
                       }
                       className="w-full py-1.5 rounded-lg bg-[#C8860A] text-white text-xs font-medium disabled:opacity-40 hover:bg-[#B57609] transition-colors flex items-center justify-center gap-1.5"
