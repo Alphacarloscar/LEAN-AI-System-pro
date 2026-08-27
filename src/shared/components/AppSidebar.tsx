@@ -16,7 +16,7 @@ import { useNavigate, useLocation }   from 'react-router-dom'
 import { useUnsavedChanges }          from '@/shared/hooks/useUnsavedChanges'
 import { useSidebar }                 from '@/shared/hooks/useSidebar'
 import { UnsavedChangesModal }        from '@/shared/components/UnsavedChangesModal'
-import { useState, useEffect }         from 'react'
+import React, { useState, useEffect }  from 'react'
 import { useEngagementStore }         from '@/modules/Engagement/store'
 import { useCompanyProfileStore }      from '@/modules/CompanyProfile/store'
 import { usePermissions }             from '@/modules/Auth/usePermissions'
@@ -169,11 +169,10 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
                              (tool.path !== '/' && location.pathname.startsWith(tool.path + '/'))
 
             return (
-              <>
+              <React.Fragment key={tool.code}>
                 {/* Gate de completitud: bloqueado si el proyecto no tiene contexto */}
                 {activeProject && !isProjectComplete && !isActive ? (
                 <div
-                  key={tool.code}
                   title={`Completa el contexto del proyecto antes de usar esta herramienta. Falta: ${missingFields.join(', ')}`}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-not-allowed opacity-40"
                 >
@@ -192,7 +191,6 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
                 </div>
               ) : (
               <button
-                key={tool.code}
                 onClick={() => onNav(tool.path)}
                 aria-current={isActive ? 'page' : undefined}
                 className={[
@@ -227,7 +225,7 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
                 </span>
               </button>
               )}
-              </>
+              </React.Fragment>
             )
           })}
         </div>
