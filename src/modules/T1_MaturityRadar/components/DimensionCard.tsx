@@ -12,8 +12,7 @@ import { useState } from 'react'
 import { Button, FormField } from '@/shared/design-system/components'
 import type { T1DimensionState, T1SubdimensionState } from '../types'
 import { computeDimensionScore, maturityHex, maturityTextOnBg } from '../types'
-import type { DimensionDefinition }                    from '../constants'
-import { SUBDIMENSION_MAP }                            from '../constants'
+import type { DimensionDefinition, SubdimensionDefinition } from '../constants'
 
 interface DimensionCardProps {
   state:      T1DimensionState
@@ -35,11 +34,11 @@ const SCORE_LABELS: Record<number, string> = {
 interface SubdimRowProps {
   sub:        T1SubdimensionState
   dimCode:    string
+  def:        SubdimensionDefinition | undefined
   onChange:   (updated: T1SubdimensionState) => void
 }
 
-function SubdimRow({ sub, onChange }: SubdimRowProps) {
-  const def  = SUBDIMENSION_MAP[sub.code]
+function SubdimRow({ sub, def, onChange }: SubdimRowProps) {
   const hasScore = sub.score !== null
 
   // Gradiente warm-700→gold: 0 = #4A4740 (track barra progreso), 4 = #C8860A (gold)
@@ -246,14 +245,20 @@ export function DimensionCard({ state, definition, onChange }: DimensionCardProp
       {/* ── Subdimensiones ── */}
       {!isCollapsed && (
         <div className="px-5 divide-y divide-border/50">
-          {state.subdimensions.map((sub) => (
-            <SubdimRow
-              key={sub.code}
-              sub={sub}
-              dimCode={state.code}
-              onChange={updateSubdimension}
-            />
-          ))}
+          {(() => {
+            const subdimMap = Object.fromEntries(
+              definition.subdimensions.map((s) => [s.code, s])
+            )
+            return state.subdimensions.map((sub) => (
+              <SubdimRow
+                key={sub.code}
+                sub={sub}
+                dimCode={state.code}
+                def={subdimMap[sub.code]}
+                onChange={updateSubdimension}
+              />
+            ))
+          })()}
         </div>
       )}
     </div>
