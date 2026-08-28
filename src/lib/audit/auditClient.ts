@@ -42,10 +42,20 @@ export function fireAuditLog(entry: AuditLogEntry): void {
       })
 
       if (error != null) {
-        reportError('audit.write', new Error(`[AuditLog] Invoke failed: ${error.message}`))
+        // En dev, un 503 indica que supabase functions serve no está activo — no es un error de app.
+        // En producción, cualquier fallo se reporta a Sentry (ADR-010).
+        if (import.meta.env.DEV) {
+          console.warn('[AuditLog] Edge Function unavailable (local dev):', error.message)
+        } else {
+          reportError('audit.write', new Error(`[AuditLog] Invoke failed: ${error.message}`))
+        }
       }
     } catch (err) {
-      reportError('audit.write', err)
+      if (import.meta.env.DEV) {
+        console.warn('[AuditLog] Network error (local dev):', err)
+      } else {
+        reportError('audit.write', err)
+      }
     }
   })()
 }
