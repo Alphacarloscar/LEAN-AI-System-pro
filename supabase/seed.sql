@@ -8,17 +8,14 @@
 --   2. Dashboard → SQL Editor → pegar este script → Run
 --   O bien: psql -U postgres -d postgres -p 54322 -f e2e/fixtures/seed.sql
 --
--- NOTA: Usuarios creados automáticamente por trigger en auth.users
--- Este seed se aplica DESPUÉS de las migraciones vía supabase db reset
--- Las constraints de FK se deshabilitan temporalmente para permitir inserts
+-- NOTA: Este seed se aplica DESPUÉS de las migraciones vía supabase db reset
+-- Las constraints de FK se verifican al final de la transacción
 -- =============================================================
 
 BEGIN;
 
--- Deshabilitar constraints de foreign key temporalmente
-ALTER TABLE public.profiles DISABLE TRIGGER ALL;
-ALTER TABLE public.projects DISABLE TRIGGER ALL;
-ALTER TABLE public.project_members DISABLE TRIGGER ALL;
+-- Permitir violaciones de FK hasta el final de la transacción
+SET CONSTRAINTS ALL DEFERRED;
 
 -- ── 1. Company ───────────────────────────────────────────────
 INSERT INTO public.companies (id, name, slug, sector, company_size)
@@ -176,11 +173,6 @@ VALUES
    'Revisión de solicitudes', '',
    'Operaciones', 'optimizacion_proceso', 'go', 49.30, '{}')
 ON CONFLICT (id) DO NOTHING;
-
--- Re-habilitar constraints de foreign key
-ALTER TABLE public.profiles ENABLE TRIGGER ALL;
-ALTER TABLE public.projects ENABLE TRIGGER ALL;
-ALTER TABLE public.project_members ENABLE TRIGGER ALL;
 
 COMMIT;
 
