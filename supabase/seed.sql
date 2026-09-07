@@ -1,23 +1,18 @@
 -- =============================================================
--- E2E Lab Seed — GOBY
--- Empresa: Disney (company_id fijo) | Proyecto canon: Toy Story
--- Idempotente: INSERT ... ON CONFLICT DO NOTHING en todas las tablas.
+-- Supabase Auto-Seed — GOBY Lab Data
+-- Local dev only: auto-runs after 'supabase db reset'
 --
--- Cómo ejecutar:
---   1. Instancia local Supabase Docker corriendo
---   2. Dashboard → SQL Editor → pegar este script → Run
---   O bien: psql -U postgres -d postgres -p 54322 -f e2e/fixtures/seed.sql
+-- Recreates 4 lab auth users + all test data (Disney company,
+-- projects, T1 scores, stakeholders, value streams, use cases).
 --
--- NOTA: Este seed se aplica DESPUÉS de las migraciones vía supabase db reset
--- Las constraints de FK se verifican al final de la transacción
+-- Auth users are created with bcrypt-hashed password 'Temporal'
+-- and raw_user_meta_data for role/company mapping. The trigger
+-- on_auth_user_created automatically creates public.profiles rows.
 -- =============================================================
 
 BEGIN;
 
--- Permitir violaciones de FK hasta el final de la transacción
-SET CONSTRAINTS ALL DEFERRED;
-
--- ── 1. Company ───────────────────────────────────────────────
+-- ── 0. Company FIRST (before auth users, so profiles.company_id FK is satisfied) ─
 INSERT INTO public.companies (id, name, slug, sector, company_size)
 VALUES (
   '0b83042d-414e-4d4c-8c83-3a469affbfb3',
@@ -27,7 +22,61 @@ VALUES (
   '201–500 empleados'
 ) ON CONFLICT (id) DO NOTHING;
 
--- ── 2. Profiles ──────────────────────────────────────────────
+-- ── 1. Lab auth users (local dev only — NOT FOR PRE/PRO) ──────────────────
+-- Uses pgcrypto.crypt() to bcrypt-hash passwords. Matches e2e/helpers.ts USERS.
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+  created_at, updated_at, confirmation_token, email_change,
+  email_change_token_new, recovery_token
+) VALUES
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '51e0f939-b12a-42d5-87b6-6e6d5d6036a0',
+    'authenticated', 'authenticated', 'superadmin@test.dev',
+    extensions.crypt('Temporal', extensions.gen_salt('bf')),
+    now(), '{"provider":"email","providers":["email"]}',
+    '{"name":"david.baquero","role":"superadmin","company_id":"0b83042d-414e-4d4c-8c83-3a469affbfb3"}',
+    now(), now(), '', '', '', ''
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '22749bdd-8ea1-49e1-8f44-7ae199bb77b0',
+    'authenticated', 'authenticated', 'consultant@test.dev',
+    extensions.crypt('Temporal', extensions.gen_salt('bf')),
+    now(), '{"provider":"email","providers":["email"]}',
+    '{"name":"consultor","role":"consultant","company_id":"0b83042d-414e-4d4c-8c83-3a469affbfb3"}',
+    now(), now(), '', '', '', ''
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '85a35057-442d-46bd-b9e1-628c57eeae81',
+    'authenticated', 'authenticated', 'editor@test.dev',
+    extensions.crypt('Temporal', extensions.gen_salt('bf')),
+    now(), '{"provider":"email","providers":["email"]}',
+    '{"name":"editor","role":"client_editor","company_id":"0b83042d-414e-4d4c-8c83-3a469affbfb3"}',
+    now(), now(), '', '', '', ''
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '707a11db-b233-4e16-b1df-5d7838580de5',
+    'authenticated', 'authenticated', 'viewer@test.dev',
+    extensions.crypt('Temporal', extensions.gen_salt('bf')),
+    now(), '{"provider":"email","providers":["email"]}',
+    '{"name":"viewer","role":"client_viewer","company_id":"0b83042d-414e-4d4c-8c83-3a469affbfb3"}',
+    now(), now(), '', '', '', ''
+  )
+ON CONFLICT (id) DO NOTHING;
+
+-- Auth identities for password-grant login (required for GoTrue to authenticate)
+INSERT INTO auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+SELECT id::text, id, jsonb_build_object('sub', id::text, 'email', email), 'email', now(), now(), now()
+FROM auth.users
+WHERE id IN ('51e0f939-b12a-42d5-87b6-6e6d5d6036a0', '22749bdd-8ea1-49e1-8f44-7ae199bb77b0',
+             '85a35057-442d-46bd-b9e1-628c57eeae81', '707a11db-b233-4e16-b1df-5d7838580de5')
+ON CONFLICT (provider_id, provider) DO NOTHING;
+
+-- ── 2. Profiles (trigger creates them auto, this ensures exact values) ──────
 INSERT INTO public.profiles (id, email, name, role, company_id) VALUES
   ('51e0f939-b12a-42d5-87b6-6e6d5d6036a0', 'superadmin@test.dev', 'david.baquero', 'superadmin',    '0b83042d-414e-4d4c-8c83-3a469affbfb3'),
   ('22749bdd-8ea1-49e1-8f44-7ae199bb77b0', 'consultant@test.dev', 'consultor',     'consultant',    '0b83042d-414e-4d4c-8c83-3a469affbfb3'),
@@ -48,14 +97,16 @@ INSERT INTO public.company_departments (id, company_id, name, color) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ── 4. Projects (canon E2E: "Toy Story" + "Test Boost Only") ─
-INSERT INTO public.projects (id, name, owner_id, company_id, status, current_phase)
+-- domain_id must reference a valid governance_domains row (ai_adoption is seeded by migration)
+INSERT INTO public.projects (id, name, owner_id, company_id, status, current_phase, domain_id)
 VALUES (
   'e2058bff-9759-465d-ae4d-df79fdf23815',
   'Toy Story',
   '51e0f939-b12a-42d5-87b6-6e6d5d6036a0',
   '0b83042d-414e-4d4c-8c83-3a469affbfb3',
   'active',
-  'listen'
+  'listen',
+  (SELECT id FROM governance_domains WHERE slug = 'ai_adoption' LIMIT 1)
 ),
 (
   'd1a2b3c4-e5f6-4a1b-9c8d-7e6f5a4b3c2d',
@@ -63,7 +114,8 @@ VALUES (
   '51e0f939-b12a-42d5-87b6-6e6d5d6036a0',
   '0b83042d-414e-4d4c-8c83-3a469affbfb3',
   'active',
-  'listen'
+  'listen',
+  (SELECT id FROM governance_domains WHERE slug = 'ai_adoption' LIMIT 1)
 ) ON CONFLICT (id) DO NOTHING;
 
 -- ── 5. Project members ───────────────────────────────────────
@@ -176,10 +228,14 @@ ON CONFLICT (id) DO NOTHING;
 
 COMMIT;
 
--- ── Verificación ──────────────────────────────────────────────
+-- ── Verification ──────────────────────────────────────────────
 SELECT 'companies'          AS tabla, COUNT(*) FROM public.companies          WHERE id = '0b83042d-414e-4d4c-8c83-3a469affbfb3'
 UNION ALL
-SELECT 'profiles',                    COUNT(*) FROM public.profiles            WHERE company_id = '0b83042d-414e-4d4c-8c83-3a469affbfb3'
+SELECT 'auth.users',                 COUNT(*) FROM auth.users                 WHERE email IN ('superadmin@test.dev', 'consultant@test.dev', 'editor@test.dev', 'viewer@test.dev')
+UNION ALL
+SELECT 'auth.identities',            COUNT(*) FROM auth.identities            WHERE user_id IN (SELECT id FROM auth.users WHERE email IN ('superadmin@test.dev', 'consultant@test.dev', 'editor@test.dev', 'viewer@test.dev'))
+UNION ALL
+SELECT 'profiles',                   COUNT(*) FROM public.profiles            WHERE company_id = '0b83042d-414e-4d4c-8c83-3a469affbfb3'
 UNION ALL
 SELECT 'projects (Toy Story)',         COUNT(*) FROM public.projects            WHERE id = 'e2058bff-9759-465d-ae4d-df79fdf23815'
 UNION ALL
