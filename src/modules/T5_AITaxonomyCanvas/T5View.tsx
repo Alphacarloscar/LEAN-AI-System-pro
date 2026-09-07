@@ -6,6 +6,8 @@ import { useState, useMemo, useEffect }   from 'react'
 import { useParams }                      from 'react-router-dom'
 import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
+import { useDomainSlug }                  from '@/hooks/useDomainSlug'
+import { resolveToolLabel }               from '@/shared/domain/toolDisplayNames'
 import { RecommendationPanel }            from '@/components/RecommendationPanel'
 import { buildT5RecommendationContext }   from './t5ContextBuilder'
 import type { T5DomainCode, T5DomainScores } from './types'
@@ -39,6 +41,7 @@ export function T5View({
   const { engagementId: urlId }         = useParams<{ engagementId: string }>()
   const storeId                         = useEngagementStore((s) => s.activeEngagementId)
   const engagementId                    = urlId ?? storeId
+  const { domainSlug }                  = useDomainSlug()
 
   // Hidratar canvas desde Supabase al montar o cambiar de engagement
   useEffect(() => {
@@ -73,7 +76,7 @@ export function T5View({
         onBack={onBack}
         backLabel="Volver"
         toolCode="T5"
-        title="AI Domain Architecture Canvas"
+        title={resolveToolLabel('T5', 'AI Taxonomy Canvas', domainSlug)}
         subtitle={companyName}
         phaseMiniMap={<PhaseMiniMap phaseId="evaluate" toolCode="T5" />}
         cta={<MaturityBadge level={canvas.maturityLevel} />}

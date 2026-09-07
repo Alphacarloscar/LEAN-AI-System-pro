@@ -24,6 +24,20 @@
 - **ADR-014:** LLM generations must use `useEdgeFunctionInvoke` hook.
 - **CI Trigger:** To run Playwright E2E on CI, PR title must contain `feat:`, `refactor`, or `[e2e]`.
 
+## 📦 Database Schema Consolidation (v2.2.0)
+
+**Status:** ✅ Complete (2026-09-04)
+
+All 37 active migrations have been consolidated into a single `supabase/schema.sql` file (6,082 lines, idempotent, atomic). 
+
+- **Main file:** `supabase/schema.sql` (single source of truth)
+- **Audit doc:** `SCHEMA_AUDIT.md` (dependency map, Tier 0-5)
+- **Usage guide:** `CONSOLIDATION_REPORT.md` (3 ways to apply)
+- **Summary:** `CONSOLIDATION_SUMMARY.txt` (checklist + next steps)
+- **Script:** `scripts/consolidate-schema.sh` (can regenerate anytime)
+
+**Old migrations remain in `supabase/migrations/`** (not deleted) for reference and version control. After full validation in DEV→PRE→PRO, archive to `supabase/migrations/_consolidated_archive/`.
+
 ## 🔄 Self-Documenting Pipeline (MANDATORY)
 Every change must be documented in the SAME commit/PR:
 1. Extended technical context lives in `docs/architecture/OVERVIEW.md`.
@@ -58,6 +72,17 @@ supabase migration up # aplica solo las migraciones pendientes
 supabase gen types > src/types/supabase.ts # regenerar tipos TypeScript
 npm run typecheck # verificar coherencia
 ```
+
+## ADR-029 — Reglas de Dominio Multi-Domain (BLOQUEANTE — leer antes de tocar `projects`, `domains`, T1–T13)
+
+> Plataforma multi-dominio: cada `project` pertenece a UN dominio de consultoría (`domain_id`), un `company_id` puede tener N proyectos en M dominios distintos. Ver ADR-029 completa en `docs/decisions/technical/ADR-029-generalizacion-multidominio.md`.
+
+### Reglas absolutas de dominio
+1. **`projects.domain_id` es INMUTABLE.** Nunca `UPDATE` sobre esa columna — enforced en DB y en la Edge Function `ai-recommend`. Cambiar de dominio = crear proyecto nuevo.
+2. **Dominios activos:** `ai_adoption` (original) y `digital_transformation` (piloto T1, BKL-014). Tercer dominio (`data_governance`) aparcado — ver BKL-018.
+3. **Personalización de dominio vive en BD, no en código:** tablas `governance_domains`, `evaluation_dimensions`/`framework_controls`, `governance_configurations`, `llm_prompt_templates` (capa "Personalización de Dominio" del ADR-029). Un módulo NUNCA debe hardcodear literales específicos de un dominio (nombres de dimensiones, prompts LLM, criterios) — debe leerlos vía estas tablas/servicios.
+4. **`contracted_packages`** (en `companies`, cascada a `projects` — BKL-024) determina qué módulos T1–T13 están disponibles: Paquete 1 *Boost Assessment* (T1·T2·T7), Paquete 2 *Portfolio Management* (T3·T5·T8·T9·T11, consume T4), Paquete 3 *Legal & Compliance* (T6·T12, consume T4). T4 es Shared Kernel; T10/Auth/CompanyProfile son Capa Plataforma (siempre presentes).
+5. **Módulo domain-adaptive:** patrón piloto en T1 (`useDomainDimensions.ts` con `case` por dominio + `totalSubdimensions` pasado como prop, nunca constante hardcodeada). Cualquier adaptación de T2–T13 a multi-dominio (BKL-017) debe seguir este mismo patrón, no inventar uno nuevo.
 
 ## ADR-021 — Design System Enforcement
 - PROHIBIDO: bg-gray-*, text-gray-*, border-gray-* → usar equivalentes warm-*

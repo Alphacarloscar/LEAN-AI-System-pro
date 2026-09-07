@@ -4,11 +4,12 @@
 // Formulario inline para añadir iniciativas libres al roadmap.
 // ============================================================
 
-import { useState }                    from 'react'
+import { useState, useEffect }         from 'react'
 import { useForm, Controller }         from 'react-hook-form'
 import { zodResolver }                 from '@hookform/resolvers/zod'
 import { Card, Button, FormField, PersonSelectField } from '@shared/design-system/components'
 import { useCompanyPersonStore, type CompanyPerson } from '@/modules/CompanyProfile/useCompanyPersonStore'
+import { getProjectCompanyId }         from '@/services/projects.service'
 import { useUnsavedGuard }             from '@/shared/hooks/useUnsavedGuard'
 import { AddFreeItemSchema }           from '@/lib/schemas/t9.schemas'
 import type { AddFreeItemFormValues }  from '@/lib/schemas/t9.schemas'
@@ -46,7 +47,17 @@ export function AddFreeItemForm({ onSave, onCancel, projectId }: AddFormProps) {
   const [personSelected, setPersonSelected] = useState(false)
   const [isCreatingNew, setIsCreatingNew] = useState(false)
   const [selectedPersonId, setSelectedPersonId] = useState<string | undefined>(undefined)
+  const [companyId, setCompanyId] = useState<string | undefined>(undefined)
   const startMonth = watch('startMonth')
+
+  useEffect(() => {
+    if (!projectId) return
+    let cancelled = false
+    getProjectCompanyId(projectId).then((cid) => {
+      if (!cancelled) setCompanyId(cid ?? undefined)
+    })
+    return () => { cancelled = true }
+  }, [projectId])
 
   function handlePersonSelected(personId: string, person: CompanyPerson) {
     setValue('responsible', person.name, { shouldValidate: true, shouldDirty: true })
@@ -69,6 +80,7 @@ export function AddFreeItemForm({ onSave, onCancel, projectId }: AddFormProps) {
     if (isCreatingNew && data.responsible) {
       void addPerson({
         projectId,
+        companyId,
         name:       data.responsible.trim(),
         department: data.department,
         sourceTool: 't9',
@@ -97,6 +109,7 @@ export function AddFreeItemForm({ onSave, onCancel, projectId }: AddFormProps) {
         <div className="mb-1">
           <PersonSelectField
             projectId={projectId}
+            companyId={companyId}
             selectedPersonId={selectedPersonId}
             isCreatingNew={isCreatingNew}
             sourceTool="t9"

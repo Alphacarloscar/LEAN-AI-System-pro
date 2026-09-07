@@ -91,7 +91,7 @@ const _impl = {
    * como { interviewees, dimensionStates }.
    * Devuelve vacío (no error) si el proyecto no tiene datos T1 aún.
    */
-  async fetchT1Data(projectId: string): Promise<T1LoadResult> {
+  async fetchT1Data(projectId: string, dimensionDefs?: DimensionDefinition[]): Promise<T1LoadResult> {
     const { data, error } = await supabase
       .from('t1_dimension_scores')
       .select('dimension_code,subdimension_code,score,evidence,interviewee_id,interviewee_name,interviewee_role,interviewee_type,interviewee_department')
@@ -125,7 +125,7 @@ const _impl = {
         department: firstRow.interviewee_department ?? '',
       }
       interviewees.push(ctx)
-      dimensionStates[ctx.id] = buildDimensionsFromRows(rows)
+      dimensionStates[ctx.id] = buildDimensionsFromRows(rows, dimensionDefs)
     }
 
     return { interviewees, dimensionStates }

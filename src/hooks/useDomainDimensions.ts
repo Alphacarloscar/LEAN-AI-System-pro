@@ -37,6 +37,7 @@ export function useDomainDimensions(): DomainDimensionsResult {
       break
 
     case 'transformacion_digital':
+    case 'digital_transformation':
       dimensions = TD_DIMENSION_DEFINITIONS
       break
 

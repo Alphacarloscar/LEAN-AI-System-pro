@@ -8,18 +8,20 @@
 
 import type { T1DimensionState }                        from '../types'
 import { computeOverallScore, resolveMaturityTier,
-         MATURITY_TIER_CONFIG, maturityHex,
+         maturityHex,
          maturityTextOnBg }                             from '../types'
 import { T1SpiderChart }                                from './T1SpiderChart'
+import { useDomainMaturityConfig }                      from '@/hooks/useDomainMaturityConfig'
 
 interface T1RadarPanelProps {
   dimensions: T1DimensionState[]
 }
 
 export function T1RadarPanel({ dimensions }: T1RadarPanelProps) {
+  const tierConfig    = useDomainMaturityConfig()
   const overallScore = computeOverallScore(dimensions)
   const tier         = resolveMaturityTier(overallScore)
-  const config       = MATURITY_TIER_CONFIG[tier]
+  const config       = tierConfig[tier]
   const hex          = maturityHex(overallScore)
 
   // Barra de progreso: 0-4 → 0-100%

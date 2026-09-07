@@ -109,7 +109,7 @@ export function T2View({ onBack }: T2ViewProps) {
         onBack={() => { onBack(); navigate('/') }}
         backLabel="Volver al dashboard"
         toolCode="T2"
-        title="AI Stakeholder Matrix"
+        title="Stakeholder Matrix"
         phaseMiniMap={<PhaseMiniMap phaseId="listen" toolCode="T2" />}
         maxWidth="max-w-7xl"
         cta={!isReadOnly ? (

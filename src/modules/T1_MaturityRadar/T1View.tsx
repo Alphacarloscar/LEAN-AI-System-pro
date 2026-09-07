@@ -17,9 +17,10 @@ import { useState, useMemo, useEffect } from 'react'
 import { useParams }                    from 'react-router-dom'
 import { Button, ToolHeader } from '@/shared/design-system/components'
 import { RetryBanner }                          from '@/shared/components/RetryBanner'
-import { DIMENSION_DEFINITIONS, TOTAL_SUBDIMENSIONS } from './constants'
 import type { T1DimensionState } from './types'
 import { useDomainDimensions } from '@/hooks/useDomainDimensions'
+import { useDomainMaturityConfig } from '@/hooks/useDomainMaturityConfig'
+import { resolveToolLabel } from '@/shared/domain/toolDisplayNames'
 import { countScoredSubdimensions, computeOverallScore } from './types'
 import { DimensionCard }                        from './components/DimensionCard'
 import { T1RadarPanel }                         from './components/T1RadarPanel'
@@ -52,7 +53,9 @@ export function T1View({ onBack }: T1ViewProps) {
   const { isReadOnly } = usePermissions()
 
   // ── Dominio + dimensiones ────────────────────────────────────
-  const { dimensions: domainDimensions } = useDomainDimensions()
+  const { dimensions: domainDimensions, domainSlug } = useDomainDimensions()
+  const domainTierConfig = useDomainMaturityConfig()
+  const totalSubdimensions = domainDimensions.reduce((sum, d) => sum + d.subdimensions.length, 0)
 
   // ── Store T1 + engagement ────────────────────────────────────
   const store                    = useT1Store()
@@ -94,7 +97,7 @@ export function T1View({ onBack }: T1ViewProps) {
   // Garantizar datos al montar la ruta (idempotente vía ensureLoaded).
   useEffect(() => {
     if (engagementId) {
-      store.ensureLoaded(engagementId, { reason: 'route_mount' })
+      store.ensureLoaded(engagementId, { reason: 'route_mount', dimensionDefs: domainDimensions })
       void loadProfile(engagementId)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -214,9 +217,9 @@ export function T1View({ onBack }: T1ViewProps) {
 
   // Contexto para el motor LLM
   const t1LLMContext = useMemo(
-    () => buildT1RecommendationContext(aggregateDimensions, allIntervieweeAggregates, companyProfile),
+    () => buildT1RecommendationContext(aggregateDimensions, allIntervieweeAggregates, companyProfile, domainTierConfig),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [aggregateDimensions, companyProfile]
+    [aggregateDimensions, companyProfile, domainTierConfig]
   )
 
   return (
@@ -228,14 +231,14 @@ export function T1View({ onBack }: T1ViewProps) {
         onBack={onBack}
         backLabel="Volver al dashboard"
         toolCode="T1"
-        title="AI Readiness Assessment"
+        title={resolveToolLabel('T1', 'AI Readiness Assessment', domainSlug)}
         phaseMiniMap={<PhaseMiniMap phaseId="listen" toolCode="T1" />}
         maxWidth="max-w-7xl"
         chips={
           <div className="flex items-center gap-4">
             <span className="text-xs text-text-muted tabular-nums">
               <span className="font-semibold text-lean-black dark:text-warm-100">{scoredCount}</span>
-              /{TOTAL_SUBDIMENSIONS} subdimensiones puntuadas
+              /{totalSubdimensions} subdimensiones puntuadas
             </span>
             <div className="text-right">
               <span className="text-xl font-bold tabular-nums text-lean-black dark:text-warm-50">
@@ -305,7 +308,7 @@ export function T1View({ onBack }: T1ViewProps) {
       {!hasDataT1 && !isLoadingT1 && loadErrorT1 && (
         <RetryBanner
           message={loadErrorT1}
-          onRetry={() => { if (engagementId) store.load(engagementId) }}
+          onRetry={() => { if (engagementId) store.load(engagementId, domainDimensions) }}
         />
       )}
 
@@ -326,7 +329,7 @@ export function T1View({ onBack }: T1ViewProps) {
         {hasDataT1 && !isLoadingT1 && loadErrorT1 && (
           <RetryBanner
             message={loadErrorT1}
-            onRetry={() => { if (engagementId) store.load(engagementId) }}
+            onRetry={() => { if (engagementId) store.load(engagementId, domainDimensions) }}
           />
         )}
 
@@ -336,6 +339,7 @@ export function T1View({ onBack }: T1ViewProps) {
           activeId={activeId}
           dimensionStates={intervieweeStates}
           isReadOnly={isReadOnly}
+          totalSubdimensions={totalSubdimensions}
           onSelect={(id) => store.setActiveId(id)}
           onDelete={deleteInterviewee}
         />
@@ -347,7 +351,7 @@ export function T1View({ onBack }: T1ViewProps) {
             {/* Columna izquierda — 6 DimensionCards */}
             <div className="flex-1 min-w-0 space-y-3">
               {activeDimensions.map((dim) => {
-                const def = DIMENSION_DEFINITIONS.find((d) => d.code === dim.code)
+                const def = domainDimensions.find((d) => d.code === dim.code)
                 if (!def) return null
                 return (
                   <DimensionCard
@@ -397,6 +401,8 @@ export function T1View({ onBack }: T1ViewProps) {
           onSubmit={addInterviewee}
           departments={departments}
           projectId={engagementId}
+          companyId={companyId}
+          totalSubdimensions={totalSubdimensions}
         />
       )}
     </div>

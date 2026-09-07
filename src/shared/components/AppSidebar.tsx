@@ -18,6 +18,8 @@ import { useSidebar }                 from '@/shared/hooks/useSidebar'
 import { UnsavedChangesModal }        from '@/shared/components/UnsavedChangesModal'
 import React, { useState }             from 'react'
 import { useEngagementStore }         from '@/modules/Engagement/store'
+import { useDomainSlug }              from '@/hooks/useDomainSlug'
+import { resolveToolLabel }           from '@/shared/domain/toolDisplayNames'
 import type { ToolCode }              from '@/types'
 
 // ── Registro estático del producto ───────────────────────────
@@ -131,6 +133,7 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
   const projects = useEngagementStore((state) => state.projects)
   const activeId = useEngagementStore((state) => state.activeEngagementId)
   const activeProject = projects.find((p) => p.id === activeId)
+  const { domainSlug } = useDomainSlug()
 
   // Gate de completitud: T1-T12 bloqueadas si el proyecto no tiene contexto completo
   // Columnas añadidas por migración 20260827001 — no en database.types.ts todavía
@@ -240,7 +243,8 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
 
         {/* ── T10 (plataforma) · T4 (shared kernel) ── */}
         <div className="px-3 space-y-0.5">
-          {[T10_TOOL, T4_TOOL].map((tool) => {
+          {[T10_TOOL, T4_TOOL].map((rawTool) => {
+            const tool     = { ...rawTool, label: resolveToolLabel(rawTool.code, rawTool.label, domainSlug) }
             const path     = buildPath(tool)
             const isActive = location.pathname === path ||
                              (path !== '/' && location.pathname.startsWith(path + '/'))
@@ -283,7 +287,8 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
               </div>
               {/* Herramientas del paquete */}
               <div className="px-3 space-y-0.5">
-                {group.tools.map((tool) => {
+                {group.tools.map((rawTool) => {
+                  const tool     = { ...rawTool, label: resolveToolLabel(rawTool.code, rawTool.label, domainSlug) }
                   const path     = buildPath(tool)
                   const isActive = location.pathname === path ||
                                    (path !== '/' && location.pathname.startsWith(path + '/'))

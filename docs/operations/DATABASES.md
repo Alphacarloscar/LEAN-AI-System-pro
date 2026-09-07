@@ -61,6 +61,12 @@ AI-Ready Repository System v2.1.0
 | `t5_canvas` | T5 | Canvas departamento × dominio IA |
 | `iso42001_controls` | T12 | Controles ISO 42001 con estado de cumplimiento |
 
+### Tablas de configuración y override (plataforma)
+
+| Tabla | Propósito | RLS | Escritura |
+|-------|-----------|-----|-----------|
+| `application_texts` | **Textos por Herramienta** — override centralizado de strings UI. Limita a 8 módulos permitidos (ADR-029 + BKL-024: `t1`, `t10`, `t11`, `t12`, `admin`, `admin_auth`, `company_profile`, `navegacion`). Estructura (DEBT-050, 2026-09-04): `tool_module` (módulo), `text_key` (string original hardcodeado en código fuente), `filename` (ubicación file:line en código, ej: `AdminView.tsx:154`), `text_override` (nullable — el valor personalizado; si vacío, UI usa `text_key`). El admin panel renderiza `text_key` y `filename` como readonly, solo edita `text_override`. Resolución: `resolveText(row) => row.text_override?.trim() ? row.text_override : row.text_key`. | Sí — select para autenticados, update solo superadmin/admin. | Solo superadmin/admin vía AdminView.tsx → TextsEditorTab |
+
 ### Tablas de snapshot (longitudinales)
 
 | Tabla | Datos que captura |
@@ -97,12 +103,45 @@ AI-Ready Repository System v2.1.0
 | `20260706_merge_company_persons_function.sql` | Función `merge_company_persons(p_principal_id, p_replaced_id)` — fusiona dos `company_persons`: repunta T1/T2/T3(JSONB)/T9 hacia la principal y elimina la sustituible. `SECURITY DEFINER`, solo `superadmin`/`consultant`, atómica (revierte todo ante cualquier error). Invocada desde `src/services/company-person.service.ts` vía `supabase.rpc(...)`. Ver sección "Función merge_company_persons" más abajo. | ✅ DEV (validado contra Postgres 15 vía Docker: caso feliz, mismo id, proyectos distintos, persona inexistente, rol no autorizado, rollback transaccional) — ⏳ PRE + PRO pendiente |
 | `20260707_company_departments_type.sql` | Añade `company_departments.type` (`'it'` \| `'negocio_ops'`, `NOT NULL DEFAULT 'negocio_ops'`, `CHECK` constraint) — clasifica cada departamento como IT/Tecnología o Negocio & Ops, misma distinción que T1 ya usa para `interviewee.type`. Idempotente (`ADD COLUMN IF NOT EXISTS` + backfill `WHERE type IS NULL` antes del `NOT NULL`). Clasificación real de departamentos preexistentes vía `scripts/migrate-departments-to-type.sql` (no auto-ejecutado). | ✅ DEV — ⏳ PRE + PRO pendiente |
 | `20260708_company_persons_company_scope.sql` | Amplía la LECTURA de `company_persons` de `project_id` a `company_id` (todos los proyectos de una empresa) para la sección "Personas en la empresa": nuevo helper `user_can_read_company(company_id)` (mismo patrón que `user_can_read_project`), policy `company_persons_select` con `OR` sobre ambos helpers (fallback para filas legado con `company_id NULL`), índice `idx_company_persons_company_id`, y `merge_company_persons` actualizada para validar "misma empresa" (via `projects.company_id`) en vez de "mismo proyecto". Escritura (INSERT/UPDATE/DELETE) sin cambio de fondo — sigue exigiendo `project_id` concreto. Ver limitación conocida sobre T3 en TECH-DEBT.md. | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260824001_governance_domains_and_package_config.sql` | ADR-029 Fase 5: tablas de gobernanza multi-dominio (`domains`, `framework_controls`, `package_config`) — base del sistema de dominios (`ai_adoption`, `digital_transformation`). | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260824002_seed_framework_controls.sql` | ADR-029 Fase 5 TIPO 3: seed de `framework_controls` para el dominio AI Adoption. | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260824003_seed_llm_prompt_templates.sql` | ADR-029 Fase 5 TIPO 4: migra los prompts LLM hardcodeados en frontend a tabla BD (`llm_prompt_templates`). | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260825001_create_project_rpc_add_domain_id.sql` | Añade `domain_id` (obligatorio, inmutable) al RPC de creación de proyectos. | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260825002_framework_controls_is_active.sql` | `ADD COLUMN is_active` a `framework_controls` (activar/desactivar controles sin borrar histórico). | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260827001_projects_extended_fields.sql` | Campos extendidos en `projects`: objetivo, restricciones, horizonte temporal, ecosistema tecnológico. | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260827002_contracted_packages_default_all.sql` | `contracted_packages` en `projects`: nuevo `DEFAULT` con los 3 paquetes + backfill de filas vacías. Incluida también en "Migraciones pendientes de aplicar en PRO/PRE" al inicio de este documento. | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260827002_create_project_rpc_extended_fields.sql` | RPC de creación de proyecto actualizado para aceptar los campos extendidos de `20260827001`. | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260827003_companies_contracted_packages.sql` | `contracted_packages` en `companies` (nuevo campo, fuente de verdad para el cascade empresa→proyectos de BKL-024). Incluida también en "Migraciones pendientes de aplicar en PRO/PRE". | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260827003_seed_llm_prompt_templates.sql` | ADR-029 Fase 5 TIPO 4 — variante/continuación del seed de `20260824003`. | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260829001_delete_project_rpc.sql` | RPC de borrado de proyecto. | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260829002_update_project_rpc.sql` | RPC de actualización de proyecto. | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260829003_fix_update_project_ambiguity.sql` | Fix de ambigüedad de columna en el RPC de `20260829002`. | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260828001_seed_transformacion_digital_domain.sql` | ADR-029 Fase 5 — seed real del dominio `transformacion_digital` (fila en `governance_domains` + sus 6 `evaluation_dimensions`, D1-D6). Copiado de `docs/domains/transformacion-digital-seed.sql` (hasta ahora solo spec de referencia, nunca aplicado) — root cause de "T10 no funciona en dominio Transformación Digital": sin esta fila, `governance_domains` solo tenía `ai_adoption`, el selector de dominios (`domains.service.ts`) no podía ofrecer TD, y cualquier proyecto con `domain_id` apuntando a un dominio inexistente rompía el join en `listMyProjects()` → `useDomainSlug()` caía a `null`/fallback AI Adoption en todas las pantallas domain-aware. | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260904_fix_application_texts_semantics.sql` | DEBT-050: añade columna `text_override` (el valor de override/personalización) a `application_texts`, migra datos de `text_generalizado` si existen, resetea `filename` para recarga posterior con valores file:line correctos. | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260904_refactor_application_texts_data.sql` | Continuación de DEBT-050: limpia los datos incorrectos (`filename` con valores `module_key`) para preparar la tabla para seed data correcto extraído desde el código fuente (ej: `AdminView.tsx:154`). Script de generación: `scripts/generate-application-texts-seed.ts` (a ejecutar manualmente tras revisar el output JSON). | ✅ DEV — ⏳ PRE + PRO pendiente |
 
 > Las migraciones de auditoría (`20260615_003`, `20260615_007`, `20260616_004`) marcadas ⏳ se aplican juntas via `supabase/releases/release-v2.2.0-pre-pro.sql` (único script idempotente).
 >
 > Las migraciones `20260703`, `20260705`, `20260706` (ambas), `20260707` y `20260708` marcadas ⏳ se aplican juntas via `supabase/releases/release-v2.2.1-person-select-list.sql` (único script idempotente) — **no** están cubiertas por `release-v2.2.0-pre-pro.sql`.
+>
+> Las migraciones `20260824*` a `20260829*` (ADR-029 multi-dominio) marcadas ⏳ **no tienen release consolidado todavía** — pendiente de crear `release-v2.3.0-multi-domain.sql` antes de aplicar en PRE/PRO (BKL-003, punto 6).
 
-> **FASE2_verify_indexes.sql, FASE3_add_missing_indexes.sql** — scripts de verificación/mantenimiento, no migraciones de esquema.
+> **FASE2_verify_indexes.sql, FASE3_add_missing_indexes.sql** — scripts de verificación/mantenimiento (no migraciones de esquema). Ya no viven en `supabase/migrations/` (2026-08-28): estaban duplicados byte a byte respecto a `supabase/migrations/_archive/`, se eliminó la copia activa y se conserva solo la archivada.
+
+### Limpieza de duplicados (BKL-003, 2026-08-28)
+
+Auditoría de `supabase/migrations/` encontró y resolvió 3 ficheros duplicados byte a byte (mismo contenido, nombre distinto — la "contradicción entre ficheros" que describe BKL-003):
+
+| Fichero eliminado | Duplicado exacto de | Acción |
+|---|---|---|
+| `20260709_company_persons_company_scope.sql` | `20260708_company_persons_company_scope.sql` | Eliminado — se conserva `20260708` (nombre referenciado en este documento y en el release v2.2.1) |
+| `20260826_seed_framework_controls.sql` | `20260824002_seed_framework_controls.sql` | Eliminado — se conserva `20260824002` (secuencia coherente con `20260824001`/`003` del mismo día) |
+| `DRAFT_20260527_security_persistence_v2.sql`, `DRAFT_20260527_security_persistence_v3.sql`, `FASE2_verify_indexes.sql`, `FASE3_add_missing_indexes.sql`, `FASE4_test_procedure.md` | Copia idéntica ya existente en `supabase/migrations/_archive/` | Eliminados de la carpeta activa — quedan solo en `_archive/` |
+
+**Pendiente de BKL-003 (no completado en esta pasada, requiere validación contra Postgres real):**
+- Fichero base `000_baseline_schema.sql` que represente el esquema completo actual.
+- Script `npm run db:validate` que compare el esquema resultante contra `supabase gen types`.
+- Release consolidado `release-v2.3.0-multi-domain.sql` para la serie `20260824*`–`20260829*` (ADR-029), siguiendo el patrón de `release-v2.2.0` / `release-v2.2.1`.
 
 ---
 

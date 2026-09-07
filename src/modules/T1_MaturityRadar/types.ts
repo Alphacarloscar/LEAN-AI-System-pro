@@ -74,12 +74,14 @@ export type MaturityTier =
   | 'avanzado'
   | 'lider'
 
-export const MATURITY_TIER_CONFIG: Record<MaturityTier, {
+export interface TierConfig {
   label:       string
   range:       [number, number]
   description: string
   color:       string   // Tailwind color tokens
-}> = {
+}
+
+export const MATURITY_TIER_CONFIG: Record<MaturityTier, TierConfig> = {
   inicial: {
     label:       'Iniciación',
     range:       [0, 1.0],

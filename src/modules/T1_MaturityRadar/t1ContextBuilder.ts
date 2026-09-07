@@ -7,7 +7,7 @@
 // Se llama desde T1View con los datos ya computados en el componente.
 // ============================================================
 
-import type { T1DimensionState }       from './types'
+import type { T1DimensionState, MaturityTier, TierConfig } from './types'
 import {
   computeDimensionScore,
   computeOverallScore,
@@ -73,6 +73,9 @@ export function buildT1RecommendationContext(
   aggregateDimensions: T1DimensionState[],
   allInterviewees:     IntervieweeAggregate[],
   profile:             CompanyProfile,
+  // Bandas de madurez del dominio activo (ver useDomainMaturityConfig) —
+  // opcional, default AI Adoption por compatibilidad con llamadas existentes.
+  tierConfig:          Record<MaturityTier, TierConfig> = MATURITY_TIER_CONFIG,
 ): T1RecommendationContext {
 
   // ── Dimensiones con scores calculados ──
@@ -91,7 +94,7 @@ export function buildT1RecommendationContext(
   // ── Overall + tier ──
   const overallScore  = computeOverallScore(aggregateDimensions)
   const maturityTier  = resolveMaturityTier(overallScore)
-  const maturityLabel = MATURITY_TIER_CONFIG[maturityTier].label
+  const maturityLabel = tierConfig[maturityTier].label
 
   // ── Strengths: top 3 por score descendente (con score ≥ 0) ──
   const strengths = [...dimensions]

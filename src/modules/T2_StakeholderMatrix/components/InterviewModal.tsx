@@ -145,6 +145,7 @@ function StakeholderFormPhase({
     <form onSubmit={handleSubmit(onValid)} className="space-y-4">
       <PersonSelectField
         projectId={projectId}
+        companyId={companyId}
         selectedPersonId={selectedPersonId ?? undefined}
         isCreatingNew={isCreatingNew}
         sourceTool="t2"

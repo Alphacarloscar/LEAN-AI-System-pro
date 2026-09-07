@@ -9,6 +9,8 @@ import { useT1Store }             from '@/modules/T1_MaturityRadar/store'
 import { useT2Store }             from '@/modules/T2_StakeholderMatrix/store'
 import { useCompanyProfileStore } from '@/modules/CompanyProfile/store'
 import { useEngagementStore }     from '@/modules/Engagement/store'
+import { useDomainSlug }          from '@/hooks/useDomainSlug'
+import { resolveToolLabel }       from '@/shared/domain/toolDisplayNames'
 import { useAuthStore }           from '@/modules/Auth'
 import { useUnsavedChanges }      from '@/shared/hooks/useUnsavedChanges'
 import { Button, Spinner, ToolHeader } from '@shared/design-system/components'
@@ -35,6 +37,7 @@ export function T4View({ onBack }: T4ViewProps) {
   const { engagementId: urlId }                          = useParams<{ engagementId: string }>()
   const storeId                                          = useEngagementStore((s) => s.activeEngagementId)
   const engagementId                                     = urlId ?? storeId
+  const { domainSlug }                                   = useDomainSlug()
   const user                                             = useAuthStore((s) => s.user)
   const isAuth                                           = !!user
 
@@ -197,7 +200,7 @@ export function T4View({ onBack }: T4ViewProps) {
         onBack={() => requestAction('back')}
         backLabel="Volver al dashboard"
         toolCode="T4"
-        title="Use Case Priority Board"
+        title={resolveToolLabel('T4', 'Use Case Priority Board', domainSlug)}
         phaseMiniMap={<PhaseMiniMap phaseId="evaluate" toolCode="T4" />}
         cta={
           <Button variant="primary" size="sm" onClick={() => requestAction('import')}>

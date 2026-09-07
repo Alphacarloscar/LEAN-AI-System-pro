@@ -140,7 +140,7 @@ export function T11View({ onBack }: T11ViewProps) {
         onBack={onBack}
         backLabel="Volver al dashboard"
         toolCode="T11"
-        title="AI Operating Rhythm"
+        title="Operating Rhythm"
         phaseMiniMap={<PhaseMiniMap phaseId="normalize" toolCode="T11" />}
         maxWidth="max-w-7xl"
         cta={

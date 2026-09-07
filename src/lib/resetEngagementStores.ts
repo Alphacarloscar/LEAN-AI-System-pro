@@ -29,6 +29,7 @@
 // ============================================================
 
 import { useT1Store }              from '@/modules/T1_MaturityRadar/store'
+import type { DimensionDefinition }  from '@/modules/T1_MaturityRadar/constants'
 import { useT2Store }              from '@/modules/T2_StakeholderMatrix/store'
 import { useT3Store }              from '@/modules/T3_ValueStreamMap/store'
 import { useT4Store }              from '@/modules/T4_UseCasePriorityBoard/store'
@@ -82,17 +83,18 @@ export interface LoadSummary {
  */
 export async function loadAllCriticalStores(
   engagementId: string,
-  options?: { staleMs?: number; reason?: string },
+  options?: { staleMs?: number; reason?: string; dimensionDefs?: DimensionDefinition[] },
 ): Promise<LoadSummary> {
-  const reason  = options?.reason  ?? 'loadAllCriticalStores'
-  const staleMs = options?.staleMs
+  const reason        = options?.reason  ?? 'loadAllCriticalStores'
+  const staleMs       = options?.staleMs
+  const dimensionDefs = options?.dimensionDefs
 
   // Stack trace para identificar el caller exacto en producción
   console.debug('[RUNTIME] loadAllCriticalStores called', { reason, project: engagementId.slice(0, 8) + '…' })
   console.trace('[RUNTIME] loadAllCriticalStores stack')
 
   const results = await Promise.allSettled([
-    useT1Store.getState().ensureLoaded(engagementId, { reason, ...(staleMs != null ? { staleMs } : {}) }),
+    useT1Store.getState().ensureLoaded(engagementId, { reason, ...(staleMs != null ? { staleMs } : {}), ...(dimensionDefs ? { dimensionDefs } : {}) }),
     useT2Store.getState().ensureLoaded(engagementId, { reason, ...(staleMs != null ? { staleMs } : {}) }),
     useT3Store.getState().ensureLoaded(engagementId, { reason, ...(staleMs != null ? { staleMs } : {}) }),
     useT4Store.getState().ensureLoaded(engagementId, { reason, ...(staleMs != null ? { staleMs } : {}) }),

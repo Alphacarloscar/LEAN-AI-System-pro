@@ -8,9 +8,10 @@
 
 import { useState, useEffect } from 'react'
 import { Button }              from '@shared/design-system/components'
-import { supabase }            from '@/lib/supabaseClient'
+import { supabase }            from '@/lib/supabase'
 import { reportError }         from '@/lib/reportError'
 import { PACKAGE_GROUPS }      from '@/shared/components/AppSidebar'
+import { useEngagementStore }  from '@/modules/Engagement/store'
 
 interface PlanesTabProps {
   companyId: string
@@ -93,6 +94,15 @@ export function PlanesTab({ companyId }: PlanesTabProps) {
         .update({ contracted_packages: packages })
         .eq('id', companyId)
       if (error) throw error
+
+      // Sincronizar en cascada: todos los proyectos de la empresa (BKL-024)
+      const { error: projError } = await supabase
+        .from('projects')
+        .update({ contracted_packages: packages })
+        .eq('company_id', companyId)
+      if (projError) throw projError
+
+      await useEngagementStore.getState().loadMyProjects()
       setSaveMsg('Planes guardados correctamente.')
     } catch (err) {
       reportError('[PlanesTab] save', err)
@@ -206,10 +216,6 @@ export function PlanesTab({ companyId }: PlanesTabProps) {
         </Button>
       </div>
 
-      <p className="mt-4 text-[10px] text-text-muted dark:text-warm-500 leading-relaxed">
-        Nota: los cambios en planes no actualizan retroactivamente los proyectos existentes.
-        Para modificar los paquetes de un proyecto concreto, edita el proyecto desde la pestaña Proyectos.
-      </p>
     </div>
   )
 }

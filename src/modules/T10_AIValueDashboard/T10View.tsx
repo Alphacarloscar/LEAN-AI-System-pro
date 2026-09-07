@@ -20,6 +20,7 @@ import { useT3Store }                    from '@/modules/T3_ValueStreamMap/store
 import { useT12Store }                   from '@/modules/T12_ISOAssessment/store'
 import { useT9Store }                    from '@/modules/T9_AIRoadmap/store'
 import { usePermissions }                from '@/modules/Auth'
+import { useDomainDimensions }           from '@/hooks/useDomainDimensions'
 
 import { getThemeColor, CHART_SERIES_COLORS } from '@shared/design-system/charts/chartTokens'
 import { EmptyNoProject, EmptyNoData } from './components/EmptyStates'
@@ -88,12 +89,13 @@ export function T10View({ onNavigate }: T10ViewProps) {
   const { controls: t12Controls, syncEngagement: syncT12 } = useT12Store()
   const { freeItems: t9FreeItems, syncEngagement: syncT9  } = useT9Store()
   const { isReadOnly: isReadOnlyProject, hasModule } = usePermissions()
+  const { dimensions: domainDimensions } = useDomainDimensions()
 
   // mount-only: carga inicial de todos los módulos cuando cambia el engagement
   // stable Zustand actions — añadirlas es inofensivo pero convención del proyecto es omitirlas
   useEffect(() => {
     if (!engagementId) return
-    loadT1(engagementId); loadT2(engagementId); loadT3(engagementId); loadT4(engagementId)
+    loadT1(engagementId, domainDimensions); loadT2(engagementId); loadT3(engagementId); loadT4(engagementId)
     loadProfile(engagementId); syncT12(engagementId); syncT9(engagementId)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engagementId])

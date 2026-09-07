@@ -18,6 +18,8 @@ import { useNavigate, useParams }       from 'react-router-dom'
 import { useT12Store }                  from './store'
 import { useT6Store }                   from '@/modules/T6_RiskGovernance/store'
 import { useEngagementStore }           from '@/modules/Engagement/store'
+import { useDomainSlug }                from '@/hooks/useDomainSlug'
+import { resolveToolLabel }             from '@/shared/domain/toolDisplayNames'
 import { useCompanyProfileStore }       from '@/modules/CompanyProfile/store'
 import {
   T12_CLAUSE_CONFIG,
@@ -47,6 +49,7 @@ export function T12View({ onBack }: T12ViewProps) {
   const { engagementId: urlId }     = useParams<{ engagementId: string }>()
   const storeId                     = useEngagementStore((s) => s.activeEngagementId)
   const engagementId                = urlId ?? storeId
+  const { domainSlug }              = useDomainSlug()
   const companyName                 = useCompanyProfileStore((s) => s.profile.engagementName)
   const loadProfile                 = useCompanyProfileStore((s) => s.loadProfile)
 
@@ -107,7 +110,7 @@ export function T12View({ onBack }: T12ViewProps) {
         onBack={() => { onBack?.(); navigate('/') }}
         backLabel="Volver al dashboard"
         toolCode="T12"
-        title="AI System Impact Assessment — ISO 42001"
+        title={resolveToolLabel('T12', 'ISO 42001 Assessment', domainSlug)}
         phaseMiniMap={<PhaseMiniMap phaseId="normalize" toolCode="T12" />}
         cta={
           <>

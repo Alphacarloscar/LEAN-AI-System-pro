@@ -29,6 +29,7 @@ import type {
   T1DimensionState,
   T1SubdimensionState,
 } from './types'
+import type { DimensionDefinition } from './constants'
 
 // ── Tipos del store ──────────────────────────────────────────
 
@@ -48,10 +49,10 @@ interface T1Store {
   /** Error de carga — visible en RetryBanner si != null */
   loadError:        string | null
 
-  ensureLoaded: (projectId: string, options?: { force?: boolean; reason?: string; staleMs?: number }) => Promise<void>
+  ensureLoaded: (projectId: string, options?: { force?: boolean; reason?: string; staleMs?: number; dimensionDefs?: DimensionDefinition[] }) => Promise<void>
 
   // ── Carga desde Supabase ────────────────────────────────────
-  load: (engagementId: string) => Promise<void>
+  load: (engagementId: string, dimensionDefs?: DimensionDefinition[]) => Promise<void>
 
   // ── Inicialización en modo demo (sin engagement) ────────────
   initFromScenario: (interviewees: T1IntervieweeContext[], stateMap: Record<string, T1DimensionState[]>) => void
@@ -154,7 +155,7 @@ export const useT1Store = create<T1Store>()((set, get) => ({
 
   // ── ensureLoaded ───────────────────────────────────────────
   ensureLoaded: async (projectId, options = {}) => {
-    const { force = false, reason = 'unknown', staleMs = STALE_MS } = options
+    const { force = false, reason = 'unknown', staleMs = STALE_MS, dimensionDefs } = options
     const state = get()
     if (state.isLoading && state.loadedProjectId === projectId && !force) {
       logTrace({ resourceName: 'T1', projectId, requestId: state.currentRequestId ?? 'n/a', reason, status: 'skipped', skippedReason: 'in_flight' })
@@ -170,18 +171,18 @@ export const useT1Store = create<T1Store>()((set, get) => ({
     if (state.hasData && state.loadedProjectId !== projectId) {
       set({ interviewees: [], dimensionStates: {}, activeId: '', hasData: false, loadError: null })
     }
-    await get().load(projectId)
+    await get().load(projectId, dimensionDefs)
   },
 
   // ── load ───────────────────────────────────────────────────
-  load: async (engagementId) => {
+  load: async (engagementId, dimensionDefs) => {
     const requestId = crypto.randomUUID()
     set({ isLoading: true, currentRequestId: requestId, loadError: null, loadedProjectId: engagementId })
     logTrace({ resourceName: 'T1', projectId: engagementId, requestId, status: 'started' })
 
     const LOAD_TIMEOUT_MS = 15_000
 
-    const fetchPromise = fetchT1Data(engagementId)
+    const fetchPromise = fetchT1Data(engagementId, dimensionDefs)
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('T1_LOAD_TIMEOUT')), LOAD_TIMEOUT_MS)
     )

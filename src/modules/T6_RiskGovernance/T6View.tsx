@@ -100,7 +100,7 @@ export function T6View({
         onBack={onBack}
         backLabel="Volver al dashboard"
         toolCode="T6"
-        title="Risk &amp; Governance"
+        title="Risk & Governance"
         phaseMiniMap={<PhaseMiniMap phaseId="evaluate" toolCode="T6" />}
         maxWidth="max-w-[1100px]"
         chips={

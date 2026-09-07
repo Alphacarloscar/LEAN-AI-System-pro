@@ -1,6 +1,6 @@
 ﻿# Technical Debt Register — GOBY
 
-Last updated: 2026-07-08
+Last updated: 2026-09-04
 AI-Ready Repository System v2.1.0
 
 > Registro activo de deuda técnica conocida. Cada item tiene severidad, impacto y plan de acción.
@@ -10,6 +10,83 @@ AI-Ready Repository System v2.1.0
 ---
 
 ## Items Activos
+
+### DEBT-050 — "Textos por Herramienta" feature tenía semántica incorrecta en table structure [RESUELTO 2026-09-04]
+
+**Detectado:** 2026-09-04 (refactorización de AdminView)
+**Área:** `src/modules/Admin/components/TextsEditorTab.tsx`, `application_texts` table (BD), `src/types/database.types.ts`
+
+La tabla `application_texts` y su UI correspondiente tenían semantics confundidas:
+- `filename` se llenaba con `module_"<text_key>"` (ej: `Admin_"Crear empresa"`) en lugar de referencias reales file:line del código fuente
+- `text_generalizado` se llamaba así pero era en realidad el override value (el texto personalizado que el usuario establece en el admin panel)
+- `text_key` debería ser el texto **original** del código fuente, pero era ambiguo
+- El selector de módulos mostraba todos los módulos en la tabla (1000+ registros), cuando solo 8 deberían ser visibles (ADR-029 + BKL-024)
+
+**Fix:** 
+1. Renombraron la semántica en `database.types.ts`: `text_generalizado` → `text_override` (con comentarios explicativos)
+2. `TextsEditorTab.tsx` ahora:
+   - Limita módulos a 8 permitidos: `t1`, `t10`, `t11`, `t12`, `admin`, `admin_auth`, `company_profile`, `navegacion`
+   - Hace `Clave` y `Archivo` readonly (son datos de referencia del código fuente)
+   - Columna `Texto` es editable, contiene el override value
+   - Implementa `resolveText(row)`: si `text_override` está vacío, devuelve `text_key`; si tiene valor, devuelve el override
+3. Migración `20260904_fix_application_texts_semantics.sql` y `20260904_refactor_application_texts_data.sql` limpian los datos incorrectos
+4. Script nuevo `generate-application-texts-seed.ts` (a ejecutar manualmente) genera seed data correcto del código fuente
+
+**Impacto:** hasta que se ejecute el seed generator, la tabla tendrá datos parcialmente corregidos pero incompletos. El UI funcionará correctamente una vez que se llene con datos reales.
+
+---
+
+### DEBT-048 — fetchT1Data no propagaba dimensionDefs: T1/T10 mostraban 0/24 en proyectos TD con entrevistas ya rellenadas [RESUELTO 2026-08-28]
+
+**Detectado:** 2026-08-28 (reporte de Carlos: "t10 no funciona en dominio transformacion" — tras descartar DEBT-047, Carlos aportó capturas de T1 "Digital Readiness Assessment" mostrando a los entrevistados Woody y Buzz en 0/24 subdimensiones y "MADUREZ IA GLOBAL 0.0/4", con la aclaración explícita "pero ya estaban rellenas las entrevistas" — descartando estado vacío).
+**Área:** `src/services/t1.service.ts`, `src/modules/T1_MaturityRadar/store.ts`, `T1View.tsx`, `T10View.tsx`, `src/lib/resetEngagementStores.ts`.
+
+Asimetría entre el camino de escritura y el de lectura de T1. `buildBlankDimensions(dimensionDefs?)` y `buildDimensionsFromRows(rows, dimensionDefs?)` en `t1.service.ts` ya soportaban recibir las definiciones de dimensión domain-aware desde hace tiempo — pero `fetchT1Data(projectId)` (el camino de lectura) no tenía parámetro `dimensionDefs` en absoluto, así que su llamada interna `buildDimensionsFromRows(rows)` siempre pasaba `undefined` y caía al default hardcodeado de `DIMENSION_DEFINITIONS` (AI Adoption), sin importar el dominio real del proyecto. El write path (`addInterviewee`, invocado desde `T1View.tsx`) sí recibía correctamente las definiciones TD, así que las filas se guardaban en BD con códigos TD correctos (`digital_vision::vision_articulada`, etc.). Al leerlas, `fetchT1Data` reconstruía la plantilla en memoria con códigos AI (`strategy::...`, etc.), y el lookup por clave `` `${dimension_code}::${subdimension_code}` `` (usado para mapear `t1_dimension_scores` a la plantilla) nunca encontraba coincidencia entre las filas reales (TD) y las claves esperadas (AI) → todas las puntuaciones se mostraban en 0/blank pese a existir en BD.
+
+**Fix:** se propagó `dimensionDefs` por todo el camino de lectura:
+- `t1.service.ts`: `fetchT1Data(projectId, dimensionDefs?)` reenvía el parámetro a `buildDimensionsFromRows`.
+- `T1_MaturityRadar/store.ts`: `load(engagementId, dimensionDefs?)` y `ensureLoaded(projectId, { ..., dimensionDefs? })` propagan hasta `fetchT1Data`.
+- `T1View.tsx`: el `useEffect` de montaje y ambos botones de reintento pasan `domainDimensions` (ya resuelto vía `useDomainDimensions()`).
+- `T10View.tsx`: el `useEffect` de montaje ahora resuelve `domainDimensions` vía `useDomainDimensions()` y lo pasa a `loadT1(engagementId, domainDimensions)` — antes llamaba `loadT1(engagementId)` sin dominio, con el mismo bug.
+- `resetEngagementStores.ts`: `loadAllCriticalStores()` acepta y reenvía `dimensionDefs` a `ensureLoaded` para T1, por consistencia — este call site no tiene caller activo en la app hoy (solo `resetAllEngagementStores` está conectado a `selectEngagement`), pero su doc interna lo describe como el mecanismo de eager-loading al cambiar de proyecto, así que se dejó domain-aware para cuando se active.
+
+Verificado con `npm run typecheck` (0 errores).
+
+**Nota:** distinto de DEBT-047 — ese ítem (dominio TD nunca sembrado vía migración real) es un gap real y se mantiene resuelto, pero **no era la causa** del bug reportado por Carlos: en su entorno local el dominio TD ya existía (sembrado fuera de banda), confirmado con una traza de red del navegador antes de encontrar este root cause real.
+
+---
+
+### DEBT-047 — Dominio "Transformación Digital" nunca se sembró en BD, solo existía como spec [RESUELTO 2026-08-28]
+
+**Detectado:** 2026-08-28 (reporte de Carlos: "t10 no funciona en dominio transformacion")
+**Área:** `governance_domains` / `evaluation_dimensions` (BD) — el resto del código (dimensiones T1 domain-aware, `resolveToolLabel`, `useDomainMaturityConfig`, T10) ya estaba construido correctamente sobre ADR-029 Fase 5.
+
+`docs/domains/transformacion-digital-seed.sql` contenía el INSERT del dominio `transformacion_digital` y sus 6 `evaluation_dimensions` (D1-D6), pero llevaba la etiqueta "Especificación de referencia — aplicable cuando se active TD en producción" y nunca se copió a `supabase/migrations/`. Resultado: `governance_domains` solo tenía la fila `ai_adoption` sembrada en `20260824001_governance_domains_and_package_config.sql`. El selector de dominio (`domains.service.ts` → `loadActiveDomains()`) lee esa tabla directamente, así que no había forma real de crear un proyecto en el dominio TD; y si algún proyecto tenía `domain_id` apuntando a un dominio inexistente, el join `governance_domains(id, slug, label)` de `listMyProjects()` no resolvía nada, `useDomainSlug()` devolvía `domainSlug: null`, y **todas** las pantallas domain-aware (T10 incluido — hero "Índice IA", categorías de `AI_CAT_META` en el panel de ecosistema, tiers de madurez, nombres de herramienta) caían silenciosamente al fallback de AI Adoption en vez de mostrar contenido TD.
+
+**Fix:** se copió `docs/domains/transformacion-digital-seed.sql` a `supabase/migrations/20260828001_seed_transformacion_digital_domain.sql` (idempotente, `ON CONFLICT DO NOTHING` en ambos INSERT) para que el dominio exista de verdad en BD. Con esto el selector de dominio puede ofrecer TD al crear proyectos y `useDomainSlug()`/`useDomainDimensions()`/`useDomainMaturityConfig()`/`resolveToolLabel()` (ya escritos para reconocer `'transformacion_digital'`) empiezan a resolver correctamente.
+
+**Pendiente:** aplicar esta migración en PRE/PRO (queda dentro del mismo paquete `20260824*`–`20260829*` de ADR-029 sin release consolidado — ver BKL-003). Proyectos ya creados en producción con un `domain_id` roto (si los hubiera) necesitarán backfill manual una vez identificados — no se puede hacer desde este entorno sin acceso a la BD real.
+
+**Corrección 2026-08-28:** este gap es real pero **no era la causa** del bug "T10 no funciona en dominio transformación" reportado por Carlos — en su entorno local el dominio TD ya existía sembrado fuera de banda. El root cause real era un bug de código independiente, ver DEBT-048.
+
+---
+
+### DEBT-046 — PersonSelectField solo listaba personas del proyecto activo, no de toda la empresa [RESUELTO 2026-08-28]
+
+**Detectado:** 2026-08-28 (reporte de Carlos: "las personas de la empresa no se conservan entre proyectos")
+**Área:** `src/shared/design-system/components/PersonSelectField.tsx` y sus 4 consumidores (T1 `NewInterviewModal.tsx`, T2 `InterviewModal.tsx`, T3 `StageModal.tsx`, T9 `AddFreeItemForm.tsx`)
+
+El backend ya soportaba scope de empresa desde `20260708_company_persons_company_scope.sql` (RLS `company_persons_select` vía `user_can_read_company`, service `fetchPersonsByCompany`, store `fetchPersonsByCompany`) — pero `PersonSelectField`, el selector real usado en los formularios de alta de T1/T2/T3/T9, seguía llamando siempre a `fetchPersons(projectId)` (scope de proyecto). Resultado: al abrir un proyecto nuevo de una empresa ya existente, el desplegable de personas aparecía vacío aunque esa empresa ya tuviera personas registradas en otros proyectos — solo la sección "Personas en la empresa" de `CompanyProfile` (que sí usa `fetchPersonsByCompany`) las mostraba.
+
+**Fix:** `PersonSelectField` acepta ahora `companyId?: string | null` — si se recibe, usa `fetchPersonsByCompany(companyId)`; si no (proyecto sin empresa resuelta aún), cae a `fetchPersons(projectId)`. Los 4 consumidores fueron actualizados para resolver y pasar `companyId`:
+- T1: `T1View.tsx` ya resolvía `companyId` (para `fetchDepartments`) pero no lo pasaba a `NewInterviewModal` — ahora sí.
+- T2: `InterviewModal.tsx` ya recibía `companyId` como prop y lo usaba en `addPerson` — ahora también se pasa a `PersonSelectField`.
+- T3: `StageModal.tsx` no resolvía `companyId` — se añadió `getProjectCompanyId(engagementId)` (mismo patrón que T1/T2), y se pasa tanto a `addPerson` (antes creaba personas con `company_id` NULL) como a `PersonSelectField`.
+- T9: `AddFreeItemForm.tsx` — mismo fix que T3 (no resolvía `companyId` en absoluto).
+
+**Nota:** filas de `company_persons` creadas antes de este fix desde T3/T9 pueden tener `company_id` NULL (nunca se pasaba). La policy RLS ya tiene fallback a `user_can_read_project` para esas filas legado, así que siguen siendo visibles dentro de su proyecto de origen, pero no aparecerán en el selector de otros proyectos de la misma empresa hasta que se fusionen (`merge_company_persons`) o se re-creen. Si se detectan en producción, considerar un backfill de `company_id` en `company_persons` vía `projects.company_id` (mismo patrón que `20260705_backfill_company_persons_all_projects.sql`).
+
+---
 
 ### DEBT-035 — merge_company_persons no repunta referencias T3 entre proyectos distintos de la misma empresa
 **Severidad:** 🟡 Media

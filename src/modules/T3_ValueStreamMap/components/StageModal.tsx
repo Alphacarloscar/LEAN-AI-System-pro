@@ -2,12 +2,13 @@
 // StageModal — Add/Edit/Delete stage modal for T3 StagesTab
 // ============================================================
 
-import { useState }                       from 'react'
+import { useState, useEffect }            from 'react'
 import { useForm, Controller }            from 'react-hook-form'
 import { zodResolver }                    from '@hookform/resolvers/zod'
 import { stageFormSchema, type StageFormValues } from '@/lib/schemas/t3.schemas'
 import { useT3Store }                     from '../store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
+import { getProjectCompanyId }            from '@/services/projects.service'
 import { useDepartmentStore }             from '@/modules/CompanyProfile/useDepartmentStore'
 import { useCompanyPersonStore, type CompanyPerson } from '@/modules/CompanyProfile/useCompanyPersonStore'
 import { useUnsavedGuard }                from '@/shared/hooks/useUnsavedGuard'
@@ -46,6 +47,16 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
   const { addPerson } = useCompanyPersonStore()
   const [isCreatingNew, setIsCreatingNew] = useState(false)
   const [selectedPersonId, setSelectedPersonId] = useState<string | undefined>(undefined)
+  const [companyId, setCompanyId] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    if (!engagementId) return
+    let cancelled = false
+    getProjectCompanyId(engagementId).then((cid) => {
+      if (!cancelled) setCompanyId(cid ?? undefined)
+    })
+    return () => { cancelled = true }
+  }, [engagementId])
 
   const {
     register,
@@ -101,6 +112,7 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
     if (isCreatingNew && engagementId && data.responsible) {
       void addPerson({
         projectId:  engagementId,
+        companyId,
         name:       data.responsible.trim(),
         department: data.department ?? '',
         sourceTool: 't3',
@@ -167,6 +179,7 @@ export function StageModal({ processId, stage, onClose }: StageModalProps) {
           <>
             <PersonSelectField
               projectId={engagementId}
+              companyId={companyId}
               selectedPersonId={selectedPersonId}
               isCreatingNew={isCreatingNew}
               sourceTool="t3"

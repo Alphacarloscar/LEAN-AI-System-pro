@@ -21,6 +21,8 @@ import { useT4Store }                     from '@/modules/T4_UseCasePriorityBoar
 import { useT9Store }                     from './store'
 import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
 import { useEngagementStore }             from '@/modules/Engagement/store'
+import { useDomainSlug }                  from '@/hooks/useDomainSlug'
+import { resolveToolLabel }               from '@/shared/domain/toolDisplayNames'
 import { PhaseMiniMap }                   from '@/shared/components/PhaseMiniMap'
 import { RecommendationPanel }            from '@/components/RecommendationPanel'
 import { buildT9RecommendationContext }   from './t9ContextBuilder'
@@ -53,6 +55,7 @@ export function T9View({ onBack }: T9ViewProps) {
   const { engagementId: urlId }                         = useParams<{ engagementId: string }>()
   const storeId                                         = useEngagementStore((s) => s.activeEngagementId)
   const engagementId                                    = urlId ?? storeId
+  const { domainSlug }                                  = useDomainSlug()
   const { user }                                        = useAuthStore()
   const [snapshotLoading, setSnapshotLoading]           = useState(false)
   const [dark, setDark] = useState(() => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'))
@@ -182,7 +185,7 @@ export function T9View({ onBack }: T9ViewProps) {
         onBack={onBack}
         backLabel="Volver al dashboard"
         toolCode="T9"
-        title="Roadmap IA — 6 meses"
+        title={`${resolveToolLabel('T9', 'AI Roadmap', domainSlug)} — 6 meses`}
         phaseMiniMap={<PhaseMiniMap phaseId="activate" toolCode="T9" />}
         maxWidth="max-w-7xl"
         cta={

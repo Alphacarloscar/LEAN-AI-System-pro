@@ -7,6 +7,7 @@
 // ============================================================
 
 import type { DimensionDefinition } from '../constants'
+import type { MaturityTier, TierConfig } from '../types'
 
 export const TD_DIMENSION_DEFINITIONS: DimensionDefinition[] = [
 
@@ -17,6 +18,12 @@ export const TD_DIMENSION_DEFINITIONS: DimensionDefinition[] = [
     dimNumber:   'D1',
     weight:      0.17,
     description: 'Evalúa si la organización tiene una visión clara de transformación digital, un roadmap estructurado con iniciativas priorizadas, presupuesto asignado y liderazgo ejecutivo comprometido con el cambio.',
+    recommendations: {
+      inicial: 'Formalizar una visión de transformación digital y constituir un comité de gobierno con patrocinio ejecutivo.',
+      exploracion: 'Documentar el roadmap digital con iniciativas priorizadas, asignar presupuesto específico y designar responsable ejecutivo (CDO/CIO).',
+      desarrollo: 'Institucionalizar la visión digital en la estrategia corporativa, integrar métricas de transformación en OKRs del Comité de Dirección y acelerar el roadmap.',
+      avanzado: 'Establecer ciclos de revisión regular del roadmap digital, medir retorno de inversión sistematicamente y comunicar avances públicamente como diferenciador estratégico.',
+    },
     subdimensions: [
       {
         code:          'td-vision-ambicion',
@@ -84,6 +91,12 @@ export const TD_DIMENSION_DEFINITIONS: DimensionDefinition[] = [
     dimNumber:   'D2',
     weight:      0.17,
     description: 'Mide la madurez del dato como activo estratégico: arquitectura analítica, gobierno, calidad y uso sistemático en la toma de decisiones. Sin datos gobernados y accesibles, la transformación digital no genera valor sostenible.',
+    recommendations: {
+      inicial: 'Inventariar fuentes de datos clave, diseñar arquitectura básica de datos y establecer roles de gobernanza (Data Owners) para fuentes críticas.',
+      exploracion: 'Implementar plataforma analítica básica (data warehouse o data lake), establecer estándares de calidad de dato y crear centro de excelencia en datos.',
+      desarrollo: 'Automatizar la calidad de dato, extender data governance a todos los sistemas core, implementar analytics autoservicio y crear catálogo de datos empresarial.',
+      avanzado: 'Adoptar arquitectura moderna (data lakehouse), implementar modelos predictivos operativos, establecer data literacy corporativa y monetizar datos como activo de negocio.',
+    },
     subdimensions: [
       {
         code:          'td-data-availability',
@@ -151,6 +164,12 @@ export const TD_DIMENSION_DEFINITIONS: DimensionDefinition[] = [
     dimNumber:   'D3',
     weight:      0.17,
     description: 'Evalúa si la infraestructura cloud, la integración de sistemas, la ciberseguridad y la automatización están preparadas para soportar y escalar la transformación digital de forma segura y ágil.',
+    recommendations: {
+      inicial: 'Definir estrategia cloud (híbrida, multi-cloud), establecer equipo de Cloud Architecture y iniciar inventario de sistemas legacy candidatos a modernización.',
+      exploracion: 'Implementar primeras migraciones cloud no críticas, diseñar API Gateway corporativo básico, fortalecer ciberseguridad con estándares mínimos.',
+      desarrollo: 'Ejecutar roadmap de modernización acelerado, implementar arquitectura API-first, automatizar procesos críticos con RPA/BPM y alcanzar cumplimiento NIS2 inicial.',
+      avanzado: 'Alcanzar cloud-native por defecto, implementar Zero Trust architecture, operacionalizar automatización inteligente con IA y certificar cumplimiento DORA/NIS2.',
+    },
     subdimensions: [
       {
         code:          'td-cloud-adoption',
@@ -218,6 +237,12 @@ export const TD_DIMENSION_DEFINITIONS: DimensionDefinition[] = [
     dimNumber:   'D4',
     weight:      0.17,
     description: 'Mide la capacidad interna para ejecutar la transformación digital: perfiles digitales especializados, programas de upskilling, cultura ágil e innovadora, y gestión del cambio organizativo.',
+    recommendations: {
+      inicial: 'Reclutar perfiles digitales clave (Cloud Architect, Data Engineer, Product Owner), iniciar programa de formación digital y establecer embajadores de cambio por área.',
+      exploracion: 'Crear Academia Digital con itinerarios de formación, adoptar metodologías ágiles en equipos técnicos, iniciar transformación cultural con hackathons internos.',
+      desarrollo: 'Extender formación digital a mandos intermedios y negocio, instaurar innovación como valor corporativo, crear Centro de Excelencia Digital y establecer digital career paths.',
+      avanzado: 'Alcanzar organización digital-native con autonomous teams, culture of experimentation institutionalized, AI literacy extendida y continuous learning infrastructure.',
+    },
     subdimensions: [
       {
         code:          'td-talent-technical',
@@ -285,6 +310,12 @@ export const TD_DIMENSION_DEFINITIONS: DimensionDefinition[] = [
     dimNumber:   'D5',
     weight:      0.16,
     description: 'Evalúa si los procesos están mapeados, rediseñados con tecnología digital de forma nativa, automatizados inteligentemente y si se mide el impacto real sobre los resultados de negocio.',
+    recommendations: {
+      inicial: 'Mapear procesos core de negocio, identificar oportunidades de digitalización con criterios de impacto y constituir equipo de Process Transformation.',
+      exploracion: 'Realizar 2-3 pilotos de rediseño digital, documentar Digital Process Design methodology, establecer baseline de métricas de eficiencia y ROI.',
+      desarrollo: 'Escalar rediseño digital a procesos de mayor impacto, automatizar flujos repetitivos, integrar analytics en el ciclo de optimización, generar business cases documentados.',
+      avanzado: 'Alcanzar excelencia en procesos digital-native, implementar continuous optimization loops, monetizar eficiencia y medir ROI como driver de cartera de innovación.',
+    },
     subdimensions: [
       {
         code:          'td-process-mapping',
@@ -352,6 +383,12 @@ export const TD_DIMENSION_DEFINITIONS: DimensionDefinition[] = [
     dimNumber:   'D6',
     weight:      0.16,
     description: 'Evalúa si la organización tiene un modelo de gobierno digital maduro, gestión activa de riesgos digitales, portfolio de inversión TI gestionado por valor y avance hacia marcos como COBIT 2019, ITIL 4 o DORA.',
+    recommendations: {
+      inicial: 'Formalizar modelo de gobierno digital con roles (CDO, Digital Board) y responsabilidades, establecer risk register digital inicial y definir criterios de priorización de portfolio.',
+      exploracion: 'Crear órgano de decisión digital (Digital Board), implementar Digital Risk Framework, iniciar gap analysis vs. COBIT 2019/DORA y documentar políticas de governance.',
+      desarrollo: 'Institucionalizar governance digital en ciclos de planificación estratégica, integrar portfolio digital en gestión de inversiones corporativa, avanzar hacia compliance DORA/NIS2.',
+      avanzado: 'Alcanzar gobierno digital maduro certificado (ISO 27001, compliance DORA/NIS2 verificado), modelo de Portfolio Management optimizado y transformación digital como riesgo gestionado explícitamente.',
+    },
     subdimensions: [
       {
         code:          'td-governance-framework',
@@ -412,3 +449,41 @@ export const TD_DIMENSION_DEFINITIONS: DimensionDefinition[] = [
     ],
   },
 ]
+
+// ── Bandas de madurez global (adaptadas de AI Adoption) ──────
+// Mismo rango/color que MATURITY_TIER_CONFIG (types.ts) — solo cambia
+// el texto para hablar de "transformación digital" en vez de "IA".
+// Fuente: panel ROL-24..29, doc "Textos dominio Transformación Digital" v2,
+// sección "Textos de diagnóstico global — Bandas de madurez (widget score global)".
+export const TD_MATURITY_TIER_CONFIG: Record<MaturityTier, TierConfig> = {
+  inicial: {
+    label:       'Iniciación',
+    range:       [0, 1.0],
+    description: 'La digitalización es experimental y no gobernada. Las iniciativas son oportunistas y sin alineación estratégica.',
+    color:       'text-danger-dark bg-danger-light',
+  },
+  exploracion: {
+    label:       'Exploración',
+    range:       [1.0, 2.0],
+    description: 'Hay conciencia del potencial digital pero faltan estructuras, procesos y gobierno formal.',
+    color:       'text-warning-dark bg-warning-light',
+  },
+  desarrollo: {
+    label:       'Desarrollo',
+    range:       [2.0, 3.0],
+    description: 'El ecosistema de transformación digital está en construcción. Hay bases sólidas pero la institucionalización no está completa.',
+    color:       'text-info-dark bg-info-light',
+  },
+  avanzado: {
+    label:       'Avanzado',
+    range:       [3.0, 3.5],
+    description: 'Gobierno robusto y transformación digital como palanca real de negocio. La organización puede ejecutar y escalar.',
+    color:       'text-success-dark bg-success-light',
+  },
+  lider: {
+    label:       'Líder',
+    range:       [3.5, 4.0],
+    description: 'Referente de industria. La transformación digital es un diferenciador estratégico central y el modelo de gobierno es referencia para el sector.',
+    color:       'text-success-dark bg-success-light',
+  },
+}

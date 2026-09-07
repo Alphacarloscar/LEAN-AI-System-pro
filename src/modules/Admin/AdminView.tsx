@@ -23,6 +23,7 @@ import { useNavigate }                  from 'react-router-dom'
 import { Check, Trash2, AlertCircle }   from 'lucide-react'
 import { useAuthStore }                 from '@/modules/Auth'
 import { Spinner }                      from '@shared/design-system/components'
+import { TextsEditorTab }               from './components/TextsEditorTab'
 import {
   listCompanies,
   createCompany,
@@ -38,7 +39,7 @@ import type { CompanyRow, ProjectRow, UserRole } from '@/types/database.types'
 
 // ── Tipos compartidos ─────────────────────────────────────────
 
-type Tab = 'companies' | 'users' | 'projects'
+type Tab = 'companies' | 'users' | 'projects' | 'texts'
 
 type UserProfile = {
   id:         string
@@ -665,6 +666,7 @@ export function AdminView() {
     { id: 'companies', label: 'Empresas'  },
     { id: 'users',     label: 'Usuarios'  },
     { id: 'projects',  label: 'Proyectos' },
+    { id: 'texts',     label: 'Textos por Herramienta' },
   ]
 
   return (
@@ -723,6 +725,9 @@ export function AdminView() {
             companies={companies}
             onCompanyAdd={handleCompanyAdd}
           />
+        )}
+        {tab === 'texts' && (
+          <TextsEditorTab />
         )}
       </div>
     </div>

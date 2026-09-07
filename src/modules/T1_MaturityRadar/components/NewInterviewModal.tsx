@@ -9,7 +9,6 @@ import { Modal, Button, FormField, PersonSelectField } from '@/shared/design-sys
 import type { CompanyPerson } from '@/modules/CompanyProfile/useCompanyPersonStore'
 import type { DepartmentType } from '@/modules/CompanyProfile/useDepartmentStore'
 import { DEPARTMENT_TYPE_ICON, DEPARTMENT_TYPE_LABEL } from '@/modules/CompanyProfile/departmentDisplay'
-import { TOTAL_SUBDIMENSIONS } from '../constants'
 import { useUnsavedGuard } from '@/shared/hooks/useUnsavedGuard'
 import { newIntervieweeSchema, type NewIntervieweeFormValues } from './NewInterviewModal.schema'
 
@@ -24,13 +23,15 @@ const DEPARTMENT_TYPE_TO_T1_TYPE: Record<DepartmentType, 'it' | 'business'> = {
 }
 
 interface NewInterviewModalProps {
-  onClose:     () => void
-  onSubmit:    (form: NewIntervieweeFormValues) => Promise<void>
-  departments: { name: string; type: DepartmentType }[]
-  projectId:   string
+  onClose:            () => void
+  onSubmit:           (form: NewIntervieweeFormValues) => Promise<void>
+  departments:        { name: string; type: DepartmentType }[]
+  projectId:          string
+  companyId?:         string
+  totalSubdimensions: number
 }
 
-export function NewInterviewModal({ onClose, onSubmit, departments, projectId }: NewInterviewModalProps) {
+export function NewInterviewModal({ onClose, onSubmit, departments, projectId, companyId, totalSubdimensions }: NewInterviewModalProps) {
   // 'personSelected' habilita Nombre/Cargo/Departamento: al elegir una persona
   // existente (personId conocido) o al iniciar el alta de una nueva (isCreatingNew).
   const [personSelected, setPersonSelected] = useState(false)
@@ -102,6 +103,7 @@ export function NewInterviewModal({ onClose, onSubmit, departments, projectId }:
 
         <PersonSelectField
           projectId={projectId}
+          companyId={companyId}
           selectedPersonId={selectedPersonId}
           isCreatingNew={isCreatingNew}
           sourceTool="t1"
@@ -197,7 +199,7 @@ export function NewInterviewModal({ onClose, onSubmit, departments, projectId }:
         )}
 
         <p className="text-[11px] text-text-subtle px-3 py-2 rounded-lg bg-warm-50 dark:bg-warm-700/50 border border-border/60">
-          Se crearán <span className="font-medium text-text-muted">{TOTAL_SUBDIMENSIONS} subdimensiones</span> en blanco para este entrevistado. Puntúalas en la sesión.
+          Se crearán <span className="font-medium text-text-muted">{totalSubdimensions} subdimensiones</span> en blanco para este entrevistado. Puntúalas en la sesión.
         </p>
 
         <div className="flex gap-2 pt-1">

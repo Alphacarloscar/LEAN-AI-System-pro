@@ -63,6 +63,7 @@ export type Database = {
       companies: {
         Row: {
           company_size: string
+          contracted_packages: string[] | null
           created_at: string | null
           id: string
           name: string
@@ -71,6 +72,7 @@ export type Database = {
         }
         Insert: {
           company_size?: string
+          contracted_packages?: string[] | null
           created_at?: string | null
           id?: string
           name: string
@@ -79,6 +81,7 @@ export type Database = {
         }
         Update: {
           company_size?: string
+          contracted_packages?: string[] | null
           created_at?: string | null
           id?: string
           name?: string
@@ -1215,6 +1218,29 @@ export type UseCaseRow           = Database['public']['Tables']['use_cases']['Ro
 export type T5CanvasRow          = Database['public']['Tables']['t5_canvas']['Row']
 export type ISO42001ControlRow   = Database['public']['Tables']['iso42001_controls']['Row']
 export type ToolOutputRow        = Database['public']['Tables']['tool_outputs']['Row']
+
+// ── Application Texts (manual type — table not yet in auto-generated schema) ─────────────
+// Semántica (ADR-???: Textos por Herramienta):
+// - tool_module: módulo/herramienta de la app (t1, t10, t11, t12, admin, admin_auth, company_profile, navegacion)
+// - text_key: el texto ORIGINAL tal como existe en el código fuente (string hardcodeado)
+// - filename: ubicación file:line en el código fuente (ej: "AdminView.tsx:154")
+// - text_override: el valor de OVERRIDE personalizado (null/empty = usar text_key)
+// Resolución: resolveText(row) => row.text_override?.trim() ? row.text_override : row.text_key
+export type ApplicationTextsRow = {
+  id: string
+  tool_module: string
+  text_key: string
+  filename: string | null
+  text_override: string | null
+  text_generalizado?: string // deprecated, kept for backwards compatibility during migration
+  text_ai_domain: string | null
+  text_data_domain: string | null
+  text_digital_domain: string | null
+  updated_at: string | null
+  updated_by: string | null
+  company_id: string | null
+  created_at: string
+}
 
 // ── Insert types ────────────────────────────────────────────────
 export type CompanyInsert          = Database['public']['Tables']['companies']['Insert']

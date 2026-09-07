@@ -3,18 +3,18 @@
 // ============================================================
 
 import { useState } from 'react'
-import { TOTAL_SUBDIMENSIONS } from '../constants'
 import { countScoredSubdimensions } from '../types'
 import type { T1DimensionState } from '../types'
 import type { T1IntervieweeContext } from '../types'
 
 interface IntervieweeSelectorProps {
-  interviewees:      T1IntervieweeContext[]
-  activeId:          string
-  dimensionStates:   Record<string, T1DimensionState[]>
-  isReadOnly:        boolean
-  onSelect:          (id: string) => void
-  onDelete:          (id: string) => void
+  interviewees:       T1IntervieweeContext[]
+  activeId:           string
+  dimensionStates:    Record<string, T1DimensionState[]>
+  isReadOnly:         boolean
+  totalSubdimensions: number
+  onSelect:           (id: string) => void
+  onDelete:           (id: string) => void
 }
 
 export function IntervieweeSelector({
@@ -22,6 +22,7 @@ export function IntervieweeSelector({
   activeId,
   dimensionStates,
   isReadOnly,
+  totalSubdimensions,
   onSelect,
   onDelete,
 }: IntervieweeSelectorProps) {
@@ -75,7 +76,7 @@ export function IntervieweeSelector({
                 const personDims   = dimensionStates[person.id] ?? []
                 const personScored = countScoredSubdimensions(personDims)
                 const isActive     = person.id === activeId
-                const isComplete   = personScored === TOTAL_SUBDIMENSIONS
+                const isComplete   = personScored === totalSubdimensions
 
                 return (
                   <div
@@ -116,7 +117,7 @@ export function IntervieweeSelector({
                             <path fillRule="evenodd" d="M8 1a7 7 0 100 14A7 7 0 008 1zm3.78 5.22a.75.75 0 010 1.06l-4 4a.75.75 0 01-1.06 0l-2-2a.75.75 0 011.06-1.06L7.25 9.69l3.47-3.47a.75.75 0 011.06 0z" />
                           </svg>
                         ) : (
-                          `${personScored}/${TOTAL_SUBDIMENSIONS}`
+                          `${personScored}/${totalSubdimensions}`
                         )}
                       </span>
                     </button>

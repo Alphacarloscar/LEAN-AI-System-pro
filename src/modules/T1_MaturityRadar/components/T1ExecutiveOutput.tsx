@@ -11,10 +11,11 @@
 
 import type { T1DimensionState }                          from '../types'
 import { computeDimensionScore, computeOverallScore,
-         resolveMaturityTier, MATURITY_TIER_CONFIG,
+         resolveMaturityTier,
          maturityHex }                                    from '../types'
 import { DIMENSION_MAP }                                  from '../constants'
 import { ITBizGapSection }                               from './ITBizGapSection'
+import { useDomainMaturityConfig }                        from '@/hooks/useDomainMaturityConfig'
 
 // ── Props ─────────────────────────────────────────────────────
 
@@ -60,11 +61,13 @@ export function T1ExecutiveOutput({
   companyName,
   allInterviewees = [],
 }: T1ExecutiveOutputProps) {
+  const domainTierConfig = useDomainMaturityConfig()
+
   if (dimensions.length === 0) return null
 
   const overallScore = computeOverallScore(dimensions)
   const tier         = resolveMaturityTier(overallScore)
-  const tierConfig   = MATURITY_TIER_CONFIG[tier]
+  const tierConfig   = domainTierConfig[tier]
 
   const dimScores = dimensions
     .map((d) => ({ ...d, score: computeDimensionScore(d) }))

@@ -6,6 +6,8 @@ const NEW_PERSON_VALUE = '__new__'
 
 export interface PersonSelectFieldProps {
   projectId:         string
+  /** Si se indica, el listado se carga a nivel de empresa (todos los proyectos), no solo del proyecto activo. */
+  companyId?:        string | null
   selectedPersonId?: string
   /** true mientras el usuario está en el flujo "+ Nueva persona" (aún sin guardar) */
   isCreatingNew?:    boolean
@@ -24,17 +26,27 @@ export interface PersonSelectFieldProps {
  */
 export function PersonSelectField({
   projectId,
+  companyId,
   selectedPersonId,
   isCreatingNew = false,
   onChange,
   onCreateNew,
   label = 'Persona',
 }: PersonSelectFieldProps) {
-  const { persons, fetchPersons } = useCompanyPersonStore()
+  const { persons, fetchPersons, fetchPersonsByCompany } = useCompanyPersonStore()
 
+  // Con companyId disponible, listamos las personas de TODA la empresa
+  // (todos sus proyectos) para poder reutilizarlas entre proyectos del
+  // mismo cliente. Sin companyId (aún no resuelto, o proyecto sin empresa
+  // asociada) hacemos fallback al scope por proyecto — nunca lista vacía
+  // por una carrera de carga.
   useEffect(() => {
-    void fetchPersons(projectId)
-  }, [projectId, fetchPersons])
+    if (companyId) {
+      void fetchPersonsByCompany(companyId)
+    } else {
+      void fetchPersons(projectId)
+    }
+  }, [projectId, companyId, fetchPersons, fetchPersonsByCompany])
 
   const options = [
     ...persons.map((p) => ({ value: p.id, label: p.name })),
