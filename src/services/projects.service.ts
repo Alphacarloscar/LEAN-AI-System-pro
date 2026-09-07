@@ -38,15 +38,15 @@ export interface ProjectFriction {
 
 const _impl = {
 
-  async listMyProjects(): Promise<(ProjectRow & { governance_domains?: any })[]> {
+  async listMyProjects(): Promise<ProjectRow[]> {
     const { data, error } = await supabase
       .from('projects')
-      .select('*, governance_domains(id, slug, label)')
+      .select('*')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
 
     if (error) throw new Error(`[Projects] listMyProjects: ${error.message}`)
-    return (data ?? []) as (ProjectRow & { governance_domains?: any })[]
+    return (data ?? []) as ProjectRow[]
   },
 
   // Sprint 8: usa RPC con SECURITY DEFINER en lugar de INSERT directo.
@@ -55,7 +55,6 @@ const _impl = {
   async createProject(params: {
     name:          string
     companyId?:    string
-    domainId?:     string
     currentPhase?: ProjectRow['current_phase']
     startDate?:    string
     objetivoPrincipal?: string
@@ -77,7 +76,6 @@ const _impl = {
     const { data, error } = await supabase.rpc('create_project', {
       p_name:       params.name,
       p_company_id: params.companyId ?? undefined,
-      p_domain_id:  params.domainId ?? undefined,
       p_phase:      params.currentPhase ?? 'listen',
       p_objetivo_principal: params.objetivoPrincipal ?? undefined,
       p_restricciones: params.restricciones ?? undefined,
@@ -263,6 +261,6 @@ export const {
 /** @deprecated Usar listMyProjects */
 export const listMyEngagements = listMyProjects
 /** @deprecated Usar createProject */
-export const createEngagement  = (p: { name: string; domainId?: string }) => createProject(p)
+export const createEngagement  = (p: { name: string }) => createProject(p)
 /** @deprecated Usar addProjectMember */
 export const addMember         = addProjectMember

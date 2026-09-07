@@ -188,7 +188,6 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
       await createAndSelect(
         name,
         needsCompanySelector ? selectedCompany : undefined,
-        selectedDomain,
         {
           objetivoPrincipalIA:    objPrincipal  || undefined,
           horizonteEsperadoValor: horizonte     || undefined,

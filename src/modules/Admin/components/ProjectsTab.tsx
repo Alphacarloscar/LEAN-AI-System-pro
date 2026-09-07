@@ -5,19 +5,15 @@
 import { useState, useEffect }  from 'react'
 import { Spinner }              from '@shared/design-system/components'
 import { listMyProjects, createProject } from '@/services/projects.service'
-import { loadActiveDomains } from '@/services/domains.service'
 import { CheckIcon }            from './AdminHelpers'
 import { getEcosystemOptions, getFrictionLabel, HORIZON_OPTIONS } from '../constants/ecosystemOptions'
 import type { ProjectsTabProps } from './AdminHelpers'
 import type { ProjectRow }      from '@/types/database.types'
-import type { GovernanceDomain } from '@/services/domains.service'
 
 export function ProjectsTab({ companies }: ProjectsTabProps) {
   const [projects,  setProjects]  = useState<ProjectRow[]>([])
   const [name,      setName]      = useState('')
   const [companyId, setCompanyId] = useState('')
-  const [domainId,  setDomainId]  = useState('')
-  const [domains,   setDomains]   = useState<GovernanceDomain[]>([])
 
   const [objetivoPrincipal, setObjetivoPrincipal] = useState('')
   const [restricciones, setRestricciones] = useState('')
@@ -31,18 +27,16 @@ export function ProjectsTab({ companies }: ProjectsTabProps) {
 
   useEffect(() => {
     listMyProjects().then(setProjects)
-    loadActiveDomains().then(setDomains)
   }, [])
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim() || !domainId) return
+    if (!name.trim()) return
     setCreating(true); setError(null)
     try {
       const project = await createProject({
         name: name.trim(),
         companyId: companyId || undefined,
-        domainId,
         objetivoPrincipal: objetivoPrincipal.trim() || undefined,
         restricciones: restricciones.trim() || undefined,
         horizonteValor: horizonteValor || undefined,
@@ -52,7 +46,6 @@ export function ProjectsTab({ companies }: ProjectsTabProps) {
       setProjects((prev) => [project, ...prev])
       setName('')
       setCompanyId('')
-      setDomainId('')
       setObjetivoPrincipal('')
       setRestricciones('')
       setHorizonteValor('')
@@ -71,10 +64,8 @@ export function ProjectsTab({ companies }: ProjectsTabProps) {
   const textareaClass = "w-full px-3 py-2 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60 focus:bg-white placeholder:text-text-subtle resize-none"
   const selectClass = "w-full px-3 py-2 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60 focus:bg-white"
 
-  const selectedDomain = domains.find((d) => d.id === domainId)
-  const selectedDomainSlug = selectedDomain?.slug
-  const ecosystemOptions = getEcosystemOptions(selectedDomainSlug)
-  const frictionLabel = getFrictionLabel(selectedDomainSlug)
+  const ecosystemOptions = getEcosystemOptions('ai_adoption')
+  const frictionLabel = getFrictionLabel('ai_adoption')
 
   return (
     <div className="flex flex-col gap-6">
@@ -99,19 +90,9 @@ export function ProjectsTab({ companies }: ProjectsTabProps) {
               <option value="">Sin empresa</option>
               {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
-            <select
-              value={domainId}
-              onChange={(e) => setDomainId(e.target.value)}
-              aria-label="Seleccionar dominio para el proyecto"
-              className="h-9 px-3 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60"
-              required
-            >
-              <option value="">Seleccionar dominio</option>
-              {domains.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
-            </select>
             <button
               type="submit"
-              disabled={creating || !name.trim() || !domainId}
+              disabled={creating || !name.trim()}
               className="h-9 px-4 rounded-lg bg-gold text-white text-sm font-medium disabled:opacity-40 hover:bg-gold-hover transition-colors flex items-center gap-2 whitespace-nowrap"
             >
               {creating ? <Spinner /> : success ? <CheckIcon /> : null}
@@ -119,9 +100,8 @@ export function ProjectsTab({ companies }: ProjectsTabProps) {
             </button>
           </div>
 
-          {/* Extended fields — shown only if domain is selected */}
-          {domainId && (
-            <div className="flex flex-col gap-3 pt-3 border-t border-border/50">
+          {/* Extended fields */}
+          <div className="flex flex-col gap-3 pt-3 border-t border-border/50">
               <div>
                 <label htmlFor="proyecto-objetivo" className="text-xs font-medium text-text-subtle dark:text-warm-400 mb-1 block">
                   Objetivo principal del proyecto
@@ -199,8 +179,7 @@ export function ProjectsTab({ companies }: ProjectsTabProps) {
                   className={textareaClass}
                 />
               </div>
-            </div>
-          )}
+          </div>
 
         </form>
         {error && <p className="text-xs text-danger-dark mt-2">{error}</p>}

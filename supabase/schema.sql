@@ -4765,19 +4765,13 @@ COMMENT ON TABLE public.framework_controls IS
 
 
 -- ════════════════════════════════════════════════════════════════
--- 7. Extender projects: agregar domain_id y contracted_packages
+-- 7. Extender projects: agregar contracted_packages
 --
---    domain_id: permitir NULL temporalmente; se populará en paso 9.
 --    contracted_packages: array de package_id, default vacío.
 -- ════════════════════════════════════════════════════════════════
 
 ALTER TABLE public.projects
-  ADD COLUMN IF NOT EXISTS domain_id uuid REFERENCES public.governance_domains(id),
   ADD COLUMN IF NOT EXISTS contracted_packages public.package_id[] NOT NULL DEFAULT '{}';
-
-COMMENT ON COLUMN public.projects.domain_id IS
-  'Dominio al que pertenece este proyecto (AI Adoption, Data Governance, etc.). '
-  'FK a governance_domains. Determinará qué literales de configuración aplican.';
 
 COMMENT ON COLUMN public.projects.contracted_packages IS
   'Array de tipos de paquetes contratados. Determina qué módulos T1-T13 están disponibles. '
@@ -4797,25 +4791,13 @@ VALUES (
 )
 ON CONFLICT (slug) DO NOTHING;
 
--- Capturar el ID del dominio AI para el backfill
+-- Backfill contracted_packages con paquetes por defecto
 DO $$
-DECLARE
-  v_ai_domain_id uuid;
 BEGIN
-  SELECT id INTO v_ai_domain_id FROM public.governance_domains WHERE slug = 'ai_adoption' LIMIT 1;
-
-  IF v_ai_domain_id IS NULL THEN
-    RAISE EXCEPTION 'No se pudo insertar el dominio AI Adoption';
-  END IF;
-
-  -- Paso 9: Backfill de proyectos existentes con domain_id + todos los paquetes
+  -- Paso 9: Backfill de proyectos existentes con todos los paquetes
   UPDATE public.projects
-     SET domain_id = v_ai_domain_id,
-         contracted_packages = ARRAY['boost_assessment', 'portfolio_management', 'legal_compliance']::public.package_id[]
-   WHERE domain_id IS NULL;
-
-  -- Ahora hacer domain_id NOT NULL (todos los proyectos ya tienen valor)
-  ALTER TABLE public.projects ALTER COLUMN domain_id SET NOT NULL;
+     SET contracted_packages = ARRAY['boost_assessment', 'portfolio_management', 'legal_compliance']::public.package_id[]
+   WHERE contracted_packages = '{}';
 
 END $$;
 
@@ -4824,9 +4806,6 @@ END $$;
 -- 10. Índices para performance en queries de projects
 -- ════════════════════════════════════════════════════════════════
 
-CREATE INDEX IF NOT EXISTS idx_projects_domain_id
-  ON public.projects (domain_id);
-
 CREATE INDEX IF NOT EXISTS idx_projects_contracted_packages
   ON public.projects USING GIN (contracted_packages);
 
@@ -4834,9 +4813,8 @@ CREATE INDEX IF NOT EXISTS idx_projects_contracted_packages
 -- ════════════════════════════════════════════════════════════════
 -- Fin de la migración
 -- Verificación post-migración:
---   1. SELECT count(*) FROM governance_domains; → 1
---   2. SELECT count(*) FROM projects; → debe ser > 0 con domain_id NOT NULL
---   3. SELECT DISTINCT contracted_packages FROM projects; → debe tener valores
+--   1. SELECT count(*) FROM governance_domains; → debe ser > 0
+--   2. SELECT DISTINCT contracted_packages FROM projects; → debe tener valores
 -- ════════════════════════════════════════════════════════════════
 
 
@@ -5087,7 +5065,6 @@ ON CONFLICT (domain_id, module_slug, prompt_key, version) DO NOTHING;
 CREATE OR REPLACE FUNCTION public.create_project(
   p_company_id uuid    DEFAULT NULL,
   p_name       text    DEFAULT NULL,
-  p_domain_id  uuid    DEFAULT NULL,
   p_phase      text    DEFAULT 'listen'
 )
 RETURNS SETOF public.projects
@@ -5099,7 +5076,6 @@ DECLARE
   v_caller_role text;
   v_project_id  uuid;
   v_now         timestamptz := now();
-  v_domain_exists boolean;
 BEGIN
   -- ── Autorización explícita ─────────────────────────────────────
   SELECT role INTO v_caller_role
@@ -5123,34 +5099,12 @@ BEGIN
     RAISE EXCEPTION 'create_project: p_phase inválido: %. Valores válidos: listen, evaluate, activate, normalize, closed', p_phase;
   END IF;
 
-  -- ── Asignar dominio por defecto (ai_adoption) si no se pasa ──────────
-  IF p_domain_id IS NULL THEN
-    SELECT id INTO p_domain_id
-    FROM public.governance_domains
-    WHERE slug = 'ai_adoption' AND is_active = true
-    LIMIT 1;
-
-    IF p_domain_id IS NULL THEN
-      RAISE EXCEPTION 'create_project: no se pudo obtener el dominio por defecto (ai_adoption)';
-    END IF;
-  ELSE
-    -- Validar que el dominio pasado existe
-    SELECT EXISTS (
-      SELECT 1 FROM public.governance_domains WHERE id = p_domain_id
-    ) INTO v_domain_exists;
-
-    IF NOT v_domain_exists THEN
-      RAISE EXCEPTION 'create_project: domain_id % no existe en governance_domains', p_domain_id;
-    END IF;
-  END IF;
-
   -- ── Crear el proyecto ──────────────────────────────────────────
   INSERT INTO public.projects (
     id,
     name,
     owner_id,
     company_id,
-    domain_id,
     status,
     current_phase,
     created_at,
@@ -5161,7 +5115,6 @@ BEGIN
     trim(p_name),
     auth.uid(),
     p_company_id,
-    p_domain_id,
     'active',
     p_phase,
     v_now,
@@ -5179,15 +5132,14 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.create_project(uuid, text, uuid, text) IS
-  'Crea un proyecto con domain_id obligatorio. '
+COMMENT ON FUNCTION public.create_project(uuid, text, text) IS
+  'Crea un proyecto. '
   'Solo superadmin y consultant pueden invocarla. '
-  'SECURITY DEFINER para escribir en project_members sin conflicto de RLS. '
-  'Firma actualizada en migración 20260825 — antes no aceptaba domain_id.';
+  'SECURITY DEFINER para escribir en project_members sin conflicto de RLS.';
 
 -- ── Permisos ──────────────────────────────────────────────────────
-REVOKE ALL     ON FUNCTION public.create_project(uuid, text, uuid, text) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.create_project(uuid, text, uuid, text) TO authenticated;
+REVOKE ALL     ON FUNCTION public.create_project(uuid, text, text) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.create_project(uuid, text, text) TO authenticated;
 
 
 -- ── Verificación post-migration ───────────────────────────────────
@@ -5203,9 +5155,9 @@ BEGIN
   ) INTO v_exists;
 
   IF v_exists THEN
-    RAISE NOTICE '[20260825 OK] create_project actualizado con p_domain_id';
+    RAISE NOTICE '[create_project OK] create_project actualizado sin p_domain_id';
   ELSE
-    RAISE EXCEPTION '[20260825 FAIL] create_project no encontrado tras CREATE OR REPLACE';
+    RAISE EXCEPTION '[create_project FAIL] create_project no encontrado tras CREATE OR REPLACE';
   END IF;
 END $$;
 
@@ -5333,7 +5285,6 @@ COMMENT ON COLUMN public.companies.contracted_packages IS
 CREATE OR REPLACE FUNCTION public.create_project(
   p_company_id uuid    DEFAULT NULL,
   p_name       text    DEFAULT NULL,
-  p_domain_id  uuid    DEFAULT NULL,
   p_phase      text    DEFAULT 'listen',
   p_objetivo_principal text DEFAULT NULL,
   p_restricciones text DEFAULT NULL,
@@ -5350,7 +5301,6 @@ DECLARE
   v_caller_role text;
   v_project_id  uuid;
   v_now         timestamptz := now();
-  v_domain_exists boolean;
 BEGIN
   -- ── Autorización explícita ─────────────────────────────────────
   SELECT role INTO v_caller_role
@@ -5374,34 +5324,12 @@ BEGIN
     RAISE EXCEPTION 'create_project: p_phase inválido: %. Valores válidos: listen, evaluate, activate, normalize, closed', p_phase;
   END IF;
 
-  -- ── Asignar dominio por defecto (ai_adoption) si no se pasa ──────────
-  IF p_domain_id IS NULL THEN
-    SELECT id INTO p_domain_id
-    FROM public.governance_domains
-    WHERE slug = 'ai_adoption' AND is_active = true
-    LIMIT 1;
-
-    IF p_domain_id IS NULL THEN
-      RAISE EXCEPTION 'create_project: no se pudo obtener el dominio por defecto (ai_adoption)';
-    END IF;
-  ELSE
-    -- Validar que el dominio pasado existe
-    SELECT EXISTS (
-      SELECT 1 FROM public.governance_domains WHERE id = p_domain_id
-    ) INTO v_domain_exists;
-
-    IF NOT v_domain_exists THEN
-      RAISE EXCEPTION 'create_project: domain_id % no existe en governance_domains', p_domain_id;
-    END IF;
-  END IF;
-
   -- ── Crear el proyecto ──────────────────────────────────────────
   INSERT INTO public.projects (
     id,
     name,
     owner_id,
     company_id,
-    domain_id,
     status,
     current_phase,
     objetivo_principal,
@@ -5417,7 +5345,6 @@ BEGIN
     trim(p_name),
     auth.uid(),
     p_company_id,
-    p_domain_id,
     'active',
     p_phase,
     CASE WHEN p_objetivo_principal IS NOT NULL THEN trim(p_objetivo_principal) ELSE NULL END,
@@ -5440,16 +5367,15 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, text, text, text) IS
-  'Crea un proyecto con domain_id obligatorio y 5 campos opcionales de contexto. '
+COMMENT ON FUNCTION public.create_project(uuid, text, text, text, text, text, text, text) IS
+  'Crea un proyecto con 5 campos opcionales de contexto. '
   'p_fricciones_oportunidades es JSONB array de {id, tipo, areaFuncional, frecuencia, impacto, notas}. '
   'Solo superadmin y consultant pueden invocarla. '
-  'SECURITY DEFINER para escribir en project_members sin conflicto de RLS. '
-  'Firma extendida en migración 20260827 — antes aceptaba solo (uuid, text, uuid, text).';
+  'SECURITY DEFINER para escribir en project_members sin conflicto de RLS.';
 
 -- ── Permisos ──────────────────────────────────────────────────────
-REVOKE ALL     ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, text, text, text) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, text, text, text) TO authenticated;
+REVOKE ALL     ON FUNCTION public.create_project(uuid, text, text, text, text, text, text, text) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.create_project(uuid, text, text, text, text, text, text, text) TO authenticated;
 
 
 -- ── Verificación post-migration ───────────────────────────────────
@@ -5465,9 +5391,9 @@ BEGIN
   ) INTO v_exists;
 
   IF v_exists THEN
-    RAISE NOTICE '[20260827 OK] create_project extendido con 5 campos opcionales';
+    RAISE NOTICE '[create_project OK] create_project extendido con 5 campos opcionales sin domain_id';
   ELSE
-    RAISE EXCEPTION '[20260827 FAIL] create_project no encontrado tras CREATE OR REPLACE';
+    RAISE EXCEPTION '[create_project FAIL] create_project no encontrado tras CREATE OR REPLACE';
   END IF;
 END $$;
 

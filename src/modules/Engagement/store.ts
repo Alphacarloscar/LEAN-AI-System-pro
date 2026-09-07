@@ -18,10 +18,10 @@ import { listMyProjects, createProject, updateProject } from '@/services/project
 import { getAuthUserCompanyId }          from '@/services/auth.service'
 import { resetAllEngagementStores } from '@/lib/resetEngagementStores'
 import { reportError }               from '@/lib/reportError'
-import type { ProjectRow, ProjectRowWithDomain }                from '@/types/database.types'
+import type { ProjectRow }                from '@/types/database.types'
 
 interface EngagementStore {
-  projects: ProjectRowWithDomain[]
+  projects: ProjectRow[]
   activeEngagementId: string | null
   isLoading:          boolean
 
@@ -32,11 +32,9 @@ interface EngagementStore {
   // Crea un nuevo engagement y lo selecciona
   // companyId: si se pasa (superadmin/consultant) se usa directamente;
   //            si no (client_editor), se infiere del perfil del usuario.
-  // domainId: opcional; si se pasa, se asigna al proyecto; si no, usa default en RPC.
   createAndSelect: (
     name: string,
     companyId?: string,
-    domainId?: string,
     extra?: {
       objetivoPrincipalIA?:    string
       horizonteEsperadoValor?: string
@@ -107,7 +105,7 @@ export const useEngagementStore = create<EngagementStore>()(
         set({ activeEngagementId: id })
       },
 
-      createAndSelect: async (name, companyId, domainId, extra) => {
+      createAndSelect: async (name, companyId, extra) => {
         set({ isLoading: true })
         try {
           let resolvedCompanyId = companyId
@@ -117,7 +115,6 @@ export const useEngagementStore = create<EngagementStore>()(
           const project = await createProject({
             name,
             companyId:             resolvedCompanyId,
-            domainId,
             objetivoPrincipal:     extra?.objetivoPrincipalIA,
             horizonteValor:        extra?.horizonteEsperadoValor,
             ecosistemaTecnologico: extra?.ecosistemaTecnologico,

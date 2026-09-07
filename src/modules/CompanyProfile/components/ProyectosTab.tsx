@@ -9,18 +9,15 @@ import { useState, useEffect } from 'react'
 import { Spinner, Button, Modal, FormField } from '@shared/design-system/components'
 import {
   getEcosystemOptions,
-  getEcosystemLabel,
   getFrictionTypes,
   HORIZON_OPTIONS
 } from '@/modules/Admin/constants/ecosystemOptions'
 import { listProjectsByCompany, createProject, deleteProject } from '@/services/projects.service'
-import { loadActiveDomains } from '@/services/domains.service'
 import { usePermissions } from '@/modules/Auth'
 import { useDepartmentStore } from '../useDepartmentStore'
 import { reportError } from '@/lib/reportError'
 import { ProjectDetailView } from '../ProjectDetailView'
 import { ImpactWarningDialog } from '@/shared/components/ImpactWarningDialog'
-import type { GovernanceDomain } from '@/services/domains.service'
 import type { Friction } from '../types'
 
 interface ProyectoItem {
@@ -37,7 +34,6 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
   const { departments } = useDepartmentStore()
   const [projects, setProjects] = useState<ProyectoItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [domains, setDomains] = useState<GovernanceDomain[]>([])
 
   // Pantalla de edición
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
@@ -50,7 +46,6 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [projectName, setProjectName] = useState('')
-  const [domainId, setDomainId] = useState('')
   const [objetivoPrincipal, setObjetivoPrincipal] = useState('')
   const [restricciones, setRestricciones] = useState('')
   const [horizonteValor, setHorizonteValor] = useState('')
@@ -63,7 +58,6 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
 
   useEffect(() => {
     loadProjects()
-    loadActiveDomains().then(setDomains).catch((err: unknown) => reportError('[CompanyProjectsSection]', err))
   }, [companyId])
 
   async function loadProjects() {
@@ -81,7 +75,6 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
   function resetCreateModal() {
     setShowCreateModal(false)
     setProjectName('')
-    setDomainId('')
     setObjetivoPrincipal('')
     setRestricciones('')
     setHorizonteValor('')
@@ -112,8 +105,8 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
   }
 
   async function handleCreateProject() {
-    if (!projectName.trim() || !domainId) {
-      setCreateError('Nombre del proyecto y dominio son requeridos')
+    if (!projectName.trim()) {
+      setCreateError('El nombre del proyecto es requerido')
       return
     }
 
@@ -124,7 +117,6 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
       await createProject({
         name: projectName.trim(),
         companyId,
-        domainId,
         objetivoPrincipal: objetivoPrincipal.trim() || undefined,
         restricciones: restricciones.trim() || undefined,
         horizonteValor: horizonteValor || undefined,
@@ -146,10 +138,8 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
     }
   }
 
-  const selectedDomain = domains.find((d) => d.id === domainId)
-  const selectedDomainSlug = selectedDomain?.slug
-  const ecosystemOptions = getEcosystemOptions(selectedDomainSlug)
-  const frictionTypes = getFrictionTypes(selectedDomainSlug)
+  const ecosystemOptions = getEcosystemOptions('ai_adoption')
+  const frictionTypes = getFrictionTypes('ai_adoption')
 
   const textareaClass = "w-full px-3 py-2 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60 focus:bg-white placeholder:text-text-subtle resize-none"
   const selectClass = "w-full px-3 py-2 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60 focus:bg-white"
@@ -238,27 +228,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
               required
             />
 
-            <div>
-              <label htmlFor="proyecto-dominio" className="text-xs font-medium text-text-subtle dark:text-warm-400 mb-1 block">
-                Dominio <span className="text-danger-dark">*</span>
-              </label>
-              <select
-                id="proyecto-dominio"
-                value={domainId}
-                onChange={(e) => setDomainId(e.target.value)}
-                className={selectClass}
-                required
-              >
-                <option value="">Seleccionar dominio</option>
-                {domains.map((d) => (
-                  <option key={d.id} value={d.id}>{d.label}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Campos extendidos (solo si dominio seleccionado) */}
-            {domainId && (
-              <>
+            {/* Campos extendidos */}
                 <div>
                   <label htmlFor="proyecto-objetivo" className="text-xs font-medium text-text-subtle dark:text-warm-400 mb-1 block">
                     Objetivo principal del proyecto
@@ -293,7 +263,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
 
                   <div>
                     <label htmlFor="proyecto-ecosistema" className="text-xs font-medium text-text-subtle dark:text-warm-400 mb-1 block">
-                      {getEcosystemLabel(selectedDomain?.slug)}
+                      Ecosistema tecnológico
                     </label>
                     <select
                       id="proyecto-ecosistema"
@@ -307,7 +277,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
                       ))}
                     </select>
                   </div>
-                </div>
+              </div>
 
                 <div>
                   <label htmlFor="proyecto-restricciones" className="text-xs font-medium text-text-subtle dark:text-warm-400 mb-1 block">
@@ -424,9 +394,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
                       Sin fricciones. Usa el botón "Añadir" para empezar.
                     </p>
                   )}
-                </div>
-              </>
-            )}
+            </div>
 
             {/* Error */}
             {createError && (
@@ -445,7 +413,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
               <Button
                 variant="primary"
                 onClick={handleCreateProject}
-                disabled={!projectName.trim() || !domainId || isCreating}
+                disabled={!projectName.trim() || isCreating}
                 loading={isCreating}
               >
                 {createSuccess ? '✓ Creado' : 'Crear'}

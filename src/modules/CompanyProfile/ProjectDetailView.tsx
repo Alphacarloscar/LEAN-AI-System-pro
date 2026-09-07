@@ -13,7 +13,6 @@
 import { useState, useEffect } from 'react'
 import { Spinner, Button } from '@shared/design-system/components'
 import { getProjectById, updateProject } from '@/services/projects.service'
-import { loadActiveDomains } from '@/services/domains.service'
 import { useDepartmentStore } from './useDepartmentStore'
 import { useEngagementStore } from '@/modules/Engagement/store'
 import { usePermissions } from '@/modules/Auth'
@@ -26,8 +25,6 @@ import {
 } from './types'
 import { getEcosystemOptions } from '@/modules/Admin/constants/ecosystemOptions'
 import type { ProjectRow } from '@/types/database.types'
-import type { GovernanceDomain } from '@/services/domains.service'
-import { supabase }                  from '@/lib/supabase'
 
 interface ExtendedProjectRow extends ProjectRow {
   objetivo_principal?: string | null
@@ -49,15 +46,12 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
   const { departments } = useDepartmentStore()
 
   const [project, setProject] = useState<ExtendedProjectRow | null>(null)
-  const [domains, setDomains] = useState<GovernanceDomain[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [t1HasData, setT1HasData] = useState(false)
 
   // Campos editables
   const [name, setName] = useState('')
-  const [domainId, setDomainId] = useState('')
   const [objetivoPrincipal, setObjetivoPrincipal] = useState('')
   const [restricciones, setRestricciones] = useState('')
   const [horizonteValor, setHorizonteValor] = useState('')
@@ -70,17 +64,12 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
     async function load() {
       setIsLoading(true)
       try {
-        const [proj, doms] = await Promise.all([
-          getProjectById(projectId),
-          loadActiveDomains(),
-        ])
+        const proj = await getProjectById(projectId)
         const extendedProj = proj as ExtendedProjectRow
         setProject(extendedProj)
-        setDomains(doms)
 
         // Llenar campos
         setName(extendedProj.name || '')
-        setDomainId(extendedProj.domain_id || '')
         setObjetivoPrincipal(extendedProj.objetivo_principal || '')
         setRestricciones(extendedProj.restricciones || '')
         setHorizonteValor(extendedProj.horizonte_valor || '')
@@ -91,12 +80,6 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
         if (extendedProj.fricciones_oportunidades && Array.isArray(extendedProj.fricciones_oportunidades)) {
           setFricciones(extendedProj.fricciones_oportunidades)
         }
-        // Comprobar si T1 tiene datos (bloquea cambio de dominio)
-        const { count } = await supabase
-          .from('t1_dimension_scores')
-          .select('*', { count: 'exact', head: true })
-          .eq('project_id', projectId)
-        setT1HasData((count ?? 0) > 0)
       } catch (err) {
         reportError('[ProjectDetailView] load', err)
       } finally {
@@ -109,8 +92,8 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
 
   // Guardar cambios
   async function handleSave() {
-    if (!name.trim() || !domainId) {
-      setSaveError('Nombre y dominio son requeridos')
+    if (!name.trim()) {
+      setSaveError('El nombre del proyecto es requerido')
       return
     }
 
@@ -167,9 +150,8 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
     )
   }
 
-  // Obtener opciones ecosistema según dominio
-  const selectedDomain = domains.find(d => d.id === domainId)
-  const ecosystemOptions = getEcosystemOptions(selectedDomain?.slug)
+  // Obtener opciones ecosistema (usa dominio por defecto)
+  const ecosystemOptions = getEcosystemOptions('ai_adoption')
 
   if (isLoading) {
     return (
@@ -232,32 +214,11 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
               className="w-full px-4 py-2.5 rounded-lg text-sm bg-white dark:bg-warm-800 border border-border dark:border-white/8 text-lean-black dark:text-warm-50 focus:outline-none focus:border-navy dark:focus:border-navy/60 disabled:opacity-50"
             />
           </div>
-
-          <div>
-            <FieldLabel>Dominio</FieldLabel>
-            <select
-              value={domainId}
-              onChange={(e) => setDomainId(e.target.value)}
-              disabled={isReadOnly || t1HasData}
-              className="w-full px-4 py-2.5 rounded-lg text-sm bg-white dark:bg-warm-800 border border-border dark:border-white/8 text-lean-black dark:text-warm-50 focus:outline-none focus:border-navy dark:focus:border-navy/60 disabled:opacity-50"
-            >
-              <option value="">Seleccionar dominio</option>
-              {domains.map(d => (
-                <option key={d.id} value={d.id}>{d.label}</option>
-              ))}
-            </select>
-            {t1HasData && (
-              <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">
-                El dominio está bloqueado porque ya existe una entrevista T1 guardada para este proyecto.
-              </p>
-            )}
-          </div>
         </div>
 
         {/* Contexto del proyecto */}
-        {domainId && (
-          <div className="rounded-xl bg-white dark:bg-warm-800 border border-border dark:border-white/6 p-6 space-y-4">
-            <SectionLabel>Contexto del proyecto</SectionLabel>
+        <div className="rounded-xl bg-white dark:bg-warm-800 border border-border dark:border-white/6 p-6 space-y-4">
+          <SectionLabel>Contexto del proyecto</SectionLabel>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -308,14 +269,12 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
                 />
               </div>
             </div>
-          </div>
-        )}
+        </div>
 
         {/* Fricciones y oportunidades */}
-        {domainId && (
-          <div className="rounded-xl bg-white dark:bg-warm-800 border border-border dark:border-white/6 p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <SectionLabel>Fricciones y oportunidades</SectionLabel>
+        <div className="rounded-xl bg-white dark:bg-warm-800 border border-border dark:border-white/6 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <SectionLabel>Fricciones y oportunidades</SectionLabel>
               {!isReadOnly && (
                 <Button
                   variant="secondary"
@@ -345,13 +304,11 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
                 Sin fricciones registradas. Añade una para comenzar.
               </p>
             )}
-          </div>
-        )}
+        </div>
 
         {/* Departamentos implicados */}
-        {domainId && (
-          <div className="rounded-xl bg-white dark:bg-warm-800 border border-border dark:border-white/6 p-6 space-y-4">
-            <SectionLabel>Departamentos implicados</SectionLabel>
+        <div className="rounded-xl bg-white dark:bg-warm-800 border border-border dark:border-white/6 p-6 space-y-4">
+          <SectionLabel>Departamentos implicados</SectionLabel>
             {departments.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {departments.map(dept => (
@@ -368,8 +325,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
                 No hay departamentos. Crea algunos en la sección Empresa.
               </p>
             )}
-          </div>
-        )}
+        </div>
       </div>
 
 
@@ -388,7 +344,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
             <Button
               variant="primary"
               onClick={handleSave}
-              disabled={isSaving || !name.trim() || !domainId}
+              disabled={isSaving || !name.trim()}
               loading={isSaving}
             >
               Guardar cambios

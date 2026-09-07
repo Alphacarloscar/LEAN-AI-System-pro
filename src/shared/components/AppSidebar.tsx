@@ -258,7 +258,7 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
                     tool={{ ...tool, path }}
                     isActive={isActive}
                     onNav={onNav}
-                    label={tool.code === 'T10' ? (activeProject?.governance_domains?.label ?? 'Dashboard') : tool.label}
+                    label={tool.code === 'T10' ? 'Dashboard' : tool.label}
                   />
                 )}
               </React.Fragment>
