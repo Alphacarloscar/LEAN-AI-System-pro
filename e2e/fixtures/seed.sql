@@ -10,10 +10,10 @@
 --
 -- PREREQUISITO: los 4 usuarios lab deben existir ya en auth.users
 --   (creados con supabase-cli o desde el Dashboard de Auth local).
---   superadmin@test.dev  / temporal  → UID 51e0f939-b12a-42d5-87b6-6e6d5d6036a0
---   consultor@test.dev   / temporal  → UID 22749bdd-8ea1-49e1-8f44-7ae199bb77b0
---   editor@test.dev      / temporal  → UID 85a35057-442d-46bd-b9e1-628c57eeae81
---   viewer@test.dev      / temporal  → UID 707a11db-b233-4e16-b1df-5d7838580de5
+--   superadmin@test.dev  / Temporal  → UID 51e0f939-b12a-42d5-87b6-6e6d5d6036a0
+--   consultant@test.dev  / Temporal  → UID 22749bdd-8ea1-49e1-8f44-7ae199bb77b0
+--   editor@test.dev      / Temporal  → UID 85a35057-442d-46bd-b9e1-628c57eeae81
+--   viewer@test.dev      / Temporal  → UID 707a11db-b233-4e16-b1df-5d7838580de5
 -- =============================================================
 
 BEGIN;
@@ -31,7 +31,7 @@ VALUES (
 -- ── 2. Profiles ──────────────────────────────────────────────
 INSERT INTO public.profiles (id, email, name, role, company_id) VALUES
   ('51e0f939-b12a-42d5-87b6-6e6d5d6036a0', 'superadmin@test.dev', 'david.baquero', 'superadmin',    '0b83042d-414e-4d4c-8c83-3a469affbfb3'),
-  ('22749bdd-8ea1-49e1-8f44-7ae199bb77b0', 'consultor@test.dev',  'consultor',     'consultant',    '0b83042d-414e-4d4c-8c83-3a469affbfb3'),
+  ('22749bdd-8ea1-49e1-8f44-7ae199bb77b0', 'consultant@test.dev', 'consultor',     'consultant',    '0b83042d-414e-4d4c-8c83-3a469affbfb3'),
   ('85a35057-442d-46bd-b9e1-628c57eeae81', 'editor@test.dev',     'editor',        'client_editor', '0b83042d-414e-4d4c-8c83-3a469affbfb3'),
   ('707a11db-b233-4e16-b1df-5d7838580de5', 'viewer@test.dev',     'viewer',        'client_viewer', '0b83042d-414e-4d4c-8c83-3a469affbfb3')
 ON CONFLICT (id) DO NOTHING;

@@ -18,7 +18,7 @@
 // Fixture de referencia: e2e/fixtures/seed.sql
 //   — Company: Disney   (0b83042d-414e-4d4c-8c83-3a469affbfb3)
 //   — Project: Toy Story (e2058bff-9759-465d-ae4d-df79fdf23815)
-//   — consultor@test.dev → role: consultant
+//   — consultant@test.dev → role: consultant
 //
 // Patrones de estabilidad aplicados:
 //   — page.waitForResponse() ancla cada aserción a una respuesta HTTP real
@@ -191,7 +191,7 @@ function prepareAuditResponseWatcher(
  */
 async function fillAndSubmitNewIntervieweeModal(page: Page): Promise<void> {
   // El botón CTA del ToolHeader solo aparece si el usuario no es read-only.
-  // consultor@test.dev tiene rol 'consultant' → tiene acceso de escritura.
+  // consultant@test.dev tiene rol 'consultant' → tiene acceso de escritura.
   const addBtn = page.getByRole('button', { name: /nueva entrevista/i })
   await expect(addBtn).toBeVisible({ timeout: 8_000 })
   await addBtn.click()

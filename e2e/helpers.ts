@@ -12,19 +12,19 @@ export const LAB_PROJECT_BOOST_ONLY   = 'd1a2b3c4-e5f6-4a1b-9c8d-7e6f5a4b3c2d'  
 export const USERS = {
   superadmin: {
     email:    process.env.E2E_SUPERADMIN_EMAIL    ?? 'superadmin@test.dev',
-    password: process.env.E2E_SUPERADMIN_PASSWORD ?? 'temporal',
+    password: process.env.E2E_SUPERADMIN_PASSWORD ?? 'Temporal',
   },
   consultor: {
-    email:    process.env.E2E_CONSULTANT_EMAIL    ?? 'consultor@test.dev',
-    password: process.env.E2E_CONSULTANT_PASSWORD ?? 'temporal',
+    email:    process.env.E2E_CONSULTANT_EMAIL    ?? 'consultant@test.dev',
+    password: process.env.E2E_CONSULTANT_PASSWORD ?? 'Temporal',
   },
   editor: {
     email:    process.env.E2E_CLIENT_EDITOR_EMAIL    ?? 'editor@test.dev',
-    password: process.env.E2E_CLIENT_EDITOR_PASSWORD ?? 'temporal',
+    password: process.env.E2E_CLIENT_EDITOR_PASSWORD ?? 'Temporal',
   },
   viewer: {
     email:    process.env.E2E_CLIENT_VIEWER_EMAIL    ?? 'viewer@test.dev',
-    password: process.env.E2E_CLIENT_VIEWER_PASSWORD ?? 'temporal',
+    password: process.env.E2E_CLIENT_VIEWER_PASSWORD ?? 'Temporal',
   },
 } as const
 
