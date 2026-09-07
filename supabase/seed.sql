@@ -97,16 +97,14 @@ INSERT INTO public.company_departments (id, company_id, name, color) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ── 4. Projects (canon E2E: "Toy Story" + "Test Boost Only") ─
--- domain_id must reference a valid governance_domains row (ai_adoption is seeded by migration)
-INSERT INTO public.projects (id, name, owner_id, company_id, status, current_phase, domain_id)
+INSERT INTO public.projects (id, name, owner_id, company_id, status, current_phase)
 VALUES (
   'e2058bff-9759-465d-ae4d-df79fdf23815',
   'Toy Story',
   '51e0f939-b12a-42d5-87b6-6e6d5d6036a0',
   '0b83042d-414e-4d4c-8c83-3a469affbfb3',
   'active',
-  'listen',
-  (SELECT id FROM governance_domains WHERE slug = 'ai_adoption' LIMIT 1)
+  'listen'
 ),
 (
   'd1a2b3c4-e5f6-4a1b-9c8d-7e6f5a4b3c2d',
@@ -114,8 +112,7 @@ VALUES (
   '51e0f939-b12a-42d5-87b6-6e6d5d6036a0',
   '0b83042d-414e-4d4c-8c83-3a469affbfb3',
   'active',
-  'listen',
-  (SELECT id FROM governance_domains WHERE slug = 'ai_adoption' LIMIT 1)
+  'listen'
 ) ON CONFLICT (id) DO NOTHING;
 
 -- ── 5. Project members ───────────────────────────────────────

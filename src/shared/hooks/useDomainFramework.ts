@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useEngagementStore } from '@/modules/Engagement/store'
 import { createClient } from '@supabase/supabase-js'
 
 /**
@@ -13,38 +12,29 @@ interface FrameworkControl {
 }
 
 /**
- * useDomainFramework — Carga controles de framework desde BD parametrizados por dominio.
+ * useDomainFramework — Carga controles de framework desde BD (single-domain ai_adoption).
  *
- * Fase 5 ADR-029: Los labels de frameworks regulatorios (AI Act, etc.) se leen de BD
- * según el domain_id del proyecto activo. Fallback a control_id si no hay datos en BD.
+ * ADR-029 reversal: Projects ya no tienen domain_id. Siempre usa 'ai_adoption'.
+ * Los labels de frameworks regulatorios (AI Act, etc.) se leen de BD para ese dominio.
  *
  * Uso en componentes:
  *   const { getLabel } = useDomainFramework()
  *   <span>{getLabel('ai_act_dashboard')}</span>  // → "Dashboard AI Act" (desde BD)
  *
  * Resiliencia:
- * - Si no hay domainId (proyecto sin dominio asignado): devuelve control_id como label
  * - Si BD falla: devuelve control_id como label (fallback)
  * - Si control_id no existe en BD: devuelve control_id sin transformar
  */
 export function useDomainFramework() {
-  const projects = useEngagementStore((state) => state.projects)
-  const activeId = useEngagementStore((state) => state.activeEngagementId)
-
   const [controls, setControls] = useState<FrameworkControl[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  // Extraer domainId del proyecto activo
-  const domainId = projects.find((p) => p.id === activeId)?.domain_id
+  // Dominio fijo: ai_adoption
+  const domainSlug = 'ai_adoption'
 
-  // Cargar controles al cambiar domainId o activeId
+  // Cargar controles del dominio ai_adoption
   useEffect(() => {
-    if (!domainId) {
-      setControls([])
-      setError(null)
-      return
-    }
 
     const loadControls = async () => {
       setLoading(true)
@@ -54,10 +44,24 @@ export function useDomainFramework() {
           import.meta.env.VITE_SUPABASE_URL || '',
           import.meta.env.VITE_SUPABASE_ANON_KEY || ''
         )
+        // Obtener ID del dominio ai_adoption
+        const { data: domainData, error: domainError } = await supabase
+          .from('governance_domains')
+          .select('id')
+          .eq('slug', domainSlug)
+          .single()
+
+        if (domainError || !domainData) {
+          console.warn('[useDomainFramework] No se encontró dominio:', domainSlug)
+          setControls([])
+          setError(domainError || new Error('Domain not found'))
+          return
+        }
+
         const { data, error: queryError } = await supabase
           .from('framework_controls')
           .select('control_id, label, category')
-          .eq('domain_id', domainId)
+          .eq('domain_id', domainData.id)
           .eq('is_active', true)
 
         if (queryError) {
@@ -79,7 +83,7 @@ export function useDomainFramework() {
     }
 
     loadControls()
-  }, [domainId])
+  }, [domainSlug])
 
   /**
    * Obtener label de un control por su ID.
@@ -105,7 +109,6 @@ export function useDomainFramework() {
     controls,
     loading,
     error,
-    domainId,
     getLabel,
     getControl,
   }

@@ -1,3 +1,4 @@
+Connecting to db 5432
 export type Json =
   | string
   | number
@@ -661,7 +662,6 @@ export type Database = {
           contracted_packages: Database["public"]["Enums"]["package_id"][]
           created_at: string | null
           current_phase: string
-          domain_id: string
           ecosistema_tecnologico: string | null
           end_date: string | null
           fricciones_oportunidades: Json | null
@@ -681,7 +681,6 @@ export type Database = {
           contracted_packages?: Database["public"]["Enums"]["package_id"][]
           created_at?: string | null
           current_phase?: string
-          domain_id: string
           ecosistema_tecnologico?: string | null
           end_date?: string | null
           fricciones_oportunidades?: Json | null
@@ -701,7 +700,6 @@ export type Database = {
           contracted_packages?: Database["public"]["Enums"]["package_id"][]
           created_at?: string | null
           current_phase?: string
-          domain_id?: string
           ecosistema_tecnologico?: string | null
           end_date?: string | null
           fricciones_oportunidades?: Json | null
@@ -728,13 +726,6 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "projects_domain_id_fkey"
-            columns: ["domain_id"]
-            isOneToOne: false
-            referencedRelation: "governance_domains"
             referencedColumns: ["id"]
           },
         ]
@@ -1283,45 +1274,73 @@ export type Database = {
         Args: { p_project_id: string; p_tool_code: string; p_user_id: string }
         Returns: Json
       }
-      create_project: {
-        Args: {
-          p_company_id?: string
-          p_domain_id?: string
-          p_ecosistema_tecnologico?: string
-          p_fricciones_oportunidades?: string
-          p_horizonte_valor?: string
-          p_name?: string
-          p_objetivo_principal?: string
-          p_phase?: string
-          p_restricciones?: string
-        }
-        Returns: {
-          areas_prioritarias: string[] | null
-          company_id: string | null
-          contracted_packages: Database["public"]["Enums"]["package_id"][]
-          created_at: string | null
-          current_phase: string
-          domain_id: string
-          ecosistema_tecnologico: string | null
-          end_date: string | null
-          fricciones_oportunidades: Json | null
-          horizonte_valor: string | null
-          id: string
-          name: string
-          objetivo_principal: string | null
-          owner_id: string
-          restricciones: string | null
-          start_date: string | null
-          status: string
-          updated_at: string | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "projects"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
+      create_project:
+        | {
+            Args: {
+              p_company_id?: string
+              p_domain_id?: string
+              p_ecosistema_tecnologico?: string
+              p_fricciones_oportunidades?: string
+              p_horizonte_valor?: string
+              p_name?: string
+              p_objetivo_principal?: string
+              p_phase?: string
+              p_restricciones?: string
+            }
+            Returns: {
+              areas_prioritarias: string[] | null
+              company_id: string | null
+              contracted_packages: Database["public"]["Enums"]["package_id"][]
+              created_at: string | null
+              current_phase: string
+              ecosistema_tecnologico: string | null
+              end_date: string | null
+              fricciones_oportunidades: Json | null
+              horizonte_valor: string | null
+              id: string
+              name: string
+              objetivo_principal: string | null
+              owner_id: string
+              restricciones: string | null
+              start_date: string | null
+              status: string
+              updated_at: string | null
+            }[]
+            SetofOptions: {
+              from: "*"
+              to: "projects"
+              isOneToOne: false
+              isSetofReturn: true
+            }
+          }
+        | {
+            Args: { p_company_id?: string; p_name?: string; p_phase?: string }
+            Returns: {
+              areas_prioritarias: string[] | null
+              company_id: string | null
+              contracted_packages: Database["public"]["Enums"]["package_id"][]
+              created_at: string | null
+              current_phase: string
+              ecosistema_tecnologico: string | null
+              end_date: string | null
+              fricciones_oportunidades: Json | null
+              horizonte_valor: string | null
+              id: string
+              name: string
+              objetivo_principal: string | null
+              owner_id: string
+              restricciones: string | null
+              start_date: string | null
+              status: string
+              updated_at: string | null
+            }[]
+            SetofOptions: {
+              from: "*"
+              to: "projects"
+              isOneToOne: false
+              isSetofReturn: true
+            }
+          }
       delete_project: { Args: { p_project_id: string }; Returns: undefined }
       is_company_project: { Args: { pid: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
@@ -1358,7 +1377,6 @@ export type Database = {
           contracted_packages: Database["public"]["Enums"]["package_id"][]
           created_at: string | null
           current_phase: string
-          domain_id: string
           ecosistema_tecnologico: string | null
           end_date: string | null
           fricciones_oportunidades: Json | null
@@ -1536,3 +1554,5 @@ export const Constants = {
   },
 } as const
 
+A new version of Supabase CLI is available: v2.116.0 (currently installed v2.101.0)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
