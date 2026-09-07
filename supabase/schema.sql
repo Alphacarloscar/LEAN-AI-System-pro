@@ -4765,13 +4765,19 @@ COMMENT ON TABLE public.framework_controls IS
 
 
 -- ════════════════════════════════════════════════════════════════
--- 7. Extender projects: agregar contracted_packages
+-- 7. Extender projects: agregar domain_id y contracted_packages
 --
+--    domain_id: permitir NULL temporalmente; se populará en paso 9.
 --    contracted_packages: array de package_id, default vacío.
 -- ════════════════════════════════════════════════════════════════
 
 ALTER TABLE public.projects
+  ADD COLUMN IF NOT EXISTS domain_id uuid REFERENCES public.governance_domains(id),
   ADD COLUMN IF NOT EXISTS contracted_packages public.package_id[] NOT NULL DEFAULT '{}';
+
+COMMENT ON COLUMN public.projects.domain_id IS
+  'Dominio al que pertenece este proyecto (AI Adoption, Data Governance, etc.). '
+  'FK a governance_domains. Determinará qué literales de configuración aplican.';
 
 COMMENT ON COLUMN public.projects.contracted_packages IS
   'Array de tipos de paquetes contratados. Determina qué módulos T1-T13 están disponibles. '
@@ -4791,13 +4797,25 @@ VALUES (
 )
 ON CONFLICT (slug) DO NOTHING;
 
--- Backfill contracted_packages con paquetes por defecto
+-- Capturar el ID del dominio AI para el backfill
 DO $$
+DECLARE
+  v_ai_domain_id uuid;
 BEGIN
-  -- Paso 9: Backfill de proyectos existentes con todos los paquetes
+  SELECT id INTO v_ai_domain_id FROM public.governance_domains WHERE slug = 'ai_adoption' LIMIT 1;
+
+  IF v_ai_domain_id IS NULL THEN
+    RAISE EXCEPTION 'No se pudo insertar el dominio AI Adoption';
+  END IF;
+
+  -- Paso 9: Backfill de proyectos existentes con domain_id + todos los paquetes
   UPDATE public.projects
-     SET contracted_packages = ARRAY['boost_assessment', 'portfolio_management', 'legal_compliance']::public.package_id[]
-   WHERE contracted_packages = '{}';
+     SET domain_id = v_ai_domain_id,
+         contracted_packages = ARRAY['boost_assessment', 'portfolio_management', 'legal_compliance']::public.package_id[]
+   WHERE domain_id IS NULL;
+
+  -- Ahora hacer domain_id NOT NULL (todos los proyectos ya tienen valor)
+  ALTER TABLE public.projects ALTER COLUMN domain_id SET NOT NULL;
 
 END $$;
 
@@ -4806,6 +4824,9 @@ END $$;
 -- 10. Índices para performance en queries de projects
 -- ════════════════════════════════════════════════════════════════
 
+CREATE INDEX IF NOT EXISTS idx_projects_domain_id
+  ON public.projects (domain_id);
+
 CREATE INDEX IF NOT EXISTS idx_projects_contracted_packages
   ON public.projects USING GIN (contracted_packages);
 
@@ -4813,8 +4834,9 @@ CREATE INDEX IF NOT EXISTS idx_projects_contracted_packages
 -- ════════════════════════════════════════════════════════════════
 -- Fin de la migración
 -- Verificación post-migración:
---   1. SELECT count(*) FROM governance_domains; → debe ser > 0
---   2. SELECT DISTINCT contracted_packages FROM projects; → debe tener valores
+--   1. SELECT count(*) FROM governance_domains; → 1
+--   2. SELECT count(*) FROM projects; → debe ser > 0 con domain_id NOT NULL
+--   3. SELECT DISTINCT contracted_packages FROM projects; → debe tener valores
 -- ════════════════════════════════════════════════════════════════
 
 
@@ -5065,6 +5087,7 @@ ON CONFLICT (domain_id, module_slug, prompt_key, version) DO NOTHING;
 CREATE OR REPLACE FUNCTION public.create_project(
   p_company_id uuid    DEFAULT NULL,
   p_name       text    DEFAULT NULL,
+  p_domain_id  uuid    DEFAULT NULL,
   p_phase      text    DEFAULT 'listen'
 )
 RETURNS SETOF public.projects
@@ -5076,6 +5099,7 @@ DECLARE
   v_caller_role text;
   v_project_id  uuid;
   v_now         timestamptz := now();
+  v_domain_exists boolean;
 BEGIN
   -- ── Autorización explícita ─────────────────────────────────────
   SELECT role INTO v_caller_role
@@ -5099,12 +5123,34 @@ BEGIN
     RAISE EXCEPTION 'create_project: p_phase inválido: %. Valores válidos: listen, evaluate, activate, normalize, closed', p_phase;
   END IF;
 
+  -- ── Asignar dominio por defecto (ai_adoption) si no se pasa ──────────
+  IF p_domain_id IS NULL THEN
+    SELECT id INTO p_domain_id
+    FROM public.governance_domains
+    WHERE slug = 'ai_adoption' AND is_active = true
+    LIMIT 1;
+
+    IF p_domain_id IS NULL THEN
+      RAISE EXCEPTION 'create_project: no se pudo obtener el dominio por defecto (ai_adoption)';
+    END IF;
+  ELSE
+    -- Validar que el dominio pasado existe
+    SELECT EXISTS (
+      SELECT 1 FROM public.governance_domains WHERE id = p_domain_id
+    ) INTO v_domain_exists;
+
+    IF NOT v_domain_exists THEN
+      RAISE EXCEPTION 'create_project: domain_id % no existe en governance_domains', p_domain_id;
+    END IF;
+  END IF;
+
   -- ── Crear el proyecto ──────────────────────────────────────────
   INSERT INTO public.projects (
     id,
     name,
     owner_id,
     company_id,
+    domain_id,
     status,
     current_phase,
     created_at,
@@ -5115,6 +5161,7 @@ BEGIN
     trim(p_name),
     auth.uid(),
     p_company_id,
+    p_domain_id,
     'active',
     p_phase,
     v_now,
@@ -5132,14 +5179,15 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.create_project(uuid, text, text) IS
-  'Crea un proyecto. '
+COMMENT ON FUNCTION public.create_project(uuid, text, uuid, text) IS
+  'Crea un proyecto con domain_id obligatorio. '
   'Solo superadmin y consultant pueden invocarla. '
-  'SECURITY DEFINER para escribir en project_members sin conflicto de RLS.';
+  'SECURITY DEFINER para escribir en project_members sin conflicto de RLS. '
+  'Firma actualizada en migración 20260825 — antes no aceptaba domain_id.';
 
 -- ── Permisos ──────────────────────────────────────────────────────
-REVOKE ALL     ON FUNCTION public.create_project(uuid, text, text) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.create_project(uuid, text, text) TO authenticated;
+REVOKE ALL     ON FUNCTION public.create_project(uuid, text, uuid, text) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.create_project(uuid, text, uuid, text) TO authenticated;
 
 
 -- ── Verificación post-migration ───────────────────────────────────
@@ -5155,9 +5203,9 @@ BEGIN
   ) INTO v_exists;
 
   IF v_exists THEN
-    RAISE NOTICE '[create_project OK] create_project actualizado sin p_domain_id';
+    RAISE NOTICE '[20260825 OK] create_project actualizado con p_domain_id';
   ELSE
-    RAISE EXCEPTION '[create_project FAIL] create_project no encontrado tras CREATE OR REPLACE';
+    RAISE EXCEPTION '[20260825 FAIL] create_project no encontrado tras CREATE OR REPLACE';
   END IF;
 END $$;
 
@@ -5285,6 +5333,7 @@ COMMENT ON COLUMN public.companies.contracted_packages IS
 CREATE OR REPLACE FUNCTION public.create_project(
   p_company_id uuid    DEFAULT NULL,
   p_name       text    DEFAULT NULL,
+  p_domain_id  uuid    DEFAULT NULL,
   p_phase      text    DEFAULT 'listen',
   p_objetivo_principal text DEFAULT NULL,
   p_restricciones text DEFAULT NULL,
@@ -5301,6 +5350,7 @@ DECLARE
   v_caller_role text;
   v_project_id  uuid;
   v_now         timestamptz := now();
+  v_domain_exists boolean;
 BEGIN
   -- ── Autorización explícita ─────────────────────────────────────
   SELECT role INTO v_caller_role
@@ -5324,12 +5374,34 @@ BEGIN
     RAISE EXCEPTION 'create_project: p_phase inválido: %. Valores válidos: listen, evaluate, activate, normalize, closed', p_phase;
   END IF;
 
+  -- ── Asignar dominio por defecto (ai_adoption) si no se pasa ──────────
+  IF p_domain_id IS NULL THEN
+    SELECT id INTO p_domain_id
+    FROM public.governance_domains
+    WHERE slug = 'ai_adoption' AND is_active = true
+    LIMIT 1;
+
+    IF p_domain_id IS NULL THEN
+      RAISE EXCEPTION 'create_project: no se pudo obtener el dominio por defecto (ai_adoption)';
+    END IF;
+  ELSE
+    -- Validar que el dominio pasado existe
+    SELECT EXISTS (
+      SELECT 1 FROM public.governance_domains WHERE id = p_domain_id
+    ) INTO v_domain_exists;
+
+    IF NOT v_domain_exists THEN
+      RAISE EXCEPTION 'create_project: domain_id % no existe en governance_domains', p_domain_id;
+    END IF;
+  END IF;
+
   -- ── Crear el proyecto ──────────────────────────────────────────
   INSERT INTO public.projects (
     id,
     name,
     owner_id,
     company_id,
+    domain_id,
     status,
     current_phase,
     objetivo_principal,
@@ -5345,6 +5417,7 @@ BEGIN
     trim(p_name),
     auth.uid(),
     p_company_id,
+    p_domain_id,
     'active',
     p_phase,
     CASE WHEN p_objetivo_principal IS NOT NULL THEN trim(p_objetivo_principal) ELSE NULL END,
@@ -5367,15 +5440,16 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.create_project(uuid, text, text, text, text, text, text, text) IS
-  'Crea un proyecto con 5 campos opcionales de contexto. '
+COMMENT ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, text, text, text) IS
+  'Crea un proyecto con domain_id obligatorio y 5 campos opcionales de contexto. '
   'p_fricciones_oportunidades es JSONB array de {id, tipo, areaFuncional, frecuencia, impacto, notas}. '
   'Solo superadmin y consultant pueden invocarla. '
-  'SECURITY DEFINER para escribir en project_members sin conflicto de RLS.';
+  'SECURITY DEFINER para escribir en project_members sin conflicto de RLS. '
+  'Firma extendida en migración 20260827 — antes aceptaba solo (uuid, text, uuid, text).';
 
 -- ── Permisos ──────────────────────────────────────────────────────
-REVOKE ALL     ON FUNCTION public.create_project(uuid, text, text, text, text, text, text, text) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.create_project(uuid, text, text, text, text, text, text, text) TO authenticated;
+REVOKE ALL     ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, text, text, text) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.create_project(uuid, text, uuid, text, text, text, text, text, text) TO authenticated;
 
 
 -- ── Verificación post-migration ───────────────────────────────────
@@ -5391,9 +5465,9 @@ BEGIN
   ) INTO v_exists;
 
   IF v_exists THEN
-    RAISE NOTICE '[create_project OK] create_project extendido con 5 campos opcionales sin domain_id';
+    RAISE NOTICE '[20260827 OK] create_project extendido con 5 campos opcionales';
   ELSE
-    RAISE EXCEPTION '[create_project FAIL] create_project no encontrado tras CREATE OR REPLACE';
+    RAISE EXCEPTION '[20260827 FAIL] create_project no encontrado tras CREATE OR REPLACE';
   END IF;
 END $$;
 
@@ -5788,195 +5862,40 @@ END $$;
 -- ========== 20260903152412_create_application_texts_table.sql ==========
 -- Original source: 20260903152412_create_application_texts_table.sql
 
+-- Create application_texts table if it doesn't exist
+-- This table holds UI text/label overrides per application module
 
-
--- ========== 20260903_add_text_columns.sql ==========
--- Original source: 20260903_add_text_columns.sql
-
--- Add new columns for filename and text_generalizado
-ALTER TABLE public.application_texts
-ADD COLUMN IF NOT EXISTS filename TEXT,
-ADD COLUMN IF NOT EXISTS text_generalizado TEXT NOT NULL DEFAULT '[Sin especificar]';
-
--- Migrate data from text_es to filename and text_generalizado
-UPDATE public.application_texts
-SET
-  filename = COALESCE(filename, text_es, tool_module || '_' || text_key),
-  text_generalizado = COALESCE(NULLIF(text_generalizado, '[Sin especificar]'), text_es, '[Sin especificar]')
-WHERE text_es IS NOT NULL;
-
--- Verify migration
-SELECT
-  COUNT(*) as total_rows,
-  COUNT(filename) as rows_with_filename,
-  COUNT(text_generalizado) as rows_with_text_generalizado,
-  COUNT(text_es) as rows_with_old_text_es
-FROM public.application_texts;
-
--- Show sample
-SELECT tool_module, text_key, filename, text_generalizado, text_es
-FROM public.application_texts
-LIMIT 5;
-
-
--- ========== 20260903_app_labels_overrides.sql ==========
--- Original source: 20260903_app_labels_overrides.sql
-
-﻿CREATE TABLE app_labels_overrides (
+CREATE TABLE IF NOT EXISTS public.application_texts (
   id BIGSERIAL PRIMARY KEY,
-  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-  tool_code TEXT NOT NULL,
-  field_key TEXT NOT NULL,
-  label_es TEXT NOT NULL,
-  label_en TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(project_id, tool_code, field_key)
+  tool_module TEXT NOT NULL,                    -- e.g., 'AdminView', 'T1', 'T2'
+  text_key TEXT NOT NULL,                       -- e.g., 'title', 'description', 'button_label'
+  filename TEXT,                                -- Source file location: 'AdminView.tsx:154'
+  text_generalizado TEXT DEFAULT '[Sin especificar]',  -- Deprecated: being moved to text_override
+  text_override TEXT,                           -- Admin override value (if set)
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(tool_module, text_key)
 );
 
-ALTER TABLE app_labels_overrides ENABLE ROW LEVEL SECURITY;
+-- Create index for lookups by module and key
+CREATE INDEX IF NOT EXISTS idx_application_texts_module_key
+ON public.application_texts(tool_module, text_key);
 
-CREATE POLICY "Proyecto owner puede ver sus overrides"
-ON app_labels_overrides FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM projects p
-    WHERE p.id = app_labels_overrides.project_id
-    AND p.created_by = auth.uid()
-  )
-);
+-- Create index for admin panel searches
+CREATE INDEX IF NOT EXISTS idx_application_texts_filename
+ON public.application_texts(filename) WHERE filename IS NOT NULL;
 
-
--- ========== 20260903_fill_application_texts_defaults.sql ==========
--- Original source: 20260903_fill_application_texts_defaults.sql
-
--- Fill empty filename with tool_module + text_key
-UPDATE public.application_texts
-SET filename = COALESCE(
-  NULLIF(filename, ''),
-  tool_module || '_' || text_key
-)
-WHERE filename IS NULL OR filename = '';
-
--- Fill empty text_generalizado with a default message
-UPDATE public.application_texts
-SET text_generalizado = COALESCE(
-  NULLIF(text_generalizado, ''),
-  '[Sin especificar]'
-)
-WHERE text_generalizado IS NULL OR text_generalizado = '';
-
--- Verify results
-SELECT
-  COUNT(*) as total,
-  COUNT(CASE WHEN filename IS NOT NULL THEN 1 END) as with_filename,
-  COUNT(CASE WHEN text_generalizado IS NOT NULL THEN 1 END) as with_text_generalizado
-FROM public.application_texts;
+COMMENT ON TABLE public.application_texts IS
+  'Centralized UI text/label storage with admin override capability. '
+  'Each (tool_module, text_key) tuple defines a UI text element that can be overridden.';
 
 
--- ========== 20260903_rls_application_texts.sql ==========
--- Original source: 20260903_rls_application_texts.sql
-
--- Enable RLS on application_texts
-ALTER TABLE public.application_texts ENABLE ROW LEVEL SECURITY;
-
--- Policy: All authenticated users can read application_texts (global texts)
-CREATE POLICY "Authenticated users can read application_texts"
-  ON public.application_texts
-  FOR SELECT
-  TO authenticated
-  USING (true);
-
--- Policy: Only superadmin/admin can update application_texts
-CREATE POLICY "Admins can update application_texts"
-  ON public.application_texts
-  FOR UPDATE
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE public.profiles.id = auth.uid()
-        AND (public.profiles.role = 'superadmin' OR public.profiles.role = 'admin')
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE public.profiles.id = auth.uid()
-        AND (public.profiles.role = 'superadmin' OR public.profiles.role = 'admin')
-    )
-  );
-
-
--- ========== 20260904_fix_application_texts_semantics.sql ==========
--- Original source: 20260904_fix_application_texts_semantics.sql
-
--- Fix semantic errors in application_texts table
--- 1. Rename text_generalizado to text_override (it's the override value, not generalized text)
--- 2. Drop the old columns no longer needed
--- 3. Ensure filename contains real file:line references, not module_key concatenations
-
--- Add new text_override column (if not already exists from previous migration)
-ALTER TABLE public.application_texts
-ADD COLUMN IF NOT EXISTS text_override TEXT;
-
--- Migrate existing data: if text_generalizado exists and is not '[Sin especificar]', move to text_override
-UPDATE public.application_texts
-SET text_override = NULLIF(text_generalizado, '[Sin especificar]')
-WHERE text_generalizado IS NOT NULL AND text_generalizado != '[Sin especificar]';
-
--- For now, reset filename to empty so it can be properly populated with file:line values
--- This will be filled via a separate data migration or manual update
-UPDATE public.application_texts
-SET filename = NULL
-WHERE filename IS NOT NULL AND filename LIKE '%_%';
-
--- Drop the old text_generalizado column (if this is a future migration, else comment out)
--- ALTER TABLE public.application_texts DROP COLUMN IF EXISTS text_generalizado;
-
--- Verify migration
-SELECT
-  COUNT(*) as total_rows,
-  COUNT(CASE WHEN text_override IS NOT NULL THEN 1 END) as rows_with_override,
-  COUNT(CASE WHEN filename IS NOT NULL THEN 1 END) as rows_with_filename
-FROM public.application_texts;
-
-
--- ========== 20260904_refactor_application_texts_data.sql ==========
--- Original source: 20260904_refactor_application_texts_data.sql
-
--- Refactor application_texts data: clean up incorrect filename values
--- and prepare for proper seed data with file:line references
---
--- Current issue (ADR-??? BKL-XXX):
---   - filename column has incorrect values like "Admin_\"<text_key>\"" or "module_key"
---   - These should be replaced with actual file:line references (e.g., "AdminView.tsx:154")
---   - text_override column should be null for all entries (users set overrides in admin panel)
---
--- This migration:
---   1. Resets filename to NULL (will be populated by proper seed script)
---   2. Moves any existing text_generalizado to text_override if it's not a placeholder
---   3. Cleans up the table for fresh seed data
-
--- Reset all filenames to NULL (they will be populated with proper file:line values)
-UPDATE public.application_texts
-SET filename = NULL
-WHERE filename IS NOT NULL;
-
--- Move text_generalizado to text_override (if it exists and is not a placeholder)
-UPDATE public.application_texts
-SET text_override = NULLIF(text_generalizado, '[Sin especificar]')
-WHERE text_generalizado IS NOT NULL
-  AND text_generalizado != '[Sin especificar]'
-  AND text_override IS NULL;
-
--- Log the cleanup
-SELECT
-  COUNT(*) as total_rows,
-  COUNT(CASE WHEN filename IS NULL THEN 1 END) as rows_with_null_filename,
-  COUNT(CASE WHEN text_override IS NOT NULL THEN 1 END) as rows_with_override
-FROM public.application_texts;
-
+WARNING: Missing file supabase/migrations/20260903_add_text_columns.sql
+WARNING: Missing file supabase/migrations/20260903_app_labels_overrides.sql
+WARNING: Missing file supabase/migrations/20260903_fill_application_texts_defaults.sql
+WARNING: Missing file supabase/migrations/20260903_rls_application_texts.sql
+WARNING: Missing file supabase/migrations/20260904_fix_application_texts_semantics.sql
+WARNING: Missing file supabase/migrations/20260904_refactor_application_texts_data.sql
 
 -- ========== End of Consolidated Schema ==========
 

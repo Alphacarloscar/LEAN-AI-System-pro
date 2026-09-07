@@ -1,0 +1,8 @@
+-- ================================================================
+-- GOBY — Migración: Seguridad + Persistencia (v1 — DRAFT)
+-- Fecha: 2026-05-27
+--
+-- SUPERSEDED: este archivo era un borrador (tabla company_users incorrecta,
+-- nunca ejecutado en producción). Todo el DDL está en la versión canónica:
+--   20260527_security_persistence_v3_1.sql
+-- ================================================================
