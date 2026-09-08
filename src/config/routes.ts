@@ -13,6 +13,28 @@ export const PUBLIC_ROUTES = {
 } as const
 
 // ── Zona Protegida: Dashboard ─────────────────────────────────────────────
+// EVALUATION_ROUTE_PATTERNS — Static path patterns for React Router <Route path>
+// Used only by <Route path={EVALUATION_ROUTE_PATTERNS.T1}> declarations
+// to avoid hardcoded strings that drift from the builders below.
+export const EVALUATION_ROUTE_PATTERNS = {
+  ROOT: 'evaluation',
+  PROJECT_ROOT: 'evaluation/projects/:projectId',
+  T1: 'evaluation/projects/:projectId/t1',
+  T2: 'evaluation/projects/:projectId/t2',
+  T3: 'evaluation/projects/:projectId/t3',
+  T4: 'evaluation/projects/:projectId/t4',
+  T5: 'evaluation/projects/:projectId/t5',
+  T6: 'evaluation/projects/:projectId/t6',
+  T7: 'evaluation/projects/:projectId/t7',
+  T8: 'evaluation/projects/:projectId/t8',
+  T9: 'evaluation/projects/:projectId/t9',
+  T10: 'evaluation/projects/:projectId/t10',
+  T11: 'evaluation/projects/:projectId/t11',
+  T12: 'evaluation/projects/:projectId/t12',
+  MEMBERS: 'evaluation/projects/:projectId/members',
+} as const
+
+// EVALUATION_ROUTES — Path builders for navigate() and <Link>
 export const EVALUATION_ROUTES = {
   ROOT: '/evaluation',
   PROFILE: '/profile',
@@ -29,6 +51,7 @@ export const EVALUATION_ROUTES = {
   T10: (projectId: string) => `/evaluation/projects/${projectId}/t10`,
   T11: (projectId: string) => `/evaluation/projects/${projectId}/t11`,
   T12: (projectId: string) => `/evaluation/projects/${projectId}/t12`,
+  MEMBERS: (projectId: string) => `/evaluation/projects/${projectId}/members`,
 } as const
 
 // ── Zona Admin (Superadmin) ───────────────────────────────────────────────

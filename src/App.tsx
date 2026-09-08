@@ -12,6 +12,7 @@ import { Spinner, ToastProvider }                           from '@shared/design
 import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useProjectStore }                              from '@/modules/Engagement/store'
 import { AppLayout }                            from '@/shared/layouts/AppLayout'
+import { ProjectMembershipGuard }                from '@/shared/guards/ProjectMembershipGuard'
 import { LoginView, ResetPasswordView, UpdatePasswordView, useAuthStore } from '@/modules/Auth'
 import { AdminView, CompanyDetailView, ProjectDetailView, UserDetailView } from '@/modules/Admin'
 import { T1View }                               from '@/modules/T1_MaturityRadar'
@@ -28,7 +29,8 @@ import { T11View }                              from '@/modules/T11_OperatingRhy
 import { T12View }                              from '@/modules/T12_ISOAssessment'
 import { CompanyProfileView }                   from '@/modules/CompanyProfile'
 import { UserProfileView }                      from '@/modules/UserProfile'
-import { PUBLIC_ROUTES, EVALUATION_ROUTES, ADMIN_ROUTES, DEFAULT_REDIRECT } from '@/config/routes'
+import { ProjectMembersRouteView }              from '@/modules/ProjectMembers'
+import { PUBLIC_ROUTES, EVALUATION_ROUTES, EVALUATION_ROUTE_PATTERNS, ADMIN_ROUTES, DEFAULT_REDIRECT } from '@/config/routes'
 
 // ── ProtectedRoute — redirige a /login si no autenticado ──────
 
@@ -162,19 +164,23 @@ export default function App() {
         <Route path={EVALUATION_ROUTES.PROFILE}  element={<UserProfileView />} />
         <Route path="/company-profile"           element={<CompanyProfileView />} />
 
-        {/* Herramientas T1-T12 */}
-        <Route path="evaluation/projects/:projectId/t1"  element={<T1RouteView />} />
-        <Route path="evaluation/projects/:projectId/t2"  element={<T2RouteView />} />
-        <Route path="evaluation/projects/:projectId/t3"  element={<T3RouteView />} />
-        <Route path="evaluation/projects/:projectId/t4"  element={<T4RouteView />} />
-        <Route path="evaluation/projects/:projectId/t5"  element={<T5RouteView />} />
-        <Route path="evaluation/projects/:projectId/t6"  element={<T6RouteView />} />
-        <Route path="evaluation/projects/:projectId/t7"  element={<T7RouteView />} />
-        <Route path="evaluation/projects/:projectId/t8"  element={<T8RouteView />} />
-        <Route path="evaluation/projects/:projectId/t9"  element={<T9RouteView />} />
-        <Route path="evaluation/projects/:projectId/t10" element={<T10RouteView />} />
-        <Route path="evaluation/projects/:projectId/t11" element={<T11RouteView />} />
-        <Route path="evaluation/projects/:projectId/t12" element={<T12RouteView />} />
+        {/* Herramientas T1-T12 — bajo guarda de membresía de proyecto */}
+        <Route path={EVALUATION_ROUTE_PATTERNS.PROJECT_ROOT} element={<ProjectMembershipGuard />}>
+          <Route path={EVALUATION_ROUTE_PATTERNS.T1}  element={<T1RouteView />} />
+          <Route path={EVALUATION_ROUTE_PATTERNS.T2}  element={<T2RouteView />} />
+          <Route path={EVALUATION_ROUTE_PATTERNS.T3}  element={<T3RouteView />} />
+          <Route path={EVALUATION_ROUTE_PATTERNS.T4}  element={<T4RouteView />} />
+          <Route path={EVALUATION_ROUTE_PATTERNS.T5}  element={<T5RouteView />} />
+          <Route path={EVALUATION_ROUTE_PATTERNS.T6}  element={<T6RouteView />} />
+          <Route path={EVALUATION_ROUTE_PATTERNS.T7}  element={<T7RouteView />} />
+          <Route path={EVALUATION_ROUTE_PATTERNS.T8}  element={<T8RouteView />} />
+          <Route path={EVALUATION_ROUTE_PATTERNS.T9}  element={<T9RouteView />} />
+          <Route path={EVALUATION_ROUTE_PATTERNS.T10} element={<T10RouteView />} />
+          <Route path={EVALUATION_ROUTE_PATTERNS.T11} element={<T11RouteView />} />
+          <Route path={EVALUATION_ROUTE_PATTERNS.T12} element={<T12RouteView />} />
+          {/* Gestión de miembros del proyecto */}
+          <Route path={EVALUATION_ROUTE_PATTERNS.MEMBERS} element={<ProjectMembersRouteView />} />
+        </Route>
 
         {/* Admin */}
         <Route path={ADMIN_ROUTES.ROOT} element={<AdminView />} />

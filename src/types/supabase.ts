@@ -595,24 +595,33 @@ export type Database = {
           created_at: string | null
           email: string
           id: string
+          is_active: boolean
           name: string
+          person_id: string | null
           role: string
+          updated_at: string
         }
         Insert: {
           company_id?: string | null
           created_at?: string | null
           email: string
           id: string
+          is_active?: boolean
           name?: string
+          person_id?: string | null
           role?: string
+          updated_at?: string
         }
         Update: {
           company_id?: string | null
           created_at?: string | null
           email?: string
           id?: string
+          is_active?: boolean
           name?: string
+          person_id?: string | null
           role?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -620,6 +629,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "company_persons"
             referencedColumns: ["id"]
           },
         ]
@@ -734,6 +750,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      schema_metadata: {
+        Row: {
+          key: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
       }
       snapshots: {
         Row: {
@@ -1558,3 +1592,4 @@ export const Constants = {
     },
   },
 } as const
+
