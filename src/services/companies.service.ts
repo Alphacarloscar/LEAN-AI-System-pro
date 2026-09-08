@@ -272,6 +272,53 @@ const _impl = {
 
     if (deleteError) throw new Error(`[Companies] deleteCompany: ${deleteError.message}`)
   },
+
+  // Epic 5: Funciones para gestión de usuarios en admin
+  async listAllUsersWithStats(): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, email, name, role, is_active, company_id, created_at')
+      .order('created_at', { ascending: false })
+
+    if (error) throw new Error(`[Companies] listAllUsersWithStats: ${error.message}`)
+    return data ?? []
+  },
+
+  async getUserById(userId: string): Promise<any> {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single()
+
+    if (error || !data) throw new Error(`[Companies] getUserById: ${error?.message}`)
+    return data
+  },
+
+  async updateUserInfo(userId: string, params: { name?: string; role?: string }): Promise<any> {
+    type UpdatePayload = { name?: string; role?: string }
+    const updates: UpdatePayload = {}
+    if (params.name !== undefined) updates.name = params.name
+    if (params.role !== undefined) updates.role = params.role
+
+    const { data, error } = await (supabase.from('profiles').update(updates as any))
+      .eq('id', userId)
+      .select()
+      .single()
+
+    if (error || !data) throw new Error(`[Companies] updateUserInfo: ${error?.message}`)
+    return data
+  },
+
+  async toggleUserActive(userId: string, isActive: boolean): Promise<any> {
+    const { data, error } = await (supabase.from('profiles').update({ is_active: isActive } as any))
+      .eq('id', userId)
+      .select()
+      .single()
+
+    if (error || !data) throw new Error(`[Companies] toggleUserActive: ${error?.message}`)
+    return data
+  },
 }
 
 // ── Punto de exportación auditado ────────────────────────────
@@ -293,4 +340,8 @@ export const {
   toggleCompanyActive,
   getCompanyStats,
   deleteCompany,
+  listAllUsersWithStats,
+  getUserById,
+  updateUserInfo,
+  toggleUserActive,
 } = _service
