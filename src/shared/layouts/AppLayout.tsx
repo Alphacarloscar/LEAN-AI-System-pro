@@ -24,6 +24,7 @@ import { Outlet }                                 from 'react-router-dom'
 import type { AppLayoutContext }                  from './AppLayout.hooks'
 import { AppSidebar }                             from '@/shared/components/AppSidebar'
 import { AlphaLogo }                              from '@/shared/components/AlphaLogo'
+import { CompanySelector }                        from '@/shared/components/CompanySelector'
 import { EngagementSelector }                     from '@/shared/components/EngagementSelector'
 import { useDarkMode }                            from '@/shared/hooks/useDarkMode'
 import { useAuthStore }                           from '@/modules/Auth'
@@ -272,9 +273,10 @@ export function AppLayout() {
             : 'bg-[rgba(247,244,238,0.95)] border-[rgba(28,26,22,0.12)]',
         ].join(' ')}>
 
-          {/* ── Izquierda: logo + selector de proyecto ── */}
+          {/* ── Izquierda: logo + selectores de empresa y proyecto ── */}
           <div className="flex items-center gap-3 shrink-0">
             <AlphaLogo dark={dark} />
+            <CompanySelector dark={dark} />
             <EngagementSelector dark={dark} />
           </div>
 

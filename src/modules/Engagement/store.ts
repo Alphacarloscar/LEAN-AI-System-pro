@@ -26,11 +26,15 @@ interface ProjectStore {
   isLoading:          boolean
   // Backward compat (Phase 2 will migrate to activeProjectId)
   activeEngagementId: string | null
+  // Epic 6: Toolbar — empresa activa
+  activeCompanyId: string | null
 
   // Carga los proyectos del usuario logueado
   loadMyProjects: () => Promise<void>
   // Selecciona el proyecto activo (y notifica a los stores T1-T6)
   selectProject:   (id: string | null) => void
+  // Epic 6: Selecciona la empresa activa
+  setActiveCompany: (companyId: string | null) => void
   // Crea un nuevo proyecto y lo selecciona
   // companyId: si se pasa (superadmin/consultant) se usa directamente;
   //            si no (client_editor), se infiere del perfil del usuario.
@@ -56,6 +60,7 @@ export const useProjectStore = create<ProjectStore>()(
       projects:        [],
       activeProjectId: null,
       activeEngagementId: null,
+      activeCompanyId: null,
       isLoading:          false,
 
       loadMyProjects: async () => {
@@ -121,6 +126,10 @@ export const useProjectStore = create<ProjectStore>()(
         get().selectProject(id)
       },
 
+      setActiveCompany: (companyId) => {
+        set({ activeCompanyId: companyId })
+      },
+
       createAndSelect: async (name, companyId, extra) => {
         set({ isLoading: true })
         try {
@@ -152,13 +161,13 @@ export const useProjectStore = create<ProjectStore>()(
         }
       },
 
-      reset: () => set({ projects: [], activeProjectId: null, activeEngagementId: null, isLoading: false }),
+      reset: () => set({ projects: [], activeProjectId: null, activeEngagementId: null, activeCompanyId: null, isLoading: false }),
     }),
     {
       name:       'lean-active-project',
       version:    1,
-      // Solo persistir el ID activo, no la lista completa (puede quedar stale)
-      partialize: (s) => ({ activeProjectId: s.activeProjectId }),
+      // Solo persistir los IDs activos, no la lista completa (puede quedar stale)
+      partialize: (s) => ({ activeProjectId: s.activeProjectId, activeCompanyId: s.activeCompanyId }),
     }
   )
 )

@@ -17,6 +17,7 @@ import { useState, useRef, useEffect }  from 'react'
 import { Spinner }                      from '@shared/design-system/components'
 import { useEngagementStore }           from '@/modules/Engagement/store'
 import { useAuthStore }                 from '@/modules/Auth'
+import { useLocation }                  from 'react-router-dom'
 import { listCompanies }                from '@/services/companies.service'
 import type { CompanyRow }              from '@/types/database.types'
 import { isDemoEnabled }                from '@/lib/config'
@@ -67,8 +68,11 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
     isLoading,
     selectEngagement,
     createAndSelect,
+    activeCompanyId,
   } = useEngagementStore()
   const { user } = useAuthStore()
+  const location = useLocation()
+  const isAdminRoute = location.pathname.startsWith('/admin')
 
   const myUserId = user?.id   ?? null
   const userRole = user?.role ?? 'client_viewer'
@@ -143,7 +147,14 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
     setCreateError(null)
   }
 
-  const activeEngagement = projects.find((e) => e.id === activeEngagementId)
+  // Filtrar proyectos: solo activos y de la empresa seleccionada
+  const filteredProjects = projects.filter((p) => {
+    if (p.status !== 'active') return false
+    if (activeCompanyId && p.company_id !== activeCompanyId) return false
+    return true
+  })
+
+  const activeEngagement = filteredProjects.find((e) => e.id === activeEngagementId)
   const label = activeEngagement?.name
     ?? (isDemoEnabled && !activeEngagementId ? 'Proyecto Demo' : 'Seleccionar proyecto')
 
@@ -202,13 +213,14 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
 
       {/* Trigger */}
       <button
-        onClick={() => setOpen((o) => !o)}
-        title="Cambiar proyecto activo"
+        onClick={() => !isAdminRoute && setOpen((o) => !o)}
+        disabled={isAdminRoute}
+        title={isAdminRoute ? 'Deshabilitado en zona admin' : 'Cambiar proyecto activo'}
         aria-label="Selector de proyecto"
         className={[
-          'flex items-center gap-1.5 h-8 px-3 rounded-full',
+          'flex items-center gap-1.5 h-8 px-3 rounded-full disabled:opacity-50',
           'text-[10px] font-mono uppercase tracking-wide transition-colors duration-200',
-          open
+          open && !isAdminRoute
             ? dark
               ? 'bg-white/12 text-white/90'
               : 'bg-black/8 text-black/80'
@@ -285,16 +297,16 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
                   )}
                 </button>
               </div>
-              {projects.length > 0 && (
+              {filteredProjects.length > 0 && (
                 <div className={['border-t', dark ? 'border-white/8' : 'border-warm-100'].join(' ')} />
               )}
             </>
           )}
 
           {/* Lista de proyectos */}
-          {projects.length > 0 ? (
+          {filteredProjects.length > 0 ? (
             <div className="py-1">
-              {projects.map((eng) => {
+              {filteredProjects.map((eng) => {
                 const isOwn    = !myUserId || eng.owner_id === myUserId
                 const isActive = eng.id === activeEngagementId
                 return (
