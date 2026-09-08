@@ -255,8 +255,11 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
           {[T10_TOOL, T4_TOOL].map((rawTool) => {
             const tool     = { ...rawTool, label: resolveToolLabel(rawTool.code, rawTool.label, domainSlug) }
             const path     = buildPath(tool)
-            const isActive = location.pathname === path ||
-                             (path !== '/' && location.pathname.startsWith(path + '/'))
+            // T10: solo activo si ruta es exactamente /evaluation o /
+            // T4-T12: activos si ruta comienza con /evaluation/projects/{projectId}/t{N}
+            const isActive = tool.code === 'T10'
+              ? (location.pathname === path || location.pathname === '/')
+              : (location.pathname === path || location.pathname.startsWith(path + '/'))
             const isLocked = activeProject && !isProjectComplete && !isActive
             return (
               <React.Fragment key={tool.code}>

@@ -93,8 +93,8 @@ describe('AppSidebar — aria-current="page" en ítem activo', () => {
     expect(activeItems.length).toBeGreaterThanOrEqual(0)
   })
 
-  it('el botón T1 es accesible cuando la ruta es /t1/:projectId', () => {
-    const testPath = `/t1/${TEST_PROJECT_ID}`
+  it('el botón T1 es accesible cuando la ruta es /evaluation/projects/:projectId/t1', () => {
+    const testPath = `/evaluation/projects/${TEST_PROJECT_ID}/t1`
     renderSidebar(testPath)
     // El store debe tener el projectId
     expect(useEngagementStore.getState().activeEngagementId).toBe(TEST_PROJECT_ID)
@@ -105,8 +105,8 @@ describe('AppSidebar — aria-current="page" en ítem activo', () => {
     expect(t1Button?.tagName).toBe('BUTTON')
   })
 
-  it('el botón T5 es accesible cuando la ruta es /t5/:projectId', () => {
-    renderSidebar(`/t5/${TEST_PROJECT_ID}`)
+  it('el botón T5 es accesible cuando la ruta es /evaluation/projects/:projectId/t5', () => {
+    renderSidebar(`/evaluation/projects/${TEST_PROJECT_ID}/t5`)
     // Buscar botón T5 que contiene la palabra "T5"
     const allButtons = screen.getAllByRole('button')
     const t5Button = allButtons.find((btn) => btn.textContent?.includes('T5') && !btn.textContent?.includes('T12'))
@@ -114,8 +114,8 @@ describe('AppSidebar — aria-current="page" en ítem activo', () => {
     expect(t5Button?.tagName).toBe('BUTTON')
   })
 
-  it('el botón T12 es accesible cuando la ruta es /t12/:projectId', () => {
-    renderSidebar(`/t12/${TEST_PROJECT_ID}`)
+  it('el botón T12 es accesible cuando la ruta es /evaluation/projects/:projectId/t12', () => {
+    renderSidebar(`/evaluation/projects/${TEST_PROJECT_ID}/t12`)
     // Buscar botón T12 que contiene "T12"
     const allButtons = screen.getAllByRole('button')
     const t12Button = allButtons.find((btn) => btn.textContent?.includes('T12'))
@@ -138,7 +138,7 @@ describe('AppSidebar — aria-current="page" en ítem activo', () => {
   })
 
   it('solo un ítem es activo a la vez (unicidad de aria-current="page")', () => {
-    renderSidebar(`/t4/${TEST_PROJECT_ID}`)
+    renderSidebar(`/evaluation/projects/${TEST_PROJECT_ID}/t4`)
     const activeButtons = screen.queryAllByRole('button', { current: 'page' })
     // Un único botón debe ser el activo — nunca múltiples ítems marcados simultáneamente
     expect(
