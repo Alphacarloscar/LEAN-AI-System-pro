@@ -1091,6 +1091,29 @@ la protección existe pero está inerte hasta que cada vista lo adopte.
 
 ---
 
+### DEBT-051 — `company_persons.department` permanece como texto libre (no normalizado a FK)
+
+**Severidad:** 🟢 Baja
+**Detectado:** 2026-09-08 (Épica 8 — gestión de miembros del proyecto)
+**Área:** `supabase/schema.sql` (tabla `company_persons`, columna `department: text`)
+**Estado:** Pendiente
+
+**Descripción:**
+La columna `department` en `company_persons` almacena texto libre (ej: "Tecnología", "Finanzas") en lugar de FK a `company_departments.id`. Por decisión de alcance de Épica 8, no se normalizó: el directorio de personas sigue independiente del catálogo de departamentos oficial. Esto crea divergencia si un usuario edita un departamento en el catálogo pero hay personas con ese nombre en texto libre.
+
+**Impacto:** Riesgo bajo actualmente (Épica 8 solo trata listas de personas), pero puede crecer si futuras épicas (ej: T2 mejorado, reporte de diversidad) intenta filtrar por `company_departments.id`.
+
+**Plan de acción:**
+1. Monitorear si en próximos sprints `company_persons.department` se usa para filtros/joins contra `company_departments`.
+2. Si sí: crear migración para añadir `department_id (FK nullable)`, backfill por nombre aproximado (ej: `LOWER(department_text) = LOWER(department.name)`), y gradualmente migrar lecturas a usar la FK.
+3. Si no: cerrar como wontfix (quedó fuera de alcance de Épica 8 a propósito).
+
+**Requiere ADR:** No (es una decisión de PM/alcance, no arquitectónica).
+
+**Relacionado:** Épica 8 (2026-09-08), ADR-029 (directorio multi-dominio).
+
+---
+
 ## Cómo añadir un item
 
 Cuando detectes deuda técnica en un PR:

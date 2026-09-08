@@ -38,9 +38,9 @@ AI-Ready Repository System v2.1.0
 | Tabla | Propósito | Discriminador de tenant |
 |-------|----------|------------------------|
 | `companies` | Empresas cliente (tenants) | `id` |
-| `profiles` | Usuarios (extiende auth.users) | `company_id` |
+| `profiles` | Usuarios (extiende auth.users). Columnas: `id` (PK, FK auth.users), `email`, `name`, `role` (CHECK: superadmin/consultant/client_editor/client_viewer), `company_id`, `person_id` (nullable FK a company_persons). `person_id` se establece al invitar un usuario vinculado a una persona del directorio (Épica 8). | `company_id` |
 | `projects` | Proyectos de adopción IA | `company_id` |
-| `project_members` | Relación usuario ↔ proyecto | `project_id` |
+| `project_members` | Relación usuario ↔ proyecto con rol asignado (consultant/client_editor/client_viewer). PK (project_id, user_id). RLS via `user_can_read_project` (SELECT) / `user_can_edit_project` (INSERT/UPDATE/DELETE). Escritura: solo miembros con role IN ('consultant','client_editor') o admin. Lectura: todos los miembros del proyecto. | `project_id` |
 | `company_profiles` | Perfil de empresa del cliente | `project_id` |
 | `snapshots` | Capturas longitudinales del estado | `project_id` |
 | `frictions` | Fricciones detectadas en T3 | `project_id` |
@@ -119,6 +119,7 @@ AI-Ready Repository System v2.1.0
 | `20260828001_seed_transformacion_digital_domain.sql` | ADR-029 Fase 5 — seed real del dominio `transformacion_digital` (fila en `governance_domains` + sus 6 `evaluation_dimensions`, D1-D6). Copiado de `docs/domains/transformacion-digital-seed.sql` (hasta ahora solo spec de referencia, nunca aplicado) — root cause de "T10 no funciona en dominio Transformación Digital": sin esta fila, `governance_domains` solo tenía `ai_adoption`, el selector de dominios (`domains.service.ts`) no podía ofrecer TD, y cualquier proyecto con `domain_id` apuntando a un dominio inexistente rompía el join en `listMyProjects()` → `useDomainSlug()` caía a `null`/fallback AI Adoption en todas las pantallas domain-aware. | ✅ DEV — ⏳ PRE + PRO pendiente |
 | `20260904_fix_application_texts_semantics.sql` | DEBT-050: añade columna `text_override` (el valor de override/personalización) a `application_texts`, migra datos de `text_generalizado` si existen, resetea `filename` para recarga posterior con valores file:line correctos. | ✅ DEV — ⏳ PRE + PRO pendiente |
 | `20260904_refactor_application_texts_data.sql` | Continuación de DEBT-050: limpia los datos incorrectos (`filename` con valores `module_key`) para preparar la tabla para seed data correcto extraído desde el código fuente (ej: `AdminView.tsx:154`). Script de generación: `scripts/generate-application-texts-seed.ts` (a ejecutar manualmente tras revisar el output JSON). | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260908004_project_members_roles_and_rls.sql` | **Épica 8 — Gestión de miembros del proyecto**: (1) Backfill `project_members.role` 'viewer' → 'client_viewer'; (2) Actualiza CHECK constraint a `('consultant','client_editor','client_viewer')`; (3) Reemplaza RLS policies con `user_can_read_project`/`user_can_edit_project` helpers (drop `is_project_member`/`can_write_project` policies, que quedan como funciones legacy); (4) Añade `profiles.person_id` (FK nullable a `company_persons`) para vincular cuentas a personas del directorio (usado por invite-user edge function en Épica 8). | ✅ DEV — ⏳ PRE + PRO pendiente |
 
 > Las migraciones de auditoría (`20260615_003`, `20260615_007`, `20260616_004`) marcadas ⏳ se aplican juntas via `supabase/releases/release-v2.2.0-pre-pro.sql` (único script idempotente).
 >
