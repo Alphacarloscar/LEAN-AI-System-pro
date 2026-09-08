@@ -39,8 +39,22 @@ vi.mock('react-router-dom', async (importOriginal) => {
 })
 
 import { AppSidebar } from '@/shared/components/AppSidebar'
+import { useEngagementStore } from '@/modules/Engagement/store'
 
 // ── Helper ────────────────────────────────────────────────────────────────────
+
+const TEST_PROJECT_ID = '123e4567-e89b-12d3-a456-426614174000'
+
+const testProject = {
+  id: TEST_PROJECT_ID,
+  name: 'Test Project',
+  company_id: 'test-company',
+  created_at: '2024-01-01T00:00:00Z',
+  objetivo_principal: 'Test objective',
+  horizonte_valor: 'Test horizon',
+  ecosistema_tecnologico: 'Test ecosystem',
+  areas_prioritarias: ['IT Department'],
+} as any
 
 function renderSidebar(initialPath = '/') {
   return render(
@@ -58,7 +72,16 @@ function renderSidebar(initialPath = '/') {
 // para cada ruta de la aplicación.
 
 describe('AppSidebar — aria-current="page" en ítem activo', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // Initialize store with test project data for each test
+    useEngagementStore.setState({
+      projects: [testProject],
+      activeEngagementId: TEST_PROJECT_ID,
+      activeProjectId: TEST_PROJECT_ID,
+      isLoading: false,
+    })
+  })
 
   it('ningún botón tiene aria-current="page" en la ruta raíz "/" (T10 = home)', () => {
     renderSidebar('/')
@@ -70,8 +93,8 @@ describe('AppSidebar — aria-current="page" en ítem activo', () => {
     expect(activeItems.length).toBeGreaterThanOrEqual(0)
   })
 
-  it('el botón T1 tiene aria-current="page" cuando la ruta es /t1', () => {
-    renderSidebar('/t1')
+  it('el botón T1 tiene aria-current="page" cuando la ruta es /t1/:projectId', () => {
+    renderSidebar(`/t1/${TEST_PROJECT_ID}`)
     const activeButtons = screen.queryAllByRole('button', { current: 'page' })
     expect(activeButtons.length).toBeGreaterThanOrEqual(1)
 
@@ -81,12 +104,12 @@ describe('AppSidebar — aria-current="page" en ítem activo', () => {
     )
     expect(
       t1ActiveBtn,
-      'El botón T1 debe tener aria-current="page" cuando pathname es /t1',
+      'El botón T1 debe tener aria-current="page" cuando pathname es /t1/:projectId',
     ).toBeDefined()
   })
 
-  it('el botón T5 tiene aria-current="page" cuando la ruta es /t5', () => {
-    renderSidebar('/t5')
+  it('el botón T5 tiene aria-current="page" cuando la ruta es /t5/:projectId', () => {
+    renderSidebar(`/t5/${TEST_PROJECT_ID}`)
     const activeButtons = screen.queryAllByRole('button', { current: 'page' })
     expect(activeButtons.length).toBeGreaterThanOrEqual(1)
 
@@ -95,12 +118,12 @@ describe('AppSidebar — aria-current="page" en ítem activo', () => {
     )
     expect(
       t5ActiveBtn,
-      'El botón T5 debe tener aria-current="page" cuando pathname es /t5',
+      'El botón T5 debe tener aria-current="page" cuando pathname es /t5/:projectId',
     ).toBeDefined()
   })
 
-  it('el botón T12 tiene aria-current="page" cuando la ruta es /t12', () => {
-    renderSidebar('/t12')
+  it('el botón T12 tiene aria-current="page" cuando la ruta es /t12/:projectId', () => {
+    renderSidebar(`/t12/${TEST_PROJECT_ID}`)
     const activeButtons = screen.queryAllByRole('button', { current: 'page' })
     expect(activeButtons.length).toBeGreaterThanOrEqual(1)
 
@@ -109,7 +132,7 @@ describe('AppSidebar — aria-current="page" en ítem activo', () => {
     )
     expect(
       t12ActiveBtn,
-      'El botón T12 debe tener aria-current="page" cuando pathname es /t12',
+      'El botón T12 debe tener aria-current="page" cuando pathname es /t12/:projectId',
     ).toBeDefined()
   })
 
@@ -128,7 +151,7 @@ describe('AppSidebar — aria-current="page" en ítem activo', () => {
   })
 
   it('solo un ítem es activo a la vez (unicidad de aria-current="page")', () => {
-    renderSidebar('/t4')
+    renderSidebar(`/t4/${TEST_PROJECT_ID}`)
     const activeButtons = screen.queryAllByRole('button', { current: 'page' })
     // Un único botón debe ser el activo — nunca múltiples ítems marcados simultáneamente
     expect(

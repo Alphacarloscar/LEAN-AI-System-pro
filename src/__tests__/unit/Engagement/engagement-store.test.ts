@@ -43,6 +43,7 @@ describe('useEngagementStore — reset', () => {
     useEngagementStore.setState({
       projects:           [makeProject('p-1')],
       activeEngagementId: 'p-1',
+      activeProjectId:    'p-1',
       isLoading:          false,
     })
   })
@@ -62,6 +63,7 @@ describe('useEngagementStore — selectEngagement', () => {
     useEngagementStore.setState({
       projects:           [makeProject('p-1'), makeProject('p-2')],
       activeEngagementId: 'p-1',
+      activeProjectId:    'p-1',
       isLoading:          false,
     })
   })
@@ -91,7 +93,7 @@ describe('useEngagementStore — selectEngagement', () => {
 describe('useEngagementStore — loadMyProjects', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    useEngagementStore.setState({ projects: [], activeEngagementId: null, isLoading: false })
+    useEngagementStore.setState({ projects: [], activeEngagementId: null, activeProjectId: null, isLoading: false })
   })
 
   it('carga proyectos y los guarda en el store', async () => {

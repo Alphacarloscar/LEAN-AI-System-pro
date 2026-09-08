@@ -1,15 +1,15 @@
 // ============================================================
-// Engagement Store
+// Project Store
 //
-// Gestiona el engagement activo en la sesión.
-// Un consultor puede tener múltiples engagements (multi-client).
+// Gestiona el proyecto activo en la sesión.
+// Un consultor puede tener múltiples proyectos (multi-client).
 // Este store trackea cuál está seleccionado ahora mismo.
 //
 // Flujo:
 //   1. Tras login → loadMyProjects()
 //   2. Si hay uno solo → auto-select
 //   3. Si hay varios → mostrar selector (Sprint 4 UI)
-//   4. selectEngagement(id) → el resto de stores cargan sus datos
+//   4. selectProject(id) → el resto de stores cargan sus datos
 // ============================================================
 
 import { create }                         from 'zustand'
@@ -20,16 +20,18 @@ import { resetAllEngagementStores } from '@/lib/resetEngagementStores'
 import { reportError }               from '@/lib/reportError'
 import type { ProjectRow }                from '@/types/database.types'
 
-interface EngagementStore {
+interface ProjectStore {
   projects: ProjectRow[]
-  activeEngagementId: string | null
+  activeProjectId: string | null
   isLoading:          boolean
+  // Backward compat (Phase 2 will migrate to activeProjectId)
+  activeEngagementId: string | null
 
-  // Carga los engagements del usuario logueado
+  // Carga los proyectos del usuario logueado
   loadMyProjects: () => Promise<void>
-  // Selecciona el engagement activo (y notifica a los stores T1-T6)
-  selectEngagement:   (id: string | null) => void
-  // Crea un nuevo engagement y lo selecciona
+  // Selecciona el proyecto activo (y notifica a los stores T1-T6)
+  selectProject:   (id: string | null) => void
+  // Crea un nuevo proyecto y lo selecciona
   // companyId: si se pasa (superadmin/consultant) se usa directamente;
   //            si no (client_editor), se infiere del perfil del usuario.
   createAndSelect: (
@@ -44,12 +46,15 @@ interface EngagementStore {
   ) => Promise<ProjectRow>
   // Limpia el estado al logout
   reset:              () => void
+  // Backward compat (Phase 2 will migrate to selectProject)
+  selectEngagement: (id: string | null) => void
 }
 
-export const useEngagementStore = create<EngagementStore>()(
+export const useProjectStore = create<ProjectStore>()(
   persist(
     (set, get) => ({
       projects:        [],
+      activeProjectId: null,
       activeEngagementId: null,
       isLoading:          false,
 
@@ -59,7 +64,7 @@ export const useEngagementStore = create<EngagementStore>()(
         const timeout = setTimeout(() => {
           const { isLoading } = get()
           if (isLoading) {
-            reportError('[EngagementStore] loadMyEngagements timeout', new Error('isLoading safety timeout exceeded'))
+            reportError('[ProjectStore] loadMyProjects timeout', new Error('isLoading safety timeout exceeded'))
             set({ isLoading: false })
           }
         }, 10_000)
@@ -69,40 +74,51 @@ export const useEngagementStore = create<EngagementStore>()(
           set({ projects, isLoading: false })
 
           // Auto-select si hay exactamente uno
-          const { activeEngagementId } = get()
-          if (!activeEngagementId && projects.length === 1) {
-            set({ activeEngagementId: projects[0].id })
+          const { activeProjectId } = get()
+          if (!activeProjectId && projects.length === 1) {
+            const id = projects[0].id
+            set({ activeProjectId: id, activeEngagementId: id })
           }
-          // Si el activeEngagementId guardado ya no existe → limpiar
+          // Si el activeProjectId guardado ya no existe → limpiar
           if (
-            activeEngagementId &&
-            !projects.find((p) => p.id === activeEngagementId)
+            activeProjectId &&
+            !projects.find((p) => p.id === activeProjectId)
           ) {
-            set({ activeEngagementId: projects[0]?.id ?? null })
+            const id = projects[0]?.id ?? null
+            set({ activeProjectId: id, activeEngagementId: id })
           }
         } catch (err) {
           clearTimeout(timeout)
-          reportError('[EngagementStore] loadMyProjects', err)
+          reportError('[ProjectStore] loadMyProjects', err)
           set({ isLoading: false })
         }
       },
 
-      selectEngagement: (id) => {
-        const { activeEngagementId } = get()
+      selectProject: (id) => {
+        const { activeProjectId, activeEngagementId } = get()
+        // Backward compat: check both activeProjectId and activeEngagementId for noop
+        const currentId = activeProjectId ?? activeEngagementId
 
         // NO-OP: si el proyecto seleccionado es el mismo que ya está activo,
         // no resetear ni disparar carga. Evita recargas innecesarias al
         // re-abrir el selector o al hacer click en el proyecto ya activo.
-        if (id === activeEngagementId) {
+        if (id === currentId) {
           return
         }
 
-        // Hard Reset: limpiar stores T1-T12 ANTES de cambiar activeEngagementId.
+        // Hard Reset: limpiar stores T1-T12 ANTES de cambiar activeProjectId.
         // Garantiza cero stale data entre proyectos.
         // La CARGA de los nuevos datos la gestiona exclusivamente ProjectRuntimeProvider,
-        // que observa el cambio de activeEngagementId vía useEffect([projectId]).
+        // que observa el cambio de activeProjectId vía useEffect([projectId]).
         resetAllEngagementStores()
-        set({ activeEngagementId: id })
+        set({ activeProjectId: id, activeEngagementId: id })
+      },
+
+      selectEngagement: (id) => {
+        // Backward compat wrapper — Phase 2 will remove this
+        // Delegates to selectProject, but selectProject checks activeProjectId
+        // For full backward compat, pass through the new method
+        get().selectProject(id)
       },
 
       createAndSelect: async (name, companyId, extra) => {
@@ -125,6 +141,7 @@ export const useEngagementStore = create<EngagementStore>()(
           }
           set((s) => ({
             projects:           [...s.projects, project],
+            activeProjectId: project.id,
             activeEngagementId: project.id,
             isLoading:          false,
           }))
@@ -135,13 +152,17 @@ export const useEngagementStore = create<EngagementStore>()(
         }
       },
 
-      reset: () => set({ projects: [], activeEngagementId: null, isLoading: false }),
+      reset: () => set({ projects: [], activeProjectId: null, activeEngagementId: null, isLoading: false }),
     }),
     {
-      name:       'lean-active-engagement',
+      name:       'lean-active-project',
       version:    1,
       // Solo persistir el ID activo, no la lista completa (puede quedar stale)
-      partialize: (s) => ({ activeEngagementId: s.activeEngagementId }),
+      partialize: (s) => ({ activeProjectId: s.activeProjectId }),
     }
   )
 )
+
+// Backward compat alias during refactor Phase 1 → Phase 2
+// Phase 2 will rename all imports from useEngagementStore → useProjectStore
+export const useEngagementStore = useProjectStore

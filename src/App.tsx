@@ -10,7 +10,7 @@
 import { useEffect }                                        from 'react'
 import { Spinner, ToastProvider }                           from '@shared/design-system/components'
 import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { useEngagementStore }                              from '@/modules/Engagement/store'
+import { useProjectStore }                              from '@/modules/Engagement/store'
 import { AppLayout }                            from '@/shared/layouts/AppLayout'
 import { LoginView, ResetPasswordView, UpdatePasswordView, useAuthStore } from '@/modules/Auth'
 import { AdminView }                              from '@/modules/Admin'
@@ -43,75 +43,75 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-// ── useEngagementSync — sincroniza el store con el param de la URL ──
-// Garantiza que el store global refleje siempre el engagement de la URL.
+// ── useProjectSync — sincroniza el store con el param de la URL ──
+// Garantiza que el store global refleje siempre el project de la URL.
 // Es un hook interno de App; no se exporta ni se reutiliza fuera de aquí.
-function useEngagementSync() {
-  const { engagementId }  = useParams<{ engagementId: string }>()
-  const selectEngagement  = useEngagementStore((s) => s.selectEngagement)
-  const storeId           = useEngagementStore((s) => s.activeEngagementId)
+function useProjectSync() {
+  const { projectId }  = useParams<{ projectId: string }>()
+  const selectProject  = useProjectStore((s) => s.selectProject)
+  const storeProjectId = useProjectStore((s) => s.activeProjectId)
 
   useEffect(() => {
-    if (engagementId && engagementId !== storeId) {
-      selectEngagement(engagementId)
+    if (projectId && projectId !== storeProjectId) {
+      selectProject(projectId)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [engagementId])
+  }, [projectId])
 }
 
 // ── Route wrappers — sin DemoContext, sin companyName prop ────
 // Cada RouteView sincroniza el store desde la URL y delega al View.
 
 function T1RouteView() {
-  useEngagementSync()
+  useProjectSync()
   const navigate = useNavigate()
   return <T1View onBack={() => navigate('/')} />
 }
 
 function T2RouteView() {
-  useEngagementSync()
+  useProjectSync()
   const navigate = useNavigate()
   return <T2View onBack={() => navigate('/')} />
 }
 
 function T3RouteView() {
-  useEngagementSync()
+  useProjectSync()
   const navigate = useNavigate()
   return <T3View onBack={() => navigate('/')} />
 }
 
 function T4RouteView() {
-  useEngagementSync()
+  useProjectSync()
   const navigate = useNavigate()
   return <T4View onBack={() => navigate('/')} />
 }
 
 function T5RouteView() {
-  useEngagementSync()
+  useProjectSync()
   const navigate = useNavigate()
   return <T5View onBack={() => navigate('/')} />
 }
 
 function T6RouteView() {
-  useEngagementSync()
+  useProjectSync()
   const navigate = useNavigate()
   return <T6View onBack={() => navigate('/')} />
 }
 
 function T7RouteView() {
-  useEngagementSync()
+  useProjectSync()
   const navigate = useNavigate()
   return <T7View onBack={() => navigate('/')} />
 }
 
 function T8RouteView() {
-  useEngagementSync()
+  useProjectSync()
   const navigate = useNavigate()
   return <T8View onBack={() => navigate('/')} />
 }
 
 function T9RouteView() {
-  useEngagementSync()
+  useProjectSync()
   const navigate = useNavigate()
   return <T9View onBack={() => navigate('/')} />
 }
@@ -122,13 +122,13 @@ function T10RouteView() {
 }
 
 function T11RouteView() {
-  useEngagementSync()
+  useProjectSync()
   const navigate = useNavigate()
   return <T11View onBack={() => navigate('/')} />
 }
 
 function T12RouteView() {
-  useEngagementSync()
+  useProjectSync()
   const navigate = useNavigate()
   return <T12View onBack={() => navigate('/')} />
 }
@@ -157,17 +157,17 @@ export default function App() {
       >
         <Route index                  element={<T10RouteView />} />
         <Route path="company-profile" element={<CompanyProfileView />} />
-        <Route path="t1/:engagementId"  element={<T1RouteView />} />
-        <Route path="t2/:engagementId"  element={<T2RouteView />} />
-        <Route path="t3/:engagementId"  element={<T3RouteView />} />
-        <Route path="t4/:engagementId"  element={<T4RouteView />} />
-        <Route path="t5/:engagementId"  element={<T5RouteView />} />
-        <Route path="t6/:engagementId"  element={<T6RouteView />} />
-        <Route path="t7/:engagementId"  element={<T7RouteView />} />
-        <Route path="t8/:engagementId"  element={<T8RouteView />} />
-        <Route path="t9/:engagementId"  element={<T9RouteView />} />
-        <Route path="t11/:engagementId" element={<T11RouteView />} />
-        <Route path="t12/:engagementId" element={<T12RouteView />} />
+        <Route path="t1/:projectId"  element={<T1RouteView />} />
+        <Route path="t2/:projectId"  element={<T2RouteView />} />
+        <Route path="t3/:projectId"  element={<T3RouteView />} />
+        <Route path="t4/:projectId"  element={<T4RouteView />} />
+        <Route path="t5/:projectId"  element={<T5RouteView />} />
+        <Route path="t6/:projectId"  element={<T6RouteView />} />
+        <Route path="t7/:projectId"  element={<T7RouteView />} />
+        <Route path="t8/:projectId"  element={<T8RouteView />} />
+        <Route path="t9/:projectId"  element={<T9RouteView />} />
+        <Route path="t11/:projectId" element={<T11RouteView />} />
+        <Route path="t12/:projectId" element={<T12RouteView />} />
         <Route path="admin"           element={<AdminView />} />
       </Route>
 
