@@ -13,7 +13,7 @@ import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-do
 import { useProjectStore }                              from '@/modules/Engagement/store'
 import { AppLayout }                            from '@/shared/layouts/AppLayout'
 import { LoginView, ResetPasswordView, UpdatePasswordView, useAuthStore } from '@/modules/Auth'
-import { AdminView, CompanyDetailView }          from '@/modules/Admin'
+import { AdminView, CompanyDetailView, ProjectDetailView } from '@/modules/Admin'
 import { T1View }                               from '@/modules/T1_MaturityRadar'
 import { T2View }                               from '@/modules/T2_StakeholderMatrix'
 import { T3View }                               from '@/modules/T3_ValueStreamMap'
@@ -177,6 +177,7 @@ export default function App() {
         {/* Admin */}
         <Route path={ADMIN_ROUTES.ROOT} element={<AdminView />} />
         <Route path="/admin/companies/:companyId" element={<CompanyDetailView />} />
+        <Route path="/admin/companies/:companyId/projects/:projectId" element={<ProjectDetailView />} />
       </Route>
 
       {/* Fallback — redirigir a /evaluation */}
