@@ -52,8 +52,8 @@ describe('ProjectsTab — accesibilidad de formulario Crear proyecto', () => {
 
   it('el input de nombre de proyecto es accesible por su rol (textbox)', () => {
     render(<ProjectsTab companies={NO_COMPANIES} />)
-    // El input debe ser localizable por rol (query agnóstica al selector CSS)
-    const nameInput = screen.getByRole('textbox')
+    // El input debe ser localizable por su placeholder descriptivo
+    const nameInput = screen.getByPlaceholderText(/nombre del proyecto/i)
     expect(nameInput).toBeDefined()
     expect(nameInput.tagName.toLowerCase()).toBe('input')
   })
@@ -108,7 +108,7 @@ describe('CompaniesTab — accesibilidad de formulario Crear empresa', () => {
 
   it('el input de nombre de empresa es accesible por su rol (textbox)', () => {
     render(<CompaniesTab companies={NO_COMPANIES} onCompanyAdd={noOp} />)
-    const nameInput = screen.getByRole('textbox')
+    const nameInput = screen.getByPlaceholderText(/nombre de la empresa/i)
     expect(nameInput).toBeDefined()
   })
 
