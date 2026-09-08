@@ -27,6 +27,7 @@ import { T10View }                              from '@/modules/T10_AIValueDashb
 import { T11View }                              from '@/modules/T11_OperatingRhythm'
 import { T12View }                              from '@/modules/T12_ISOAssessment'
 import { CompanyProfileView }                   from '@/modules/CompanyProfile'
+import { PUBLIC_ROUTES, EVALUATION_ROUTES, ADMIN_ROUTES, DEFAULT_REDIRECT } from '@/config/routes'
 
 // ── ProtectedRoute — redirige a /login si no autenticado ──────
 
@@ -47,8 +48,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 // Garantiza que el store global refleje siempre el project de la URL.
 // Es un hook interno de App; no se exporta ni se reutiliza fuera de aquí.
 function useProjectSync() {
-  const { projectId }  = useParams<{ projectId: string }>()
-  const selectProject  = useProjectStore((s) => s.selectProject)
+  const { projectId } = useParams<{ projectId: string }>()
+  const selectProject = useProjectStore((s) => s.selectProject)
   const storeProjectId = useProjectStore((s) => s.activeProjectId)
 
   useEffect(() => {
@@ -143,9 +144,9 @@ export default function App() {
     <ToastProvider>
     <Routes>
       {/* Rutas públicas — sin AppLayout */}
-      <Route path="login"            element={<LoginView />} />
-      <Route path="reset-password"   element={<ResetPasswordView />} />
-      <Route path="update-password"  element={<UpdatePasswordView />} />
+      <Route path={PUBLIC_ROUTES.LOGIN}           element={<LoginView />} />
+      <Route path={PUBLIC_ROUTES.RESET_PASSWORD}  element={<ResetPasswordView />} />
+      <Route path={PUBLIC_ROUTES.UPDATE_PASSWORD} element={<UpdatePasswordView />} />
 
       {/* Rutas protegidas — AppLayout persistente (header + sidebar) */}
       <Route
@@ -155,24 +156,30 @@ export default function App() {
           </ProtectedRoute>
         }
       >
-        <Route index                  element={<T10RouteView />} />
-        <Route path="company-profile" element={<CompanyProfileView />} />
-        <Route path="t1/:projectId"  element={<T1RouteView />} />
-        <Route path="t2/:projectId"  element={<T2RouteView />} />
-        <Route path="t3/:projectId"  element={<T3RouteView />} />
-        <Route path="t4/:projectId"  element={<T4RouteView />} />
-        <Route path="t5/:projectId"  element={<T5RouteView />} />
-        <Route path="t6/:projectId"  element={<T6RouteView />} />
-        <Route path="t7/:projectId"  element={<T7RouteView />} />
-        <Route path="t8/:projectId"  element={<T8RouteView />} />
-        <Route path="t9/:projectId"  element={<T9RouteView />} />
-        <Route path="t11/:projectId" element={<T11RouteView />} />
-        <Route path="t12/:projectId" element={<T12RouteView />} />
-        <Route path="admin"           element={<AdminView />} />
+        {/* Dashboard / Evaluación */}
+        <Route path={EVALUATION_ROUTES.ROOT}     element={<T10RouteView />} />
+        <Route path={EVALUATION_ROUTES.PROFILE}  element={<CompanyProfileView />} />
+
+        {/* Herramientas T1-T12 */}
+        <Route path="evaluation/projects/:projectId/t1"  element={<T1RouteView />} />
+        <Route path="evaluation/projects/:projectId/t2"  element={<T2RouteView />} />
+        <Route path="evaluation/projects/:projectId/t3"  element={<T3RouteView />} />
+        <Route path="evaluation/projects/:projectId/t4"  element={<T4RouteView />} />
+        <Route path="evaluation/projects/:projectId/t5"  element={<T5RouteView />} />
+        <Route path="evaluation/projects/:projectId/t6"  element={<T6RouteView />} />
+        <Route path="evaluation/projects/:projectId/t7"  element={<T7RouteView />} />
+        <Route path="evaluation/projects/:projectId/t8"  element={<T8RouteView />} />
+        <Route path="evaluation/projects/:projectId/t9"  element={<T9RouteView />} />
+        <Route path="evaluation/projects/:projectId/t10" element={<T10RouteView />} />
+        <Route path="evaluation/projects/:projectId/t11" element={<T11RouteView />} />
+        <Route path="evaluation/projects/:projectId/t12" element={<T12RouteView />} />
+
+        {/* Admin */}
+        <Route path={ADMIN_ROUTES.ROOT} element={<AdminView />} />
       </Route>
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Fallback — redirigir a /evaluation */}
+      <Route path="*" element={<Navigate to={DEFAULT_REDIRECT} replace />} />
     </Routes>
     </ToastProvider>
   )
