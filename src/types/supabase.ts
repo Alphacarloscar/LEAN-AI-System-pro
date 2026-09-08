@@ -146,27 +146,33 @@ export type Database = {
           contracted_packages: Database["public"]["Enums"]["package_id"][]
           created_at: string | null
           id: string
+          is_active: boolean
           name: string
           sector: string
           slug: string | null
+          updated_at: string
         }
         Insert: {
           company_size?: string
           contracted_packages?: Database["public"]["Enums"]["package_id"][]
           created_at?: string | null
           id?: string
+          is_active?: boolean
           name: string
           sector?: string
           slug?: string | null
+          updated_at?: string
         }
         Update: {
           company_size?: string
           contracted_packages?: Database["public"]["Enums"]["package_id"][]
           created_at?: string | null
           id?: string
+          is_active?: boolean
           name?: string
           sector?: string
           slug?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

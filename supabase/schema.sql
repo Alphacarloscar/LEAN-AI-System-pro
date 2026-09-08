@@ -1074,14 +1074,74 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- PASO 1: Crear tabla companies
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.companies (
-  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name       text NOT NULL,
-  slug       text UNIQUE,
-  created_at timestamptz DEFAULT now()
+  id                     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name                   text NOT NULL,
+  slug                   text UNIQUE,
+  is_active              boolean NOT NULL DEFAULT true,
+  contracted_packages    public.package_id[] NOT NULL DEFAULT ARRAY['boost_assessment','portfolio_management','legal_compliance']::public.package_id[],
+  sector                 text NOT NULL DEFAULT '',
+  company_size           text NOT NULL DEFAULT '',
+  created_at             timestamptz DEFAULT now(),
+  updated_at             timestamptz NOT NULL DEFAULT now()
 );
 
 ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
 
+COMMENT ON COLUMN public.companies.is_active IS
+  'Estado de la empresa. Si es false, los usuarios pierden acceso al siguiente request.';
+
+COMMENT ON COLUMN public.companies.updated_at IS
+  'Timestamp de la última actualización (admin edita empresa, cambia paquetes, activa/desactiva).';
+
+-- ── Trigger para actualizar updated_at automáticamente ───────
+CREATE OR REPLACE FUNCTION public.update_companies_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_update_companies_updated_at ON public.companies;
+
+CREATE TRIGGER trigger_update_companies_updated_at
+  BEFORE UPDATE ON public.companies
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_companies_updated_at();
+
+-- ── Índices para performance ──────────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_companies_is_active
+  ON public.companies (is_active)
+  WHERE is_active = true;
+
+CREATE INDEX IF NOT EXISTS idx_companies_updated_at
+  ON public.companies (updated_at DESC);
+
+-- ── RLS Policies: Solo superadmin accede ─────────────────────
+-- Permitir que superadmin vea todas las empresas
+CREATE POLICY IF NOT EXISTS "superadmin_select_all_companies"
+  ON public.companies
+  FOR SELECT
+  USING (public.is_platform_admin());
+
+-- Permitir que superadmin inserte empresas
+CREATE POLICY IF NOT EXISTS "superadmin_insert_companies"
+  ON public.companies
+  FOR INSERT
+  WITH CHECK (public.is_platform_admin());
+
+-- Permitir que superadmin actualice empresas
+CREATE POLICY IF NOT EXISTS "superadmin_update_companies"
+  ON public.companies
+  FOR UPDATE
+  USING (public.is_platform_admin())
+  WITH CHECK (public.is_platform_admin());
+
+-- Permitir que superadmin elimine empresas
+CREATE POLICY IF NOT EXISTS "superadmin_delete_companies"
+  ON public.companies
+  FOR DELETE
+  USING (public.is_platform_admin());
 
 -- ============================================================
 -- PASO 2: Tabla profiles (con company_id)

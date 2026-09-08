@@ -154,6 +154,124 @@ const _impl = {
     if (error) throw new Error(`[Companies] listCompanyProjects: ${error.message}`)
     return data ?? []
   },
+
+  // Epic 3: obtener una empresa por ID (para detail view)
+  async getCompanyById(companyId: string): Promise<CompanyRow> {
+    const { data, error } = await supabase
+      .from('companies')
+      .select('*')
+      .eq('id', companyId)
+      .single()
+
+    if (error || !data) throw new Error(`[Companies] getCompanyById: ${error?.message}`)
+    return data
+  },
+
+  // Epic 3: actualizar información de empresa (nombre, sector, tamaño, paquetes)
+  async updateCompanyInfo(
+    companyId: string,
+    params: {
+      name?: string
+      sector?: string
+      company_size?: string
+      contracted_packages?: string[]
+    },
+  ): Promise<CompanyRow> {
+    type UpdatePayload = {
+      name?: string
+      sector?: string
+      company_size?: string
+      contracted_packages?: string[]
+    }
+
+    const updates: UpdatePayload = {}
+    if (params.name !== undefined) updates.name = params.name
+    if (params.sector !== undefined) updates.sector = params.sector
+    if (params.company_size !== undefined) updates.company_size = params.company_size
+    if (params.contracted_packages !== undefined) {
+      updates.contracted_packages = params.contracted_packages
+    }
+
+    const { data, error } = await supabase
+      .from('companies')
+      .update(updates)
+      .eq('id', companyId)
+      .select()
+      .single()
+
+    if (error || !data) throw new Error(`[Companies] updateCompanyInfo: ${error?.message}`)
+    return data
+  },
+
+  // Epic 3: alternar estado activo/inactivo de empresa
+  async toggleCompanyActive(companyId: string, isActive: boolean): Promise<CompanyRow> {
+    const { data, error } = await supabase
+      .from('companies')
+      .update({ is_active: isActive })
+      .eq('id', companyId)
+      .select()
+      .single()
+
+    if (error || !data) throw new Error(`[Companies] toggleCompanyActive: ${error?.message}`)
+    return data
+  },
+
+  // Epic 3: obtener estadísticas de empresa (nº proyectos, usuarios)
+  async getCompanyStats(companyId: string): Promise<{
+    projectCount: number
+    userCount: number
+  }> {
+    const [projectRes, userRes] = await Promise.all([
+      supabase
+        .from('projects')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', companyId)
+        .eq('status', 'active'),
+      supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', companyId),
+    ])
+
+    const projectCount = projectRes.count ?? 0
+    const userCount = userRes.count ?? 0
+
+    return { projectCount, userCount }
+  },
+
+  // Epic 3: eliminar empresa con validaciones
+  // Bloquea si tiene proyectos o usuarios. Si está limpia, elimina en cascada.
+  async deleteCompany(companyId: string): Promise<void> {
+    // Verificar si tiene proyectos
+    const { count: projectCount, error: projError } = await supabase
+      .from('projects')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId)
+
+    if (projError) throw new Error(`[Companies] deleteCompany (check projects): ${projError.message}`)
+    if ((projectCount ?? 0) > 0) {
+      throw new Error(`No se puede eliminar: la empresa tiene ${projectCount} proyecto(s) activo(s)`)
+    }
+
+    // Verificar si tiene usuarios
+    const { count: userCount, error: userError } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId)
+
+    if (userError) throw new Error(`[Companies] deleteCompany (check users): ${userError.message}`)
+    if ((userCount ?? 0) > 0) {
+      throw new Error(`No se puede eliminar: la empresa tiene ${userCount} usuario(s) asignado(s)`)
+    }
+
+    // Si pasó las validaciones, eliminar
+    const { error: deleteError } = await supabase
+      .from('companies')
+      .delete()
+      .eq('id', companyId)
+
+    if (deleteError) throw new Error(`[Companies] deleteCompany: ${deleteError.message}`)
+  },
 }
 
 // ── Punto de exportación auditado ────────────────────────────
@@ -170,4 +288,9 @@ export const {
   deleteUser,
   updateCompanySettings,
   listCompanyProjects,
+  getCompanyById,
+  updateCompanyInfo,
+  toggleCompanyActive,
+  getCompanyStats,
+  deleteCompany,
 } = _service
