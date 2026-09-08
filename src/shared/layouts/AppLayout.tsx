@@ -26,6 +26,7 @@ import { AppSidebar }                             from '@/shared/components/AppS
 import { AlphaLogo }                              from '@/shared/components/AlphaLogo'
 import { CompanySelector }                        from '@/shared/components/CompanySelector'
 import { EngagementSelector }                     from '@/shared/components/EngagementSelector'
+import { UserMenu }                               from '@/shared/components/UserMenu'
 import { useDarkMode }                            from '@/shared/hooks/useDarkMode'
 import { useAuthStore }                           from '@/modules/Auth'
 import type { SessionRecoveryState }              from '@/modules/Auth/store'
@@ -75,35 +76,6 @@ function DarkModeToggle({ dark, onToggle }: { dark: boolean; onToggle: () => voi
   )
 }
 
-// ── Botón de logout ───────────────────────────────────────────
-function LogoutButton({ dark }: { dark: boolean }) {
-  const { logout, user } = useAuthStore()
-  const navigate         = useNavigate()
-
-  function handleLogout() {
-    logout()
-    navigate(PUBLIC_ROUTES.LOGIN, { replace: true })
-  }
-
-  return (
-    <button
-      onClick={handleLogout}
-      title={`Cerrar sesión${user ? ` (${user.name})` : ''}`}
-      className={[
-        'h-8 px-3 rounded-full flex items-center gap-1.5',
-        'text-[10px] font-mono uppercase tracking-wide transition-colors duration-200',
-        dark
-          ? 'text-white/60 hover:text-white/85 hover:bg-white/8'
-          : 'text-black/50 hover:text-black/75 hover:bg-black/6',
-      ].join(' ')}
-    >
-      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 14H3a1 1 0 01-1-1V3a1 1 0 011-1h3M10 11l3-3-3-3M13 8H6" />
-      </svg>
-      <span className="hidden sm:inline">{user?.name ?? 'Salir'}</span>
-    </button>
-  )
-}
 
 // ── Breadcrumb de contexto: GOBY · proyecto · empresa ─────────
 // Muestra la jerarquía de contexto activo en el header.
@@ -287,7 +259,7 @@ export function AppLayout() {
 
           {/* ── Derecha: controles de sesión ── */}
           <div className="flex items-center gap-3 shrink-0">
-            <LogoutButton dark={dark} />
+            <UserMenu dark={dark} />
             <DarkModeToggle dark={dark} onToggle={toggle} />
           </div>
 

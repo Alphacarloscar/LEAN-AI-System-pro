@@ -27,6 +27,7 @@ import { T10View }                              from '@/modules/T10_AIValueDashb
 import { T11View }                              from '@/modules/T11_OperatingRhythm'
 import { T12View }                              from '@/modules/T12_ISOAssessment'
 import { CompanyProfileView }                   from '@/modules/CompanyProfile'
+import { UserProfileView }                      from '@/modules/UserProfile'
 import { PUBLIC_ROUTES, EVALUATION_ROUTES, ADMIN_ROUTES, DEFAULT_REDIRECT } from '@/config/routes'
 
 // ── ProtectedRoute — redirige a /login si no autenticado ──────
@@ -158,7 +159,8 @@ export default function App() {
       >
         {/* Dashboard / Evaluación */}
         <Route path={EVALUATION_ROUTES.ROOT}     element={<T10RouteView />} />
-        <Route path={EVALUATION_ROUTES.PROFILE}  element={<CompanyProfileView />} />
+        <Route path={EVALUATION_ROUTES.PROFILE}  element={<UserProfileView />} />
+        <Route path="/company-profile"           element={<CompanyProfileView />} />
 
         {/* Herramientas T1-T12 */}
         <Route path="evaluation/projects/:projectId/t1"  element={<T1RouteView />} />

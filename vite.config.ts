@@ -18,6 +18,7 @@ function getGitCommit(): string {
 // https://vitejs.dev/config/
 export default defineConfig({
   define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(process.env.npm_package_version ?? '0.0.0'),
     __APP_VERSION__:  JSON.stringify(process.env.npm_package_version ?? '0.0.0'),
     __GIT_COMMIT__:   JSON.stringify(getGitCommit()),
     __BUILD_TIME__:   JSON.stringify(new Date().toISOString()),

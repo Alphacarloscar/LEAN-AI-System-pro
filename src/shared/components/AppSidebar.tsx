@@ -32,8 +32,9 @@ interface ToolNavItem {
 }
 
 // T10 (plataforma) y T4 (shared kernel) son siempre visibles
-const T10_TOOL: ToolNavItem = { code: 'T10', moduleCode: 'T10', label: 'Dashboard', path: '/' }
-const T4_TOOL:  ToolNavItem = { code: 'T4',  moduleCode: 'T4',  label: 'Use Case Priority Board', path: '/t4' }
+// Rutas dinámicas: se construyen en buildPath() con el engagementId
+const T10_TOOL: ToolNavItem = { code: 'T10', moduleCode: 'T10', label: 'Dashboard', path: '/evaluation' }
+const T4_TOOL:  ToolNavItem = { code: 'T4',  moduleCode: 'T4',  label: 'Use Case Priority Board', path: '/evaluation/projects' }
 
 // Paquetes con sus herramientas — orden de renderizado en sidebar
 export interface PackageGroup {
@@ -47,28 +48,28 @@ export const PACKAGE_GROUPS: PackageGroup[] = [
     packageId: 'boost_assessment',
     label:     'Boost Assessment',
     tools: [
-      { code: 'T1', moduleCode: 'T1', label: 'AI Readiness Assessment', path: '/t1' },
-      { code: 'T2', moduleCode: 'T2', label: 'Stakeholder Matrix',       path: '/t2' },
-      { code: 'T7', moduleCode: 'T7', label: 'Adoption Heatmap',         path: '/t7' },
+      { code: 'T1', moduleCode: 'T1', label: 'AI Readiness Assessment', path: '/evaluation/projects' },
+      { code: 'T2', moduleCode: 'T2', label: 'Stakeholder Matrix',       path: '/evaluation/projects' },
+      { code: 'T7', moduleCode: 'T7', label: 'Adoption Heatmap',         path: '/evaluation/projects' },
     ],
   },
   {
     packageId: 'portfolio_management',
     label:     'Portfolio Management',
     tools: [
-      { code: 'T3',  moduleCode: 'T3',  label: 'Value Stream Map',   path: '/t3'  },
-      { code: 'T5',  moduleCode: 'T5',  label: 'AI Taxonomy Canvas', path: '/t5'  },
-      { code: 'T8',  moduleCode: 'T8',  label: 'Communication Map',  path: '/t8'  },
-      { code: 'T9',  moduleCode: 'T9',  label: 'AI Roadmap',         path: '/t9'  },
-      { code: 'T11', moduleCode: 'T11', label: 'Operating Rhythm',   path: '/t11' },
+      { code: 'T3',  moduleCode: 'T3',  label: 'Value Stream Map',   path: '/evaluation/projects' },
+      { code: 'T5',  moduleCode: 'T5',  label: 'AI Taxonomy Canvas', path: '/evaluation/projects' },
+      { code: 'T8',  moduleCode: 'T8',  label: 'Communication Map',  path: '/evaluation/projects' },
+      { code: 'T9',  moduleCode: 'T9',  label: 'AI Roadmap',         path: '/evaluation/projects' },
+      { code: 'T11', moduleCode: 'T11', label: 'Operating Rhythm',   path: '/evaluation/projects' },
     ],
   },
   {
     packageId: 'legal_compliance',
     label:     'Legal & Compliance',
     tools: [
-      { code: 'T6',  moduleCode: 'T6',  label: 'Risk & Governance',   path: '/t6'  },
-      { code: 'T12', moduleCode: 'T12', label: 'ISO 42001 Assessment', path: '/t12' },
+      { code: 'T6',  moduleCode: 'T6',  label: 'Risk & Governance',   path: '/evaluation/projects' },
+      { code: 'T12', moduleCode: 'T12', label: 'ISO 42001 Assessment', path: '/evaluation/projects' },
     ],
   },
 ]
@@ -158,11 +159,19 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
     !(ap.areas_prioritarias?.length) && 'Departamentos implicados',
   ].filter(Boolean) as string[] : []
 
-  // Helper: añade engagementId a una ruta (T10 '/' no lleva id)
+  // Helper: construye la ruta final con el engagementId y el código de herramienta
+  // T10: /evaluation (sin engagementId)
+  // T4-T12: /evaluation/projects/{engagementId}/t{N}
   function buildPath(tool: ToolNavItem) {
-    return tool.path !== '/' && engagementId
-      ? `${tool.path}/${engagementId}`
-      : tool.path
+    if (tool.code === 'T10') {
+      return '/evaluation'
+    }
+    if (!engagementId) {
+      return tool.path
+    }
+    // Construir: /evaluation/projects/{engagementId}/t{N}
+    const toolCode = tool.code.toLowerCase()
+    return `/evaluation/projects/${engagementId}/${toolCode}`
   }
 
   // Paquetes contratados del proyecto activo
