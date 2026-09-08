@@ -410,7 +410,7 @@ export type Database = {
           owner_id: string
           start_date: string | null
           status: string
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
           company_id?: string | null
@@ -424,7 +424,7 @@ export type Database = {
           owner_id: string
           start_date?: string | null
           status?: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
           company_id?: string | null
@@ -438,7 +438,7 @@ export type Database = {
           owner_id?: string
           start_date?: string | null
           status?: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {

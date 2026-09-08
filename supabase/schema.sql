@@ -1169,21 +1169,29 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS company_id uuid REFERENCES 
 -- PASO 3: Tabla projects (antes engagements)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.projects (
-  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name          text NOT NULL,
-  owner_id      uuid REFERENCES public.profiles(id) NOT NULL,
-  company_id    uuid REFERENCES public.companies(id),
-  status        text NOT NULL DEFAULT 'active'
-                CHECK (status IN ('active', 'archived')),
-  current_phase text NOT NULL DEFAULT 'listen'
-                CHECK (current_phase IN ('listen', 'evaluate', 'activate', 'normalize', 'closed')),
-  start_date    date,
-  end_date      date,
-  created_at    timestamptz DEFAULT now(),
-  updated_at    timestamptz DEFAULT now()
+  id                     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name                   text NOT NULL,
+  owner_id               uuid REFERENCES public.profiles(id) NOT NULL,
+  company_id             uuid REFERENCES public.companies(id),
+  status                 text NOT NULL DEFAULT 'active'
+                         CHECK (status IN ('active', 'paused', 'archived', 'completed')),
+  current_phase          text NOT NULL DEFAULT 'listen'
+                         CHECK (current_phase IN ('listen', 'evaluate', 'activate', 'normalize', 'closed')),
+  start_date             date,
+  end_date               date,
+  contracted_packages    package_id[] NOT NULL DEFAULT '{}',
+  created_at             timestamptz DEFAULT now(),
+  updated_at             timestamptz DEFAULT now()
 );
 
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
+
+-- Índices para performance
+CREATE INDEX IF NOT EXISTS idx_projects_status
+  ON public.projects (status);
+
+CREATE INDEX IF NOT EXISTS idx_projects_company_status
+  ON public.projects (company_id, status);
 -- Add company_id when projects was renamed from engagements (which lacked it)
 ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS company_id uuid REFERENCES public.companies(id);
 

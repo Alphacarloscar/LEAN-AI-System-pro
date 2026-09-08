@@ -234,6 +234,121 @@ const _impl = {
 
     if (error) throw new Error(`[Projects] deleteProject RPC error: ${error.message}`)
   },
+
+  // ── Epic 4: Funciones de admin para gestión de proyectos ──────
+
+  // Epic 4: cambiar estado de proyecto con validaciones de rol
+  // Estados: active, paused, archived, completed
+  async updateProjectStatus(projectId: string, newStatus: 'active' | 'paused' | 'archived' | 'completed'): Promise<ProjectRow> {
+    const validStatuses = ['active', 'paused', 'archived', 'completed']
+    if (!validStatuses.includes(newStatus)) {
+      throw new Error(`[Projects] updateProjectStatus: Invalid status '${newStatus}'`)
+    }
+
+    const { data, error } = await supabase
+      .from('projects')
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq('id', projectId)
+      .select()
+      .single()
+
+    if (error || !data) throw new Error(`[Projects] updateProjectStatus: ${error?.message}`)
+    return data as ProjectRow
+  },
+
+  // Epic 4: obtener estadísticas de proyecto (nº miembros, etc)
+  async getProjectStats(projectId: string): Promise<{ memberCount: number }> {
+    const { count, error } = await supabase
+      .from('project_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('project_id', projectId)
+
+    if (error) throw new Error(`[Projects] getProjectStats: ${error.message}`)
+    return { memberCount: count ?? 0 }
+  },
+
+  // Epic 4: eliminar miembro de proyecto
+  async removeProjectMember(projectId: string, userId: string): Promise<void> {
+    const { error } = await supabase
+      .from('project_members')
+      .delete()
+      .eq('project_id', projectId)
+      .eq('user_id', userId)
+
+    if (error) throw new Error(`[Projects] removeProjectMember: ${error.message}`)
+  },
+
+  // Epic 4: actualizar rol de miembro en proyecto
+  async updateProjectMemberRole(projectId: string, userId: string, role: MemberRole): Promise<void> {
+    const { error } = await supabase
+      .from('project_members')
+      .update({ role })
+      .eq('project_id', projectId)
+      .eq('user_id', userId)
+
+    if (error) throw new Error(`[Projects] updateProjectMemberRole: ${error.message}`)
+  },
+
+  // Epic 4: actualizar info de proyecto (nombre, etc)
+  async updateProjectInfo(projectId: string, params: {
+    name?: string
+    contractedPackages?: string[]
+  }): Promise<ProjectRow> {
+    type UpdatePayload = {
+      name?: string
+      contracted_packages?: string[]
+    }
+
+    const updates: UpdatePayload = {}
+    if (params.name !== undefined) updates.name = params.name
+    if (params.contractedPackages !== undefined) updates.contracted_packages = params.contractedPackages
+
+    const { data, error } = await supabase
+      .from('projects')
+      .update(updates)
+      .eq('id', projectId)
+      .select()
+      .single()
+
+    if (error || !data) throw new Error(`[Projects] updateProjectInfo: ${error?.message}`)
+    return data as ProjectRow
+  },
+
+  // Epic 4: listar todos los proyectos de una empresa (incluyendo archivados) para admin
+  async listAllProjectsByCompany(companyId: string): Promise<ProjectRow[]> {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw new Error(`[Projects] listAllProjectsByCompany: ${error.message}`)
+    return (data ?? []) as ProjectRow[]
+  },
+
+  // Epic 4: obtener miembros de proyecto con detalles de perfil
+  async getProjectMembers(projectId: string): Promise<Array<{
+    user_id: string
+    role: string
+    added_at: string | null
+    profile: { id: string; email: string; name: string; role: string } | null
+  }>> {
+    const { data, error } = await supabase
+      .from('project_members')
+      .select('user_id, role, added_at, profiles(id, email, name, role)')
+      .eq('project_id', projectId)
+      .order('added_at', { ascending: false })
+
+    if (error) throw new Error(`[Projects] getProjectMembers: ${error.message}`)
+
+    // Remap 'profiles' to 'profile' for consistency
+    return ((data ?? []) as any[]).map((member) => ({
+      user_id: member.user_id,
+      role: member.role,
+      added_at: member.added_at,
+      profile: member.profiles,
+    }))
+  },
 }
 
 // ── Punto de exportación auditado ────────────────────────────
@@ -255,6 +370,13 @@ export const {
   getProjectById,
   updateProject,
   deleteProject,
+  updateProjectStatus,
+  getProjectStats,
+  removeProjectMember,
+  updateProjectMemberRole,
+  updateProjectInfo,
+  listAllProjectsByCompany,
+  getProjectMembers,
 } = _service
 
 // ── Alias de compatibilidad (deprecados) ────────────────────
