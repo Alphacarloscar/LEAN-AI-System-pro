@@ -17,6 +17,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate }         from 'react-router-dom'
 import { getAuthSession, subscribeToAuthChanges, updateAuthUser } from '@services/auth.service'
 import { useAuthStore }        from './store'
+import { PUBLIC_ROUTES }       from '@/config/routes'
 import { Spinner }             from '@shared/design-system/components'
 
 // ── Logo GOBY inline ──────────────────────────────────────────
@@ -139,7 +140,7 @@ export function ResetPasswordView() {
           El enlace de recuperación ha caducado. Solicita uno nuevo desde la pantalla de acceso.
         </p>
         <button
-          onClick={() => navigate('/login', { replace: true })}
+          onClick={() => navigate(PUBLIC_ROUTES.LOGIN, { replace: true })}
           className="w-full h-10 rounded-lg bg-gold text-white text-sm font-medium hover:opacity-90 transition-colors"
         >
           Volver al acceso

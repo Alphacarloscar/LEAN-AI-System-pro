@@ -15,6 +15,7 @@
 
 import { useState, useMemo, useEffect, useRef }  from 'react'
 import { useNavigate, useParams }               from 'react-router-dom'
+import { EVALUATION_ROUTES }             from '@/config/routes'
 import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
 import { useT4Store }                   from '@/modules/T4_UseCasePriorityBoard/store'
 import { PhaseMiniMap }                 from '@/shared/components/PhaseMiniMap'
@@ -257,7 +258,7 @@ export function T8View({ onBack }: T8ViewProps) {
           }
           title="Sin stakeholders registrados"
           description="Completa T2 — AI Stakeholder Matrix para mapear al equipo antes de construir el plan de comunicación."
-          action={<Button variant="ghost" size="sm" onClick={() => navigate(engagementId ? `/t2/${engagementId}` : '/t2')}>Ir a T2</Button>}
+          action={<Button variant="ghost" size="sm" onClick={() => navigate(engagementId ? EVALUATION_ROUTES.T2(engagementId) : EVALUATION_ROUTES.ROOT)}>Ir a T2</Button>}
           className="py-12"
         />
       ) : (

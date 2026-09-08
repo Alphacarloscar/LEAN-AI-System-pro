@@ -17,6 +17,7 @@
 import { useState, useMemo, useEffect }   from 'react'
 import { useNavigate, useParams }         from 'react-router-dom'
 import { Button, Card, ToolHeader, EmptyState } from '@shared/design-system/components'
+import { EVALUATION_ROUTES }              from '@/config/routes'
 import { useT4Store }                     from '@/modules/T4_UseCasePriorityBoard/store'
 import { useT9Store }                     from './store'
 import { useCompanyProfileStore }         from '@/modules/CompanyProfile/store'
@@ -295,7 +296,7 @@ export function T9View({ onBack }: T9ViewProps) {
               }
               title="Roadmap vacío"
               description="Aprueba casos de uso en T4 o añade iniciativas libres para construir el roadmap de 6 meses."
-              action={<Button variant="ghost" size="sm" onClick={() => navigate(engagementId ? `/t4/${engagementId}` : '/t4')}>Ir a T4</Button>}
+              action={<Button variant="ghost" size="sm" onClick={() => navigate(engagementId ? EVALUATION_ROUTES.T4(engagementId) : EVALUATION_ROUTES.ROOT)}>Ir a T4</Button>}
               className="py-10"
             />
           )

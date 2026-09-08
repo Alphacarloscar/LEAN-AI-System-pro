@@ -34,6 +34,7 @@ import { DebugPanel }                             from '@/shared/components/Debu
 import { getProjectWithCompany }                  from '@/services/projects.service'
 import { ProjectRuntimeProvider }                 from '@/shared/providers/ProjectRuntimeProvider'
 import { useNavigate }                            from 'react-router-dom'
+import { PUBLIC_ROUTES }                          from '@/config/routes'
 
 // ── Dark mode toggle ──────────────────────────────────────────
 function DarkModeToggle({ dark, onToggle }: { dark: boolean; onToggle: () => void }) {
@@ -80,7 +81,7 @@ function LogoutButton({ dark }: { dark: boolean }) {
 
   function handleLogout() {
     logout()
-    navigate('/login', { replace: true })
+    navigate(PUBLIC_ROUTES.LOGIN, { replace: true })
   }
 
   return (
@@ -244,7 +245,7 @@ export function AppLayout() {
 
   function handleReLogin() {
     clearSessionExpired()
-    navigate('/login', { replace: true })
+    navigate(PUBLIC_ROUTES.LOGIN, { replace: true })
   }
 
   return (

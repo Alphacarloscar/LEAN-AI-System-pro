@@ -13,6 +13,7 @@
 
 import { useState, useMemo, useEffect }  from 'react'
 import { useNavigate, useParams }        from 'react-router-dom'
+import { EVALUATION_ROUTES }             from '@/config/routes'
 import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
 import { useT4Store }                    from '@/modules/T4_UseCasePriorityBoard'
 import { useT1Store }                    from '@/modules/T1_MaturityRadar/store'
@@ -222,7 +223,7 @@ export function T7View({ onBack }: T7ViewProps) {
           }
           title="Sin stakeholders registrados"
           description="Completa T2 — AI Stakeholder Matrix para mapear al equipo antes de analizar la adopción."
-          action={<Button variant="ghost" size="sm" onClick={() => navigate(engagementId ? `/t2/${engagementId}` : '/t2')}>Ir a T2</Button>}
+          action={<Button variant="ghost" size="sm" onClick={() => navigate(engagementId ? EVALUATION_ROUTES.T2(engagementId) : EVALUATION_ROUTES.ROOT)}>Ir a T2</Button>}
           className="py-12"
         />
       ) : (
