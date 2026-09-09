@@ -12,10 +12,11 @@ import {
   deleteProject,
 } from '@/services/projects.service'
 import { listCompanyUsers } from '@/services/companies.service'
+import { AuditTab } from './AuditTab'
 import type { ProjectRow, UserRole } from '@/types/database.types'
 import { Breadcrumb } from './Breadcrumb'
 
-type Tab = 'info' | 'packages' | 'members' | 'users'
+type Tab = 'info' | 'packages' | 'members' | 'users' | 'audit'
 
 interface ProjectMember {
   user_id: string
@@ -280,6 +281,7 @@ export function ProjectDetailView() {
           { id: 'packages' as const, label: 'Paquetes' },
           { id: 'members' as const, label: `Miembros (${members.length})` },
           { id: 'users' as const, label: `Usuarios (${companyUsers.length})` },
+          { id: 'audit' as const, label: 'Auditoría' },
         ].map((t) => (
           <button
             key={t.id}
@@ -396,6 +398,11 @@ export function ProjectDetailView() {
               ))
             )}
           </div>
+        )}
+
+        {/* Tab: Auditoría */}
+        {tab === 'audit' && projectId && companyId && (
+          <AuditTab projectId={projectId} companyId={companyId} />
         )}
       </div>
 

@@ -11,10 +11,11 @@ import {
   listCompanyProjects,
   listCompanyUsers,
 } from '@/services/companies.service'
+import { AuditTab } from './AuditTab'
 import type { CompanyRow, UserRole } from '@/types/database.types'
 import { Breadcrumb } from './Breadcrumb'
 
-type Tab = 'info' | 'packages' | 'projects' | 'users'
+type Tab = 'info' | 'packages' | 'projects' | 'users' | 'audit'
 
 interface CompanyStats {
   projectCount: number
@@ -306,6 +307,7 @@ export function CompanyDetailView() {
           { id: 'packages' as const, label: 'Paquetes' },
           { id: 'projects' as const, label: `Proyectos (${projects.length})` },
           { id: 'users' as const, label: `Usuarios (${users.length})` },
+          { id: 'audit' as const, label: 'Auditoría' },
         ].map((t) => (
           <button
             key={t.id}
@@ -546,6 +548,11 @@ export function CompanyDetailView() {
               ))
             )}
           </div>
+        )}
+
+        {/* Tab: Auditoría */}
+        {tab === 'audit' && companyId && (
+          <AuditTab companyId={companyId} />
         )}
       </div>
 
