@@ -14,6 +14,7 @@
 
 import { create }        from 'zustand'
 import { reportError }   from '@/lib/reportError'
+import { fireBusinessAuditEvent } from '@/lib/audit'
 import {
   fetchProfile,
   getAuthSession,
@@ -78,7 +79,7 @@ const loadProfile = fetchProfile
 
 // ── Store ──────────────────────────────────────────────────────
 
-export const useAuthStore = create<AuthStore>()((set) => ({
+export const useAuthStore = create<AuthStore>()((set, get) => ({
   isAuthenticated:      false,
   isInitializing:       true,
   needsPasswordUpdate:  false,
@@ -288,6 +289,15 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       }
 
       set({ isAuthenticated: true, user: profile, error: null })
+
+      // Épica 9 — Evento de auditoría de negocio: login exitoso
+      fireBusinessAuditEvent({
+        event_type: 'user.login',
+        entity_type: 'user',
+        entity_id: data.user.id,
+        payload: { email: email.toLowerCase().trim() },
+      })
+
       return true
     } catch (err) {
       reportError('[AuthStore] login', err)
@@ -301,6 +311,18 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     // Marcar que es un sign-out intencional para que el handler de SIGNED_OUT
     // no active el overlay de sesión expirada.
     _intentionalSignOut = true
+
+    // Épica 9 — Evento de auditoría de negocio: logout
+    const state = get()
+    if (state.user) {
+      fireBusinessAuditEvent({
+        event_type: 'user.logout',
+        entity_type: 'user',
+        entity_id: state.user.id,
+        payload: { email: state.user.email },
+      })
+    }
+
     await authSignOut()
     // La limpieza de stores la hace el handler SIGNED_OUT en onAuthStateChange.
     // Solo reseteamos el error y auth state aquí como fallback.

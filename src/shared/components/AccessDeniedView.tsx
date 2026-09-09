@@ -5,12 +5,28 @@
 // (e.g., not a member of a project).
 // ============================================================
 
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/shared/design-system/components'
+import { fireBusinessAuditEvent } from '@/lib/audit'
+import { useAuthStore } from '@/modules/Auth'
 
 export function AccessDeniedView({ returnPath = '/evaluation' }: { returnPath?: string }) {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
+
+  // Épica 9 — Evento de auditoría: intento de acceso denegado
+  useEffect(() => {
+    if (user) {
+      fireBusinessAuditEvent({
+        event_type: 'access.denied',
+        entity_type: 'resource',
+        entity_id: returnPath,
+        payload: { path: returnPath },
+      })
+    }
+  }, [returnPath, user])
 
   return (
     <div className="flex h-screen w-full items-center justify-center bg-warm-50 px-4">
