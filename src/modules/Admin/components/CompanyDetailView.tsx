@@ -195,7 +195,7 @@ export function CompanyDetailView() {
     return (
       <div className="max-w-5xl mx-auto px-6 py-8">
         <button
-          onClick={() => navigate('/admin/companies')}
+          onClick={() => navigate('/admin')}
           className="flex items-center gap-2 text-warm-700 hover:text-warm-900 mb-6"
         >
           <ChevronLeft size={16} />
@@ -214,7 +214,7 @@ export function CompanyDetailView() {
       {/* Breadcrumb y botón atrás */}
       <div className="flex items-center justify-between mb-6">
         <button
-          onClick={() => navigate('/admin/companies')}
+          onClick={() => navigate('/admin')}
           className="flex items-center gap-2 text-warm-700 hover:text-warm-900"
         >
           <ChevronLeft size={16} />

@@ -13,7 +13,7 @@ import { useEffect, useRef, useState }           from 'react'
 import { useNavigate }                           from 'react-router-dom'
 import { useAuthStore }                          from '@/modules/Auth'
 import { PUBLIC_ROUTES }                         from '@/config/routes'
-import { supabase }                              from '@/lib/supabase'
+import { getDbVersion }                          from '@/services/schemaMetadata.service'
 
 interface UserMenuProps {
   dark: boolean
@@ -26,28 +26,12 @@ export function UserMenu({ dark }: UserMenuProps) {
   const [dbVersion, setDbVersion] = useState<string>('—')
   const menuRef = useRef<HTMLDivElement>(null)
 
-  // Cargar DB_VERSION desde schema_metadata (tabla creada vía migración)
+  // Cargar DB_VERSION desde schema_metadata via el servicio centralizado
   // Si la tabla no existe o hay error, mostrar '—' como fallback
   useEffect(() => {
     async function loadDbVersion() {
-      try {
-        const { data, error } = await (supabase as any)
-          .from('schema_metadata')
-          .select('value')
-          .eq('key', 'db_version')
-          .single()
-
-        if (error) {
-          console.debug('[UserMenu] schema_metadata table not yet available')
-          setDbVersion('—')
-          return
-        }
-        setDbVersion(data?.value ?? '—')
-      } catch (err) {
-        // Tabla no existe aún (migración pendiente)
-        console.debug('[UserMenu] loadDbVersion — table pending')
-        setDbVersion('—')
-      }
+      const version = await getDbVersion()
+      setDbVersion(version ?? '—')
     }
     loadDbVersion()
   }, [])

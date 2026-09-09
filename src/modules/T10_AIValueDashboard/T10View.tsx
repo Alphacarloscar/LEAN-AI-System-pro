@@ -12,6 +12,7 @@ import { useT4Store }                    from '@/modules/T4_UseCasePriorityBoard
 import { useT2Store }                    from '@/modules/T2_StakeholderMatrix/store'
 import { useCompanyProfileStore }        from '@/modules/CompanyProfile/store'
 import { useEngagementStore }            from '@/modules/Engagement/store'
+import { EVALUATION_ROUTES }             from '@/config/routes'
 import { RecommendationPanel }           from '@/components/RecommendationPanel'
 import { buildT10RecommendationContext } from './t10ContextBuilder'
 import { useT1Store }                    from '@/modules/T1_MaturityRadar/store'
@@ -236,12 +237,23 @@ export function T10View({ onNavigate }: T10ViewProps) {
   function toggle(id: PanelId) { setExpanded(prev => prev === id ? null : id) }
 
   // Enriquece los paths /tN con el engagementId para que los panels
-  // generen URLs completas y compartibles. Rutas no-tool (p.ej. '/') pasan sin cambio.
+  // generen URLs completas y compartibles. Rutas no-tool pasan sin cambio.
   function navigateWithId(path: string) {
-    const enriched = engagementId && /^\/t\d+$/.test(path)
-      ? `${path}/${engagementId}`
-      : path
-    onNavigate(enriched)
+    if (!engagementId) {
+      onNavigate(path)
+      return
+    }
+    const toolMatch = path.match(/^\/t(\d+)$/)
+    if (toolMatch) {
+      const toolNum = parseInt(toolMatch[1], 10)
+      const toolKey = `T${toolNum}` as keyof typeof EVALUATION_ROUTES
+      if (toolKey in EVALUATION_ROUTES && typeof EVALUATION_ROUTES[toolKey] === 'function') {
+        const enriched = (EVALUATION_ROUTES[toolKey] as (id: string) => string)(engagementId)
+        onNavigate(enriched)
+        return
+      }
+    }
+    onNavigate(path)
   }
 
   // ── Guards ───────────────────────────────────────────────────

@@ -86,9 +86,12 @@ function DarkModeToggle({ dark, onToggle }: { dark: boolean; onToggle: () => voi
 function ContextBreadcrumb({ dark }: { dark: boolean }) {
   const { activeEngagementId } = useEngagementStore()
   const [companyName, setCompanyName] = useState<string | null>(null)
+  const prevIdRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!activeEngagementId) { setCompanyName(null); return }
+    if (!activeEngagementId) { setCompanyName(null); prevIdRef.current = null; return }
+    if (prevIdRef.current === activeEngagementId) return
+    prevIdRef.current = activeEngagementId
     getProjectWithCompany(activeEngagementId)
       .then((d) => setCompanyName(d.company_name || null))
       .catch(() => setCompanyName(null))
