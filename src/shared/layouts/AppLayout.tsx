@@ -188,9 +188,15 @@ function SessionRecoveryBanner({ state, onReLogin }: {
 export function AppLayout() {
   const { dark, toggle }                        = useDarkMode()
   const { user, sessionRecoveryState, clearSessionExpired } = useAuthStore()
-  const { loadMyProjects }                      = useEngagementStore()
+  const { loadMyProjects, activeEngagementId }  = useEngagementStore()
   const navigate                                = useNavigate()
   const location                                = useLocation()
+
+  // Contexto admin: mostrar botón de regreso a herramientas
+  const isAdminZone = location.pathname.startsWith('/admin')
+  const evaluationTarget = activeEngagementId
+    ? `/evaluation/projects/${activeEngagementId}/t1`
+    : '/evaluation'
 
   // Epic 10: Validar que la sesión sigue siendo válida
   // Si empresa/proyecto no están activos, cerrar sesión automáticamente
@@ -265,8 +271,24 @@ export function AppLayout() {
             <ContextBreadcrumb dark={dark} />
           </div>
 
-          {/* ── Derecha: controles de sesión ── */}
+          {/* ── Derecha: botón de regreso a herramientas + controles de sesión ── */}
           <div className="flex items-center gap-3 shrink-0">
+            {isAdminZone && (
+              <button
+                onClick={() => navigate(evaluationTarget)}
+                className="hidden sm:flex items-center gap-1.5 px-3 h-7 rounded-full
+                           border border-gold/30 bg-gold/5 hover:bg-gold/10
+                           text-xs font-medium text-gold dark:text-gold-hover
+                           transition-colors duration-150 shrink-0"
+              >
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none"
+                     stroke="currentColor" strokeWidth="1.8"
+                     strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 2L4 6l4 4" />
+                </svg>
+                Herramientas
+              </button>
+            )}
             <UserMenu dark={dark} />
             <DarkModeToggle dark={dark} onToggle={toggle} />
           </div>
