@@ -37,6 +37,7 @@ import { getProjectWithCompany }                  from '@/services/projects.serv
 import { ProjectRuntimeProvider }                 from '@/shared/providers/ProjectRuntimeProvider'
 import { useNavigate }                            from 'react-router-dom'
 import { PUBLIC_ROUTES }                          from '@/config/routes'
+import { useSessionGuard }                        from '@/hooks/useSessionGuard'
 
 // ── Dark mode toggle ──────────────────────────────────────────
 function DarkModeToggle({ dark, onToggle }: { dark: boolean; onToggle: () => void }) {
@@ -187,6 +188,10 @@ export function AppLayout() {
   const { loadMyProjects }                      = useEngagementStore()
   const navigate                                = useNavigate()
   const location                                = useLocation()
+
+  // Epic 10: Validar que la sesión sigue siendo válida
+  // Si empresa/proyecto no están activos, cerrar sesión automáticamente
+  useSessionGuard()
 
   // Cargar engagements del usuario en cuanto esté autenticado
   useEffect(() => {
