@@ -20,6 +20,8 @@
 
 import { fireAuditLog, fireAuditLogAwaitable }    from './auditClient'
 import { reportError }                            from '@/lib/reportError'
+import { maskEmail, maskName, maskPhone, maskIp } from './maskPII'
+import { getIntensiveMode }                        from '@/services/schemaMetadata.service'
 import type { AuditLogInsert, AuditAIMetadata } from './types'
 import type { Json }            from '@/types'
 
@@ -43,20 +45,45 @@ function extractResourceId(args: unknown[]): string | null {
 /**
  * Redacta campos sensibles recursivamente para que no lleguen a la BD de logs.
  * Se aplica ANTES de serializar, no después.
+ *
+ * Dos niveles de enmascaramiento:
+ *   1. REDACTED_KEYS: campos que se reemplazan por [REDACTED] (passwords, tokens)
+ *   2. PII_FIELD_MASKS: campos que se ocultan pero conservan estructura (emails → ***los@...)
  */
 const REDACTED_KEYS = new Set([
   'password', 'token', 'secret', 'apikey', 'api_key',
   'authorization', 'access_token', 'refresh_token', 'service_role_key',
 ])
 
+// Mapeo de nombres de campo (case-insensitive) a funciones de máscara PII
+const PII_FIELD_MASKS: Record<string, (val: unknown) => string> = {
+  email: (val) => (typeof val === 'string' ? maskEmail(val) : String(val)),
+  name: (val) => (typeof val === 'string' ? maskName(val) : String(val)),
+  phone: (val) => (typeof val === 'string' ? maskPhone(val) : String(val)),
+  ip: (val) => (typeof val === 'string' ? maskIp(val) : String(val)),
+  address: (val) => String(val), // placeholder — sin parseo de ciudad/provincia
+}
+
 function maskSensitive(value: unknown, depth = 0): unknown {
   if (depth > 10 || typeof value !== 'object' || value === null) return value
   if (Array.isArray(value)) return value.map(v => maskSensitive(v, depth + 1))
   return Object.fromEntries(
-    Object.entries(value as Record<string, unknown>).map(([k, v]) => [
-      k,
-      REDACTED_KEYS.has(k.toLowerCase()) ? '[REDACTED]' : maskSensitive(v, depth + 1),
-    ]),
+    Object.entries(value as Record<string, unknown>).map(([k, v]) => {
+      const lowerKey = k.toLowerCase()
+
+      // Redactar secretos completamente
+      if (REDACTED_KEYS.has(lowerKey)) {
+        return [k, '[REDACTED]']
+      }
+
+      // Aplicar máscara PII si es un campo conocido y el valor es string
+      if (lowerKey in PII_FIELD_MASKS && typeof v === 'string') {
+        return [k, PII_FIELD_MASKS[lowerKey]!(v)]
+      }
+
+      // Recursión en otros campos
+      return [k, maskSensitive(v, depth + 1)]
+    }),
   )
 }
 
@@ -210,13 +237,31 @@ export function makeAuditable<T extends Record<string, unknown>>(
               ).json,
             }
 
-            // En E2E (window.__E2E_AWAIT_AUDIT__) esperamos a que el INSERT complete
-            // antes de devolver el control — evita cancelación por afterEach (ADR-017 §test-mode).
-            // En producción: fire-and-forget de siempre.
-            if ((globalThis as Record<string, unknown>)['__E2E_AWAIT_AUDIT__'] === true) {
-              await fireAuditLogAwaitable(entry).catch((err) => reportError('audit.write', err))
-            } else {
-              fireAuditLog(entry)
+            // ÉPICA 9 — Gating modo intensivo:
+            // Solo auditar si:
+            //   a) Es un error (siempre se audita), O
+            //   b) Modo intensivo está activo
+            // En modo normal, los éxitos se silencian (no se dispara fireAuditLog).
+            let shouldAudit = true
+            try {
+              const intensiveMode = await getIntensiveMode()
+              shouldAudit = intensiveMode // Solo auditar si modo intensivo === true
+            } catch (err) {
+              // Si falla la lectura de modo intensivo, asumir intensivo activo (fail-safe)
+              // para no perder auditoría de errores.
+              reportError('audit.intensiveModeCheck', err)
+              shouldAudit = true
+            }
+
+            if (shouldAudit) {
+              // En E2E (window.__E2E_AWAIT_AUDIT__) esperamos a que el INSERT complete
+              // antes de devolver el control — evita cancelación por afterEach (ADR-017 §test-mode).
+              // En producción: fire-and-forget de siempre.
+              if ((globalThis as Record<string, unknown>)['__E2E_AWAIT_AUDIT__'] === true) {
+                await fireAuditLogAwaitable(entry).catch((err) => reportError('audit.write', err))
+              } else {
+                fireAuditLog(entry)
+              }
             }
             return response
           },

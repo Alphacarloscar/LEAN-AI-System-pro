@@ -2,11 +2,14 @@
 // Edge Function: log-audit-event
 //
 // Receptor fire-and-forget del sistema de auditoría (ADR-017).
+// ÉPICA 9: soporta eventos de negocio + enmascaramiento PII.
 //
 // Responsabilidades:
 //   1. Verifica el JWT del caller y extrae user_id, user_email.
 //   2. Valida el shape mínimo del body (service_name, method_name, status).
 //   3. Inserta en audit_logs usando service_role (bypass RLS).
+//   4. Calcula actor_email_masked server-side (PII masking).
+//   5. Persiste event_type/entity_type/company_id/project_id si vienen.
 //
 // Diseño de latencia (fix DEBT-012):
 //   La función responde HTTP 200 inmediatamente tras auth + body validation.
@@ -21,8 +24,22 @@
 //   - El service role key nunca sale del servidor.
 //
 // Llamado desde: src/lib/audit/auditClient.ts → fireAuditLog()
-// Relacionado: ADR-017 · migration 20260615_003_audit_system.sql · DEBT-012
+// Relacionado: ADR-017 · migration 20260615_003_audit_system.sql · DEBT-012 · Épica 9
 // ============================================================
+
+// Función de enmascaramiento de email (duplicada de src/lib/audit/maskPII.ts
+// para usarla en Deno sin imports de src/).
+// IMPORTANTE: mantener sincronizada con maskEmail en maskPII.ts
+function maskEmail(email: string): string {
+  if (!email || typeof email !== 'string') return email
+  const [user, domain] = email.split('@')
+  if (!user || !domain) return email
+  const visibleChars = Math.min(3, user.length)
+  const hiddenCount = Math.max(0, user.length - visibleChars)
+  const asterisks = '*'.repeat(hiddenCount)
+  const visibleUser = user.slice(-visibleChars)
+  return `${asterisks}${visibleUser}@${domain}`
+}
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
@@ -82,6 +99,8 @@ Deno.serve(async (req) => {
       service_name, method_name, args_payload, status,
       response_payload, error_message, error_stack,
       duration_ms, resource_id, correlation_id, metadata,
+      // Épica 9 — nuevos campos de eventos de negocio
+      event_type, entity_type, company_id, project_id,
     } = body
 
     // ── 3. INSERT en background — no bloquea la respuesta HTTP ───────────
@@ -99,6 +118,12 @@ Deno.serve(async (req) => {
           .eq('id', user.id)
           .single()
 
+        // Enriquecer metadata con actor_email_masked (PII masking)
+        const enrichedMetadata = {
+          ...(typeof metadata === 'object' && metadata !== null ? metadata : {}),
+          actor_email_masked: maskEmail(user.email ?? ''),
+        }
+
         const { error: insertErr } = await adminClient
           .from('audit_logs')
           .insert({
@@ -115,7 +140,12 @@ Deno.serve(async (req) => {
             duration_ms:      typeof duration_ms   === 'number' ? Math.round(duration_ms) : 0,
             resource_id:      typeof resource_id   === 'string' ? resource_id   : null,
             correlation_id:   typeof correlation_id === 'string' ? correlation_id : null,
-            metadata:         metadata ?? {},
+            // Épica 9 — nuevos campos
+            event_type:       typeof event_type   === 'string' ? event_type   : null,
+            entity_type:      typeof entity_type  === 'string' ? entity_type  : null,
+            company_id:       typeof company_id   === 'string' ? company_id   : null,
+            project_id:       typeof project_id   === 'string' ? project_id   : null,
+            metadata:         enrichedMetadata,
           })
 
         if (insertErr) {

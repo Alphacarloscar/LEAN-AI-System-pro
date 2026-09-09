@@ -46,6 +46,12 @@ export interface AuditLogQueryFilters {
   toDate?:        string   // ISO 8601
   correlationId?: string   // agrupa todos los logs de una misma acción UI
   limit?:         number   // default 500, max 1000
+  // Épica 9 — filtros de eventos de negocio
+  eventType?:     string   // ej: 'user.login', 'project.status_changed'
+  entityType?:    string   // ej: 'company', 'project', 'user'
+  companyId?:     string   // filtrar por empresa
+  projectId?:     string   // filtrar por proyecto
+  offset?:        number   // paginación (default 0)
 }
 
 // ── Consulta principal ────────────────────────────────────────────────────
