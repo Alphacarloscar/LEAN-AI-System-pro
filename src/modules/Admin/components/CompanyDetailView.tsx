@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Loader, AlertCircle, Copy } from 'lucide-react'
+import { Loader, AlertCircle, Copy, X } from 'lucide-react'
 import { Spinner, Select } from '@shared/design-system/components'
 import {
   getCompanyById,
@@ -10,7 +10,12 @@ import {
   deleteCompany,
   listCompanyProjects,
   listCompanyUsers,
+  inviteUserToCompany,
+  updateUserInfo,
+  deleteUser,
 } from '@/services/companies.service'
+import { createProject } from '@/services/projects.service'
+import { useAuthStore } from '@/modules/Auth'
 import { SECTOR_OPTIONS, COMPANY_SIZE_OPTIONS } from '@/modules/CompanyProfile/types'
 import { PlanesTab } from '@/modules/CompanyProfile/components/PlanesTab'
 import { AuditTab } from './AuditTab'
@@ -61,6 +66,25 @@ export function CompanyDetailView() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  // Modal crear proyecto
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false)
+  const [newProjectName, setNewProjectName] = useState('')
+  const [creatingProject, setCreatingProject] = useState(false)
+  const [projectError, setProjectError] = useState<string | null>(null)
+
+  // Modal invitar usuario
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<UserRole>('client_viewer')
+  const [inviting, setInviting] = useState(false)
+  const [inviteError, setInviteError] = useState<string | null>(null)
+
+  // Estado para cambio de rol de usuario
+  const [changingUserRole, setChangingUserRole] = useState<string | null>(null)
+
+  const { user } = useAuthStore()
+  const canManage = user?.role === 'superadmin' || user?.role === 'consultant'
 
   if (!companyId) {
     return <div className="text-center py-8 text-danger-dark">ID de empresa no válido</div>
@@ -159,6 +183,75 @@ export function CompanyDetailView() {
     }
   }
 
+  // Handlers para proyectos
+  async function handleCreateProject(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newProjectName.trim() || !companyId) return
+    setCreatingProject(true)
+    setProjectError(null)
+    try {
+      const cid = companyId
+      await createProject({ name: newProjectName.trim(), companyId: cid })
+      const updated = await listCompanyProjects(cid)
+      setProjects(updated)
+      setNewProjectName('')
+      setShowNewProjectModal(false)
+    } catch (err) {
+      setProjectError(err instanceof Error ? err.message : 'Error al crear proyecto')
+    } finally {
+      setCreatingProject(false)
+    }
+  }
+
+  // Handlers para usuarios
+  async function handleInviteUser(e: React.FormEvent) {
+    e.preventDefault()
+    if (!inviteEmail.trim() || !companyId) return
+    setInviting(true)
+    setInviteError(null)
+    try {
+      const cid = companyId
+      const userName = inviteEmail.split('@')[0] // Usar parte de email como nombre
+      await inviteUserToCompany({ email: inviteEmail.trim(), name: userName, companyId: cid, role: inviteRole })
+      const updated = await listCompanyUsers(cid) as CompanyUser[]
+      setUsers(updated)
+      setInviteEmail('')
+      setInviteRole('client_viewer')
+      setShowInviteModal(false)
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Error al invitar usuario')
+    } finally {
+      setInviting(false)
+    }
+  }
+
+  async function handleChangeUserRole(userId: string, newRole: UserRole) {
+    if (!companyId) return
+    setChangingUserRole(userId)
+    try {
+      await updateUserInfo(userId, { role: newRole })
+      const updated = await listCompanyUsers(companyId) as CompanyUser[]
+      setUsers(updated)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Error al cambiar rol')
+    } finally {
+      setChangingUserRole(null)
+    }
+  }
+
+  async function handleRemoveUser(userId: string) {
+    if (!companyId) return
+    setSaving(true)
+    try {
+      await deleteUser(userId)
+      const updated = await listCompanyUsers(companyId) as CompanyUser[]
+      setUsers(updated)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Error al remover usuario')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -469,15 +562,41 @@ export function CompanyDetailView() {
         {/* Tab: Proyectos */}
         {tab === 'projects' && (
           <div className="flex flex-col gap-3">
+            {canManage && (
+              <button
+                onClick={() => setShowNewProjectModal(true)}
+                className="w-fit px-4 py-2 rounded-lg bg-gold text-white text-sm font-medium hover:bg-gold-hover transition-colors"
+              >
+                + Nuevo proyecto
+              </button>
+            )}
             {projects.length === 0 ? (
               <p className="text-sm text-text-subtle">Sin proyectos activos.</p>
             ) : (
-              projects.map((p) => (
-                <div key={p.id} className="px-4 py-3 rounded-lg bg-surface border border-border">
-                  <p className="text-sm font-medium text-lean-black dark:text-warm-50">{p.name}</p>
-                  <p className="text-xs text-text-muted mt-1">Fase: {p.current_phase}</p>
-                </div>
-              ))
+              projects.map((p) => {
+                const statusColors: Record<string, { bg: string; text: string }> = {
+                  active: { bg: 'bg-success-light', text: 'text-success-dark' },
+                  paused: { bg: 'bg-warm-100', text: 'text-warm-700' },
+                  archived: { bg: 'bg-warm-200', text: 'text-warm-600' },
+                  completed: { bg: 'bg-gold/10', text: 'text-gold' },
+                }
+                const colors = statusColors[p.status] || statusColors.active
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => navigate(`/admin/companies/${companyId}/projects/${p.id}`)}
+                    className="px-4 py-3 rounded-lg bg-surface border border-border hover:border-gold/40 transition-colors cursor-pointer flex items-center justify-between"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-lean-black dark:text-warm-50">{p.name}</p>
+                      <p className="text-xs text-text-muted mt-1">Fase: {p.current_phase}</p>
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${colors.bg} ${colors.text}`}>
+                      {p.status}
+                    </span>
+                  </div>
+                )
+              })
             )}
           </div>
         )}
@@ -485,16 +604,52 @@ export function CompanyDetailView() {
         {/* Tab: Usuarios */}
         {tab === 'users' && (
           <div className="flex flex-col gap-3">
+            {canManage && (
+              <button
+                onClick={() => setShowInviteModal(true)}
+                className="w-fit px-4 py-2 rounded-lg bg-gold text-white text-sm font-medium hover:bg-gold-hover transition-colors"
+              >
+                + Invitar usuario
+              </button>
+            )}
             {users.length === 0 ? (
               <p className="text-sm text-text-subtle">Sin usuarios asignados.</p>
             ) : (
               users.map((u) => (
-                <div key={u.id} className="px-4 py-3 rounded-lg bg-surface border border-border">
-                  <p className="text-sm font-medium text-lean-black dark:text-warm-50">{u.name}</p>
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-xs text-text-muted font-mono">{u.email}</p>
-                    <span className="text-xs px-2 py-1 rounded bg-warm-100 text-warm-800">{u.role}</span>
+                <div
+                  key={u.id}
+                  onClick={() => navigate(`/admin/users/${u.id}`)}
+                  className="px-4 py-3 rounded-lg bg-surface border border-border hover:border-gold/40 transition-colors cursor-pointer flex items-center justify-between"
+                >
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-lean-black dark:text-warm-50">{u.name}</p>
+                    <p className="text-xs text-text-muted font-mono mt-1">{u.email}</p>
                   </div>
+                  {canManage ? (
+                    <div className="flex items-center gap-2 ml-4 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <select
+                        value={u.role}
+                        onChange={(e) => handleChangeUserRole(u.id, e.target.value as UserRole)}
+                        disabled={saving || changingUserRole === u.id}
+                        className="text-xs px-2 py-1 rounded bg-warm-100 text-warm-800 border-0 cursor-pointer hover:bg-warm-200 transition-colors disabled:opacity-40"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <option value="consultant">consultant</option>
+                        <option value="client_editor">client_editor</option>
+                        <option value="client_viewer">client_viewer</option>
+                      </select>
+                      <button
+                        onClick={() => handleRemoveUser(u.id)}
+                        disabled={saving}
+                        className="text-xs text-danger-dark hover:text-danger ml-2 opacity-60 hover:opacity-100 transition-opacity disabled:opacity-40"
+                        title="Remover usuario"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-xs px-2 py-1 rounded bg-warm-100 text-warm-800 ml-4 shrink-0">{u.role}</span>
+                  )}
                 </div>
               ))
             )}
@@ -506,6 +661,103 @@ export function CompanyDetailView() {
           <AuditTab companyId={companyId} />
         )}
       </div>
+
+      {/* Modal crear proyecto */}
+      {showNewProjectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={() => setShowNewProjectModal(false)} />
+          <div className="relative bg-white rounded-xl shadow-md border border-black/8 p-6 w-full max-w-sm dark:bg-warm-900">
+            <h2 className="text-base font-semibold text-lean-black dark:text-warm-50 mb-4">Crear proyecto</h2>
+            <form onSubmit={handleCreateProject} className="flex flex-col gap-4">
+              <input
+                type="text"
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                placeholder="Nombre del proyecto"
+                required
+                minLength={3}
+                className="h-10 px-3 rounded-lg border border-border text-sm bg-white outline-none focus:border-gold/60 dark:bg-warm-800 dark:border-warm-700"
+              />
+              {projectError && (
+                <p className="text-xs text-danger-dark bg-danger-light px-3 py-2 rounded-lg">
+                  {projectError}
+                </p>
+              )}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowNewProjectModal(false)}
+                  disabled={creatingProject}
+                  className="flex-1 h-9 rounded-lg border border-border text-sm font-medium text-warm-700 hover:bg-warm-50 disabled:opacity-40 transition-colors dark:border-warm-700 dark:hover:bg-warm-800"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingProject || !newProjectName.trim()}
+                  className="flex-1 h-9 rounded-lg bg-gold text-white text-sm font-medium hover:bg-gold-hover disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
+                >
+                  {creatingProject ? <Spinner /> : 'Crear'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal invitar usuario */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={() => setShowInviteModal(false)} />
+          <div className="relative bg-white rounded-xl shadow-md border border-black/8 p-6 w-full max-w-sm dark:bg-warm-900">
+            <h2 className="text-base font-semibold text-lean-black dark:text-warm-50 mb-4">Invitar usuario</h2>
+            <form onSubmit={handleInviteUser} className="flex flex-col gap-4">
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="Email del usuario"
+                required
+                className="h-10 px-3 rounded-lg border border-border text-sm bg-white outline-none focus:border-gold/60 dark:bg-warm-800 dark:border-warm-700"
+              />
+              <div>
+                <label className="text-xs font-medium text-text-muted mb-2 block">Rol</label>
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value as UserRole)}
+                  className="w-full h-10 px-3 rounded-lg border border-border text-sm bg-white outline-none focus:border-gold/60 dark:bg-warm-800 dark:border-warm-700"
+                >
+                  <option value="consultant">Consultor Alpha</option>
+                  <option value="client_editor">Cliente Editor</option>
+                  <option value="client_viewer">Cliente Viewer</option>
+                </select>
+              </div>
+              {inviteError && (
+                <p className="text-xs text-danger-dark bg-danger-light px-3 py-2 rounded-lg">
+                  {inviteError}
+                </p>
+              )}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowInviteModal(false)}
+                  disabled={inviting}
+                  className="flex-1 h-9 rounded-lg border border-border text-sm font-medium text-warm-700 hover:bg-warm-50 disabled:opacity-40 transition-colors dark:border-warm-700 dark:hover:bg-warm-800"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={inviting || !inviteEmail.trim()}
+                  className="flex-1 h-9 rounded-lg bg-gold text-white text-sm font-medium hover:bg-gold-hover disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
+                >
+                  {inviting ? <Spinner /> : 'Invitar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Modal de confirmación de eliminación */}
       {showDeleteModal && (
