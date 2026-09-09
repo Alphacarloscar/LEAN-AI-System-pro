@@ -31,7 +31,9 @@ Estas variables deben declararse en **Vercel → Settings → Environment Variab
 |---|---|---|---|
 | `APP_AUDIT_PEPPER` | PRE + PRO | Secreto de 64 chars hex para HMAC-SHA256. Generado una sola vez, nunca rotado (rompería hashes históricos). | `a3f8...` (64 chars) |
 
-> **Importante:** `APP_AUDIT_PEPPER` **no se pasa a la Edge Function como env var de Vercel**. Se configura directamente en la base de datos de Supabase como `app.audit_pepper` (ver Paso 2.2). Esta tabla de Vercel es un recordatorio del valor a usar — el valor real vive en Supabase Vault.
+> **Importante:** `APP_AUDIT_PEPPER` **no se pasa a la Edge Function como env var de Vercel**. Se registra directamente como secreto `audit_pepper` en **Supabase Vault** (ver Paso 2.2). Esta tabla de Vercel es solo un recordatorio del valor a usar — el valor real vive en el Vault, `hmac_email_hash()` lo lee de `vault.decrypted_secrets` en cada llamada.
+>
+> **Corrección 2026-09-09:** el enfoque anterior de este runbook (`ALTER DATABASE postgres SET app.audit_pepper = '...'`) **no funciona en Supabase** — el rol `postgres` no es superusuario real y Postgres exige superusuario para fijar por defecto un GUC custom a nivel de base de datos/rol. Da `42501: permission denied to set parameter`. El sistema usa Vault en su lugar, sin ningún GUC de sesión.
 
 #### Variables ya existentes que deben estar activas
 
@@ -50,21 +52,17 @@ Verificar que estas variables estén presentes (no son nuevas, pero son precondi
 
 ### 2.1 Prerrequisitos en Supabase Dashboard
 
-Completar estos pasos en **Supabase Dashboard → Database → Extensions** antes de ejecutar el SQL:
+Completar este paso en **Supabase Dashboard → Database → Extensions** antes de ejecutar el SQL:
 
-**Paso 1 — Habilitar `pg_cron`:**
+**Habilitar `pg_cron`:**
 ```
 Dashboard → Database → Extensions → buscar "pg_cron" → Enable
 ```
 > Supabase Cloud no permite activar pg_cron vía SQL. Debe hacerse desde el Dashboard.
 
-**Paso 2 — Habilitar `pgcrypto`:**
-```
-Dashboard → Database → Extensions → buscar "pgcrypto" → Enable
-```
-> El script incluye `CREATE EXTENSION IF NOT EXISTS pgcrypto` como fallback idempotente.
+`pgcrypto` no requiere paso manual: el script trae `CREATE EXTENSION IF NOT EXISTS pgcrypto` y esa sí se puede crear vía SQL sin privilegios especiales.
 
-### 2.2 Configurar el secreto `audit_pepper` en Supabase
+### 2.2 Configurar el secreto `audit_pepper` en Supabase Vault
 
 **Paso 1 — Generar el valor del pepper** (si no existe ya):
 ```sql
@@ -73,19 +71,27 @@ SELECT encode(gen_random_bytes(32), 'hex');
 ```
 Copiar la salida (64 caracteres hexadecimales). Guardarla en un gestor de secretos seguro.
 
-**Paso 2 — Registrar en Supabase Vault:**
+**Paso 2 — Registrar en Supabase Vault** (vía Dashboard o SQL):
 ```
 Dashboard → Project Settings → Vault → New Secret
   Name:  audit_pepper
   Value: <pegar los 64 chars hex>
 ```
-
-**Paso 3 — Activar como parámetro de base de datos:**
+Alternativa por SQL Editor:
 ```sql
--- Sustituir <valor> por los 64 chars hex generados en el paso anterior
-ALTER DATABASE postgres SET app.audit_pepper = '<valor>';
+SELECT vault.create_secret(
+  '<pegar los 64 chars hex>',
+  'audit_pepper',
+  'HMAC pepper para pseudonimización GDPR de audit logs'
+);
 ```
-> Este parámetro persiste entre reinicios de la BD. Solo necesita ejecutarse una vez por entorno.
+
+Verificar que quedó registrado:
+```sql
+SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'audit_pepper';
+```
+
+> **No usar `ALTER DATABASE postgres SET app.audit_pepper = '...'`.** Ese enfoque (GUC de sesión) no funciona en Supabase: el rol `postgres` no es superusuario real, y Postgres exige superusuario para fijar por defecto un parámetro custom a nivel de base de datos/rol → `42501: permission denied`. `hmac_email_hash()` lee el secreto directamente de `vault.decrypted_secrets`, sin GUC.
 
 ### 2.3 Ejecutar el script SQL consolidado
 
@@ -94,11 +100,13 @@ ALTER DATABASE postgres SET app.audit_pepper = '<valor>';
 1. Abrir **Supabase Dashboard → SQL Editor**
 2. Copiar el contenido íntegro del archivo:
    ```
-   supabase/releases/release-audit-system-complete.sql
+   supabase/releases/release-v2.2.0-pre-pro.sql
    ```
 3. Pegar en el editor y hacer clic en **Run**
 
-El script es **idempotente**: puede ejecutarse múltiples veces en el mismo entorno sin errores ni efectos secundarios. Está diseñado para ser seguro de re-lanzar en caso de duda.
+El script incluye sus propios checks previos (pg_cron habilitado, secreto `audit_pepper` presente en Vault) que abortan con `RAISE EXCEPTION` y un mensaje explicativo si falta algo, antes de tocar el esquema.
+
+> `supabase/releases/release-audit-system-complete.sql` queda **obsoleto** para PRE/PRO — usaba el enfoque GUC que no es compatible con el modelo de permisos de Supabase. No usarlo para despliegues.
 
 **Salidas esperadas al finalizar sin error:**
 
@@ -240,12 +248,10 @@ SELECT * FROM public.get_audit_logs('{}');
 Marcar cada ítem antes de declarar el despliegue completado:
 
 ### PRE
-- [ ] pg_cron habilitado en Supabase PRE
-- [ ] pgcrypto habilitado en Supabase PRE
+- [ ] pg_cron habilitado en Supabase PRE (Dashboard → Extensions)
 - [ ] Secreto `audit_pepper` generado y guardado en gestor de secretos
-- [ ] `audit_pepper` registrado en Vault de Supabase PRE
-- [ ] `ALTER DATABASE postgres SET app.audit_pepper = '...'` ejecutado en PRE
-- [ ] Script SQL `release-audit-system-complete.sql` ejecutado en PRE sin errores
+- [ ] `audit_pepper` registrado en Vault de Supabase PRE (verificado con `SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'audit_pepper'`)
+- [ ] Script SQL `release-v2.2.0-pre-pro.sql` ejecutado en PRE sin errores
 - [ ] Smoke Test 1 ejecutado: 3/3 tablas ✓ · 5/5 funciones ✓ · 2/2 jobs ✓
 - [ ] Smoke Test 2 ejecutado: hash_length=64 ✓ · meta-auditoría registrada ✓
 - [ ] Smoke Test 3 ejecutado: acceso denegado correctamente ✓
@@ -255,10 +261,9 @@ Marcar cada ítem antes de declarar el despliegue completado:
 
 ### PRO
 - [ ] Todos los ítems de PRE superados sin incidencias
-- [ ] `audit_pepper` generado **independientemente** para PRO (secreto diferente a PRE)
-- [ ] `audit_pepper` registrado en Vault de Supabase PRO
-- [ ] `ALTER DATABASE postgres SET app.audit_pepper = '...'` ejecutado en PRO
-- [ ] Script SQL ejecutado en PRO sin errores
+- [ ] `audit_pepper` generado **independientemente** para PRO (secreto diferente a PRE, nunca reutilizar el de PRE/DEV)
+- [ ] `audit_pepper` registrado en Vault de Supabase PRO (verificado con `SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'audit_pepper'`)
+- [ ] Script SQL `release-v2.2.0-pre-pro.sql` ejecutado en PRO sin errores
 - [ ] Smoke Test 1 ejecutado en PRO ✓
 - [ ] Smoke Test 2 ejecutado en PRO ✓
 - [ ] Smoke Test 3 ejecutado en PRO ✓
@@ -306,7 +311,7 @@ DROP TABLE IF EXISTS public.audit_logs;
 
 | Documento | Ruta |
 |---|---|
-| Script SQL consolidado | `supabase/releases/release-audit-system-complete.sql` |
+| Script SQL consolidado (PRE/PRO, Vault) | `supabase/releases/release-v2.2.0-pre-pro.sql` |
 | ADR-017 — Audit Logging Proxy | `docs/decisions/technical/ADR-017-audit-logging-proxy.md` |
 | ADR-018 — Audit Log Retention | `docs/decisions/technical/ADR-018-audit-log-retention-pg-cron.md` |
 | ADR-019 — Audit Logs Read Security | `docs/decisions/technical/ADR-019-audit-logs-read-security-definer.md` |
