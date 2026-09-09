@@ -1,1 +1,1 @@
-SELECT current_setting('app.audit_pepper', true) AS pepper_value;
+SELECT tablename FROM pg_tables WHERE tablename = 'audit_access_logs';

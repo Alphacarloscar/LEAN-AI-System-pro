@@ -133,7 +133,10 @@ BEGIN
     'en Dashboard → Edge Functions antes de usar la aplicación.';
 END $$;
 
-RAISE NOTICE '§PRE completado — todos los prerrequisitos verificados. Continuando con el despliegue.';
+DO $$
+BEGIN
+  RAISE NOTICE '§PRE completado — todos los prerrequisitos verificados. Continuando con el despliegue.';
+END $$;
 
 
 -- ════════════════════════════════════════════════════════════════

@@ -586,6 +586,17 @@ Crear proyecto Supabase dedicado para E2E (staging), configurar variables `VITE_
 
 > Los items tachados están completamente resueltos y se mantienen como registro histórico.
 
+### ~~DEBT-052~~ — `RAISE NOTICE` suelto rompía `release-v2.2.0-pre-pro.sql` ✅ (Resuelto — 2026-09-09)
+**Severidad:** 🟡 Media
+**Detectado:** 2026-09-09 (aplicando el release en DEV local para activar el sistema de auditoría)
+**Área:** `supabase/releases/release-v2.2.0-pre-pro.sql`
+**Estado:** Resuelto (2026-09-09)
+
+**Descripción:** Línea 136 tenía un `RAISE NOTICE ...;` como sentencia SQL top-level, fuera de cualquier bloque `DO $$ ... $$;`. `RAISE` solo es válido dentro de PL/pgSQL, así que el script fallaba con `42601: syntax error at or near "RAISE"` en cualquier entorno donde se aplicara (DEV, PRE, PRO).
+**Impacto:** Bloqueaba la aplicación completa del release de activación del sistema de auditoría (Épica 9) hasta este fix.
+**Plan de acción:** Envuelto en `DO $$ BEGIN ... END $$;` como el resto de checks del script. Verificado en DEV local — el script se aplica sin errores y `hmac_email_hash()` funciona con el pepper del Vault.
+**Requiere ADR:** No
+
 ### ~~DEBT-001~~ — Tests automatizados ✅ (Resuelto parcialmente — 2026-06-02)
 - **Vitest** configurado y funcionando: **507+ tests en 33 ficheros pasando** (medido 2026-06-11)
 - **Playwright e2e**: **16 specs** en `e2e/` (architecture-guard + T1-T8 + fixtures)
