@@ -3,8 +3,9 @@
 //
 // Sprint 9: panel de administración exclusivo para superadmin.
 // Refactorizado como landing page (v2.2.1):
-//   - 3 tarjetas de navegación que llevan a ListViews separadas
+//   - 2 tarjetas de navegación que llevan a ListViews separadas
 //   - AdminView es ahora solo la landing, no contiene tabs
+//   - Proyectos se gestiona desde CompanyDetailView
 //
 // Roles del sistema (4 niveles):
 //   superadmin    → Alpha platform admin — acceso global
@@ -15,7 +16,7 @@
 
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Users, Folder } from 'lucide-react'
+import { Building2, Users } from 'lucide-react'
 import { useAuthStore } from '@/modules/Auth'
 
 interface NavCard {
@@ -40,13 +41,6 @@ const NAV_CARDS: NavCard[] = [
     description: 'Gestión de usuarios, roles e invitaciones',
     icon: <Users size={24} strokeWidth={1.5} />,
     path: '/admin/users',
-  },
-  {
-    id: 'projects',
-    label: 'Proyectos',
-    description: 'Visión global de todos los proyectos',
-    icon: <Folder size={24} strokeWidth={1.5} />,
-    path: '/admin/projects',
   },
 ]
 
@@ -74,8 +68,8 @@ export function AdminView() {
         </p>
       </div>
 
-      {/* Grid de navegación — 3 tarjetas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Grid de navegación — 2 tarjetas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {NAV_CARDS.map((card) => (
           <button
             key={card.id}

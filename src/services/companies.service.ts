@@ -319,6 +319,17 @@ const _impl = {
     if (error || !data) throw new Error(`[Companies] toggleUserActive: ${error?.message}`)
     return data
   },
+
+  // Desvincular usuario de una empresa (set company_id = null)
+  // NO elimina la cuenta de Supabase Auth ni la vinculación con proyectos
+  async removeUserFromCompany(userId: string): Promise<void> {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ company_id: null })
+      .eq('id', userId)
+
+    if (error) throw new Error(`[Companies] removeUserFromCompany: ${error.message}`)
+  },
 }
 
 // ── Punto de exportación auditado ────────────────────────────
@@ -344,4 +355,5 @@ export const {
   getUserById,
   updateUserInfo,
   toggleUserActive,
+  removeUserFromCompany,
 } = _service

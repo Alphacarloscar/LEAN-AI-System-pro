@@ -12,6 +12,7 @@ import {
   listCompanyUsers,
   inviteUserToCompany,
   updateUserInfo,
+  removeUserFromCompany,
 } from '@/services/companies.service'
 import { createProject } from '@/services/projects.service'
 import { useAuthStore } from '@/modules/Auth'
@@ -238,11 +239,18 @@ export function CompanyDetailView() {
     }
   }
 
-  // GAP: removeUserFromCompany no implementado en companies.service
-  // deleteUser elimina la cuenta permanentemente — NO usar aquí
-  // Botón × deshabilitado hasta que exista la función de desvinculación
-  function handleRemoveUser(_userId: string) {
-    alert('Función no disponible aún. Para desvincular un usuario de la empresa, contacta con soporte.')
+  async function handleRemoveUser(userId: string) {
+    if (!companyId) return
+    setSaving(true)
+    try {
+      await removeUserFromCompany(userId)
+      const updated = await listCompanyUsers(companyId) as CompanyUser[]
+      setUsers(updated)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Error al remover usuario')
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (loading) {
@@ -631,10 +639,10 @@ export function CompanyDetailView() {
                         <option value="client_viewer">client_viewer</option>
                       </select>
                       <button
-                        disabled={true}
+                        disabled={saving}
                         onClick={(e) => { e.stopPropagation(); handleRemoveUser(u.id) }}
-                        className="text-xs text-danger-dark hover:text-danger ml-2 opacity-30 cursor-not-allowed transition-opacity"
-                        title="Función no disponible aún"
+                        className="text-xs text-danger-dark hover:text-danger ml-2 opacity-60 hover:opacity-100 transition-opacity disabled:opacity-40"
+                        title="Remover usuario de la empresa"
                       >
                         <X size={14} />
                       </button>
