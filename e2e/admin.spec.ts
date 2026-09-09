@@ -147,3 +147,75 @@ test.describe('Admin Panel — acceso denegado a roles no-superadmin', () => {
     }
   })
 })
+
+test.describe('Admin Panel — botón en sidebar', () => {
+  test('superadmin ve el botón "Administración" en el sidebar', async ({ page }) => {
+    test.skip(!SUPERADMIN_PASSWORD, 'E2E_SUPERADMIN_PASSWORD no configurado')
+    await loginAs(page, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD)
+
+    // Abrir sidebar
+    await page.locator('button[aria-label*="Abrir menú"], button[aria-expanded="false"]').first().click()
+
+    const adminButton = page.getByText('Administración', { exact: false })
+    await expect(adminButton).toBeVisible({ timeout: 5_000 })
+  })
+
+  test('consultant ve el botón "Administración" en el sidebar', async ({ page }) => {
+    const CONSULTANT_EMAIL = process.env.E2E_CONSULTANT_EMAIL ?? 'consultant@test.dev'
+    const CONSULTANT_PASSWORD = process.env.E2E_CONSULTANT_PASSWORD ?? ''
+    test.skip(!CONSULTANT_PASSWORD, 'E2E_CONSULTANT_PASSWORD no configurado')
+
+    await loginAs(page, CONSULTANT_EMAIL, CONSULTANT_PASSWORD)
+
+    // Abrir sidebar
+    await page.locator('button[aria-label*="Abrir menú"], button[aria-expanded="false"]').first().click()
+
+    const adminButton = page.getByText('Administración', { exact: false })
+    await expect(adminButton).toBeVisible({ timeout: 5_000 })
+  })
+
+  test('client_editor NO ve el botón "Administración" en el sidebar', async ({ page }) => {
+    const CLIENT_EDITOR_EMAIL = process.env.E2E_CLIENT_EDITOR_EMAIL ?? 'client@test.dev'
+    const CLIENT_EDITOR_PASSWORD = process.env.E2E_CLIENT_EDITOR_PASSWORD ?? ''
+    test.skip(!CLIENT_EDITOR_PASSWORD, 'E2E_CLIENT_EDITOR_PASSWORD no configurado')
+
+    await loginAs(page, CLIENT_EDITOR_EMAIL, CLIENT_EDITOR_PASSWORD)
+
+    // Abrir sidebar
+    await page.locator('button[aria-label*="Abrir menú"], button[aria-expanded="false"]').first().click()
+
+    const adminButton = page.getByText('Administración', { exact: false })
+    await expect(adminButton).not.toBeVisible({ timeout: 3_000 }).catch(() => {})
+  })
+
+  test('client_viewer NO ve el botón "Administración" en el sidebar', async ({ page }) => {
+    const CLIENT_VIEWER_EMAIL = process.env.E2E_CLIENT_VIEWER_EMAIL ?? 'viewer@test.dev'
+    const CLIENT_VIEWER_PASSWORD = process.env.E2E_CLIENT_VIEWER_PASSWORD ?? ''
+    test.skip(!CLIENT_VIEWER_PASSWORD, 'E2E_CLIENT_VIEWER_PASSWORD no configurado')
+
+    await loginAs(page, CLIENT_VIEWER_EMAIL, CLIENT_VIEWER_PASSWORD)
+
+    // Abrir sidebar
+    await page.locator('button[aria-label*="Abrir menú"], button[aria-expanded="false"]').first().click()
+
+    const adminButton = page.getByText('Administración', { exact: false })
+    await expect(adminButton).not.toBeVisible({ timeout: 3_000 }).catch(() => {})
+  })
+
+  test('clic en el botón "Administración" navega a /admin', async ({ page }) => {
+    test.skip(!SUPERADMIN_PASSWORD, 'E2E_SUPERADMIN_PASSWORD no configurado')
+    await loginAs(page, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD)
+
+    // Abrir sidebar
+    await page.locator('button[aria-label*="Abrir menú"], button[aria-expanded="false"]').first().click()
+
+    const adminButton = page.getByText('Administración', { exact: false }).first()
+    await expect(adminButton).toBeVisible({ timeout: 5_000 })
+
+    // Hacer clic en el botón
+    await adminButton.click()
+
+    // Verificar que navegó a /admin
+    await expect(page).toHaveURL(/\/admin/, { timeout: 5_000 })
+  })
+})

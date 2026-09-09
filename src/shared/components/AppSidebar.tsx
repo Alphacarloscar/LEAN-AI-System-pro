@@ -18,6 +18,7 @@ import { useSidebar }                 from '@/shared/hooks/useSidebar'
 import { UnsavedChangesModal }        from '@/shared/components/UnsavedChangesModal'
 import React, { useState }             from 'react'
 import { useEngagementStore }         from '@/modules/Engagement/store'
+import { useAuthStore }               from '@/modules/Auth'
 import { useDomainSlug }              from '@/hooks/useDomainSlug'
 import { resolveToolLabel }           from '@/shared/domain/toolDisplayNames'
 import type { ToolCode }              from '@/types'
@@ -179,6 +180,9 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
   const hasPackage = (pkgId: string) => contractedPackages.includes(pkgId)
 
   const isCompanyProfileActive = location.pathname === '/company-profile'
+  const { user } = useAuthStore()
+  const isAdminUser = user?.role === 'superadmin' || user?.role === 'consultant'
+  const isAdminActive = location.pathname.startsWith('/admin')
 
   return (
     <>
@@ -228,6 +232,42 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
             </p>
           </div>
         </button>
+
+        {/* ── Administración (solo superadmin/consultant) ── */}
+        {isAdminUser && (
+          <button
+            onClick={() => onNav('/admin')}
+            aria-current={isAdminActive ? 'page' : undefined}
+            className={[
+              'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors duration-100',
+              isAdminActive
+                ? 'bg-navy/8 dark:bg-navy/20'
+                : 'hover:bg-black/3 dark:hover:bg-white/4',
+            ].join(' ')}
+          >
+            <div
+              className="h-7 w-7 rounded-full flex items-center justify-center shrink-0"
+              style={{
+                backgroundColor: isAdminActive ? 'rgba(42,40,34,0.12)' : '#F0EDE8',
+                border: `1.5px solid ${isAdminActive ? '#2A2822' : '#D4D0C8'}`,
+                color:  isAdminActive ? '#2A2822' : '#6B6864',
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="7" cy="7" r="2"/>
+                <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M3.2 3.2l1 1M9.8 9.8l1 1M9.8 3.2l-1 1M3.2 9.8l1-1"/>
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className={`text-xs font-semibold truncate ${isAdminActive ? 'text-navy dark:text-warm-100' : 'text-warm-700 dark:text-warm-100'}`}>
+                Administración
+              </p>
+              <p className="text-[10px] text-black/30 dark:text-white/25 font-mono mt-0.5">
+                Empresas · Proyectos · Usuarios
+              </p>
+            </div>
+          </button>
+        )}
 
         {/* Banner: proyecto incompleto (solo si hay proyecto activo) */}
         {activeProject && !isProjectComplete && (
