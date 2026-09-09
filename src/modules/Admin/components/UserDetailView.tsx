@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { AlertCircle } from 'lucide-react'
 import { Spinner } from '@shared/design-system/components'
 import { getUserById, updateUserInfo, toggleUserActive } from '@/services/companies.service'
+import { listUserProjects } from '@/services/projects.service'
+import type { ProjectRow } from '@/types/database.types'
 import { Breadcrumb } from './Breadcrumb'
 
 export function UserDetailView() {
@@ -10,6 +12,7 @@ export function UserDetailView() {
   const navigate = useNavigate()
 
   const [user, setUser] = useState<any>(null)
+  const [projects, setProjects] = useState<ProjectRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -26,9 +29,13 @@ export function UserDetailView() {
       setLoading(true)
       setError(null)
       try {
-        const data = await getUserById(userId!)
-        setUser(data)
-        setEditName(data.name)
+        const [userData, projectsData] = await Promise.all([
+          getUserById(userId!),
+          listUserProjects(userId!),
+        ])
+        setUser(userData)
+        setProjects(projectsData)
+        setEditName(userData.name)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al cargar usuario')
       } finally {
@@ -203,6 +210,25 @@ export function UserDetailView() {
             {new Date(user.created_at ?? '').toLocaleDateString('es-ES')}
           </p>
         </div>
+      </div>
+
+      {/* Proyectos asignados */}
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold text-lean-black dark:text-warm-50 mb-4">Proyectos asignados</h2>
+        {projects.length === 0 ? (
+          <p className="text-sm text-text-muted">Sin proyectos asignados</p>
+        ) : (
+          <div className="grid gap-3">
+            {projects.map((p) => (
+              <div key={p.id} className="p-4 rounded-lg bg-surface border border-border">
+                <p className="text-sm font-medium text-lean-black dark:text-warm-50">{p.name}</p>
+                <p className="text-xs text-text-muted mt-1">
+                  Estado: <span className="font-semibold">{p.status}</span>
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

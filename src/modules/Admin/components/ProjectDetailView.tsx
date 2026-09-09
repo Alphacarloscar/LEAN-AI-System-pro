@@ -10,6 +10,7 @@ import {
   updateProjectMemberRole,
   getProjectMembers,
   deleteProject,
+  addProjectMember,
 } from '@/services/projects.service'
 import { listCompanyUsers } from '@/services/companies.service'
 import { AuditTab } from './AuditTab'
@@ -61,6 +62,9 @@ export function ProjectDetailView() {
   const [editName, setEditName] = useState('')
   const [saving, setSaving] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState('')
+  const [selectedRole, setSelectedRole] = useState<'consultant' | 'viewer'>('viewer')
 
   if (!companyId || !projectId) {
     return <div className="text-center py-8 text-danger-dark">Parámetros inválidos</div>
@@ -150,6 +154,22 @@ export function ProjectDetailView() {
       setMembers(updated)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cambiar rol')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleAddMember() {
+    if (!selectedUserId || !projectId) return
+    setSaving(true)
+    try {
+      await addProjectMember(projectId, selectedUserId, selectedRole)
+      const updated = await getProjectMembers(projectId)
+      setMembers(updated)
+      setSelectedUserId('')
+      setShowAddMemberModal(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al agregar miembro')
     } finally {
       setSaving(false)
     }
@@ -350,6 +370,12 @@ export function ProjectDetailView() {
 
         {tab === 'members' && (
           <div className="flex flex-col gap-3">
+            <button
+              onClick={() => setShowAddMemberModal(true)}
+              className="w-fit px-4 py-2 rounded-lg bg-gold text-white text-sm font-medium hover:bg-gold-hover transition-colors"
+            >
+              + Agregar miembro
+            </button>
             {members.length === 0 ? (
               <p className="text-sm text-text-subtle">Sin miembros asignados.</p>
             ) : (
@@ -410,6 +436,62 @@ export function ProjectDetailView() {
           <AuditTab projectId={projectId} companyId={companyId} />
         )}
       </div>
+
+      {/* Add Member Modal */}
+      {showAddMemberModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={() => setShowAddMemberModal(false)} />
+          <div className="relative bg-white rounded-xl shadow-md border border-black/8 p-6 w-full max-w-sm dark:bg-warm-900">
+            <h2 className="text-base font-semibold text-lean-black dark:text-warm-50 mb-4">Agregar miembro</h2>
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="text-xs font-medium text-text-muted mb-2 block">Usuario</label>
+                <select
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg border border-border text-sm bg-white outline-none focus:border-gold/60"
+                >
+                  <option value="">Seleccionar usuario…</option>
+                  {companyUsers
+                    .filter((u) => !members.find((m) => m.user_id === u.id))
+                    .map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.email})
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-text-muted mb-2 block">Rol</label>
+                <select
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value as any)}
+                  className="w-full h-10 px-3 rounded-lg border border-border text-sm bg-white outline-none focus:border-gold/60"
+                >
+                  <option value="consultant">Consultor</option>
+                  <option value="viewer">Viewer</option>
+                </select>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowAddMemberModal(false)}
+                  disabled={saving}
+                  className="flex-1 h-9 rounded-lg border border-border text-sm font-medium disabled:opacity-40"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAddMember}
+                  disabled={saving || !selectedUserId}
+                  className="flex-1 h-9 rounded-lg bg-gold text-white text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2"
+                >
+                  {saving ? <Spinner /> : 'Agregar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Modal */}
       {showDeleteModal && (

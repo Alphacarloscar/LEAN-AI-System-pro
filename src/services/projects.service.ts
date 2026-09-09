@@ -349,6 +349,27 @@ const _impl = {
       profile: member.profiles,
     }))
   },
+
+  async listUserProjects(userId: string): Promise<ProjectRow[]> {
+    const { data, error } = await supabase
+      .from('project_members')
+      .select('project_id')
+      .eq('user_id', userId)
+
+    if (error) throw new Error(`[Projects] listUserProjects: ${error.message}`)
+
+    if (!data || data.length === 0) return []
+
+    const projectIds = data.map((m) => m.project_id)
+    const { data: projects, error: projError } = await supabase
+      .from('projects')
+      .select('*')
+      .in('id', projectIds)
+      .order('created_at', { ascending: false })
+
+    if (projError) throw new Error(`[Projects] listUserProjects (fetch projects): ${projError.message}`)
+    return (projects ?? []) as ProjectRow[]
+  },
 }
 
 // ── Punto de exportación auditado ────────────────────────────
@@ -377,6 +398,7 @@ export const {
   updateProjectInfo,
   listAllProjectsByCompany,
   getProjectMembers,
+  listUserProjects,
 } = _service
 
 // ── Alias de compatibilidad (deprecados) ────────────────────
