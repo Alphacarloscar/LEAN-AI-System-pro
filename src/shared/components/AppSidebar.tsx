@@ -18,6 +18,7 @@ import { useSidebar }                 from '@/shared/hooks/useSidebar'
 import { UnsavedChangesModal }        from '@/shared/components/UnsavedChangesModal'
 import React, { useState }             from 'react'
 import { useEngagementStore }         from '@/modules/Engagement/store'
+import { useAuthStore }               from '@/modules/Auth'
 import { useDomainSlug }              from '@/hooks/useDomainSlug'
 import { resolveToolLabel }           from '@/shared/domain/toolDisplayNames'
 import type { ToolCode }              from '@/types'
@@ -135,6 +136,7 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
   const activeId = useEngagementStore((state) => state.activeEngagementId)
   const activeProject = projects.find((p) => p.id === activeId)
   const { domainSlug } = useDomainSlug()
+  const { user } = useAuthStore()
 
   // Gate de completitud: T1-T12 bloqueadas si el proyecto no tiene contexto completo
   // Columnas añadidas por migración 20260827001 — no en database.types.ts todavía
@@ -228,6 +230,42 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
             </p>
           </div>
         </button>
+
+        {/* ── Administración (solo superadmin/consultant) ── */}
+        {(user?.role === 'superadmin' || user?.role === 'consultant') && (
+          <button
+            onClick={() => onNav('/admin')}
+            aria-current={location.pathname.startsWith('/admin') ? 'page' : undefined}
+            className={[
+              'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors duration-100',
+              location.pathname.startsWith('/admin')
+                ? 'bg-navy/8 dark:bg-navy/20'
+                : 'hover:bg-black/3 dark:hover:bg-white/4',
+            ].join(' ')}
+          >
+            <div
+              className="h-7 w-7 rounded-full flex items-center justify-center shrink-0"
+              style={{
+                backgroundColor: location.pathname.startsWith('/admin') ? 'rgba(42,40,34,0.12)' : '#F0EDE8',
+                border: `1.5px solid ${location.pathname.startsWith('/admin') ? '#2A2822' : '#D4D0C8'}`,
+                color:  location.pathname.startsWith('/admin') ? '#2A2822' : '#6B6864',
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="7" cy="4" r="2" />
+                <path d="M3 13v-1a4 4 0 114 0v1M9 3.5H13M11 1.5v4" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className={`text-xs font-semibold truncate ${location.pathname.startsWith('/admin') ? 'text-navy dark:text-warm-100' : 'text-warm-700 dark:text-warm-100'}`}>
+                Administración
+              </p>
+              <p className="text-[10px] text-black/30 dark:text-white/25 font-mono mt-0.5">
+                Empresas · Proyectos · Usuarios
+              </p>
+            </div>
+          </button>
+        )}
 
         {/* Banner: proyecto incompleto (solo si hay proyecto activo) */}
         {activeProject && !isProjectComplete && (
