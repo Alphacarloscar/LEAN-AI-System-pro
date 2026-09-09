@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ChevronLeft, Loader, AlertCircle, Copy } from 'lucide-react'
-import { Spinner } from '@shared/design-system/components'
+import { Spinner, Select } from '@shared/design-system/components'
 import {
   getCompanyById,
   updateCompanyInfo,
@@ -11,6 +11,8 @@ import {
   listCompanyProjects,
   listCompanyUsers,
 } from '@/services/companies.service'
+import { SECTOR_OPTIONS, COMPANY_SIZE_OPTIONS } from '@/modules/CompanyProfile/types'
+import { PlanesTab } from '@/modules/CompanyProfile/components/PlanesTab'
 import { AuditTab } from './AuditTab'
 import type { CompanyRow, UserRole } from '@/types/database.types'
 import { Breadcrumb } from './Breadcrumb'
@@ -22,11 +24,8 @@ interface CompanyStats {
   userCount: number
 }
 
-const PACKAGE_OPTIONS = [
-  { id: 'boost_assessment', label: 'T1·T2·T7 — Boost Assessment' },
-  { id: 'portfolio_management', label: 'T3·T5·T8·T9·T11 — Portfolio Management' },
-  { id: 'legal_compliance', label: 'T6·T12 — Legal & Compliance' },
-] as const
+const SECTOR_SELECT_OPTIONS = SECTOR_OPTIONS.map((s) => ({ value: s, label: s }))
+const COMPANY_SIZE_SELECT_OPTIONS = COMPANY_SIZE_OPTIONS.map((s) => ({ value: s, label: s }))
 
 interface CompanyUser {
   id: string
@@ -160,25 +159,6 @@ export function CompanyDetailView() {
     }
   }
 
-  async function handlePackageToggle(packageId: string) {
-    if (!company || !companyId) return
-    setSaving(true)
-    setSaveError(null)
-    try {
-      const current = company.contracted_packages ?? []
-      const newPackages = current.includes(packageId as any)
-        ? current.filter((p) => p !== packageId)
-        : [...current, packageId as any]
-
-      const cid = companyId // TypeScript narrowing
-      const updated = await updateCompanyInfo(cid, { contracted_packages: newPackages })
-      setCompany(updated)
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Error al actualizar paquetes')
-    } finally {
-      setSaving(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -379,11 +359,13 @@ export function CompanyDetailView() {
               </p>
               {editingSector ? (
                 <div className="flex gap-2">
-                  <input
+                  <Select
                     value={editSector}
                     onChange={(e) => setEditSector(e.target.value)}
-                    placeholder="ej: Manufactura, Finanzas, Healthcare…"
-                    className="flex-1 h-10 px-3 rounded-lg border border-border text-sm bg-white outline-none focus:border-gold/60"
+                    options={SECTOR_SELECT_OPTIONS}
+                    placeholder="Seleccionar sector…"
+                    disabled={saving}
+                    className="flex-1 h-10 text-sm"
                   />
                   <button
                     onClick={() => handleUpdateField('sector')}
@@ -423,18 +405,14 @@ export function CompanyDetailView() {
               </p>
               {editingSize ? (
                 <div className="flex gap-2">
-                  <select
+                  <Select
                     value={editSize}
                     onChange={(e) => setEditSize(e.target.value)}
-                    className="flex-1 h-10 px-3 rounded-lg border border-border text-sm bg-white outline-none focus:border-gold/60"
-                  >
-                    <option value="">Seleccionar…</option>
-                    <option value="1-10">1-10 empleados</option>
-                    <option value="11-50">11-50 empleados</option>
-                    <option value="51-200">51-200 empleados</option>
-                    <option value="201-1000">201-1000 empleados</option>
-                    <option value="1000+">1000+ empleados</option>
-                  </select>
+                    options={COMPANY_SIZE_SELECT_OPTIONS}
+                    placeholder="Seleccionar tamaño…"
+                    disabled={saving}
+                    className="flex-1 h-10 text-sm"
+                  />
                   <button
                     onClick={() => handleUpdateField('size')}
                     disabled={saving}
@@ -483,37 +461,7 @@ export function CompanyDetailView() {
         )}
 
         {/* Tab: Paquetes */}
-        {tab === 'packages' && (
-          <div className="flex flex-col gap-4 max-w-2xl">
-            <div className="bg-warm-50 border border-border rounded-lg p-4 mb-4">
-              <p className="text-sm text-text-muted">
-                Los paquetes contratados definen qué herramientas (T1-T12) están disponibles para todos los proyectos de esta empresa.
-              </p>
-            </div>
-            {PACKAGE_OPTIONS.map((pkg) => (
-              <label
-                key={pkg.id}
-                className={[
-                  'flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-colors',
-                  company.contracted_packages?.includes(pkg.id as any)
-                    ? 'border-gold/40 bg-warning-light'
-                    : 'border-border bg-surface hover:bg-warm-50',
-                ].join(' ')}
-              >
-                <input
-                  type="checkbox"
-                  checked={company.contracted_packages?.includes(pkg.id as any) ?? false}
-                  onChange={() => handlePackageToggle(pkg.id)}
-                  disabled={saving}
-                  className="accent-gold"
-                />
-                <span className="text-sm font-medium text-lean-black dark:text-warm-50">
-                  {pkg.label}
-                </span>
-              </label>
-            ))}
-          </div>
-        )}
+        {tab === 'packages' && <PlanesTab companyId={companyId!} />}
 
         {/* Tab: Proyectos */}
         {tab === 'projects' && (
