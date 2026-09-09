@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ChevronLeft, Loader, AlertCircle, Copy } from 'lucide-react'
+import { Loader, AlertCircle, Copy } from 'lucide-react'
 import { Spinner, Select } from '@shared/design-system/components'
 import {
   getCompanyById,
@@ -162,7 +162,7 @@ export function CompanyDetailView() {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-8 py-8">
         <div className="flex items-center gap-3 text-sm text-text-subtle">
           <Spinner size="lg" />
           <span>Cargando empresa…</span>
@@ -173,12 +173,14 @@ export function CompanyDetailView() {
 
   if (!company) {
     return (
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-8 py-8">
         <button
-          onClick={() => navigate('/admin')}
-          className="flex items-center gap-2 text-warm-700 hover:text-warm-900 mb-6"
+          onClick={() => navigate('/admin/companies')}
+          className="flex items-center gap-1.5 text-xs font-medium text-text-muted dark:text-warm-300 hover:text-lean-black dark:hover:text-warm-100 transition-colors mb-6"
         >
-          <ChevronLeft size={16} />
+          <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 12L6 8l4-4" />
+          </svg>
           Volver a empresas
         </button>
         <div className="flex items-center gap-2 text-sm text-danger-dark bg-danger-light px-4 py-3 rounded-lg">
@@ -190,22 +192,23 @@ export function CompanyDetailView() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
-      {/* Breadcrumb y botón atrás */}
-      <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={() => navigate('/admin')}
-          className="flex items-center gap-2 text-warm-700 hover:text-warm-900"
-        >
-          <ChevronLeft size={16} />
-          Volver a empresas
-        </button>
-      </div>
+    <div className="max-w-5xl mx-auto px-8 py-8">
+      {/* Botón volver */}
+      <button
+        onClick={() => navigate('/admin/companies')}
+        className="flex items-center gap-1.5 text-xs font-medium text-text-muted dark:text-warm-300 hover:text-lean-black dark:hover:text-warm-100 transition-colors mb-6"
+      >
+        <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 12L6 8l4-4" />
+        </svg>
+        Volver a empresas
+      </button>
 
       <Breadcrumb
         items={[
+          { label: 'Administración', href: '/admin' },
           { label: 'Empresas', href: '/admin/companies' },
-          { label: company.name, href: `/admin/companies/${companyId}`, current: true },
+          { label: company.name, current: true },
         ]}
       />
 

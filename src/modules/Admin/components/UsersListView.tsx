@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, Trash2, AlertCircle, Check } from 'lucide-react'
+import { Trash2, AlertCircle, Check } from 'lucide-react'
 import { Spinner } from '@shared/design-system/components'
 import { useAuthStore } from '@/modules/Auth'
 import { useIsDark } from '@/shared/hooks/useDarkMode'
@@ -212,10 +212,12 @@ export function UsersListView() {
       {/* Botón volver */}
       <button
         onClick={() => navigate('/admin')}
-        className="flex items-center gap-2 text-warm-700 hover:text-warm-900 mb-8"
+        className="flex items-center gap-1.5 text-xs font-medium text-text-muted dark:text-warm-300 hover:text-lean-black dark:hover:text-warm-100 transition-colors mb-8"
       >
-        <ChevronLeft size={16} />
-        Administración
+        <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 12L6 8l4-4" />
+        </svg>
+        Volver a administración
       </button>
 
       {/* Header */}

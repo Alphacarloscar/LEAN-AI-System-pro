@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ChevronLeft, Loader, AlertCircle, Trash2 } from 'lucide-react'
+import { Loader, AlertCircle, Trash2 } from 'lucide-react'
 import { Spinner } from '@shared/design-system/components'
 import {
   getProjectById,
@@ -157,7 +157,7 @@ export function ProjectDetailView() {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-8 py-8">
         <div className="flex items-center gap-3">
           <Spinner size="lg" />
           <span className="text-sm text-text-muted">Cargando proyecto…</span>
@@ -168,13 +168,15 @@ export function ProjectDetailView() {
 
   if (!project) {
     return (
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-8 py-8">
         <button
           onClick={() => navigate(`/admin/companies/${companyId}`)}
-          className="flex items-center gap-2 text-warm-700 hover:text-warm-900 mb-6"
+          className="flex items-center gap-1.5 text-xs font-medium text-text-muted dark:text-warm-300 hover:text-lean-black dark:hover:text-warm-100 transition-colors mb-6"
         >
-          <ChevronLeft size={16} />
-          Volver
+          <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 12L6 8l4-4" />
+          </svg>
+          Volver a empresa
         </button>
         <div className="text-danger-dark bg-danger-light px-4 py-3 rounded-lg">Proyecto no encontrado</div>
       </div>
@@ -184,20 +186,23 @@ export function ProjectDetailView() {
   const statusStyle = STATUS_STYLES[project.status] || STATUS_STYLES.active
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
+    <div className="max-w-5xl mx-auto px-8 py-8">
       <button
-        onClick={() => navigate(`/admin/companies/${companyId!}`)}
-        className="flex items-center gap-2 text-warm-700 hover:text-warm-900 mb-6"
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-xs font-medium text-text-muted dark:text-warm-300 hover:text-lean-black dark:hover:text-warm-100 transition-colors mb-6"
       >
-        <ChevronLeft size={16} />
+        <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 12L6 8l4-4" />
+        </svg>
         Volver a empresa
       </button>
 
       <Breadcrumb
         items={[
+          { label: 'Administración', href: '/admin' },
           { label: 'Empresas', href: '/admin/companies' },
-          { label: project.name, href: `/admin/companies/${companyId!}` },
-          { label: project.name, href: `/admin/companies/${companyId!}/projects/${projectId!}`, current: true },
+          { label: 'Empresa', href: `/admin/companies/${companyId!}` },
+          { label: project.name, current: true },
         ]}
       />
 

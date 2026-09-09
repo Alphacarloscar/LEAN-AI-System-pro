@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ChevronLeft, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { Spinner } from '@shared/design-system/components'
 import { getUserById, updateUserInfo, toggleUserActive } from '@/services/companies.service'
 import { Breadcrumb } from './Breadcrumb'
@@ -70,7 +70,7 @@ export function UserDetailView() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-8 py-8">
         <div className="flex items-center gap-3">
           <Spinner size="lg" />
           <span className="text-sm text-text-muted">Cargando usuario…</span>
@@ -81,12 +81,14 @@ export function UserDetailView() {
 
   if (!user) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-8 py-8">
         <button
           onClick={() => navigate('/admin/users')}
-          className="flex items-center gap-2 text-warm-700 hover:text-warm-900 mb-6"
+          className="flex items-center gap-1.5 text-xs font-medium text-text-muted dark:text-warm-300 hover:text-lean-black dark:hover:text-warm-100 transition-colors mb-6"
         >
-          <ChevronLeft size={16} />
+          <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 12L6 8l4-4" />
+          </svg>
           Volver a usuarios
         </button>
         <div className="text-danger-dark bg-danger-light px-4 py-3 rounded-lg">Usuario no encontrado</div>
@@ -100,19 +102,22 @@ export function UserDetailView() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="max-w-5xl mx-auto px-8 py-8">
       <button
         onClick={() => navigate('/admin/users')}
-        className="flex items-center gap-2 text-warm-700 hover:text-warm-900 mb-6"
+        className="flex items-center gap-1.5 text-xs font-medium text-text-muted dark:text-warm-300 hover:text-lean-black dark:hover:text-warm-100 transition-colors mb-6"
       >
-        <ChevronLeft size={16} />
+        <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 12L6 8l4-4" />
+        </svg>
         Volver a usuarios
       </button>
 
       <Breadcrumb
         items={[
+          { label: 'Administración', href: '/admin' },
           { label: 'Usuarios', href: '/admin/users' },
-          { label: user.name, href: `/admin/users/${userId}`, current: true },
+          { label: user.name, current: true },
         ]}
       />
 
