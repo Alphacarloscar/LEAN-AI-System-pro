@@ -120,6 +120,9 @@ AI-Ready Repository System v2.1.0
 | `20260904_fix_application_texts_semantics.sql` | DEBT-050: añade columna `text_override` (el valor de override/personalización) a `application_texts`, migra datos de `text_generalizado` si existen, resetea `filename` para recarga posterior con valores file:line correctos. | ✅ DEV — ⏳ PRE + PRO pendiente |
 | `20260904_refactor_application_texts_data.sql` | Continuación de DEBT-050: limpia los datos incorrectos (`filename` con valores `module_key`) para preparar la tabla para seed data correcto extraído desde el código fuente (ej: `AdminView.tsx:154`). Script de generación: `scripts/generate-application-texts-seed.ts` (a ejecutar manualmente tras revisar el output JSON). | ✅ DEV — ⏳ PRE + PRO pendiente |
 | `20260908004_project_members_roles_and_rls.sql` | **Épica 8 — Gestión de miembros del proyecto**: (1) Backfill `project_members.role` 'viewer' → 'client_viewer'; (2) Actualiza CHECK constraint a `('consultant','client_editor','client_viewer')`; (3) Reemplaza RLS policies con `user_can_read_project`/`user_can_edit_project` helpers (drop `is_project_member`/`can_write_project` policies, que quedan como funciones legacy); (4) Añade `profiles.person_id` (FK nullable a `company_persons`) para vincular cuentas a personas del directorio (usado por invite-user edge function en Épica 8). | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260909001_delete_company_rpc.sql` | **Épica 10 — Cascading delete**: RPC `delete_company()` con validación de precondiciones (sin proyectos, sin usuarios no-admin) y cascada transaccional (departamentos → personas → empresa). Retorna jsonb con {success, message, blocking_entity?, blocking_count?}. | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260909002_update_project_status_rpc.sql` | **Épica 10 — Entity lifecycle**: RPC `update_project_status()` para ciclo de vida de proyectos (active, paused, archived, completed) con validación de transiciones permitidas y checks de permisos (superadmin, project owner). Registra en audit_log. Retorna jsonb. | ✅ DEV — ⏳ PRE + PRO pendiente |
+| `20260909003_can_write_project_status_check.sql` | **Épica 10 — Read-only enforcement**: Actualiza función `can_write_project()` para retornar FALSE si project.status != 'active', haciendo read-only automáticamente todos los proyectos inactivos vía RLS en 9+ tablas de proyecto. | ✅ DEV — ⏳ PRE + PRO pendiente |
 
 > Las migraciones de auditoría (`20260615_003`, `20260615_007`, `20260616_004`) marcadas ⏳ se aplican juntas via `supabase/releases/release-v2.2.0-pre-pro.sql` (único script idempotente).
 >
@@ -216,6 +219,131 @@ Funcionalidad de "Personas en la empresa" (Perfil de Empresa) para roles `consul
 - `src/modules/CompanyProfile/components/MergePersonsModal.tsx` — modal con dos selectores (principal / sustituible, mutuamente excluyentes), ahora recibe `companyId` y opera sobre personas de todos los proyectos de la empresa. Si `mergeError` está poblado, el mismo componente muestra un **modal de error dedicado** con el texto descriptivo devuelto por la función, en vez del formulario — no un toast, tal como se especificó en el requisito.
 
 **Validado con Docker (Postgres 15) antes de entregar (versión original, scope por proyecto):** caso feliz (4 tablas repuntadas correctamente, persona sustituible eliminada, referencias ya correctas a la principal quedan intactas), mismo id, proyectos distintos, persona inexistente, rol no autorizado (`client_viewer`), y confirmación explícita de que un `ROLLBACK` externo (simulando cualquier error a mitad de la operación) no deja ningún cambio parcial en ninguna de las 4 tablas ni en `company_persons`. La ampliación a scope por empresa (`20260708_company_persons_company_scope.sql`) reutiliza la misma estructura transaccional — pendiente de validar en Docker antes de aplicar en PRE/PRO.
+
+---
+
+### RPC: `delete_company(p_company_id uuid)` — Epic 10
+
+**Migration:** `20260909001_delete_company_rpc.sql`
+
+**Firma:** `RETURNS jsonb` con `{success: bool, message: text, company_id: uuid, blocking_entity?: text, blocking_count?: int}`
+
+**Propósito:** Eliminar una empresa solo si cumple precondiciones: no tiene proyectos activos, no tiene usuarios no-superadmin asignados.
+
+**Precondiciones (bloqueantes):**
+1. `COUNT(projects WHERE company_id = X) = 0`
+2. `COUNT(users WHERE company_id = X AND role != 'superadmin') = 0`
+
+**Cascada de eliminación (transaccional):**
+1. DELETE FROM departments WHERE company_id = X
+2. DELETE FROM persons WHERE company_id = X
+3. DELETE FROM companies WHERE id = X
+4. Log to audit_log si existe
+
+**Permisos:** Solo `superadmin` role (SECURITY DEFINER)
+
+**Validación:** No existe en fase piloto, solo superadmin puede invocar (error si otro rol intenta).
+
+**Ejemplo:**
+```sql
+SELECT public.delete_company('550e8400-e29b-41d4-a716-446655440000'::uuid);
+-- {success: true, message: 'Empresa... eliminada correctamente.', company_id: '550e8400...'}
+```
+
+**Error (proyectos existen):**
+```json
+{
+  "success": false,
+  "message": "No se puede eliminar la empresa \"Acme\". Tiene 3 proyecto(s) activo(s). Elimine primero todos los proyectos.",
+  "company_id": "550e8400...",
+  "blocking_entity": "projects",
+  "blocking_count": 3
+}
+```
+
+---
+
+### RPC: `update_project_status(p_project_id uuid, p_new_status text, p_actor_id uuid = NULL)` — Epic 10
+
+**Migration:** `20260909002_update_project_status_rpc.sql`
+
+**Firma:** `RETURNS jsonb` con `{success: bool, message: text, project: {id, name, status, company_id}}`
+
+**Propósito:** Cambiar el estado de ciclo de vida de un proyecto con validación de transiciones permitidas.
+
+**Estados válidos:** `active`, `paused`, `archived`, `completed`
+
+**Grafo de transiciones:**
+```
+active ←→ paused (superadmin, consultant)
+active → archived (superadmin)
+active → completed (superadmin)
+paused → archived (superadmin)
+archived ↔ active (superadmin)
+completed ↔ active (superadmin)
+```
+
+**Permisos:**
+- Transiciones a `paused`: superadmin o project owner
+- Transiciones a `archived`/`completed`: superadmin solo
+- Transiciones vuelta a `active`: superadmin solo
+
+**Validación:** Aborta si transición inválida, rol insuficiente, o proyecto inexistente.
+
+**Log de auditoría:** Registra cambio en `audit_log` con old_status, new_status, project_name, company_id.
+
+**Ejemplo:**
+```sql
+-- Como consultant, pausar proyecto propio
+SELECT public.update_project_status(
+  'abc123...'::uuid,
+  'paused',
+  auth.uid()
+);
+-- {success: true, message: 'Proyecto "Demo" cambió de "active" a "paused".', project: {...}}
+
+-- Como superadmin, archivar proyecto
+SELECT public.update_project_status(
+  'abc123...'::uuid,
+  'archived',
+  'superadmin-uuid'::uuid
+);
+```
+
+**Error (transición inválida):**
+```json
+{
+  "success": false,
+  "message": "Transición no permitida: paused → completed para rol \"consultant\".",
+  "project_id": "abc123...",
+  "current_status": "paused",
+  "requested_status": "completed",
+  "actor_role": "consultant"
+}
+```
+
+---
+
+### Updated Function: `can_write_project(pid uuid)` — Epic 10
+
+**Migration:** `20260909003_can_write_project_status_check.sql`
+
+**Cambio:** Ahora retorna `FALSE` si `project.status != 'active'`, incluso para owner/consultant/admin.
+
+**Impacto:**
+- Todas las políticas RLS de WRITE en tablas de proyecto ahora implícitamente hacen read-only proyectos paused/archived/completed.
+- Afecta 9+ tablas: `project_members`, `company_profiles`, `t1_dimension_scores`, `stakeholders`, `value_streams`, `use_cases`, `t5_canvas`, `iso42001_controls`, `snapshots`.
+
+**Ejemplo (RLS policy):**
+```sql
+-- Antes (solo validaba rol)
+CREATE POLICY project_members_write ON project_members
+  FOR ALL USING (can_write_project(project_id));
+  
+-- Después (también valida status)
+-- can_write_project devuelve FALSE si status != 'active'
+-- INSERT/UPDATE/DELETE devuelven 403 (Policy violation)
+```
 
 ---
 
