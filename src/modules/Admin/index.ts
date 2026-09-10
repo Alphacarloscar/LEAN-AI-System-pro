@@ -1,6 +1,6 @@
 export { AdminView } from './AdminView'
 export { CompanyDetailView } from './components/CompanyDetailView'
-export { ProjectDetailView } from './components/ProjectDetailView'
+export { ProjectDetailAdminView } from './components/ProjectDetailAdminView'
 export { UserDetailView } from './components/UserDetailView'
 export { CompaniesListView } from './components/CompaniesListView'
 export { UsersListView } from './components/UsersListView'

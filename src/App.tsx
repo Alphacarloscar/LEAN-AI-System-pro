@@ -14,7 +14,7 @@ import { useProjectStore }                              from '@/modules/Engageme
 import { AppLayout }                            from '@/shared/layouts/AppLayout'
 import { ProjectMembershipGuard }                from '@/shared/guards/ProjectMembershipGuard'
 import { LoginView, ResetPasswordView, UpdatePasswordView, useAuthStore } from '@/modules/Auth'
-import { AdminView, CompanyDetailView, ProjectDetailView, UserDetailView, CompaniesListView, UsersListView, ProjectsListView } from '@/modules/Admin'
+import { AdminView, CompanyDetailView, ProjectDetailAdminView, UserDetailView, CompaniesListView, UsersListView, ProjectsListView } from '@/modules/Admin'
 import { T1View }                               from '@/modules/T1_MaturityRadar'
 import { T2View }                               from '@/modules/T2_StakeholderMatrix'
 import { T3View }                               from '@/modules/T3_ValueStreamMap'
@@ -188,7 +188,7 @@ export default function App() {
         <Route path="/admin/users" element={<UsersListView />} />
         <Route path="/admin/projects" element={<ProjectsListView />} />
         <Route path="/admin/companies/:companyId" element={<CompanyDetailView />} />
-        <Route path="/admin/companies/:companyId/projects/:projectId" element={<ProjectDetailView />} />
+        <Route path="/admin/companies/:companyId/projects/:projectId" element={<ProjectDetailAdminView />} />
         <Route path="/admin/users/:userId" element={<UserDetailView />} />
       </Route>
 

@@ -53,7 +53,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   completed: { bg: 'bg-info-light', text: 'text-info-dark', label: 'Completado' },
 }
 
-export function ProjectDetailView() {
+export function ProjectDetailAdminView() {
   const { companyId, projectId } = useParams<{ companyId: string; projectId: string }>()
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('info')
