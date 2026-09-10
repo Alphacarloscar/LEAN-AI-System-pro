@@ -13,11 +13,17 @@ import {
   addProjectMember,
 } from '@/services/projects.service'
 import { listCompanyUsers } from '@/services/companies.service'
+import { fetchCompanyProfile, upsertCompanyProfile } from '@/services/company-profile.service'
+import { fetchDepartments } from '@/services/department.service'
+import { fetchPersonsByCompany } from '@/services/company-person.service'
 import { AuditTab } from './AuditTab'
 import type { ProjectRow, UserRole } from '@/types/database.types'
+import type { CompanyPerson } from '@/modules/CompanyProfile/useCompanyPersonStore'
+import type { Department } from '@/modules/CompanyProfile/useDepartmentStore'
 import { Breadcrumb } from './Breadcrumb'
+import { reportError } from '@/lib/reportError'
 
-type Tab = 'info' | 'packages' | 'members' | 'users' | 'audit'
+type Tab = 'info' | 'config' | 'packages' | 'members' | 'personas' | 'departamentos' | 'users' | 'audit'
 
 interface ProjectMember {
   user_id: string
@@ -55,6 +61,8 @@ export function ProjectDetailView() {
   const [project, setProject] = useState<ProjectRow | null>(null)
   const [members, setMembers] = useState<ProjectMember[]>([])
   const [companyUsers, setCompanyUsers] = useState<CompanyUser[]>([])
+  const [personas, setPersonas] = useState<CompanyPerson[]>([])
+  const [departamentos, setDepartamentos] = useState<Department[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -66,6 +74,14 @@ export function ProjectDetailView() {
   const [selectedUserId, setSelectedUserId] = useState('')
   const [selectedRole, setSelectedRole] = useState<'consultant' | 'viewer'>('viewer')
 
+  // Config fields
+  const [objetivo, setObjetivo] = useState('')
+  const [restricciones, setRestricciones] = useState('')
+  const [horizonte, setHorizonte] = useState('')
+  const [ecosistema, setEcosistema] = useState('')
+  const [editingConfig, setEditingConfig] = useState(false)
+  const [configSaving, setConfigSaving] = useState(false)
+
   if (!companyId || !projectId) {
     return <div className="text-center py-8 text-danger-dark">Parámetros inválidos</div>
   }
@@ -75,16 +91,28 @@ export function ProjectDetailView() {
       setLoading(true)
       setError(null)
       try {
-        const [projData, membersData, usersData] = await Promise.all([
+        const [projData, membersData, usersData, profileData, personasData, deptData] = await Promise.all([
           getProjectById(projectId!),
           getProjectMembers(projectId!),
           listCompanyUsers(companyId!) as Promise<CompanyUser[]>,
+          fetchCompanyProfile(projectId!).catch(() => null),
+          fetchPersonsByCompany(companyId!).catch(() => []),
+          fetchDepartments(companyId!).catch(() => []),
         ])
         setProject(projData)
         setMembers(membersData)
         setCompanyUsers(usersData)
+        setPersonas(personasData as CompanyPerson[])
+        setDepartamentos(deptData as Department[])
         setEditName(projData.name)
+        if (profileData?.profile) {
+          setObjetivo(profileData.profile.objetivoPrincipalIA || '')
+          setRestricciones(profileData.profile.restriccionesRelevantes || '')
+          setHorizonte(profileData.profile.horizonteEsperadoValor || '')
+          setEcosistema(profileData.profile.ecosistemaTecnologico || '')
+        }
       } catch (err) {
+        reportError('[ProjectDetailView] loadData', err)
         setError(err instanceof Error ? err.message : 'Error al cargar proyecto')
       } finally {
         setLoading(false)
@@ -120,6 +148,31 @@ export function ProjectDetailView() {
       setError(err instanceof Error ? err.message : 'Error al guardar')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleSaveConfig() {
+    if (!projectId || !project) return
+    setConfigSaving(true)
+    try {
+      await upsertCompanyProfile({
+        engagementName: project.name,
+        sector: '',
+        tamanoEmpresa: '',
+        objetivoPrincipalIA: objetivo,
+        restriccionesRelevantes: restricciones,
+        horizonteEsperadoValor: horizonte,
+        ecosistemaTecnologico: ecosistema,
+        areasPrioritarias: [],
+        fricciones: [],
+        savedAt: new Date().toISOString(),
+      }, projectId)
+      setEditingConfig(false)
+    } catch (err) {
+      reportError('[ProjectDetailView] handleSaveConfig', err)
+      setError(err instanceof Error ? err.message : 'Error al guardar configuración')
+    } finally {
+      setConfigSaving(false)
     }
   }
 
@@ -300,11 +353,14 @@ export function ProjectDetailView() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-8 bg-surface rounded-xl p-1 w-fit">
+      <div className="flex gap-1 mb-8 bg-surface rounded-xl p-1 w-fit flex-wrap">
         {[
           { id: 'info' as const, label: 'Información' },
+          { id: 'config' as const, label: 'Configuración' },
           { id: 'packages' as const, label: 'Paquetes' },
           { id: 'members' as const, label: `Miembros (${members.length})` },
+          { id: 'personas' as const, label: `Personas (${personas.length})` },
+          { id: 'departamentos' as const, label: `Departamentos (${departamentos.length})` },
           { id: 'users' as const, label: `Usuarios (${companyUsers.length})` },
           { id: 'audit' as const, label: 'Auditoría' },
         ].map((t) => (
@@ -405,6 +461,143 @@ export function ProjectDetailView() {
                       >
                         <Trash2 size={14} />
                       </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {tab === 'config' && (
+          <div className="flex flex-col gap-4 max-w-3xl">
+            {editingConfig ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-medium text-text-muted mb-2 block">Objetivo Principal</label>
+                  <textarea
+                    value={objetivo}
+                    onChange={(e) => setObjetivo(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-border text-sm bg-white outline-none focus:border-gold/60"
+                    rows={3}
+                    placeholder="Describir el objetivo principal del proyecto"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-text-muted mb-2 block">Restricciones</label>
+                  <textarea
+                    value={restricciones}
+                    onChange={(e) => setRestricciones(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-border text-sm bg-white outline-none focus:border-gold/60"
+                    rows={3}
+                    placeholder="Restricciones y limitaciones del proyecto"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-text-muted mb-2 block">Horizonte Temporal</label>
+                  <select
+                    value={horizonte}
+                    onChange={(e) => setHorizonte(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-border text-sm bg-white outline-none focus:border-gold/60"
+                  >
+                    <option value="">Seleccionar horizonte…</option>
+                    <option value="corto">Corto plazo (&lt; 6 meses)</option>
+                    <option value="medio">Medio plazo (6-18 meses)</option>
+                    <option value="largo">Largo plazo (&gt; 18 meses)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-text-muted mb-2 block">Ecosistema Tecnológico</label>
+                  <textarea
+                    value={ecosistema}
+                    onChange={(e) => setEcosistema(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-border text-sm bg-white outline-none focus:border-gold/60"
+                    rows={3}
+                    placeholder="Descripción del ecosistema tecnológico actual"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleSaveConfig}
+                    disabled={configSaving}
+                    className="px-4 py-2 rounded-lg bg-gold text-white text-sm font-medium disabled:opacity-40"
+                  >
+                    {configSaving ? <Loader size={14} className="animate-spin" /> : 'Guardar configuración'}
+                  </button>
+                  <button
+                    onClick={() => setEditingConfig(false)}
+                    disabled={configSaving}
+                    className="px-4 py-2 rounded-lg border border-border text-sm font-medium disabled:opacity-40"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-4 rounded-lg bg-surface border border-border">
+                  <p className="text-xs font-mono uppercase tracking-widest text-warm-400 mb-2">Objetivo</p>
+                  <p className="text-sm text-lean-black dark:text-warm-50 whitespace-pre-wrap">{objetivo || '—'}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-surface border border-border">
+                  <p className="text-xs font-mono uppercase tracking-widest text-warm-400 mb-2">Restricciones</p>
+                  <p className="text-sm text-lean-black dark:text-warm-50 whitespace-pre-wrap">{restricciones || '—'}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-surface border border-border">
+                  <p className="text-xs font-mono uppercase tracking-widest text-warm-400 mb-2">Horizonte</p>
+                  <p className="text-sm text-lean-black dark:text-warm-50">{horizonte || '—'}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-surface border border-border">
+                  <p className="text-xs font-mono uppercase tracking-widest text-warm-400 mb-2">Ecosistema</p>
+                  <p className="text-sm text-lean-black dark:text-warm-50 whitespace-pre-wrap">{ecosistema || '—'}</p>
+                </div>
+                <button
+                  onClick={() => setEditingConfig(true)}
+                  className="px-4 py-2 rounded-lg bg-gold text-white text-sm font-medium hover:bg-gold-hover"
+                >
+                  Editar configuración
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'personas' && (
+          <div className="flex flex-col gap-3">
+            {personas.length === 0 ? (
+              <p className="text-sm text-text-subtle">Sin personas registradas en esta empresa.</p>
+            ) : (
+              personas.map((p) => (
+                <div key={p.id} className="px-4 py-3 rounded-lg bg-surface border border-border">
+                  <p className="text-sm font-medium text-lean-black dark:text-warm-50">{p.name}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <div>
+                      <p className="text-xs text-text-muted font-mono">{p.role}</p>
+                      {p.department && <p className="text-xs text-text-muted">{p.department}</p>}
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded bg-warm-100 text-warm-800">{p.source_tool}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {tab === 'departamentos' && (
+          <div className="flex flex-col gap-3">
+            {departamentos.length === 0 ? (
+              <p className="text-sm text-text-subtle">Sin departamentos configurados.</p>
+            ) : (
+              departamentos.map((d) => (
+                <div key={d.id} className="px-4 py-3 rounded-lg bg-surface border border-border">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-3 h-3 rounded-full shrink-0"
+                      style={{ backgroundColor: d.color }}
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-lean-black dark:text-warm-50">{d.name}</p>
+                      {d.type && <p className="text-xs text-text-muted">{d.type}</p>}
                     </div>
                   </div>
                 </div>

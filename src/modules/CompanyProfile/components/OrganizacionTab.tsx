@@ -241,11 +241,15 @@ export function OrganizacionTab({ companyId }: OrganizacionTabProps) {
       {editingPerson && (
         <EditPersonModal
           person={editingPerson}
-          companyId={companyId}
-          onClose={() => setEditingPerson(null)}
-          onSave={(updated) => {
-            setPersonas(prev => prev.map(p => p.id === updated.id ? updated : p))
+          departments={[]}
+          onClose={() => {
             setEditingPerson(null)
+            // Reload personas after edit
+            async function reload() {
+              const updated = await fetchPersonsByCompany(companyId)
+              setPersonas(updated)
+            }
+            reload()
           }}
         />
       )}
@@ -253,7 +257,7 @@ export function OrganizacionTab({ companyId }: OrganizacionTabProps) {
       <ImpactWarningDialog
         isOpen={impactWarningOpen}
         title="Confirmar eliminación"
-        description={impactDescription}
+        impactDescription={impactDescription}
         onConfirm={handleConfirmDelete}
         onCancel={() => {
           setImpactWarningOpen(false)

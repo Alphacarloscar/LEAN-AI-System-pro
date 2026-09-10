@@ -25,12 +25,13 @@ import { updateCompanySettings }  from '@/services/companies.service'
 import { reportError }            from '@/lib/reportError'
 import { isDemoEnabled }          from '@/lib/config'
 import { EmpresaTab }             from './components/EmpresaTab'
+import { OrganizacionTab }        from './components/OrganizacionTab'
 import { ProyectosTab }           from './components/ProyectosTab'
 import { PlanesTab }              from './components/PlanesTab'
 
 // ── Tipos locales ─────────────────────────────────────────────
 
-type ActiveTab = 'empresa' | 'planes' | 'proyectos'
+type ActiveTab = 'empresa' | 'organizacion' | 'planes' | 'proyectos'
 
 interface CompanySettings {
   sector:       string
@@ -206,9 +207,10 @@ export function CompanyProfileView() {
         {/* ── Tabs ── */}
         <div className="max-w-5xl mx-auto mt-3 flex gap-1">
           {([
-            { id: 'empresa',  label: 'Empresa' },
-            { id: 'planes',    label: 'Planes' },
-            { id: 'proyectos', label: 'Proyectos' },
+            { id: 'empresa',      label: 'Empresa' },
+            { id: 'organizacion', label: 'Organización' },
+            { id: 'planes',       label: 'Planes' },
+            { id: 'proyectos',    label: 'Proyectos' },
           ] as { id: ActiveTab; label: string }[]).map((tab) => (
             <button
               key={tab.id}
@@ -234,6 +236,9 @@ export function CompanyProfileView() {
             onSettingsChange={(patch) => setCompanySettings((s) => ({ ...s, ...patch }))}
             canEditCompanySettings={canEditCompanySettings}
           />
+        )}
+        {activeTab === 'organizacion' && companyId && (
+          <OrganizacionTab companyId={companyId} />
         )}
         {activeTab === 'planes' && companyId && (
           <PlanesTab companyId={companyId} />

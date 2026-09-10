@@ -2,8 +2,6 @@
 // CompanyProfile — Tab Empresa
 // ============================================================
 
-import { DepartmentManager }  from '../DepartmentManager'
-import { CompanyPeopleSection } from './CompanyPeopleSection'
 import { SectionLabel, FieldLabel, LeanSelect } from './CompanyProfileHelpers'
 import { SECTOR_OPTIONS, COMPANY_SIZE_OPTIONS } from '../types'
 
@@ -56,21 +54,6 @@ export function EmpresaTab({
           </div>
         </div>
       </div>
-
-      {/* Departamentos */}
-      <div className="rounded-xl bg-white dark:bg-warm-800 border border-border dark:border-white/6 p-6 space-y-4">
-        <div>
-          <SectionLabel>Departamentos de la empresa</SectionLabel>
-          <p className="text-xs text-text-muted dark:text-warm-400 -mt-1">
-            Lista centralizada compartida entre todos los proyectos.
-            Disponible como selector en T2, T3, T4 y T8.
-          </p>
-        </div>
-        <DepartmentManager companyId={companyId} />
-      </div>
-
-      {/* Personas en la empresa */}
-      <CompanyPeopleSection companyId={companyId} />
     </>
   )
 }
