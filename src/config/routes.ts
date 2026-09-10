@@ -1,7 +1,33 @@
 /**
- * Routes Configuration — Épica 2
- * Centraliza todas las rutas de la aplicación con naming estandarizado (kebab-case)
+ * Routes Configuration — Épica 2 + ADR-030
+ *
+ * Centraliza todas las rutas de la aplicación con naming estandarizado (kebab-case).
  * Reemplaza strings hardcodeados en navigate(), Link, etc.
+ *
+ * SEPARACIÓN FUNCIONAL (ADR-030):
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * /company-profile (CLIENT ZONE — client_editor/client_viewer)
+ *   • Clientes editan su propia empresa y proyectos
+ *   • CompanyProfileView: Tab Empresa, Organización, Planes, Proyectos
+ *   • Edición modal de proyectos (ProjectDetailView modal en CompanyProfile)
+ *   • Datos: empresas del usuario, sus proyectos, configuración compartida
+ *   • Guards: ProjectMembershipGuard valida acceso a proyecto activo
+ *
+ * /admin (OPERATIONAL ZONE — superadmin)
+ *   • Superadmin gestiona todas las empresas, proyectos, usuarios
+ *   • AdminView: landing con Empresas, Usuarios, Proyectos
+ *   • CompanyDetailView: gestión empresa (info, usuarios, departamentos)
+ *   • ProjectDetailAdminView: gestión proyecto (config, personas, departamentos)
+ *   • UserDetailView: gestión usuario (asignaciones, permisos)
+ *   • Datos: datos globales, acceso irrestricto
+ *   • Guards: isAdminUser(superadmin) — redirige otros roles a /company-profile
+ *
+ * GARANTÍAS DE SEPARACIÓN:
+ *   • No hay acceso /admin sin role superadmin (guard ProjectMembershipGuard)
+ *   • Ediciones en /admin afectan data global (companies, projects, audit_logs)
+ *   • Ediciones en /company-profile son locales (company_profiles project-scoped)
+ *   • Ambas usan mismos servicios pero con diferentes contextos (role-based)
  */
 
 // ── Zona Pública (Autenticación) ──────────────────────────────────────────
@@ -12,7 +38,8 @@ export const PUBLIC_ROUTES = {
   UPDATE_PASSWORD: '/update-password',
 } as const
 
-// ── Zona Protegida: Dashboard ─────────────────────────────────────────────
+// ── Zona Protegida: Dashboard (CLIENT ZONE) ────────────────────────────────
+// Proyecto activo seleccionado por cliente vía selector de proyecto en header.
 // EVALUATION_ROUTE_PATTERNS — Static path patterns for React Router <Route path>
 // Used only by <Route path={EVALUATION_ROUTE_PATTERNS.T1}> declarations
 // to avoid hardcoded strings that drift from the builders below.
@@ -54,7 +81,9 @@ export const EVALUATION_ROUTES = {
   MEMBERS: (projectId: string) => `/evaluation/projects/${projectId}/members`,
 } as const
 
-// ── Zona Admin (Superadmin) ───────────────────────────────────────────────
+// ── Zona Admin (OPERATIONAL ZONE — Superadmin only) ────────────────────────
+// Gestión global: empresas, proyectos, usuarios, auditoría.
+// Acceso: superadmin role solamente. Otros roles redirigidos a /company-profile.
 export const ADMIN_ROUTES = {
   ROOT: '/admin',
   COMPANIES: '/admin/companies',
