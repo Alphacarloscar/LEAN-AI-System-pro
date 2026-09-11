@@ -35,6 +35,8 @@ function makeProject(overrides: Partial<ProjectRow> = {}): ProjectRow {
     company_id:    'company-001',
     status:        'active',
     current_phase: 'listen',
+    domain_id:     'domain-ai',
+    contracted_packages: [],
     start_date:    '2026-01-01',
     end_date:      null,
     created_at:    '2026-01-01T09:00:00.000Z',
@@ -103,7 +105,31 @@ describe('createProject', () => {
       p_name:       'Nexus Digital S.A.',
       p_company_id: 'company-001',
       p_phase:      'listen',
+      p_domain_id:  undefined,
+      p_objetivo_principal: undefined,
+      p_restricciones: undefined,
+      p_horizonte_valor: undefined,
+      p_ecosistema_tecnologico: undefined,
+      p_fricciones_oportunidades: undefined,
     })
+  })
+
+  it('envia domainId a la RPC al crear proyectos multi-domain', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: [makeProject({ domain_id: 'domain-transformacion' })],
+      error: null,
+    } as never)
+
+    await createProject({
+      name: 'Proyecto Transformacion',
+      companyId: 'company-001',
+      domainId: 'domain-transformacion',
+    })
+
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      'create_project',
+      expect.objectContaining({ p_domain_id: 'domain-transformacion' }),
+    )
   })
 
   it('usa fase "listen" por defecto', async () => {

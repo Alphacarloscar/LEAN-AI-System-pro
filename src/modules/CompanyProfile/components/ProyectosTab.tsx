@@ -14,7 +14,9 @@ import {
 } from '@/modules/Admin/constants/ecosystemOptions'
 import { listProjectsByCompany, createProject, deleteProject } from '@/services/projects.service'
 import { usePermissions } from '@/modules/Auth'
+import { useEngagementStore } from '@/modules/Engagement/store'
 import { useDepartmentStore } from '../useDepartmentStore'
+import { getProjectDomainId, getProjectDomainSlug } from '../projectDomain'
 import { reportError } from '@/lib/reportError'
 import { ProjectDetailView } from '../ProjectDetailView'
 import { ImpactWarningDialog } from '@/shared/components/ImpactWarningDialog'
@@ -23,6 +25,7 @@ import type { Friction } from '../types'
 interface ProyectoItem {
   id: string
   name: string
+  domain_id?: string | null
 }
 
 interface ProyectosTabProps {
@@ -31,6 +34,10 @@ interface ProyectosTabProps {
 
 export function ProyectosTab({ companyId }: ProyectosTabProps) {
   const { canCreateProjects, canEditProjects, canDeleteProjects } = usePermissions()
+  const activeProjectId = useEngagementStore((state) => state.activeProjectId ?? state.activeEngagementId)
+  const activeProject = useEngagementStore((state) =>
+    state.projects.find((project) => project.id === activeProjectId) ?? null
+  )
   const { departments } = useDepartmentStore()
   const [projects, setProjects] = useState<ProyectoItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -118,6 +125,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
       await createProject({
         name: projectName.trim(),
         companyId,
+        domainId: getProjectDomainId(activeProject),
         objetivoPrincipal: objetivoPrincipal.trim() || undefined,
         restricciones: restricciones.trim() || undefined,
         horizonteValor: horizonteValor || undefined,
@@ -139,8 +147,9 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
     }
   }
 
-  const ecosystemOptions = getEcosystemOptions('ai_adoption')
-  const frictionTypes = getFrictionTypes('ai_adoption')
+  const activeDomainSlug = getProjectDomainSlug(activeProject)
+  const ecosystemOptions = getEcosystemOptions(activeDomainSlug)
+  const frictionTypes = getFrictionTypes(activeDomainSlug)
 
   const textareaClass = "w-full px-3 py-2 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60 focus:bg-white placeholder:text-text-subtle resize-none"
   const selectClass = "w-full px-3 py-2 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60 focus:bg-white"

@@ -80,4 +80,20 @@ describe('DepartmentManager', () => {
     })
     expect(useDepartmentStore.getState().departments).toEqual([])
   })
+
+  it('rolls back the optimistic deletion when the service fails', async () => {
+    const user = userEvent.setup()
+    vi.mocked(deleteDepartment).mockRejectedValueOnce(new Error('delete failed'))
+
+    render(<DepartmentManager companyId="company-1" />)
+
+    await user.click(screen.getByRole('button', { name: /eliminar ventas/i }))
+    await user.click(await screen.findByRole('button', { name: /confirmar/i }))
+
+    await waitFor(() => {
+      expect(deleteDepartment).toHaveBeenCalledTimes(1)
+    })
+    expect(useDepartmentStore.getState().departments).toEqual([department])
+    expect(await screen.findByText(/delete failed/i)).toBeInTheDocument()
+  })
 })

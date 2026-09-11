@@ -19,14 +19,15 @@ import { usePermissions } from '@/modules/Auth'
 import { reportError } from '@/lib/reportError'
 import { FrictionCard } from './components/FrictionCard'
 import { SectionLabel, FieldLabel, LeanSelect, AreaChip } from './components/CompanyProfileHelpers'
+import { getProjectDomainSlug } from './projectDomain'
 import {
   VALUE_HORIZON_OPTIONS,
   Friction,
 } from './types'
-import { getEcosystemOptions } from '@/modules/Admin/constants/ecosystemOptions'
-import type { ProjectRow } from '@/types/database.types'
+import { getEcosystemOptions, getFrictionTypes } from '@/modules/Admin/constants/ecosystemOptions'
+import type { ProjectRowWithDomain } from '@/types/database.types'
 
-interface ExtendedProjectRow extends ProjectRow {
+interface ExtendedProjectRow extends ProjectRowWithDomain {
   objetivo_principal?: string | null
   restricciones?: string | null
   horizonte_valor?: string | null
@@ -157,7 +158,9 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
   }
 
   // Obtener opciones ecosistema (usa dominio por defecto)
-  const ecosystemOptions = getEcosystemOptions('ai_adoption')
+  const projectDomainSlug = getProjectDomainSlug(project)
+  const ecosystemOptions = getEcosystemOptions(projectDomainSlug)
+  const frictionTypeOptions = getFrictionTypes(projectDomainSlug)
 
   if (isLoading) {
     return (
@@ -302,6 +305,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
                     onUpdate={(updates) => updateFriction(friction.id, updates)}
                     onRemove={() => removeFriction(friction.id)}
                     areas={departments}
+                    frictionTypeOptions={frictionTypeOptions}
                     disabled={isReadOnly}
                   />
                 ))}

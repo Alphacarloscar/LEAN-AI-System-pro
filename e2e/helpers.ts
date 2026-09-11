@@ -57,13 +57,23 @@ export async function selectEngagement(
   page:      Page,
   projectId: string = LAB_PROJECT_ID,
 ): Promise<void> {
-  await page.evaluate((pid) => {
-    // Formato interno de zustand/middleware/persist v1
+  const persistProject = ([pid, companyId]: [string, string]) => {
+    // Formato interno de zustand/middleware/persist v1.
+    // La app actual usa lean-active-project; lean-active-engagement queda
+    // como compatibilidad para rutas/tests legacy.
+    const state = { activeProjectId: pid, activeEngagementId: pid, activeCompanyId: companyId }
+    localStorage.setItem(
+      'lean-active-project',
+      JSON.stringify({ state, version: 1 }),
+    )
     localStorage.setItem(
       'lean-active-engagement',
-      JSON.stringify({ state: { activeEngagementId: pid }, version: 1 }),
+      JSON.stringify({ state, version: 1 }),
     )
-  }, projectId)
+  }
+
+  await page.addInitScript(persistProject, [projectId, LAB_COMPANY_ID])
+  await page.evaluate(persistProject, [projectId, LAB_COMPANY_ID])
 }
 
 // ── waitForStoreReady ─────────────────────────────────────────────────────────

@@ -62,10 +62,11 @@ export const FRICTION_TYPES_BY_DOMAIN: Record<string, string[]> = {
 }
 
 export const DEFAULT_ECOSYSTEM_OPTIONS = [
-  'Microsoft Azure AI / Copilot',
-  'Google Vertex AI / Gemini',
-  'AWS Bedrock / SageMaker',
-  'OpenAI / ChatGPT Enterprise',
+  'Microsoft 365 / Power Platform',
+  'Google Workspace',
+  'ERP / CRM existente',
+  'Infraestructura legacy / on-premise',
+  'Mixto / Híbrido',
   'Otro / Personalizado',
 ]
 

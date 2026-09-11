@@ -64,8 +64,8 @@ export function ProjectsTab({ companies }: ProjectsTabProps) {
   const textareaClass = "w-full px-3 py-2 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60 focus:bg-white placeholder:text-text-subtle resize-none"
   const selectClass = "w-full px-3 py-2 rounded-lg border border-border text-sm bg-warm-50 outline-none focus:border-gold/60 focus:bg-white"
 
-  const ecosystemOptions = getEcosystemOptions('ai_adoption')
-  const frictionLabel = getFrictionLabel('ai_adoption')
+  const ecosystemOptions = getEcosystemOptions(null)
+  const frictionLabel = getFrictionLabel(null)
 
   return (
     <div className="flex flex-col gap-6">

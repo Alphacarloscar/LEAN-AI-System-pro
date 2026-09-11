@@ -13,7 +13,7 @@
 
 import { supabase }                    from '@/lib/supabase'
 import { makeAuditable }               from '@/lib/audit'
-import type { ProjectRow, MemberRole } from '@/types/database.types'
+import type { ProjectRow, ProjectRowWithDomain, MemberRole } from '@/types/database.types'
 
 export interface ProjectCompanyData {
   company_id:   string | null
@@ -41,7 +41,7 @@ const _impl = {
   async listMyProjects(): Promise<ProjectRow[]> {
     const { data, error } = await supabase
       .from('projects')
-      .select('*')
+      .select('*, governance_domains!projects_domain_id_fkey(id, slug, label)')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
 
@@ -55,6 +55,7 @@ const _impl = {
   async createProject(params: {
     name:          string
     companyId?:    string
+    domainId?:     string
     currentPhase?: ProjectRow['current_phase']
     startDate?:    string
     objetivoPrincipal?: string
@@ -76,6 +77,7 @@ const _impl = {
     const { data, error } = await supabase.rpc('create_project', {
       p_name:       params.name,
       p_company_id: params.companyId ?? undefined,
+      p_domain_id:  params.domainId ?? undefined,
       p_phase:      params.currentPhase ?? 'listen',
       p_objetivo_principal: params.objetivoPrincipal ?? undefined,
       p_restricciones: params.restricciones ?? undefined,
@@ -145,10 +147,10 @@ const _impl = {
   // status — se quieren ver también personas de proyectos archivados).
   // Usado por CompanyPeopleSection para el filtro de proyecto y el
   // selector de proyecto al dar de alta una persona.
-  async listProjectsByCompany(companyId: string): Promise<Pick<ProjectRow, 'id' | 'name'>[]> {
+  async listProjectsByCompany(companyId: string): Promise<Pick<ProjectRow, 'id' | 'name' | 'domain_id'>[]> {
     const { data, error } = await supabase
       .from('projects')
-      .select('id, name')
+      .select('id, name, domain_id')
       .eq('company_id', companyId)
       .order('name', { ascending: true })
 
@@ -177,15 +179,15 @@ const _impl = {
   },
 
   // Obtener proyecto completo con todos sus campos
-  async getProjectById(projectId: string): Promise<ProjectRow> {
+  async getProjectById(projectId: string): Promise<ProjectRowWithDomain> {
     const { data, error } = await supabase
       .from('projects')
-      .select('*')
+      .select('*, governance_domains!projects_domain_id_fkey(id, slug, label)')
       .eq('id', projectId)
       .single()
 
     if (error) throw new Error(`[Projects] getProjectById: ${error.message}`)
-    return data as ProjectRow
+    return data as ProjectRowWithDomain
   },
 
   // Actualizar proyecto existente
@@ -363,7 +365,7 @@ const _impl = {
     const projectIds = data.map((m) => m.project_id)
     const { data: projects, error: projError } = await supabase
       .from('projects')
-      .select('*')
+      .select('*, governance_domains!projects_domain_id_fkey(id, slug, label)')
       .in('id', projectIds)
       .order('created_at', { ascending: false })
 

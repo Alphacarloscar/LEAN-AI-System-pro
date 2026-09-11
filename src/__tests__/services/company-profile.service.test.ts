@@ -241,61 +241,34 @@ describe('upsertCompanyProfile', () => {
     expect(supabase.from).not.toHaveBeenCalled()
   })
 
-  it('hace upsert del perfil y sincroniza frictions (sin fricciones)', async () => {
-    const upsertMock = vi.fn().mockResolvedValue({ error: null })
-    const deleteMock = vi.fn().mockReturnThis()
-    const eqMock     = vi.fn().mockResolvedValue({ error: null })
-
-    vi.mocked(supabase.from).mockImplementation((table: string) => {
-      if (table === 'company_profiles') return { upsert: upsertMock } as never
-      return { delete: deleteMock, eq: eqMock } as never
-    })
-
-    const profile = makeProfile({ fricciones: [] })
-    await upsertCompanyProfile(profile, ENG_ID)
-
-    expect(upsertMock).toHaveBeenCalledOnce()
-    expect(deleteMock).toHaveBeenCalledOnce()
-  })
-
-  it('re-inserta las fricciones después de borrarlas', async () => {
-    const upsertProfileMock   = vi.fn().mockResolvedValue({ error: null })
-    const deleteFromDbMock    = vi.fn().mockReturnThis()
-    const eqDeleteMock        = vi.fn().mockResolvedValue({ error: null })
-    const insertFrictionsMock = vi.fn().mockResolvedValue({ error: null })
-
-    vi.mocked(supabase.from).mockImplementation((table: string) => {
-      if (table === 'company_profiles') return { upsert: upsertProfileMock } as never
-      if (table === 'frictions') {
-        return {
-          delete: deleteFromDbMock,
-          eq:     eqDeleteMock,
-          insert: insertFrictionsMock,
-        } as never
-      }
-      return {} as never
-    })
-
+  it('envia fricciones mapeadas a la RPC atomica', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never)
     const friction: Friction = {
       id: 'fr-1', tipo: 'proceso manual', areaFuncional: 'RRHH',
       frecuencia: 'Media', impacto: 'Medio', notas: '',
     }
-    const profile = makeProfile({ fricciones: [friction] })
-    await upsertCompanyProfile(profile, ENG_ID)
 
-    expect(upsertProfileMock).toHaveBeenCalledOnce()
+    await upsertCompanyProfile(makeProfile({ fricciones: [friction] }), ENG_ID)
+
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      'upsert_company_profile_with_frictions',
+      expect.objectContaining({
+        p_frictions: [expect.objectContaining({ id: 'fr-1', project_id: ENG_ID })],
+      }),
+    )
+    expect(supabase.from).not.toHaveBeenCalled()
   })
 
-  it('lanza error con prefijo [CompanyProfile] si falla el upsert del perfil', async () => {
-    vi.mocked(supabase.from).mockImplementation((table: string) => {
-      if (table === 'company_profiles') {
-        return { upsert: vi.fn().mockResolvedValue({ error: { message: 'constraint violation' } }) } as never
-      }
-      return {} as never
-    })
+  it('propaga errores de la RPC atomica sin ejecutar delete/insert local', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: null,
+      error: { message: 'insert frictions failed' },
+    } as never)
 
     await expect(upsertCompanyProfile(makeProfile(), ENG_ID)).rejects.toThrow(
-      '[CompanyProfile] upsertCompanyProfile:',
+      '[CompanyProfile] upsertCompanyProfileWithFrictions: insert frictions failed',
     )
+    expect(supabase.from).not.toHaveBeenCalled()
   })
+
 })

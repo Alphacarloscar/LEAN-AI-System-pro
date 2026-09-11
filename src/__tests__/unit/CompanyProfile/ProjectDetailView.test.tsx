@@ -50,6 +50,11 @@ import { getProjectById } from '@/services/projects.service'
 const project = {
   id: 'project-1',
   company_id: 'company-1',
+  domain_id: 'domain-transformacion',
+  governance_domains: {
+    slug: 'transformacion_digital',
+    label: 'Transformacion Digital',
+  },
   name: 'Proyecto Alpha',
   objetivo_principal: 'Reducir carga manual',
   restricciones: 'Sin integraciones legacy',
@@ -101,5 +106,15 @@ describe('ProjectDetailView', () => {
     expect(screen.getByRole('button', { name: /guardar cambios/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /eliminar fricci/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Ventas' })).not.toBeDisabled()
+  })
+
+  it('uses the project domain when rendering ecosystem options', async () => {
+    mockUsePermissions.mockReturnValue({ canEditProjects: true })
+
+    render(<ProjectDetailView projectId="project-1" companyId="company-1" onClose={vi.fn()} />)
+
+    await screen.findByDisplayValue('Proyecto Alpha')
+    expect(screen.getByRole('option', { name: 'Salesforce' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'OpenAI / ChatGPT Enterprise' })).not.toBeInTheDocument()
   })
 })

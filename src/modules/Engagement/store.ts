@@ -42,6 +42,7 @@ interface ProjectStore {
     name: string,
     companyId?: string,
     extra?: {
+      domainId?:                string
       objetivoPrincipalIA?:    string
       horizonteEsperadoValor?: string
       ecosistemaTecnologico?:  string
@@ -137,9 +138,11 @@ export const useProjectStore = create<ProjectStore>()(
           if (!resolvedCompanyId) {
             resolvedCompanyId = await getAuthUserCompanyId()
           }
+          const activeProject = get().projects.find((project) => project.id === get().activeProjectId)
           const project = await createProject({
             name,
             companyId:             resolvedCompanyId,
+            domainId:              extra?.domainId ?? activeProject?.domain_id,
             objetivoPrincipal:     extra?.objetivoPrincipalIA,
             horizonteValor:        extra?.horizonteEsperadoValor,
             ecosistemaTecnologico: extra?.ecosistemaTecnologico,

@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProyectosTab } from '@/modules/CompanyProfile/components/ProyectosTab'
 
@@ -10,6 +11,10 @@ vi.mock('@/modules/Auth', () => ({
 
 vi.mock('@/modules/CompanyProfile/useDepartmentStore', () => ({
   useDepartmentStore: () => ({ departments: [] }),
+}))
+
+vi.mock('@/modules/Engagement/store', () => ({
+  useEngagementStore: vi.fn(),
 }))
 
 vi.mock('@shared/design-system/components', () => ({
@@ -67,7 +72,8 @@ vi.mock('@/services/projects.service', () => ({
   deleteProject: vi.fn(),
 }))
 
-import { listProjectsByCompany } from '@/services/projects.service'
+import { useEngagementStore } from '@/modules/Engagement/store'
+import { createProject, listProjectsByCompany } from '@/services/projects.service'
 
 const permissions = {
   canCreateProjects: false,
@@ -79,6 +85,24 @@ describe('ProyectosTab', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(listProjectsByCompany).mockResolvedValue([{ id: 'project-1', name: 'Proyecto Alpha' }])
+    vi.mocked(createProject).mockResolvedValue({ id: 'project-new', name: 'Proyecto Nuevo' } as any)
+    vi.mocked(useEngagementStore).mockImplementation((selector) => {
+      const state = {
+        activeProjectId: 'active-project',
+        activeEngagementId: 'active-project',
+        projects: [
+          {
+            id: 'active-project',
+            domain_id: 'domain-transformacion',
+            governance_domains: {
+              slug: 'transformacion_digital',
+              label: 'Transformacion Digital',
+            },
+          },
+        ],
+      }
+      return selector(state as any)
+    })
   })
 
   it('hides project write actions when the role has read-only project permissions', async () => {
@@ -120,5 +144,33 @@ describe('ProyectosTab', () => {
     expect(screen.getByRole('button', { name: /crear proyecto/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /editar/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /eliminar/i })).toBeInTheDocument()
+  })
+
+  it('creates projects with the active project domain and domain-specific options', async () => {
+    const user = userEvent.setup()
+    mockUsePermissions.mockReturnValue({
+      canCreateProjects: true,
+      canEditProjects: true,
+      canDeleteProjects: false,
+    })
+
+    render(<ProyectosTab companyId="company-1" />)
+
+    await screen.findByText('Proyecto Alpha')
+    await user.click(screen.getByRole('button', { name: /crear proyecto/i }))
+
+    expect(screen.getByRole('option', { name: 'Salesforce' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'OpenAI / ChatGPT Enterprise' })).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText(/nombre del proyecto/i), 'Proyecto TD')
+    await user.click(screen.getByRole('button', { name: /^crear$/i }))
+
+    await waitFor(() => {
+      expect(createProject).toHaveBeenCalledWith(expect.objectContaining({
+        name: 'Proyecto TD',
+        companyId: 'company-1',
+        domainId: 'domain-transformacion',
+      }))
+    })
   })
 })

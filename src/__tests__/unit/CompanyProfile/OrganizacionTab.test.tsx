@@ -26,7 +26,7 @@ vi.mock('@/shared/components/ImpactWarningDialog', () => ({
 vi.mock('@/modules/CompanyProfile/components/EditPersonModal', () => ({
   EditPersonModal: ({ departments }: { departments: { name: string }[] }) => (
     <div role="dialog">
-      Departments: {departments.map((department) => department.name).join(', ')}
+      Departments: {departments.length > 0 ? departments.map((department) => department.name).join(', ') : 'Sin departamentos'}
     </div>
   ),
 }))
@@ -103,5 +103,23 @@ describe('OrganizacionTab', () => {
     expect(screen.getByText('Department manager')).toBeInTheDocument()
     expect(screen.queryByTitle('Editar')).not.toBeInTheDocument()
     expect(screen.queryByTitle('Eliminar')).not.toBeInTheDocument()
+  })
+
+  it('shows a clear empty-departments state in the person editor', async () => {
+    const user = userEvent.setup()
+    useDepartmentStore.setState({
+      departments: [],
+      isLoading: false,
+      error: null,
+    })
+
+    render(<OrganizacionTab companyId="company-1" />)
+
+    await screen.findByText('Ana Perez')
+    await user.click(screen.getByTitle('Editar'))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toHaveTextContent('Departments: Sin departamentos')
+    })
   })
 })

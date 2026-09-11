@@ -121,39 +121,21 @@ const _impl = {
   },
 
   /**
-   * Guarda el perfil en Supabase (UPSERT por project_id).
-   * Sincroniza frictions: elimina las existentes y re-inserta las actuales.
-   * Estrategia delete+insert es segura aquí — máximo ~10 filas por proyecto.
+   * Guarda perfil + fricciones mediante RPC transaccional.
+   * Si falla cualquier parte, la base conserva el estado anterior completo.
    */
   async upsertCompanyProfile(
     profile: CompanyProfile,
     projectId: string,
   ): Promise<void> {
-    // 1. Upsert perfil principal
-    const { error: profileError } = await supabase
-      .from('company_profiles')
-      .upsert(profileToUpsert(profile, projectId), { onConflict: 'project_id' })
+    const { error } = await supabase.rpc('upsert_company_profile_with_frictions', {
+      p_project_id: projectId,
+      p_profile: profileToUpsert(profile, projectId),
+      p_frictions: profile.fricciones.map((f) => frictionToInsert(f, projectId)),
+    })
 
-    if (profileError) {
-      throw new Error(`[CompanyProfile] upsertCompanyProfile: ${profileError.message}`)
-    }
-
-    // 2. Sincronizar frictions: delete all + re-insert current list
-    const { error: deleteError } = await supabase
-      .from('frictions')
-      .delete()
-      .eq('project_id', projectId)
-
-    if (deleteError) {
-      throw new Error(`[CompanyProfile] syncFrictions (delete): ${deleteError.message}`)
-    }
-
-    if (profile.fricciones.length > 0) {
-      const rows = profile.fricciones.map((f) => frictionToInsert(f, projectId))
-      const { error: insertError } = await supabase.from('frictions').insert(rows)
-      if (insertError) {
-        throw new Error(`[CompanyProfile] syncFrictions (insert): ${insertError.message}`)
-      }
+    if (error) {
+      throw new Error(`[CompanyProfile] upsertCompanyProfileWithFrictions: ${error.message}`)
     }
   },
 }

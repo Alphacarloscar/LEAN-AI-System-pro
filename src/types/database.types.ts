@@ -279,6 +279,33 @@ export type Database = {
           },
         ]
       }
+      governance_domains: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          label: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          slug: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       iso42001_controls: {
         Row: {
           auto_inferred: boolean
@@ -446,6 +473,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "governance_domains"
             referencedColumns: ["id"]
           },
           {
@@ -1003,11 +1037,23 @@ export type Database = {
         Returns: Json
       }
       create_project: {
-        Args: { p_company_id?: string; p_name?: string; p_phase?: string }
+        Args: {
+          p_company_id?: string
+          p_domain_id?: string
+          p_ecosistema_tecnologico?: string
+          p_fricciones_oportunidades?: string
+          p_horizonte_valor?: string
+          p_name?: string
+          p_objetivo_principal?: string
+          p_phase?: string
+          p_restricciones?: string
+        }
         Returns: {
           company_id: string | null
+          contracted_packages: string[]
           created_at: string | null
           current_phase: string
+          domain_id: string
           end_date: string | null
           id: string
           name: string
@@ -1022,6 +1068,14 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      upsert_company_profile_with_frictions: {
+        Args: {
+          p_frictions?: Json
+          p_profile: Json
+          p_project_id: string
+        }
+        Returns: undefined
       }
       is_company_project: { Args: { pid: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
