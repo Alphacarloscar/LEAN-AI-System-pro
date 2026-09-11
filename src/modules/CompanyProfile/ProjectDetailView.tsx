@@ -6,7 +6,7 @@
 // - Fricciones y oportunidades (registro estructurado)
 // - Áreas prioritarias (departamentos)
 //
-// Solo superadmin/consultant pueden editar.
+// superadmin/consultant/client_editor pueden editar proyectos.
 // Botones Guardar/Cancelar en la parte inferior.
 // ============================================================
 
@@ -42,7 +42,8 @@ interface ProjectDetailViewProps {
 }
 
 export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps) {
-  const { isReadOnly } = usePermissions()
+  const { canEditProjects } = usePermissions()
+  const isReadOnly = !canEditProjects
   const { departments } = useDepartmentStore()
 
   const [project, setProject] = useState<ExtendedProjectRow | null>(null)
@@ -92,6 +93,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
 
   // Guardar cambios
   async function handleSave() {
+    if (isReadOnly) return
     if (!name.trim()) {
       setSaveError('El nombre del proyecto es requerido')
       return
@@ -122,6 +124,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
 
   // Manejar fricciones
   function addFriction() {
+    if (isReadOnly) return
     const newFriction: Friction = {
       id: crypto.randomUUID(),
       tipo: '',
@@ -134,15 +137,18 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
   }
 
   function updateFriction(id: string, updates: Partial<Friction>) {
+    if (isReadOnly) return
     setFricciones(fricciones.map(f => f.id === id ? { ...f, ...updates } : f))
   }
 
   function removeFriction(id: string) {
+    if (isReadOnly) return
     setFricciones(fricciones.filter(f => f.id !== id))
   }
 
   // Manejar áreas
   function toggleArea(areaName: string) {
+    if (isReadOnly) return
     setAreasPrioritarias(prev =>
       prev.includes(areaName)
         ? prev.filter(a => a !== areaName)
@@ -296,6 +302,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
                     onUpdate={(updates) => updateFriction(friction.id, updates)}
                     onRemove={() => removeFriction(friction.id)}
                     areas={departments}
+                    disabled={isReadOnly}
                   />
                 ))}
               </div>
@@ -317,6 +324,7 @@ export function ProjectDetailView({ projectId, onClose }: ProjectDetailViewProps
                     label={dept.name}
                     selected={areasPrioritarias.includes(dept.name)}
                     onToggle={() => toggleArea(dept.name)}
+                    disabled={isReadOnly}
                   />
                 ))}
               </div>

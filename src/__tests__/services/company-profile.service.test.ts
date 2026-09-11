@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     from:      vi.fn(),
+    rpc:       vi.fn(),
     functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) },
     auth: {
       getSession: vi.fn().mockResolvedValue({
@@ -223,6 +224,22 @@ describe('fetchCompanyProfile', () => {
 
 describe('upsertCompanyProfile', () => {
   beforeEach(() => vi.clearAllMocks())
+
+  it('usa una RPC atomica para evitar perdida parcial de fricciones', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never)
+
+    await upsertCompanyProfile(makeProfile({ fricciones: [] }), ENG_ID)
+
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      'upsert_company_profile_with_frictions',
+      expect.objectContaining({
+        p_project_id: ENG_ID,
+        p_profile: expect.objectContaining({ project_id: ENG_ID }),
+        p_frictions: [],
+      }),
+    )
+    expect(supabase.from).not.toHaveBeenCalled()
+  })
 
   it('hace upsert del perfil y sincroniza frictions (sin fricciones)', async () => {
     const upsertMock = vi.fn().mockResolvedValue({ error: null })

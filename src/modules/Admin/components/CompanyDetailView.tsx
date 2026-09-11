@@ -84,7 +84,7 @@ export function CompanyDetailView() {
   const [changingUserRole, setChangingUserRole] = useState<string | null>(null)
 
   const { user } = useAuthStore()
-  const canManage = user?.role === 'superadmin' || user?.role === 'consultant'
+  const canManage = user?.role === 'superadmin'
 
   if (!companyId) {
     return <div className="text-center py-8 text-danger-dark">ID de empresa no válido</div>

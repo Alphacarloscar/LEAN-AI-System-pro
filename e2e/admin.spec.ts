@@ -1,221 +1,132 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
+import { LAB_COMPANY_ID, LAB_PROJECT_ID, LAB_SECOND_PROJECT_ID, USERS } from './helpers'
 
-// Usuario superadmin (necesario para acceder al panel de admin)
-const SUPERADMIN_EMAIL    = process.env.E2E_SUPERADMIN_EMAIL    ?? 'superadmin@test.dev'
+const SUPERADMIN_EMAIL = process.env.E2E_SUPERADMIN_EMAIL ?? USERS.superadmin.email
 const SUPERADMIN_PASSWORD = process.env.E2E_SUPERADMIN_PASSWORD ?? ''
 
-// Usuario con rol no-admin para probar que NO puede acceder
-const REGULAR_EMAIL    = process.env.E2E_EMAIL    ?? 'david.baquero@consultoriaalpha.com'
-const REGULAR_PASSWORD = process.env.E2E_PASSWORD ?? ''
+const ROLE_FIXTURES = {
+  consultant: {
+    email: process.env.E2E_CONSULTANT_EMAIL ?? USERS.consultor.email,
+    password: process.env.E2E_CONSULTANT_PASSWORD ?? '',
+  },
+  client_editor: {
+    email: process.env.E2E_CLIENT_EDITOR_EMAIL ?? USERS.editor.email,
+    password: process.env.E2E_CLIENT_EDITOR_PASSWORD ?? '',
+  },
+  client_viewer: {
+    email: process.env.E2E_CLIENT_VIEWER_EMAIL ?? USERS.viewer.email,
+    password: process.env.E2E_CLIENT_VIEWER_PASSWORD ?? '',
+  },
+} as const
 
-async function loginAs(
-  page: Parameters<Parameters<typeof test>[1]>[0]['page'],
-  email: string,
-  password: string,
-) {
+const ADMIN_SUBROUTES = [
+  '/admin',
+  '/admin/companies',
+  '/admin/users',
+  '/admin/projects',
+  `/admin/companies/${LAB_COMPANY_ID}`,
+  `/admin/companies/${LAB_COMPANY_ID}/projects/${LAB_PROJECT_ID}`,
+] as const
+
+async function loginAs(page: Page, email: string, password: string) {
   await page.goto('/login')
   await page.locator('input[autocomplete="email"]').fill(email)
   await page.locator('input[autocomplete="current-password"]').fill(password)
   await page.locator('button[type="submit"]').click()
-  await expect(page).not.toHaveURL(/login/, { timeout: 10_000 })
+  await expect(page).not.toHaveURL(/\/login/, { timeout: 10_000 })
 }
 
-test.describe('Admin Panel — acceso superadmin', () => {
+async function openSidebar(page: Page) {
+  await page.locator('button[aria-label*="Abrir"], button[aria-expanded="false"]').first().click()
+}
+
+async function expectAdminDenied(page: Page, path: string) {
+  await page.goto(path)
+  await expect(page.locator('body')).toBeVisible({ timeout: 5_000 })
+  await expect(page).toHaveURL(/\/evaluation/, { timeout: 8_000 })
+  await expect(page).not.toHaveURL(/\/admin/)
+}
+
+test.describe('Admin Panel - acceso superadmin', () => {
   test.beforeEach(async ({ page }) => {
     test.skip(!SUPERADMIN_PASSWORD, 'E2E_SUPERADMIN_PASSWORD no configurado')
     await loginAs(page, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD)
   })
 
-  test('la vista /admin carga sin crash', async ({ page }) => {
-    const jsErrors: string[] = []
-    page.on('pageerror', (err) => jsErrors.push(err.message))
+  for (const path of ADMIN_SUBROUTES) {
+    test(`superadmin puede abrir ${path}`, async ({ page }) => {
+      const jsErrors: string[] = []
+      page.on('pageerror', (err) => jsErrors.push(err.message))
 
-    await page.goto('/admin')
-    await expect(page).not.toHaveURL(/login/)
-    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
+      await page.goto(path)
+      await expect(page).not.toHaveURL(/\/login/)
+      await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 12_000 })
 
-    const crashErrors = jsErrors.filter((e) =>
-      e.includes('Cannot read') || e.includes('is not a function') || e.includes('is undefined'),
+      const crashErrors = jsErrors.filter((message) =>
+        message.includes('Cannot read') ||
+        message.includes('is not a function') ||
+        message.includes('is undefined'),
+      )
+      expect(crashErrors, `Errores JS en ${path}: ${crashErrors.join(', ')}`).toHaveLength(0)
+    })
+  }
+
+  test('detalle de proyecto muestra el nombre real de empresa en breadcrumb', async ({ page }) => {
+    await page.goto(`/admin/companies/${LAB_COMPANY_ID}/projects/${LAB_PROJECT_ID}`)
+
+    const breadcrumb = page.getByRole('navigation', { name: /breadcrumb/i })
+    await expect(breadcrumb).toContainText(/Administraci.n/)
+    await expect(breadcrumb).toContainText('Empresas')
+    await expect(breadcrumb.getByRole('link', { name: 'DISNEY' })).toHaveAttribute(
+      'href',
+      `/admin/companies/${LAB_COMPANY_ID}`,
     )
-    expect(crashErrors, `Errores JS en /admin: ${crashErrors.join(', ')}`).toHaveLength(0)
+    await expect(breadcrumb).toContainText('Toy Story')
+    await expect(breadcrumb.getByRole('link', { name: /^Empresa$/ })).toHaveCount(0)
   })
 
-  test('muestra los 3 tabs: Empresas, Usuarios, Proyectos', async ({ page }) => {
-    await page.goto('/admin')
-    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
+  test('bloquea detalle de proyecto cuando projectId pertenece a otra empresa', async ({ page }) => {
+    await page.goto(`/admin/companies/${LAB_COMPANY_ID}/projects/${LAB_SECOND_PROJECT_ID}`)
 
-    const tabLabels = ['Empresas', 'Usuarios', 'Proyectos']
-    for (const label of tabLabels) {
-      const tab = page.getByText(label, { exact: false }).first()
-      await expect(tab).toBeVisible({ timeout: 5_000 })
-    }
+    await expect(page.getByText(/no pertenece a la empresa/i)).toBeVisible({ timeout: 12_000 })
+    await expect(page.getByRole('button', { name: /agregar miembro/i })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /editar configuraci/i })).toHaveCount(0)
+    await expect(page.getByText('Road Runner')).toHaveCount(0)
+    await expect(page.getByText('consultant@test.dev')).toHaveCount(0)
   })
 
-  test('tab Empresas muestra al menos una empresa', async ({ page }) => {
-    await page.goto('/admin')
-    // Esperar a que el panel cargue completamente (AdminLoadingScreen → contenido real)
-    await expect(page.getByText('Panel de administración')).toBeVisible({ timeout: 12_000 })
+  test('superadmin ve el botón Administración en el sidebar y navega a /admin', async ({ page }) => {
+    await page.goto('/evaluation')
+    await openSidebar(page)
 
-    const empresasTab = page.getByRole('tab', { name: /empresas/i })
-      .or(page.locator('button').filter({ hasText: /empresas/i }).first())
-    const tabExists = await empresasTab.isVisible({ timeout: 3_000 }).catch(() => false)
-    if (tabExists) await empresasTab.click()
-
-    // El panel cargó correctamente si aparece el heading — datos o lista vacía son ambos válidos
-    await expect(page.getByText(/empresas registradas/i).first()).toBeVisible({ timeout: 8_000 })
-    const isEmpty = await page.getByText('Sin empresas todavía.').isVisible({ timeout: 1_000 }).catch(() => false)
-    if (isEmpty) {
-      test.info().annotations.push({ type: 'info', description: 'DB sin empresas en este entorno CI — estado vacío válido' })
-    }
-  })
-
-  test('tab Usuarios muestra al menos un usuario', async ({ page }) => {
-    await page.goto('/admin')
-    // Los tabs solo aparecen tras cargar datos (AdminLoadingScreen no los tiene)
-    const usuariosTabBtn = page.locator('button').filter({ hasText: /^Usuarios$/ })
-    await expect(usuariosTabBtn.first()).toBeVisible({ timeout: 15_000 })
-    await usuariosTabBtn.first().click()
-
-    // UsersTab usa divs, no <table>. El panel cargó correctamente si aparece el heading
-    await expect(page.getByText(/usuarios registrados/i).first()).toBeVisible({ timeout: 8_000 })
-    const isEmpty = await page.getByText('Sin usuarios registrados.').isVisible({ timeout: 1_000 }).catch(() => false)
-    if (isEmpty) {
-      test.info().annotations.push({ type: 'info', description: 'DB sin usuarios en este entorno CI — estado vacío válido' })
-    }
-  })
-
-  test('el botón de crear empresa está visible', async ({ page }) => {
-    await page.goto('/admin')
-    // Esperar que carguen los tabs reales (la pantalla de carga no los incluye)
-    await expect(page.locator('button').filter({ hasText: /^Empresas$/ }).first()).toBeVisible({ timeout: 15_000 })
-
-    // Por defecto se muestra el tab Empresas con el formulario de creación
-    const createBtn = page.getByRole('button', { name: /^Crear$/ })
-    const hasBtn = await createBtn.first().isVisible({ timeout: 8_000 }).catch(() => false)
-    expect(hasBtn, 'Debe haber un botón para crear empresa').toBe(true)
-  })
-
-  test('el botón de invitar usuario está visible', async ({ page }) => {
-    await page.goto('/admin')
-    await expect(page.locator('main, [role="main"]').first()).toBeVisible({ timeout: 8_000 })
-
-    // Navegar al tab Usuarios donde siempre se muestra la sección de invitación
-    const usuariosTab = page.locator('button').filter({ hasText: /^Usuarios$/ }).first()
-    const tabExists = await usuariosTab.isVisible({ timeout: 8_000 }).catch(() => false)
-
-    if (!tabExists) {
-      test.info().annotations.push({ type: 'info', description: 'Tab Usuarios no visible — panel admin cargando o sin datos' })
-      return
-    }
-
-    await usuariosTab.dispatchEvent('click')
-
-    // UsersTab siempre renderiza el h2 "Invitar usuario" y el botón submit "Enviar invitación"
-    const hasSection = await page.getByText(/invitar usuario/i).first().isVisible({ timeout: 5_000 }).catch(() => false)
-    const hasBtn     = await page.getByRole('button', { name: /enviar invitaci[oó]n/i }).first().isVisible({ timeout: 3_000 }).catch(() => false)
-
-    if (!hasSection && !hasBtn) {
-      test.info().annotations.push({ type: 'info', description: 'Sección de invitar no encontrada en entorno E2E' })
-      return
-    }
-
-    expect(hasSection || hasBtn, 'Debe existir la sección de invitar usuario').toBe(true)
-  })
-})
-
-test.describe('Admin Panel — acceso denegado a roles no-superadmin', () => {
-  test.beforeEach(async ({ page }) => {
-    test.skip(!REGULAR_PASSWORD, 'E2E_PASSWORD no configurado')
-    await loginAs(page, REGULAR_EMAIL, REGULAR_PASSWORD)
-  })
-
-  test('usuario no-superadmin no puede ver /admin (redirige o muestra 403)', async ({ page }) => {
-    await page.goto('/admin')
-    // Esperar que la navegación se complete (redirige o carga vacío)
-    await expect(page.locator('body')).toBeVisible({ timeout: 5_000 })
-
-    // Debe redirigir al home o mostrar un estado vacío/error
-    const isOnAdmin = page.url().endsWith('/admin')
-    if (isOnAdmin) {
-      // Si llega a /admin, no debe ver los tabs de gestión
-      const empresasTab = page.getByText('Empresas', { exact: true })
-      const hasAccess = await empresasTab.isVisible({ timeout: 3_000 }).catch(() => false)
-      expect(hasAccess, 'Un usuario no-superadmin NO debe ver los tabs del admin').toBe(false)
-    } else {
-      // Fue redirigido — correcto
-      expect(page.url()).not.toMatch(/\/admin$/)
-    }
-  })
-})
-
-test.describe('Admin Panel — botón en sidebar', () => {
-  test('superadmin ve el botón "Administración" en el sidebar', async ({ page }) => {
-    test.skip(!SUPERADMIN_PASSWORD, 'E2E_SUPERADMIN_PASSWORD no configurado')
-    await loginAs(page, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD)
-
-    // Abrir sidebar
-    await page.locator('button[aria-label*="Abrir menú"], button[aria-expanded="false"]').first().click()
-
-    const adminButton = page.getByText('Administración', { exact: false })
-    await expect(adminButton).toBeVisible({ timeout: 5_000 })
-  })
-
-  test('consultant ve el botón "Administración" en el sidebar', async ({ page }) => {
-    const CONSULTANT_EMAIL = process.env.E2E_CONSULTANT_EMAIL ?? 'consultant@test.dev'
-    const CONSULTANT_PASSWORD = process.env.E2E_CONSULTANT_PASSWORD ?? ''
-    test.skip(!CONSULTANT_PASSWORD, 'E2E_CONSULTANT_PASSWORD no configurado')
-
-    await loginAs(page, CONSULTANT_EMAIL, CONSULTANT_PASSWORD)
-
-    // Abrir sidebar
-    await page.locator('button[aria-label*="Abrir menú"], button[aria-expanded="false"]').first().click()
-
-    const adminButton = page.getByText('Administración', { exact: false })
-    await expect(adminButton).toBeVisible({ timeout: 5_000 })
-  })
-
-  test('client_editor NO ve el botón "Administración" en el sidebar', async ({ page }) => {
-    const CLIENT_EDITOR_EMAIL = process.env.E2E_CLIENT_EDITOR_EMAIL ?? 'client@test.dev'
-    const CLIENT_EDITOR_PASSWORD = process.env.E2E_CLIENT_EDITOR_PASSWORD ?? ''
-    test.skip(!CLIENT_EDITOR_PASSWORD, 'E2E_CLIENT_EDITOR_PASSWORD no configurado')
-
-    await loginAs(page, CLIENT_EDITOR_EMAIL, CLIENT_EDITOR_PASSWORD)
-
-    // Abrir sidebar
-    await page.locator('button[aria-label*="Abrir menú"], button[aria-expanded="false"]').first().click()
-
-    const adminButton = page.getByText('Administración', { exact: false })
-    await expect(adminButton).not.toBeVisible({ timeout: 3_000 }).catch(() => {})
-  })
-
-  test('client_viewer NO ve el botón "Administración" en el sidebar', async ({ page }) => {
-    const CLIENT_VIEWER_EMAIL = process.env.E2E_CLIENT_VIEWER_EMAIL ?? 'viewer@test.dev'
-    const CLIENT_VIEWER_PASSWORD = process.env.E2E_CLIENT_VIEWER_PASSWORD ?? ''
-    test.skip(!CLIENT_VIEWER_PASSWORD, 'E2E_CLIENT_VIEWER_PASSWORD no configurado')
-
-    await loginAs(page, CLIENT_VIEWER_EMAIL, CLIENT_VIEWER_PASSWORD)
-
-    // Abrir sidebar
-    await page.locator('button[aria-label*="Abrir menú"], button[aria-expanded="false"]').first().click()
-
-    const adminButton = page.getByText('Administración', { exact: false })
-    await expect(adminButton).not.toBeVisible({ timeout: 3_000 }).catch(() => {})
-  })
-
-  test('clic en el botón "Administración" navega a /admin', async ({ page }) => {
-    test.skip(!SUPERADMIN_PASSWORD, 'E2E_SUPERADMIN_PASSWORD no configurado')
-    await loginAs(page, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD)
-
-    // Abrir sidebar
-    await page.locator('button[aria-label*="Abrir menú"], button[aria-expanded="false"]').first().click()
-
-    const adminButton = page.getByText('Administración', { exact: false }).first()
+    const adminButton = page.getByRole('button', { name: /administraci/i }).first()
     await expect(adminButton).toBeVisible({ timeout: 5_000 })
 
-    // Hacer clic en el botón
     await adminButton.click()
-
-    // Verificar que navegó a /admin
-    await expect(page).toHaveURL(/\/admin/, { timeout: 5_000 })
+    await expect(page).toHaveURL(/\/admin$/, { timeout: 5_000 })
   })
+})
+
+test.describe('Admin Panel - acceso denegado a roles no-superadmin', () => {
+  for (const [role, credentials] of Object.entries(ROLE_FIXTURES)) {
+    test.describe(role, () => {
+      test.beforeEach(async ({ page }) => {
+        test.skip(!credentials.password, `Password E2E no configurado para ${role}`)
+        await loginAs(page, credentials.email, credentials.password)
+      })
+
+      test('no ve el botón Administración en el sidebar', async ({ page }) => {
+        await page.goto('/evaluation')
+        await openSidebar(page)
+
+        await expect(page.getByRole('button', { name: /administraci/i })).toHaveCount(0)
+      })
+
+      test('no puede abrir directamente ninguna subruta /admin/**', async ({ page }) => {
+        for (const path of ADMIN_SUBROUTES) {
+          await expectAdminDenied(page, path)
+        }
+      })
+    })
+  }
 })

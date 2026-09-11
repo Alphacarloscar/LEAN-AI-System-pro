@@ -87,23 +87,26 @@ export function AreaChip({
 }
 
 export function ToggleChip<T extends string>({
-  label, value, selected, onSelect, colorSelected,
+  label, value, selected, onSelect, colorSelected, disabled,
 }: {
   label:          T
   value:          T
   selected:       boolean
   onSelect:       (v: T) => void
   colorSelected?: string
+  disabled?:       boolean
 }) {
   return (
     <button
       type="button"
       onClick={() => onSelect(value)}
+      disabled={disabled}
       className={[
         'px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 border',
         selected
           ? `border-transparent text-white ${colorSelected ?? 'bg-navy'}`
           : 'bg-warm-100 dark:bg-warm-700 text-text-muted dark:text-warm-300 border-border dark:border-white/8 hover:border-warm-300 dark:hover:border-white/20',
+        disabled ? 'opacity-50 cursor-not-allowed' : '',
       ].join(' ')}
     >
       {label}

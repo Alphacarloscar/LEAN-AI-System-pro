@@ -12,6 +12,7 @@ import { Spinner, ToastProvider }                           from '@shared/design
 import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useProjectStore }                              from '@/modules/Engagement/store'
 import { AppLayout }                            from '@/shared/layouts/AppLayout'
+import { AdminRouteGuard }                      from '@/shared/guards/AdminRouteGuard'
 import { ProjectMembershipGuard }                from '@/shared/guards/ProjectMembershipGuard'
 import { LoginView, ResetPasswordView, UpdatePasswordView, useAuthStore } from '@/modules/Auth'
 import { AdminView, CompanyDetailView, ProjectDetailAdminView, UserDetailView, CompaniesListView, UsersListView, ProjectsListView } from '@/modules/Admin'
@@ -30,7 +31,7 @@ import { T12View }                              from '@/modules/T12_ISOAssessmen
 import { CompanyProfileView }                   from '@/modules/CompanyProfile'
 import { UserProfileView }                      from '@/modules/UserProfile'
 import { ProjectMembersRouteView }              from '@/modules/ProjectMembers'
-import { PUBLIC_ROUTES, EVALUATION_ROUTES, EVALUATION_ROUTE_PATTERNS, ADMIN_ROUTES, DEFAULT_REDIRECT } from '@/config/routes'
+import { PUBLIC_ROUTES, EVALUATION_ROUTES, EVALUATION_ROUTE_PATTERNS, ADMIN_ROUTE_PATTERNS, DEFAULT_REDIRECT } from '@/config/routes'
 
 // ── ProtectedRoute — redirige a /login si no autenticado ──────
 
@@ -182,14 +183,16 @@ export default function App() {
           <Route path={EVALUATION_ROUTE_PATTERNS.MEMBERS} element={<ProjectMembersRouteView />} />
         </Route>
 
-        {/* Admin */}
-        <Route path={ADMIN_ROUTES.ROOT} element={<AdminView />} />
-        <Route path="/admin/companies" element={<CompaniesListView />} />
-        <Route path="/admin/users" element={<UsersListView />} />
-        <Route path="/admin/projects" element={<ProjectsListView />} />
-        <Route path="/admin/companies/:companyId" element={<CompanyDetailView />} />
-        <Route path="/admin/companies/:companyId/projects/:projectId" element={<ProjectDetailAdminView />} />
-        <Route path="/admin/users/:userId" element={<UserDetailView />} />
+        {/* Admin - superadmin only */}
+        <Route element={<AdminRouteGuard />}>
+          <Route path={ADMIN_ROUTE_PATTERNS.ROOT} element={<AdminView />} />
+          <Route path={ADMIN_ROUTE_PATTERNS.COMPANIES} element={<CompaniesListView />} />
+          <Route path={ADMIN_ROUTE_PATTERNS.USERS} element={<UsersListView />} />
+          <Route path={ADMIN_ROUTE_PATTERNS.PROJECTS} element={<ProjectsListView />} />
+          <Route path={ADMIN_ROUTE_PATTERNS.COMPANY_DETAIL} element={<CompanyDetailView />} />
+          <Route path={ADMIN_ROUTE_PATTERNS.COMPANY_PROJECT_DETAIL} element={<ProjectDetailAdminView />} />
+          <Route path={ADMIN_ROUTE_PATTERNS.USER_DETAIL} element={<UserDetailView />} />
+        </Route>
       </Route>
 
       {/* Fallback — redirigir a /evaluation */}

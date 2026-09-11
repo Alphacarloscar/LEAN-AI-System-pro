@@ -22,11 +22,22 @@ BEGIN;
 INSERT INTO public.companies (id, name, slug, sector, company_size)
 VALUES (
   '0b83042d-414e-4d4c-8c83-3a469affbfb3',
-  'Disney',
+  'DISNEY',
   'disney',
   'Tecnología / Software',
   '201–500 empleados'
-) ON CONFLICT (id) DO NOTHING;
+),
+(
+  '9f648a7e-4d12-4a29-bf18-2750cde3ed7f',
+  'ACME',
+  'acme',
+  'Manufactura',
+  '51-200 empleados'
+) ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  slug = EXCLUDED.slug,
+  sector = EXCLUDED.sector,
+  company_size = EXCLUDED.company_size;
 
 -- ── 2. Profiles ──────────────────────────────────────────────
 INSERT INTO public.profiles (id, email, name, role, company_id) VALUES
@@ -65,6 +76,14 @@ VALUES (
   '0b83042d-414e-4d4c-8c83-3a469affbfb3',
   'active',
   'listen'
+),
+(
+  '57d8a20c-a87f-4e17-a8ac-3426d071e762',
+  'Road Runner',
+  '51e0f939-b12a-42d5-87b6-6e6d5d6036a0',
+  '9f648a7e-4d12-4a29-bf18-2750cde3ed7f',
+  'active',
+  'listen'
 ) ON CONFLICT (id) DO NOTHING;
 
 -- ── 5. Project members ───────────────────────────────────────
@@ -72,7 +91,8 @@ INSERT INTO public.project_members (project_id, user_id, role) VALUES
   ('e2058bff-9759-465d-ae4d-df79fdf23815', '51e0f939-b12a-42d5-87b6-6e6d5d6036a0', 'consultant'),
   ('e2058bff-9759-465d-ae4d-df79fdf23815', '22749bdd-8ea1-49e1-8f44-7ae199bb77b0', 'consultant'),
   ('d1a2b3c4-e5f6-4a1b-9c8d-7e6f5a4b3c2d', '51e0f939-b12a-42d5-87b6-6e6d5d6036a0', 'consultant'),
-  ('d1a2b3c4-e5f6-4a1b-9c8d-7e6f5a4b3c2d', '22749bdd-8ea1-49e1-8f44-7ae199bb77b0', 'consultant')
+  ('d1a2b3c4-e5f6-4a1b-9c8d-7e6f5a4b3c2d', '22749bdd-8ea1-49e1-8f44-7ae199bb77b0', 'consultant'),
+  ('57d8a20c-a87f-4e17-a8ac-3426d071e762', '51e0f939-b12a-42d5-87b6-6e6d5d6036a0', 'consultant')
 ON CONFLICT (project_id, user_id) DO NOTHING;
 
 -- ── 6. T1 dimension scores — interviewee: Andy (CEO / business) ──

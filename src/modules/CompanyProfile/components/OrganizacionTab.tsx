@@ -2,7 +2,7 @@
 // CompanyProfile — Tab Organización
 //
 // Gestión de departamentos y personas de la empresa.
-// Sección A: CRUD de departamentos (solo canEditCompanySettings)
+// Sección A: CRUD de departamentos si canManageOrganization=true
 // Sección B: Vista lista/organigrama de personas agrupadas por departamento
 // ============================================================
 
@@ -25,7 +25,7 @@ interface OrganizacionTabProps {
 type ViewMode = 'lista' | 'organigrama'
 
 export function OrganizacionTab({ companyId }: OrganizacionTabProps) {
-  const { canEditCompanySettings } = usePermissions()
+  const { canManageOrganization } = usePermissions()
   const { departments } = useDepartmentStore()
 
   const [viewMode, setViewMode] = useState<ViewMode>('lista')
@@ -65,6 +65,7 @@ export function OrganizacionTab({ companyId }: OrganizacionTabProps) {
   }, {} as Record<string, CompanyPerson[]>)
 
   async function handleDeletePersonClick(person: CompanyPerson) {
+    if (!canManageOrganization) return
     setDeletingPerson(person)
     try {
       const impact = await getPersonImpact(person.id)
@@ -85,6 +86,7 @@ export function OrganizacionTab({ companyId }: OrganizacionTabProps) {
   }
 
   async function handleConfirmDelete() {
+    if (!canManageOrganization) return
     if (!deletingPerson) return
     try {
       await deletePerson(deletingPerson.id)
@@ -182,7 +184,7 @@ export function OrganizacionTab({ companyId }: OrganizacionTabProps) {
                         {persona.source_tool === 'company_profile' && (
                           <Badge variant="gold">manual</Badge>
                         )}
-                        {canEditCompanySettings && (
+                        {canManageOrganization && (
                           <div className="flex gap-1">
                             <button
                               onClick={() => setEditingPerson(persona)}
@@ -241,7 +243,7 @@ export function OrganizacionTab({ companyId }: OrganizacionTabProps) {
       {editingPerson && (
         <EditPersonModal
           person={editingPerson}
-          departments={[]}
+          departments={departments}
           onClose={() => {
             setEditingPerson(null)
             // Reload personas after edit

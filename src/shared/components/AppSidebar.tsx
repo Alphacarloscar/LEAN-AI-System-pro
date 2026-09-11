@@ -19,18 +19,12 @@ import { UnsavedChangesModal }        from '@/shared/components/UnsavedChangesMo
 import React, { useState }             from 'react'
 import { useEngagementStore }         from '@/modules/Engagement/store'
 import { useAuthStore }               from '@/modules/Auth'
+import { canAccessAdmin }             from '@/modules/Auth/usePermissions'
 import { useDomainSlug }              from '@/hooks/useDomainSlug'
 import { resolveToolLabel }           from '@/shared/domain/toolDisplayNames'
-import type { ToolCode }              from '@/types'
+import { PACKAGE_GROUPS, type ToolNavItem } from '@/config/packageCatalog'
 
 // ── Registro estático del producto ───────────────────────────
-
-interface ToolNavItem {
-  code:       ToolCode
-  moduleCode: ToolCode
-  label:      string
-  path:       string
-}
 
 // T10 (plataforma) y T4 (shared kernel) son siempre visibles
 // Rutas dinámicas: se construyen en buildPath() con el engagementId
@@ -38,43 +32,6 @@ const T10_TOOL: ToolNavItem = { code: 'T10', moduleCode: 'T10', label: 'Dashboar
 const T4_TOOL:  ToolNavItem = { code: 'T4',  moduleCode: 'T4',  label: 'Use Case Priority Board', path: '/evaluation/projects' }
 
 // Paquetes con sus herramientas — orden de renderizado en sidebar
-export interface PackageGroup {
-  packageId: string
-  label:     string
-  tools:     ToolNavItem[]
-}
-
-export const PACKAGE_GROUPS: PackageGroup[] = [
-  {
-    packageId: 'boost_assessment',
-    label:     'Boost Assessment',
-    tools: [
-      { code: 'T1', moduleCode: 'T1', label: 'AI Readiness Assessment', path: '/evaluation/projects' },
-      { code: 'T2', moduleCode: 'T2', label: 'Stakeholder Matrix',       path: '/evaluation/projects' },
-      { code: 'T7', moduleCode: 'T7', label: 'Adoption Heatmap',         path: '/evaluation/projects' },
-    ],
-  },
-  {
-    packageId: 'portfolio_management',
-    label:     'Portfolio Management',
-    tools: [
-      { code: 'T3',  moduleCode: 'T3',  label: 'Value Stream Map',   path: '/evaluation/projects' },
-      { code: 'T5',  moduleCode: 'T5',  label: 'AI Taxonomy Canvas', path: '/evaluation/projects' },
-      { code: 'T8',  moduleCode: 'T8',  label: 'Communication Map',  path: '/evaluation/projects' },
-      { code: 'T9',  moduleCode: 'T9',  label: 'AI Roadmap',         path: '/evaluation/projects' },
-      { code: 'T11', moduleCode: 'T11', label: 'Operating Rhythm',   path: '/evaluation/projects' },
-    ],
-  },
-  {
-    packageId: 'legal_compliance',
-    label:     'Legal & Compliance',
-    tools: [
-      { code: 'T6',  moduleCode: 'T6',  label: 'Risk & Governance',   path: '/evaluation/projects' },
-      { code: 'T12', moduleCode: 'T12', label: 'ISO 42001 Assessment', path: '/evaluation/projects' },
-    ],
-  },
-]
-
 // ── Sub-componentes de herramienta ──────────────────────────────
 
 function ToolButton({ tool, isActive, onNav, label }: {
@@ -176,12 +133,12 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
   }
 
   // Paquetes contratados del proyecto activo
-  const contractedPackages: string[] = (activeProject as any)?.contracted_packages ?? []
+  const contractedPackages = activeProject?.contracted_packages ?? []
   const hasPackage = (pkgId: string) => contractedPackages.includes(pkgId)
 
   const isCompanyProfileActive = location.pathname === '/company-profile'
   const { user } = useAuthStore()
-  const isAdminUser = user?.role === 'superadmin' || user?.role === 'consultant'
+  const isAdminUser = canAccessAdmin(user?.role)
   const isAdminActive = location.pathname.startsWith('/admin')
 
   return (
@@ -233,7 +190,7 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
           </div>
         </button>
 
-        {/* ── Administración (solo superadmin/consultant) ── */}
+        {/* ── Administración (solo superadmin) ── */}
         {isAdminUser && (
           <button
             onClick={() => onNav('/admin')}
@@ -271,16 +228,16 @@ function SidebarPanel({ onNav, engagementId }: { onNav: (path: string) => void; 
 
         {/* Banner: proyecto incompleto (solo si hay proyecto activo) */}
         {activeProject && !isProjectComplete && (
-          <div className="mx-3 mt-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30">
-            <p className="text-[10px] font-medium text-amber-800 dark:text-amber-300 leading-snug">
+          <div className="mx-3 mt-2 px-3 py-2 rounded-lg bg-warning-light dark:bg-warning/10 border border-warning dark:border-warning/40">
+            <p className="text-[10px] font-medium text-warning-dark dark:text-warning leading-snug">
               Completa el contexto del proyecto para desbloquear las herramientas.
             </p>
-            <p className="text-[10px] text-amber-700/70 dark:text-amber-400/70 mt-0.5">
+            <p className="text-[10px] text-warning-dark/80 dark:text-warning/80 mt-0.5">
               Falta: {missingFields.join(' · ')}
             </p>
             <button
               onClick={() => onNav('/company-profile')}
-              className="mt-1.5 text-[10px] font-medium text-amber-700 dark:text-amber-300 underline underline-offset-2 hover:text-amber-900 dark:hover:text-amber-100 transition-colors"
+              className="mt-1.5 text-[10px] font-medium text-warning-dark dark:text-warning underline underline-offset-2 hover:text-warm-900 dark:hover:text-warm-100 transition-colors"
             >
               Ir a Perfil de Empresa →
             </button>

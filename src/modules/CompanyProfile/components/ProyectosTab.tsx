@@ -2,7 +2,7 @@
 // ProyectosTab — Gestión de proyectos de la empresa
 //
 // Listado de proyectos, crear nuevo, editar en pantalla detail.
-// Solo superadmin/consultant pueden editar.
+// La visibilidad de acciones sale de la matriz de permisos de Perfil Empresa.
 // ============================================================
 
 import { useState, useEffect } from 'react'
@@ -30,7 +30,7 @@ interface ProyectosTabProps {
 }
 
 export function ProyectosTab({ companyId }: ProyectosTabProps) {
-  const { canEditCompanySettings } = usePermissions()
+  const { canCreateProjects, canEditProjects, canDeleteProjects } = usePermissions()
   const { departments } = useDepartmentStore()
   const [projects, setProjects] = useState<ProyectoItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -105,6 +105,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
   }
 
   async function handleCreateProject() {
+    if (!canCreateProjects) return
     if (!projectName.trim()) {
       setCreateError('El nombre del proyecto es requerido')
       return
@@ -155,13 +156,15 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
           </p>
         </div>
 
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={() => setShowCreateModal(true)}
-        >
-          Crear proyecto
-        </Button>
+        {canCreateProjects && (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setShowCreateModal(true)}
+          >
+            Crear proyecto
+          </Button>
+        )}
 
         {isLoading ? (
           <div className="flex items-center gap-2 py-4">
@@ -178,14 +181,16 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
                   <p className="text-xs font-semibold text-lean-black dark:text-warm-100 truncate">{project.name}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setSelectedProjectId(project.id)}
-                  >
-                    Editar
-                  </Button>
-                  {canEditCompanySettings && (
+                  {canEditProjects && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setSelectedProjectId(project.id)}
+                    >
+                      Editar
+                    </Button>
+                  )}
+                  {canDeleteProjects && (
                     <Button
                       variant="danger"
                       size="sm"
@@ -441,7 +446,7 @@ export function ProyectosTab({ companyId }: ProyectosTabProps) {
         title="Eliminar proyecto"
         impactDescription={`¿Estás seguro de que quieres eliminar el proyecto "${deletingProjectName}"? Esta acción no se puede deshacer. Se eliminarán todos los datos asociados al proyecto.`}
         onConfirm={async () => {
-          if (!deletingProjectId) return
+          if (!canDeleteProjects || !deletingProjectId) return
           setIsDeleting(true)
           try {
             await deleteProject(deletingProjectId)

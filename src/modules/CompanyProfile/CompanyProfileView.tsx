@@ -42,7 +42,7 @@ interface CompanySettings {
 
 export function CompanyProfileView() {
   const navigate     = useNavigate()
-  const { canEditCompanySettings } = usePermissions()
+  const { canEditCompanyData } = usePermissions()
 
   const {
     isLoadingData, loadProfile, resetProfile,
@@ -87,6 +87,7 @@ export function CompanyProfileView() {
 
   // ── Guardar datos de empresa ──────────────────────────────────
   async function handleCompanySave() {
+    if (!canEditCompanyData) return
     if (!companyId) return
     setIsCompanySaving(true)
     setCompanySaveError(null)
@@ -184,7 +185,7 @@ export function CompanyProfileView() {
               <span className="text-[10px] text-danger font-mono max-w-[280px] truncate" title={companySaveError}>{companySaveError}</span>
             )}
 
-            {canEditCompanySettings && activeTab === 'empresa' && (
+            {canEditCompanyData && activeTab === 'empresa' && (
               <button
                 onClick={handleCompanySave}
                 disabled={isCompanySaving || !companyId}
@@ -234,7 +235,7 @@ export function CompanyProfileView() {
             companyId={companyId}
             companySettings={companySettings}
             onSettingsChange={(patch) => setCompanySettings((s) => ({ ...s, ...patch }))}
-            canEditCompanySettings={canEditCompanySettings}
+            canEditCompanyData={canEditCompanyData}
           />
         )}
         {activeTab === 'organizacion' && companyId && (

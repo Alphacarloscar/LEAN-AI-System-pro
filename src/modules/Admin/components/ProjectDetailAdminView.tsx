@@ -12,18 +12,19 @@ import {
   deleteProject,
   addProjectMember,
 } from '@/services/projects.service'
-import { listCompanyUsers } from '@/services/companies.service'
+import { getCompanyById, listCompanyUsers } from '@/services/companies.service'
 import { fetchCompanyProfile, upsertCompanyProfile } from '@/services/company-profile.service'
 import { fetchDepartments } from '@/services/department.service'
 import { fetchPersonsByCompany } from '@/services/company-person.service'
 import { AuditTab } from './AuditTab'
-import type { ProjectRow, UserRole } from '@/types/database.types'
+import type { MemberRole, ProjectRow, UserRole } from '@/types/database.types'
 import type { CompanyPerson } from '@/modules/CompanyProfile/useCompanyPersonStore'
 import type { Department } from '@/modules/CompanyProfile/useDepartmentStore'
 import { Breadcrumb } from './Breadcrumb'
 import { reportError } from '@/lib/reportError'
 
 type Tab = 'info' | 'config' | 'packages' | 'members' | 'personas' | 'departamentos' | 'users' | 'audit'
+type ProjectAdminStatus = 'active' | 'paused' | 'archived' | 'completed'
 
 interface ProjectMember {
   user_id: string
@@ -46,6 +47,8 @@ const PACKAGE_OPTIONS = [
   { id: 'legal_compliance', label: 'T6·T12 — Legal & Compliance' },
 ] as const
 
+type ProjectPackageId = (typeof PACKAGE_OPTIONS)[number]['id']
+
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   active: { bg: 'bg-success-light', text: 'text-success-dark', label: 'Activo' },
   paused: { bg: 'bg-warning-light', text: 'text-warning-dark', label: 'Pausado' },
@@ -53,12 +56,15 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   completed: { bg: 'bg-info-light', text: 'text-info-dark', label: 'Completado' },
 }
 
+const PROJECT_STATUSES: ProjectAdminStatus[] = ['active', 'paused', 'archived', 'completed']
+
 export function ProjectDetailAdminView() {
   const { companyId, projectId } = useParams<{ companyId: string; projectId: string }>()
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('info')
 
   const [project, setProject] = useState<ProjectRow | null>(null)
+  const [companyName, setCompanyName] = useState<string | null>(null)
   const [members, setMembers] = useState<ProjectMember[]>([])
   const [companyUsers, setCompanyUsers] = useState<CompanyUser[]>([])
   const [personas, setPersonas] = useState<CompanyPerson[]>([])
@@ -82,22 +88,39 @@ export function ProjectDetailAdminView() {
   const [editingConfig, setEditingConfig] = useState(false)
   const [configSaving, setConfigSaving] = useState(false)
 
-  if (!companyId || !projectId) {
-    return <div className="text-center py-8 text-danger-dark">Parámetros inválidos</div>
-  }
-
   useEffect(() => {
     async function loadData() {
+      if (!companyId || !projectId) {
+        setLoading(false)
+        return
+      }
+
       setLoading(true)
       setError(null)
       try {
-        const [projData, membersData, usersData, profileData, personasData, deptData] = await Promise.all([
-          getProjectById(projectId!),
-          getProjectMembers(projectId!),
-          listCompanyUsers(companyId!) as Promise<CompanyUser[]>,
-          fetchCompanyProfile(projectId!).catch(() => null),
-          fetchPersonsByCompany(companyId!).catch(() => []),
-          fetchDepartments(companyId!).catch(() => []),
+        const [companyData, projData] = await Promise.all([
+          getCompanyById(companyId),
+          getProjectById(projectId),
+        ])
+
+        setCompanyName(companyData.name)
+
+        if (projData.company_id !== companyId) {
+          setProject(null)
+          setMembers([])
+          setCompanyUsers([])
+          setPersonas([])
+          setDepartamentos([])
+          setError('El proyecto no pertenece a la empresa indicada.')
+          return
+        }
+
+        const [membersData, usersData, profileData, personasData, deptData] = await Promise.all([
+          getProjectMembers(projectId),
+          listCompanyUsers(companyId) as Promise<CompanyUser[]>,
+          fetchCompanyProfile(projectId).catch(() => null),
+          fetchPersonsByCompany(companyId).catch(() => []),
+          fetchDepartments(companyId).catch(() => []),
         ])
         setProject(projData)
         setMembers(membersData)
@@ -123,9 +146,10 @@ export function ProjectDetailAdminView() {
 
   async function handleUpdateStatus(newStatus: string) {
     if (!project) return
+    if (!PROJECT_STATUSES.includes(newStatus as ProjectAdminStatus)) return
     setSaving(true)
     try {
-      const updated = await updateProjectStatus(projectId!, newStatus as any)
+      const updated = await updateProjectStatus(projectId!, newStatus as ProjectAdminStatus)
       setProject(updated)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cambiar estado')
@@ -199,10 +223,10 @@ export function ProjectDetailAdminView() {
     }
   }
 
-  async function handleUpdateMemberRole(userId: string, newRole: string) {
+  async function handleUpdateMemberRole(userId: string, newRole: MemberRole) {
     setSaving(true)
     try {
-      await updateProjectMemberRole(projectId!, userId, newRole as any)
+      await updateProjectMemberRole(projectId!, userId, newRole)
       const updated = await getProjectMembers(projectId!)
       setMembers(updated)
     } catch (err) {
@@ -228,6 +252,10 @@ export function ProjectDetailAdminView() {
     }
   }
 
+  if (!companyId || !projectId) {
+    return <div className="text-center py-8 text-danger-dark">Parámetros inválidos</div>
+  }
+
   if (loading) {
     return (
       <div className="max-w-5xl mx-auto px-8 py-8">
@@ -251,7 +279,9 @@ export function ProjectDetailAdminView() {
           </svg>
           Volver a empresa
         </button>
-        <div className="text-danger-dark bg-danger-light px-4 py-3 rounded-lg">Proyecto no encontrado</div>
+        <div className="text-danger-dark bg-danger-light px-4 py-3 rounded-lg">
+          {error ?? 'Proyecto no encontrado'}
+        </div>
       </div>
     )
   }
@@ -274,7 +304,7 @@ export function ProjectDetailAdminView() {
         items={[
           { label: 'Administración', href: '/admin' },
           { label: 'Empresas', href: '/admin/companies' },
-          { label: 'Empresa', href: `/admin/companies/${companyId!}` },
+          { label: companyName ?? 'Empresa no disponible', href: `/admin/companies/${companyId!}` },
           { label: project.name, current: true },
         ]}
       />
@@ -407,14 +437,14 @@ export function ProjectDetailAdminView() {
                 key={pkg.id}
                 className={[
                   'flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-colors',
-                  project.contracted_packages?.includes(pkg.id as any)
+                  project.contracted_packages?.includes(pkg.id as ProjectPackageId)
                     ? 'border-gold/40 bg-warning-light'
                     : 'border-border bg-surface hover:bg-warm-50',
                 ].join(' ')}
               >
                 <input
                   type="checkbox"
-                  checked={project.contracted_packages?.includes(pkg.id as any) ?? false}
+                  checked={project.contracted_packages?.includes(pkg.id as ProjectPackageId) ?? false}
                   disabled
                   className="accent-gold"
                 />
@@ -447,7 +477,7 @@ export function ProjectDetailAdminView() {
                     <div className="flex items-center gap-2 shrink-0">
                       <select
                         value={m.role}
-                        onChange={(e) => handleUpdateMemberRole(m.user_id, e.target.value)}
+                        onChange={(e) => handleUpdateMemberRole(m.user_id, e.target.value as MemberRole)}
                         disabled={saving}
                         className="h-8 px-2 rounded text-xs border border-border bg-white disabled:opacity-40"
                       >
@@ -658,7 +688,7 @@ export function ProjectDetailAdminView() {
                 <label className="text-xs font-medium text-text-muted mb-2 block">Rol</label>
                 <select
                   value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value as any)}
+                  onChange={(e) => setSelectedRole(e.target.value as MemberRole)}
                   className="w-full h-10 px-3 rounded-lg border border-border text-sm bg-white outline-none focus:border-gold/60"
                 >
                   <option value="consultant">Consultor</option>

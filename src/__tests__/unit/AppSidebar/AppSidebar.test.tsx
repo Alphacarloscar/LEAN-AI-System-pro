@@ -21,6 +21,7 @@ vi.mock('@shared/design-system/components', () => ({
 
 // Mock de usePermissions — por defecto muestra todos los módulos
 vi.mock('@/modules/Auth/usePermissions', () => ({
+  canAccessAdmin: (role: string | null | undefined) => role === 'superadmin',
   usePermissions: () => ({
     isReadOnly: false,
     canEditCompanySettings: false,
@@ -39,22 +40,39 @@ vi.mock('react-router-dom', async (importOriginal) => {
 })
 
 import { AppSidebar } from '@/shared/components/AppSidebar'
+import { useAuthStore } from '@/modules/Auth'
 import { useEngagementStore } from '@/modules/Engagement/store'
+import type { ProjectRow } from '@/types/database.types'
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
 const TEST_PROJECT_ID = '123e4567-e89b-12d3-a456-426614174000'
 
-const testProject = {
+type SidebarProject = ProjectRow & {
+  objetivo_principal: string
+  horizonte_valor: string
+  ecosistema_tecnologico: string
+  areas_prioritarias: string[]
+}
+
+const testProject: SidebarProject = {
   id: TEST_PROJECT_ID,
   name: 'Test Project',
   company_id: 'test-company',
+  contracted_packages: ['boost_assessment', 'portfolio_management', 'legal_compliance'],
   created_at: '2024-01-01T00:00:00Z',
+  current_phase: 'listen',
+  domain_id: 'domain-test',
+  end_date: null,
+  owner_id: 'owner-test',
+  start_date: null,
+  status: 'active',
+  updated_at: '2024-01-01T00:00:00Z',
   objetivo_principal: 'Test objective',
   horizonte_valor: 'Test horizon',
   ecosistema_tecnologico: 'Test ecosystem',
   areas_prioritarias: ['IT Department'],
-} as any
+}
 
 function renderSidebar(initialPath = '/') {
   return render(
@@ -62,6 +80,13 @@ function renderSidebar(initialPath = '/') {
       <AppSidebar />
     </MemoryRouter>,
   )
+}
+
+function setRole(role: 'superadmin' | 'consultant' | 'client_editor' | 'client_viewer') {
+  useAuthStore.setState({
+    isAuthenticated: true,
+    user: { id: `user-${role}`, email: `${role}@test.com`, name: role, role },
+  })
 }
 
 // ── ADR-021 §3a — Accesibilidad: aria-current="page" ─────────────────────────
@@ -180,4 +205,30 @@ describe('AppSidebar — estructura y atributos de accesibilidad base', () => {
     // 12 herramientas (T1-T12) + 1 botón "Perfil de Empresa" = 13 botones totales en el nav
     expect(toolButtons.length).toBeGreaterThanOrEqual(12)
   })
+})
+describe('AppSidebar admin access by role', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    useEngagementStore.setState({
+      projects: [testProject],
+      activeEngagementId: TEST_PROJECT_ID,
+      activeProjectId: TEST_PROJECT_ID,
+      isLoading: false,
+    })
+  })
+
+  it('shows Administracion only for superadmin', () => {
+    setRole('superadmin')
+    renderSidebar('/')
+    expect(screen.getByRole('button', { name: /administraci/i })).toBeInTheDocument()
+  })
+
+  it.each(['consultant', 'client_editor', 'client_viewer'] as const)(
+    'hides Administracion for %s',
+    (role) => {
+      setRole(role)
+      renderSidebar('/')
+      expect(screen.queryByRole('button', { name: /administraci/i })).not.toBeInTheDocument()
+    },
+  )
 })

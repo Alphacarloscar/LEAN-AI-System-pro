@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock de stores — deben ir antes del import del hook
 vi.mock('@/modules/Auth/store', () => ({
   useAuthStore: vi.fn(),
 }))
@@ -11,10 +10,13 @@ vi.mock('@/modules/Engagement/store', () => ({
 
 import { useAuthStore } from '@/modules/Auth/store'
 import { useEngagementStore } from '@/modules/Engagement/store'
-import { usePermissions } from '@/modules/Auth/usePermissions'
+import {
+  COMPANY_PROFILE_ROLE_PERMISSIONS,
+  canAccessAdmin,
+  getCompanyProfilePermissions,
+  usePermissions,
+} from '@/modules/Auth/usePermissions'
 import type { AuthUser } from '@/modules/Auth/types'
-
-// ── Helper ────────────────────────────────────────────────────
 
 function mockUser(role: AuthUser['role']): AuthUser {
   return { id: 'user-123', email: 'test@goby.ai', name: 'Test User', role }
@@ -22,79 +24,159 @@ function mockUser(role: AuthUser['role']): AuthUser {
 
 function setupStore(user: AuthUser | null) {
   vi.mocked(useAuthStore).mockReturnValue({ user } as ReturnType<typeof useAuthStore>)
-  // Mock engagement store sin proyecto activo (valores por defecto vacíos)
   vi.mocked(useEngagementStore).mockImplementation((selector) => {
     const state = { projects: [], activeEngagementId: null }
-    return selector(state as any)
+    const typedSelector = selector as (store: typeof state) => unknown
+    return typedSelector(state) as ReturnType<typeof selector>
   })
 }
 
-// ── usePermissions ────────────────────────────────────────────
-
-describe('usePermissions — isReadOnly', () => {
+describe('usePermissions - isReadOnly', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('client_viewer → isReadOnly = true', () => {
-    setupStore(mockUser('client_viewer'))
-    const { isReadOnly } = usePermissions()
-    expect(isReadOnly).toBe(true)
+  it.each([
+    ['client_viewer', true],
+    ['client_editor', false],
+    ['consultant', false],
+    ['superadmin', false],
+  ] as const)('%s maps isReadOnly to %s', (role, expected) => {
+    setupStore(mockUser(role))
+    expect(usePermissions().isReadOnly).toBe(expected)
   })
 
-  it('client_editor → isReadOnly = false', () => {
-    setupStore(mockUser('client_editor'))
-    const { isReadOnly } = usePermissions()
-    expect(isReadOnly).toBe(false)
-  })
-
-  it('consultant → isReadOnly = false', () => {
-    setupStore(mockUser('consultant'))
-    const { isReadOnly } = usePermissions()
-    expect(isReadOnly).toBe(false)
-  })
-
-  it('superadmin → isReadOnly = false', () => {
-    setupStore(mockUser('superadmin'))
-    const { isReadOnly } = usePermissions()
-    expect(isReadOnly).toBe(false)
-  })
-
-  it('user null (no autenticado) → isReadOnly = false', () => {
+  it('anonymous users are not treated as read-only project users', () => {
     setupStore(null)
-    const { isReadOnly } = usePermissions()
-    expect(isReadOnly).toBe(false)
+    expect(usePermissions().isReadOnly).toBe(false)
   })
 })
 
-describe('usePermissions — canEditCompanySettings', () => {
+describe('canAccessAdmin', () => {
+  it.each([
+    ['superadmin', true],
+    ['consultant', false],
+    ['client_editor', false],
+    ['client_viewer', false],
+    [null, false],
+  ] as const)('%s role returns %s', (role, expected) => {
+    expect(canAccessAdmin(role)).toBe(expected)
+  })
+})
+
+describe('getCompanyProfilePermissions', () => {
+  it('exposes a reusable action matrix for every role', () => {
+    expect(COMPANY_PROFILE_ROLE_PERMISSIONS).toEqual({
+      superadmin: {
+        canViewCompanyProfile: true,
+        canEditCompanyData: true,
+        canManageOrganization: true,
+        canManageContractedPlans: true,
+        canCreateProjects: true,
+        canEditProjects: true,
+        canDeleteProjects: true,
+      },
+      consultant: {
+        canViewCompanyProfile: true,
+        canEditCompanyData: true,
+        canManageOrganization: true,
+        canManageContractedPlans: false,
+        canCreateProjects: true,
+        canEditProjects: true,
+        canDeleteProjects: true,
+      },
+      client_editor: {
+        canViewCompanyProfile: true,
+        canEditCompanyData: false,
+        canManageOrganization: false,
+        canManageContractedPlans: false,
+        canCreateProjects: true,
+        canEditProjects: true,
+        canDeleteProjects: false,
+      },
+      client_viewer: {
+        canViewCompanyProfile: true,
+        canEditCompanyData: false,
+        canManageOrganization: false,
+        canManageContractedPlans: false,
+        canCreateProjects: false,
+        canEditProjects: false,
+        canDeleteProjects: false,
+      },
+    })
+  })
+
+  it('maps superadmin to every company profile action', () => {
+    expect(getCompanyProfilePermissions('superadmin')).toEqual({
+      canViewCompanyProfile: true,
+      canEditCompanyData: true,
+      canManageOrganization: true,
+      canManageContractedPlans: true,
+      canCreateProjects: true,
+      canEditProjects: true,
+      canDeleteProjects: true,
+    })
+  })
+
+  it('maps consultant to operational actions but not contracted plans', () => {
+    expect(getCompanyProfilePermissions('consultant')).toMatchObject({
+      canViewCompanyProfile: true,
+      canEditCompanyData: true,
+      canManageOrganization: true,
+      canManageContractedPlans: false,
+      canCreateProjects: true,
+      canEditProjects: true,
+      canDeleteProjects: true,
+    })
+  })
+
+  it('maps client_editor to functional project editing only', () => {
+    expect(getCompanyProfilePermissions('client_editor')).toMatchObject({
+      canViewCompanyProfile: true,
+      canEditCompanyData: false,
+      canManageOrganization: false,
+      canManageContractedPlans: false,
+      canCreateProjects: true,
+      canEditProjects: true,
+      canDeleteProjects: false,
+    })
+  })
+
+  it('maps client_viewer and anonymous users to read-only access', () => {
+    expect(getCompanyProfilePermissions('client_viewer')).toMatchObject({
+      canViewCompanyProfile: true,
+      canEditCompanyData: false,
+      canManageOrganization: false,
+      canManageContractedPlans: false,
+      canCreateProjects: false,
+      canEditProjects: false,
+      canDeleteProjects: false,
+    })
+    expect(getCompanyProfilePermissions(null)).toMatchObject({
+      canViewCompanyProfile: false,
+      canEditCompanyData: false,
+      canManageOrganization: false,
+      canManageContractedPlans: false,
+      canCreateProjects: false,
+      canEditProjects: false,
+      canDeleteProjects: false,
+    })
+  })
+})
+
+describe('usePermissions - company settings compatibility', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('superadmin → canEditCompanySettings = true', () => {
-    setupStore(mockUser('superadmin'))
-    const { canEditCompanySettings } = usePermissions()
-    expect(canEditCompanySettings).toBe(true)
+  it.each([
+    ['superadmin', true],
+    ['consultant', true],
+    ['client_editor', false],
+    ['client_viewer', false],
+  ] as const)('%s maps canEditCompanySettings to %s', (role, expected) => {
+    setupStore(mockUser(role))
+    expect(usePermissions().canEditCompanySettings).toBe(expected)
   })
 
-  it('consultant → canEditCompanySettings = true', () => {
-    setupStore(mockUser('consultant'))
-    const { canEditCompanySettings } = usePermissions()
-    expect(canEditCompanySettings).toBe(true)
-  })
-
-  it('client_editor → canEditCompanySettings = false', () => {
-    setupStore(mockUser('client_editor'))
-    const { canEditCompanySettings } = usePermissions()
-    expect(canEditCompanySettings).toBe(false)
-  })
-
-  it('client_viewer → canEditCompanySettings = false', () => {
-    setupStore(mockUser('client_viewer'))
-    const { canEditCompanySettings } = usePermissions()
-    expect(canEditCompanySettings).toBe(false)
-  })
-
-  it('user null → canEditCompanySettings = false', () => {
+  it('anonymous users cannot edit company settings', () => {
     setupStore(null)
-    const { canEditCompanySettings } = usePermissions()
-    expect(canEditCompanySettings).toBe(false)
+    expect(usePermissions().canEditCompanySettings).toBe(false)
   })
 })

@@ -8,6 +8,8 @@ import { expect, type Page } from '@playwright/test'
 export const LAB_COMPANY_ID           = '0b83042d-414e-4d4c-8c83-3a469affbfb3'
 export const LAB_PROJECT_ID           = 'e2058bff-9759-465d-ae4d-df79fdf23815'  // Toy Story
 export const LAB_PROJECT_BOOST_ONLY   = 'd1a2b3c4-e5f6-4a1b-9c8d-7e6f5a4b3c2d'  // Test Boost Only
+export const LAB_SECOND_COMPANY_ID    = '9f648a7e-4d12-4a29-bf18-2750cde3ed7f'
+export const LAB_SECOND_PROJECT_ID    = '57d8a20c-a87f-4e17-a8ac-3426d071e762'
 
 export const USERS = {
   superadmin: {

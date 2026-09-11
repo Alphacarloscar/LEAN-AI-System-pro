@@ -5,10 +5,9 @@
 // Muestra el proyecto activo y permite cambiar entre ellos
 // o crear uno nuevo directamente desde el header.
 //
-// Lógica de creación por rol:
-//   superadmin / consultant → selector de empresa obligatorio
-//   client_editor           → hereda company_id del perfil (sin selector)
-//   client_viewer           → no puede crear proyectos (botón oculto)
+// La creación se controla desde la matriz de permisos por acción.
+// En el flujo actual, solo superadmin elige empresa explícitamente;
+// el resto de roles autorizados heredan su company_id desde el perfil.
 //
 // Paleta: Obsidian Amber — warm charcoal + gold #C8860A
 // ============================================================
@@ -16,7 +15,7 @@
 import { useState, useRef, useEffect }  from 'react'
 import { Spinner }                      from '@shared/design-system/components'
 import { useEngagementStore }           from '@/modules/Engagement/store'
-import { useAuthStore }                 from '@/modules/Auth'
+import { useAuthStore, usePermissions } from '@/modules/Auth'
 import { useLocation }                  from 'react-router-dom'
 import { listCompanies }                from '@/services/companies.service'
 import type { CompanyRow }              from '@/types/database.types'
@@ -71,16 +70,15 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
     activeCompanyId,
   } = useEngagementStore()
   const { user } = useAuthStore()
+  const { canCreateProjects } = usePermissions()
   const location = useLocation()
   const isAdminRoute = location.pathname.startsWith('/admin')
 
   const myUserId = user?.id   ?? null
   const userRole = user?.role ?? 'client_viewer'
 
-  // Solo superadmin elige empresa al crear — los demás heredan la suya del perfil
+  // Solo superadmin elige empresa al crear; los demás roles autorizados heredan la suya.
   const needsCompanySelector = userRole === 'superadmin'
-  // client_viewer no puede crear proyectos
-  const canCreateProject     = userRole !== 'client_viewer'
 
   const [open,           setOpen]          = useState(false)
   const [creating,       setCreating]      = useState(false)
@@ -160,6 +158,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
+    if (!canCreateProjects) return
     const name = newName.trim()
     if (!name) return
     // Para superadmin/consultant, empresa obligatoria
@@ -354,7 +353,7 @@ export function EngagementSelector({ dark }: EngagementSelectorProps) {
           )}
 
           {/* Separador + formulario de creación — solo si puede crear */}
-          {canCreateProject && (
+          {canCreateProjects && (
             <>
               <div className={['border-t', dark ? 'border-white/8' : 'border-warm-100'].join(' ')} />
 

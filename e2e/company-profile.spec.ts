@@ -65,7 +65,7 @@ test.describe('Company Profile', () => {
   })
 
   test('el botón de guardar es visible', async ({ page }) => {
-    // "Guardar empresa" solo renderiza cuando canEditCompanySettings=true (rol con permisos de edición).
+    // "Guardar empresa" solo renderiza cuando canEditCompanyData=true.
     // "Guardar contexto" solo renderiza cuando el tab Proyecto está activo y !isReadOnly.
     // En modo solo lectura ninguno de los dos aparece — en ese caso verificamos que el formulario cargó.
     const saveButton = page.getByRole('button', { name: /guardar empresa|guardar contexto/i })

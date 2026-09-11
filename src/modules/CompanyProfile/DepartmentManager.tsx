@@ -4,7 +4,7 @@
 // CRUD visual de company_departments para CompanyProfileView.
 // - Chips Amber con botón de eliminar (hover reveal)
 // - Input de texto limpio (sin sugerencias)
-// - canEditCompanySettings: oculta controles de escritura para client_editor y client_viewer
+// - canManageOrganization: oculta controles de escritura para client_editor y client_viewer
 // - Optimistic delete con rollback automático en error
 // ============================================================
 
@@ -15,7 +15,7 @@ import { usePermissions }     from '@/modules/Auth'
 import { Spinner, SegmentedControl } from '@shared/design-system/components'
 import { ImpactWarningDialog } from '@/shared/components/ImpactWarningDialog'
 import { reportError }        from '@/lib/reportError'
-import { getDepartmentImpact, deleteDepartment as svcDeleteDepartment } from '@/services/department.service'
+import { getDepartmentImpact } from '@/services/department.service'
 import {
   DEPARTMENT_TYPE_LABEL,
   DEPARTMENT_CHIP_CLASS,
@@ -38,7 +38,7 @@ interface Props {
 // ── Componente ────────────────────────────────────────────────
 
 export function DepartmentManager({ companyId }: Props) {
-  const { canEditCompanySettings } = usePermissions()
+  const { canManageOrganization } = usePermissions()
   const { departments, isLoading, error, addDepartment, updateDepartment, deleteDepartment } =
     useDepartmentStore()
 
@@ -172,13 +172,12 @@ export function DepartmentManager({ companyId }: Props) {
   }
 
   async function handleConfirmDelete() {
-    if (!deletingDept || !companyId) return
+    if (!deletingDept) return
 
     setIsDeleting(true)
     setLocalError(null)
 
     try {
-      await svcDeleteDepartment(deletingDept.id)
       await deleteDepartment(deletingDept.id)
       setImpactWarningOpen(false)
       setDeletingDept(null)
@@ -279,7 +278,7 @@ export function DepartmentManager({ companyId }: Props) {
                 <span className={['h-1.5 w-1.5 rounded-full shrink-0', DEPARTMENT_DOT_CLASS[dept.type]].join(' ')} aria-hidden="true" />
                 <TypeIcon size={12} strokeWidth={1.5} className="shrink-0" aria-hidden="true" />
                 {dept.name}
-                {canEditCompanySettings && (
+                {canManageOrganization && (
                   <span className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-100">
                     <button
                       type="button"
@@ -313,8 +312,8 @@ export function DepartmentManager({ companyId }: Props) {
         </p>
       )}
 
-      {/* ── Input de alta — solo visible para superadmin y consultant ── */}
-      {canEditCompanySettings && (
+      {/* ── Input de alta: visible si el rol puede gestionar organizacion ── */}
+      {canManageOrganization && (
         <div className="flex flex-col gap-2 pt-3 border-t border-border dark:border-white/8">
           <span className="text-xs font-semibold text-text-subtle dark:text-warm-400">
             Añadir departamento

@@ -14,11 +14,11 @@ interface EmpresaTabProps {
   companyId:              string | null
   companySettings:        CompanySettings
   onSettingsChange:       (patch: Partial<CompanySettings>) => void
-  canEditCompanySettings: boolean
+  canEditCompanyData:     boolean
 }
 
 export function EmpresaTab({
-  companyId, companySettings, onSettingsChange, canEditCompanySettings,
+  companyId, companySettings, onSettingsChange, canEditCompanyData,
 }: EmpresaTabProps) {
   return (
     <>
@@ -39,7 +39,7 @@ export function EmpresaTab({
               onChange={(v) => onSettingsChange({ sector: v })}
               options={SECTOR_OPTIONS}
               placeholder="Seleccionar sector..."
-              disabled={!canEditCompanySettings || !companyId}
+              disabled={!canEditCompanyData || !companyId}
             />
           </div>
           <div>
@@ -49,7 +49,7 @@ export function EmpresaTab({
               onChange={(v) => onSettingsChange({ company_size: v })}
               options={COMPANY_SIZE_OPTIONS}
               placeholder="Seleccionar tamaño..."
-              disabled={!canEditCompanySettings || !companyId}
+              disabled={!canEditCompanyData || !companyId}
             />
           </div>
         </div>

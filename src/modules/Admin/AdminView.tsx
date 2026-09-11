@@ -14,10 +14,8 @@
 //   client_viewer → Cliente directivo — solo lectura
 // ============================================================
 
-import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Building2, Users } from 'lucide-react'
-import { useAuthStore } from '@/modules/Auth'
 
 interface NavCard {
   id: string
@@ -45,15 +43,7 @@ const NAV_CARDS: NavCard[] = [
 ]
 
 export function AdminView() {
-  const { user } = useAuthStore()
   const navigate = useNavigate()
-
-  // Redirigir si no es superadmin
-  useEffect(() => {
-    if (user && user.role !== 'superadmin') navigate('/', { replace: true })
-  }, [user, navigate])
-
-  if (!user || user.role !== 'superadmin') return null
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-8">

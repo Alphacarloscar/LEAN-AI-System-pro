@@ -13,9 +13,10 @@ interface FrictionCardProps {
   onUpdate: (partial: Partial<Friction>) => void
   onRemove: () => void
   areas?: { id: string; name: string }[]
+  disabled?: boolean
 }
 
-export function FrictionCard({ index, friction, onUpdate, onRemove, areas }: FrictionCardProps) {
+export function FrictionCard({ index, friction, onUpdate, onRemove, areas, disabled }: FrictionCardProps) {
   const areaOptions = areas && areas.length > 0
     ? areas.map(a => a.name)
     : AREA_OPTIONS as unknown as string[]
@@ -28,6 +29,7 @@ export function FrictionCard({ index, friction, onUpdate, onRemove, areas }: Fri
           </div>
           <span className="text-xs font-semibold text-lean-black dark:text-warm-100">Fricción / Oportunidad</span>
         </div>
+        {!disabled && (
         <button
           onClick={onRemove}
           className="h-6 w-6 rounded flex items-center justify-center text-text-subtle dark:text-warm-400 hover:text-danger-dark hover:bg-danger-light/20 transition-colors"
@@ -37,6 +39,7 @@ export function FrictionCard({ index, friction, onUpdate, onRemove, areas }: Fri
             <path d="M2 2l10 10M12 2L2 12" />
           </svg>
         </button>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -47,6 +50,7 @@ export function FrictionCard({ index, friction, onUpdate, onRemove, areas }: Fri
             onChange={(v) => onUpdate({ tipo: v })}
             options={FRICTION_TYPE_OPTIONS}
             placeholder="Seleccionar..."
+            disabled={disabled}
           />
         </div>
         <div>
@@ -56,6 +60,7 @@ export function FrictionCard({ index, friction, onUpdate, onRemove, areas }: Fri
             onChange={(v) => onUpdate({ areaFuncional: v })}
             options={areaOptions}
             placeholder="Opcional..."
+            disabled={disabled}
           />
         </div>
       </div>
@@ -70,6 +75,7 @@ export function FrictionCard({ index, friction, onUpdate, onRemove, areas }: Fri
                 selected={friction.frecuencia === f}
                 onSelect={(v) => onUpdate({ frecuencia: v })}
                 colorSelected={FREQ_COLOR[f]}
+                disabled={disabled}
               />
             ))}
           </div>
@@ -83,6 +89,7 @@ export function FrictionCard({ index, friction, onUpdate, onRemove, areas }: Fri
                 selected={friction.impacto === i}
                 onSelect={(v) => onUpdate({ impacto: v })}
                 colorSelected={IMPACT_COLOR[i]}
+                disabled={disabled}
               />
             ))}
           </div>
@@ -92,6 +99,7 @@ export function FrictionCard({ index, friction, onUpdate, onRemove, areas }: Fri
           <textarea
             value={friction.notas}
             onChange={(e) => onUpdate({ notas: e.target.value })}
+            disabled={disabled}
             rows={2}
             aria-label={`Notas adicionales para la fricción ${index + 1}`}
             placeholder="Descripción adicional..."

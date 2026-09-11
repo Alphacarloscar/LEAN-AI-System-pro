@@ -33,7 +33,7 @@ interface CompanyPeopleSectionProps {
 const ALL_VALUE = 'all'
 
 export function CompanyPeopleSection({ companyId }: CompanyPeopleSectionProps) {
-  const { canEditCompanySettings } = usePermissions()
+  const { canManageOrganization } = usePermissions()
   const { persons, isLoading, fetchPersonsByCompany, addPerson } = useCompanyPersonStore()
   const { departments, fetchDepartments } = useDepartmentStore()
 
@@ -65,6 +65,7 @@ export function CompanyPeopleSection({ companyId }: CompanyPeopleSectionProps) {
   }
 
   async function handleAddPerson() {
+    if (!canManageOrganization) return
     if (!newPersonName.trim() || !addPersonProjectId) return
     setIsAddingPerson(true)
     try {
@@ -83,6 +84,7 @@ export function CompanyPeopleSection({ companyId }: CompanyPeopleSectionProps) {
   }
 
   async function handleDeletePersonClick(person: CompanyPerson) {
+    if (!canManageOrganization) return
     setDeletingPerson(person)
     setIsDeleting(true)
 
@@ -110,6 +112,7 @@ export function CompanyPeopleSection({ companyId }: CompanyPeopleSectionProps) {
   }
 
   async function handleConfirmDeletePerson() {
+    if (!canManageOrganization) return
     if (!deletingPerson) return
 
     setIsDeleting(true)
@@ -187,7 +190,7 @@ export function CompanyPeopleSection({ companyId }: CompanyPeopleSectionProps) {
             Personas registradas en todos los proyectos de esta empresa, reutilizables desde T1, T2, T3 y T9.
           </p>
         </div>
-        {canEditCompanySettings && (
+        {canManageOrganization && (
           <div className="flex items-center gap-2 shrink-0">
             {persons.length >= 2 && (
               <Button variant="ghost" size="sm" onClick={() => setShowMergeModal(true)}>
@@ -270,7 +273,7 @@ export function CompanyPeopleSection({ companyId }: CompanyPeopleSectionProps) {
                   <Badge variant="navy-ghost" size="xs" className="rounded-md font-mono uppercase tracking-wider">
                     {person.source_tool}
                   </Badge>
-                  {canEditCompanySettings && (
+                  {canManageOrganization && (
                     <>
                       <Button variant="ghost" size="sm" onClick={() => setEditingPerson(person)}>
                         Editar

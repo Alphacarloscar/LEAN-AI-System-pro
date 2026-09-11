@@ -21,10 +21,10 @@
  *   • ProjectDetailAdminView: gestión proyecto (config, personas, departamentos)
  *   • UserDetailView: gestión usuario (asignaciones, permisos)
  *   • Datos: datos globales, acceso irrestricto
- *   • Guards: isAdminUser(superadmin) — redirige otros roles a /company-profile
+ *   • Guards: AdminRouteGuard + canAccessAdmin(superadmin) — redirige otros roles a /evaluation
  *
  * GARANTÍAS DE SEPARACIÓN:
- *   • No hay acceso /admin sin role superadmin (guard ProjectMembershipGuard)
+ *   • No hay acceso /admin sin role superadmin (guard AdminRouteGuard)
  *   • Ediciones en /admin afectan data global (companies, projects, audit_logs)
  *   • Ediciones en /company-profile son locales (company_profiles project-scoped)
  *   • Ambas usan mismos servicios pero con diferentes contextos (role-based)
@@ -93,6 +93,18 @@ export const ADMIN_ROUTES = {
     `/admin/companies/${companyId}/projects/${projectId}`,
   USERS: '/admin/users',
   USER_DETAIL: (userId: string) => `/admin/users/${userId}`,
+} as const
+
+// ADMIN_ROUTE_PATTERNS — Static path patterns for React Router <Route path>.
+// Keep all /admin/** declarations behind AdminRouteGuard in App.tsx.
+export const ADMIN_ROUTE_PATTERNS = {
+  ROOT: '/admin',
+  COMPANIES: '/admin/companies',
+  PROJECTS: '/admin/projects',
+  USERS: '/admin/users',
+  COMPANY_DETAIL: '/admin/companies/:companyId',
+  COMPANY_PROJECT_DETAIL: '/admin/companies/:companyId/projects/:projectId',
+  USER_DETAIL: '/admin/users/:userId',
 } as const
 
 // ── Constantes útiles ─────────────────────────────────────────────────────
